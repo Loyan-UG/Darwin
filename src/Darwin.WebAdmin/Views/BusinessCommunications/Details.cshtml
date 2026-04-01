@@ -534,6 +534,114 @@
 </div>
 
 <div class="card mt-4">
+    <div class="card-header">Live SMS / WhatsApp Message Families</div>
+    <div class="card-body">
+        <div class="small text-muted mb-3">
+            This keeps the current non-email template and policy context visible while troubleshooting one business. Operators do not need to wait for a single incident chain to reconstruct which message family is live and what its allowed target path is.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Family</th>
+                        <th>Channel</th>
+                        <th>Current Template</th>
+                        <th>Rendered Preview</th>
+                        <th>Tokens</th>
+                        <th>Target / Policy</th>
+                        <th>Usage Guidance</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.ChannelTemplateFamilies.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-3">No live SMS or WhatsApp message families are currently exposed.</td></tr>
+                }
+                else
+                {
+                    foreach (var family in Model.ChannelTemplateFamilies)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@family.FamilyName</td>
+                            <td><span class="badge text-bg-light">@family.Channel</span></td>
+                            <td><div class="small">@family.CurrentTemplate</div></td>
+                            <td><div class="small text-body-secondary">@family.ExamplePreview</div></td>
+                            <td><code>@family.SupportedTokens</code></td>
+                            <td>
+                                <div class="small">@family.TargetSurface</div>
+                                <div class="small text-muted mt-1">@family.PolicyNote</div>
+                            </td>
+                            <td>
+                                <div class="small">@family.SafeUsageNote</div>
+                                <div class="small text-muted mt-1">@family.RolloutBoundary</div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a asp-controller="SiteSettings"
+                                       asp-action="Edit"
+                                       asp-fragment="@family.ActionFragment"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = family.ActionFragment })"
+                                       hx-target="#business-communication-profile-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@family.ActionLabel</a>
+                                    @if (string.Equals(family.FamilyName, "Phone Verification", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <a asp-action="ChannelAudits"
+                                           asp-route-businessId="@Model.Id"
+                                           asp-route-phoneVerificationOnly="true"
+                                           asp-route-channel="@family.Channel"
+                                           class="btn btn-sm btn-outline-dark"
+                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id, phoneVerificationOnly = true, channel = family.Channel })"
+                                           hx-target="#business-communication-profile-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">Open Verification Audits</a>
+                                    }
+                                    else if (string.Equals(family.FamilyName, "Admin Communication Test", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <a asp-action="ChannelAudits"
+                                           asp-route-businessId="@Model.Id"
+                                           asp-route-adminTestOnly="true"
+                                           asp-route-channel="@family.Channel"
+                                           class="btn btn-sm btn-outline-dark"
+                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id, adminTestOnly = true, channel = family.Channel })"
+                                           hx-target="#business-communication-profile-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">Open Test Audits</a>
+                                        @if (string.Equals(family.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestSms)
+                                        {
+                                            <form asp-action="SendTestSms" method="post" class="d-inline"
+                                                  hx-post="@Url.Action("SendTestSms", "BusinessCommunications")"
+                                                  hx-target="#business-communication-profile-shell"
+                                                  hx-swap="outerHTML">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rerun SMS Test</button>
+                                            </form>
+                                        }
+                                        else if (string.Equals(family.Channel, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestWhatsApp)
+                                        {
+                                            <form asp-action="SendTestWhatsApp" method="post" class="d-inline"
+                                                  hx-post="@Url.Action("SendTestWhatsApp", "BusinessCommunications")"
+                                                  hx-target="#business-communication-profile-shell"
+                                                  hx-swap="outerHTML">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rerun WhatsApp Test</button>
+                                            </form>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
     <div class="card-header">Channel Truth Snapshot</div>
     <div class="card-body">
         <div class="small text-muted mb-3">

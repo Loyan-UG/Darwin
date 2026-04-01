@@ -1,15 +1,16 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InvoiceEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="crm-invoice-editor-shell">
-    <h1 class="mb-3">Edit Invoice</h1>
+    <h1 class="mb-3">@T.T("EditInvoice")</h1>
 
     <div class="alert alert-light border mb-3">
         <div class="row g-2 small">
             <div class="col-md-4">
-                <strong>Invoice:</strong> <code>@Model.Id</code>
+                <strong>@T.T("Invoice"):</strong> <code>@Model.Id</code>
             </div>
             <div class="col-md-4">
-                <strong>Order:</strong>
+                <strong>@T.T("Order"):</strong>
                 @if (Model.OrderId.HasValue)
                 {
                     <a asp-controller="Orders"
@@ -29,7 +30,7 @@
                 }
             </div>
             <div class="col-md-4">
-                <strong>Customer:</strong>
+                <strong>@T.T("Customer"):</strong>
                 @if (Model.CustomerId.HasValue)
                 {
                     <a asp-action="EditCustomer"
@@ -56,7 +57,7 @@
                         }
                         else if (Model.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business)
                         {
-                            <span class="text-danger ms-1">VAT ID missing</span>
+                            <span class="text-danger ms-1">@T.T("VatIdMissing")</span>
                         }
                     </div>
                 }
@@ -67,7 +68,7 @@
     <div class="card border-0 bg-light mb-3">
         <div class="card-body py-3">
             <div class="d-flex flex-wrap gap-2 align-items-center">
-                <span class="small text-uppercase text-muted fw-semibold">Quick Status</span>
+                <span class="small text-uppercase text-muted fw-semibold">@T.T("QuickStatus")</span>
 
                 <form asp-action="TransitionInvoiceStatus"
                       method="post"
@@ -80,7 +81,7 @@
                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
                     <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Open" />
                     <button type="submit" class="btn btn-outline-secondary btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Open ? "disabled" : null)>
-                        @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Draft ? "Post Invoice" : "Set Open")
+                        @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Draft ? T.T("PostInvoice") : T.T("SetOpen"))
                     </button>
                 </form>
 
@@ -94,7 +95,7 @@
                     <input type="hidden" name="Id" value="@Model.Id" />
                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
                     <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Paid" />
-                    <button type="submit" class="btn btn-outline-success btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Paid ? "disabled" : null)>Mark Paid</button>
+                    <button type="submit" class="btn btn-outline-success btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Paid ? "disabled" : null)>@T.T("MarkPaid")</button>
                 </form>
 
                 <form asp-action="TransitionInvoiceStatus"
@@ -107,11 +108,11 @@
                     <input type="hidden" name="Id" value="@Model.Id" />
                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
                     <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Cancelled" />
-                    <button type="submit" class="btn btn-outline-danger btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Cancelled ? "disabled" : null)>Void Invoice</button>
+                    <button type="submit" class="btn btn-outline-danger btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Cancelled ? "disabled" : null)>@T.T("VoidInvoice")</button>
                 </form>
 
                 <span class="badge text-bg-primary-subtle border border-primary-subtle text-primary-emphasis ms-auto">
-                    Current: @Model.Status
+                    @T.T("Current"): @Model.Status
                 </span>
             </div>
         </div>
@@ -122,7 +123,7 @@
             <div class="card border-0 bg-light">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="small text-uppercase text-muted fw-semibold">Tax &amp; Invoicing Policy</div>
+                        <div class="small text-uppercase text-muted fw-semibold">@T.T("TaxInvoicingPolicy")</div>
                         <a asp-controller="SiteSettings"
                            asp-action="Edit"
                            asp-fragment="site-settings-tax"
@@ -131,41 +132,41 @@
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
-                            Open Tax Settings
+                            @T.T("OpenTaxSettings")
                         </a>
                     </div>
                     <div class="row g-3 small">
                         <div class="col-md-2">
-                            <div class="text-muted">VAT Enabled</div>
-                            <div class="fw-semibold">@(Model.TaxPolicy.VatEnabled ? "Yes" : "No")</div>
+                            <div class="text-muted">@T.T("VatEnabled")</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.VatEnabled ? T.T("Yes") : T.T("No"))</div>
                         </div>
                         <div class="col-md-2">
-                            <div class="text-muted">Default VAT</div>
+                            <div class="text-muted">@T.T("DefaultVat")</div>
                             <div class="fw-semibold">@Model.TaxPolicy.DefaultVatRatePercent.ToString("0.##")%</div>
                         </div>
                         <div class="col-md-2">
-                            <div class="text-muted">Price Mode</div>
-                            <div class="fw-semibold">@(Model.TaxPolicy.PricesIncludeVat ? "VAT Inclusive" : "VAT Exclusive")</div>
+                            <div class="text-muted">@T.T("PriceMode")</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.PricesIncludeVat ? T.T("VatInclusive") : T.T("VatExclusive"))</div>
                         </div>
                         <div class="col-md-2">
-                            <div class="text-muted">Reverse Charge</div>
-                            <div class="fw-semibold">@(Model.TaxPolicy.AllowReverseCharge ? "Allowed" : "Disabled")</div>
+                            <div class="text-muted">@T.T("ReverseCharge")</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.AllowReverseCharge ? T.T("Allowed") : T.T("Disabled"))</div>
                         </div>
                         <div class="col-md-2">
-                            <div class="text-muted">Issuer</div>
-                            <div class="fw-semibold">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : "Missing")</div>
+                            <div class="text-muted">@T.T("Issuer")</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : T.T("Missing"))</div>
                         </div>
                         <div class="col-md-2">
-                            <div class="text-muted">Tax ID</div>
-                            <div class="fw-semibold">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? "Ready" : "Missing")</div>
+                            <div class="text-muted">@T.T("TaxId")</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? T.T("Ready") : T.T("Missing"))</div>
                         </div>
                         <div class="col-md-2">
-                            <div class="text-muted">Archive</div>
-                            <div class="fw-semibold">@(Model.TaxPolicy.ArchiveReadinessComplete ? "Ready" : "Missing data")</div>
+                            <div class="text-muted">@T.T("ArchiveReadiness")</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.ArchiveReadinessComplete ? T.T("Ready") : T.T("MissingData"))</div>
                         </div>
                         <div class="col-md-2">
-                            <div class="text-muted">E-Invoice</div>
-                            <div class="fw-semibold">@(Model.TaxPolicy.EInvoiceBaselineReady ? "Baseline ready" : "Not ready")</div>
+                            <div class="text-muted">@T.T("EInvoiceBaseline")</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.EInvoiceBaselineReady ? T.T("BaselineReady") : T.T("NotReady"))</div>
                         </div>
                     </div>
                     <div class="small text-muted mt-3">@Model.TaxPolicy.ComplianceScopeNote</div>
@@ -178,7 +179,7 @@
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
-                            Tax Settings
+                            @T.T("TaxSettings")
                         </a>
                         @if (Model.CustomerId.HasValue)
                         {
@@ -189,7 +190,7 @@
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
-                                Customer Tax Profile
+                                @T.T("CustomerTaxProfile")
                             </a>
                             @if (Model.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(Model.CustomerVatId))
                             {
@@ -200,7 +201,7 @@
                                    hx-target="#crm-invoice-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
-                                    Fix VAT ID
+                                    @T.T("FixVatId")
                                 </a>
                             }
                         }
@@ -214,7 +215,7 @@
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
-                                Complete Issuer Data
+                                @T.T("CompleteIssuerData")
                             </a>
                         }
                     </div>
@@ -224,26 +225,26 @@
         <div class="col-md-4">
             <div class="card h-100 border-0 bg-light">
                 <div class="card-body py-3">
-                    <div class="small text-uppercase text-muted fw-semibold">Net / Tax / Gross</div>
-                    <div>@Model.Currency @((Model.TotalNetMinor / 100.0M).ToString("0.00")) net</div>
-                    <div>@Model.Currency @((Model.TotalTaxMinor / 100.0M).ToString("0.00")) tax</div>
-                    <div class="fs-5">@Model.Currency @((Model.TotalGrossMinor / 100.0M).ToString("0.00")) gross</div>
+                    <div class="small text-uppercase text-muted fw-semibold">@T.T("NetTaxGross")</div>
+                    <div>@Model.Currency @((Model.TotalNetMinor / 100.0M).ToString("0.00")) @T.T("Net")</div>
+                    <div>@Model.Currency @((Model.TotalTaxMinor / 100.0M).ToString("0.00")) @T.T("Tax")</div>
+                    <div class="fs-5">@Model.Currency @((Model.TotalGrossMinor / 100.0M).ToString("0.00")) @T.T("Gross")</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card h-100 border-0 bg-light">
                 <div class="card-body py-3">
-                    <div class="small text-uppercase text-muted fw-semibold">Refunded / Settled</div>
-                    <div>@Model.Currency @((Model.RefundedAmountMinor / 100.0M).ToString("0.00")) refunded</div>
-                    <div class="small text-muted">@Model.Currency @((Model.SettledAmountMinor / 100.0M).ToString("0.00")) settled</div>
+                    <div class="small text-uppercase text-muted fw-semibold">@T.T("RefundedSettled")</div>
+                    <div>@Model.Currency @((Model.RefundedAmountMinor / 100.0M).ToString("0.00")) @T.T("Refunded")</div>
+                    <div class="small text-muted">@Model.Currency @((Model.SettledAmountMinor / 100.0M).ToString("0.00")) @T.T("Settled")</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card h-100 border-0 bg-light">
                 <div class="card-body py-3">
-                    <div class="small text-uppercase text-muted fw-semibold">Open Balance</div>
+                    <div class="small text-uppercase text-muted fw-semibold">@T.T("OpenBalance")</div>
                     <div class="fs-5 @(Model.BalanceMinor > 0 ? "text-danger" : "text-success")">
                         @Model.Currency @((Model.BalanceMinor / 100.0M).ToString("0.00"))
                     </div>
@@ -258,11 +259,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <div class="small text-uppercase text-muted fw-semibold">Refund Workflow</div>
-                        <div class="small text-muted">Use refund when captured funds must be returned. Use void only if funds were not collected.</div>
+                        <div class="small text-uppercase text-muted fw-semibold">@T.T("RefundWorkflow")</div>
+                        <div class="small text-muted">@T.T("RefundWorkflowNote")</div>
                     </div>
                     <div class="text-end small">
-                        <div class="text-muted">Max refundable now</div>
+                        <div class="text-muted">@T.T("MaxRefundableNow")</div>
                         <div class="fw-semibold">@Model.Currency @((Model.SettledAmountMinor / 100.0M).ToString("0.00"))</div>
                     </div>
                 </div>
@@ -277,15 +278,15 @@
                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
                     <input type="hidden" name="Currency" value="@Model.Currency" />
                     <div class="col-md-4">
-                        <label class="form-label" for="invoice-refund-amount">Refund amount (minor)</label>
+                        <label class="form-label" for="invoice-refund-amount">@T.T("RefundAmountMinor")</label>
                         <input id="invoice-refund-amount" name="AmountMinor" value="@(Model.Refund.AmountMinor > 0 ? Model.Refund.AmountMinor : Model.SettledAmountMinor)" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="invoice-refund-reason">Reason</label>
+                        <label class="form-label" for="invoice-refund-reason">@T.T("Reason")</label>
                         <input id="invoice-refund-reason" name="Reason" value="@Model.Refund.Reason" class="form-control" />
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-outline-warning w-100">Refund</button>
+                        <button type="submit" class="btn btn-outline-warning w-100">@T.T("Refund")</button>
                     </div>
                 </form>
             </div>
@@ -315,7 +316,7 @@
                 <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
                 @if (!string.IsNullOrWhiteSpace(Model.PaymentSummary))
                 {
-                    <div class="form-text">Current: @Model.PaymentSummary</div>
+                    <div class="form-text">@T.T("Current"): @Model.PaymentSummary</div>
                 }
             </div>
             <div class="col-md-3">

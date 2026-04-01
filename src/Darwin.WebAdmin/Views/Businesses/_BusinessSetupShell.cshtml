@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Business Setup";
+    ViewData["Title"] = T.T("BusinessSetupTitle");
     var checklistComplete = Model.ActiveOwnerCount > 0 &&
                             Model.PrimaryLocationCount > 0 &&
                             Model.HasContactEmailConfigured &&
@@ -10,7 +11,7 @@
 <div id="business-setup-shell">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h1 class="mb-1">Business Setup</h1>
+            <h1 class="mb-1">@T.T("BusinessSetupTitle")</h1>
             <p class="text-muted mb-0">@Model.Name</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
@@ -20,7 +21,7 @@
                hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML">
-                <i class="fa-solid fa-pen"></i> Edit Business
+                <i class="fa-solid fa-pen"></i> @T.T("EditBusiness")
             </a>
             <a asp-action="Members"
                asp-route-businessId="@Model.Id"
@@ -28,7 +29,7 @@
                hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML">
-                <i class="fa-solid fa-user-group"></i> Members
+                <i class="fa-solid fa-user-group"></i> @T.T("Members")
             </a>
             <a asp-action="Locations"
                asp-route-businessId="@Model.Id"
@@ -36,7 +37,7 @@
                hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML">
-                <i class="fa-solid fa-location-dot"></i> Locations
+                <i class="fa-solid fa-location-dot"></i> @T.T("Locations")
             </a>
             <a asp-action="Invitations"
                asp-route-businessId="@Model.Id"
@@ -44,7 +45,7 @@
                hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML">
-                <i class="fa-solid fa-envelope"></i> Invitations
+                <i class="fa-solid fa-envelope"></i> @T.T("Invitations")
             </a>
             <a asp-action="Subscription"
                asp-route-businessId="@Model.Id"
@@ -52,7 +53,7 @@
                hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML">
-                <i class="fa-solid fa-credit-card"></i> Subscription
+                <i class="fa-solid fa-credit-card"></i> @T.T("Subscription")
             </a>
             <a asp-action="OwnerOverrideAudits"
                asp-route-businessId="@Model.Id"
@@ -60,7 +61,7 @@
                hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.Id })"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML">
-                <i class="fa-solid fa-clipboard-list"></i> Override Audit
+                <i class="fa-solid fa-clipboard-list"></i> @T.T("OverrideAudit")
             </a>
         </div>
     </div>
@@ -68,30 +69,30 @@
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small text-uppercase">Operational Status</div>
+                <div class="text-muted small text-uppercase">@T.T("OperationalStatus")</div>
                 <div class="fw-semibold mt-1">@Model.OperationalStatus</div>
-                <div class="small text-muted mt-2">@(Model.IsActive ? "Business is active" : "Business is inactive")</div>
+                <div class="small text-muted mt-2">@(Model.IsActive ? T.T("BusinessIsActive") : T.T("BusinessIsInactive"))</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small text-uppercase">Checklist</div>
-                <div class="fw-semibold mt-1">@(checklistComplete ? "Complete" : "Incomplete")</div>
+                <div class="text-muted small text-uppercase">@T.T("Checklist")</div>
+                <div class="fw-semibold mt-1">@(checklistComplete ? T.T("Complete") : T.T("Incomplete"))</div>
                 <div class="small text-muted mt-2">@Model.ActiveOwnerCount owner(s), @Model.PrimaryLocationCount primary location(s)</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small text-uppercase">Defaults</div>
+                <div class="text-muted small text-uppercase">@T.T("Defaults")</div>
                 <div class="fw-semibold mt-1">@Model.DefaultCulture / @Model.DefaultCurrency</div>
                 <div class="small text-muted mt-2">@Model.DefaultTimeZoneId</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small text-uppercase">Go-live Readiness</div>
-                <div class="fw-semibold mt-1">@(checklistComplete && Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Approved ? "Operationally ready" : "Still pending setup")</div>
-                <div class="small text-muted mt-2">Approval and checklist must both be satisfied.</div>
+                <div class="text-muted small text-uppercase">@T.T("GoLiveReadiness")</div>
+                <div class="fw-semibold mt-1">@(checklistComplete && Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Approved ? T.T("OperationallyReady") : T.T("StillPendingSetup"))</div>
+                <div class="small text-muted mt-2">@T.T("ApprovalChecklistRequirement")</div>
             </div>
         </div>
     </div>
@@ -99,20 +100,20 @@
     @if (!checklistComplete)
     {
         <div class="alert alert-warning">
-            Setup is still incomplete. Finish owner assignment, primary location, legal name, and contact email before operational approval.
+            @T.T("SetupIncompleteWarning")
         </div>
     }
 
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Settings Ownership</span>
+            <span>@T.T("SettingsOwnership")</span>
             <a asp-controller="SiteSettings"
                asp-action="Edit"
                asp-fragment="site-settings-communications-policy"
                class="btn btn-sm btn-outline-secondary"
                hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                hx-target="#business-setup-shell"
-               hx-swap="outerHTML">Open Global Settings</a>
+               hx-swap="outerHTML">@T.T("OpenGlobalSettings")</a>
         </div>
         <div class="card-body">
             <div class="small text-muted mb-3">
@@ -202,39 +203,39 @@
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
         <div class="card mb-4" id="business-profile-settings">
-            <div class="card-header">Business Profile</div>
+            <div class="card-header">@T.T("BusinessProfile")</div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label asp-for="Name" class="form-label">Business name</label>
+                        <label asp-for="Name" class="form-label">@T.T("BusinessName")</label>
                         <input asp-for="Name" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="LegalName" class="form-label">Legal name</label>
+                        <label asp-for="LegalName" class="form-label">@T.T("LegalName")</label>
                         <input asp-for="LegalName" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="TaxId" class="form-label">Tax / VAT ID</label>
+                        <label asp-for="TaxId" class="form-label">@T.T("TaxVatId")</label>
                         <input asp-for="TaxId" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="Category" class="form-label">Category</label>
+                        <label asp-for="Category" class="form-label">@T.T("Category")</label>
                         <select asp-for="Category" asp-items="Model.CategoryOptions" class="form-select"></select>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="WebsiteUrl" class="form-label">Website</label>
+                        <label asp-for="WebsiteUrl" class="form-label">@T.T("Website")</label>
                         <input asp-for="WebsiteUrl" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="ContactPhoneE164" class="form-label">Contact phone (E.164)</label>
+                        <label asp-for="ContactPhoneE164" class="form-label">@T.T("ContactPhoneE164")</label>
                         <input asp-for="ContactPhoneE164" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="ContactEmail" class="form-label">Contact email</label>
+                        <label asp-for="ContactEmail" class="form-label">@T.T("ContactEmail")</label>
                         <input asp-for="ContactEmail" class="form-control" />
                     </div>
                     <div class="col-12">
-                        <label asp-for="ShortDescription" class="form-label">Short description</label>
+                        <label asp-for="ShortDescription" class="form-label">@T.T("ShortDescription")</label>
                         <textarea asp-for="ShortDescription" class="form-control" rows="3"></textarea>
                     </div>
                 </div>
@@ -242,7 +243,7 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">Localization and Operational Defaults</div>
+            <div class="card-header">@T.T("LocalizationOperationalDefaults")</div>
             <div class="card-body">
                 <div class="alert alert-light border small">
                     Business setup owns the tenant-facing override for culture, currency, and time zone. Change these only when this business must differ from the platform fallback. If every tenant should inherit a new baseline, change Site Settings instead.
@@ -253,13 +254,13 @@
                            class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
                            hx-target="#business-setup-shell"
-                           hx-swap="outerHTML">Open Global Localization</a>
+                           hx-swap="outerHTML">@T.T("OpenGlobalLocalization")</a>
                         <a asp-controller="CRM"
                            asp-action="Customers"
                            class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("Customers", "Crm")"
                            hx-target="#business-setup-shell"
-                           hx-swap="outerHTML">Customer Locale Review</a>
+                           hx-swap="outerHTML">@T.T("CustomerLocaleReview")</a>
                     </div>
                 </div>
                 <div class="row g-3">
@@ -285,6 +286,14 @@
                         {
                             <div class="form-text">Activation remains blocked until the business is approved.</div>
                         }
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="AdminTextOverridesJson" class="form-label">@T.T("BusinessAdminTextOverridesJson")</label>
+                        <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="5" placeholder='{"de-DE":{"BusinessSetupTitle":"Betriebs-Setup"},"en-US":{"BusinessSetupTitle":"Business setup"}}'></textarea>
+                        <span asp-validation-for="AdminTextOverridesJson" class="text-danger"></span>
+                        <div class="form-text">
+                            Business-scoped admin wording overrides apply only when operators work inside this business context. Precedence is business override, then platform site-setting override, then shared resource text.
+                        </div>
                     </div>
                 </div>
             </div>

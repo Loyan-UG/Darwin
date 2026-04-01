@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.PurchaseOrdersListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Purchase Orders";
+    ViewData["Title"] = T.T("PurchaseOrders");
 }
 
 <div id="inventory-purchase-orders-workspace-shell">
-<h1 class="mb-3">Purchase Orders</h1>
+<h1 class="mb-3">@T.T("PurchaseOrders")</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="PurchaseOrders" method="get" class="d-flex gap-2"
@@ -13,20 +14,20 @@
           hx-swap="outerHTML"
           hx-push-url="true">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search purchase orders">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchPurchaseOrdersPlaceholder")">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
            hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId })"
            hx-target="#inventory-purchase-orders-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
+           hx-push-url="true">@T.T("Reset")</a>
     </form>
     <a asp-action="CreatePurchaseOrder" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
        hx-get="@Url.Action("CreatePurchaseOrder", "Inventory", new { businessId = Model.BusinessId })"
        hx-target="#inventory-purchase-orders-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">New Purchase Order</a>
+       hx-push-url="true">@T.T("NewPurchaseOrder")</a>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
@@ -34,29 +35,29 @@
        hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Draft" })"
        hx-target="#inventory-purchase-orders-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Draft</a>
+       hx-push-url="true">@T.T("Draft")</a>
     <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Issued" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.Issued ? "btn-warning" : "btn-outline-warning")"
        hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Issued" })"
        hx-target="#inventory-purchase-orders-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Issued</a>
+       hx-push-url="true">@T.T("Issued")</a>
     <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Received" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.Received ? "btn-success" : "btn-outline-success")"
        hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Received" })"
        hx-target="#inventory-purchase-orders-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Received</a>
+       hx-push-url="true">@T.T("Received")</a>
     <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query })"
        hx-target="#inventory-purchase-orders-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Clear Queue Filters</a>
+       hx-push-url="true">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card h-100">
             <div class="card-body">
-                <div class="text-muted small">Total</div>
+                <div class="text-muted small">@T.T("Total")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
             </div>
         </div>
@@ -64,7 +65,7 @@
     <div class="col-md-3">
         <div class="card h-100 border-secondary-subtle">
             <div class="card-body">
-                <div class="text-muted small">Draft</div>
+                <div class="text-muted small">@T.T("Draft")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.DraftCount</div>
             </div>
         </div>
@@ -72,7 +73,7 @@
     <div class="col-md-3">
         <div class="card h-100 border-warning-subtle">
             <div class="card-body">
-                <div class="text-muted small">Issued</div>
+                <div class="text-muted small">@T.T("Issued")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.IssuedCount</div>
             </div>
         </div>
@@ -80,7 +81,7 @@
     <div class="col-md-3">
         <div class="card h-100 border-success-subtle">
             <div class="card-body">
-                <div class="text-muted small">Received</div>
+                <div class="text-muted small">@T.T("Received")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.ReceivedCount</div>
             </div>
         </div>
@@ -90,14 +91,14 @@
 @if (Model.Playbooks.Count > 0)
 {
     <div class="card mb-4">
-        <div class="card-header">Purchase Order Ops Playbooks</div>
+        <div class="card-header">@T.T("PurchaseOrderOpsPlaybooks")</div>
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead>
                 <tr>
-                    <th>Playbook</th>
-                    <th>When It Applies</th>
-                    <th>Operator Action</th>
+                    <th>@T.T("Playbook")</th>
+                    <th>@T.T("WhenItApplies")</th>
+                    <th>@T.T("OperatorAction")</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -117,11 +118,11 @@
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>Order Number</th><th>Supplier</th><th>Status</th><th>Lines</th><th>Ordered</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>@T.T("OrderNumber")</th><th>@T.T("Supplier")</th><th>@T.T("Status")</th><th>@T.T("Lines")</th><th>@T.T("Ordered")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">No purchase orders found.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted">@T.T("NoPurchaseOrdersFound")</td></tr>
         }
         else
         {
@@ -133,11 +134,11 @@
                     <td>
                         @if (string.Equals(item.Status, "Issued", StringComparison.OrdinalIgnoreCase))
                         {
-                            <span class="badge text-bg-warning">Issued</span>
+                            <span class="badge text-bg-warning">@T.T("Issued")</span>
                         }
                         else if (string.Equals(item.Status, "Received", StringComparison.OrdinalIgnoreCase))
                         {
-                            <span class="badge text-bg-success">Received</span>
+                            <span class="badge text-bg-success">@T.T("Received")</span>
                         }
                         else
                         {
@@ -150,7 +151,7 @@
                            hx-get="@Url.Action("EditPurchaseOrder", "Inventory", new { id = item.Id })"
                            hx-target="#inventory-purchase-orders-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Edit</a></td>
+                           hx-push-url="true">@T.T("Edit")</a></td>
                 </tr>
             }
         }

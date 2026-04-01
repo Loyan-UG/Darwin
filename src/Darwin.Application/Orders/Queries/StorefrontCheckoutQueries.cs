@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Orders;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Orders.Queries;
 
@@ -19,6 +20,7 @@ public sealed class CreateStorefrontCheckoutIntentHandler
     private readonly IAppDbContext _db;
     private readonly ComputeCartSummaryHandler _computeCartSummaryHandler;
     private readonly RateShipmentHandler _rateShipmentHandler;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateStorefrontCheckoutIntentHandler"/> class.
@@ -26,11 +28,13 @@ public sealed class CreateStorefrontCheckoutIntentHandler
     public CreateStorefrontCheckoutIntentHandler(
         IAppDbContext db,
         ComputeCartSummaryHandler computeCartSummaryHandler,
-        RateShipmentHandler rateShipmentHandler)
+        RateShipmentHandler rateShipmentHandler,
+        IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
         _rateShipmentHandler = rateShipmentHandler ?? throw new ArgumentNullException(nameof(rateShipmentHandler));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -41,24 +45,24 @@ public sealed class CreateStorefrontCheckoutIntentHandler
         ArgumentNullException.ThrowIfNull(dto);
         if (dto.CartId == Guid.Empty)
         {
-            throw new InvalidOperationException("CartId is required.");
+            throw new InvalidOperationException(_localizer["CartIdRequired"]);
         }
 
         var cart = await _db.Set<Cart>()
             .Include(x => x.Items)
             .FirstOrDefaultAsync(x => x.Id == dto.CartId && !x.IsDeleted, ct)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException("Cart not found.");
+            ?? throw new InvalidOperationException(_localizer["CartNotFound"]);
 
         if (cart.UserId.HasValue && cart.UserId != dto.UserId)
         {
-            throw new InvalidOperationException("Cart does not belong to the current user.");
+            throw new InvalidOperationException(_localizer["CartDoesNotBelongToCurrentUser"]);
         }
 
         var activeItems = cart.Items.Where(x => !x.IsDeleted && x.Quantity > 0).ToList();
         if (activeItems.Count == 0)
         {
-            throw new InvalidOperationException("Cart is empty.");
+            throw new InvalidOperationException(_localizer["CartIsEmpty"]);
         }
 
         var summary = await _computeCartSummaryHandler.HandleAsync(dto.CartId, ct).ConfigureAwait(false);
@@ -78,7 +82,7 @@ public sealed class CreateStorefrontCheckoutIntentHandler
 
         if (variants.Count != variantIds.Count)
         {
-            throw new InvalidOperationException("One or more cart variants are no longer available.");
+            throw new InvalidOperationException(_localizer["CartVariantsNoLongerAvailable"]);
         }
 
         var variantById = variants.ToDictionary(x => x.Id);
@@ -117,7 +121,7 @@ public sealed class CreateStorefrontCheckoutIntentHandler
         result.ShippingOptions = shippingOptions.Select(MapOption).ToList();
         if (result.ShippingOptions.Count == 0)
         {
-            throw new InvalidOperationException("No shipping options are available for the current checkout.");
+            throw new InvalidOperationException(_localizer["NoShippingOptionsAvailableForCurrentCheckout"]);
         }
 
         var selected = dto.SelectedShippingMethodId.HasValue
@@ -126,7 +130,7 @@ public sealed class CreateStorefrontCheckoutIntentHandler
 
         if (dto.SelectedShippingMethodId.HasValue && selected is null)
         {
-            throw new InvalidOperationException("Selected shipping method is not valid for the current checkout.");
+            throw new InvalidOperationException(_localizer["SelectedShippingMethodInvalidForCurrentCheckout"]);
         }
 
         selected ??= result.ShippingOptions.OrderBy(x => x.PriceMinor).First();
@@ -146,7 +150,7 @@ public sealed class CreateStorefrontCheckoutIntentHandler
         {
             if (!userId.HasValue || userId.Value == Guid.Empty)
             {
-                throw new InvalidOperationException("A signed-in user is required to use a saved shipping address.");
+                throw new InvalidOperationException(_localizer["SignedInUserRequiredToUseSavedShippingAddress"]);
             }
 
             var address = await _db.Set<Address>()
@@ -156,7 +160,7 @@ public sealed class CreateStorefrontCheckoutIntentHandler
 
             if (address is null)
             {
-                throw new InvalidOperationException("Saved shipping address not found.");
+                throw new InvalidOperationException(_localizer["SavedShippingAddressNotFound"]);
             }
 
             return address.CountryCode;
@@ -164,7 +168,7 @@ public sealed class CreateStorefrontCheckoutIntentHandler
 
         if (shippingAddress is null || string.IsNullOrWhiteSpace(shippingAddress.CountryCode))
         {
-            throw new InvalidOperationException("A shipping address with a country code is required.");
+            throw new InvalidOperationException(_localizer["ShippingAddressWithCountryCodeRequired"]);
         }
 
         return shippingAddress.CountryCode.Trim().ToUpperInvariant();
@@ -188,13 +192,15 @@ public sealed class CreateStorefrontCheckoutIntentHandler
 public sealed class GetStorefrontOrderConfirmationHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetStorefrontOrderConfirmationHandler"/> class.
     /// </summary>
-    public GetStorefrontOrderConfirmationHandler(IAppDbContext db)
+    public GetStorefrontOrderConfirmationHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -205,7 +211,7 @@ public sealed class GetStorefrontOrderConfirmationHandler
         ArgumentNullException.ThrowIfNull(dto);
         if (dto.OrderId == Guid.Empty)
         {
-            throw new InvalidOperationException("OrderId is required.");
+            throw new InvalidOperationException(_localizer["OrderIdRequired"]);
         }
 
         var order = await _db.Set<Order>()

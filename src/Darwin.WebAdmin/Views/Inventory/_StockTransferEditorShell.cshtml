@@ -1,11 +1,12 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockTransferEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
-    ViewData["Title"] = isCreate ? "Create Stock Transfer" : "Edit Stock Transfer";
+    ViewData["Title"] = isCreate ? T.T("CreateStockTransfer") : T.T("EditStockTransfer");
 }
 
 <div id="inventory-stock-transfer-editor-shell">
-    <h1 class="mb-3">@(isCreate ? "Create Stock Transfer" : "Edit Stock Transfer")</h1>
+    <h1 class="mb-3">@(isCreate ? T.T("CreateStockTransfer") : T.T("EditStockTransfer"))</h1>
 
     <form asp-action="@(isCreate ? "CreateStockTransfer" : "EditStockTransfer")"
           method="post"
@@ -20,12 +21,12 @@
         }
         <partial name="_StockTransferForm" model="Model" />
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary">@T.T("Save")</button>
             <a asp-action="StockTransfers" asp-route-warehouseId="@Model.FromWarehouseId" class="btn btn-outline-secondary"
                hx-get="@Url.Action("StockTransfers", "Inventory", new { warehouseId = Model.FromWarehouseId })"
                hx-target="#inventory-stock-transfer-editor-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">Back</a>
+               hx-push-url="true">@T.T("Back")</a>
         </div>
     </form>
 </div>

@@ -38,6 +38,7 @@ namespace Darwin.Application.Businesses.Queries
                     DefaultCurrency = x.DefaultCurrency,
                     DefaultCulture = x.DefaultCulture,
                     DefaultTimeZoneId = x.DefaultTimeZoneId,
+                    AdminTextOverridesJson = x.AdminTextOverridesJson,
                     BrandDisplayName = x.BrandDisplayName,
                     BrandLogoUrl = x.BrandLogoUrl,
                     BrandPrimaryColorHex = x.BrandPrimaryColorHex,

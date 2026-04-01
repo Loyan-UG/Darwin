@@ -1,5 +1,9 @@
 import { ProductDetailPage } from "@/components/catalog/product-detail-page";
-import { getPublicProductBySlug } from "@/features/catalog/api/public-catalog";
+import {
+  getPublicCategories,
+  getPublicProductBySlug,
+} from "@/features/catalog/api/public-catalog";
+import { getRequestCulture } from "@/lib/request-culture";
 
 type ProductDetailRouteProps = {
   params: Promise<{
@@ -8,8 +12,9 @@ type ProductDetailRouteProps = {
 };
 
 export async function generateMetadata({ params }: ProductDetailRouteProps) {
+  const culture = await getRequestCulture();
   const { slug } = await params;
-  const productResult = await getPublicProductBySlug(slug);
+  const productResult = await getPublicProductBySlug(slug, culture);
   const product = productResult.data;
 
   if (!product) {
@@ -30,12 +35,22 @@ export async function generateMetadata({ params }: ProductDetailRouteProps) {
 export default async function ProductDetailRoute({
   params,
 }: ProductDetailRouteProps) {
+  const culture = await getRequestCulture();
   const { slug } = await params;
-  const productResult = await getPublicProductBySlug(slug);
+  const [productResult, categoriesResult] = await Promise.all([
+    getPublicProductBySlug(slug, culture),
+    getPublicCategories(culture),
+  ]);
+  const activeCategory =
+    categoriesResult.data?.items.find(
+      (category) => category.id === productResult.data?.primaryCategoryId,
+    ) ?? null;
 
   return (
     <ProductDetailPage
+      culture={culture}
       product={productResult.data}
+      primaryCategory={activeCategory}
       status={productResult.status}
     />
   );

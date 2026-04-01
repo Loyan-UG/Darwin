@@ -11,6 +11,7 @@ export type ShellLinkGroup = {
 export type ShellModel = {
   activeThemeName: string;
   culture: string;
+  supportedCultures: string[];
   menuSource: "cms" | "fallback";
   menuStatus:
     | "ok"

@@ -39,6 +39,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public List<CommunicationTemplateInventoryVm> TemplateInventory { get; set; } = new();
         public List<CommunicationCapabilityCoverageVm> CapabilityCoverage { get; set; } = new();
         public List<CommunicationChannelOpsVm> ChannelOperations { get; set; } = new();
+        public List<ChannelMessageFamilyVm> ChannelTemplateFamilies { get; set; } = new();
         public List<CommunicationResendPolicyVm> ResendPolicies { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();
         public ChannelDispatchAuditSummaryVm ChannelAuditSummary { get; set; } = new();
@@ -181,6 +182,10 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int PriorSuccessContextCount { get; set; }
         public int ActionReadyCount { get; set; }
         public int ActionBlockedCount { get; set; }
+        public int EscalationCandidateCount { get; set; }
+        public int HeavyChainCount { get; set; }
+        public int ProviderReviewCount { get; set; }
+        public int ProviderRecoveredCount { get; set; }
     }
 
     public sealed class ChannelDispatchAuditListItemVm
@@ -197,6 +202,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public DateTime? CompletedAtUtc { get; set; }
         public string? FailureMessage { get; set; }
         public bool NeedsOperatorFollowUp { get; set; }
+        public int ChainAttemptCount { get; set; }
+        public string ChainStatusMix { get; set; } = string.Empty;
         public int PriorAttemptCount { get; set; }
         public int PriorFailureCount { get; set; }
         public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
@@ -204,6 +211,13 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string ActionPolicyState { get; set; } = string.Empty;
         public string? ActionBlockedReason { get; set; }
         public DateTime? ActionAvailableAtUtc { get; set; }
+        public bool NeedsEscalationReview { get; set; }
+        public string? EscalationReason { get; set; }
+        public int ProviderRecentAttemptCount24h { get; set; }
+        public int ProviderFailureCount24h { get; set; }
+        public string ProviderPressureState { get; set; } = string.Empty;
+        public string ProviderRecoveryState { get; set; } = string.Empty;
+        public DateTime? ProviderLastSuccessfulAttemptAtUtc { get; set; }
     }
 
     public sealed class ChannelDispatchAuditChainSummaryVm
@@ -215,8 +229,27 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int NeedsOperatorFollowUpCount { get; set; }
         public DateTime? FirstAttemptAtUtc { get; set; }
         public DateTime? LastAttemptAtUtc { get; set; }
+        public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
         public string StatusMix { get; set; } = string.Empty;
+        public string RecommendedAction { get; set; } = string.Empty;
+        public string EscalationHint { get; set; } = string.Empty;
         public List<ChannelDispatchAuditChainHistoryItemVm> RecentHistory { get; set; } = new();
+    }
+
+    public sealed class ChannelDispatchProviderSummaryVm
+    {
+        public string Provider { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public string FlowKey { get; set; } = string.Empty;
+        public int RecentAttemptCount24h { get; set; }
+        public int FailureCount24h { get; set; }
+        public int SentCount24h { get; set; }
+        public int PendingCount24h { get; set; }
+        public string PressureState { get; set; } = string.Empty;
+        public string RecoveryState { get; set; } = string.Empty;
+        public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
+        public string RecommendedAction { get; set; } = string.Empty;
+        public string EscalationHint { get; set; } = string.Empty;
     }
 
     public sealed class ChannelDispatchAuditChainHistoryItemVm
@@ -237,6 +270,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
         public string RecipientAddress { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
         public string Channel { get; set; } = string.Empty;
         public string FlowKey { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
@@ -248,17 +282,39 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool PriorSuccessOnly { get; set; }
         public bool ActionReadyOnly { get; set; }
         public bool ActionBlockedOnly { get; set; }
+        public bool EscalationCandidatesOnly { get; set; }
+        public bool HeavyChainsOnly { get; set; }
+        public bool ProviderReviewOnly { get; set; }
         public bool ChainFollowUpOnly { get; set; }
         public bool ChainResolvedOnly { get; set; }
         public bool CanSendTestSms { get; set; }
         public bool CanSendTestWhatsApp { get; set; }
         public ChannelDispatchAuditSummaryVm Summary { get; set; } = new();
         public ChannelDispatchAuditChainSummaryVm? ChainSummary { get; set; }
+        public ChannelDispatchProviderSummaryVm? ProviderSummary { get; set; }
+        public List<ChannelMessageFamilyVm> TemplateFamilies { get; set; } = new();
         public List<ChannelDispatchAuditListItemVm> Items { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> ProviderItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> ChannelItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> FlowItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> StatusItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class ChannelMessageFamilyVm
+    {
+        public string FamilyName { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public string CurrentTemplate { get; set; } = string.Empty;
+        public string ExamplePreview { get; set; } = string.Empty;
+        public string SupportedTokens { get; set; } = string.Empty;
+        public string TargetSurface { get; set; } = string.Empty;
+        public string PolicyNote { get; set; } = string.Empty;
+        public string SafeUsageNote { get; set; } = string.Empty;
+        public string RolloutBoundary { get; set; } = string.Empty;
+        public string ActionLabel { get; set; } = string.Empty;
+        public string ActionTarget { get; set; } = string.Empty;
+        public string ActionFragment { get; set; } = string.Empty;
     }
 
     public sealed class EmailDispatchAuditsListVm
@@ -381,6 +437,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public List<string> ActiveFlowNames { get; set; } = new();
         public List<CommunicationTemplateInventoryVm> TemplateInventory { get; set; } = new();
         public List<CommunicationChannelOpsVm> ChannelOperations { get; set; } = new();
+        public List<ChannelMessageFamilyVm> ChannelTemplateFamilies { get; set; } = new();
         public List<CommunicationResendPolicyVm> ResendPolicies { get; set; } = new();
         public List<string> ReadinessIssues { get; set; } = new();
         public List<string> RecommendedActions { get; set; } = new();

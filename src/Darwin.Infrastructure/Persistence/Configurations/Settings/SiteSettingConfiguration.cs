@@ -31,6 +31,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.TimeZone).IsRequired().HasMaxLength(100);
             builder.Property(x => x.DateFormat).IsRequired().HasMaxLength(50);
             builder.Property(x => x.TimeFormat).IsRequired().HasMaxLength(50);
+        builder.Property(x => x.AdminTextOverridesJson).HasMaxLength(16000);
 
             // --- Display & Units ---
             builder.Property(x => x.MeasurementSystem).IsRequired().HasMaxLength(20);          // "Metric"/"Imperial"

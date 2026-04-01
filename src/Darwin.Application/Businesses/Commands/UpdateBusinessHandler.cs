@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -18,11 +19,16 @@ namespace Darwin.Application.Businesses.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<BusinessEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateBusinessHandler(IAppDbContext db, IValidator<BusinessEditDto> validator)
+        public UpdateBusinessHandler(
+            IAppDbContext db,
+            IValidator<BusinessEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(BusinessEditDto dto, CancellationToken ct = default)
@@ -33,13 +39,13 @@ namespace Darwin.Application.Businesses.Commands
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (entity is null)
-                throw new InvalidOperationException("Business not found.");
+                throw new InvalidOperationException(_localizer["BusinessNotFound"]);
 
             // Concurrency check exactly like Brand.
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
             if (!currentVersion.SequenceEqual(requestVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             entity.Name = dto.Name.Trim();
             entity.LegalName = string.IsNullOrWhiteSpace(dto.LegalName) ? null : dto.LegalName.Trim();
@@ -52,6 +58,7 @@ namespace Darwin.Application.Businesses.Commands
             entity.DefaultCurrency = dto.DefaultCurrency.Trim();
             entity.DefaultCulture = dto.DefaultCulture.Trim();
             entity.DefaultTimeZoneId = dto.DefaultTimeZoneId.Trim();
+            entity.AdminTextOverridesJson = string.IsNullOrWhiteSpace(dto.AdminTextOverridesJson) ? null : dto.AdminTextOverridesJson.Trim();
             entity.BrandDisplayName = string.IsNullOrWhiteSpace(dto.BrandDisplayName) ? null : dto.BrandDisplayName.Trim();
             entity.BrandLogoUrl = string.IsNullOrWhiteSpace(dto.BrandLogoUrl) ? null : dto.BrandLogoUrl.Trim();
             entity.BrandPrimaryColorHex = string.IsNullOrWhiteSpace(dto.BrandPrimaryColorHex) ? null : dto.BrandPrimaryColorHex.Trim();

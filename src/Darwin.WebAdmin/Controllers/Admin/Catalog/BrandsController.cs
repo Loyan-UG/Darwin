@@ -110,7 +110,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _create.HandleAsync(dto, ct);
-                TempData["Success"] = "Brand created.";
+                SetSuccessMessage("BrandCreated");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (Exception ex)
@@ -127,7 +127,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var dto = await _getForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
-                TempData["Error"] = "Brand not found.";
+                SetErrorMessage("BrandNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -174,12 +174,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _update.HandleAsync(dto, ct);
-                TempData["Success"] = "Brand updated.";
+                SetSuccessMessage("BrandUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. The brand was modified by another process. Please reload and try again.";
+                SetErrorMessage("BrandConcurrencyConflict");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -200,7 +200,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             Result result = await _softDelete.HandleAsync(dto, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] =
-                result.Succeeded ? "Brand deleted." : (result.Error ?? "Failed to delete brand.");
+                result.Succeeded ? T("BrandDeleted") : (result.Error ?? T("BrandDeleteFailed"));
 
             return RedirectOrHtmx(nameof(Index), new { });
         }

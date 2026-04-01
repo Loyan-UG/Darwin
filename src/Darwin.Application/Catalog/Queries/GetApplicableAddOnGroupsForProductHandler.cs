@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Queries
 {
@@ -25,12 +27,16 @@ namespace Darwin.Application.Catalog.Queries
     public sealed class GetApplicableAddOnGroupsForProductHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes the handler with an <see cref="IAppDbContext"/> abstraction for EF Core.
         /// </summary>
-        public GetApplicableAddOnGroupsForProductHandler(IAppDbContext db)
-            => _db = db;
+        public GetApplicableAddOnGroupsForProductHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         /// <summary>
         /// Resolves applicable groups for the specified product (and optional variant).
@@ -55,7 +61,7 @@ namespace Darwin.Application.Catalog.Queries
                 .FirstOrDefaultAsync(ct);
 
             if (prod is null)
-                throw new InvalidOperationException("Product not found.");
+                throw new InvalidOperationException(_localizer["ProductNotFound"]);
 
             // 1) Variant-level (highest precedence) if provided
             var variantGroupIds = new List<Guid>();

@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.CRM.OpportunityEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = Model.Id == Guid.Empty;
     var formAction = (string?)ViewData["FormAction"] ?? (isCreate ? "CreateOpportunity" : "EditOpportunity");
@@ -18,8 +19,8 @@
         }
         <partial name="_OpportunityForm" model="Model" />
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
-            <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-opportunity-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">Back</a>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
+            <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-opportunity-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 </div>

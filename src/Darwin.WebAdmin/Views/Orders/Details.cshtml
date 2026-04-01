@@ -1,33 +1,34 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderDetailVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Order " + Model.OrderNumber;
+    ViewData["Title"] = T.T("Order") + " " + Model.OrderNumber;
 }
 
 <div id="order-details-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-2">
-    <h1 class="mb-0"><i class="fa fa-receipt"></i> Order @Model.OrderNumber</h1>
+    <h1 class="mb-0"><i class="fa fa-receipt"></i> @T.T("Order") @Model.OrderNumber</h1>
     <a asp-action="Index"
        hx-get="@Url.Action("Index", "Orders")"
        hx-target="#order-details-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
-       class="btn btn-outline-secondary">Back to Orders</a>
+       class="btn btn-outline-secondary">@T.T("BackToOrders")</a>
 </div>
 <partial name="~/Views/Shared/_Alerts.cshtml" />
 
 <div class="card mb-3">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-3"><strong>Status:</strong> @Model.Status</div>
-            <div class="col-md-3"><strong>Total:</strong> @Model.Currency @((Model.GrandTotalGrossMinor / 100.0M).ToString("0.00"))</div>
+            <div class="col-md-3"><strong>@T.T("Status"):</strong> @Model.Status</div>
+            <div class="col-md-3"><strong>@T.T("Total"):</strong> @Model.Currency @((Model.GrandTotalGrossMinor / 100.0M).ToString("0.00"))</div>
             <div class="col-md-3">
-                <strong>Shipping:</strong>
+                <strong>@T.T("Shipping"):</strong>
                 @(string.IsNullOrWhiteSpace(Model.ShippingMethodName)
-                    ? "Not selected"
+                    ? T.T("NotSelected")
                     : $"{Model.ShippingMethodName} ({Model.Currency} {(Model.ShippingTotalMinor / 100.0M):0.00})")
             </div>
             <div class="col-md-3">
-                <strong>Carrier/Service:</strong>
+                <strong>@T.T("CarrierService"):</strong>
                 @(string.IsNullOrWhiteSpace(Model.ShippingCarrier)
                     ? "-"
                     : string.IsNullOrWhiteSpace(Model.ShippingService)
@@ -46,7 +47,7 @@
                     <input type="hidden" name="OrderId" value="@Model.Id" />
                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
                     <select name="WarehouseId" class="form-select form-select-sm d-inline w-auto me-2">
-                        <option value="">Warehouse (Auto)</option>
+                        <option value="">@T.T("WarehouseAuto")</option>
                         @foreach (var warehouse in Model.WarehouseOptions)
                         {
                             <option value="@warehouse.Value" selected="@warehouse.Selected">@warehouse.Text</option>
@@ -59,7 +60,7 @@
                         <option value="Cancelled">Cancelled</option>
                         <option value="Shipped">Shipped</option>
                     </select>
-                    <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fa fa-sync"></i> Change Status</button>
+                    <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fa fa-sync"></i> @T.T("ChangeStatus")</button>
                 </form>
                 <a asp-controller="Orders"
                    asp-action="AddPayment"
@@ -69,7 +70,7 @@
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
-                    <i class="fa fa-credit-card"></i> Add Payment
+                    <i class="fa fa-credit-card"></i> @T.T("AddPayment")
                 </a>
                 <a asp-controller="Orders"
                    asp-action="AddShipment"
@@ -79,7 +80,7 @@
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
-                    <i class="fa fa-truck"></i> Add Shipment
+                    <i class="fa fa-truck"></i> @T.T("AddShipment")
                 </a>
                 <a asp-controller="Orders"
                    asp-action="AddRefund"
@@ -89,7 +90,7 @@
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
-                    <i class="fa fa-rotate-left"></i> Add Refund
+                    <i class="fa fa-rotate-left"></i> @T.T("AddRefund")
                 </a>
                 <a asp-controller="Orders"
                    asp-action="CreateInvoice"
@@ -99,7 +100,7 @@
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
-                    <i class="fa fa-file-invoice"></i> Create Invoice
+                    <i class="fa fa-file-invoice"></i> @T.T("CreateInvoice")
                 </a>
             </div>
         </div>
@@ -110,7 +111,7 @@
     <div class="col-lg-8">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Tax &amp; Price Snapshot</span>
+                <span>@T.T("TaxPriceSnapshot")</span>
                 <a asp-controller="SiteSettings"
                    asp-action="Edit"
                    asp-fragment="site-settings-tax"
@@ -119,50 +120,50 @@
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
-                    Open Tax Settings
+                    @T.T("OpenTaxSettings")
                 </a>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <div class="text-muted small">Price Mode</div>
-                        <div class="fw-semibold mt-1">@(Model.PricesIncludeTax ? "VAT Inclusive" : "VAT Exclusive")</div>
+                        <div class="text-muted small">@T.T("PriceMode")</div>
+                        <div class="fw-semibold mt-1">@(Model.PricesIncludeTax ? T.T("VatInclusive") : T.T("VatExclusive"))</div>
                     </div>
                     <div class="col-md-3">
-                        <div class="text-muted small">Subtotal Net</div>
+                        <div class="text-muted small">@T.T("SubtotalNet")</div>
                         <div class="fw-semibold mt-1">@Model.Currency @((Model.SubtotalNetMinor / 100.0M).ToString("0.00"))</div>
                     </div>
                     <div class="col-md-3">
-                        <div class="text-muted small">Tax Total</div>
+                        <div class="text-muted small">@T.T("TaxTotal")</div>
                         <div class="fw-semibold mt-1">@Model.Currency @((Model.TaxTotalMinor / 100.0M).ToString("0.00"))</div>
                     </div>
                     <div class="col-md-3">
-                        <div class="text-muted small">Discounts</div>
+                        <div class="text-muted small">@T.T("Discounts")</div>
                         <div class="fw-semibold mt-1">@Model.Currency @((Model.DiscountTotalMinor / 100.0M).ToString("0.00"))</div>
                     </div>
                 </div>
                 <div class="small text-muted mt-3">
-                    Gross totals remain the operational source of truth, while this snapshot exposes the net/tax split currently persisted on the order.
+                    @T.T("TaxSnapshotNote")
                 </div>
             </div>
         </div>
     </div>
     <div class="col-lg-4">
         <div class="card h-100">
-            <div class="card-header">Current Tax Policy</div>
+            <div class="card-header">@T.T("CurrentTaxPolicy")</div>
             <div class="card-body">
-                <div class="small text-muted">VAT Enabled</div>
-                <div class="fw-semibold mb-2">@(Model.TaxPolicy.VatEnabled ? "Yes" : "No")</div>
-                <div class="small text-muted">Default VAT</div>
+                <div class="small text-muted">@T.T("VatEnabled")</div>
+                <div class="fw-semibold mb-2">@(Model.TaxPolicy.VatEnabled ? T.T("Yes") : T.T("No"))</div>
+                <div class="small text-muted">@T.T("DefaultVat")</div>
                 <div class="fw-semibold mb-2">@Model.TaxPolicy.DefaultVatRatePercent.ToString("0.##")%</div>
-                <div class="small text-muted">Reverse Charge</div>
-                <div class="fw-semibold mb-2">@(Model.TaxPolicy.AllowReverseCharge ? "Allowed" : "Disabled")</div>
-                <div class="small text-muted">Issuer</div>
-                <div class="fw-semibold mb-2">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : "Missing")</div>
-                <div class="small text-muted">Archive Readiness</div>
-                <div class="fw-semibold mb-2">@(Model.TaxPolicy.ArchiveReadinessComplete ? "Ready" : "Missing data")</div>
-                <div class="small text-muted">E-Invoice Baseline</div>
-                <div class="fw-semibold">@(Model.TaxPolicy.EInvoiceBaselineReady ? "Ready" : "Not ready")</div>
+                <div class="small text-muted">@T.T("ReverseCharge")</div>
+                <div class="fw-semibold mb-2">@(Model.TaxPolicy.AllowReverseCharge ? T.T("Allowed") : T.T("Disabled"))</div>
+                <div class="small text-muted">@T.T("Issuer")</div>
+                <div class="fw-semibold mb-2">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : T.T("Missing"))</div>
+                <div class="small text-muted">@T.T("ArchiveReadiness")</div>
+                <div class="fw-semibold mb-2">@(Model.TaxPolicy.ArchiveReadinessComplete ? T.T("Ready") : T.T("MissingData"))</div>
+                <div class="small text-muted">@T.T("EInvoiceBaseline")</div>
+                <div class="fw-semibold">@(Model.TaxPolicy.EInvoiceBaselineReady ? T.T("Ready") : T.T("NotReady"))</div>
                 <div class="small text-muted mt-2">@Model.TaxPolicy.ComplianceScopeNote</div>
                 <div class="d-flex flex-wrap gap-2 mt-3">
                     <a asp-controller="SiteSettings"
@@ -173,7 +174,7 @@
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">
-                        Tax Settings
+                        @T.T("TaxSettings")
                     </a>
                     @if (!Model.TaxPolicy.ArchiveReadinessComplete)
                     {
@@ -185,7 +186,7 @@
                            hx-target="#order-operation-shell"
                            hx-swap="innerHTML"
                            hx-push-url="false">
-                            Complete Issuer Data
+                            @T.T("CompleteIssuerData")
                         </a>
                     }
                     @if (!Model.TaxPolicy.EInvoiceBaselineReady)
@@ -198,14 +199,14 @@
                            hx-target="#order-operation-shell"
                            hx-swap="innerHTML"
                            hx-push-url="false">
-                            Review E-Invoice Baseline
+                            @T.T("ReviewEInvoiceBaseline")
                         </a>
                     }
                     <button class="btn btn-sm btn-outline-primary"
                             type="button"
                             data-bs-toggle="tab"
                             data-bs-target="#invoices">
-                        Review Invoices
+                        @T.T("ReviewInvoices")
                     </button>
                 </div>
             </div>
@@ -214,7 +215,7 @@
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Return Support Baseline</span>
+                <span>@T.T("ReturnSupportBaseline")</span>
                 <a asp-controller="Orders"
                    asp-action="ShipmentsQueue"
                    asp-route-filter="Returned"
@@ -223,26 +224,26 @@
                    hx-swap="outerHTML"
                    hx-push-url="true"
                    class="btn btn-sm btn-outline-secondary">
-                    Open Returned Queue
+                    @T.T("OpenReturnedQueue")
                 </a>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <div class="text-muted small">Returned Shipments</div>
+                        <div class="text-muted small">@T.T("ReturnedShipments")</div>
                         <div class="fs-4 fw-semibold mt-1">@Model.ReturnSupport.ReturnedShipmentCount</div>
                     </div>
                     <div class="col-md-3">
-                        <div class="text-muted small">Returned Without Tracking</div>
+                        <div class="text-muted small">@T.T("ReturnedWithoutTracking")</div>
                         <div class="fs-4 fw-semibold mt-1">@Model.ReturnSupport.ReturnedWithoutTrackingCount</div>
                     </div>
                     <div class="col-md-3">
-                        <div class="text-muted small">Carrier Review Rows</div>
+                        <div class="text-muted small">@T.T("CarrierReviewRows")</div>
                         <div class="fs-4 fw-semibold mt-1">@Model.ReturnSupport.CarrierReviewShipmentCount</div>
                     </div>
                     <div class="col-md-3">
-                        <div class="text-muted small">Refund Path</div>
-                        <div class="fw-semibold mt-1">@(Model.ReturnSupport.HasRefundablePayment ? "Ready" : "Check payments first")</div>
+                        <div class="text-muted small">@T.T("RefundPath")</div>
+                        <div class="fw-semibold mt-1">@(Model.ReturnSupport.HasRefundablePayment ? T.T("Ready") : T.T("CheckPaymentsFirst"))</div>
                     </div>
                 </div>
                 <div class="d-flex gap-2 flex-wrap mt-3">
@@ -250,13 +251,13 @@
                             type="button"
                             data-bs-toggle="tab"
                             data-bs-target="#shipments">
-                        Review Shipments
+                        @T.T("ReviewShipments")
                     </button>
                     <button class="btn btn-sm btn-outline-danger"
                             type="button"
                             data-bs-toggle="tab"
                             data-bs-target="#refunds">
-                        Review Refunds
+                        @T.T("ReviewRefunds")
                     </button>
                     @if (Model.ReturnSupport.DefaultRefundPaymentId.HasValue)
                     {
@@ -269,7 +270,7 @@
                            hx-target="#order-operation-shell"
                            hx-swap="innerHTML"
                            hx-push-url="false">
-                            <i class="fa fa-rotate-left"></i> Start Return Refund
+                            <i class="fa fa-rotate-left"></i> @T.T("StartReturnRefund")
                         </a>
                     }
                     <a asp-controller="Orders"
@@ -280,11 +281,11 @@
                        hx-target="#order-details-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
-                        Carrier Review Queue
+                        @T.T("CarrierReviewQueue")
                     </a>
                 </div>
                 <div class="small text-muted mt-3">
-                    Phase-1 returns support uses existing shipment and refund records. Returned parcels can be triaged here, while restock and deeper RMA workflow remain later-phase work.
+                    @T.T("ReturnSupportNote")
                 </div>
             </div>
         </div>
@@ -295,12 +296,12 @@
 
 <div class="card mt-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <strong>Inventory Allocation</strong>
-        <small class="text-muted">Allocate reserved stock & finalize picking</small>
+        <strong>@T.T("InventoryAllocation")</strong>
+        <small class="text-muted">@T.T("InventoryAllocationSubtitle")</small>
     </div>
     <div class="card-body">
         <p class="mb-3">
-            When allocation succeeds, the order transitions to <code>Shipped</code> (idempotent).
+            @T.T("InventoryAllocationNote")
         </p>
 
         <form asp-controller="Orders"
@@ -315,7 +316,7 @@
             <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
             <input type="hidden" name="NewStatus" value="Shipped" />
             <select name="WarehouseId" class="form-select d-inline w-auto me-2">
-                <option value="">Warehouse (Auto)</option>
+                <option value="">@T.T("WarehouseAuto")</option>
                 @foreach (var warehouse in Model.WarehouseOptions)
                 {
                     <option value="@warehouse.Value" selected="@warehouse.Selected">@warehouse.Text</option>

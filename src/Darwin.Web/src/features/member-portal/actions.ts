@@ -1,0 +1,474 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import {
+  prepareCurrentMemberLoyaltyScanSession,
+  confirmCurrentMemberPhoneVerification,
+  createCurrentMemberAddress,
+  deleteCurrentMemberAddress,
+  joinCurrentMemberLoyaltyBusiness,
+  trackCurrentMemberPromotionInteraction,
+  requestCurrentMemberPhoneVerification,
+  setCurrentMemberAddressDefault,
+  updateCurrentMemberAddress,
+  updateCurrentMemberPreferences,
+  updateCurrentMemberProfile,
+} from "@/features/member-portal/api/member-portal";
+import {
+  clearPreparedMemberLoyaltyScanSession,
+  writePreparedMemberLoyaltyScanSession,
+} from "@/features/member-portal/scan-session-cookie";
+import { getFreshMemberAccessToken } from "@/features/member-session/server";
+import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+
+function withFlash(path: string, key: string, value: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}${key}=${encodeURIComponent(value)}`;
+}
+
+async function createPaymentIntent(path: string) {
+  const accessToken = await getFreshMemberAccessToken();
+  if (!accessToken) {
+    return {
+      ok: false,
+      message: "A member session is required.",
+    };
+  }
+
+  const { webApiBaseUrl } = getSiteRuntimeConfig();
+
+  try {
+    const response = await fetch(`${webApiBaseUrl}${path}`, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      let detail = `Payment handoff returned status ${response.status}.`;
+      try {
+        const problem = (await response.json()) as { detail?: string; title?: string };
+        detail = problem.detail ?? problem.title ?? detail;
+      } catch {
+        // Keep status detail.
+      }
+
+      return {
+        ok: false,
+        message: detail,
+      };
+    }
+
+    const payload = (await response.json()) as { checkoutUrl?: string };
+    return payload.checkoutUrl
+      ? {
+          ok: true,
+          checkoutUrl: payload.checkoutUrl,
+        }
+      : {
+          ok: false,
+          message: "Hosted checkout URL was not returned.",
+        };
+  } catch {
+    return {
+      ok: false,
+      message: "Payment handoff endpoint could not be reached.",
+    };
+  }
+}
+
+export async function createMemberOrderPaymentIntentAction(formData: FormData) {
+  const orderId = String(formData.get("orderId") ?? "").trim();
+  const failurePath =
+    String(formData.get("failurePath") ?? `/orders/${orderId}`).trim() ||
+    `/orders/${orderId}`;
+
+  if (!orderId) {
+    redirect("/orders");
+  }
+
+  const result = await createPaymentIntent(
+    `/api/v1/member/orders/${orderId}/payment-intent`,
+  );
+
+  if (!result.ok || !result.checkoutUrl) {
+    const separator = failurePath.includes("?") ? "&" : "?";
+    redirect(
+      `${failurePath}${separator}paymentError=${encodeURIComponent(
+        result.message ?? "Payment handoff failed.",
+      )}`,
+    );
+  }
+
+  redirect(result.checkoutUrl);
+}
+
+export async function updateMemberProfileAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  const phoneE164 = String(formData.get("phoneE164") ?? "").trim();
+  const locale = String(formData.get("locale") ?? "").trim();
+  const timezone = String(formData.get("timezone") ?? "").trim();
+  const currency = String(formData.get("currency") ?? "").trim();
+  const rowVersion = String(formData.get("rowVersion") ?? "").trim();
+
+  if (!id || !rowVersion || !locale || !timezone || !currency) {
+    redirect(withFlash("/account/profile", "profileError", "Profile update is missing required fields."));
+  }
+
+  const result = await updateCurrentMemberProfile({
+    id,
+    email,
+    firstName,
+    lastName,
+    phoneE164: phoneE164 || null,
+    locale,
+    timezone,
+    currency,
+    rowVersion,
+  });
+
+  if (result.status !== "ok") {
+    redirect(withFlash("/account/profile", "profileError", result.message ?? "Profile update failed."));
+  }
+
+  redirect(withFlash("/account/profile", "profileStatus", "saved"));
+}
+
+export async function updateMemberPreferencesAction(formData: FormData) {
+  const rowVersion = String(formData.get("rowVersion") ?? "").trim();
+  if (!rowVersion) {
+    redirect(withFlash("/account/preferences", "preferencesError", "Preference update requires a row version."));
+  }
+
+  const result = await updateCurrentMemberPreferences({
+    rowVersion,
+    marketingConsent: formData.get("marketingConsent") === "on",
+    allowEmailMarketing: formData.get("allowEmailMarketing") === "on",
+    allowSmsMarketing: formData.get("allowSmsMarketing") === "on",
+    allowWhatsAppMarketing: formData.get("allowWhatsAppMarketing") === "on",
+    allowPromotionalPushNotifications:
+      formData.get("allowPromotionalPushNotifications") === "on",
+    allowOptionalAnalyticsTracking:
+      formData.get("allowOptionalAnalyticsTracking") === "on",
+  });
+
+  if (result.status !== "ok") {
+    redirect(withFlash("/account/preferences", "preferencesError", result.message ?? "Preference update failed."));
+  }
+
+  redirect(withFlash("/account/preferences", "preferencesStatus", "saved"));
+}
+
+export async function requestMemberPhoneVerificationAction(formData: FormData) {
+  const channel = String(formData.get("channel") ?? "").trim();
+  const result = await requestCurrentMemberPhoneVerification({
+    channel: channel || null,
+  });
+
+  if (result.status !== "ok") {
+    redirect(
+      withFlash(
+        "/account/profile",
+        "phoneError",
+        result.message ?? "Phone verification request failed.",
+      ),
+    );
+  }
+
+  redirect(withFlash("/account/profile", "phoneStatus", "requested"));
+}
+
+export async function confirmMemberPhoneVerificationAction(formData: FormData) {
+  const code = String(formData.get("code") ?? "").trim();
+  if (!code) {
+    redirect(
+      withFlash(
+        "/account/profile",
+        "phoneError",
+        "Phone verification code is required.",
+      ),
+    );
+  }
+
+  const result = await confirmCurrentMemberPhoneVerification({
+    code,
+  });
+
+  if (result.status !== "ok") {
+    redirect(
+      withFlash(
+        "/account/profile",
+        "phoneError",
+        result.message ?? "Phone verification confirmation failed.",
+      ),
+    );
+  }
+
+  redirect(withFlash("/account/profile", "phoneStatus", "confirmed"));
+}
+
+export async function createMemberAddressAction(formData: FormData) {
+  const result = await createCurrentMemberAddress({
+    fullName: String(formData.get("fullName") ?? "").trim(),
+    company: String(formData.get("company") ?? "").trim() || null,
+    street1: String(formData.get("street1") ?? "").trim(),
+    street2: String(formData.get("street2") ?? "").trim() || null,
+    postalCode: String(formData.get("postalCode") ?? "").trim(),
+    city: String(formData.get("city") ?? "").trim(),
+    state: String(formData.get("state") ?? "").trim() || null,
+    countryCode: String(formData.get("countryCode") ?? "").trim() || "DE",
+    phoneE164: String(formData.get("phoneE164") ?? "").trim() || null,
+    isDefaultBilling: formData.get("isDefaultBilling") === "on",
+    isDefaultShipping: formData.get("isDefaultShipping") === "on",
+  });
+
+  if (result.status !== "ok") {
+    redirect(withFlash("/account/addresses", "addressesError", result.message ?? "Address creation failed."));
+  }
+
+  redirect(withFlash("/account/addresses", "addressesStatus", "created"));
+}
+
+export async function updateMemberAddressAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  const rowVersion = String(formData.get("rowVersion") ?? "").trim();
+
+  if (!id || !rowVersion) {
+    redirect(withFlash("/account/addresses", "addressesError", "Address update requires id and row version."));
+  }
+
+  const result = await updateCurrentMemberAddress(id, {
+    rowVersion,
+    fullName: String(formData.get("fullName") ?? "").trim(),
+    company: String(formData.get("company") ?? "").trim() || null,
+    street1: String(formData.get("street1") ?? "").trim(),
+    street2: String(formData.get("street2") ?? "").trim() || null,
+    postalCode: String(formData.get("postalCode") ?? "").trim(),
+    city: String(formData.get("city") ?? "").trim(),
+    state: String(formData.get("state") ?? "").trim() || null,
+    countryCode: String(formData.get("countryCode") ?? "").trim() || "DE",
+    phoneE164: String(formData.get("phoneE164") ?? "").trim() || null,
+    isDefaultBilling: formData.get("isDefaultBilling") === "on",
+    isDefaultShipping: formData.get("isDefaultShipping") === "on",
+  });
+
+  if (result.status !== "ok") {
+    redirect(withFlash("/account/addresses", "addressesError", result.message ?? "Address update failed."));
+  }
+
+  redirect(withFlash("/account/addresses", "addressesStatus", "updated"));
+}
+
+export async function deleteMemberAddressAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  const rowVersion = String(formData.get("rowVersion") ?? "").trim();
+
+  if (!id || !rowVersion) {
+    redirect(withFlash("/account/addresses", "addressesError", "Address delete requires id and row version."));
+  }
+
+  const result = await deleteCurrentMemberAddress(id, rowVersion);
+  if (result.status !== "ok") {
+    redirect(withFlash("/account/addresses", "addressesError", result.message ?? "Address delete failed."));
+  }
+
+  redirect(withFlash("/account/addresses", "addressesStatus", "deleted"));
+}
+
+export async function setMemberAddressDefaultAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  const asBilling = String(formData.get("asBilling") ?? "") === "true";
+  const asShipping = String(formData.get("asShipping") ?? "") === "true";
+
+  if (!id || (!asBilling && !asShipping)) {
+    redirect(withFlash("/account/addresses", "addressesError", "Default address request is incomplete."));
+  }
+
+  const result = await setCurrentMemberAddressDefault(id, {
+    asBilling,
+    asShipping,
+  });
+
+  if (result.status !== "ok") {
+    redirect(withFlash("/account/addresses", "addressesError", result.message ?? "Default address update failed."));
+  }
+
+  redirect(withFlash("/account/addresses", "addressesStatus", "default-updated"));
+}
+
+export async function trackMemberPromotionInteractionAction(formData: FormData) {
+  const businessId = String(formData.get("businessId") ?? "").trim();
+  const businessName = String(formData.get("businessName") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const ctaKind = String(formData.get("ctaKind") ?? "").trim();
+  const eventType = String(formData.get("eventType") ?? "Open").trim();
+  const returnPath =
+    String(formData.get("returnPath") ?? "/loyalty").trim() || "/loyalty";
+
+  if (!businessId || !businessName || !title || !ctaKind) {
+    redirect(
+      withFlash(
+        returnPath,
+        "promotionError",
+        "Promotion tracking request is incomplete.",
+      ),
+    );
+  }
+
+  const normalizedEventType =
+    eventType === "Claim" || eventType === "Impression" ? eventType : "Open";
+
+  const result = await trackCurrentMemberPromotionInteraction({
+    businessId,
+    businessName,
+    title,
+    ctaKind,
+    eventType: normalizedEventType,
+  });
+
+  if (result.status !== "ok") {
+    redirect(
+      withFlash(
+        returnPath,
+        "promotionError",
+        result.message ?? "Promotion interaction could not be recorded.",
+      ),
+    );
+  }
+
+  redirect(withFlash(returnPath, "promotionStatus", "tracked"));
+}
+
+export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
+  const businessId = String(formData.get("businessId") ?? "").trim();
+  const businessLocationId = String(formData.get("businessLocationId") ?? "").trim();
+  const returnPath =
+    String(formData.get("returnPath") ?? `/loyalty/${businessId}`).trim() ||
+    `/loyalty/${businessId}`;
+
+  if (!businessId) {
+    redirect("/loyalty");
+  }
+
+  const result = await joinCurrentMemberLoyaltyBusiness({
+    businessId,
+    businessLocationId: businessLocationId || null,
+  });
+
+  if (result.status === "unauthenticated" || result.status === "unauthorized") {
+    redirect(`/account/sign-in?returnPath=${encodeURIComponent(returnPath)}`);
+  }
+
+  if (result.status !== "ok") {
+    redirect(
+      withFlash(
+        returnPath,
+        "joinError",
+        result.message ?? "Loyalty enrollment could not be completed.",
+      ),
+    );
+  }
+
+  redirect(withFlash(returnPath, "joinStatus", "joined"));
+}
+
+export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) {
+  const businessId = String(formData.get("businessId") ?? "").trim();
+  const businessLocationId = String(formData.get("businessLocationId") ?? "").trim();
+  const mode = String(formData.get("mode") ?? "Accrual").trim();
+  const returnPath =
+    String(formData.get("returnPath") ?? `/loyalty/${businessId}`).trim() ||
+    `/loyalty/${businessId}`;
+  const selectedRewardTierIds = formData
+    .getAll("selectedRewardTierIds")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  if (!businessId) {
+    redirect("/loyalty");
+  }
+
+  if (mode === "Redemption" && selectedRewardTierIds.length === 0) {
+    redirect(
+      withFlash(
+        returnPath,
+        "scanError",
+        "Choose at least one reward before preparing a redemption scan.",
+      ),
+    );
+  }
+
+  const normalizedMode = mode === "Redemption" ? "Redemption" : "Accrual";
+  const result = await prepareCurrentMemberLoyaltyScanSession({
+    businessId,
+    businessLocationId: businessLocationId || null,
+    mode: normalizedMode,
+    selectedRewardTierIds,
+    deviceId: "Darwin.Web",
+  });
+
+  if (result.status === "unauthenticated" || result.status === "unauthorized") {
+    redirect(`/account/sign-in?returnPath=${encodeURIComponent(returnPath)}`);
+  }
+
+  if (result.status !== "ok" || !result.data) {
+    redirect(
+      withFlash(
+        returnPath,
+        "scanError",
+        result.message ?? "Scan session could not be prepared.",
+      ),
+    );
+  }
+
+  await writePreparedMemberLoyaltyScanSession({
+    ...result.data,
+    businessId,
+  });
+
+  redirect(withFlash(returnPath, "scanStatus", "prepared"));
+}
+
+export async function clearMemberLoyaltyScanSessionAction(formData: FormData) {
+  const businessId = String(formData.get("businessId") ?? "").trim();
+  const returnPath =
+    String(formData.get("returnPath") ?? `/loyalty/${businessId}`).trim() ||
+    `/loyalty/${businessId}`;
+
+  await clearPreparedMemberLoyaltyScanSession();
+  redirect(withFlash(returnPath, "scanStatus", "cleared"));
+}
+
+export async function createMemberInvoicePaymentIntentAction(formData: FormData) {
+  const invoiceId = String(formData.get("invoiceId") ?? "").trim();
+  const failurePath =
+    String(formData.get("failurePath") ?? `/invoices/${invoiceId}`).trim() ||
+    `/invoices/${invoiceId}`;
+
+  if (!invoiceId) {
+    redirect("/invoices");
+  }
+
+  const result = await createPaymentIntent(
+    `/api/v1/member/invoices/${invoiceId}/payment-intent`,
+  );
+
+  if (!result.ok || !result.checkoutUrl) {
+    const separator = failurePath.includes("?") ? "&" : "?";
+    redirect(
+      `${failurePath}${separator}paymentError=${encodeURIComponent(
+        result.message ?? "Payment handoff failed.",
+      )}`,
+    );
+  }
+
+  redirect(result.checkoutUrl);
+}

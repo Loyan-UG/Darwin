@@ -1,6 +1,7 @@
 using System.Linq;
 using Darwin.Application.CRM.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CRM.Validators
 {
@@ -19,7 +20,7 @@ namespace Darwin.Application.CRM.Validators
 
     public sealed class CustomerCreateValidator : AbstractValidator<CustomerCreateDto>
     {
-        public CustomerCreateValidator()
+        public CustomerCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.FirstName).MaximumLength(120);
             RuleFor(x => x.LastName).MaximumLength(120);
@@ -35,7 +36,7 @@ namespace Darwin.Application.CRM.Validators
             {
                 RuleFor(x => x.CompanyName)
                     .NotEmpty()
-                    .WithMessage("Business customers should include a company name.");
+                    .WithMessage(localizer["CustomerBusinessRequiresCompanyName"]);
             });
 
             When(x => !x.UserId.HasValue, () =>
@@ -49,9 +50,9 @@ namespace Darwin.Application.CRM.Validators
 
     public sealed class CustomerEditValidator : AbstractValidator<CustomerEditDto>
     {
-        public CustomerEditValidator()
+        public CustomerEditValidator(IStringLocalizer<ValidationResource> localizer)
         {
-            Include(new CustomerCreateValidator());
+            Include(new CustomerCreateValidator(localizer));
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotEmpty();
         }
@@ -125,7 +126,7 @@ namespace Darwin.Application.CRM.Validators
 
     public sealed class InteractionCreateValidator : AbstractValidator<InteractionCreateDto>
     {
-        public InteractionCreateValidator()
+        public InteractionCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Type).IsInEnum();
             RuleFor(x => x.Channel).IsInEnum();
@@ -133,20 +134,20 @@ namespace Darwin.Application.CRM.Validators
             RuleFor(x => x.Content).MaximumLength(4000);
             RuleFor(x => x)
                 .Must(x => new[] { x.CustomerId, x.LeadId, x.OpportunityId }.Count(id => id.HasValue) == 1)
-                .WithMessage("Exactly one CRM target must be selected for an interaction.");
+                .WithMessage(localizer["InteractionSingleTargetRequired"]);
         }
     }
 
     public sealed class ConsentCreateValidator : AbstractValidator<ConsentCreateDto>
     {
-        public ConsentCreateValidator()
+        public ConsentCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.CustomerId).NotEmpty();
             RuleFor(x => x.Type).IsInEnum();
             RuleFor(x => x.GrantedAtUtc).NotEmpty();
             RuleFor(x => x)
                 .Must(x => x.Granted || x.RevokedAtUtc.HasValue)
-                .WithMessage("Revoked consents must include a revocation timestamp.");
+                .WithMessage(localizer["ConsentRevocationTimestampRequired"]);
         }
     }
 

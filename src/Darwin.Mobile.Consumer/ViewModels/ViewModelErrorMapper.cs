@@ -18,15 +18,23 @@ internal static class ViewModelErrorMapper
     public static string ToUserMessage(Exception ex, string fallback)
     {
         var raw = ex.Message ?? string.Empty;
+        var typeName = ex.GetType().FullName ?? string.Empty;
 
         if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("Unable to connect", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("Could not resolve host", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("Connection refused", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("failed to connect", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("timed out", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("No such host", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("SSL", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("certificate", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("invalid_requesturi", StringComparison.OrdinalIgnoreCase))
+            raw.Contains("invalid_requesturi", StringComparison.OrdinalIgnoreCase) ||
+            typeName.Contains("HttpRequestException", StringComparison.OrdinalIgnoreCase) ||
+            typeName.Contains("SocketException", StringComparison.OrdinalIgnoreCase) ||
+            typeName.Contains("TaskCanceledException", StringComparison.OrdinalIgnoreCase))
         {
             return AppResources.ServerUnreachableMessage;
         }

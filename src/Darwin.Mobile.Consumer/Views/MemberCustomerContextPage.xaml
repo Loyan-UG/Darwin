@@ -9,62 +9,43 @@
     Title="{x:Static res:AppResources.MemberCustomerContextTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
-            <Label Text="{x:Static res:AppResources.MemberCustomerContextTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
-
-            <Label Text="{x:Static res:AppResources.MemberCustomerContextSubtitle}"
-                   FontSize="14"
-                   Opacity="0.85" />
-
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   FontSize="14"
-                   IsVisible="{Binding HasError}" />
-
-            <Button Text="{x:Static res:AppResources.MemberCustomerContextRefreshButton}"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    Command="{Binding RefreshCommand}" />
-
-            <Label Text="{x:Static res:AppResources.MemberCustomerContextEmpty}"
-                   FontSize="13"
-                   IsVisible="{Binding HasContext, Converter={StaticResource InverseBoolConverter}}" />
-
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16"
-                    IsVisible="{Binding HasContext}">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="{x:Static res:AppResources.MemberCustomerContextSummarySectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-                    <Label Text="{Binding DisplayName}" FontAttributes="Bold" />
-                    <Label Text="{Binding EmailText}" FontSize="13" />
-                    <Label Text="{Binding PhoneText}" FontSize="13" IsVisible="{Binding HasPhone}" />
-                    <Label Text="{Binding CompanyText}" FontSize="13" IsVisible="{Binding HasCompany}" />
-                    <Label Text="{Binding CreatedAtText}" FontSize="13" />
-                    <Label Text="{Binding InteractionCountText}" FontSize="13" />
-                    <Label Text="{Binding LastInteractionText}" FontSize="13" IsVisible="{Binding HasLastInteraction}" />
-                    <Label Text="{Binding NotesText}" FontSize="13" LineBreakMode="WordWrap" IsVisible="{Binding HasNotes}" />
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextTitle}" Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextSubtitle}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Button Text="{x:Static res:AppResources.MemberCustomerContextRefreshButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
+                    <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
                 </VerticalStackLayout>
             </Border>
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16"
-                    IsVisible="{Binding HasContext}">
+            <Label Text="{x:Static res:AppResources.MemberCustomerContextEmpty}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasContext, Converter={StaticResource InverseBoolConverter}}" />
+
+            <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasContext}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextSummarySectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{Binding DisplayName}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                    <Label Text="{Binding EmailText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Label Text="{Binding PhoneText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasPhone}" />
+                    <Label Text="{Binding CompanyText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasCompany}" />
+                    <Label Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Label Text="{Binding InteractionCountText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Label Text="{Binding LastInteractionText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasLastInteraction}" />
+                    <Label Text="{Binding NotesText}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" IsVisible="{Binding HasNotes}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasContext}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.MemberCustomerContextSegmentsSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-                    <Label Text="{x:Static res:AppResources.MemberCustomerContextNoSegments}"
-                           FontSize="13"
-                           IsVisible="{Binding HasSegments, Converter={StaticResource InverseBoolConverter}}" />
-                    <VerticalStackLayout Spacing="8"
-                                         BindableLayout.ItemsSource="{Binding Segments}"
-                                         IsVisible="{Binding HasSegments}">
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextSegmentsSectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextNoSegments}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasSegments, Converter={StaticResource InverseBoolConverter}}" />
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Segments}" IsVisible="{Binding HasSegments}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCustomerSegmentItemViewModel">
-                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
+                                <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding Name}" FontAttributes="Bold" />
-                                        <Label Text="{Binding Description}" FontSize="13" LineBreakMode="WordWrap" IsVisible="{Binding HasDescription}" />
+                                        <Label Text="{Binding Name}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                                        <Label Text="{Binding Description}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" IsVisible="{Binding HasDescription}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -73,26 +54,19 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16"
-                    IsVisible="{Binding HasContext}">
+            <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasContext}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.MemberCustomerContextConsentsSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-                    <Label Text="{x:Static res:AppResources.MemberCustomerContextNoConsents}"
-                           FontSize="13"
-                           IsVisible="{Binding HasConsents, Converter={StaticResource InverseBoolConverter}}" />
-                    <VerticalStackLayout Spacing="8"
-                                         BindableLayout.ItemsSource="{Binding Consents}"
-                                         IsVisible="{Binding HasConsents}">
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextConsentsSectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextNoConsents}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasConsents, Converter={StaticResource InverseBoolConverter}}" />
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Consents}" IsVisible="{Binding HasConsents}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCustomerConsentItemViewModel">
-                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
+                                <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding Type}" FontAttributes="Bold" />
-                                        <Label Text="{Binding StatusText}" FontSize="13" />
-                                        <Label Text="{Binding GrantedAtText}" FontSize="13" />
-                                        <Label Text="{Binding RevokedAtText}" FontSize="13" IsVisible="{Binding HasRevokedAt}" />
+                                        <Label Text="{Binding Type}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                                        <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding GrantedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding RevokedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasRevokedAt}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -101,26 +75,19 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16"
-                    IsVisible="{Binding HasContext}">
+            <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasContext}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.MemberCustomerContextInteractionsSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-                    <Label Text="{x:Static res:AppResources.MemberCustomerContextNoInteractions}"
-                           FontSize="13"
-                           IsVisible="{Binding HasRecentInteractions, Converter={StaticResource InverseBoolConverter}}" />
-                    <VerticalStackLayout Spacing="8"
-                                         BindableLayout.ItemsSource="{Binding RecentInteractions}"
-                                         IsVisible="{Binding HasRecentInteractions}">
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextInteractionsSectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberCustomerContextNoInteractions}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasRecentInteractions, Converter={StaticResource InverseBoolConverter}}" />
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding RecentInteractions}" IsVisible="{Binding HasRecentInteractions}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCustomerInteractionItemViewModel">
-                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
+                                <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding TypeChannelText}" FontAttributes="Bold" />
-                                        <Label Text="{Binding SubjectText}" FontSize="13" IsVisible="{Binding HasSubject}" />
-                                        <Label Text="{Binding CreatedAtText}" FontSize="13" />
-                                        <Label Text="{Binding PreviewText}" FontSize="13" LineBreakMode="WordWrap" IsVisible="{Binding HasPreview}" />
+                                        <Label Text="{Binding TypeChannelText}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                                        <Label Text="{Binding SubjectText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasSubject}" />
+                                        <Label Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding PreviewText}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" IsVisible="{Binding HasPreview}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -129,9 +96,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrandGold500}" />
+            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

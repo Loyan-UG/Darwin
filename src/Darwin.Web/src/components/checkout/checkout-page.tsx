@@ -4,9 +4,11 @@ import { placeStorefrontOrderAction } from "@/features/checkout/actions";
 import { isCheckoutAddressComplete } from "@/features/checkout/helpers";
 import type { CheckoutDraft, PublicCheckoutIntent } from "@/features/checkout/types";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
+import { formatResource, getCommerceResource } from "@/localization";
 import { formatMoney } from "@/lib/formatting";
 
 type CheckoutPageProps = {
+  culture: string;
   model: CartViewModel;
   draft: CheckoutDraft;
   intent: PublicCheckoutIntent | null;
@@ -27,6 +29,7 @@ function getFinalTotalMinor(
 }
 
 export function CheckoutPage({
+  culture,
   model,
   draft,
   intent,
@@ -34,6 +37,7 @@ export function CheckoutPage({
   intentMessage,
   checkoutError,
 }: CheckoutPageProps) {
+  const copy = getCommerceResource(culture);
   const cart = model.cart;
   const addressComplete = isCheckoutAddressComplete(draft);
   const requiresShipping = intent?.requiresShipping ?? true;
@@ -50,15 +54,15 @@ export function CheckoutPage({
         <div className="flex w-full flex-col gap-6 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
           <StatusBanner
             tone="warning"
-            title="Checkout is unavailable without a cart."
-            message={model.message ?? "Add at least one published storefront product before starting the public checkout flow."}
+            title={copy.checkoutUnavailableTitle}
+            message={model.message ?? copy.checkoutUnavailableMessage}
           />
           <div>
             <Link
               href="/catalog"
               className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
-              Browse catalog
+              {copy.browseCatalog}
             </Link>
           </div>
         </div>
@@ -71,36 +75,38 @@ export function CheckoutPage({
       <div className="flex w-full flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            Public checkout
+            {copy.publicCheckoutEyebrow}
           </p>
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-            Checkout now runs on the live storefront intent and order contracts
+            {copy.checkoutHeroTitle}
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
-            Enter the delivery address, review the rated shipping options, and place an order through the public `Darwin.WebApi` checkout flow.
+            {copy.checkoutHeroDescription}
           </p>
         </div>
 
         {checkoutError && (
           <StatusBanner
             tone="warning"
-            title="Checkout action failed"
+            title={copy.checkoutActionFailedTitle}
             message={checkoutError}
           />
         )}
 
         {!addressComplete && (
           <StatusBanner
-            title="Address details are still incomplete."
-            message="Fill the required fields and refresh the checkout preview to calculate authoritative shipping and totals."
+            title={copy.addressIncompleteTitle}
+            message={copy.addressIncompleteMessage}
           />
         )}
 
         {intentStatus !== "idle" && intentStatus !== "ok" && (
           <StatusBanner
             tone="warning"
-            title="Checkout preview is degraded."
-            message={intentMessage ?? `Checkout intent returned status "${intentStatus}".`}
+            title={copy.previewDegradedTitle}
+            message={intentMessage ?? formatResource(copy.previewDegradedMessage, {
+              status: intentStatus,
+            })}
           />
         )}
 
@@ -112,51 +118,51 @@ export function CheckoutPage({
             <div className="grid gap-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                  Billing and shipping
+                  {copy.billingShippingEyebrow}
                 </p>
                 <h2 className="mt-3 text-3xl font-[family-name:var(--font-display)] text-[var(--color-text-primary)]">
-                  Delivery address
+                  {copy.deliveryAddressTitle}
                 </h2>
                 <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  This first slice keeps billing and shipping aligned to one address so the storefront checkout can stay small and contract-first.
+                  {copy.deliveryAddressDescription}
                 </p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Full name*
+                  {copy.fullNameLabel}
                   <input name="fullName" defaultValue={draft.fullName} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Company
+                  {copy.companyLabel}
                   <input name="company" defaultValue={draft.company} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
-                  Street line 1*
+                  {copy.street1Label}
                   <input name="street1" defaultValue={draft.street1} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
-                  Street line 2
+                  {copy.street2Label}
                   <input name="street2" defaultValue={draft.street2} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Postal code*
+                  {copy.postalCodeLabel}
                   <input name="postalCode" defaultValue={draft.postalCode} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  City*
+                  {copy.cityLabel}
                   <input name="city" defaultValue={draft.city} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  State / region
+                  {copy.stateLabel}
                   <input name="state" defaultValue={draft.state} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Country code*
+                  {copy.countryCodeLabel}
                   <input name="countryCode" defaultValue={draft.countryCode} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal uppercase text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
-                  Phone (E.164)
+                  {copy.phoneLabel}
                   <input name="phoneE164" defaultValue={draft.phoneE164} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
               </div>
@@ -165,10 +171,10 @@ export function CheckoutPage({
                 <div className="grid gap-3 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-5">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                      Shipping options
+                      {copy.shippingOptionsTitle}
                     </p>
                     <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      Select one option and refresh the preview before placing the order.
+                      {copy.shippingOptionsDescription}
                     </p>
                   </div>
                   {intent.shippingOptions.map((option) => {
@@ -196,7 +202,7 @@ export function CheckoutPage({
                           </span>
                         </span>
                         <span className="font-semibold text-[var(--color-text-primary)]">
-                          {formatMoney(option.priceMinor, option.currency)}
+                          {formatMoney(option.priceMinor, option.currency, culture)}
                         </span>
                       </label>
                     );
@@ -209,13 +215,13 @@ export function CheckoutPage({
                   type="submit"
                   className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                 >
-                  Refresh checkout preview
+                  {copy.refreshCheckoutPreview}
                 </button>
                 <Link
                   href="/cart"
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
-                  Back to cart
+                  {copy.backToCart}
                 </Link>
               </div>
             </div>
@@ -224,28 +230,46 @@ export function CheckoutPage({
           <div className="flex flex-col gap-5">
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                Checkout summary
+                {copy.checkoutSummaryTitle}
               </p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
+                {cart.couponCode ? (
+                  <div className="flex items-center justify-between">
+                    <span>{copy.couponLabel}</span>
+                    <span>{cart.couponCode}</span>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between">
-                  <span>Cart lines</span>
+                  <span>{copy.cartLinesLabel}</span>
                   <span>{cart.items.length}</span>
                 </div>
+                {intent ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span>{copy.shipmentMassLabel}</span>
+                      <span>{intent.shipmentMass}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{copy.shippingCountryLabel}</span>
+                      <span>{intent.shippingCountryCode ?? (draft.countryCode || copy.unavailable)}</span>
+                    </div>
+                  </>
+                ) : null}
                 <div className="flex items-center justify-between">
-                  <span>Subtotal net</span>
-                  <span>{formatMoney(intent?.subtotalNetMinor ?? cart.subtotalNetMinor, cart.currency)}</span>
+                  <span>{copy.subtotalNetLabel}</span>
+                  <span>{formatMoney(intent?.subtotalNetMinor ?? cart.subtotalNetMinor, cart.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>VAT total</span>
-                  <span>{formatMoney(intent?.vatTotalMinor ?? cart.vatTotalMinor, cart.currency)}</span>
+                  <span>{copy.vatTotalLabel}</span>
+                  <span>{formatMoney(intent?.vatTotalMinor ?? cart.vatTotalMinor, cart.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Shipping</span>
-                  <span>{formatMoney(intent?.selectedShippingTotalMinor ?? 0, cart.currency)}</span>
+                  <span>{copy.shippingLabel}</span>
+                  <span>{formatMoney(intent?.selectedShippingTotalMinor ?? 0, cart.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between border-t border-[var(--color-border-soft)] pt-3 text-base font-semibold text-[var(--color-text-primary)]">
-                  <span>Estimated grand total</span>
-                  <span>{formatMoney(getFinalTotalMinor(intent, cart.grandTotalGrossMinor), cart.currency)}</span>
+                  <span>{copy.estimatedGrandTotalLabel}</span>
+                  <span>{formatMoney(getFinalTotalMinor(intent, cart.grandTotalGrossMinor), cart.currency, culture)}</span>
                 </div>
               </div>
 
@@ -253,8 +277,8 @@ export function CheckoutPage({
                 <div className="mt-5">
                   <StatusBanner
                     tone="warning"
-                    title="Shipping selection is still missing."
-                    message="Choose a shipping option in the preview form and refresh checkout before placing the order."
+                    title={copy.shippingSelectionMissingTitle}
+                    message={copy.shippingSelectionMissingMessage}
                   />
                 </div>
               )}
@@ -262,8 +286,17 @@ export function CheckoutPage({
               {!intent && (
                 <div className="mt-5">
                   <StatusBanner
-                    title="No authoritative checkout preview yet."
-                    message="The order button becomes available after the address is complete and the public checkout intent succeeds."
+                    title={copy.noPreviewTitle}
+                    message={copy.noPreviewMessage}
+                  />
+                </div>
+              )}
+
+              {intent && !intent.requiresShipping && (
+                <div className="mt-5">
+                  <StatusBanner
+                    title={copy.shippingNotRequiredTitle}
+                    message={copy.shippingNotRequiredMessage}
                   />
                 </div>
               )}
@@ -294,17 +327,17 @@ export function CheckoutPage({
                 value={String(intent?.selectedShippingTotalMinor ?? 0)}
               />
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                Place order
+                {copy.placeOrderEyebrow}
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                This creates the order through the public checkout endpoint and then moves the shopper into the confirmation and payment handoff flow.
+                {copy.placeOrderDescription}
               </p>
               <button
                 type="submit"
                 disabled={!canPlaceOrder}
                 className="mt-5 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Place order
+                {copy.placeOrderButton}
               </button>
             </form>
           </div>

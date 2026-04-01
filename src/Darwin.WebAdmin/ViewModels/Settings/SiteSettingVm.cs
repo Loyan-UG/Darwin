@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Darwin.WebAdmin.Localization;
 
 namespace Darwin.WebAdmin.ViewModels.Settings
 {
@@ -19,378 +20,381 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
         // ---------- Basics ----------
-        [Display(Name = "Title"), Required, MaxLength(200)]
+        [Display(Name = "SiteSettingTitle"), Required, MaxLength(200)]
         public string Title { get; set; } = string.Empty;
 
-        [Display(Name = "Logo URL"), MaxLength(500)]
+        [Display(Name = "SiteSettingLogoUrl"), MaxLength(500)]
         public string? LogoUrl { get; set; }
 
-        [Display(Name = "Contact Email"), EmailAddress]
+        [Display(Name = "SiteSettingContactEmail"), EmailAddress]
         public string? ContactEmail { get; set; }
 
         // ---------- Routing ----------
-        [Display(Name = "Home Slug")]
+        [Display(Name = "SiteSettingHomeSlug")]
         public string? HomeSlug { get; set; } = "home";
 
         // ---------- Localization ----------
-        [Display(Name = "Default Culture"), Required, MaxLength(10)]
-        public string DefaultCulture { get; set; } = "de-DE";
+        [Display(Name = "SiteSettingDefaultCulture"), Required, MaxLength(10)]
+        public string DefaultCulture { get; set; } = AdminCultureCatalog.DefaultCulture;
 
-        [Display(Name = "Supported Cultures"), Required]
-        public string SupportedCulturesCsv { get; set; } = "de-DE,en-US";
+        [Display(Name = "SiteSettingSupportedCulturesCsv"), Required]
+        public string SupportedCulturesCsv { get; set; } = AdminCultureCatalog.SupportedCulturesCsvDefault;
 
-        [Display(Name = "Default Country"), MaxLength(2)]
+        [Display(Name = "SiteSettingDefaultCountry"), MaxLength(2)]
         public string? DefaultCountry { get; set; } = "DE";
 
-        [Display(Name = "Default Currency"), Required, MaxLength(3)]
+        [Display(Name = "SiteSettingDefaultCurrency"), Required, MaxLength(3)]
         public string DefaultCurrency { get; set; } = "EUR";
 
-        [Display(Name = "Time Zone")]
+        [Display(Name = "SiteSettingTimeZone")]
         public string? TimeZone { get; set; } = "Europe/Berlin";
 
-        [Display(Name = "Date Format")]
+        [Display(Name = "SiteSettingDateFormat")]
         public string? DateFormat { get; set; } = "yyyy-MM-dd";
 
-        [Display(Name = "Time Format")]
+        [Display(Name = "SiteSettingTimeFormat")]
         public string? TimeFormat { get; set; } = "HH:mm";
 
+        [Display(Name = "SiteSettingAdminTextOverridesJson")]
+        public string? AdminTextOverridesJson { get; set; }
+
         // ---------- Security / JWT ----------
-        [Display(Name = "JWT Enabled")]
+        [Display(Name = "SiteSettingJwtEnabled")]
         public bool JwtEnabled { get; set; } = true;
 
-        [Display(Name = "JWT Issuer")]
+        [Display(Name = "SiteSettingJwtIssuer")]
         public string JwtIssuer { get; set; } = "Darwin";
 
-        [Display(Name = "JWT Audience")]
+        [Display(Name = "SiteSettingJwtAudience")]
         public string JwtAudience { get; set; } = "Darwin.PublicApi";
 
-        [Display(Name = "Access Token Lifetime (Minutes)")]
+        [Display(Name = "SiteSettingJwtAccessTokenMinutes")]
         public int JwtAccessTokenMinutes { get; set; } = 15;
 
-        [Display(Name = "Refresh Token Lifetime (Days)")]
+        [Display(Name = "SiteSettingJwtRefreshTokenDays")]
         public int JwtRefreshTokenDays { get; set; } = 30;
 
-        [Display(Name = "Signing Key")]
+        [Display(Name = "SiteSettingJwtSigningKey")]
         public string JwtSigningKey { get; set; } = string.Empty;
 
-        [Display(Name = "Previous Signing Key")]
+        [Display(Name = "SiteSettingJwtPreviousSigningKey")]
         public string? JwtPreviousSigningKey { get; set; }
 
-        [Display(Name = "Emit Scopes")]
+        [Display(Name = "SiteSettingJwtEmitScopes")]
         public bool JwtEmitScopes { get; set; }
 
-        [Display(Name = "Single Device Only")]
+        [Display(Name = "SiteSettingJwtSingleDeviceOnly")]
         public bool JwtSingleDeviceOnly { get; set; }
 
-        [Display(Name = "Require Device Binding")]
+        [Display(Name = "SiteSettingJwtRequireDeviceBinding")]
         public bool JwtRequireDeviceBinding { get; set; } = true;
 
-        [Display(Name = "Clock Skew Seconds")]
+        [Display(Name = "SiteSettingJwtClockSkewSeconds")]
         public int JwtClockSkewSeconds { get; set; } = 60;
 
         // ---------- Mobile bootstrap ----------
-        [Display(Name = "QR Token Refresh Seconds")]
+        [Display(Name = "SiteSettingMobileQrTokenRefreshSeconds")]
         public int MobileQrTokenRefreshSeconds { get; set; }
 
-        [Display(Name = "Max Outbox Items")]
+        [Display(Name = "SiteSettingMobileMaxOutboxItems")]
         public int MobileMaxOutboxItems { get; set; }
 
-        [Display(Name = "Business Management Website")]
+        [Display(Name = "SiteSettingBusinessManagementWebsiteUrl")]
         public string? BusinessManagementWebsiteUrl { get; set; }
 
-        [Display(Name = "Impressum URL")]
+        [Display(Name = "SiteSettingImpressumUrl")]
         public string? ImpressumUrl { get; set; }
 
-        [Display(Name = "Privacy Policy URL")]
+        [Display(Name = "SiteSettingPrivacyPolicyUrl")]
         public string? PrivacyPolicyUrl { get; set; }
 
-        [Display(Name = "Business Terms URL")]
+        [Display(Name = "SiteSettingBusinessTermsUrl")]
         public string? BusinessTermsUrl { get; set; }
 
-        [Display(Name = "Account Deletion URL")]
+        [Display(Name = "SiteSettingAccountDeletionUrl")]
         public string? AccountDeletionUrl { get; set; }
 
         // ---------- Payments (Stripe-first) ----------
-        [Display(Name = "Enable Stripe")]
+        [Display(Name = "SiteSettingStripeEnabled")]
         public bool StripeEnabled { get; set; }
 
-        [Display(Name = "Stripe Publishable Key")]
+        [Display(Name = "SiteSettingStripePublishableKey")]
         public string? StripePublishableKey { get; set; }
 
-        [Display(Name = "Stripe Secret Key")]
+        [Display(Name = "SiteSettingStripeSecretKey")]
         public string? StripeSecretKey { get; set; }
 
-        [Display(Name = "Stripe Webhook Secret")]
+        [Display(Name = "SiteSettingStripeWebhookSecret")]
         public string? StripeWebhookSecret { get; set; }
 
-        [Display(Name = "Stripe Merchant Display Name")]
+        [Display(Name = "SiteSettingStripeMerchantDisplayName")]
         public string? StripeMerchantDisplayName { get; set; }
 
         // ---------- Tax / VAT / Invoicing ----------
-        [Display(Name = "VAT Enabled")]
+        [Display(Name = "SiteSettingVatEnabled")]
         public bool VatEnabled { get; set; } = true;
 
-        [Display(Name = "Default VAT Rate (%)")]
+        [Display(Name = "SiteSettingDefaultVatRatePercent")]
         public decimal DefaultVatRatePercent { get; set; } = 19m;
 
-        [Display(Name = "Prices Include VAT")]
+        [Display(Name = "SiteSettingPricesIncludeVat")]
         public bool PricesIncludeVat { get; set; } = true;
 
-        [Display(Name = "Allow Reverse Charge")]
+        [Display(Name = "SiteSettingAllowReverseCharge")]
         public bool AllowReverseCharge { get; set; } = false;
 
-        [Display(Name = "Invoice Issuer Legal Name")]
+        [Display(Name = "SiteSettingInvoiceIssuerLegalName")]
         public string? InvoiceIssuerLegalName { get; set; }
 
-        [Display(Name = "Invoice Issuer Tax ID")]
+        [Display(Name = "SiteSettingInvoiceIssuerTaxId")]
         public string? InvoiceIssuerTaxId { get; set; }
 
-        [Display(Name = "Invoice Issuer Address Line 1")]
+        [Display(Name = "SiteSettingInvoiceIssuerAddressLine1")]
         public string? InvoiceIssuerAddressLine1 { get; set; }
 
-        [Display(Name = "Invoice Issuer Postal Code")]
+        [Display(Name = "SiteSettingInvoiceIssuerPostalCode")]
         public string? InvoiceIssuerPostalCode { get; set; }
 
-        [Display(Name = "Invoice Issuer City")]
+        [Display(Name = "SiteSettingInvoiceIssuerCity")]
         public string? InvoiceIssuerCity { get; set; }
 
-        [Display(Name = "Invoice Issuer Country")]
+        [Display(Name = "SiteSettingInvoiceIssuerCountry")]
         public string? InvoiceIssuerCountry { get; set; }
 
         // ---------- Shipping (DHL-first) ----------
-        [Display(Name = "Enable DHL")]
+        [Display(Name = "SiteSettingDhlEnabled")]
         public bool DhlEnabled { get; set; }
 
-        [Display(Name = "DHL Environment")]
+        [Display(Name = "SiteSettingDhlEnvironment")]
         public string? DhlEnvironment { get; set; }
 
-        [Display(Name = "DHL API Base URL")]
+        [Display(Name = "SiteSettingDhlApiBaseUrl")]
         public string? DhlApiBaseUrl { get; set; }
 
-        [Display(Name = "DHL API Key")]
+        [Display(Name = "SiteSettingDhlApiKey")]
         public string? DhlApiKey { get; set; }
 
-        [Display(Name = "DHL API Secret")]
+        [Display(Name = "SiteSettingDhlApiSecret")]
         public string? DhlApiSecret { get; set; }
 
-        [Display(Name = "DHL Account Number")]
+        [Display(Name = "SiteSettingDhlAccountNumber")]
         public string? DhlAccountNumber { get; set; }
 
-        [Display(Name = "DHL Shipper Name")]
+        [Display(Name = "SiteSettingDhlShipperName")]
         public string? DhlShipperName { get; set; }
 
-        [Display(Name = "DHL Shipper Email")]
+        [Display(Name = "SiteSettingDhlShipperEmail")]
         public string? DhlShipperEmail { get; set; }
 
-        [Display(Name = "DHL Shipper Phone (E.164)")]
+        [Display(Name = "SiteSettingDhlShipperPhoneE164")]
         public string? DhlShipperPhoneE164 { get; set; }
 
-        [Display(Name = "DHL Shipper Street")]
+        [Display(Name = "SiteSettingDhlShipperStreet")]
         public string? DhlShipperStreet { get; set; }
 
-        [Display(Name = "DHL Shipper Postal Code")]
+        [Display(Name = "SiteSettingDhlShipperPostalCode")]
         public string? DhlShipperPostalCode { get; set; }
 
-        [Display(Name = "DHL Shipper City")]
+        [Display(Name = "SiteSettingDhlShipperCity")]
         public string? DhlShipperCity { get; set; }
 
-        [Display(Name = "DHL Shipper Country")]
+        [Display(Name = "SiteSettingDhlShipperCountry")]
         public string? DhlShipperCountry { get; set; }
 
-        [Display(Name = "Shipment Attention Delay (Hours)")]
+        [Display(Name = "SiteSettingShipmentAttentionDelayHours")]
         public int ShipmentAttentionDelayHours { get; set; } = 24;
 
-        [Display(Name = "Tracking Grace (Hours)")]
+        [Display(Name = "SiteSettingShipmentTrackingGraceHours")]
         public int ShipmentTrackingGraceHours { get; set; } = 12;
 
         // ---------- Soft delete / retention ----------
-        [Display(Name = "Soft Delete Cleanup Enabled")]
+        [Display(Name = "SiteSettingSoftDeleteCleanupEnabled")]
         public bool SoftDeleteCleanupEnabled { get; set; } = true;
 
-        [Display(Name = "Soft Delete Retention Days")]
+        [Display(Name = "SiteSettingSoftDeleteRetentionDays")]
         public int SoftDeleteRetentionDays { get; set; } = 90;
 
-        [Display(Name = "Soft Delete Cleanup Batch Size")]
+        [Display(Name = "SiteSettingSoftDeleteCleanupBatchSize")]
         public int SoftDeleteCleanupBatchSize { get; set; } = 500;
 
         // ---------- Units & Formatting ----------
-        [Display(Name = "Measurement System")]
+        [Display(Name = "SiteSettingMeasurementSystem")]
         public string MeasurementSystem { get; set; } = "Metric";
 
-        [Display(Name = "Display Weight Unit")]
+        [Display(Name = "SiteSettingDisplayWeightUnit")]
         public string? DisplayWeightUnit { get; set; } = "kg";
 
-        [Display(Name = "Display Length Unit")]
+        [Display(Name = "SiteSettingDisplayLengthUnit")]
         public string? DisplayLengthUnit { get; set; } = "cm";
 
-        [Display(Name = "Measurement Settings (JSON)")]
+        [Display(Name = "SiteSettingMeasurementSettingsJson")]
         public string? MeasurementSettingsJson { get; set; }
 
-        [Display(Name = "Number Formatting Overrides (JSON)")]
+        [Display(Name = "SiteSettingNumberFormattingOverridesJson")]
         public string? NumberFormattingOverridesJson { get; set; }
 
         // ---------- SEO ----------
-        [Display(Name = "Enable Canonical")]
+        [Display(Name = "SiteSettingEnableCanonical")]
         public bool EnableCanonical { get; set; } = true;
 
-        [Display(Name = "Hreflang Enabled")]
+        [Display(Name = "SiteSettingHreflangEnabled")]
         public bool HreflangEnabled { get; set; } = true;
 
-        [Display(Name = "SEO Title Template"), MaxLength(150)]
+        [Display(Name = "SiteSettingSeoTitleTemplate"), MaxLength(150)]
         public string? SeoTitleTemplate { get; set; } = "{title} | {site}";
 
-        [Display(Name = "SEO Meta Description Template"), MaxLength(200)]
+        [Display(Name = "SiteSettingSeoMetaDescriptionTemplate"), MaxLength(200)]
         public string? SeoMetaDescriptionTemplate { get; set; }
 
-        [Display(Name = "OpenGraph Defaults (JSON)"), MaxLength(2000)]
+        [Display(Name = "SiteSettingOpenGraphDefaultsJson"), MaxLength(2000)]
         public string? OpenGraphDefaultsJson { get; set; }
 
         // ---------- Analytics ----------
-        [Display(Name = "Google Analytics ID")]
+        [Display(Name = "SiteSettingGoogleAnalyticsId")]
         public string? GoogleAnalyticsId { get; set; }
 
-        [Display(Name = "Google Tag Manager ID")]
+        [Display(Name = "SiteSettingGoogleTagManagerId")]
         public string? GoogleTagManagerId { get; set; }
 
-        [Display(Name = "Google Search Console Verification")]
+        [Display(Name = "SiteSettingGoogleSearchConsoleVerification")]
         public string? GoogleSearchConsoleVerification { get; set; }
 
         // ---------- Feature Flags ----------
-        [Display(Name = "Feature Flags (JSON)")]
+        [Display(Name = "SiteSettingFeatureFlagsJson")]
         public string? FeatureFlagsJson { get; set; }
 
         // ---------- WhatsApp ----------
-        [Display(Name = "Enable WhatsApp")]
+        [Display(Name = "SiteSettingWhatsAppEnabled")]
         public bool WhatsAppEnabled { get; set; }
 
-        [Display(Name = "Business Phone ID")]
+        [Display(Name = "SiteSettingWhatsAppBusinessPhoneId")]
         public string? WhatsAppBusinessPhoneId { get; set; }
 
-        [Display(Name = "Access Token")]
+        [Display(Name = "SiteSettingWhatsAppAccessToken")]
         public string? WhatsAppAccessToken { get; set; }
 
-        [Display(Name = "From Phone (E.164)")]
+        [Display(Name = "SiteSettingWhatsAppFromPhoneE164")]
         public string? WhatsAppFromPhoneE164 { get; set; }
 
-        [Display(Name = "Admin Recipients (CSV)")]
+        [Display(Name = "SiteSettingWhatsAppAdminRecipientsCsv")]
         public string? WhatsAppAdminRecipientsCsv { get; set; }
 
         // ---------- WebAuthn ----------
-        [Display(Name = "WebAuthn RP ID")]
+        [Display(Name = "SiteSettingWebAuthnRelyingPartyId")]
         public string WebAuthnRelyingPartyId { get; set; } = "localhost";
 
-        [Display(Name = "WebAuthn RP Name")]
+        [Display(Name = "SiteSettingWebAuthnRelyingPartyName")]
         public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
 
-        [Display(Name = "WebAuthn Allowed Origins (CSV)")]
+        [Display(Name = "SiteSettingWebAuthnAllowedOriginsCsv")]
         public string WebAuthnAllowedOriginsCsv { get; set; } = "https://localhost:5001";
 
-        [Display(Name = "Require User Verification")]
+        [Display(Name = "SiteSettingWebAuthnRequireUserVerification")]
         public bool WebAuthnRequireUserVerification { get; set; } = false;
 
         // ---------- SMTP ----------
-        [Display(Name = "Enable SMTP")]
+        [Display(Name = "SiteSettingSmtpEnabled")]
         public bool SmtpEnabled { get; set; }
 
-        [Display(Name = "SMTP Host")]
+        [Display(Name = "SiteSettingSmtpHost")]
         public string? SmtpHost { get; set; }
 
-        [Display(Name = "SMTP Port")]
+        [Display(Name = "SiteSettingSmtpPort")]
         public int? SmtpPort { get; set; }
 
-        [Display(Name = "Enable SSL")]
+        [Display(Name = "SiteSettingSmtpEnableSsl")]
         public bool SmtpEnableSsl { get; set; } = true;
 
-        [Display(Name = "SMTP Username")]
+        [Display(Name = "SiteSettingSmtpUsername")]
         public string? SmtpUsername { get; set; }
 
-        [Display(Name = "SMTP Password")]
+        [Display(Name = "SiteSettingSmtpPassword")]
         public string? SmtpPassword { get; set; }
 
-        [Display(Name = "From Address")]
+        [Display(Name = "SiteSettingSmtpFromAddress")]
         public string? SmtpFromAddress { get; set; }
 
-        [Display(Name = "From Display Name")]
+        [Display(Name = "SiteSettingSmtpFromDisplayName")]
         public string? SmtpFromDisplayName { get; set; }
 
         // ---------- SMS ----------
-        [Display(Name = "Enable SMS")]
+        [Display(Name = "SiteSettingSmsEnabled")]
         public bool SmsEnabled { get; set; }
 
-        [Display(Name = "SMS Provider")]
+        [Display(Name = "SiteSettingSmsProvider")]
         public string? SmsProvider { get; set; }
 
-        [Display(Name = "From Phone (E.164)")]
+        [Display(Name = "SiteSettingSmsFromPhoneE164")]
         public string? SmsFromPhoneE164 { get; set; }
 
-        [Display(Name = "API Key")]
+        [Display(Name = "SiteSettingSmsApiKey")]
         public string? SmsApiKey { get; set; }
 
-        [Display(Name = "API Secret")]
+        [Display(Name = "SiteSettingSmsApiSecret")]
         public string? SmsApiSecret { get; set; }
 
-        [Display(Name = "Extra Settings (JSON)")]
+        [Display(Name = "SiteSettingSmsExtraSettingsJson")]
         public string? SmsExtraSettingsJson { get; set; }
 
         // ---------- Admin Routing ----------
-        [Display(Name = "Admin Alert Emails (CSV)")]
+        [Display(Name = "SiteSettingAdminAlertEmailsCsv")]
         public string? AdminAlertEmailsCsv { get; set; }
 
-        [Display(Name = "Admin Alert SMS Recipients (CSV, E.164)")]
+        [Display(Name = "SiteSettingAdminAlertSmsRecipientsCsv")]
         public string? AdminAlertSmsRecipientsCsv { get; set; }
 
-        [Display(Name = "Transactional Email Subject Prefix")]
+        [Display(Name = "SiteSettingTransactionalEmailSubjectPrefix")]
         public string? TransactionalEmailSubjectPrefix { get; set; }
 
-        [Display(Name = "Communication Test Inbox")]
+        [Display(Name = "SiteSettingCommunicationTestInboxEmail")]
         public string? CommunicationTestInboxEmail { get; set; }
 
-        [Display(Name = "Communication Test SMS Recipient")]
+        [Display(Name = "SiteSettingCommunicationTestSmsRecipientE164")]
         public string? CommunicationTestSmsRecipientE164 { get; set; }
 
-        [Display(Name = "Communication Test WhatsApp Recipient")]
+        [Display(Name = "SiteSettingCommunicationTestWhatsAppRecipientE164")]
         public string? CommunicationTestWhatsAppRecipientE164 { get; set; }
 
-        [Display(Name = "Communication Test Email Subject Template")]
+        [Display(Name = "SiteSettingCommunicationTestEmailSubjectTemplate")]
         public string? CommunicationTestEmailSubjectTemplate { get; set; }
 
-        [Display(Name = "Communication Test Email Body Template")]
+        [Display(Name = "SiteSettingCommunicationTestEmailBodyTemplate")]
         public string? CommunicationTestEmailBodyTemplate { get; set; }
 
-        [Display(Name = "Communication Test SMS Template")]
+        [Display(Name = "SiteSettingCommunicationTestSmsTemplate")]
         public string? CommunicationTestSmsTemplate { get; set; }
 
-        [Display(Name = "Communication Test WhatsApp Template")]
+        [Display(Name = "SiteSettingCommunicationTestWhatsAppTemplate")]
         public string? CommunicationTestWhatsAppTemplate { get; set; }
 
-        [Display(Name = "Business Invitation Subject Template")]
+        [Display(Name = "SiteSettingBusinessInvitationEmailSubjectTemplate")]
         public string? BusinessInvitationEmailSubjectTemplate { get; set; }
 
-        [Display(Name = "Business Invitation Body Template")]
+        [Display(Name = "SiteSettingBusinessInvitationEmailBodyTemplate")]
         public string? BusinessInvitationEmailBodyTemplate { get; set; }
 
-        [Display(Name = "Account Activation Subject Template")]
+        [Display(Name = "SiteSettingAccountActivationEmailSubjectTemplate")]
         public string? AccountActivationEmailSubjectTemplate { get; set; }
 
-        [Display(Name = "Account Activation Body Template")]
+        [Display(Name = "SiteSettingAccountActivationEmailBodyTemplate")]
         public string? AccountActivationEmailBodyTemplate { get; set; }
 
-        [Display(Name = "Password Reset Subject Template")]
+        [Display(Name = "SiteSettingPasswordResetEmailSubjectTemplate")]
         public string? PasswordResetEmailSubjectTemplate { get; set; }
 
-        [Display(Name = "Password Reset Body Template")]
+        [Display(Name = "SiteSettingPasswordResetEmailBodyTemplate")]
         public string? PasswordResetEmailBodyTemplate { get; set; }
 
-        [Display(Name = "Phone Verification SMS Template")]
+        [Display(Name = "SiteSettingPhoneVerificationSmsTemplate")]
         public string? PhoneVerificationSmsTemplate { get; set; }
 
-        [Display(Name = "Phone Verification WhatsApp Template")]
+        [Display(Name = "SiteSettingPhoneVerificationWhatsAppTemplate")]
         public string? PhoneVerificationWhatsAppTemplate { get; set; }
 
-        [Display(Name = "Preferred Phone Verification Channel")]
+        [Display(Name = "SiteSettingPhoneVerificationPreferredChannel")]
         public string? PhoneVerificationPreferredChannel { get; set; }
 
-        [Display(Name = "Allow Verification Channel Fallback")]
+        [Display(Name = "SiteSettingPhoneVerificationAllowFallback")]
         public bool PhoneVerificationAllowFallback { get; set; }
     }
 }

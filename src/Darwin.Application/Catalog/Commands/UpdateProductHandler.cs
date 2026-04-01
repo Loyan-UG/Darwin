@@ -9,6 +9,7 @@ using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Darwin.Application.Common.Html;
+using Microsoft.Extensions.Localization;
 
 
 namespace Darwin.Application.Catalog.Commands
@@ -34,12 +35,18 @@ namespace Darwin.Application.Catalog.Commands
         private readonly IAppDbContext _db;
         private readonly IValidator<ProductEditDto> _validator;
         private readonly IHtmlSanitizer _sanitizer;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateProductHandler(IAppDbContext db, IValidator<ProductEditDto> validator, IHtmlSanitizer sanitizer)
+        public UpdateProductHandler(
+            IAppDbContext db,
+            IValidator<ProductEditDto> validator,
+            IHtmlSanitizer sanitizer,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
             _sanitizer = sanitizer;
+            _localizer = localizer;
         }   
 
         public async Task HandleAsync(ProductEditDto dto, CancellationToken ct = default)
@@ -50,12 +57,12 @@ namespace Darwin.Application.Catalog.Commands
                 .Include(p => p.Translations)
                 .Include(p => p.Variants)
                 .FirstOrDefaultAsync(p => p.Id == dto.Id, ct)
-                ?? throw new ValidationException("Product not found.");
+                ?? throw new ValidationException(_localizer["ProductNotFound"]);
 
 
             // Concurrency check
             if (!product.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("The product was modified by another user. Please reload and try again.");
+                throw new DbUpdateConcurrencyException(_localizer["ProductModifiedByAnotherUserPleaseReload"]);
 
             // Map basic fields
             product.BrandId = dto.BrandId;

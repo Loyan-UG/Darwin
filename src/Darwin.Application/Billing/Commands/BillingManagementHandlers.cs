@@ -3,6 +3,7 @@ using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Entities.Billing;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Billing.Commands
 {
@@ -49,11 +50,16 @@ namespace Darwin.Application.Billing.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<PaymentEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdatePaymentHandler(IAppDbContext db, IValidator<PaymentEditDto> validator)
+        public UpdatePaymentHandler(
+            IAppDbContext db,
+            IValidator<PaymentEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(PaymentEditDto dto, CancellationToken ct = default)
@@ -66,12 +72,12 @@ namespace Darwin.Application.Billing.Commands
 
             if (payment is null)
             {
-                throw new InvalidOperationException("Payment not found.");
+                throw new InvalidOperationException(_localizer["PaymentNotFound"]);
             }
 
             if (!payment.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             payment.BusinessId = dto.BusinessId;
@@ -129,11 +135,16 @@ namespace Darwin.Application.Billing.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<FinancialAccountEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateFinancialAccountHandler(IAppDbContext db, IValidator<FinancialAccountEditDto> validator)
+        public UpdateFinancialAccountHandler(
+            IAppDbContext db,
+            IValidator<FinancialAccountEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(FinancialAccountEditDto dto, CancellationToken ct = default)
@@ -146,12 +157,12 @@ namespace Darwin.Application.Billing.Commands
 
             if (account is null)
             {
-                throw new InvalidOperationException("Financial account not found.");
+                throw new InvalidOperationException(_localizer["FinancialAccountNotFound"]);
             }
 
             if (!account.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             account.BusinessId = dto.BusinessId;
@@ -201,11 +212,16 @@ namespace Darwin.Application.Billing.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<ExpenseEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateExpenseHandler(IAppDbContext db, IValidator<ExpenseEditDto> validator)
+        public UpdateExpenseHandler(
+            IAppDbContext db,
+            IValidator<ExpenseEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(ExpenseEditDto dto, CancellationToken ct = default)
@@ -218,12 +234,12 @@ namespace Darwin.Application.Billing.Commands
 
             if (expense is null)
             {
-                throw new InvalidOperationException("Expense not found.");
+                throw new InvalidOperationException(_localizer["ExpenseNotFound"]);
             }
 
             if (!expense.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             expense.BusinessId = dto.BusinessId;
@@ -279,11 +295,16 @@ namespace Darwin.Application.Billing.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<JournalEntryEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateJournalEntryHandler(IAppDbContext db, IValidator<JournalEntryEditDto> validator)
+        public UpdateJournalEntryHandler(
+            IAppDbContext db,
+            IValidator<JournalEntryEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(JournalEntryEditDto dto, CancellationToken ct = default)
@@ -297,12 +318,12 @@ namespace Darwin.Application.Billing.Commands
 
             if (entry is null)
             {
-                throw new InvalidOperationException("Journal entry not found.");
+                throw new InvalidOperationException(_localizer["JournalEntryNotFound"]);
             }
 
             if (!entry.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             entry.BusinessId = dto.BusinessId;

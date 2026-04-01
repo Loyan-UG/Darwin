@@ -7,6 +7,7 @@ using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Shared.Results;
+using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.ViewModels.Identity;
 using Darwin.WebAdmin.Security;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +22,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
     /// </summary>
     [Route("Admin/[controller]/[action]")]
     [PermissionAuthorize("FullAdminAccess")]
-    public sealed class PermissionsController : Controller
+    public sealed class PermissionsController : AdminBaseController
     {
         private readonly GetPermissionsPageHandler _getPage;
         private readonly GetPermissionForEditHandler _getForEdit;
@@ -52,7 +53,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _getPage.HandleAsync(1, 500, q, ct);
             if (!result.Succeeded || result.Value == null)
             {
-                TempData["Error"] = result.Error ?? "Failed to load permissions.";
+                TempData["Error"] = result.Error ?? T("PermissionsLoadFailed");
                 return RenderIndexWorkspace(new PermissionsListVm());
             }
 
@@ -146,7 +147,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             if (!ModelState.IsValid)
             {
-                TempData["Warning"] = "Please fix validation errors and try again.";
+                SetWarningMessage("ValidationErrorsRetry");
                 return RenderCreateEditor(vm);
             }
 
@@ -156,11 +157,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 false, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? "Failed to create permission.";
+                TempData["Error"] = result.Error ?? T("PermissionCreateFailed");
                 return RenderCreateEditor(vm);
             }
 
-            TempData["Success"] = "Permission created successfully.";
+            SetSuccessMessage("PermissionCreated");
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -173,7 +174,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _getForEdit.HandleAsync(id, ct);
             if (!result.Succeeded || result.Value is null)
             {
-                TempData["Warning"] = result.Error ?? "Permission not found.";
+                TempData["Warning"] = result.Error ?? T("PermissionNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -200,7 +201,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             if (!ModelState.IsValid)
             {
-                TempData["Warning"] = "Please fix validation errors and try again.";
+                SetWarningMessage("ValidationErrorsRetry");
                 return RenderEditEditor(vm);
             }
 
@@ -215,11 +216,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _update.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? "Failed to update permission.";
+                TempData["Error"] = result.Error ?? T("PermissionUpdateFailed");
                 return RenderEditEditor(vm);
             }
 
-            TempData["Success"] = "Permission updated successfully.";
+            SetSuccessMessage("PermissionUpdated");
             return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
 
@@ -236,13 +237,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
                 var result = await _softDelete.HandleAsync(dto, ct);
                 if (!result.Succeeded)
-                    TempData["Warning"] = result.Error ?? "Failed to delete permission.";
+                    TempData["Warning"] = result.Error ?? T("PermissionDeleteFailed");
                 else
-                    TempData["Success"] = "Permission deleted successfully.";
+                    SetSuccessMessage("PermissionDeleted");
             }
             catch (Exception)
             {
-                TempData["Error"] = "Failed to delete permission.";
+                SetErrorMessage("PermissionDeleteFailed");
             }
 
             return RedirectOrHtmx(nameof(Index), new { });

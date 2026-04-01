@@ -1,9 +1,10 @@
-﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Registrieren";
+    ViewData["Title"] = T.T("Register");
 }
 
-<h1 class="mb-3">Registrieren</h1>
+<h1 class="mb-3">@T.T("Register")</h1>
 
 <form asp-action="RegisterPost" method="post" class="needs-validation" novalidate>
     @Html.AntiForgeryToken()
@@ -11,19 +12,17 @@
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="mb-3">
-        <label for="email" class="form-label">E-Mail</label>
+        <label for="email" class="form-label">@T.T("Email")</label>
         <input id="email" name="email" type="email" class="form-control" required />
         <span class="text-danger field-validation-valid" data-valmsg-for="email" data-valmsg-replace="true"></span>
     </div>
 
     <div class="mb-3">
-        <label for="password" class="form-label">Passwort</label>
+        <label for="password" class="form-label">@T.T("Password")</label>
         <input id="password" name="password" type="password" class="form-control" required autocomplete="new-password" />
         <span class="text-danger field-validation-valid" data-valmsg-for="password" data-valmsg-replace="true"></span>
     </div>
 
-    <!-- Hidden localization defaults for Germany.
-         TODO: Unhide these fields when multi-lingual UX is enabled and allow users to choose. -->
     <fieldset class="d-none">
         <div class="row">
             <div class="col-md-4 mb-3">
@@ -52,7 +51,7 @@
     </fieldset>
 
     <div class="text-end">
-        <button type="submit" class="btn btn-primary">Konto erstellen</button>
+        <button type="submit" class="btn btn-primary">@T.T("CreateAccount")</button>
     </div>
 </form>
 

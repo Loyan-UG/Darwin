@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Validators;
 using Darwin.Domain.Entities.CMS;
 using FluentAssertions;
+using Microsoft.Extensions.Localization;
 using Xunit;
 
 namespace Darwin.Tests.Unit.CMS
@@ -59,7 +61,7 @@ namespace Darwin.Tests.Unit.CMS
                 }
             };
 
-            var sut = new PageCreateUniqueSlugValidator(ctx);
+            var sut = new PageCreateUniqueSlugValidator(ctx, new TestStringLocalizer());
 
             // Act
             var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
@@ -103,7 +105,7 @@ namespace Darwin.Tests.Unit.CMS
                     }
                 }
             };
-            var sut = new PageCreateUniqueSlugValidator(ctx);
+            var sut = new PageCreateUniqueSlugValidator(ctx, new TestStringLocalizer());
             var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
             result.IsValid.Should().BeTrue();
         }
@@ -143,7 +145,7 @@ namespace Darwin.Tests.Unit.CMS
                     }
                 }
             };
-            var sut = new PageEditUniqueSlugValidator(ctx);
+            var sut = new PageEditUniqueSlugValidator(ctx, new TestStringLocalizer());
             var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
             result.IsValid.Should().BeTrue();
         }
@@ -201,7 +203,7 @@ namespace Darwin.Tests.Unit.CMS
                     }
                 }
             };
-            var sut = new PageEditUniqueSlugValidator(ctx);
+            var sut = new PageEditUniqueSlugValidator(ctx, new TestStringLocalizer());
             var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
             result.IsValid.Should().BeFalse();
         }
@@ -256,9 +258,22 @@ namespace Darwin.Tests.Unit.CMS
                     }
                 }
             };
-            var sut = new PageEditUniqueSlugValidator(ctx);
+            var sut = new PageEditUniqueSlugValidator(ctx, new TestStringLocalizer());
             var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
             result.IsValid.Should().BeTrue();
+        }
+
+        private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+        {
+            public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+            public LocalizedString this[string name, params object[] arguments] =>
+                new(name, string.Format(name, arguments), resourceNotFound: false);
+
+            public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+                Array.Empty<LocalizedString>();
+
+            public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
         }
     }
 }

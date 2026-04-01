@@ -3,6 +3,7 @@ using Darwin.Application.Shipping.DTOs;
 using Darwin.Domain.Entities.Shipping;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,11 +16,11 @@ namespace Darwin.Application.Shipping.Validators
     {
         private readonly IAppDbContext _db;
 
-        public ShippingMethodCreateUniqueNameValidator(IAppDbContext db)
+        public ShippingMethodCreateUniqueNameValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             RuleFor(x => x)
-                .MustAsync(BeUniqueName).WithMessage("A shipping method with the same Name, Carrier, and Service already exists");
+                .MustAsync(BeUniqueName).WithMessage(localizer["ShippingMethodSameNameCarrierServiceAlreadyExists"]);
         }
 
         private async Task<bool> BeUniqueName(ShippingMethodCreateDto dto, CancellationToken ct)
@@ -41,11 +42,11 @@ namespace Darwin.Application.Shipping.Validators
     {
         private readonly IAppDbContext _db;
 
-        public ShippingMethodEditUniqueNameValidator(IAppDbContext db)
+        public ShippingMethodEditUniqueNameValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             RuleFor(x => x)
-                .MustAsync(BeUniqueName).WithMessage("A different shipping method already uses this Name, Carrier, and Service");
+                .MustAsync(BeUniqueName).WithMessage(localizer["ShippingMethodDifferentRecordAlreadyUsesNameCarrierService"]);
         }
 
         private async Task<bool> BeUniqueName(ShippingMethodEditDto dto, CancellationToken ct)

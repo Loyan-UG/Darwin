@@ -50,7 +50,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             var settings = await _getSiteSettings.HandleAsync(ct).ConfigureAwait(false);
             if (settings is null)
             {
-                TempData["Error"] = "Site settings are missing. Configure system settings before relying on mobile operations diagnostics.";
+                SetErrorMessage("MobileOperationsSiteSettingsMissing");
                 return RedirectOrHtmx("Edit", "SiteSettings", new { fragment = "site-settings-mobile" });
             }
 

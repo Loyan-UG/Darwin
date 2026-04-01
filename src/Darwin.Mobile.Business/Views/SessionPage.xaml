@@ -9,66 +9,94 @@
     Title="{x:Static res:AppResources.SessionTitle}">
 
     <ScrollView x:Name="RootScrollView">
-        <VerticalStackLayout Padding="24" Spacing="16">
+        <VerticalStackLayout Padding="20,16,20,24" Spacing="14">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.OperatorRoleFormat}'}"
+                           Style="{StaticResource CaptionLabelStyle}" />
+                    <Label Text="{Binding CustomerName}"
+                           Style="{StaticResource TitleLabelStyle}" />
 
-            <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.OperatorRoleFormat}'}"
-                   FontSize="12"
-                   Opacity="0.8"
-                   TextColor="{StaticResource BrushOnSurface}" />
-            <Label Text="{x:Static res:AppResources.CustomerLabel}"
-                   Style="{StaticResource TitleLabelStyle}" />
-            <Label Text="{Binding CustomerName}"
-                   FontSize="18"
-                   TextColor="{StaticResource BrushOnSurface}" />
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="10">
+                        <Border Grid.Column="0"
+                                Style="{StaticResource MutedCardBorderStyle}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{x:Static res:AppResources.PointsLabel}"
+                                       Style="{StaticResource CaptionLabelStyle}" />
+                                <Label Text="{Binding PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
+                                       Style="{StaticResource MetricValueLabelStyle}" />
+                            </VerticalStackLayout>
+                        </Border>
 
-            <Label Text="{x:Static res:AppResources.PointsLabel}"
-                   Style="{StaticResource TitleLabelStyle}" />
-            <Label Text="{Binding PointsBalance}"
-                   FontSize="18"
-                   TextColor="{StaticResource BrushOnSurface}" />
+                        <Border Grid.Column="1"
+                                Style="{StaticResource MutedCardBorderStyle}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{x:Static res:AppResources.SessionTitle}"
+                                       Style="{StaticResource CaptionLabelStyle}" />
+                                <Label Text="{Binding CustomerName}"
+                                       Style="{StaticResource BodyLabelStyle}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
 
-            <Entry x:Name="PointsEntry"
-                   Text="{Binding PointsToAccrue}"
-                   Keyboard="Numeric"
-                   Placeholder="{x:Static res:AppResources.PointsPlaceholder}"
-                   IsVisible="{Binding CanExecuteAccrual}"
-                   TextColor="{StaticResource BrushOnSurface}" />
+                    <Label Text="{Binding SuccessMessage}"
+                           Style="{StaticResource SuccessLabelStyle}"
+                           IsVisible="{Binding HasSuccess}" />
 
-            <Button Text="{x:Static res:AppResources.ConfirmAccrualButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding ConfirmAccrualCommand}"
-                    IsVisible="{Binding CanExecuteAccrual}"
-                    Clicked="OnActionClicked" />
-            <Label Text="{x:Static res:AppResources.AccrualHelpText}"
-                   IsVisible="{Binding CanExecuteAccrual}"
-                   FontSize="12"
-                   Opacity="0.75"
-                   TextColor="{StaticResource BrushOnSurface}" />
+                    <Label Text="{Binding WarningMessage}"
+                           Style="{StaticResource WarningLabelStyle}"
+                           IsVisible="{Binding HasWarning}" />
 
-            <Button Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding ConfirmRedemptionCommand}"
-                    IsVisible="{Binding CanExecuteRedemption}"
-                    Clicked="OnActionClicked" />
-            <Label Text="{x:Static res:AppResources.RedemptionHelpText}"
-                   IsVisible="{Binding CanExecuteRedemption}"
-                   FontSize="12"
-                   Opacity="0.75"
-                   TextColor="{StaticResource BrushOnSurface}" />
+                    <Label Text="{Binding ErrorMessage}"
+                           Style="{StaticResource ErrorLabelStyle}"
+                           IsVisible="{Binding HasError}" />
+                </VerticalStackLayout>
+            </Border>
 
             <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedAccrual}"
-                   TextColor="OrangeRed"
-                   FontSize="12"
+                   Style="{StaticResource WarningLabelStyle}"
                    IsVisible="{Binding HasAccrualPermission, Converter={StaticResource InverseBoolConverter}}" />
 
             <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRedemption}"
-                   TextColor="OrangeRed"
-                   FontSize="12"
+                   Style="{StaticResource WarningLabelStyle}"
                    IsVisible="{Binding HasRedemptionPermission, Converter={StaticResource InverseBoolConverter}}" />
 
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   IsVisible="{Binding HasError}" />
+            <Border Style="{StaticResource CardBorderStyle}"
+                    IsVisible="{Binding CanExecuteAccrual}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.ConfirmAccrualButton}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.AccrualHelpText}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry x:Name="PointsEntry"
+                               Text="{Binding PointsToAccrue}"
+                               Keyboard="Numeric"
+                               Placeholder="{x:Static res:AppResources.PointsPlaceholder}"
+                               Style="{StaticResource FormEntryStyle}"
+                               TextColor="{StaticResource BrushOnSurface}" />
+                    </Border>
+                    <Button Text="{x:Static res:AppResources.ConfirmAccrualButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding ConfirmAccrualCommand}"
+                            Clicked="OnActionClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}"
+                    IsVisible="{Binding CanExecuteRedemption}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.RedemptionHelpText}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Button Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding ConfirmRedemptionCommand}"
+                            Clicked="OnActionClicked" />
+                </VerticalStackLayout>
+            </Border>
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"

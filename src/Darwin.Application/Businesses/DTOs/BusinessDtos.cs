@@ -20,6 +20,7 @@ namespace Darwin.Application.Businesses.DTOs
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
         public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
+        public string? AdminTextOverridesJson { get; set; }
         public string? BrandDisplayName { get; set; }
         public string? BrandLogoUrl { get; set; }
         public string? BrandPrimaryColorHex { get; set; }
@@ -51,6 +52,7 @@ namespace Darwin.Application.Businesses.DTOs
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
         public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
+        public string? AdminTextOverridesJson { get; set; }
         public string? BrandDisplayName { get; set; }
         public string? BrandLogoUrl { get; set; }
         public string? BrandPrimaryColorHex { get; set; }

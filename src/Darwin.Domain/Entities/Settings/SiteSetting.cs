@@ -30,6 +30,12 @@ namespace Darwin.Domain.Entities.Settings
         /// <summary>Date and time formatting patterns for display.</summary>
         public string DateFormat { get; set; } = "dd.MM.yyyy";
         public string TimeFormat { get; set; } = "HH:mm";
+        /// <summary>
+        /// Optional JSON map of admin UI text overrides layered on top of shared resx resources.
+        /// Format: { "de-DE": { "SomeKey": "..." }, "en-US": { "SomeKey": "..." } }.
+        /// Intended for platform-level wording adjustments without changing source resource files.
+        /// </summary>
+        public string? AdminTextOverridesJson { get; set; }
 
 
 

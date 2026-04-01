@@ -72,6 +72,7 @@ namespace Darwin.WebApi.Extensions
 
             // HttpContextAccessor and a CurrentUser service used by handlers to obtain caller id.
             services.AddHttpContextAccessor();
+            services.AddLocalization();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             // ------------------------------------------------------------

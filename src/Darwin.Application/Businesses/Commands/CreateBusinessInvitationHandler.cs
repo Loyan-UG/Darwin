@@ -15,6 +15,7 @@ using Darwin.Domain.Enums;
 using Darwin.Shared.Security;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -29,6 +30,7 @@ namespace Darwin.Application.Businesses.Commands
         private readonly ICurrentUserService _currentUser;
         private readonly IBusinessInvitationLinkBuilder _businessInvitationLinkBuilder;
         private readonly IValidator<BusinessInvitationCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public CreateBusinessInvitationHandler(
             IAppDbContext db,
@@ -36,7 +38,8 @@ namespace Darwin.Application.Businesses.Commands
             IClock clock,
             ICurrentUserService currentUser,
             IBusinessInvitationLinkBuilder businessInvitationLinkBuilder,
-            IValidator<BusinessInvitationCreateDto> validator)
+            IValidator<BusinessInvitationCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
@@ -44,6 +47,7 @@ namespace Darwin.Application.Businesses.Commands
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
             _businessInvitationLinkBuilder = businessInvitationLinkBuilder ?? throw new ArgumentNullException(nameof(businessInvitationLinkBuilder));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(BusinessInvitationCreateDto dto, CancellationToken ct = default)
@@ -53,7 +57,7 @@ namespace Darwin.Application.Businesses.Commands
             var business = await _db.Set<Business>()
                 .FirstOrDefaultAsync(x => x.Id == dto.BusinessId, ct);
             if (business is null)
-                throw new InvalidOperationException("Business not found.");
+                throw new InvalidOperationException(_localizer["BusinessNotFound"]);
 
             var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
 
@@ -66,7 +70,7 @@ namespace Darwin.Application.Businesses.Commands
                 select member.Id)
                 .AnyAsync(ct);
             if (existingMember)
-                throw new InvalidOperationException("This email already belongs to a member of the business. Assign or update the existing membership instead.");
+                throw new InvalidOperationException(_localizer["BusinessInvitationEmailAlreadyBelongsToExistingMember"]);
 
             var existingInvitation = await _db.Set<BusinessInvitation>()
                 .Where(x => x.BusinessId == dto.BusinessId && x.NormalizedEmail == normalizedEmail)
@@ -77,7 +81,7 @@ namespace Darwin.Application.Businesses.Commands
                 (existingInvitation.Status == BusinessInvitationStatus.Pending ||
                  (existingInvitation.Status == BusinessInvitationStatus.Expired && existingInvitation.AcceptedAtUtc == null)))
             {
-                throw new InvalidOperationException("A pending or expired invitation already exists for this email. Use resend instead of creating a duplicate invitation.");
+                throw new InvalidOperationException(_localizer["BusinessInvitationPendingOrExpiredAlreadyExistsForEmail"]);
             }
 
             var token = RandomTokenGenerator.UrlSafeToken(32);

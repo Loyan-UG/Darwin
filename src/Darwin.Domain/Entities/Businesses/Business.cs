@@ -74,6 +74,13 @@ namespace Darwin.Domain.Entities.Businesses
         public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
 
         /// <summary>
+        /// Optional JSON map of business-scoped admin text overrides layered on top of platform shared resources.
+        /// Format: { "de-DE": { "SomeKey": "..." }, "en-US": { "SomeKey": "..." } }.
+        /// Intended for tenant-specific operator wording where one business needs different terminology than the platform baseline.
+        /// </summary>
+        public string? AdminTextOverridesJson { get; set; }
+
+        /// <summary>
         /// Optional display name used for branded customer-facing content when it should differ from the internal business name.
         /// This is useful for storefront, email templates, and receipts without changing the legal or operational business names.
         /// </summary>

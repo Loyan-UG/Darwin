@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
-import { removeCartItemAction, updateCartQuantityAction } from "@/features/cart/actions";
+import {
+  applyCartCouponAction,
+  removeCartItemAction,
+  updateCartQuantityAction,
+} from "@/features/cart/actions";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
+import { formatResource, getCommerceResource } from "@/localization";
 import { formatMoney } from "@/lib/formatting";
 
 type CartPageProps = {
+  culture: string;
   model: CartViewModel;
   cartStatus?: string;
   cartError?: string;
@@ -13,18 +19,31 @@ type CartPageProps = {
 function getStatusMessage(status?: string) {
   switch (status) {
     case "added":
-      return "The item was added to the cart.";
+      return "cartItemAdded";
     case "updated":
-      return "Cart quantity was updated.";
+      return "cartQuantityUpdated";
     case "removed":
-      return "The item was removed from the cart.";
+      return "cartItemRemoved";
+    case "coupon-applied":
+      return "cartCouponApplied";
+    case "coupon-cleared":
+      return "cartCouponCleared";
     default:
       return undefined;
   }
 }
 
-export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
-  const statusMessage = getStatusMessage(cartStatus);
+export function CartPage({
+  culture,
+  model,
+  cartStatus,
+  cartError,
+}: CartPageProps) {
+  const copy = getCommerceResource(culture);
+  const statusMessageKey = getStatusMessage(cartStatus);
+  const statusMessage = statusMessageKey
+    ? copy[statusMessageKey as keyof typeof copy]
+    : undefined;
   const cart = model.cart;
 
   return (
@@ -32,19 +51,19 @@ export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
       <div className="flex w-full flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            Public cart
+            {copy.cartHeroEyebrow}
           </p>
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-            Storefront cart is now a real public commerce slice
+            {copy.cartHeroTitle}
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
-            This cart runs against the public `Darwin.WebApi` cart endpoints and keeps anonymous storefront identity stable through a dedicated web-owned cookie.
+            {copy.cartHeroDescription}
           </p>
         </div>
 
         {statusMessage && (
           <StatusBanner
-            title="Cart updated"
+            title={copy.cartUpdatedTitle}
             message={statusMessage}
           />
         )}
@@ -52,7 +71,7 @@ export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
         {cartError && (
           <StatusBanner
             tone="warning"
-            title="Cart action failed"
+            title={copy.cartActionFailedTitle}
             message={cartError}
           />
         )}
@@ -60,28 +79,30 @@ export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
         {model.status !== "ok" && model.status !== "empty" && (
           <StatusBanner
             tone="warning"
-            title="Cart is running in degraded mode."
-            message={model.message ?? `Cart fetch returned status "${model.status}".`}
+            title={copy.cartDegradedTitle}
+            message={model.message ?? formatResource(copy.cartDegradedMessage, {
+              status: model.status,
+            })}
           />
         )}
 
         {!cart || cart.items.length === 0 ? (
           <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
-              Empty cart
+              {copy.emptyCartEyebrow}
             </p>
             <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-[var(--color-text-primary)]">
-              No items are in the storefront cart yet.
+              {copy.emptyCartTitle}
             </h2>
             <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
-              Add a product from a detail page to create an anonymous storefront cart and validate the public cart contracts end to end.
+              {copy.emptyCartDescription}
             </p>
             <div className="mt-8">
               <Link
                 href="/catalog"
                 className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
               >
-                Browse catalog
+                {copy.browseCatalog}
               </Link>
             </div>
           </div>
@@ -102,15 +123,15 @@ export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
                         className="max-h-28 w-auto object-contain"
                       />
                     ) : (
-                      <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
-                        No image
-                      </span>
-                    )}
+                        <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                          {copy.noImage}
+                        </span>
+                      )}
                   </div>
                   <div className="flex flex-col gap-4">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                        Cart item
+                        {copy.cartItemEyebrow}
                       </p>
                       <h2 className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
                         {item.display?.href ? (
@@ -118,18 +139,27 @@ export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
                             {item.display.name}
                           </Link>
                         ) : (
-                          item.display?.name ?? "Storefront variant"
+                          item.display?.name ?? copy.storefrontVariantFallback
                         )}
                       </h2>
                       <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                        SKU: {item.display?.sku ?? "Unavailable"} | Variant ID: {item.variantId}
+                        {formatResource(copy.skuVariantLine, {
+                          sku: item.display?.sku ?? copy.unavailable,
+                          variantId: item.variantId,
+                        })}
                       </p>
                     </div>
 
                     <div className="flex flex-wrap items-end justify-between gap-4">
                       <div className="text-sm leading-7 text-[var(--color-text-secondary)]">
-                          <p>Line total: {formatMoney(item.lineGrossMinor, cart.currency)}</p>
-                          <p>VAT: {formatMoney(item.lineVatMinor, cart.currency)}</p>
+                          <p>{copy.unitNetLabel} {formatMoney(item.unitPriceNetMinor, cart.currency, culture)}</p>
+                          {item.addOnPriceDeltaMinor > 0 ? (
+                            <p>{copy.addOnsLabel} {formatMoney(item.addOnPriceDeltaMinor, cart.currency, culture)}</p>
+                          ) : null}
+                          <p>{copy.vatRateLabel} {(item.vatRate * 100).toFixed(0)}%</p>
+                          <p>{copy.lineNetLabel} {formatMoney(item.lineNetMinor, cart.currency, culture)}</p>
+                          <p>{copy.lineTotalLabel} {formatMoney(item.lineGrossMinor, cart.currency, culture)}</p>
+                          <p>{copy.vatLabel} {formatMoney(item.lineVatMinor, cart.currency, culture)}</p>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3">
@@ -152,7 +182,7 @@ export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
                             type="submit"
                             className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                           >
-                            Update
+                            {copy.update}
                           </button>
                         </form>
 
@@ -168,7 +198,7 @@ export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
                             type="submit"
                             className="rounded-full border border-[rgba(217,111,50,0.2)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] transition hover:bg-[rgba(217,111,50,0.08)]"
                           >
-                            Remove
+                            {copy.remove}
                           </button>
                         </form>
                       </div>
@@ -180,41 +210,67 @@ export function CartPage({ model, cartStatus, cartError }: CartPageProps) {
 
             <aside className="h-fit rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                Summary
+                {copy.summaryTitle}
               </p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
+                {cart.couponCode ? (
+                  <div className="flex items-center justify-between">
+                    <span>{copy.couponLabel}</span>
+                    <span>{cart.couponCode}</span>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between">
-                  <span>Items</span>
+                  <span>{copy.itemsLabel}</span>
                   <span>{cart.items.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Subtotal net</span>
-                  <span>{formatMoney(cart.subtotalNetMinor, cart.currency)}</span>
+                  <span>{copy.subtotalNetLabel}</span>
+                  <span>{formatMoney(cart.subtotalNetMinor, cart.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>VAT total</span>
-                  <span>{formatMoney(cart.vatTotalMinor, cart.currency)}</span>
+                  <span>{copy.vatTotalLabel}</span>
+                  <span>{formatMoney(cart.vatTotalMinor, cart.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between border-t border-[var(--color-border-soft)] pt-3 text-base font-semibold text-[var(--color-text-primary)]">
-                  <span>Grand total</span>
-                  <span>{formatMoney(cart.grandTotalGrossMinor, cart.currency)}</span>
+                  <span>{copy.grandTotalLabel}</span>
+                  <span>{formatMoney(cart.grandTotalGrossMinor, cart.currency, culture)}</span>
                 </div>
               </div>
+              <form action={applyCartCouponAction} className="mt-6 flex flex-col gap-3">
+                <input type="hidden" name="cartId" value={cart.cartId} />
+                <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                  {copy.couponCodeLabel}
+                  <input
+                    name="couponCode"
+                    defaultValue={cart.couponCode ?? ""}
+                    placeholder={copy.couponPlaceholder}
+                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.applyOrClearCoupon}
+                  </button>
+                </div>
+              </form>
               <div className="mt-6 flex flex-col gap-3">
                 <Link
                   href="/checkout"
                   className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                 >
-                  Start checkout
+                  {copy.startCheckout}
                 </Link>
                 <Link
                   href="/catalog"
                   className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
-                  Continue shopping
+                  {copy.continueShopping}
                 </Link>
                 <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  Public checkout now sits on top of this cart using the live intent, order-placement, and confirmation contracts from `Darwin.WebApi`.
+                  {copy.checkoutSummaryNote}
                 </div>
               </div>
             </aside>

@@ -181,7 +181,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                     Role = string.IsNullOrWhiteSpace(vm.Role) ? "LibraryAsset" : vm.Role
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Media uploaded.";
+                SetSuccessMessage("MediaUploaded");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (Exception ex)
@@ -200,7 +200,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             var dto = await _getForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Media asset not found.";
+                SetErrorMessage("MediaAssetNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -243,12 +243,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                     Role = vm.Role
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Media updated.";
+                SetSuccessMessage("MediaUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the media asset and try again.";
+                SetErrorMessage("MediaConcurrencyConflict");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -266,7 +266,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
         {
             await _softDelete.HandleAsync(id, ct).ConfigureAwait(false);
-            TempData["Success"] = "Media asset deleted from the library.";
+            SetSuccessMessage("MediaDeleted");
             return RedirectOrHtmx(nameof(Index), new { });
         }
 

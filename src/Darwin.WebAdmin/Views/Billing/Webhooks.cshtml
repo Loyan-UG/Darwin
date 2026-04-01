@@ -1,66 +1,67 @@
 @using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.BillingWebhooksListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Webhook Deliveries";
+    ViewData["Title"] = T.T("WebhookDeliveries");
 }
 
 <div id="billing-webhooks-workspace-shell">
-<h1 class="mb-3">Webhook Deliveries</h1>
+<h1 class="mb-3">@T.T("WebhookDeliveries")</h1>
 
 <div class="row g-3 mb-3">
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Active Subscriptions</div>
+            <div class="text-muted small">@T.T("ActiveSubscriptions")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.ActiveSubscriptionCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Pending</div>
+            <div class="text-muted small">@T.T("Pending")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PendingDeliveryCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Failed</div>
+            <div class="text-muted small">@T.T("Failed")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.FailedDeliveryCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Succeeded</div>
+            <div class="text-muted small">@T.T("Succeeded")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.SucceededDeliveryCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Retry Pending</div>
+            <div class="text-muted small">@T.T("RetryPending")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.RetryPendingCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Payment Exceptions</div>
+            <div class="text-muted small">@T.T("PaymentExceptions")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PaymentExceptionCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Dispute Signals</div>
+            <div class="text-muted small">@T.T("DisputeSignals")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.DisputeSignalCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Queue Scope</div>
-            <div class="fw-semibold mt-1">Global</div>
+            <div class="text-muted small">@T.T("QueueScope")</div>
+            <div class="fw-semibold mt-1">@T.T("Global")</div>
             <div class="small text-muted mt-2">Phase-1 callbacks are platform scoped.</div>
         </div>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Webhook Support Playbooks</div>
+    <div class="card-header">@T.T("WebhookSupportPlaybooks")</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
@@ -68,7 +69,7 @@
                     <tr>
                         <th>Queue</th>
                         <th>Scope</th>
-                        <th>Operator Action</th>
+                        <th>@T.T("OperatorAction")</th>
                         <th>Settings Dependency</th>
                     </tr>
                 </thead>
@@ -89,22 +90,22 @@
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Active Webhook Subscriptions</div>
+    <div class="card-header">@T.T("ActiveWebhookSubscriptions")</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-sm table-striped align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Event Type</th>
-                        <th>Callback URL</th>
-                        <th>Status</th>
-                        <th>Created</th>
+                        <th>@T.T("EventType")</th>
+                        <th>@T.T("CallbackUrl")</th>
+                        <th>@T.T("Status")</th>
+                        <th>@T.T("Created")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.Subscriptions.Count == 0)
                 {
-                    <tr><td colspan="4" class="text-center text-muted">No webhook subscriptions found.</td></tr>
+                    <tr><td colspan="4" class="text-center text-muted">@T.T("NoWebhookSubscriptionsFound")</td></tr>
                 }
                 else
                 {
@@ -115,7 +116,7 @@
                             <td><code>@item.CallbackUrl</code></td>
                             <td>
                                 <span class="badge @(item.IsActive ? "bg-success" : "bg-secondary")">
-                                    @(item.IsActive ? "Active" : "Inactive")
+                                    @(item.IsActive ? T.T("Active") : T.T("Inactive"))
                                 </span>
                             </td>
                             <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
@@ -137,20 +138,20 @@
           hx-swap="outerHTML">
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search event type, callback, status, or idempotency key">
         <select name="queue" class="form-select">
-            <option value="@BillingWebhookDeliveryQueueFilter.All" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.All)">All deliveries</option>
-            <option value="@BillingWebhookDeliveryQueueFilter.Pending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Pending)">Pending</option>
-            <option value="@BillingWebhookDeliveryQueueFilter.Failed" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Failed)">Failed</option>
-            <option value="@BillingWebhookDeliveryQueueFilter.Succeeded" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Succeeded)">Succeeded</option>
-            <option value="@BillingWebhookDeliveryQueueFilter.RetryPending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.RetryPending)">Retry Pending</option>
-            <option value="@BillingWebhookDeliveryQueueFilter.PaymentExceptions" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.PaymentExceptions)">Payment Exceptions</option>
-            <option value="@BillingWebhookDeliveryQueueFilter.DisputeSignals" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.DisputeSignals)">Dispute Signals</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.All" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.All)">@T.T("AllDeliveries")</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.Pending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Pending)">@T.T("Pending")</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.Failed" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Failed)">@T.T("Failed")</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.Succeeded" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Succeeded)">@T.T("Succeeded")</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.RetryPending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.RetryPending)">@T.T("RetryPending")</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.PaymentExceptions" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.PaymentExceptions)">@T.T("PaymentExceptions")</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.DisputeSignals" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.DisputeSignals)">@T.T("DisputeSignals")</option>
         </select>
-        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> @T.T("Filter")</button>
         <a asp-action="Webhooks"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Webhooks", "Billing")"
            hx-target="#billing-webhooks-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML">@T.T("Reset")</a>
     </form>
     <div class="d-flex gap-2">
         <a asp-action="Payments"
@@ -158,7 +159,7 @@
            hx-get="@Url.Action("Payments", "Billing")"
            hx-target="#billing-webhooks-workspace-shell"
            hx-swap="outerHTML">
-            <i class="fa fa-money-bill-wave"></i> Payments
+            <i class="fa fa-money-bill-wave"></i> @T.T("PaymentsLabel")
         </a>
         <a asp-controller="SiteSettings"
            asp-action="Edit"
@@ -167,7 +168,7 @@
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
            hx-target="#billing-webhooks-workspace-shell"
            hx-swap="outerHTML">
-            <i class="fa fa-sliders"></i> Payment Settings
+            <i class="fa fa-sliders"></i> @T.T("PaymentSettings")
         </a>
     </div>
 </div>
@@ -177,62 +178,62 @@
        class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.All ? "btn-dark" : "btn-outline-dark")"
        hx-get="@Url.Action("Webhooks", "Billing")"
        hx-target="#billing-webhooks-workspace-shell"
-       hx-swap="outerHTML">All</a>
+       hx-swap="outerHTML">@T.T("All")</a>
     <a asp-action="Webhooks"
        asp-route-queue="@BillingWebhookDeliveryQueueFilter.Pending"
        class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")"
        hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.Pending })"
        hx-target="#billing-webhooks-workspace-shell"
-       hx-swap="outerHTML">Pending</a>
+       hx-swap="outerHTML">@T.T("Pending")</a>
     <a asp-action="Webhooks"
        asp-route-queue="@BillingWebhookDeliveryQueueFilter.Failed"
        class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Failed ? "btn-danger" : "btn-outline-danger")"
        hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.Failed })"
        hx-target="#billing-webhooks-workspace-shell"
-       hx-swap="outerHTML">Failed</a>
+       hx-swap="outerHTML">@T.T("Failed")</a>
     <a asp-action="Webhooks"
        asp-route-queue="@BillingWebhookDeliveryQueueFilter.Succeeded"
        class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Succeeded ? "btn-success" : "btn-outline-success")"
        hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.Succeeded })"
        hx-target="#billing-webhooks-workspace-shell"
-       hx-swap="outerHTML">Succeeded</a>
+       hx-swap="outerHTML">@T.T("Succeeded")</a>
     <a asp-action="Webhooks"
        asp-route-queue="@BillingWebhookDeliveryQueueFilter.RetryPending"
        class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.RetryPending ? "btn-danger" : "btn-outline-danger")"
        hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.RetryPending })"
        hx-target="#billing-webhooks-workspace-shell"
-       hx-swap="outerHTML">Retry Pending</a>
+       hx-swap="outerHTML">@T.T("RetryPending")</a>
     <a asp-action="Webhooks"
        asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
        class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.PaymentExceptions ? "btn-warning" : "btn-outline-warning")"
        hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
        hx-target="#billing-webhooks-workspace-shell"
-       hx-swap="outerHTML">Payment Exceptions</a>
+       hx-swap="outerHTML">@T.T("PaymentExceptions")</a>
     <a asp-action="Webhooks"
        asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
        class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.DisputeSignals ? "btn-dark" : "btn-outline-dark")"
        hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
        hx-target="#billing-webhooks-workspace-shell"
-       hx-swap="outerHTML">Dispute Signals</a>
+       hx-swap="outerHTML">@T.T("DisputeSignals")</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Event Type</th>
-                <th>Callback</th>
-                <th>Status</th>
-                <th>Attempts</th>
-                <th>Timeline</th>
-                <th>Correlation</th>
-                <th class="text-end">Operator Follow-up</th>
+                <th>@T.T("EventType")</th>
+                <th>@T.T("Callback")</th>
+                <th>@T.T("Status")</th>
+                <th>@T.T("Attempts")</th>
+                <th>@T.T("Timeline")</th>
+                <th>@T.T("Correlation")</th>
+                <th class="text-end">@T.T("OperatorFollowUp")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Deliveries.Count == 0)
         {
-            <tr><td colspan="7" class="text-center text-muted">No webhook deliveries found.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">@T.T("NoWebhookDeliveriesFound")</td></tr>
         }
         else
         {
@@ -243,7 +244,7 @@
                         <div class="fw-semibold">@item.EventType</div>
                         @if (!item.IsActiveSubscription)
                         {
-                            <div><span class="badge text-bg-secondary mt-1">Inactive subscription</span></div>
+                            <div><span class="badge text-bg-secondary mt-1">@T.T("InactiveSubscription")</span></div>
                         }
                     </td>
                     <td><code>@item.CallbackUrl</code></td>
@@ -251,14 +252,14 @@
                         <span class="badge @(item.Status == "Succeeded" ? "bg-success" : item.Status == "Failed" ? "bg-danger" : "bg-warning text-dark")">@item.Status</span>
                         @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
                         {
-                            <div><span class="badge text-bg-dark mt-1">Dispute signal</span></div>
+                            <div><span class="badge text-bg-dark mt-1">@T.T("DisputeSignal")</span></div>
                         }
                         else if ((item.EventType.Contains("payment_intent", StringComparison.OrdinalIgnoreCase) ||
                                   item.EventType.Contains("charge", StringComparison.OrdinalIgnoreCase) ||
                                   item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase)) &&
                                  (item.Status != "Succeeded" || item.RetryCount > 0))
                         {
-                            <div><span class="badge text-bg-warning mt-1">Payment exception</span></div>
+                            <div><span class="badge text-bg-warning mt-1">@T.T("PaymentException")</span></div>
                         }
                         @if (item.ResponseCode.HasValue)
                         {
@@ -269,7 +270,7 @@
                         <div>@item.RetryCount</div>
                         @if (item.RetryCount > 0)
                         {
-                            <div class="small text-warning">Retry path used</div>
+                            <div class="small text-warning">@T.T("RetryPathUsed")</div>
                         }
                     </td>
                     <td>
@@ -332,7 +333,7 @@
                                hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
                                hx-target="#billing-webhooks-workspace-shell"
                                hx-swap="outerHTML">
-                                Payment Settings
+                                @T.T("PaymentSettings")
                             </a>
                         </div>
                     </td>

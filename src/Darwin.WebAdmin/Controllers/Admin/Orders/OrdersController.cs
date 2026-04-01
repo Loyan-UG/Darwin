@@ -309,7 +309,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Order not found.";
+                SetErrorMessage("OrderNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -545,7 +545,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Order not found.";
+                SetErrorMessage("OrderNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -583,7 +583,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             try
             {
                 await _addPayment.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Payment added.";
+                SetSuccessMessage("OrderPaymentAdded");
             }
             catch (Exception ex)
             {
@@ -601,7 +601,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Order not found.";
+                SetErrorMessage("OrderNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -650,7 +650,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             try
             {
                 await _addShipment.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Shipment added.";
+                SetSuccessMessage("OrderShipmentAdded");
             }
             catch (Exception ex)
             {
@@ -668,7 +668,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Order not found.";
+                SetErrorMessage("OrderNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -711,7 +711,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     Reason = vm.Reason
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Refund added.";
+                SetSuccessMessage("OrderRefundAdded");
             }
             catch (Exception ex)
             {
@@ -730,7 +730,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Order not found.";
+                SetErrorMessage("OrderNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -770,7 +770,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     DueAtUtc = vm.DueAtUtc
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Invoice created.";
+                SetSuccessMessage("OrderInvoiceCreated");
             }
             catch (Exception ex)
             {
@@ -789,7 +789,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         {
             if (vm.RowVersion is null || vm.RowVersion.Length == 0)
             {
-                TempData["Error"] = "Missing concurrency token.";
+                SetErrorMessage("ConcurrencyTokenMissing");
                 return RedirectOrHtmxDetails(vm.OrderId);
             }
 
@@ -803,7 +803,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     WarehouseId = vm.WarehouseId
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = $"Order status updated to {vm.NewStatus}.";
+                TempData["Success"] = string.Format(T("OrderStatusUpdatedFormat"), vm.NewStatus);
             }
             catch (Exception ex)
             {

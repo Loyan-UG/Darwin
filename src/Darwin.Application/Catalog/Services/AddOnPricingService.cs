@@ -2,6 +2,7 @@
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,8 +23,13 @@ namespace Darwin.Application.Catalog.Services
     public sealed class AddOnPricingService : IAddOnPricingService
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public AddOnPricingService(IAppDbContext db) => _db = db;
+        public AddOnPricingService(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         /// <inheritdoc />
         /// <inheritdoc />
@@ -35,7 +41,7 @@ namespace Darwin.Application.Catalog.Services
                 .Where(v => v.Id == variantId && !v.IsDeleted)
                 .Select(v => new { v.Id, v.ProductId })
                 .FirstOrDefaultAsync(ct)
-                ?? throw new InvalidOperationException("Variant not found.");
+                ?? throw new InvalidOperationException(_localizer["VariantNotFound"]);
 
             // Load minimal product link (PrimaryCategoryId + BrandId).
             var product = await _db.Set<Product>()
@@ -43,7 +49,7 @@ namespace Darwin.Application.Catalog.Services
                 .Where(p => p.Id == variant.ProductId && !p.IsDeleted)
                 .Select(p => new { p.Id, p.PrimaryCategoryId, p.BrandId })
                 .FirstOrDefaultAsync(ct)
-                ?? throw new InvalidOperationException("Owning product not found.");
+                ?? throw new InvalidOperationException(_localizer["OwningProductNotFound"]);
 
             // Resolve all applicable group IDs (precedence: Variant → Product → Category → Brand → Global)
             var groupIds = await ResolveApplicableGroupIdsAsync(
@@ -56,7 +62,7 @@ namespace Darwin.Application.Catalog.Services
             if (groupIds.Count == 0)
             {
                 if (selectedValueIds != null && selectedValueIds.Count > 0)
-                    throw new InvalidOperationException("No add-ons are applicable to this product, but selections were provided.");
+                    throw new InvalidOperationException(_localizer["NoAddOnsApplicableButSelectionsWereProvided"]);
                 return;
             }
 
@@ -78,7 +84,7 @@ namespace Darwin.Application.Catalog.Services
             // 1. Membership & Active checks
             var allValidValues = validValuesByGroup.SelectMany(x => x.Value).ToHashSet();
             if (selectedValueIds.Any(id => !allValidValues.Contains(id)))
-                throw new InvalidOperationException("One or more selected add-on values do not belong to applicable groups.");
+                throw new InvalidOperationException(_localizer["SelectedAddOnValuesDoNotBelongToApplicableGroups"]);
 
             // 2. Group-level constraints
             var selectedValuesGrouped = selectedValueIds
@@ -95,20 +101,20 @@ namespace Darwin.Application.Catalog.Services
 
                 // MinSelections check
                 if (count < min)
-                    throw new InvalidOperationException($"Add-on group '{group.Name}' requires at least {min} selection(s).");
+                    throw new InvalidOperationException(_localizer["AddOnGroupRequiresMinimumSelections", group.Name, min]);
 
                 // MaxSelections check
                 if (count > max)
-                    throw new InvalidOperationException($"Add-on group '{group.Name}' allows at most {max} selection(s).");
+                    throw new InvalidOperationException(_localizer["AddOnGroupAllowsMaximumSelections", group.Name, max]);
 
                 // SelectionMode check
                 if (group.SelectionMode == AddOnSelectionMode.Single && count > 1)
-                    throw new InvalidOperationException($"Add-on group '{group.Name}' allows only one selection (single-choice).");
+                    throw new InvalidOperationException(_localizer["AddOnGroupAllowsOnlySingleSelection", group.Name]);
             }
 
             // 3. Duplicate checks (rare at DTO level, but safe)
             if (selectedValueIds.Count != selectedValueIds.Distinct().Count())
-                throw new InvalidOperationException("Duplicate add-on selections are not allowed.");
+                throw new InvalidOperationException(_localizer["DuplicateAddOnSelectionsAreNotAllowed"]);
 
         }
 

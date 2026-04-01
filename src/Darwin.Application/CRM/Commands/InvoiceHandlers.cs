@@ -7,6 +7,7 @@ using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CRM.Commands
 {
@@ -14,11 +15,16 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<InvoiceEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateInvoiceHandler(IAppDbContext db, IValidator<InvoiceEditDto> validator)
+        public UpdateInvoiceHandler(
+            IAppDbContext db,
+            IValidator<InvoiceEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(InvoiceEditDto dto, CancellationToken ct = default)
@@ -31,12 +37,12 @@ namespace Darwin.Application.CRM.Commands
 
             if (invoice is null)
             {
-                throw new InvalidOperationException("Invoice not found.");
+                throw new InvalidOperationException(_localizer["InvoiceNotFound"]);
             }
 
             if (!invoice.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             var previousPaymentId = invoice.PaymentId;
@@ -50,7 +56,7 @@ namespace Darwin.Application.CRM.Commands
 
                 if (!customerExists)
                 {
-                    throw new InvalidOperationException("Linked customer not found.");
+                    throw new InvalidOperationException(_localizer["LinkedCustomerNotFound"]);
                 }
             }
 
@@ -62,12 +68,12 @@ namespace Darwin.Application.CRM.Commands
 
                 if (payment is null)
                 {
-                    throw new InvalidOperationException("Linked payment not found.");
+                    throw new InvalidOperationException(_localizer["LinkedPaymentNotFound"]);
                 }
 
                 if (payment.InvoiceId.HasValue && payment.InvoiceId.Value != invoice.Id)
                 {
-                    throw new InvalidOperationException("Linked payment is already assigned to another invoice.");
+                    throw new InvalidOperationException(_localizer["LinkedPaymentAlreadyAssignedToAnotherInvoice"]);
                 }
 
                 payment.InvoiceId = invoice.Id;
@@ -109,11 +115,16 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<InvoiceStatusTransitionDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public TransitionInvoiceStatusHandler(IAppDbContext db, IValidator<InvoiceStatusTransitionDto> validator)
+        public TransitionInvoiceStatusHandler(
+            IAppDbContext db,
+            IValidator<InvoiceStatusTransitionDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(InvoiceStatusTransitionDto dto, CancellationToken ct = default)
@@ -126,12 +137,12 @@ namespace Darwin.Application.CRM.Commands
 
             if (invoice is null)
             {
-                throw new InvalidOperationException("Invoice not found.");
+                throw new InvalidOperationException(_localizer["InvoiceNotFound"]);
             }
 
             if (!invoice.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             var payment = invoice.PaymentId.HasValue
@@ -155,7 +166,7 @@ namespace Darwin.Application.CRM.Commands
                     {
                         if (payment.Status is PaymentStatus.Failed or PaymentStatus.Voided or PaymentStatus.Refunded)
                         {
-                            throw new InvalidOperationException("Invoices cannot be marked as paid while the linked payment is failed, voided, or refunded.");
+                            throw new InvalidOperationException(_localizer["InvoicesCannotBeMarkedAsPaidWhileLinkedPaymentIsFailedVoidedOrRefunded"]);
                         }
 
                         if (payment.Status is PaymentStatus.Pending or PaymentStatus.Authorized)
@@ -180,7 +191,7 @@ namespace Darwin.Application.CRM.Commands
                     {
                         if (payment.Status is PaymentStatus.Captured or PaymentStatus.Completed)
                         {
-                            throw new InvalidOperationException("Paid invoices must be refunded before cancellation.");
+                            throw new InvalidOperationException(_localizer["PaidInvoicesMustBeRefundedBeforeCancellation"]);
                         }
 
                         if (payment.Status is PaymentStatus.Pending or PaymentStatus.Authorized)
@@ -195,7 +206,7 @@ namespace Darwin.Application.CRM.Commands
                     break;
 
                 default:
-                    throw new InvalidOperationException("Unsupported invoice status transition.");
+                    throw new InvalidOperationException(_localizer["UnsupportedInvoiceStatusTransition"]);
             }
 
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -206,11 +217,16 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<InvoiceRefundCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateInvoiceRefundHandler(IAppDbContext db, IValidator<InvoiceRefundCreateDto> validator)
+        public CreateInvoiceRefundHandler(
+            IAppDbContext db,
+            IValidator<InvoiceRefundCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(InvoiceRefundCreateDto dto, CancellationToken ct = default)
@@ -223,17 +239,17 @@ namespace Darwin.Application.CRM.Commands
 
             if (invoice is null)
             {
-                throw new InvalidOperationException("Invoice not found.");
+                throw new InvalidOperationException(_localizer["InvoiceNotFound"]);
             }
 
             if (!invoice.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             if (!invoice.PaymentId.HasValue)
             {
-                throw new InvalidOperationException("Only invoices with a linked payment can be refunded.");
+                throw new InvalidOperationException(_localizer["OnlyInvoicesWithLinkedPaymentCanBeRefunded"]);
             }
 
             var payment = await _db.Set<Payment>()
@@ -242,18 +258,18 @@ namespace Darwin.Application.CRM.Commands
 
             if (payment is null)
             {
-                throw new InvalidOperationException("Linked payment not found.");
+                throw new InvalidOperationException(_localizer["LinkedPaymentNotFound"]);
             }
 
             if (payment.Status is PaymentStatus.Pending or PaymentStatus.Authorized or PaymentStatus.Failed or PaymentStatus.Voided)
             {
-                throw new ValidationException("Only captured or completed payments can be refunded. Void the invoice/payment if funds were not collected.");
+                throw new ValidationException(_localizer["OnlyCapturedOrCompletedPaymentsCanBeRefunded"]);
             }
 
             if (!string.Equals(payment.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase) ||
                 !string.Equals(invoice.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ValidationException("Refund currency must match the linked invoice and payment currency.");
+                throw new ValidationException(_localizer["RefundCurrencyMustMatchLinkedInvoiceAndPaymentCurrency"]);
             }
 
             var refundedAmountMinor = await _db.Set<Refund>()
@@ -269,12 +285,12 @@ namespace Darwin.Application.CRM.Commands
 
             if (refundableAgainstInvoiceMinor <= 0)
             {
-                throw new ValidationException("There is no refundable amount remaining on the invoice.");
+                throw new ValidationException(_localizer["NoRefundableAmountRemainingOnInvoice"]);
             }
 
             if (dto.AmountMinor > refundableAgainstPaymentMinor || dto.AmountMinor > refundableAgainstInvoiceMinor)
             {
-                throw new ValidationException("Refund amount exceeds the remaining refundable amount on the invoice.");
+                throw new ValidationException(_localizer["RefundAmountExceedsRemainingRefundableAmountOnInvoice"]);
             }
 
             var refund = new Refund

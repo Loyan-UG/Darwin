@@ -1,9 +1,11 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Validators;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,8 +19,13 @@ namespace Darwin.Application.Catalog.Commands
     {
         private readonly IAppDbContext _db;
         private readonly AddOnGroupEditValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateAddOnGroupHandler(IAppDbContext db) => _db = db;
+        public UpdateAddOnGroupHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(AddOnGroupEditDto dto, CancellationToken ct = default)
         {
@@ -29,12 +36,11 @@ namespace Darwin.Application.Catalog.Commands
                 .Include(x => x.Options).ThenInclude(o => o.Values)
                 .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
 
-            if (g == null) throw new InvalidOperationException("Add-on group not found.");
+            if (g == null) throw new InvalidOperationException(_localizer["AddOnGroupNotFound"]);
 
             if (!g.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
-            // Update scalar fields
             g.Name = dto.Name.Trim();
             g.Currency = dto.Currency.Trim();
             g.IsGlobal = dto.IsGlobal;
@@ -43,7 +49,6 @@ namespace Darwin.Application.Catalog.Commands
             g.MaxSelections = dto.MaxSelections;
             g.IsActive = dto.IsActive;
 
-            // Simple strategy: remove existing options/values and re-add from DTO (keeps logic simple for phase 1)
             g.Options.Clear();
             foreach (var o in dto.Options.OrderBy(x => x.SortOrder))
             {

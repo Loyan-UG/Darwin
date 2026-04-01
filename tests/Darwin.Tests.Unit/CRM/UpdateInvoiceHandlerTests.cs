@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Validators;
@@ -8,6 +9,7 @@ using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.CRM;
 
@@ -65,7 +67,7 @@ public sealed class UpdateInvoiceHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateInvoiceHandler(db, new InvoiceEditValidator());
+        var handler = new UpdateInvoiceHandler(db, new InvoiceEditValidator(), new TestStringLocalizer());
 
         await handler.HandleAsync(new InvoiceEditDto
         {
@@ -131,7 +133,7 @@ public sealed class UpdateInvoiceHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateInvoiceHandler(db, new InvoiceEditValidator());
+        var handler = new UpdateInvoiceHandler(db, new InvoiceEditValidator(), new TestStringLocalizer());
 
         var act = () => handler.HandleAsync(new InvoiceEditDto
         {
@@ -147,7 +149,7 @@ public sealed class UpdateInvoiceHandlerTests
         }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Linked payment is already assigned to another invoice.");
+            .WithMessage("LinkedPaymentAlreadyAssignedToAnotherInvoice");
     }
 
     [Fact]
@@ -182,7 +184,7 @@ public sealed class UpdateInvoiceHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CreateInvoiceRefundHandler(db, new InvoiceRefundCreateValidator());
+        var handler = new CreateInvoiceRefundHandler(db, new InvoiceRefundCreateValidator(), new TestStringLocalizer());
         await handler.HandleAsync(new InvoiceRefundCreateDto
         {
             InvoiceId = invoiceId,
@@ -235,7 +237,7 @@ public sealed class UpdateInvoiceHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CreateInvoiceRefundHandler(db, new InvoiceRefundCreateValidator());
+        var handler = new CreateInvoiceRefundHandler(db, new InvoiceRefundCreateValidator(), new TestStringLocalizer());
         await handler.HandleAsync(new InvoiceRefundCreateDto
         {
             InvoiceId = invoiceId,
@@ -308,5 +310,18 @@ public sealed class UpdateInvoiceHandlerTests
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }
+    }
+
+    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 }

@@ -14,9 +14,7 @@
                    Style="{StaticResource TitleLabelStyle}" />
 
             <Label Text="{x:Static res:AppResources.LegalHubSubtitle}"
-                   FontSize="14"
-                   LineBreakMode="WordWrap"
-                   Opacity="0.85" />
+                   Style="{StaticResource SecondaryBodyLabelStyle}" />
 
             <Button Text="{x:Static res:AppResources.LegalImpressumButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
@@ -35,7 +33,7 @@
                     Clicked="OnAccountDeletionClicked" />
 
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
+                   Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"

@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockLevelsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Stock Levels";
+    ViewData["Title"] = T.T("StockLevelsTitle");
 }
 
 <div id="inventory-stock-levels-workspace-shell">
-<h1 class="mb-3">Stock Levels</h1>
+<h1 class="mb-3">@T.T("StockLevelsTitle")</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="StockLevels" method="get" class="d-flex gap-2"
@@ -14,20 +15,20 @@
           hx-push-url="true">
         <input type="hidden" name="businessId" value="@Model.BusinessId" />
         <select name="warehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search stock levels">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchStockLevelsPlaceholder")">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
            hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })"
            hx-target="#inventory-stock-levels-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
+           hx-push-url="true">@T.T("Reset")</a>
     </form>
     <a asp-action="CreateStockLevel" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary"
        hx-get="@Url.Action("CreateStockLevel", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">New Stock Level</a>
+       hx-push-url="true">@T.T("NewStockLevel")</a>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
@@ -35,31 +36,31 @@
        hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "LowStock" })"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Low Stock</a>
+       hx-push-url="true">@T.T("LowStock")</a>
     <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reserved" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.Reserved ? "btn-warning" : "btn-outline-warning")"
        hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Reserved" })"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Reserved</a>
+       hx-push-url="true">@T.T("Reserved")</a>
     <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="InTransit" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.InTransit ? "btn-info" : "btn-outline-info")"
        hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "InTransit" })"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">In Transit</a>
+       hx-push-url="true">@T.T("InTransit")</a>
     <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query })"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Clear Queue Filters</a>
+       hx-push-url="true">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>SKU</th><th>Available</th><th>Reserved</th><th>Reorder Point</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>SKU</th><th>Available</th><th>@T.T("Reserved")</th><th>@T.T("ReorderPoint")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="5" class="text-center text-muted">No stock levels found.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted">@T.T("NoStockLevelsFound")</td></tr>
         }
         else
         {
@@ -75,32 +76,32 @@
                            hx-get="@Url.Action("AdjustStock", "Inventory", new { stockLevelId = item.Id, businessId = Model.BusinessId })"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Adjust</a>
+                           hx-push-url="true">@T.T("Adjust")</a>
                         <a asp-action="ReserveStock" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-warning"
                            hx-get="@Url.Action("ReserveStock", "Inventory", new { stockLevelId = item.Id, businessId = Model.BusinessId })"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Reserve</a>
+                           hx-push-url="true">@T.T("Reserve")</a>
                         <a asp-action="ReleaseReservation" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
                            hx-get="@Url.Action("ReleaseReservation", "Inventory", new { stockLevelId = item.Id, businessId = Model.BusinessId })"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Release</a>
+                           hx-push-url="true">@T.T("Release")</a>
                         <a asp-action="ReturnReceipt" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-dark"
                            hx-get="@Url.Action("ReturnReceipt", "Inventory", new { stockLevelId = item.Id, businessId = Model.BusinessId })"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Return</a>
+                           hx-push-url="true">@T.T("Return")</a>
                         <a asp-action="VariantLedger" asp-route-variantId="@item.ProductVariantId" asp-route-warehouseId="@item.WarehouseId" class="btn btn-sm btn-outline-primary"
                            hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = item.ProductVariantId, warehouseId = item.WarehouseId })"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Ledger</a>
+                           hx-push-url="true">@T.T("Ledger")</a>
                         <a asp-action="EditStockLevel" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditStockLevel", "Inventory", new { id = item.Id })"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Edit</a>
+                           hx-push-url="true">@T.T("Edit")</a>
                     </td>
                 </tr>
             }

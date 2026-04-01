@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderPaymentsPageVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     // Server renders pager via TagHelper; actions stay on Details page and reload this partial via JS when needed.
 }
@@ -10,30 +11,30 @@
     <form asp-controller="Orders" asp-action="Payments" method="get" class="d-flex gap-2 mb-3">
         <input type="hidden" name="orderId" value="@Model.OrderId" />
         <select name="filter" asp-items="Model.FilterItems" class="form-select form-select-sm"></select>
-        <button class="btn btn-sm btn-outline-secondary" type="submit">Apply</button>
+        <button class="btn btn-sm btn-outline-secondary" type="submit">@T.T("Apply")</button>
     </form>
     <div class="d-flex gap-2 flex-wrap mb-3">
-        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" asp-route-filter="Failed" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.PaymentQueueFilter.Failed ? "btn-danger" : "btn-outline-danger")">Failed</a>
-        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" asp-route-filter="Refunded" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.PaymentQueueFilter.Refunded ? "btn-warning" : "btn-outline-warning")">Refunded</a>
-        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">Clear</a>
+        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" asp-route-filter="Failed" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.PaymentQueueFilter.Failed ? "btn-danger" : "btn-outline-danger")">@T.T("Failed")</a>
+        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" asp-route-filter="Refunded" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.PaymentQueueFilter.Refunded ? "btn-warning" : "btn-outline-warning")">@T.T("Refunded")</a>
+        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">@T.T("Clear")</a>
     </div>
     <div class="table-responsive">
         <table class="table table-sm table-striped align-middle">
             <thead>
                 <tr>
-                    <th>Provider</th>
-                    <th>Reference</th>
-                    <th>Invoice</th>
-                    <th class="text-end">Amount</th>
-                    <th>Status</th>
-                    <th>Paid (UTC)</th>
-                    <th class="text-end">Actions</th>
+                    <th>@T.T("Provider")</th>
+                    <th>@T.T("Reference")</th>
+                    <th>@T.T("Invoice")</th>
+                    <th class="text-end">@T.T("Amount")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("PaidUtc")</th>
+                    <th class="text-end">@T.T("Actions")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="7" class="text-center text-muted">No payments.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted">@T.T("NoPayments")</td></tr>
                 }
                 else
                 {
@@ -60,9 +61,9 @@
                                 <div>@p.Currency @((p.AmountMinor / 100.0M).ToString("0.00"))</div>
                                 @if (p.RefundedAmountMinor > 0)
                                 {
-                                    <div class="small text-warning">Refunded: @p.Currency @((p.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>
+                                    <div class="small text-warning">@T.T("Refunded"): @p.Currency @((p.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>
                                 }
-                                <div class="small text-muted">Net: @p.Currency @((p.NetCapturedAmountMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="small text-muted">@T.T("Net"): @p.Currency @((p.NetCapturedAmountMinor / 100.0M).ToString("0.00"))</div>
                             </td>
                             <td>@p.Status</td>
                             <td>@(p.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? p.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"))</td>
@@ -75,7 +76,7 @@
                                    hx-target="#order-operation-shell"
                                    hx-swap="innerHTML"
                                    hx-push-url="false">
-                                    Open
+                                    @T.T("Open")
                                 </a>
                                 <a asp-controller="Orders"
                                    asp-action="AddRefund"
@@ -86,7 +87,7 @@
                                    hx-target="#order-operation-shell"
                                    hx-swap="innerHTML"
                                    hx-push-url="false">
-                                    Refund
+                                    @T.T("Refund")
                                 </a>
                             </td>
                         </tr>

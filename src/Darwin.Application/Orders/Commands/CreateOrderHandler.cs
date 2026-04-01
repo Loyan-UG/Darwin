@@ -8,6 +8,7 @@ using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Commands
@@ -18,9 +19,13 @@ namespace Darwin.Application.Orders.Commands
     public sealed class CreateOrderHandler
     {
         private readonly IAppDbContext _db;
-        private readonly OrderCreateValidator _validator = new();
+        private readonly IValidator<OrderCreateDto> _validator;
 
-        public CreateOrderHandler(IAppDbContext db) => _db = db;
+        public CreateOrderHandler(IAppDbContext db, IValidator<OrderCreateDto> validator)
+        {
+            _db = db;
+            _validator = validator;
+        }
 
         public async Task<Guid> HandleAsync(OrderCreateDto dto, CancellationToken ct = default)
         {

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.Settings;
+using Darwin.WebAdmin.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -85,13 +86,14 @@ namespace Darwin.WebAdmin.Services.Settings
                 ContactEmail = s.ContactEmail,
 
                 // Localization
-                DefaultCulture = string.IsNullOrWhiteSpace(s.DefaultCulture) ? "de-DE" : s.DefaultCulture,
-                SupportedCulturesCsv = string.IsNullOrWhiteSpace(s.SupportedCulturesCsv) ? "de-DE,en-US" : s.SupportedCulturesCsv,
+                DefaultCulture = string.IsNullOrWhiteSpace(s.DefaultCulture) ? AdminCultureCatalog.DefaultCulture : AdminCultureCatalog.NormalizeUiCulture(s.DefaultCulture),
+                SupportedCulturesCsv = string.IsNullOrWhiteSpace(s.SupportedCulturesCsv) ? AdminCultureCatalog.SupportedCulturesCsvDefault : string.Join(",", AdminCultureCatalog.NormalizeSupportedCultureNames(s.SupportedCulturesCsv)),
                 DefaultCountry = string.IsNullOrWhiteSpace(s.DefaultCountry) ? "DE" : s.DefaultCountry,
                 DefaultCurrency = string.IsNullOrWhiteSpace(s.DefaultCurrency) ? "EUR" : s.DefaultCurrency,
                 TimeZone = string.IsNullOrWhiteSpace(s.TimeZone) ? "Europe/Berlin" : s.TimeZone,
                 DateFormat = string.IsNullOrWhiteSpace(s.DateFormat) ? "yyyy-MM-dd" : s.DateFormat,
                 TimeFormat = string.IsNullOrWhiteSpace(s.TimeFormat) ? "HH:mm" : s.TimeFormat,
+                AdminTextOverridesJson = s.AdminTextOverridesJson,
 
                 // JWT (additional)
                 JwtEnabled = s.JwtEnabled,

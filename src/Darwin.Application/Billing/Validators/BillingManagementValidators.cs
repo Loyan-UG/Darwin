@@ -1,5 +1,6 @@
 using Darwin.Application.Billing.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Billing.Validators
 {
@@ -70,7 +71,7 @@ namespace Darwin.Application.Billing.Validators
 
     public sealed class JournalEntryLineValidator : AbstractValidator<JournalEntryLineDto>
     {
-        public JournalEntryLineValidator()
+        public JournalEntryLineValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.AccountId).NotEmpty();
             RuleFor(x => x.DebitMinor).GreaterThanOrEqualTo(0);
@@ -78,29 +79,29 @@ namespace Darwin.Application.Billing.Validators
             RuleFor(x => x.Memo).MaximumLength(500);
             RuleFor(x => x)
                 .Must(x => (x.DebitMinor > 0 && x.CreditMinor == 0) || (x.CreditMinor > 0 && x.DebitMinor == 0))
-                .WithMessage("Each journal line must contain either a debit or a credit amount.");
+                .WithMessage(localizer["JournalEntryLineDebitOrCreditRequired"]);
         }
     }
 
     public sealed class JournalEntryCreateValidator : AbstractValidator<JournalEntryCreateDto>
     {
-        public JournalEntryCreateValidator()
+        public JournalEntryCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.BusinessId).NotEmpty();
             RuleFor(x => x.Description).NotEmpty().MaximumLength(500);
             RuleFor(x => x.Lines).NotEmpty();
-            RuleForEach(x => x.Lines).SetValidator(new JournalEntryLineValidator());
+            RuleForEach(x => x.Lines).SetValidator(new JournalEntryLineValidator(localizer));
             RuleFor(x => x)
                 .Must(x => x.Lines.Sum(l => l.DebitMinor) == x.Lines.Sum(l => l.CreditMinor))
-                .WithMessage("Journal entry must be balanced.");
+                .WithMessage(localizer["JournalEntryBalancedRequired"]);
         }
     }
 
     public sealed class JournalEntryEditValidator : AbstractValidator<JournalEntryEditDto>
     {
-        public JournalEntryEditValidator()
+        public JournalEntryEditValidator(IStringLocalizer<ValidationResource> localizer)
         {
-            Include(new JournalEntryCreateValidator());
+            Include(new JournalEntryCreateValidator(localizer));
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotEmpty();
         }

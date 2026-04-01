@@ -10,6 +10,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Loyalty.Commands
@@ -24,7 +25,8 @@ namespace Darwin.Application.Loyalty.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
-        private readonly AdjustLoyaltyPointsValidator _validator = new();
+        private readonly IValidator<AdjustLoyaltyPointsDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustLoyaltyPointsHandler"/> class.
@@ -34,10 +36,16 @@ namespace Darwin.Application.Loyalty.Commands
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="db"/> or <paramref name="clock"/> is null.
         /// </exception>
-        public AdjustLoyaltyPointsHandler(IAppDbContext db, IClock clock)
+        public AdjustLoyaltyPointsHandler(
+            IAppDbContext db,
+            IClock clock,
+            IValidator<AdjustLoyaltyPointsDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -71,12 +79,12 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (account is null)
             {
-                return Result<AdjustLoyaltyPointsResultDto>.Fail("Loyalty account not found.");
+                return Result<AdjustLoyaltyPointsResultDto>.Fail(_localizer["LoyaltyAccountNotFound"]);
             }
 
             if (account.BusinessId != dto.BusinessId)
             {
-                return Result<AdjustLoyaltyPointsResultDto>.Fail("Business mismatch for loyalty account.");
+                return Result<AdjustLoyaltyPointsResultDto>.Fail(_localizer["BusinessMismatchForLoyaltyAccount"]);
             }
 
             // Optional optimistic concurrency check when a row version is supplied.
@@ -84,20 +92,20 @@ namespace Darwin.Application.Loyalty.Commands
                 !account.RowVersion.SequenceEqual(dto.RowVersion))
             {
                 return Result<AdjustLoyaltyPointsResultDto>.Fail(
-                    "Concurrency conflict. The loyalty account was modified by another process.");
+                    _localizer["ConcurrencyConflictLoyaltyAccountModified"]);
             }
 
             if (account.Status != LoyaltyAccountStatus.Active)
             {
                 return Result<AdjustLoyaltyPointsResultDto>.Fail(
-                    "The loyalty account is not active and cannot be adjusted.");
+                    _localizer["LoyaltyAccountMustBeActiveForAdjustment"]);
             }
 
             var newBalance = account.PointsBalance + dto.PointsDelta;
             if (newBalance < 0)
             {
                 return Result<AdjustLoyaltyPointsResultDto>.Fail(
-                    "The adjustment would result in a negative points balance.");
+                    _localizer["LoyaltyAdjustmentWouldResultInNegativeBalance"]);
             }
 
             var now = _clock.UtcNow;

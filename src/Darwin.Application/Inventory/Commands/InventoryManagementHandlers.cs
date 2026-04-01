@@ -3,6 +3,7 @@ using Darwin.Application.Inventory.DTOs;
 using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Enums;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Inventory.Commands
@@ -55,11 +56,16 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<WarehouseEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateWarehouseHandler(IAppDbContext db, IValidator<WarehouseEditDto> validator)
+        public UpdateWarehouseHandler(
+            IAppDbContext db,
+            IValidator<WarehouseEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(WarehouseEditDto dto, CancellationToken ct = default)
@@ -72,12 +78,12 @@ namespace Darwin.Application.Inventory.Commands
 
             if (warehouse is null)
             {
-                throw new InvalidOperationException("Warehouse not found.");
+                throw new InvalidOperationException(_localizer["WarehouseNotFound"]);
             }
 
             if (!warehouse.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             if (dto.IsDefault)
@@ -140,11 +146,16 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<SupplierEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateSupplierHandler(IAppDbContext db, IValidator<SupplierEditDto> validator)
+        public UpdateSupplierHandler(
+            IAppDbContext db,
+            IValidator<SupplierEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(SupplierEditDto dto, CancellationToken ct = default)
@@ -157,12 +168,12 @@ namespace Darwin.Application.Inventory.Commands
 
             if (supplier is null)
             {
-                throw new InvalidOperationException("Supplier not found.");
+                throw new InvalidOperationException(_localizer["SupplierNotFound"]);
             }
 
             if (!supplier.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             supplier.BusinessId = dto.BusinessId;
@@ -181,11 +192,16 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<StockLevelCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateStockLevelHandler(IAppDbContext db, IValidator<StockLevelCreateDto> validator)
+        public CreateStockLevelHandler(
+            IAppDbContext db,
+            IValidator<StockLevelCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(StockLevelCreateDto dto, CancellationToken ct = default)
@@ -199,7 +215,7 @@ namespace Darwin.Application.Inventory.Commands
 
             if (exists)
             {
-                throw new InvalidOperationException("Stock level already exists for the warehouse and variant.");
+                throw new InvalidOperationException(_localizer["StockLevelAlreadyExistsForWarehouseAndVariant"]);
             }
 
             var stockLevel = new StockLevel
@@ -214,7 +230,7 @@ namespace Darwin.Application.Inventory.Commands
             };
 
             _db.Set<StockLevel>().Add(stockLevel);
-            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.ProductVariantId, ct);
+            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.ProductVariantId, _localizer, ct);
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
             return stockLevel.Id;
         }
@@ -224,11 +240,16 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<StockLevelEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateStockLevelHandler(IAppDbContext db, IValidator<StockLevelEditDto> validator)
+        public UpdateStockLevelHandler(
+            IAppDbContext db,
+            IValidator<StockLevelEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(StockLevelEditDto dto, CancellationToken ct = default)
@@ -241,12 +262,12 @@ namespace Darwin.Application.Inventory.Commands
 
             if (stockLevel is null)
             {
-                throw new InvalidOperationException("Stock level not found.");
+                throw new InvalidOperationException(_localizer["StockLevelNotFound"]);
             }
 
             if (!stockLevel.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             stockLevel.WarehouseId = dto.WarehouseId;
@@ -257,7 +278,7 @@ namespace Darwin.Application.Inventory.Commands
             stockLevel.ReorderQuantity = dto.ReorderQuantity;
             stockLevel.InTransitQuantity = dto.InTransitQuantity;
 
-            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.ProductVariantId, ct);
+            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.ProductVariantId, _localizer, ct);
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
         }
     }
@@ -266,11 +287,16 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<StockTransferCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateStockTransferHandler(IAppDbContext db, IValidator<StockTransferCreateDto> validator)
+        public CreateStockTransferHandler(
+            IAppDbContext db,
+            IValidator<StockTransferCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(StockTransferCreateDto dto, CancellationToken ct = default)
@@ -281,7 +307,7 @@ namespace Darwin.Application.Inventory.Commands
             {
                 FromWarehouseId = dto.FromWarehouseId,
                 ToWarehouseId = dto.ToWarehouseId,
-                Status = InventoryManagementHandlerSupport.ParseTransferStatus(dto.Status),
+                Status = InventoryManagementHandlerSupport.ParseTransferStatus(dto.Status, _localizer),
                 Lines = dto.Lines.Select(x => new StockTransferLine
                 {
                     ProductVariantId = x.ProductVariantId,
@@ -299,11 +325,16 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<StockTransferEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateStockTransferHandler(IAppDbContext db, IValidator<StockTransferEditDto> validator)
+        public UpdateStockTransferHandler(
+            IAppDbContext db,
+            IValidator<StockTransferEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(StockTransferEditDto dto, CancellationToken ct = default)
@@ -317,17 +348,17 @@ namespace Darwin.Application.Inventory.Commands
 
             if (transfer is null)
             {
-                throw new InvalidOperationException("Stock transfer not found.");
+                throw new InvalidOperationException(_localizer["StockTransferNotFound"]);
             }
 
             if (!transfer.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             transfer.FromWarehouseId = dto.FromWarehouseId;
             transfer.ToWarehouseId = dto.ToWarehouseId;
-            transfer.Status = InventoryManagementHandlerSupport.ParseTransferStatus(dto.Status);
+            transfer.Status = InventoryManagementHandlerSupport.ParseTransferStatus(dto.Status, _localizer);
 
             _db.Set<StockTransferLine>().RemoveRange(transfer.Lines);
             transfer.Lines = dto.Lines.Select(x => new StockTransferLine
@@ -344,11 +375,16 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<PurchaseOrderCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreatePurchaseOrderHandler(IAppDbContext db, IValidator<PurchaseOrderCreateDto> validator)
+        public CreatePurchaseOrderHandler(
+            IAppDbContext db,
+            IValidator<PurchaseOrderCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(PurchaseOrderCreateDto dto, CancellationToken ct = default)
@@ -361,7 +397,7 @@ namespace Darwin.Application.Inventory.Commands
                 BusinessId = dto.BusinessId,
                 OrderNumber = dto.OrderNumber.Trim(),
                 OrderedAtUtc = dto.OrderedAtUtc,
-                Status = InventoryManagementHandlerSupport.ParsePurchaseOrderStatus(dto.Status),
+                Status = InventoryManagementHandlerSupport.ParsePurchaseOrderStatus(dto.Status, _localizer),
                 Lines = dto.Lines.Select(x => new PurchaseOrderLine
                 {
                     ProductVariantId = x.ProductVariantId,
@@ -381,11 +417,16 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<PurchaseOrderEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdatePurchaseOrderHandler(IAppDbContext db, IValidator<PurchaseOrderEditDto> validator)
+        public UpdatePurchaseOrderHandler(
+            IAppDbContext db,
+            IValidator<PurchaseOrderEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(PurchaseOrderEditDto dto, CancellationToken ct = default)
@@ -399,19 +440,19 @@ namespace Darwin.Application.Inventory.Commands
 
             if (order is null)
             {
-                throw new InvalidOperationException("Purchase order not found.");
+                throw new InvalidOperationException(_localizer["PurchaseOrderNotFound"]);
             }
 
             if (!order.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             order.SupplierId = dto.SupplierId;
             order.BusinessId = dto.BusinessId;
             order.OrderNumber = dto.OrderNumber.Trim();
             order.OrderedAtUtc = dto.OrderedAtUtc;
-            order.Status = InventoryManagementHandlerSupport.ParsePurchaseOrderStatus(dto.Status);
+            order.Status = InventoryManagementHandlerSupport.ParsePurchaseOrderStatus(dto.Status, _localizer);
 
             _db.Set<PurchaseOrderLine>().RemoveRange(order.Lines);
             order.Lines = dto.Lines.Select(x => new PurchaseOrderLine
@@ -428,21 +469,21 @@ namespace Darwin.Application.Inventory.Commands
 
     internal static class InventoryManagementHandlerSupport
     {
-        public static TransferStatus ParseTransferStatus(string value)
+        public static TransferStatus ParseTransferStatus(string value, IStringLocalizer<ValidationResource> localizer)
         {
             if (!Enum.TryParse<TransferStatus>(value, true, out var status))
             {
-                throw new ValidationException("Invalid stock transfer status.");
+                throw new ValidationException(localizer["InvalidStockTransferStatus"]);
             }
 
             return status;
         }
 
-        public static PurchaseOrderStatus ParsePurchaseOrderStatus(string value)
+        public static PurchaseOrderStatus ParsePurchaseOrderStatus(string value, IStringLocalizer<ValidationResource> localizer)
         {
             if (!Enum.TryParse<PurchaseOrderStatus>(value, true, out var status))
             {
-                throw new ValidationException("Invalid purchase order status.");
+                throw new ValidationException(localizer["InvalidPurchaseOrderStatus"]);
             }
 
             return status;

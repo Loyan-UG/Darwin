@@ -208,7 +208,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Addresses = vm.Addresses.Select(MapCustomerAddress).ToList()
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Customer created.";
+                SetSuccessMessage("CustomerCreatedMessage");
                 return RedirectOrHtmx(nameof(EditCustomer), new { id });
             }
             catch (Exception ex)
@@ -226,7 +226,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var dto = await _getCustomerForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Customer not found.";
+                SetErrorMessage("CustomerNotFoundMessage");
                 return RedirectOrHtmx(nameof(Customers), new { });
             }
 
@@ -321,12 +321,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Addresses = vm.Addresses.Select(MapCustomerAddress).ToList()
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Customer updated.";
+                SetSuccessMessage("CustomerUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditCustomer), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the customer and try again.";
+                SetErrorMessage("CustomerConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditCustomer), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -385,7 +385,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var dto = await _getInvoiceForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Invoice not found.";
+                SetErrorMessage("InvoiceNotFoundMessage");
                 return RedirectOrHtmx(nameof(Invoices), new { });
             }
 
@@ -457,12 +457,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     PaidAtUtc = vm.PaidAtUtc
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Invoice updated.";
+                SetSuccessMessage("InvoiceUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the invoice and try again.";
+                SetErrorMessage("InvoiceConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -491,7 +491,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the invoice and try again.";
+                SetErrorMessage("InvoiceConcurrencyMessage");
             }
             catch (Exception ex)
             {
@@ -516,11 +516,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Reason = vm.Reason
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Invoice refund recorded.";
+                SetSuccessMessage("InvoiceRefundRecordedMessage");
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the invoice and try again.";
+                SetErrorMessage("InvoiceConcurrencyMessage");
             }
             catch (Exception ex)
             {
@@ -598,7 +598,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     CustomerId = vm.CustomerId
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Lead created.";
+                SetSuccessMessage("LeadCreatedMessage");
                 return RedirectOrHtmx(nameof(EditLead), new { id });
             }
             catch (Exception ex)
@@ -615,7 +615,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var dto = await _getLeadForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Lead not found.";
+                SetErrorMessage("LeadNotFoundMessage");
                 return RedirectOrHtmx(nameof(Leads), new { });
             }
 
@@ -674,12 +674,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     CustomerId = vm.CustomerId
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Lead updated.";
+                SetSuccessMessage("LeadUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditLead), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the lead and try again.";
+                SetErrorMessage("LeadConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditLead), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -765,7 +765,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     }).ToList()
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Opportunity created.";
+                SetSuccessMessage("OpportunityCreatedMessage");
                 return RedirectOrHtmx(nameof(EditOpportunity), new { id });
             }
             catch (Exception ex)
@@ -783,7 +783,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var dto = await _getOpportunityForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Opportunity not found.";
+                SetErrorMessage("OpportunityNotFoundMessage");
                 return RedirectOrHtmx(nameof(Opportunities), new { });
             }
 
@@ -845,12 +845,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     }).ToList()
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Opportunity updated.";
+                SetSuccessMessage("OpportunityUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditOpportunity), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the opportunity and try again.";
+                SetErrorMessage("OpportunityConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditOpportunity), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -913,12 +913,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     CopyNotesToCustomer = vm.CopyNotesToCustomer
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Lead converted to customer.";
+                SetSuccessMessage("LeadConvertedMessage");
                 return RedirectOrHtmx(nameof(EditCustomer), new { id = customerId });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the lead and try again.";
+                SetErrorMessage("LeadConcurrencyMessage");
             }
             catch (Exception ex)
             {
@@ -948,7 +948,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Description = vm.Description
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Segment created.";
+                SetSuccessMessage("SegmentCreatedMessage");
                 return RedirectOrHtmx(nameof(EditSegment), new { id });
             }
             catch (Exception ex)
@@ -964,7 +964,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var dto = await _getCustomerSegmentForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Segment not found.";
+                SetErrorMessage("SegmentNotFoundMessage");
                 return RedirectOrHtmx(nameof(Segments), new { });
             }
 
@@ -996,12 +996,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Description = vm.Description
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Segment updated.";
+                SetSuccessMessage("SegmentUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditSegment), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the segment and try again.";
+                SetErrorMessage("SegmentConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditSegment), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -1033,7 +1033,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             try
             {
                 await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
-                TempData["Success"] = "Interaction added.";
+                SetSuccessMessage("InteractionAddedMessage");
             }
             catch (Exception ex)
             {
@@ -1065,7 +1065,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             try
             {
                 await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
-                TempData["Success"] = "Interaction added.";
+                SetSuccessMessage("InteractionAddedMessage");
             }
             catch (Exception ex)
             {
@@ -1097,7 +1097,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             try
             {
                 await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
-                TempData["Success"] = "Interaction added.";
+                SetSuccessMessage("InteractionAddedMessage");
             }
             catch (Exception ex)
             {
@@ -1143,7 +1143,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     RevokedAtUtc = vm.RevokedAtUtc
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Consent record added.";
+                SetSuccessMessage("ConsentAddedMessage");
             }
             catch (Exception ex)
             {
@@ -1182,7 +1182,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     CustomerSegmentId = vm.CustomerSegmentId
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Segment assigned.";
+                SetSuccessMessage("SegmentAssignedMessage");
             }
             catch (Exception ex)
             {
@@ -1199,7 +1199,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             try
             {
                 await _removeCustomerSegmentMembership.HandleAsync(membershipId, ct).ConfigureAwait(false);
-                TempData["Success"] = "Segment removed.";
+                SetSuccessMessage("SegmentRemovedMessage");
             }
             catch (Exception ex)
             {

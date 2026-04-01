@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Inventory;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Inventory.Commands
 {
@@ -21,15 +22,20 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly InventoryReturnReceiptValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ProcessReturnReceiptHandler(IAppDbContext db) => _db = db;
+        public ProcessReturnReceiptHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(InventoryReturnReceiptDto dto, CancellationToken ct = default)
         {
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new ValidationException(v.Errors);
 
-            var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, ct);
+            var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, _localizer, ct);
 
             // Idempotency: if a ReferenceId is provided and a matching ledger row exists, skip
             if (dto.ReferenceId.HasValue)
@@ -48,7 +54,7 @@ namespace Darwin.Application.Inventory.Commands
                 .AnyAsync(vr => vr.Id == dto.VariantId, ct);
 
             if (!variantExists)
-                throw new InvalidOperationException("Variant not found.");
+                throw new InvalidOperationException(_localizer["VariantNotFound"]);
 
             var stockLevel = await Darwin.Application.Inventory.InventoryStockHelper.GetOrCreateStockLevelAsync(_db, warehouseId, dto.VariantId, ct);
             stockLevel.AvailableQuantity += dto.Quantity;
@@ -62,7 +68,7 @@ namespace Darwin.Application.Inventory.Commands
                 ReferenceId = dto.ReferenceId
             });
 
-            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, ct);
+            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, _localizer, ct);
             await _db.SaveChangesAsync(ct);
         }
     }

@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.CartCheckout.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
@@ -13,6 +14,7 @@ using Darwin.Domain.Entities.Shipping;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Orders;
 
@@ -113,7 +115,8 @@ public sealed class StorefrontCheckoutFlowHandlersTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db), new RateShipmentHandler(db));
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
 
         var result = await handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
         {
@@ -168,7 +171,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CreateStorefrontPaymentIntentHandler(db);
+        var handler = new CreateStorefrontPaymentIntentHandler(db, new TestStringLocalizer());
 
         var result = await handler.HandleAsync(new CreateStorefrontPaymentIntentDto
         {
@@ -214,7 +217,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CompleteStorefrontPaymentHandler(db);
+        var handler = new CompleteStorefrontPaymentHandler(db, new TestStringLocalizer());
 
         var result = await handler.HandleAsync(new CompleteStorefrontPaymentDto
         {
@@ -274,7 +277,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CompleteStorefrontPaymentHandler(db);
+        var handler = new CompleteStorefrontPaymentHandler(db, new TestStringLocalizer());
 
         var result = await handler.HandleAsync(new CompleteStorefrontPaymentDto
         {
@@ -314,7 +317,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new GetStorefrontOrderConfirmationHandler(db);
+        var handler = new GetStorefrontOrderConfirmationHandler(db, new TestStringLocalizer());
 
         var result = await handler.HandleAsync(new GetStorefrontOrderConfirmationDto
         {
@@ -421,5 +424,18 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }
+    }
+
+    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 }

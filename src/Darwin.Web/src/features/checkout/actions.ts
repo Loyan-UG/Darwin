@@ -7,13 +7,14 @@ import {
   createPublicStorefrontPaymentIntent,
   placePublicStorefrontOrder,
 } from "@/features/checkout/api/public-checkout";
+import { writeStorefrontPaymentHandoff } from "@/features/checkout/cookies";
 import {
   buildCheckoutDraftSearch,
   isCheckoutAddressComplete,
   readCheckoutDraftFromFormData,
   toCheckoutAddress,
 } from "@/features/checkout/helpers";
-import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+import { getRequestCulture } from "@/lib/request-culture";
 
 function revalidateCheckoutPaths() {
   revalidatePath("/cart");
@@ -47,7 +48,7 @@ export async function placeStorefrontOrderAction(formData: FormData) {
     shippingAddress: toCheckoutAddress(draft),
     selectedShippingMethodId: draft.selectedShippingMethodId || undefined,
     shippingTotalMinor,
-    culture: getSiteRuntimeConfig().culture,
+    culture: await getRequestCulture(),
   });
 
   if (!orderResult.data) {
@@ -86,6 +87,15 @@ export async function createStorefrontPaymentIntentAction(formData: FormData) {
       : `?paymentError=${encodeURIComponent(paymentError)}`;
     redirect(`/checkout/orders/${orderId}/confirmation${suffix}`);
   }
+
+  await writeStorefrontPaymentHandoff({
+    orderId: paymentResult.data.orderId,
+    orderNumber: orderNumber || undefined,
+    paymentId: paymentResult.data.paymentId,
+    provider: paymentResult.data.provider,
+    providerReference: paymentResult.data.providerReference,
+    expiresAtUtc: paymentResult.data.expiresAtUtc,
+  });
 
   redirect(paymentResult.data.checkoutUrl);
 }

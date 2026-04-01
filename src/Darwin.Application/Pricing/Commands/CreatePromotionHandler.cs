@@ -6,6 +6,7 @@ using Darwin.Application.Pricing.Validators;
 using Darwin.Domain.Entities.Pricing;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Pricing.Commands
 {
@@ -15,9 +16,18 @@ namespace Darwin.Application.Pricing.Commands
     public sealed class CreatePromotionHandler
     {
         private readonly IAppDbContext _db;
-        private readonly PromotionCreateValidator _validator = new();
+        private readonly IValidator<PromotionCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreatePromotionHandler(IAppDbContext db) => _db = db;
+        public CreatePromotionHandler(
+            IAppDbContext db,
+            IValidator<PromotionCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = validator;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(PromotionCreateDto dto, CancellationToken ct = default)
         {
@@ -29,7 +39,7 @@ namespace Darwin.Application.Pricing.Commands
                 var exists = await _db.Set<Promotion>().AsNoTracking()
                     .AnyAsync(p => p.IsActive && p.Code != null && p.Code.ToLower() == dto.Code.ToLower(), ct);
                 if (exists)
-                    throw new ValidationException("Coupon code must be unique among active promotions.");
+                    throw new ValidationException(_localizer["CouponCodeMustBeUniqueAmongActivePromotions"]);
             }
 
             var entity = new Promotion

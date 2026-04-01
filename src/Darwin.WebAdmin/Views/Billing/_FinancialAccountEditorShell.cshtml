@@ -1,11 +1,12 @@
 @model Darwin.WebAdmin.ViewModels.Billing.FinancialAccountEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
-    ViewData["Title"] = isCreate ? "Create Financial Account" : "Edit Financial Account";
+    ViewData["Title"] = isCreate ? T.T("CreateFinancialAccount") : T.T("EditFinancialAccount");
 }
 
 <div id="billing-financial-account-editor-shell">
-    <h1 class="mb-3">@(isCreate ? "Create Financial Account" : "Edit Financial Account")</h1>
+    <h1 class="mb-3">@(isCreate ? T.T("CreateFinancialAccount") : T.T("EditFinancialAccount"))</h1>
 
     <form asp-action="@(isCreate ? "CreateFinancialAccount" : "EditFinancialAccount")"
           method="post"
@@ -20,8 +21,8 @@
         }
         <partial name="_FinancialAccountForm" model="Model" />
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+            <button type="submit" class="btn btn-primary">@T.T("Save")</button>
+            <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 </div>

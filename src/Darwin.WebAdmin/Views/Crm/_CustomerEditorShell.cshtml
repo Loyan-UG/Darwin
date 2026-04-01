@@ -1,7 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.CRM.CustomerEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var formAction = ViewData["FormAction"]?.ToString() ?? "EditCustomer";
-    var heading = formAction == "CreateCustomer" ? "Create Customer" : "Edit Customer";
+    var heading = formAction == "CreateCustomer" ? T.T("CreateCustomer") : T.T("EditCustomer");
 }
 
 <div id="crm-customer-editor-shell">
@@ -20,8 +21,8 @@
         }
         <partial name="_CustomerForm" model="Model" />
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
-            <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-customer-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">Back</a>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
+            <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-customer-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 </div>

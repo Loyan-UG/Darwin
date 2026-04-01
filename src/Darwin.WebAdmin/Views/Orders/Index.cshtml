@@ -1,18 +1,19 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrdersListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Orders";
+    ViewData["Title"] = T.T("OrdersTitle");
 }
 
 <div id="orders-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0"><i class="fa fa-receipt"></i> Orders</h1>
+    <h1 class="mb-0"><i class="fa fa-receipt"></i> @T.T("OrdersTitle")</h1>
     <a asp-controller="Orders"
        asp-action="ShipmentsQueue"
        hx-get="@Url.Action("ShipmentsQueue", "Orders")"
        hx-target="#orders-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
-       class="btn btn-outline-secondary">Shipments Queue</a>
+       class="btn btn-outline-secondary">@T.T("ShipmentsQueue")</a>
 </div>
 
 <partial name="~/Views/Shared/_Alerts.cshtml" />
@@ -22,19 +23,19 @@
       hx-target="#orders-workspace-shell"
       hx-swap="outerHTML"
       hx-push-url="true">
-    <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by order number or currency" />
+    <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("SearchOrdersPlaceholder")" />
     <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     <button class="btn btn-outline-secondary" type="submit">
-        <i class="fa fa-search"></i> Search
+        <i class="fa fa-search"></i> @T.T("Search")
     </button>
-    <a asp-action="Index" hx-get="@Url.Action("Index", "Orders")" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">Reset</a>
+    <a asp-action="Index" hx-get="@Url.Action("Index", "Orders")" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Reset")</a>
 </form>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="Index" asp-route-filter="Open" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "Open" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.Open ? "btn-primary" : "btn-outline-primary")">Open</a>
-    <a asp-action="Index" asp-route-filter="PaymentIssues" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "PaymentIssues" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues ? "btn-danger" : "btn-outline-danger")">Payment Issues</a>
-    <a asp-action="Index" asp-route-filter="FulfillmentAttention" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "FulfillmentAttention" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention ? "btn-warning" : "btn-outline-warning")">Fulfillment Attention</a>
-    <a asp-action="Index" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+    <a asp-action="Index" asp-route-filter="Open" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "Open" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.Open ? "btn-primary" : "btn-outline-primary")">@T.T("OpenQueue")</a>
+    <a asp-action="Index" asp-route-filter="PaymentIssues" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "PaymentIssues" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues ? "btn-danger" : "btn-outline-danger")">@T.T("PaymentIssues")</a>
+    <a asp-action="Index" asp-route-filter="FulfillmentAttention" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "FulfillmentAttention" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention ? "btn-warning" : "btn-outline-warning")">@T.T("FulfillmentAttention")</a>
+    <a asp-action="Index" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="table-responsive">
@@ -43,16 +44,16 @@
             <tr>
                 <th>#</th>
                 <th>Status</th>
-                <th>Total</th>
-                <th>Ops</th>
-                <th>Created (UTC)</th>
-                <th class="text-end" style="width:160px">Actions</th>
+                <th>@T.T("Total")</th>
+                <th>@T.T("Ops")</th>
+                <th>@T.T("CreatedUtc")</th>
+                <th class="text-end" style="width:160px">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="6" class="text-center text-muted">No orders.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted">@T.T("NoOrders")</td></tr>
             }
             else
             {
@@ -64,9 +65,9 @@
                         <td>@o.Currency @((o.GrandTotalGrossMinor / 100.0M).ToString("0.00"))</td>
                         <td>
                             <div class="small text-muted d-flex flex-column">
-                                <span>Payments: @o.PaymentCount</span>
-                                <span>Failed: @o.FailedPaymentCount</span>
-                                <span>Shipments: @o.ShipmentCount</span>
+                                <span>@T.T("PaymentsCount"): @o.PaymentCount</span>
+                                <span>@T.T("FailedCount"): @o.FailedPaymentCount</span>
+                                <span>@T.T("ShipmentsCount"): @o.ShipmentCount</span>
                             </div>
                         </td>
                         <td>@o.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
@@ -74,23 +75,23 @@
                             @if (o.FailedPaymentCount > 0 || Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues)
                             {
                                 <a asp-controller="Orders" asp-action="AddPayment" asp-route-orderId="@o.Id" hx-get="@Url.Action("AddPayment", "Orders", new { orderId = o.Id })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">
-                                    <i class="fa fa-credit-card"></i> Payment
+                                    <i class="fa fa-credit-card"></i> @T.T("Payments")
                                 </a>
                             }
                             @if (o.Status == Darwin.Domain.Enums.OrderStatus.Paid || Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention)
                             {
                                 <a asp-controller="Orders" asp-action="AddShipment" asp-route-orderId="@o.Id" hx-get="@Url.Action("AddShipment", "Orders", new { orderId = o.Id })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
-                                    <i class="fa fa-truck"></i> Shipment
+                                    <i class="fa fa-truck"></i> @T.T("Shipment")
                                 </a>
                             }
                             @if (o.PaymentCount > 0)
                             {
                                 <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@o.Id" hx-get="@Url.Action("CreateInvoice", "Orders", new { orderId = o.Id })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fa fa-file-invoice"></i> Invoice
+                                    <i class="fa fa-file-invoice"></i> @T.T("Invoice")
                                 </a>
                             }
                             <a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id" hx-get="@Url.Action("Details", "Orders", new { id = o.Id })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
-                                <i class="fa fa-eye"></i> View
+                                <i class="fa fa-eye"></i> @T.T("View")
                             </a>
                         </td>
                     </tr>

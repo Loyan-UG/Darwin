@@ -6,6 +6,7 @@ using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Commands
@@ -17,11 +18,16 @@ namespace Darwin.Application.Orders.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<RefundCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public AddRefundHandler(IAppDbContext db, IValidator<RefundCreateDto> validator)
+        public AddRefundHandler(
+            IAppDbContext db,
+            IValidator<RefundCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(RefundCreateDto dto, CancellationToken ct = default)
@@ -34,7 +40,7 @@ namespace Darwin.Application.Orders.Commands
 
             if (order is null)
             {
-                throw new InvalidOperationException("Order not found.");
+                throw new InvalidOperationException(_localizer["OrderNotFound"]);
             }
 
             var payment = await _db.Set<Payment>()
@@ -43,17 +49,17 @@ namespace Darwin.Application.Orders.Commands
 
             if (payment is null)
             {
-                throw new InvalidOperationException("Payment not found for the order.");
+                throw new InvalidOperationException(_localizer["PaymentNotFoundForOrder"]);
             }
 
             if (payment.Status is PaymentStatus.Failed or PaymentStatus.Voided)
             {
-                throw new ValidationException("Refunds cannot be recorded against failed or voided payments.");
+                throw new ValidationException(_localizer["RefundsNotAllowedForFailedOrVoidedPayments"]);
             }
 
             if (!string.Equals(payment.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ValidationException("Refund currency does not match the payment currency.");
+                throw new ValidationException(_localizer["RefundCurrencyMustMatchPaymentCurrency"]);
             }
 
             var refundedAmount = await _db.Set<Refund>()
@@ -64,7 +70,7 @@ namespace Darwin.Application.Orders.Commands
 
             if (refundedAmount + dto.AmountMinor > payment.AmountMinor)
             {
-                throw new ValidationException("Refund amount exceeds the remaining captured amount.");
+                throw new ValidationException(_localizer["RefundAmountExceedsRemainingCapturedAmount"]);
             }
 
             var refund = new Refund
@@ -126,11 +132,16 @@ namespace Darwin.Application.Orders.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<OrderInvoiceCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateOrderInvoiceHandler(IAppDbContext db, IValidator<OrderInvoiceCreateDto> validator)
+        public CreateOrderInvoiceHandler(
+            IAppDbContext db,
+            IValidator<OrderInvoiceCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(OrderInvoiceCreateDto dto, CancellationToken ct = default)
@@ -144,7 +155,7 @@ namespace Darwin.Application.Orders.Commands
 
             if (order is null)
             {
-                throw new InvalidOperationException("Order not found.");
+                throw new InvalidOperationException(_localizer["OrderNotFound"]);
             }
 
             Guid? customerId = dto.CustomerId;
@@ -167,17 +178,17 @@ namespace Darwin.Application.Orders.Commands
 
                 if (payment is null)
                 {
-                    throw new InvalidOperationException("Payment not found for the order.");
+                    throw new InvalidOperationException(_localizer["PaymentNotFoundForOrder"]);
                 }
 
                 if (payment.InvoiceId.HasValue)
                 {
-                    throw new InvalidOperationException("Linked payment is already assigned to another invoice.");
+                    throw new InvalidOperationException(_localizer["LinkedPaymentAlreadyAssignedToAnotherInvoice"]);
                 }
 
                 if (payment.Status is PaymentStatus.Failed or PaymentStatus.Voided or PaymentStatus.Refunded)
                 {
-                    throw new InvalidOperationException("Only active payments can be linked to a new invoice.");
+                    throw new InvalidOperationException(_localizer["OnlyActivePaymentsCanBeLinkedToNewInvoice"]);
                 }
             }
 

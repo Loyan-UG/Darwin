@@ -6,7 +6,15 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     xmlns:local="clr-namespace:Darwin.Mobile.Business.Constants"
     x:Class="Darwin.Mobile.Business.AppShell"
-    Shell.FlyoutBehavior="Disabled">
+    Shell.FlyoutBehavior="Disabled"
+    Shell.BackgroundColor="{StaticResource Neutral0}"
+    Shell.ForegroundColor="{StaticResource Neutral900}"
+    Shell.TitleColor="{StaticResource Neutral900}"
+    Shell.UnselectedColor="{StaticResource Neutral700}"
+    Shell.TabBarBackgroundColor="{StaticResource Neutral0}"
+    Shell.TabBarForegroundColor="{StaticResource BrandGold500}"
+    Shell.TabBarTitleColor="{StaticResource BrandGold500}"
+    Shell.TabBarUnselectedColor="{StaticResource Neutral700}">
 
     <!-- Single logout button (source of truth). -->
     <Shell.ToolbarItems>

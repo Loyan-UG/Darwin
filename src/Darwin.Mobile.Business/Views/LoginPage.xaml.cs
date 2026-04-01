@@ -21,6 +21,7 @@ public partial class LoginPage
         // Make this login page standalone:
         // - Hide the top navigation bar
         // - Disable the flyout menu for this page
+        NavigationPage.SetHasNavigationBar(this, false);
         Shell.SetNavBarIsVisible(this, false);
         Shell.SetFlyoutBehavior(this, FlyoutBehavior.Disabled);
 

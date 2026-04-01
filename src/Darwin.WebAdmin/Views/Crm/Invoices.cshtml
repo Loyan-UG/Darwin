@@ -1,94 +1,95 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InvoicesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Invoices";
+    ViewData["Title"] = T.T("Invoices");
 }
 
 <div id="crm-invoices-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1 class="mb-1">Invoices</h1>
-        <div class="text-muted small">CRM and order-generated invoices in one operational queue.</div>
+        <h1 class="mb-1">@T.T("Invoices")</h1>
+        <div class="text-muted small">@T.T("InvoicesQueueIntro")</div>
     </div>
     <a asp-action="Index"
        hx-get="@Url.Action("Index", "Crm")"
        hx-target="#crm-invoices-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
-       class="btn btn-outline-secondary">Overview</a>
+       class="btn btn-outline-secondary">@T.T("Overview")</a>
 </div>
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Tax &amp; Invoicing Policy</span>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Open Tax Settings</a>
+        <span>@T.T("TaxInvoicingPolicy")</span>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("OpenTaxSettings")</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">VAT Enabled</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.VatEnabled ? "Yes" : "No")</div>
+                    <div class="text-muted small">@T.T("VatEnabled")</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.VatEnabled ? T.T("Yes") : T.T("No"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Default VAT</div>
+                    <div class="text-muted small">@T.T("DefaultVat")</div>
                     <div class="fw-semibold mt-1">@Model.TaxPolicy.DefaultVatRatePercent.ToString("0.##")%</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Price Mode</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.PricesIncludeVat ? "VAT Inclusive" : "VAT Exclusive")</div>
+                    <div class="text-muted small">@T.T("PriceMode")</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.PricesIncludeVat ? T.T("VatInclusive") : T.T("VatExclusive"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Reverse Charge</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.AllowReverseCharge ? "Allowed" : "Disabled")</div>
+                    <div class="text-muted small">@T.T("ReverseCharge")</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.AllowReverseCharge ? T.T("Allowed") : T.T("Disabled"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Issuer</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : "Missing")</div>
+                    <div class="text-muted small">@T.T("Issuer")</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : T.T("Missing"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Tax ID</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? "Ready" : "Missing")</div>
+                    <div class="text-muted small">@T.T("TaxId")</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? T.T("Ready") : T.T("Missing"))</div>
                 </div>
             </div>
         </div>
         <div class="small text-muted mt-3">
-            This is a phase-1 VAT support surface for invoice review. It exposes current tax defaults and issuer identity without claiming full tax-engine automation or compliance completion.
+            @T.T("InvoicesTaxPolicyNote")
         </div>
         <div class="row g-3 mt-1">
             <div class="col-md-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Archive Readiness</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.ArchiveReadinessComplete ? "Ready" : "Needs issuer data")</div>
+                    <div class="text-muted small">@T.T("ArchiveReadiness")</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.ArchiveReadinessComplete ? T.T("Ready") : T.T("NeedsIssuerData"))</div>
                     <div class="small text-muted mt-2">@Model.TaxPolicy.ArchiveReadinessLabel</div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">E-Invoice Baseline</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.EInvoiceBaselineReady ? "Ready" : "Not ready")</div>
+                    <div class="text-muted small">@T.T("EInvoiceBaseline")</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.EInvoiceBaselineReady ? T.T("Ready") : T.T("NotReady"))</div>
                     <div class="small text-muted mt-2">@Model.TaxPolicy.ComplianceScopeNote</div>
                 </div>
             </div>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-3">
-            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Tax Settings</a>
+            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("TaxSettings")</a>
             @if (!Model.TaxPolicy.ArchiveReadinessComplete)
             {
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">Complete Issuer Data</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("CompleteIssuerData")</a>
             }
             @if (!Model.TaxPolicy.EInvoiceBaselineReady)
             {
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">Review E-Invoice Baseline</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("ReviewEInvoiceBaseline")</a>
             }
         </div>
     </div>
@@ -100,10 +101,10 @@
       hx-swap="outerHTML"
       hx-push-url="true">
     <div class="col-md-4">
-        <input name="q" value="@Model.Query" class="form-control" placeholder="Search by id, order, customer, payment" />
+        <input name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchInvoicesPlaceholder")" />
     </div>
     <div class="col-md-auto">
-        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        <button type="submit" class="btn btn-outline-secondary">@T.T("Filter")</button>
     </div>
 </form>
 
@@ -111,21 +112,21 @@
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Invoice</th>
-                <th>Customer</th>
-                <th>Order</th>
-                <th>Payment</th>
-                <th>Tax Profile</th>
-                <th class="text-end">Net / Tax / Gross</th>
-                <th>Status</th>
-                <th>Due</th>
-                <th class="text-end">Actions</th>
+                <th>@T.T("Invoice")</th>
+                <th>@T.T("Customer")</th>
+                <th>@T.T("Order")</th>
+                <th>@T.T("Payment")</th>
+                <th>@T.T("TaxProfile")</th>
+                <th class="text-end">@T.T("NetTaxGross")</th>
+                <th>@T.T("Status")</th>
+                <th>@T.T("Due")</th>
+                <th class="text-end">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="9" class="text-center text-muted">No invoices found.</td></tr>
+                <tr><td colspan="9" class="text-center text-muted">@T.T("NoInvoicesFound")</td></tr>
             }
             else
             {
@@ -164,7 +165,7 @@
                             }
                             else
                             {
-                                <span class="text-muted">Unlinked</span>
+                                <span class="text-muted">@T.T("Unlinked")</span>
                             }
                         </td>
                         <td>
@@ -177,7 +178,7 @@
                                 }
                                 else if (item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business)
                                 {
-                                    <div class="small text-danger">VAT ID missing</div>
+                                    <div class="small text-danger">@T.T("VatIdMissing")</div>
                                 }
                             }
                             else
@@ -186,37 +187,37 @@
                             }
                         </td>
                         <td class="text-end">
-                            <div class="small text-muted">Net: @item.Currency @((item.TotalNetMinor / 100.0M).ToString("0.00"))</div>
-                            <div class="small text-muted">Tax: @item.Currency @((item.TotalTaxMinor / 100.0M).ToString("0.00"))</div>
-                            <div class="fw-semibold">Gross: @item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
+                            <div class="small text-muted">@T.T("Net"): @item.Currency @((item.TotalNetMinor / 100.0M).ToString("0.00"))</div>
+                            <div class="small text-muted">@T.T("Tax"): @item.Currency @((item.TotalTaxMinor / 100.0M).ToString("0.00"))</div>
+                            <div class="fw-semibold">@T.T("Gross"): @item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
                             @if (item.RefundedAmountMinor > 0)
                             {
-                                <div class="small text-warning">Refunded: @item.Currency @((item.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="small text-warning">@T.T("Refunded"): @item.Currency @((item.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>
                             }
-                            <div class="small text-muted">Settled: @item.Currency @((item.SettledAmountMinor / 100.0M).ToString("0.00"))</div>
+                            <div class="small text-muted">@T.T("Settled"): @item.Currency @((item.SettledAmountMinor / 100.0M).ToString("0.00"))</div>
                             <div class="small @(item.BalanceMinor > 0 ? "text-danger" : "text-success")">
-                                Balance: @item.Currency @((item.BalanceMinor / 100.0M).ToString("0.00"))
+                                @T.T("Balance"): @item.Currency @((item.BalanceMinor / 100.0M).ToString("0.00"))
                             </div>
                         </td>
                         <td>@item.Status</td>
                         <td>@item.DueDateUtc.ToString("yyyy-MM-dd")</td>
                         <td class="text-end">
-                            <a asp-action="EditInvoice" asp-route-id="@item.Id" hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.Id })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Open</a>
+                            <a asp-action="EditInvoice" asp-route-id="@item.Id" hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.Id })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Open")</a>
                             @if (item.CustomerId.HasValue)
                             {
-                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">Customer</a>
+                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Customer")</a>
                                 @if (item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(item.CustomerVatId))
                                 {
-                                    <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">Fix VAT ID</a>
+                                    <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("FixVatId")</a>
                                 }
                             }
                             @if (item.OrderId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-info">Order</a>
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-info">@T.T("Order")</a>
                             }
                             @if (item.PaymentId.HasValue && item.OrderId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value, fragment = "payments" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">Payment</a>
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value, fragment = "payments" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("Payment")</a>
                             }
                             @if (item.Status == Darwin.Domain.Enums.InvoiceStatus.Draft)
                             {
@@ -225,7 +226,7 @@
                                     <input type="hidden" name="Id" value="@item.Id" />
                                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
                                     <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Open" />
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Post</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T("Post")</button>
                                 </form>
                             }
                             @if (item.Status != Darwin.Domain.Enums.InvoiceStatus.Paid && item.BalanceMinor <= 0)
@@ -235,7 +236,7 @@
                                     <input type="hidden" name="Id" value="@item.Id" />
                                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
                                     <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Paid" />
-                                    <button type="submit" class="btn btn-sm btn-outline-success">Mark Paid</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-success">@T.T("MarkPaid")</button>
                                 </form>
                             }
                         </td>

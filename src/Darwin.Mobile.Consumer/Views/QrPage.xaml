@@ -9,28 +9,27 @@
     Title="{x:Static res:AppResources.QrTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24,28,24,32" Spacing="18">
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
             <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.QrTitle}"
-                           Style="{StaticResource TitleLabelStyle}" />
-                    <Label Text="{Binding GuidanceMessage}"
-                           Style="{StaticResource BodyLabelStyle}" />
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{x:Static res:AppResources.QrTitle}" Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{Binding GuidanceMessage}" Style="{StaticResource BodyLabelStyle}" />
                     <Label Text="{Binding BusinessDisplayName, StringFormat='{x:Static res:AppResources.QrBusinessFormat}'}"
                            Style="{StaticResource SecondaryBodyLabelStyle}"
                            IsVisible="{Binding BusinessDisplayName, Converter={StaticResource NullCheckConverter}}" />
+                    <Label Text="{Binding StatusMessage}"
+                           Style="{StaticResource SuccessLabelStyle}"
+                           IsVisible="{Binding StatusMessage, Converter={StaticResource NullCheckConverter}}" />
+                    <Label Text="{Binding ErrorMessage}"
+                           Style="{StaticResource ErrorLabelStyle}"
+                           IsVisible="{Binding HasError}" />
                 </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="14">
-                    <Label Text="{Binding StatusMessage}"
-                           Style="{StaticResource SuccessLabelStyle}"
-                           HorizontalTextAlignment="Center"
-                           IsVisible="{Binding StatusMessage, Converter={StaticResource NullCheckConverter}}" />
-
+                <VerticalStackLayout Spacing="10">
                     <Border Style="{StaticResource MutedCardBorderStyle}"
-                            Padding="22"
+                            Padding="20"
                             HorizontalOptions="Center">
                         <Image Source="{Binding QrImage}"
                                HeightRequest="220"
@@ -43,43 +42,32 @@
                            Style="{StaticResource BodyLabelStyle}"
                            HorizontalTextAlignment="Center"
                            IsVisible="{Binding HasBusinessContext}" />
-
                     <Label Text="{Binding ExpiresInText}"
                            Style="{StaticResource SecondaryBodyLabelStyle}"
                            HorizontalTextAlignment="Center"
                            IsVisible="{Binding HasBusinessContext}" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="8">
+                            <Label Text="{x:Static res:AppResources.QrAccrualHelpText}"
+                                   Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Button Text="{x:Static res:AppResources.RefreshAccrualButton}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding RefreshAccrualSessionCommand}"
+                                    IsEnabled="{Binding HasBusinessContext}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="8">
+                            <Label Text="{x:Static res:AppResources.QrRedemptionHelpText}"
+                                   Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Button Text="{x:Static res:AppResources.RefreshRedemptionButton}"
+                                    Style="{StaticResource OutlinedButtonStyle}"
+                                    Command="{Binding RefreshRedemptionSessionCommand}"
+                                    IsEnabled="{Binding HasBusinessContext}" />
+                        </VerticalStackLayout>
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
-
-            <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="14">
-                    <Label Text="{x:Static res:AppResources.RefreshAccrualButton}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
-                    <Label Text="{x:Static res:AppResources.QrAccrualHelpText}"
-                           Style="{StaticResource SecondaryBodyLabelStyle}" />
-                    <Button Text="{x:Static res:AppResources.RefreshAccrualButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding RefreshAccrualSessionCommand}"
-                            IsEnabled="{Binding HasBusinessContext}" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="14">
-                    <Label Text="{x:Static res:AppResources.RefreshRedemptionButton}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
-                    <Label Text="{x:Static res:AppResources.QrRedemptionHelpText}"
-                           Style="{StaticResource SecondaryBodyLabelStyle}" />
-                    <Button Text="{x:Static res:AppResources.RefreshRedemptionButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Command="{Binding RefreshRedemptionSessionCommand}"
-                            IsEnabled="{Binding HasBusinessContext}" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Label Text="{Binding ErrorMessage}"
-                   Style="{StaticResource ErrorLabelStyle}"
-                   IsVisible="{Binding HasError}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"

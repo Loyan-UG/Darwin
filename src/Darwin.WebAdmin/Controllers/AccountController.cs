@@ -7,6 +7,7 @@ using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Application.Identity.Services;
+using Darwin.WebAdmin.Localization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +29,7 @@ namespace Darwin.WebAdmin.Controllers
         private readonly GetSecurityStampHandler _getSecurityStamp;
         private readonly GetRoleIdByKeyHandler _getRoleIdByKey;
         private readonly IPermissionService _permissions;
+        private readonly IAdminTextLocalizer _text;
 
         /// <summary>
         /// Initializes the controller with required Application services.
@@ -40,7 +42,8 @@ namespace Darwin.WebAdmin.Controllers
             FinishLoginHandler webauthnFinish,
             GetSecurityStampHandler getSecurityStamp,
             GetRoleIdByKeyHandler getRoleIdByKey,
-            IPermissionService permissions)
+            IPermissionService permissions,
+            IAdminTextLocalizer text)
         {
             _signIn = signIn;
             _register = register;
@@ -50,6 +53,7 @@ namespace Darwin.WebAdmin.Controllers
             _getSecurityStamp = getSecurityStamp;
             _getRoleIdByKey = getRoleIdByKey;
             _permissions = permissions;
+            _text = text;
         }
 
         /// <summary>Renders the login page.</summary>
@@ -77,7 +81,7 @@ namespace Darwin.WebAdmin.Controllers
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
-                ModelState.AddModelError(string.Empty, "Email and password are required.");
+                ModelState.AddModelError(string.Empty, _text.T("EmailPasswordRequiredMessage"));
                 ViewData["ReturnUrl"] = returnUrl;
                 return View("Login");
             }
@@ -96,7 +100,7 @@ namespace Darwin.WebAdmin.Controllers
                 }
 
                 ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.FailureReason)
-                    ? "Invalid credentials."
+                    ? _text.T("InvalidCredentialsMessage")
                     : result.FailureReason!);
 
                 ViewData["ReturnUrl"] = returnUrl;
@@ -105,7 +109,7 @@ namespace Darwin.WebAdmin.Controllers
 
             if (!result.UserId.HasValue || string.IsNullOrWhiteSpace(result.SecurityStamp))
             {
-                ModelState.AddModelError(string.Empty, "Unexpected login result.");
+                ModelState.AddModelError(string.Empty, _text.T("UnexpectedLoginResultMessage"));
                 ViewData["ReturnUrl"] = returnUrl;
                 return View("Login");
             }
@@ -144,21 +148,21 @@ namespace Darwin.WebAdmin.Controllers
         {
             if (!Guid.TryParse(userId, out var uid))
             {
-                ModelState.AddModelError(string.Empty, "Invalid 2FA flow.");
+                ModelState.AddModelError(string.Empty, _text.T("InvalidTwoFactorFlowMessage"));
                 return View("LoginTwoFactor");
             }
 
             var verify = await _verifyTotp.HandleAsync(new TotpVerifyDto { UserId = uid, Code = code }, ct);
             if (!verify.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(verify.Error) ? "Invalid code." : verify.Error!);
+                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(verify.Error) ? _text.T("InvalidCodeMessage") : verify.Error!);
                 return View("LoginTwoFactor");
             }
 
             var stampRes = await _getSecurityStamp.HandleAsync(uid, ct);
             if (!stampRes.Succeeded || string.IsNullOrWhiteSpace(stampRes.Value))
             {
-                ModelState.AddModelError(string.Empty, "Unable to complete sign-in.");
+                ModelState.AddModelError(string.Empty, _text.T("UnableToCompleteSignInMessage"));
                 return View("LoginTwoFactor");
             }
 
@@ -175,7 +179,7 @@ namespace Darwin.WebAdmin.Controllers
         {
             var res = await _webauthnBegin.HandleAsync(new WebAuthnBeginLoginDto { UserId = userId }, ct);
             if (!res.Succeeded || res.Value is null)
-                return BadRequest(new { error = string.IsNullOrWhiteSpace(res.Error) ? "Failed to begin passkey login." : res.Error });
+                return BadRequest(new { error = string.IsNullOrWhiteSpace(res.Error) ? _text.T("FailedToBeginPasskeyLoginMessage") : res.Error });
 
             return Json(new { challengeTokenId = res.Value.ChallengeTokenId, options = res.Value.OptionsJson });
         }
@@ -201,11 +205,11 @@ namespace Darwin.WebAdmin.Controllers
             }, ct);
 
             if (!res.Succeeded)
-                return BadRequest(new { error = string.IsNullOrWhiteSpace(res.Error) ? "Passkey login failed." : res.Error });
+                return BadRequest(new { error = string.IsNullOrWhiteSpace(res.Error) ? _text.T("PasskeyLoginFailedMessage") : res.Error });
 
             var stampRes = await _getSecurityStamp.HandleAsync(userId, ct);
             if (!stampRes.Succeeded || string.IsNullOrWhiteSpace(stampRes.Value))
-                return BadRequest(new { error = "Unable to complete sign-in." });
+                return BadRequest(new { error = _text.T("UnableToCompleteSignInMessage") });
 
             await IssueCookieAsync(userId, stampRes.Value!, rememberMe, ct);
 
@@ -231,7 +235,7 @@ namespace Darwin.WebAdmin.Controllers
         public async Task<IActionResult> RegisterPost(
             [FromForm] string email,
             [FromForm] string password,
-            [FromForm] string locale = "de-DE",
+            [FromForm] string locale = AdminCultureCatalog.DefaultCulture,
             [FromForm] string timezone = "Europe/Berlin",
             [FromForm] string currency = "EUR",
             [FromForm] string? returnUrl = null,
@@ -239,7 +243,7 @@ namespace Darwin.WebAdmin.Controllers
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
-                ModelState.AddModelError(string.Empty, "Email and password are required.");
+                ModelState.AddModelError(string.Empty, _text.T("EmailPasswordRequiredMessage"));
                 ViewData["ReturnUrl"] = returnUrl;
                 return View("Register");
             }
@@ -248,7 +252,7 @@ namespace Darwin.WebAdmin.Controllers
             {
                 Email = email.Trim(),
                 Password = password,
-                Locale = string.IsNullOrWhiteSpace(locale) ? "de-DE" : locale,
+                Locale = string.IsNullOrWhiteSpace(locale) ? AdminCultureCatalog.DefaultCulture : AdminCultureCatalog.NormalizeUiCulture(locale),
                 Timezone = string.IsNullOrWhiteSpace(timezone) ? "Europe/Berlin" : timezone,
                 Currency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency
             };
@@ -261,7 +265,7 @@ namespace Darwin.WebAdmin.Controllers
             var result = await _register.HandleAsync(create, defaultRoleId, ct);
             if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.Error) ? "Registration failed." : result.Error!);
+                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.Error) ? _text.T("RegistrationFailedMessage") : result.Error!);
                 ViewData["ReturnUrl"] = returnUrl;
                 return View("Register");
             }

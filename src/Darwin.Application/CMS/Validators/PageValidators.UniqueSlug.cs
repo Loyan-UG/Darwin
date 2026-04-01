@@ -6,17 +6,18 @@ using Darwin.Application.CMS.DTOs;
 using Darwin.Domain.Entities.CMS;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CMS.Validators
 {
     public sealed class PageCreateUniqueSlugValidator : AbstractValidator<PageCreateDto>
     {
         private readonly IAppDbContext _db;
-        public PageCreateUniqueSlugValidator(IAppDbContext db)
+        public PageCreateUniqueSlugValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
 
-            RuleForEach(x => x.Translations).MustAsync(BeUniqueSlug).WithMessage("Slug must be unique per culture.");
+            RuleForEach(x => x.Translations).MustAsync(BeUniqueSlug).WithMessage(localizer["SlugMustBeUniquePerCulture"]);
         }
 
         private async Task<bool> BeUniqueSlug(PageTranslationDto t, CancellationToken ct)
@@ -31,11 +32,11 @@ namespace Darwin.Application.CMS.Validators
     public sealed class PageEditUniqueSlugValidator : AbstractValidator<PageEditDto>
     {
         private readonly IAppDbContext _db;
-        public PageEditUniqueSlugValidator(IAppDbContext db)
+        public PageEditUniqueSlugValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
 
-            RuleForEach(x => x.Translations).MustAsync(BeUniqueSlug).WithMessage("Slug must be unique per culture.");
+            RuleForEach(x => x.Translations).MustAsync(BeUniqueSlug).WithMessage(localizer["SlugMustBeUniquePerCulture"]);
         }
 
         private async Task<bool> BeUniqueSlug(PageEditDto dto, PageTranslationDto t, CancellationToken ct)

@@ -5,33 +5,19 @@
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     x:Class="Darwin.Mobile.Business.Views.LoginPage"
     x:DataType="vm:LoginViewModel"
+    NavigationPage.HasNavigationBar="False"
     Title="{x:Static res:AppResources.LoginTitle}">
 
     <ScrollView x:Name="RootScrollView"
                 VerticalOptions="Fill"
                 HorizontalOptions="Fill">
-        <VerticalStackLayout Padding="24,32,24,28"
-                             Spacing="18">
-            <Border StrokeThickness="0"
-                    HorizontalOptions="Center"
-                    WidthRequest="132"
-                    HeightRequest="132"
-                    StrokeShape="RoundRectangle 66">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0"
-                                         EndPoint="1,1">
-                        <GradientStop Color="{StaticResource BrandGold500}"
-                                      Offset="0" />
-                        <GradientStop Color="{StaticResource BrandGold600}"
-                                      Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
-                <Grid Padding="22">
-                    <Image Source="loyan_logo.png"
-                           Aspect="AspectFit"
-                           SemanticProperties.Description="{x:Static res:AppResources.LoginLogoDescription}" />
-                </Grid>
-            </Border>
+        <VerticalStackLayout Padding="24,8,24,24"
+                             Spacing="14">
+            <Image Source="loyan_logo.png"
+                   Aspect="AspectFit"
+                   HeightRequest="112"
+                   HorizontalOptions="Center"
+                   SemanticProperties.Description="{x:Static res:AppResources.LoginLogoDescription}" />
 
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="10">
@@ -46,6 +32,16 @@
 
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="14">
+                    <Label Text="{Binding ErrorMessage}"
+                           Style="{StaticResource ErrorLabelStyle}"
+                           IsVisible="{Binding HasError}"
+                           AutomationId="ErrorLabel" />
+
+                    <Label Text="{Binding InfoMessage}"
+                           Style="{StaticResource InfoLabelStyle}"
+                           IsVisible="{Binding HasInfo}"
+                           AutomationId="InfoLabel" />
+
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{x:Static res:AppResources.EmailLabel}"
                                Style="{StaticResource FormLabelStyle}" />
@@ -95,16 +91,6 @@
                     </Grid>
                 </VerticalStackLayout>
             </Border>
-
-            <Label Text="{Binding ErrorMessage}"
-                   Style="{StaticResource ErrorLabelStyle}"
-                   IsVisible="{Binding HasError}"
-                   AutomationId="ErrorLabel" />
-
-            <Label Text="{Binding InfoMessage}"
-                   Style="{StaticResource InfoLabelStyle}"
-                   IsVisible="{Binding HasInfo}"
-                   AutomationId="InfoLabel" />
 
             <Button Text="{x:Static res:AppResources.LegalHubTitle}"
                     Style="{StaticResource LegalLinkButtonStyle}"

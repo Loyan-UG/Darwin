@@ -5,11 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Common.DTOs;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Loyalty;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Queries
 {
@@ -35,14 +37,16 @@ namespace Darwin.Application.Loyalty.Queries
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the handler.
         /// </summary>
-        public GetMyLoyaltyBusinessesHandler(IAppDbContext db, ICurrentUserService currentUser)
+        public GetMyLoyaltyBusinessesHandler(IAppDbContext db, ICurrentUserService currentUser, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -59,7 +63,7 @@ namespace Darwin.Application.Loyalty.Queries
 
             var userId = _currentUser.GetCurrentUserId();
             if (userId == Guid.Empty)
-                throw new InvalidOperationException("Current user id is not available.");
+                throw new InvalidOperationException(_localizer["CurrentUserIdNotAvailable"]);
 
             var page = request.Page < 1 ? 1 : request.Page;
             var pageSize = request.PageSize < 1 ? 50 : request.PageSize;

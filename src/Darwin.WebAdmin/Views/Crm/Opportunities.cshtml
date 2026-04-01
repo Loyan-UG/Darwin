@@ -1,17 +1,18 @@
 @model Darwin.WebAdmin.ViewModels.CRM.OpportunitiesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "CRM Opportunities";
+    ViewData["Title"] = T.T("CrmOpportunitiesTitle");
 }
 
 <div id="crm-opportunities-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">Opportunities</h1>
+    <h1 class="mb-0">@T.T("Opportunities")</h1>
     <a asp-action="Index"
        hx-get="@Url.Action("Index", "Crm")"
        hx-target="#crm-opportunities-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
-       class="btn btn-outline-secondary">Overview</a>
+       class="btn btn-outline-secondary">@T.T("Overview")</a>
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -20,9 +21,9 @@
           hx-target="#crm-opportunities-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search opportunities">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchOpportunitiesPlaceholder")">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> @T.T("Search")</button>
     </form>
 
     <a asp-action="CreateOpportunity"
@@ -31,36 +32,36 @@
        hx-swap="outerHTML"
        hx-push-url="true"
        class="btn btn-primary">
-        <i class="fa fa-plus"></i> New Opportunity
+        <i class="fa fa-plus"></i> @T.T("NewOpportunity")
     </a>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="Opportunities" asp-route-filter="Open" hx-get="@Url.Action("Opportunities", "Crm", new { q = Model.Query, filter = "Open" })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.Open ? "btn-primary" : "btn-outline-primary")">Open</a>
-    <a asp-action="Opportunities" asp-route-filter="ClosingSoon" hx-get="@Url.Action("Opportunities", "Crm", new { q = Model.Query, filter = "ClosingSoon" })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.ClosingSoon ? "btn-warning" : "btn-outline-warning")">Closing Soon</a>
-    <a asp-action="Opportunities" asp-route-filter="HighValue" hx-get="@Url.Action("Opportunities", "Crm", new { q = Model.Query, filter = "HighValue" })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.HighValue ? "btn-info" : "btn-outline-info")">High Value</a>
-    <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm", new { q = Model.Query })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+    <a asp-action="Opportunities" asp-route-filter="Open" hx-get="@Url.Action("Opportunities", "Crm", new { q = Model.Query, filter = "Open" })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.Open ? "btn-primary" : "btn-outline-primary")">@T.T("OpenQueue")</a>
+    <a asp-action="Opportunities" asp-route-filter="ClosingSoon" hx-get="@Url.Action("Opportunities", "Crm", new { q = Model.Query, filter = "ClosingSoon" })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.ClosingSoon ? "btn-warning" : "btn-outline-warning")">@T.T("ClosingSoon")</a>
+    <a asp-action="Opportunities" asp-route-filter="HighValue" hx-get="@Url.Action("Opportunities", "Crm", new { q = Model.Query, filter = "HighValue" })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.HighValue ? "btn-info" : "btn-outline-info")">@T.T("HighValue")</a>
+    <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm", new { q = Model.Query })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Title</th>
-                <th>Customer</th>
-                <th>Stage</th>
-                <th>Estimated</th>
-                <th>Close date</th>
-                <th>Owner</th>
-                <th>Items</th>
-                <th>Updated (UTC)</th>
-                <th class="text-end">Actions</th>
+                <th>@T.T("Title")</th>
+                <th>@T.T("Customer")</th>
+                <th>@T.T("Stage")</th>
+                <th>@T.T("Estimated")</th>
+                <th>@T.T("CloseDate")</th>
+                <th>@T.T("Owner")</th>
+                <th>@T.T("Items")</th>
+                <th>@T.T("UpdatedUtc")</th>
+                <th class="text-end">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="9" class="text-center text-muted">No opportunities found.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted">@T.T("NoOpportunitiesFound")</td></tr>
         }
         else
         {
@@ -77,13 +78,13 @@
                     <td>@item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="text-end">
                         <a asp-action="EditCustomer" asp-route-id="@item.CustomerId" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-success">
-                            <i class="fa fa-user"></i> Customer
+                            <i class="fa fa-user"></i> @T.T("Customer")
                         </a>
                         <a asp-action="EditOpportunity" asp-route-id="@item.Id" asp-fragment="opportunity-interactions-grid" hx-get="@Url.Action("EditOpportunity", "Crm", new { id = item.Id, fragment = "opportunity-interactions-grid" })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
-                            <i class="fa fa-comments"></i> Interactions
+                            <i class="fa fa-comments"></i> @T.T("Interactions")
                         </a>
                         <a asp-action="EditOpportunity" asp-route-id="@item.Id" hx-get="@Url.Action("EditOpportunity", "Crm", new { id = item.Id })" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
-                            <i class="fa fa-pen"></i> Edit
+                            <i class="fa fa-pen"></i> @T.T("Edit")
                         </a>
                     </td>
                 </tr>

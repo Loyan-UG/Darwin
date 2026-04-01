@@ -19,12 +19,14 @@ export function SiteShell({ children, model }: SiteShellProps) {
         navigation={model.primaryNavigation}
         utilityLinks={model.utilityLinks}
         activeThemeName={model.activeThemeName}
+        culture={model.culture}
+        supportedCultures={model.supportedCultures}
         menuSource={model.menuSource}
         menuStatus={model.menuStatus}
         menuMessage={model.menuMessage}
       />
       <main className="flex flex-1 flex-col">{children}</main>
-      <SiteFooter groups={model.footerGroups} />
+      <SiteFooter groups={model.footerGroups} culture={model.culture} />
     </div>
   );
 }

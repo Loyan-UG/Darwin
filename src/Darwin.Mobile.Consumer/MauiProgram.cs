@@ -2,13 +2,17 @@
 using Darwin.Mobile.Consumer.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.Hosting;
+using Microsoft.Maui.Handlers;
 using Microsoft.Maui.Hosting;
 using ZXing.Net.Maui;
 using UraniumUI;
 using UraniumUI.Icons.FontAwesome;
 using ZXing.Net.Maui.Controls;
 using UraniumUI.Icons.MaterialIcons;
-using UraniumUI.Material;
+#if ANDROID
+using Android.Content.Res;
+using Android.Graphics;
+#endif
 
 
 namespace Darwin.Mobile.Consumer;
@@ -31,7 +35,6 @@ public static class MauiProgram
             .UseMauiCommunityToolkit()
             .UseMauiMaps()
             .UseUraniumUI()
-            .UseUraniumUIMaterial()
             .UseBarcodeReader() // Registers ZXing barcode scanner services
             .ConfigureFonts(fonts =>
             {
@@ -44,11 +47,41 @@ public static class MauiProgram
 
         // Register Consumer services, pages, and view models.
         builder.Services.AddConsumerApp();
+        ConfigurePlatformControlColors();
 
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
 
         return builder.Build();
+    }
+
+    /// <summary>
+    /// Forces native input controls to use the approved Consumer gold tint instead of platform defaults.
+    /// </summary>
+    private static void ConfigurePlatformControlColors()
+    {
+#if ANDROID
+        var goldTint = ColorStateList.ValueOf(Color.ParseColor("#F4B223"));
+        var goldHighlight = Color.ParseColor("#F4B223");
+
+        EntryHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", static (handler, view) =>
+        {
+            handler.PlatformView.BackgroundTintList = goldTint;
+            handler.PlatformView.SetHighlightColor(goldHighlight);
+        });
+
+        EditorHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", static (handler, view) =>
+        {
+            handler.PlatformView.BackgroundTintList = goldTint;
+            handler.PlatformView.SetHighlightColor(goldHighlight);
+        });
+
+        PickerHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", static (handler, view) =>
+        {
+            handler.PlatformView.BackgroundTintList = goldTint;
+            handler.PlatformView.SetHighlightColor(goldHighlight);
+        });
+#endif
     }
 }

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Validators;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Tests.Unit.Common;
 using FluentAssertions;
+using Microsoft.Extensions.Localization;
 using Xunit;
 
 namespace Darwin.Tests.Unit.Catalog
@@ -54,7 +56,7 @@ namespace Darwin.Tests.Unit.Catalog
                     }
                 }
             };
-            var validator = new ProductCreateUniqueSlugValidator(ctx);
+            var validator = new ProductCreateUniqueSlugValidator(ctx, new TestStringLocalizer());
 
             // Act
             var result = await validator.ValidateAsync(dto, TestContext.Current.CancellationToken);
@@ -99,7 +101,7 @@ namespace Darwin.Tests.Unit.Catalog
                     }
                 }
             };
-            var validator = new ProductEditUniqueSlugValidator(ctx);
+            var validator = new ProductEditUniqueSlugValidator(ctx, new TestStringLocalizer());
 
             // Act
             var result = await validator.ValidateAsync(dto, TestContext.Current.CancellationToken);
@@ -147,7 +149,7 @@ namespace Darwin.Tests.Unit.Catalog
                     }
                 }
             };
-            var validator = new ProductCreateUniqueSlugValidator(ctx);
+            var validator = new ProductCreateUniqueSlugValidator(ctx, new TestStringLocalizer());
             // Act
             var result = await validator.ValidateAsync(dto, TestContext.Current.CancellationToken);
             // Assert
@@ -196,11 +198,24 @@ namespace Darwin.Tests.Unit.Catalog
                     }
                 }
             };
-            var validator = new ProductEditUniqueSlugValidator(ctx);
+            var validator = new ProductEditUniqueSlugValidator(ctx, new TestStringLocalizer());
             // Act
             var result = await validator.ValidateAsync(dto, TestContext.Current.CancellationToken);
             // Assert
             result.IsValid.Should().BeTrue("editing a product without changing its slug should pass validation");
+        }
+
+        private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+        {
+            public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+            public LocalizedString this[string name, params object[] arguments] =>
+                new(name, string.Format(name, arguments), resourceNotFound: false);
+
+            public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+                Array.Empty<LocalizedString>();
+
+            public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
         }
     }
 }

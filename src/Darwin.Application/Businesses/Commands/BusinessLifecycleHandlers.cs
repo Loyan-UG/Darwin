@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -20,12 +21,18 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
         private readonly IValidator<BusinessLifecycleActionDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ApproveBusinessHandler(IAppDbContext db, IClock clock, IValidator<BusinessLifecycleActionDto> validator)
+        public ApproveBusinessHandler(
+            IAppDbContext db,
+            IClock clock,
+            IValidator<BusinessLifecycleActionDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(BusinessLifecycleActionDto dto, CancellationToken ct = default)
@@ -48,12 +55,12 @@ namespace Darwin.Application.Businesses.Commands
             var entity = await _db.Set<Business>().FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
             if (entity is null)
             {
-                throw new InvalidOperationException("Business not found.");
+                throw new InvalidOperationException(_localizer["BusinessNotFound"]);
             }
 
             if (!(entity.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             return entity;
@@ -68,12 +75,18 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
         private readonly IValidator<BusinessLifecycleActionDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SuspendBusinessHandler(IAppDbContext db, IClock clock, IValidator<BusinessLifecycleActionDto> validator)
+        public SuspendBusinessHandler(
+            IAppDbContext db,
+            IClock clock,
+            IValidator<BusinessLifecycleActionDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(BusinessLifecycleActionDto dto, CancellationToken ct = default)
@@ -95,12 +108,12 @@ namespace Darwin.Application.Businesses.Commands
             var entity = await _db.Set<Business>().FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
             if (entity is null)
             {
-                throw new InvalidOperationException("Business not found.");
+                throw new InvalidOperationException(_localizer["BusinessNotFound"]);
             }
 
             if (!(entity.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             return entity;
@@ -115,12 +128,18 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
         private readonly IValidator<BusinessLifecycleActionDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ReactivateBusinessHandler(IAppDbContext db, IClock clock, IValidator<BusinessLifecycleActionDto> validator)
+        public ReactivateBusinessHandler(
+            IAppDbContext db,
+            IClock clock,
+            IValidator<BusinessLifecycleActionDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(BusinessLifecycleActionDto dto, CancellationToken ct = default)
@@ -143,12 +162,12 @@ namespace Darwin.Application.Businesses.Commands
             var entity = await _db.Set<Business>().FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
             if (entity is null)
             {
-                throw new InvalidOperationException("Business not found.");
+                throw new InvalidOperationException(_localizer["BusinessNotFound"]);
             }
 
             if (!(entity.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             return entity;

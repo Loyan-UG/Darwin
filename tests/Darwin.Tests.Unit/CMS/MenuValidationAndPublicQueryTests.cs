@@ -4,15 +4,25 @@ using System.Threading.Tasks;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Queries;
 using Darwin.Application.CMS.Validators;
+using Darwin.Application;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Enums;
 using FluentAssertions;
+using Microsoft.Extensions.Localization;
 using Xunit;
 
 namespace Darwin.Tests.Unit.CMS
 {
     public sealed class MenuValidationAndPublicQueryTests
     {
+        private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+        {
+            public LocalizedString this[string name] => new(name, name, false);
+            public LocalizedString this[string name, params object[] arguments] => new(name, string.Format(name, arguments), false);
+            public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => Array.Empty<LocalizedString>();
+            public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
+        }
+
         [Theory]
         [InlineData("/")]
         [InlineData("/catalog")]
@@ -29,7 +39,7 @@ namespace Darwin.Tests.Unit.CMS
                 }
             };
 
-            var sut = new MenuItemDtoValidator();
+            var sut = new MenuItemDtoValidator(new TestStringLocalizer());
             var result = sut.Validate(dto);
 
             result.IsValid.Should().BeTrue();
@@ -52,7 +62,7 @@ namespace Darwin.Tests.Unit.CMS
                 }
             };
 
-            var sut = new MenuItemDtoValidator();
+            var sut = new MenuItemDtoValidator(new TestStringLocalizer());
             var result = sut.Validate(dto);
 
             result.IsValid.Should().BeFalse();

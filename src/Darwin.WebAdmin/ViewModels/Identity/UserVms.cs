@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Darwin.Application.Identity.DTOs;
+using Darwin.WebAdmin.Localization;
 
 namespace Darwin.WebAdmin.ViewModels.Identity
 {
@@ -86,19 +87,23 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public string? LastName { get; set; }
 
         /// <summary>Preferred culture code.</summary>
-        [Required]
-        public string Locale { get; set; } = "de-DE";
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "Locale")]
+        public string Locale { get; set; } = AdminCultureCatalog.DefaultCulture;
 
         /// <summary>Preferred time zone.</summary>
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "TimeZone")]
         public string Timezone { get; set; } = "Europe/Berlin";
 
         /// <summary>Preferred currency code (ISO 4217).</summary>
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "Currency")]
         [StringLength(3, MinimumLength = 3)]
         public string Currency { get; set; } = "EUR";
 
         /// <summary>Phone number in E.164 format; optional.</summary>
+        [Display(Name = "Phone")]
         [Phone]
         public string? PhoneE164 { get; set; }
     }
@@ -108,12 +113,14 @@ namespace Darwin.WebAdmin.ViewModels.Identity
     /// </summary>
     public sealed class UserCreateVm : UserEditorVm
     {
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "Email")]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
 
         /// <summary>Plain text password. Must be at least 8 characters.</summary>
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "Password")]
         [StringLength(100, MinimumLength = 8)]
         public string Password { get; set; } = string.Empty;
 
@@ -169,16 +176,20 @@ namespace Darwin.WebAdmin.ViewModels.Identity
 
         public string? LastName { get; set; }
 
-        [Required]
-        public string Locale { get; set; } = "de-DE";
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "Locale")]
+        public string Locale { get; set; } = AdminCultureCatalog.DefaultCulture;
 
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "TimeZone")]
         public string Timezone { get; set; } = "Europe/Berlin";
 
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "Currency")]
         [StringLength(3, MinimumLength = 3)]
         public string Currency { get; set; } = "EUR";
 
+        [Display(Name = "Phone")]
         [Phone]
         public string? PhoneE164 { get; set; }
     }
@@ -195,7 +206,8 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         /// </summary>
         public string CurrentEmail { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
+        [Display(Name = "NewEmail")]
         [EmailAddress]
         public string NewEmail { get; set; } = string.Empty;
     }
@@ -233,18 +245,18 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         /// New password to be set for the user.
         /// UI should enforce minimum length of 8 characters; server-side validation is performed in Application layer.
         /// </summary>
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
-        [Display(Name = "New password")]
+        [Display(Name = "NewPassword")]
         public string NewPassword { get; set; } = string.Empty;
 
         /// <summary>
         /// Confirmation of the new password. Must match <see cref="NewPassword"/>.
         /// </summary>
-        [Required]
+        [Required(ErrorMessage = "The {0} field is required.")]
         [MinLength(8)]
         [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
-        [Display(Name = "Confirm new password")]
+        [Display(Name = "ConfirmNewPassword")]
         public string ConfirmNewPassword { get; set; } = string.Empty;
     }
 

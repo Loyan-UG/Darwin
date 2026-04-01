@@ -56,12 +56,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             {
                 await _update.HandleAsync(dto, ct);
                 _cache.Invalidate();
-                TempData["Success"] = "Settings have been updated.";
+                SetSuccessMessage("SettingsUpdatedMessage");
                 return RedirectOrHtmx(nameof(Edit));
             }
             catch (DbUpdateConcurrencyException)
             {
-                ModelState.AddModelError(string.Empty, "Concurrency conflict: the settings were modified by another user.");
+                ModelState.AddModelError(string.Empty, T("SettingsConcurrencyMessage"));
                 return RenderEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
@@ -122,6 +122,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             TimeZone = dto.TimeZone,
             DateFormat = dto.DateFormat,
             TimeFormat = dto.TimeFormat,
+                AdminTextOverridesJson = dto.AdminTextOverridesJson,
 
             // Security / JWT
             JwtEnabled = dto.JwtEnabled,
@@ -280,6 +281,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             TimeZone = vm.TimeZone,
             DateFormat = vm.DateFormat,
             TimeFormat = vm.TimeFormat,
+                AdminTextOverridesJson = vm.AdminTextOverridesJson,
 
             // Security / JWT
             JwtEnabled = vm.JwtEnabled,

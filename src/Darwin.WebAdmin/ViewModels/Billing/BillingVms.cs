@@ -257,11 +257,11 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         [Required]
         public Guid BusinessId { get; set; }
 
-        [Display(Name = "Order id")]
+        [Display(Name = "PaymentOrderId")]
         public Guid? OrderId { get; set; }
         public string? OrderNumber { get; set; }
 
-        [Display(Name = "Invoice id")]
+        [Display(Name = "PaymentInvoiceId")]
         public Guid? InvoiceId { get; set; }
         public InvoiceStatus? InvoiceStatus { get; set; }
         public DateTime? InvoiceDueAtUtc { get; set; }

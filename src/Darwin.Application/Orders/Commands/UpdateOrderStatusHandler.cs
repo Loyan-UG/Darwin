@@ -12,6 +12,7 @@ using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Commands
@@ -28,8 +29,9 @@ namespace Darwin.Application.Orders.Commands
     public sealed class UpdateOrderStatusHandler
     {
         private readonly IAppDbContext _db;
-        private readonly UpdateOrderStatusValidator _validator = new();
+        private readonly IValidator<UpdateOrderStatusDto> _validator;
         private readonly OrderStatePolicy _policy = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         // Inventory orchestration dependencies
         private readonly ReserveInventoryHandler _reserveInventory;
@@ -38,11 +40,15 @@ namespace Darwin.Application.Orders.Commands
 
         public UpdateOrderStatusHandler(
             IAppDbContext db,
+            IValidator<UpdateOrderStatusDto> validator,
+            IStringLocalizer<ValidationResource> localizer,
             ReserveInventoryHandler reserveInventory,
             ReleaseInventoryReservationHandler releaseReservation,
             AllocateInventoryForOrderHandler allocateForOrder)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
             _reserveInventory = reserveInventory ?? throw new ArgumentNullException(nameof(reserveInventory));
             _releaseReservation = releaseReservation ?? throw new ArgumentNullException(nameof(releaseReservation));
             _allocateForOrder = allocateForOrder ?? throw new ArgumentNullException(nameof(allocateForOrder));
@@ -62,15 +68,15 @@ namespace Darwin.Application.Orders.Commands
                 .FirstOrDefaultAsync(o => o.Id == dto.OrderId, ct);
 
             if (order is null)
-                throw new ValidationException("Order not found.");
+                throw new ValidationException(_localizer["OrderNotFound"]);
 
             // Concurrency guard (RowVersion lives in BaseEntity).
             if (!order.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
-                throw new ValidationException("Concurrency conflict. The order was modified by another process.");
+                throw new ValidationException(_localizer["ConcurrencyConflictOrderModified"]);
 
             // Policy check: allowed transitions.
             if (!_policy.IsAllowed(order.Status, dto.NewStatus))
-                throw new ValidationException($"Transition {order.Status} → {dto.NewStatus} is not allowed.");
+                throw new ValidationException(_localizer["OrderTransitionNotAllowed", order.Status, dto.NewStatus]);
 
             if (dto.WarehouseId.HasValue)
             {

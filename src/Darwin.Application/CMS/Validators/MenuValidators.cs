@@ -1,6 +1,7 @@
 using System;
 using Darwin.Application.CMS.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CMS.Validators
 {
@@ -9,10 +10,10 @@ namespace Darwin.Application.CMS.Validators
     /// </summary>
     public sealed class MenuCreateDtoValidator : AbstractValidator<MenuCreateDto>
     {
-        public MenuCreateDtoValidator()
+        public MenuCreateDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Name).NotEmpty().MaximumLength(128);
-            RuleForEach(x => x.Items).SetValidator(new MenuItemDtoValidator());
+            RuleForEach(x => x.Items).SetValidator(new MenuItemDtoValidator(localizer));
         }
     }
 
@@ -21,12 +22,12 @@ namespace Darwin.Application.CMS.Validators
     /// </summary>
     public sealed class MenuEditDtoValidator : AbstractValidator<MenuEditDto>
     {
-        public MenuEditDtoValidator()
+        public MenuEditDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotNull();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(128);
-            RuleForEach(x => x.Items).SetValidator(new MenuItemDtoValidator());
+            RuleForEach(x => x.Items).SetValidator(new MenuItemDtoValidator(localizer));
         }
     }
 
@@ -35,18 +36,18 @@ namespace Darwin.Application.CMS.Validators
     /// </summary>
     public sealed class MenuItemDtoValidator : AbstractValidator<MenuItemDto>
     {
-        public MenuItemDtoValidator()
+        public MenuItemDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(i => i.Url)
                 .NotEmpty()
                 .MaximumLength(1024)
                 .Must(BeSupportedMenuUrl)
-                .WithMessage("Menu URLs must be rooted app paths like '/catalog' or absolute http/https URLs.");
+                .WithMessage(localizer["MenuUrlMustBeSupported"]);
 
             RuleFor(i => i.SortOrder).GreaterThanOrEqualTo(0);
             RuleFor(i => i.Translations)
-                .NotNull().WithMessage("At least one translation is required.")
-                .Must(t => t.Count > 0).WithMessage("At least one translation is required.");
+                .NotNull().WithMessage(localizer["AtLeastOneTranslationRequired"])
+                .Must(t => t.Count > 0).WithMessage(localizer["AtLeastOneTranslationRequired"]);
 
             RuleForEach(i => i.Translations).ChildRules(tr =>
             {

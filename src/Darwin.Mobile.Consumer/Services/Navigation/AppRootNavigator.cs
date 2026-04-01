@@ -45,7 +45,13 @@ public sealed class AppRootNavigator : IAppRootNavigator
     {
         // Resolve login page from DI so any future constructor dependencies continue to work automatically.
         var loginPage = _serviceProvider.GetRequiredService<LoginPage>();
-        return SwitchRootAsync(new NavigationPage(loginPage));
+        var navigationPage = new NavigationPage(loginPage)
+        {
+            BarBackgroundColor = Colors.White,
+            BarTextColor = Color.FromArgb("#2C2416")
+        };
+
+        return SwitchRootAsync(navigationPage);
     }
 
     private async Task SwitchRootAsync(Page rootPage)

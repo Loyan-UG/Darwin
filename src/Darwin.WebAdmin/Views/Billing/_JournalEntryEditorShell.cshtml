@@ -1,11 +1,12 @@
 @model Darwin.WebAdmin.ViewModels.Billing.JournalEntryEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
-    ViewData["Title"] = isCreate ? "Create Journal Entry" : "Edit Journal Entry";
+    ViewData["Title"] = isCreate ? T.T("CreateJournalEntry") : T.T("EditJournalEntry");
 }
 
 <div id="billing-journal-entry-editor-shell">
-    <h1 class="mb-3">@(isCreate ? "Create Journal Entry" : "Edit Journal Entry")</h1>
+    <h1 class="mb-3">@(isCreate ? T.T("CreateJournalEntry") : T.T("EditJournalEntry"))</h1>
 
     <form asp-action="@(isCreate ? "CreateJournalEntry" : "EditJournalEntry")"
           method="post"
@@ -20,8 +21,8 @@
         }
         <partial name="_JournalEntryForm" model="Model" />
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+            <button type="submit" class="btn btn-primary">@T.T("Save")</button>
+            <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 </div>

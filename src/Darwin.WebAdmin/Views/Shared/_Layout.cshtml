@@ -1,17 +1,22 @@
 @using Microsoft.AspNetCore.Antiforgery
+@using System.Globalization
 @inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @inject IAntiforgery Antiforgery
 @{
     var canManageBusinesses = await Perms.HasAsync("ManageBusinessSupport");
     var canManageIdentity = await Perms.HasAsync("FullAdminAccess");
+    var currentCulture = CultureInfo.CurrentUICulture?.Name ?? "de-DE";
+    var languageOptions = T.GetSupportedLanguageOptions();
+    var returnUrl = $"{Context?.Request?.Path}{Context?.Request?.QueryString}";
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@currentCulture">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] - Darwin Admin</title>
+    <title>@ViewData["Title"] - @T.T("DarwinAdmin")</title>
 
     <!-- Bootstrap 5.3.8 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-3I1H8n+..." crossorigin="anonymous" />
@@ -27,7 +32,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="Darwin" />
+    <meta name="apple-mobile-web-app-title" content="@T.T("DarwinAdmin")" />
     <link rel="manifest" href="/site.webmanifest" />
 </head>
 <body class="bg-light">
@@ -51,13 +56,25 @@
                 <div class="order-3 d-flex align-items-start gap-3">
                     <div class="text-muted" title="Current user">
                         <i class="fa-regular fa-user"></i>
-                        <span class="ms-1">@(!string.IsNullOrWhiteSpace(User?.Identity?.Name) ? User.Identity!.Name : "My Profile")</span>
+                        <span class="ms-1">@(!string.IsNullOrWhiteSpace(User?.Identity?.Name) ? User.Identity!.Name : T.T("CurrentUserFallback"))</span>
                     </div>
+
+                        <form asp-controller="Culture" asp-action="SetCulture" method="post" class="d-inline-flex align-items-center gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <label for="admin-culture-switcher" class="small text-muted mb-0">@T.T("Language")</label>
+                        <select id="admin-culture-switcher" name="culture" class="form-select form-select-sm" onchange="this.form.submit()">
+                            @foreach (var option in languageOptions)
+                            {
+                                <option value="@option.Culture" selected="@(string.Equals(currentCulture, option.Culture, StringComparison.OrdinalIgnoreCase))">@option.Label</option>
+                            }
+                        </select>
+                    </form>
 
                     <form method="post" action="/account/logout" class="d-inline">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-outline-secondary btn-sm" title="Logout">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        <button type="submit" class="btn btn-outline-secondary btn-sm" title="@T.T("Logout")">
+                            <i class="fa-solid fa-right-from-bracket"></i> @T.T("Logout")
                         </button>
                     </form>
                 </div>
@@ -70,150 +87,150 @@
             <!-- Sidebar -->
             <nav class="col-12 col-md-3 col-lg-2 bg-white border-end min-vh-100 p-0">
                 <div class="list-group list-group-flush py-2">
-                    <div class="px-3 pt-3 pb-2 text-uppercase small text-muted">Home</div>
+                    <div class="px-3 pt-3 pb-2 text-uppercase small text-muted">@T.T("Home")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Home" asp-action="Index">
-                        <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
+                        <i class="fa-solid fa-gauge-high me-2"></i> @T.T("Dashboard")
                     </active-nav>
 
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Catalog</div>
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Catalog")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Products" asp-action="Index">
-                        <i class="fa-solid fa-box-open me-2"></i> Products
+                        <i class="fa-solid fa-box-open me-2"></i> @T.T("Products")
                     </active-nav>
 
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Categories" asp-action="Index">
-                        <i class="fa-solid fa-sitemap me-2"></i> Categories
+                        <i class="fa-solid fa-sitemap me-2"></i> @T.T("Categories")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Brands" asp-action="Index">
-                        <i class="fa-solid fa-tags me-2"></i> Brands
+                        <i class="fa-solid fa-tags me-2"></i> @T.T("Brands")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="AddOnGroups" asp-action="Index">
-                        <i class="fa-solid fa-puzzle-piece me-2"></i> Add-on Groups
+                        <i class="fa-solid fa-puzzle-piece me-2"></i> @T.T("AddOnGroups")
                     </active-nav>
 
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">CMS</div>
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Cms")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Pages" asp-action="Index">
-                        <i class="fa-regular fa-file-lines me-2"></i> Pages
+                        <i class="fa-regular fa-file-lines me-2"></i> @T.T("Pages")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Media" asp-action="Index">
-                        <i class="fa-regular fa-images me-2"></i> Media
+                        <i class="fa-regular fa-images me-2"></i> @T.T("Media")
                     </active-nav>
 
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Orders</div>
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Orders")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Orders" asp-action="Index">
-                        <i class="fa-solid fa-receipt me-2"></i> Orders
+                        <i class="fa-solid fa-receipt me-2"></i> @T.T("Orders")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Orders" asp-action="ShipmentsQueue">
-                        <i class="fa-solid fa-truck me-2"></i> Shipments
+                        <i class="fa-solid fa-truck me-2"></i> @T.T("Shipments")
                     </active-nav>
                     @if (canManageIdentity)
                     {
                         <active-nav class="list-group-item list-group-item-action" asp-controller="ShippingMethods" asp-action="Index">
-                            <i class="fa-solid fa-truck-fast me-2"></i> Shipping Methods
+                            <i class="fa-solid fa-truck-fast me-2"></i> @T.T("ShippingMethods")
                         </active-nav>
                     }
 
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">CRM</div>
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Crm")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Index">
-                        <i class="fa-solid fa-chart-pie me-2"></i> Overview
+                        <i class="fa-solid fa-chart-pie me-2"></i> @T.T("Overview")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Customers">
-                        <i class="fa-solid fa-address-book me-2"></i> Customers
+                        <i class="fa-solid fa-address-book me-2"></i> @T.T("Customers")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Leads">
-                        <i class="fa-solid fa-filter-circle-dollar me-2"></i> Leads
+                        <i class="fa-solid fa-filter-circle-dollar me-2"></i> @T.T("Leads")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Opportunities">
-                        <i class="fa-solid fa-chart-line me-2"></i> Opportunities
+                        <i class="fa-solid fa-chart-line me-2"></i> @T.T("Opportunities")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Invoices">
-                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> Invoices
+                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> @T.T("Invoices")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Segments">
-                        <i class="fa-solid fa-layer-group me-2"></i> Segments
+                        <i class="fa-solid fa-layer-group me-2"></i> @T.T("Segments")
                     </active-nav>
 
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Loyalty</div>
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Loyalty")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Loyalty" asp-action="Programs">
-                        <i class="fa-solid fa-award me-2"></i> Programs
+                        <i class="fa-solid fa-award me-2"></i> @T.T("Programs")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Loyalty" asp-action="Campaigns">
-                        <i class="fa-solid fa-bullhorn me-2"></i> Campaigns
+                        <i class="fa-solid fa-bullhorn me-2"></i> @T.T("Campaigns")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Loyalty" asp-action="Accounts">
-                        <i class="fa-solid fa-id-card me-2"></i> Accounts
+                        <i class="fa-solid fa-id-card me-2"></i> @T.T("Accounts")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Loyalty" asp-action="Redemptions">
-                        <i class="fa-solid fa-gift me-2"></i> Redemptions
+                        <i class="fa-solid fa-gift me-2"></i> @T.T("Redemptions")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Loyalty" asp-action="ScanSessions">
-                        <i class="fa-solid fa-qrcode me-2"></i> Scan Sessions
+                        <i class="fa-solid fa-qrcode me-2"></i> @T.T("ScanSessions")
                     </active-nav>
 
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Inventory</div>
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Inventory")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="Warehouses">
-                        <i class="fa-solid fa-warehouse me-2"></i> Warehouses
+                        <i class="fa-solid fa-warehouse me-2"></i> @T.T("Warehouses")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="Suppliers">
-                        <i class="fa-solid fa-truck-field me-2"></i> Suppliers
+                        <i class="fa-solid fa-truck-field me-2"></i> @T.T("Suppliers")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="StockLevels">
-                        <i class="fa-solid fa-boxes-stacked me-2"></i> Stock Levels
+                        <i class="fa-solid fa-boxes-stacked me-2"></i> @T.T("StockLevels")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="StockTransfers">
-                        <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Transfers
+                        <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> @T.T("Transfers")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="PurchaseOrders">
-                        <i class="fa-solid fa-file-invoice me-2"></i> Purchase Orders
+                        <i class="fa-solid fa-file-invoice me-2"></i> @T.T("PurchaseOrders")
                     </active-nav>
 
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Billing</div>
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Billing")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="Payments">
-                        <i class="fa-regular fa-credit-card me-2"></i> Payments
+                        <i class="fa-regular fa-credit-card me-2"></i> @T.T("Payments")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="Plans">
-                        <i class="fa-solid fa-layer-group me-2"></i> Billing Plans
+                        <i class="fa-solid fa-layer-group me-2"></i> @T.T("BillingPlans")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="FinancialAccounts">
-                        <i class="fa-solid fa-book me-2"></i> Accounts
+                        <i class="fa-solid fa-book me-2"></i> @T.T("Accounts")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="Expenses">
-                        <i class="fa-solid fa-money-bill-wave me-2"></i> Expenses
+                        <i class="fa-solid fa-money-bill-wave me-2"></i> @T.T("Expenses")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="JournalEntries">
-                        <i class="fa-solid fa-scale-balanced me-2"></i> Journal Entries
+                        <i class="fa-solid fa-scale-balanced me-2"></i> @T.T("JournalEntries")
                     </active-nav>
 
                     @if (canManageBusinesses)
                     {
-                        <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Business Setup</div>
+                        <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("BusinessSetup")</div>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="Businesses" asp-action="Index">
-                            <i class="fa-solid fa-building me-2"></i> Businesses
+                            <i class="fa-solid fa-building me-2"></i> @T.T("Businesses")
                         </active-nav>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="MobileOperations" asp-action="Index">
-                            <i class="fa-solid fa-mobile-screen-button me-2"></i> Mobile Ops
+                            <i class="fa-solid fa-mobile-screen-button me-2"></i> @T.T("MobileOps")
                         </active-nav>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="BusinessCommunications" asp-action="Index">
-                            <i class="fa-solid fa-envelope-circle-check me-2"></i> Communications
+                            <i class="fa-solid fa-envelope-circle-check me-2"></i> @T.T("Communications")
                         </active-nav>
                     }
 
                     @* Protected sections (FullAdminAccess) *@
                     @if (canManageIdentity)
                     {
-                        <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Identity</div>
+                        <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Identity")</div>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="Users" asp-action="Index">
-                            <i class="fa-solid fa-user-group me-2"></i> Users
+                            <i class="fa-solid fa-user-group me-2"></i> @T.T("Users")
                         </active-nav>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="Roles" asp-action="Index">
-                            <i class="fa-regular fa-id-badge me-2"></i> Roles
+                            <i class="fa-regular fa-id-badge me-2"></i> @T.T("Roles")
                         </active-nav>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="Permissions" asp-action="Index">
-                            <i class="fa-solid fa-key me-2"></i> Permissions
+                            <i class="fa-solid fa-key me-2"></i> @T.T("Permissions")
                         </active-nav>
 
-                        <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">System</div>
+                        <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("System")</div>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="SiteSettings" asp-action="Edit">
-                            <i class="fa-solid fa-gear me-2"></i> Settings
+                            <i class="fa-solid fa-gear me-2"></i> @T.T("Settings")
                         </active-nav>
                     }
                 </div>
@@ -238,7 +255,7 @@
     <!-- Footer -->
     <footer class="border-top bg-white mt-4">
         <div class="container-fluid py-3 text-center text-muted">
-            &copy; @DateTime.UtcNow.Year Darwin - Admin Panel
+            &copy; @DateTime.UtcNow.Year Darwin - @T.T("AdminPanel")
         </div>
     </footer>
 

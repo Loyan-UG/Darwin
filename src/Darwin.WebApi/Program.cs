@@ -8,8 +8,8 @@ builder.Services.AddWebApiComposition(builder.Configuration);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline and map controllers.
-app.UseWebApiStartup();
+// Configure the HTTP request pipeline, apply dev DB bootstrap, and map controllers.
+await app.UseWebApiStartupAsync();
 
 await app.RunAsync();
 

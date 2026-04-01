@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.WarehousesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Warehouses";
+    ViewData["Title"] = T.T("WarehousesTitle");
 }
 
 <div id="inventory-warehouses-workspace-shell">
-<h1 class="mb-3">Warehouses</h1>
+<h1 class="mb-3">@T.T("WarehousesTitle")</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Warehouses" method="get" class="d-flex gap-2"
@@ -13,20 +14,20 @@
           hx-swap="outerHTML"
           hx-push-url="true">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search warehouses">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchWarehousesPlaceholder")">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="Warehouses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Warehouses", "Inventory", new { businessId = Model.BusinessId })"
            hx-target="#inventory-warehouses-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
+           hx-push-url="true">@T.T("Reset")</a>
     </form>
     <a asp-action="CreateWarehouse" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
        hx-get="@Url.Action("CreateWarehouse", "Inventory", new { businessId = Model.BusinessId })"
        hx-target="#inventory-warehouses-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">New Warehouse</a>
+       hx-push-url="true">@T.T("NewWarehouse")</a>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
@@ -34,24 +35,24 @@
        hx-get="@Url.Action("Warehouses", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Default" })"
        hx-target="#inventory-warehouses-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Default</a>
+       hx-push-url="true">@T.T("Default")</a>
     <a asp-action="Warehouses" asp-route-businessId="@Model.BusinessId" asp-route-filter="NoStockLevels" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.WarehouseQueueFilter.NoStockLevels ? "btn-warning" : "btn-outline-warning")"
        hx-get="@Url.Action("Warehouses", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "NoStockLevels" })"
        hx-target="#inventory-warehouses-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">No Stock Levels</a>
+       hx-push-url="true">@T.T("NoStockLevels")</a>
     <a asp-action="Warehouses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("Warehouses", "Inventory", new { businessId = Model.BusinessId, q = Model.Query })"
        hx-target="#inventory-warehouses-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Clear Queue Filters</a>
+       hx-push-url="true">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-body">
-                <div class="text-muted small">Total</div>
+                <div class="text-muted small">@T.T("Total")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
             </div>
         </div>
@@ -59,7 +60,7 @@
     <div class="col-md-4">
         <div class="card h-100 border-primary-subtle">
             <div class="card-body">
-                <div class="text-muted small">Default</div>
+                <div class="text-muted small">@T.T("Default")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.DefaultCount</div>
             </div>
         </div>
@@ -67,7 +68,7 @@
     <div class="col-md-4">
         <div class="card h-100 border-warning-subtle">
             <div class="card-body">
-                <div class="text-muted small">No Stock Levels</div>
+                <div class="text-muted small">@T.T("NoStockLevels")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.NoStockLevelsCount</div>
             </div>
         </div>
@@ -77,14 +78,14 @@
 @if (Model.Playbooks.Count > 0)
 {
     <div class="card mb-4">
-        <div class="card-header">Warehouse Ops Playbooks</div>
+        <div class="card-header">@T.T("WarehouseOpsPlaybooks")</div>
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead>
                 <tr>
-                    <th>Playbook</th>
-                    <th>When It Applies</th>
-                    <th>Operator Action</th>
+                    <th>@T.T("Playbook")</th>
+                    <th>@T.T("WhenItApplies")</th>
+                    <th>@T.T("OperatorAction")</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -104,11 +105,11 @@
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>Name</th><th>Location</th><th>Default</th><th>Stock Levels</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>@T.T("Name")</th><th>@T.T("Location")</th><th>@T.T("Default")</th><th>@T.T("StockLevels")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="5" class="text-center text-muted">No warehouses found.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted">@T.T("NoWarehousesFound")</td></tr>
         }
         else
         {
@@ -120,18 +121,18 @@
                     <td>
                         @if (item.IsDefault)
                         {
-                            <span class="badge text-bg-primary">Default</span>
+                            <span class="badge text-bg-primary">@T.T("Default")</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">Standard</span>
+                            <span class="badge text-bg-secondary">@T.T("Standard")</span>
                         }
                     </td>
                     <td>
                         @item.StockLevelCount
                         @if (item.StockLevelCount == 0)
                         {
-                            <div><span class="badge text-bg-warning mt-1">Empty</span></div>
+                            <div><span class="badge text-bg-warning mt-1">@T.T("Empty")</span></div>
                         }
                     </td>
                     <td class="text-end">
@@ -142,12 +143,12 @@
                            hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = item.Id })"
                            hx-target="#inventory-warehouses-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Stock Levels</a>
+                           hx-push-url="true">@T.T("StockLevels")</a>
                         <a asp-action="EditWarehouse" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditWarehouse", "Inventory", new { id = item.Id })"
                            hx-target="#inventory-warehouses-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Edit</a>
+                           hx-push-url="true">@T.T("Edit")</a>
                     </td>
                 </tr>
             }

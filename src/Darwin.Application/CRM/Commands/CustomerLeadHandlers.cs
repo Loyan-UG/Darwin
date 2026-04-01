@@ -1,10 +1,12 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CRM.Commands
 {
@@ -12,11 +14,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<CustomerCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateCustomerHandler(IAppDbContext db, IValidator<CustomerCreateDto> validator)
+        public CreateCustomerHandler(IAppDbContext db, IValidator<CustomerCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(CustomerCreateDto dto, CancellationToken ct = default)
@@ -32,7 +36,7 @@ namespace Darwin.Application.CRM.Commands
 
                 if (!userExists)
                 {
-                    throw new InvalidOperationException("Linked user not found.");
+                    throw new InvalidOperationException(_localizer["LinkedUserNotFound"]);
                 }
             }
 
@@ -79,11 +83,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<CustomerEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateCustomerHandler(IAppDbContext db, IValidator<CustomerEditDto> validator)
+        public UpdateCustomerHandler(IAppDbContext db, IValidator<CustomerEditDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(CustomerEditDto dto, CancellationToken ct = default)
@@ -97,12 +103,12 @@ namespace Darwin.Application.CRM.Commands
 
             if (customer is null)
             {
-                throw new InvalidOperationException("Customer not found.");
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
             }
 
             if (!customer.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             if (dto.UserId.HasValue)
@@ -114,7 +120,7 @@ namespace Darwin.Application.CRM.Commands
 
                 if (!userExists)
                 {
-                    throw new InvalidOperationException("Linked user not found.");
+                    throw new InvalidOperationException(_localizer["LinkedUserNotFound"]);
                 }
             }
 
@@ -230,11 +236,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<LeadEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateLeadHandler(IAppDbContext db, IValidator<LeadEditDto> validator)
+        public UpdateLeadHandler(IAppDbContext db, IValidator<LeadEditDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(LeadEditDto dto, CancellationToken ct = default)
@@ -247,12 +255,12 @@ namespace Darwin.Application.CRM.Commands
 
             if (lead is null)
             {
-                throw new InvalidOperationException("Lead not found.");
+                throw new InvalidOperationException(_localizer["LeadNotFound"]);
             }
 
             if (!lead.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             lead.FirstName = dto.FirstName.Trim();
@@ -277,11 +285,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<ConvertLeadToCustomerDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ConvertLeadToCustomerHandler(IAppDbContext db, IValidator<ConvertLeadToCustomerDto> validator)
+        public ConvertLeadToCustomerHandler(IAppDbContext db, IValidator<ConvertLeadToCustomerDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(ConvertLeadToCustomerDto dto, CancellationToken ct = default)
@@ -294,12 +304,12 @@ namespace Darwin.Application.CRM.Commands
 
             if (lead is null)
             {
-                throw new InvalidOperationException("Lead not found.");
+                throw new InvalidOperationException(_localizer["LeadNotFound"]);
             }
 
             if (!lead.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             if (lead.CustomerId.HasValue)
@@ -318,7 +328,7 @@ namespace Darwin.Application.CRM.Commands
 
                 if (!userExists)
                 {
-                    throw new InvalidOperationException("Linked user not found.");
+                    throw new InvalidOperationException(_localizer["LinkedUserNotFound"]);
                 }
             }
 

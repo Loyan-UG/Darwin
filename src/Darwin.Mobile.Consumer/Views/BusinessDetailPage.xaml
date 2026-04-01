@@ -11,24 +11,23 @@
     Title="{Binding Business.Name, FallbackValue={x:Static res:AppResources.BusinessDetailsTitle}}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24,24,24,32" Spacing="18">
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
             <Border Style="{StaticResource CardBorderStyle}" Padding="0">
-                <Grid HeightRequest="220">
+                <Grid HeightRequest="184">
                     <Image Source="{Binding Business.PrimaryImageUrl}"
                            Aspect="AspectFill"
                            IsVisible="{Binding Business.PrimaryImageUrl, Converter={StaticResource NullCheckConverter}}" />
 
-                    <Grid BackgroundColor="#66000000"
-                          Padding="20"
+                    <Grid BackgroundColor="#E6FFF8E7"
+                          Padding="16"
                           VerticalOptions="End">
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{Binding Business.Name}"
-                                   FontSize="26"
+                                   FontSize="24"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource Neutral0}" />
+                                   TextColor="{StaticResource BrushOnSurface}" />
                             <Label Text="{Binding Business.ShortDescription}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"
-                                   TextColor="{StaticResource Neutral100}"
                                    IsVisible="{Binding Business.ShortDescription, Converter={StaticResource NullCheckConverter}}" />
                         </VerticalStackLayout>
                     </Grid>
@@ -36,108 +35,104 @@
             </Border>
 
             <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="14">
-                    <Label Text="{x:Static res:AppResources.BusinessEngagementTitle}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding Business.LoyaltyProgramPublic.Name}"
+                           Style="{StaticResource SectionHeadingLabelStyle}"
+                           IsVisible="{Binding Business.LoyaltyProgramPublic, Converter={StaticResource NullCheckConverter}}" />
+                    <Label Text="{Binding Business.LoyaltyProgramPublic.IsActive, StringFormat={x:Static res:AppResources.BusinessActiveFormat}}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}"
+                           IsVisible="{Binding Business.LoyaltyProgramPublic, Converter={StaticResource NullCheckConverter}}" />
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto">
-                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{x:Static res:AppResources.BusinessLikeButton}"
-                                       Style="{StaticResource CaptionLabelStyle}" />
-                                <Label Text="{Binding LikeCountText}"
-                                       Style="{StaticResource MetricValueLabelStyle}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{x:Static res:AppResources.BusinessFavoriteButton}"
-                                       Style="{StaticResource CaptionLabelStyle}" />
-                                <Label Text="{Binding FavoriteCountText}"
-                                       Style="{StaticResource MetricValueLabelStyle}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{x:Static res:AppResources.BusinessMyReviewRatingLabel}"
-                                       Style="{StaticResource CaptionLabelStyle}" />
-                                <Label Text="{Binding RatingAverageDisplayText}"
-                                       Style="{StaticResource MetricValueLabelStyle}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{x:Static res:AppResources.BusinessRecentReviewsTitle}"
-                                       Style="{StaticResource CaptionLabelStyle}" />
-                                <Label Text="{Binding RatingCountText}"
-                                       Style="{StaticResource MetricValueLabelStyle}" />
-                            </VerticalStackLayout>
-                        </Border>
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Button Grid.Column="0"
-                                Text="{x:Static res:AppResources.BusinessLikeButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Command="{Binding ToggleLikeCommand}" />
+                                Text="{x:Static res:AppResources.JoinProgramButton}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding JoinCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
                         <Button Grid.Column="1"
-                                Text="{x:Static res:AppResources.BusinessFavoriteButton}"
+                                Text="{x:Static res:AppResources.BusinessSaveReviewButton}"
                                 Style="{StaticResource OutlinedButtonStyle}"
-                                Command="{Binding ToggleFavoriteCommand}" />
+                                Command="{Binding SaveReviewCommand}" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
 
+            <Grid ColumnDefinitions="*,*"
+                  ColumnSpacing="12"
+                  RowDefinitions="Auto,Auto"
+                  RowSpacing="12">
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{x:Static res:AppResources.BusinessLikeButton}" Style="{StaticResource CaptionLabelStyle}" />
+                        <Label Text="{Binding LikeCountText}" Style="{StaticResource MetricValueLabelStyle}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{x:Static res:AppResources.BusinessFavoriteButton}" Style="{StaticResource CaptionLabelStyle}" />
+                        <Label Text="{Binding FavoriteCountText}" Style="{StaticResource MetricValueLabelStyle}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{x:Static res:AppResources.BusinessMyReviewRatingLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                        <Label Text="{Binding RatingAverageDisplayText}" Style="{StaticResource MetricValueLabelStyle}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{x:Static res:AppResources.BusinessRecentReviewsTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                        <Label Text="{Binding RatingCountText}" Style="{StaticResource MetricValueLabelStyle}" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0"
+                        Text="{x:Static res:AppResources.BusinessLikeButton}"
+                        Style="{StaticResource OutlinedButtonStyle}"
+                        Command="{Binding ToggleLikeCommand}" />
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.BusinessFavoriteButton}"
+                        Style="{StaticResource OutlinedButtonStyle}"
+                        Command="{Binding ToggleFavoriteCommand}" />
+            </Grid>
+
             <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="14">
+                <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.BusinessMyReviewTitle}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
-
                     <Label Text="{Binding MyRatingText}"
                            Style="{StaticResource BodyLabelStyle}" />
                     <Stepper Minimum="1"
                              Maximum="5"
                              Increment="1"
                              Value="{Binding MyRating}" />
-
-                    <Border Style="{StaticResource FormFieldBorderStyle}"
-                            Padding="14,10">
+                    <Border Style="{StaticResource FormFieldBorderStyle}" Padding="14,10">
                         <Editor Text="{Binding MyReviewComment}"
                                 Placeholder="{x:Static res:AppResources.BusinessMyReviewCommentPlaceholder}"
-                                HeightRequest="120"
+                                HeightRequest="110"
                                 Style="{StaticResource FormEditorStyle}" />
                     </Border>
-
-                    <Button Text="{x:Static res:AppResources.BusinessSaveReviewButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding SaveReviewCommand}" />
                 </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="10">
+                <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static res:AppResources.BusinessInformationTitle}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
-
                     <Label Text="{Binding Business.Category, StringFormat={x:Static res:AppResources.BusinessCategoryFormat}}"
                            Style="{StaticResource BodyLabelStyle}"
                            IsVisible="{Binding Business.Category, Converter={StaticResource NullCheckConverter}}" />
-
                     <Label Text="{Binding Business.City, StringFormat={x:Static res:AppResources.BusinessCityFormat}}"
                            Style="{StaticResource BodyLabelStyle}"
                            IsVisible="{Binding Business.City, Converter={StaticResource NullCheckConverter}}" />
-
                     <Label Text="{Binding Business.WebsiteUrl, StringFormat={x:Static res:AppResources.BusinessWebsiteFormat}}"
                            Style="{StaticResource BodyLabelStyle}"
                            IsVisible="{Binding Business.WebsiteUrl, Converter={StaticResource NullCheckConverter}}" />
-
                     <Label Text="{Binding Business.ContactPhoneE164, StringFormat={x:Static res:AppResources.BusinessPhoneFormat}}"
                            Style="{StaticResource BodyLabelStyle}"
                            IsVisible="{Binding Business.ContactPhoneE164, Converter={StaticResource NullCheckConverter}}" />
-
                     <Label Text="{Binding Business.ContactEmail, StringFormat={x:Static res:AppResources.BusinessEmailFormat}}"
                            Style="{StaticResource BodyLabelStyle}"
                            IsVisible="{Binding Business.ContactEmail, Converter={StaticResource NullCheckConverter}}" />
@@ -146,18 +141,11 @@
 
             <Border Style="{StaticResource CardBorderStyle}"
                     IsVisible="{Binding Business.LoyaltyProgramPublic, Converter={StaticResource NullCheckConverter}}">
-                <VerticalStackLayout Spacing="12">
+                <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.BusinessLoyaltyProgramTitle}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
-
-                    <Label Text="{Binding Business.LoyaltyProgramPublic.Name}"
-                           Style="{StaticResource BodyLabelStyle}" />
-                    <Label Text="{Binding Business.LoyaltyProgramPublic.IsActive, StringFormat={x:Static res:AppResources.BusinessActiveFormat}}"
-                           Style="{StaticResource SecondaryBodyLabelStyle}" />
-
-                    <VerticalStackLayout
-                        Spacing="10"
-                        BindableLayout.ItemsSource="{Binding Business.LoyaltyProgramPublic.RewardTiers}">
+                    <VerticalStackLayout Spacing="10"
+                                         BindableLayout.ItemsSource="{Binding Business.LoyaltyProgramPublic.RewardTiers}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="contracts:LoyaltyRewardTierPublic">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
@@ -184,26 +172,18 @@
 
             <Border Style="{StaticResource CardBorderStyle}"
                     IsVisible="{Binding HasReviews}">
-                <VerticalStackLayout Spacing="10">
+                <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static res:AppResources.BusinessRecentReviewsTitle}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
-
-                    <CollectionView ItemsSource="{Binding Reviews}"
-                                    SelectionMode="None">
+                    <CollectionView ItemsSource="{Binding Reviews}" SelectionMode="None">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="biz:BusinessReviewItem">
-                                <Border Style="{StaticResource MutedCardBorderStyle}"
-                                        Margin="0,0,0,10">
+                                <Border Style="{StaticResource MutedCardBorderStyle}" Margin="0,0,0,10">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding AuthorName}"
-                                               Style="{StaticResource BodyLabelStyle}" />
-                                        <Label Text="{Binding Rating, StringFormat={x:Static res:AppResources.BusinessReviewRatingFormat}}"
-                                               Style="{StaticResource SecondaryBodyLabelStyle}" />
-                                        <Label Text="{Binding Comment}"
-                                               Style="{StaticResource BodyLabelStyle}"
-                                               IsVisible="{Binding Comment, Converter={StaticResource NullCheckConverter}}" />
-                                        <Label Text="{Binding CreatedAtUtc, StringFormat='{0:yyyy-MM-dd HH:mm}'}"
-                                               Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding AuthorName}" Style="{StaticResource BodyLabelStyle}" />
+                                        <Label Text="{Binding Rating, StringFormat={x:Static res:AppResources.BusinessReviewRatingFormat}}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding Comment}" Style="{StaticResource BodyLabelStyle}" IsVisible="{Binding Comment, Converter={StaticResource NullCheckConverter}}" />
+                                        <Label Text="{Binding CreatedAtUtc, StringFormat='{0:yyyy-MM-dd HH:mm}'}" Style="{StaticResource CaptionLabelStyle}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -215,11 +195,6 @@
             <Label Text="{Binding ErrorMessage}"
                    Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}" />
-
-            <Button Text="{x:Static res:AppResources.JoinProgramButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding JoinCommand}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"

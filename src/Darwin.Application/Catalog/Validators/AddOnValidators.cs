@@ -1,6 +1,7 @@
 ﻿using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -60,13 +61,13 @@ namespace Darwin.Application.Catalog.Validators
     /// </summary>
     public sealed class AddOnGroupAttachToProductsValidator : AbstractValidator<AddOnGroupAttachToProductsDto>
     {
-        public AddOnGroupAttachToProductsValidator()
+        public AddOnGroupAttachToProductsValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.AddOnGroupId).NotEmpty();
             RuleFor(x => x.ProductIds).NotNull();
             // Replacing the full set is allowed to be empty.
             RuleFor(x => x.RowVersion).NotNull().Must(rv => rv.Length > 0)
-                .WithMessage("RowVersion is required.");
+                .WithMessage(localizer["RowVersionRequired"]);
         }
     }
 
@@ -93,16 +94,16 @@ namespace Darwin.Application.Catalog.Validators
         /// <summary>
         /// Creates a new validator instance with basic non-null and format rules.
         /// </summary>
-        public AddOnGroupDeleteValidator()
+        public AddOnGroupDeleteValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Id is required.");
+                .WithMessage(localizer["IdRequired"]);
 
             RuleFor(x => x.RowVersion)
                 .NotNull()
                 .Must(rv => rv!.Length > 0)
-                .WithMessage("RowVersion is required.");
+                .WithMessage(localizer["RowVersionRequired"]);
         }
     }
 }

@@ -1,5 +1,8 @@
-﻿using Darwin.Application.Businesses.DTOs;
+using System.Collections.Generic;
+using System.Text.Json;
+using Darwin.Application.Businesses.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Validators
 {
@@ -8,12 +11,17 @@ namespace Darwin.Application.Businesses.Validators
     /// </summary>
     public sealed class BusinessCreateDtoValidator : AbstractValidator<BusinessCreateDto>
     {
-        public BusinessCreateDtoValidator()
+        public BusinessCreateDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.DefaultCurrency).NotEmpty().MaximumLength(3);
             RuleFor(x => x.DefaultCulture).NotEmpty().MaximumLength(20);
             RuleFor(x => x.DefaultTimeZoneId).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.AdminTextOverridesJson).MaximumLength(16000);
+            RuleFor(x => x.AdminTextOverridesJson)
+                .Must(BusinessValidatorJsonHelpers.BeAdminTextOverridesJson)
+                .When(x => !string.IsNullOrWhiteSpace(x.AdminTextOverridesJson))
+                .WithMessage(localizer["BusinessAdminTextOverridesJsonInvalid"]);
 
             RuleFor(x => x.WebsiteUrl).MaximumLength(500);
             RuleFor(x => x.BrandDisplayName).MaximumLength(200);
@@ -36,13 +44,18 @@ namespace Darwin.Application.Businesses.Validators
     /// </summary>
     public sealed class BusinessEditDtoValidator : AbstractValidator<BusinessEditDto>
     {
-        public BusinessEditDtoValidator()
+        public BusinessEditDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.DefaultCurrency).NotEmpty().MaximumLength(3);
             RuleFor(x => x.DefaultCulture).NotEmpty().MaximumLength(20);
             RuleFor(x => x.DefaultTimeZoneId).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.AdminTextOverridesJson).MaximumLength(16000);
+            RuleFor(x => x.AdminTextOverridesJson)
+                .Must(BusinessValidatorJsonHelpers.BeAdminTextOverridesJson)
+                .When(x => !string.IsNullOrWhiteSpace(x.AdminTextOverridesJson))
+                .WithMessage(localizer["BusinessAdminTextOverridesJsonInvalid"]);
 
             RuleFor(x => x.WebsiteUrl).MaximumLength(500);
             RuleFor(x => x.BrandDisplayName).MaximumLength(200);
@@ -86,4 +99,24 @@ namespace Darwin.Application.Businesses.Validators
         }
     }
 
+    internal static class BusinessValidatorJsonHelpers
+    {
+        public static bool BeAdminTextOverridesJson(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return true;
+            }
+
+            try
+            {
+                var root = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
+                return root is not null;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
+        }
+    }
 }

@@ -5,6 +5,7 @@ using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Orders.Commands;
 
@@ -14,13 +15,15 @@ namespace Darwin.Application.Orders.Commands;
 public sealed class CreateStorefrontPaymentIntentHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateStorefrontPaymentIntentHandler"/> class.
     /// </summary>
-    public CreateStorefrontPaymentIntentHandler(IAppDbContext db)
+    public CreateStorefrontPaymentIntentHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -31,7 +34,7 @@ public sealed class CreateStorefrontPaymentIntentHandler
         ArgumentNullException.ThrowIfNull(dto);
         if (dto.OrderId == Guid.Empty)
         {
-            throw new InvalidOperationException("OrderId is required.");
+            throw new InvalidOperationException(_localizer["OrderIdRequired"]);
         }
 
         var provider = string.IsNullOrWhiteSpace(dto.Provider) ? "DarwinCheckout" : dto.Provider.Trim();
@@ -40,21 +43,21 @@ public sealed class CreateStorefrontPaymentIntentHandler
             .Include(x => x.Payments)
             .FirstOrDefaultAsync(x => x.Id == dto.OrderId, ct)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException("Order not found.");
+            ?? throw new InvalidOperationException(_localizer["OrderNotFound"]);
 
         if (!Darwin.Application.Orders.Queries.GetStorefrontOrderConfirmationHandler.CanAccessOrder(order.UserId, order.OrderNumber, dto.UserId, dto.OrderNumber))
         {
-            throw new InvalidOperationException("Order confirmation context is invalid.");
+            throw new InvalidOperationException(_localizer["OrderConfirmationContextIsInvalid"]);
         }
 
         if (order.Status is OrderStatus.Cancelled or OrderStatus.Refunded)
         {
-            throw new InvalidOperationException("Payment cannot be initiated for a cancelled or refunded order.");
+            throw new InvalidOperationException(_localizer["PaymentCannotBeInitiatedForCancelledOrRefundedOrder"]);
         }
 
         if (order.Payments.Any(x => x.Status is PaymentStatus.Captured or PaymentStatus.Completed))
         {
-            throw new InvalidOperationException("Order is already settled.");
+            throw new InvalidOperationException(_localizer["OrderIsAlreadySettled"]);
         }
 
         var existing = order.Payments
@@ -113,13 +116,15 @@ public sealed class CreateStorefrontPaymentIntentHandler
 public sealed class CompleteStorefrontPaymentHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompleteStorefrontPaymentHandler"/> class.
     /// </summary>
-    public CompleteStorefrontPaymentHandler(IAppDbContext db)
+    public CompleteStorefrontPaymentHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -130,29 +135,29 @@ public sealed class CompleteStorefrontPaymentHandler
         ArgumentNullException.ThrowIfNull(dto);
         if (dto.OrderId == Guid.Empty || dto.PaymentId == Guid.Empty)
         {
-            throw new InvalidOperationException("OrderId and PaymentId are required.");
+            throw new InvalidOperationException(_localizer["OrderIdAndPaymentIdAreRequired"]);
         }
 
         var order = await _db.Set<Order>()
             .Include(x => x.Payments)
             .FirstOrDefaultAsync(x => x.Id == dto.OrderId, ct)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException("Order not found.");
+            ?? throw new InvalidOperationException(_localizer["OrderNotFound"]);
 
         if (!Darwin.Application.Orders.Queries.GetStorefrontOrderConfirmationHandler.CanAccessOrder(order.UserId, order.OrderNumber, dto.UserId, dto.OrderNumber))
         {
-            throw new InvalidOperationException("Order confirmation context is invalid.");
+            throw new InvalidOperationException(_localizer["OrderConfirmationContextIsInvalid"]);
         }
 
         var payment = order.Payments.FirstOrDefault(x => x.Id == dto.PaymentId && !x.IsDeleted);
         if (payment is null)
         {
-            throw new InvalidOperationException("Payment not found for the order.");
+            throw new InvalidOperationException(_localizer["PaymentNotFoundForOrder"]);
         }
 
         if (payment.Status is PaymentStatus.Captured or PaymentStatus.Completed or PaymentStatus.Refunded)
         {
-            throw new InvalidOperationException("Payment is already finalized.");
+            throw new InvalidOperationException(_localizer["PaymentIsAlreadyFinalized"]);
         }
 
         if (!string.IsNullOrWhiteSpace(dto.ProviderReference))
@@ -183,7 +188,7 @@ public sealed class CompleteStorefrontPaymentHandler
                 break;
 
             default:
-                throw new InvalidOperationException("Unsupported storefront payment outcome.");
+                throw new InvalidOperationException(_localizer["UnsupportedStorefrontPaymentOutcome"]);
         }
 
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);

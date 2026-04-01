@@ -1,0 +1,15 @@
+{
+  "cultureDisplayNames": {
+    "de-DE": "Deutsch",
+    "en-US": "English"
+  },
+  "menuSourceValues": {
+    "cms": "CMS",
+    "fallback": "Emergency fallback"
+  },
+  "menuMessages": {
+    "emptyMenu": "Public CMS menu \"{menuName}\" returned no top-level links.",
+    "notFound": "Public CMS menu \"{menuName}\" was not found.",
+    "fallbackDefault": "Main navigation is currently rendering from the emergency fallback because the CMS menu fetch returned status \"{menuStatus}\"."
+  }
+}

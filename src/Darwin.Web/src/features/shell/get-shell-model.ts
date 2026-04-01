@@ -1,8 +1,14 @@
 import "server-only";
 import { getPublicMenuByName } from "@/features/cms/api/public-cms";
 import type { PublicMenuItem } from "@/features/cms/types";
-import { fallbackFooterGroups, fallbackPrimaryNavigation, utilityLinks } from "@/features/shell/navigation";
+import {
+  getFallbackFooterGroups,
+  getFallbackPrimaryNavigation,
+  getUtilityLinks,
+} from "@/features/shell/navigation";
 import type { ShellLink, ShellModel } from "@/features/shell/types";
+import { formatResource, getSharedResource } from "@/localization";
+import { getRequestCulture } from "@/lib/request-culture";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { activeTheme } from "@/themes/registry";
 
@@ -19,15 +25,35 @@ function mapMenuItemsToLinks(items: PublicMenuItem[]): ShellLink[] {
     }));
 }
 
+function getMenuMessage(
+  culture: string,
+  menuName: string,
+  menuStatus: string,
+  menuResultMessage?: string,
+) {
+  const shared = getSharedResource(culture);
+
+  if (menuStatus === "ok") {
+    return formatResource(shared.menuMessages.emptyMenu, { menuName });
+  }
+
+  if (menuStatus === "not-found") {
+    return formatResource(shared.menuMessages.notFound, { menuName });
+  }
+
+  return menuResultMessage;
+}
+
 export async function getShellModel(): Promise<ShellModel> {
   const runtimeConfig = getSiteRuntimeConfig();
+  const culture = await getRequestCulture();
   const menuResult = await getPublicMenuByName(runtimeConfig.mainMenuName);
   const cmsLinks = menuResult.data
     ? mapMenuItemsToLinks(menuResult.data.items)
     : [];
   const primaryNavigation = cmsLinks.length > 0
     ? cmsLinks
-    : fallbackPrimaryNavigation;
+    : getFallbackPrimaryNavigation(culture);
   const menuStatus = cmsLinks.length > 0
     ? "ok"
     : menuResult.status === "ok"
@@ -35,20 +61,22 @@ export async function getShellModel(): Promise<ShellModel> {
       : menuResult.status;
   const menuMessage = cmsLinks.length > 0
     ? undefined
-    : menuResult.status === "ok"
-      ? `Public CMS menu "${runtimeConfig.mainMenuName}" returned no top-level links.`
-    : menuResult.status === "not-found"
-      ? `Public CMS menu "${runtimeConfig.mainMenuName}" was not found.`
-      : menuResult.message;
+    : getMenuMessage(
+        culture,
+        runtimeConfig.mainMenuName,
+        menuResult.status,
+        menuResult.message,
+      );
 
   return {
     activeThemeName: activeTheme.displayName,
-    culture: runtimeConfig.culture,
+    culture,
+    supportedCultures: runtimeConfig.supportedCultures,
     menuSource: cmsLinks.length > 0 ? "cms" : "fallback",
     menuStatus,
     menuMessage,
     primaryNavigation,
-    utilityLinks,
-    footerGroups: fallbackFooterGroups,
+    utilityLinks: getUtilityLinks(culture),
+    footerGroups: getFallbackFooterGroups(culture),
   };
 }

@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.SEO.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using System.Text.RegularExpressions;
 
 namespace Darwin.Application.SEO.Validators
@@ -9,13 +10,13 @@ namespace Darwin.Application.SEO.Validators
     /// </summary>
     public sealed class RedirectRuleCreateValidator : AbstractValidator<RedirectRuleCreateDto>
     {
-        public RedirectRuleCreateValidator()
+        public RedirectRuleCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.FromPath)
                 .NotEmpty()
                 .MaximumLength(2048)
                 .Must(p => p.StartsWith("/"))
-                .WithMessage("FromPath must be app-relative and start with '/'.");
+                .WithMessage(localizer["RedirectRuleFromPathMustBeAppRelative"]);
 
             RuleFor(x => x.To)
                 .NotEmpty()
@@ -25,7 +26,7 @@ namespace Darwin.Application.SEO.Validators
 
     public sealed class RedirectRuleEditValidator : AbstractValidator<RedirectRuleEditDto>
     {
-        public RedirectRuleEditValidator()
+        public RedirectRuleEditValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotNull();
@@ -34,7 +35,7 @@ namespace Darwin.Application.SEO.Validators
                 .NotEmpty()
                 .MaximumLength(2048)
                 .Must(p => p.StartsWith("/"))
-                .WithMessage("FromPath must be app-relative and start with '/'.");
+                .WithMessage(localizer["RedirectRuleFromPathMustBeAppRelative"]);
 
             RuleFor(x => x.To)
                 .NotEmpty()

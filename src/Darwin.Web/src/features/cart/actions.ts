@@ -9,6 +9,7 @@ import {
 } from "@/features/cart/cookies";
 import {
   addItemToPublicCart,
+  applyPublicCartCoupon,
   removePublicCartItem,
   updatePublicCartItem,
 } from "@/features/cart/api/public-cart";
@@ -133,4 +134,32 @@ export async function removeCartItemAction(formData: FormData) {
   await pruneCartDisplaySnapshots(result.data.items.map((item) => item.variantId));
   revalidateStorefrontPaths(["/cart"]);
   redirect(withCartFlash("/cart", "cartStatus", "removed"));
+}
+
+export async function applyCartCouponAction(formData: FormData) {
+  const cartId = String(formData.get("cartId") ?? "").trim();
+  const couponCode = String(formData.get("couponCode") ?? "").trim();
+
+  if (!cartId) {
+    redirect(withCartFlash("/cart", "cartError", "Cart coupon request is missing the cart id."));
+  }
+
+  const result = await applyPublicCartCoupon({
+    cartId,
+    couponCode: couponCode || undefined,
+  });
+
+  if (!result.data) {
+    redirect(
+      withCartFlash(
+        "/cart",
+        "cartError",
+        result.message ?? "Coupon could not be applied.",
+      ),
+    );
+  }
+
+  await pruneCartDisplaySnapshots(result.data.items.map((item) => item.variantId));
+  revalidateStorefrontPaths(["/cart", "/checkout"]);
+  redirect(withCartFlash("/cart", "cartStatus", couponCode ? "coupon-applied" : "coupon-cleared"));
 }

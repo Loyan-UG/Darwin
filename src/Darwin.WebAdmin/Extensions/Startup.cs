@@ -1,5 +1,7 @@
 using System.Globalization;
 using Darwin.Infrastructure.Extensions;
+using Darwin.WebAdmin.Localization;
+using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,13 +42,16 @@ namespace Darwin.WebAdmin.Extensions
     {
         public static async Task UseWebStartupAsync(this WebApplication app)
         {
-            var supportedCultures = new[] { new CultureInfo("de-DE"), new CultureInfo("en-US") };
-            app.UseRequestLocalization(new RequestLocalizationOptions
+            var localizationSettings = await LoadLocalizationSettingsAsync(app.Services);
+            var requestLocalizationOptions = new RequestLocalizationOptions
             {
-                DefaultRequestCulture = new RequestCulture("de-DE"),
-                SupportedCultures = supportedCultures,
-                SupportedUICultures = supportedCultures
-            });
+                DefaultRequestCulture = new RequestCulture(localizationSettings.DefaultCulture),
+                SupportedCultures = localizationSettings.SupportedCultures,
+                SupportedUICultures = localizationSettings.SupportedCultures
+            };
+            requestLocalizationOptions.RequestCultureProviders.Insert(0, new QueryStringRequestCultureProvider());
+            requestLocalizationOptions.RequestCultureProviders.Insert(1, new CookieRequestCultureProvider());
+            app.UseRequestLocalization(requestLocalizationOptions);
 
             if (app.Environment.IsDevelopment())
             {
@@ -70,6 +75,19 @@ namespace Darwin.WebAdmin.Extensions
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+        }
+
+        private static async Task<(CultureInfo[] SupportedCultures, string DefaultCulture)> LoadLocalizationSettingsAsync(IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+            var siteSettingCache = scope.ServiceProvider.GetRequiredService<ISiteSettingCache>();
+            var settings = await siteSettingCache.GetAsync().ConfigureAwait(false);
+            var cultureNames = AdminCultureCatalog.NormalizeSupportedCultureNames(settings.SupportedCulturesCsv);
+
+            var supportedCultures = cultureNames.Select(static x => new CultureInfo(x)).ToArray();
+            var defaultCulture = supportedCultures.FirstOrDefault(static x => string.Equals(x.Name, AdminCultureCatalog.DefaultCulture, StringComparison.OrdinalIgnoreCase))?.Name
+                                 ?? supportedCultures[0].Name;
+            return (supportedCultures, defaultCulture);
         }
     }
 }

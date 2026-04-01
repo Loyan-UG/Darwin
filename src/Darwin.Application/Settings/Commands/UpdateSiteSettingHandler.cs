@@ -4,6 +4,7 @@ using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.Settings;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Linq;
 using System.Threading;
@@ -19,11 +20,16 @@ namespace Darwin.Application.Settings.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<SiteSettingDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateSiteSettingHandler(IAppDbContext db, IValidator<SiteSettingDto> validator)
+        public UpdateSiteSettingHandler(
+            IAppDbContext db,
+            IValidator<SiteSettingDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -35,10 +41,10 @@ namespace Darwin.Application.Settings.Commands
 
             var s = await _db.Set<SiteSetting>().FirstOrDefaultAsync(ct);
             if (s is null)
-                throw new ValidationException("SiteSetting row not found.");
+                throw new ValidationException(_localizer["SiteSettingRowNotFound"]);
 
             if (!s.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("The settings were modified by another user.");
+                throw new DbUpdateConcurrencyException(_localizer["SettingsModifiedByAnotherUser"]);
 
             // -------- Basics --------
             s.Title = dto.Title.Trim();
@@ -59,6 +65,9 @@ namespace Darwin.Application.Settings.Commands
             s.TimeZone = dto.TimeZone ?? "Europe/Berlin";
             s.DateFormat = dto.DateFormat ?? "yyyy-MM-dd";
             s.TimeFormat = dto.TimeFormat ?? "HH:mm";
+            s.AdminTextOverridesJson = string.IsNullOrWhiteSpace(dto.AdminTextOverridesJson)
+                ? null
+                : dto.AdminTextOverridesJson.Trim();
 
             // -------- Security / JWT --------
             s.JwtEnabled = dto.JwtEnabled;

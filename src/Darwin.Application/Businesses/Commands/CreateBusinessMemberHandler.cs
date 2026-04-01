@@ -7,6 +7,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -18,11 +19,16 @@ namespace Darwin.Application.Businesses.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<BusinessMemberCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateBusinessMemberHandler(IAppDbContext db, IValidator<BusinessMemberCreateDto> validator)
+        public CreateBusinessMemberHandler(
+            IAppDbContext db,
+            IValidator<BusinessMemberCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(BusinessMemberCreateDto dto, CancellationToken ct = default)
@@ -32,17 +38,17 @@ namespace Darwin.Application.Businesses.Commands
             var businessExists = await _db.Set<Business>()
                 .AnyAsync(x => x.Id == dto.BusinessId, ct);
             if (!businessExists)
-                throw new InvalidOperationException("Business not found.");
+                throw new InvalidOperationException(_localizer["BusinessNotFound"]);
 
             var userExists = await _db.Set<User>()
                 .AnyAsync(x => x.Id == dto.UserId && !x.IsDeleted, ct);
             if (!userExists)
-                throw new InvalidOperationException("User not found.");
+                throw new InvalidOperationException(_localizer["UserNotFound"]);
 
             var duplicateExists = await _db.Set<BusinessMember>()
                 .AnyAsync(x => x.BusinessId == dto.BusinessId && x.UserId == dto.UserId, ct);
             if (duplicateExists)
-                throw new InvalidOperationException("This user is already assigned to the selected business.");
+                throw new InvalidOperationException(_localizer["BusinessMemberUserAlreadyAssignedToSelectedBusiness"]);
 
             var entity = new BusinessMember
             {

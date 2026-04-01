@@ -6,6 +6,7 @@ using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Validators;
 using Darwin.Domain.Entities.Loyalty;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Loyalty.Commands
@@ -16,11 +17,17 @@ namespace Darwin.Application.Loyalty.Commands
     public sealed class CreateLoyaltyRewardTierHandler
     {
         private readonly IAppDbContext _db;
-        private readonly LoyaltyRewardTierCreateValidator _validator = new();
+        private readonly IValidator<LoyaltyRewardTierCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateLoyaltyRewardTierHandler(IAppDbContext db)
+        public CreateLoyaltyRewardTierHandler(
+            IAppDbContext db,
+            IValidator<LoyaltyRewardTierCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(LoyaltyRewardTierCreateDto dto, CancellationToken ct = default)
@@ -32,7 +39,7 @@ namespace Darwin.Application.Loyalty.Commands
                 .AnyAsync(x => x.Id == dto.LoyaltyProgramId && !x.IsDeleted, ct);
 
             if (!programExists)
-                throw new ValidationException("Loyalty program not found.");
+                throw new ValidationException(_localizer["LoyaltyProgramNotFound"]);
 
             var entity = new LoyaltyRewardTier
             {

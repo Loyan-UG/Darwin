@@ -1,15 +1,16 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessesListVm
 @inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Businesses";
+    ViewData["Title"] = T.T("BusinessesTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
 }
 
 <div id="businesses-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1 class="mb-0"><i class="fa-solid fa-building me-2"></i>Businesses</h1>
-        <p class="text-muted mb-0">Create and maintain merchant tenants, owner assignments, and operational readiness.</p>
+        <h1 class="mb-0"><i class="fa-solid fa-building me-2"></i>@T.T("BusinessesTitle")</h1>
+        <p class="text-muted mb-0">@T.T("BusinessesIntro")</p>
     </div>
     <div class="d-flex gap-2">
         <a asp-action="SupportQueue"
@@ -17,7 +18,7 @@
            hx-get="@Url.Action("SupportQueue", "Businesses")"
            hx-target="#businesses-workspace-shell"
            hx-swap="outerHTML">
-            <i class="fa-solid fa-life-ring"></i> Support Queue
+            <i class="fa-solid fa-life-ring"></i> @T.T("SupportQueue")
         </a>
         @if (isFullAdmin)
         {
@@ -26,7 +27,7 @@
                hx-get="@Url.Action("Create", "Businesses")"
                hx-target="#businesses-workspace-shell"
                hx-swap="outerHTML">
-                <i class="fa-solid fa-plus"></i> Create Business
+                <i class="fa-solid fa-plus"></i> @T.T("CreateBusiness")
             </a>
         }
     </div>
@@ -39,7 +40,7 @@
        hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
        hx-target="#businesses-workspace-shell"
        hx-swap="outerHTML">
-        <i class="fa-solid fa-triangle-exclamation"></i> Needs Attention
+        <i class="fa-solid fa-triangle-exclamation"></i> @T.T("NeedsAttention")
     </a>
     <a asp-action="Index"
        asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval"
@@ -47,7 +48,7 @@
        hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval })"
        hx-target="#businesses-workspace-shell"
        hx-swap="outerHTML">
-        <i class="fa-solid fa-hourglass-half"></i> Pending Approval
+        <i class="fa-solid fa-hourglass-half"></i> @T.T("PendingApproval")
     </a>
     <a asp-action="Index"
        asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.Suspended"
@@ -55,14 +56,14 @@
        hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.Suspended })"
        hx-target="#businesses-workspace-shell"
        hx-swap="outerHTML">
-        <i class="fa-solid fa-ban"></i> Suspended
+        <i class="fa-solid fa-ban"></i> @T.T("Suspended")
     </a>
     <a asp-action="Index"
        class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("Index", "Businesses")"
        hx-target="#businesses-workspace-shell"
        hx-swap="outerHTML">
-        <i class="fa-solid fa-rotate-left"></i> Clear Queue Filters
+        <i class="fa-solid fa-rotate-left"></i> @T.T("ClearQueueFilters")
     </a>
 </div>
 
@@ -72,7 +73,7 @@
       hx-target="#businesses-workspace-shell"
       hx-swap="outerHTML">
     <div class="col-md-4">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business or legal name" />
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("SearchBusinessesPlaceholder")" />
     </div>
     <div class="col-md-3">
         <select name="operationalStatus" asp-items="Model.OperationalStatusItems" class="form-select"></select>
@@ -88,16 +89,16 @@
     <div class="col-auto">
         <div class="form-check mt-2">
             <input type="checkbox" name="attentionOnly" value="true" class="form-check-input" id="attentionOnly" checked="@(Model.AttentionOnly ? "checked" : null)" />
-            <label class="form-check-label" for="attentionOnly">Needs attention only</label>
+            <label class="form-check-label" for="attentionOnly">@T.T("NeedsAttentionOnly")</label>
         </div>
     </div>
     <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")</button>
         <a asp-action="Index"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "Businesses")"
            hx-target="#businesses-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML">@T.T("Reset")</a>
     </div>
 </form>
 
@@ -105,21 +106,21 @@
     <table class="table table-sm table-hover align-middle">
         <thead>
             <tr>
-                <th>Business</th>
-                <th>Category</th>
-                <th class="text-center">Status</th>
-                <th class="text-center">Owners</th>
-                <th class="text-center">Members</th>
-                <th class="text-center">Locations</th>
-                <th>Attention</th>
-                <th class="text-end" style="width:360px">Actions</th>
+                <th>@T.T("Business")</th>
+                <th>@T.T("Category")</th>
+                <th class="text-center">@T.T("Status")</th>
+                <th class="text-center">@T.T("Owners")</th>
+                <th class="text-center">@T.T("Members")</th>
+                <th class="text-center">@T.T("Locations")</th>
+                <th>@T.T("Attention")</th>
+                <th class="text-end" style="width:360px">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
             <tr>
-                <td colspan="8" class="text-center text-muted py-4">No businesses found.</td>
+                <td colspan="8" class="text-center text-muted py-4">@T.T("NoBusinessesFound")</td>
             </tr>
         }
         else
@@ -138,19 +139,19 @@
                     <td class="text-center">
                         @if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
                         {
-                            <span class="badge text-bg-warning">Pending approval</span>
+                            <span class="badge text-bg-warning">@T.T("PendingApproval")</span>
                         }
                         else if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
                         {
-                            <span class="badge text-bg-danger">Suspended</span>
+                            <span class="badge text-bg-danger">@T.T("Suspended")</span>
                         }
                         else if (item.IsActive)
                         {
-                            <span class="badge text-bg-success">Active</span>
+                            <span class="badge text-bg-success">@T.T("Active")</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">Approved, inactive</span>
+                            <span class="badge text-bg-secondary">@T.T("ApprovedInactive")</span>
                         }
                     </td>
                     <td class="text-center">
@@ -160,7 +161,7 @@
                         }
                         else
                         {
-                            <span class="badge text-bg-warning">Missing</span>
+                            <span class="badge text-bg-warning">@T.T("MissingText")</span>
                         }
                     </td>
                     <td class="text-center">@item.MemberCount</td>
@@ -171,33 +172,33 @@
                         }
                         else
                         {
-                            <span class="badge text-bg-warning">Missing</span>
+                            <span class="badge text-bg-warning">@T.T("MissingText")</span>
                         }
                     </td>
                     <td>
                         @if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
                         {
-                            <div class="small"><span class="badge text-bg-warning">Approval pending</span></div>
+                            <div class="small"><span class="badge text-bg-warning">@T.T("ApprovalPending")</span></div>
                         }
                         @if (item.ActiveOwnerCount == 0)
                         {
-                            <div class="small text-muted">Missing active owner</div>
+                            <div class="small text-muted">@T.T("MissingActiveOwner")</div>
                         }
                         @if (item.PrimaryLocationCount == 0)
                         {
-                            <div class="small text-muted">Missing primary location</div>
+                            <div class="small text-muted">@T.T("MissingPrimaryLocation")</div>
                         }
                         @if (!item.HasContactEmailConfigured)
                         {
-                            <div class="small text-muted">Missing contact email</div>
+                            <div class="small text-muted">@T.T("MissingContactEmail")</div>
                         }
                         @if (!item.HasLegalNameConfigured)
                         {
-                            <div class="small text-muted">Missing legal name</div>
+                            <div class="small text-muted">@T.T("MissingLegalName")</div>
                         }
                         @if (item.InvitationCount > 0)
                         {
-                            <div class="small text-muted">@item.InvitationCount pending invite(s)</div>
+                            <div class="small text-muted">@item.InvitationCount @T.T("PendingInvites")</div>
                         }
                     </td>
                     <td class="text-end">
@@ -207,7 +208,7 @@
                            hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id })"
                            hx-target="#businesses-workspace-shell"
                            hx-swap="outerHTML">
-                            <i class="fa-solid fa-user-group"></i> Members
+                            <i class="fa-solid fa-user-group"></i> @T.T("Members")
                         </a>
                         <a asp-action="Subscription"
                            asp-route-businessId="@item.Id"
@@ -215,7 +216,7 @@
                            hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
                            hx-target="#businesses-workspace-shell"
                            hx-swap="outerHTML">
-                            <i class="fa-solid fa-credit-card"></i> Subscription
+                            <i class="fa-solid fa-credit-card"></i> @T.T("Subscription")
                         </a>
                         <a asp-action="Invitations"
                            asp-route-businessId="@item.Id"
@@ -223,7 +224,7 @@
                            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id })"
                            hx-target="#businesses-workspace-shell"
                            hx-swap="outerHTML">
-                            <i class="fa-solid fa-envelope"></i> Invitations
+                            <i class="fa-solid fa-envelope"></i> @T.T("Invitations")
                         </a>
                         @if (isFullAdmin)
                         {
@@ -233,7 +234,7 @@
                                hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
                                hx-target="#businesses-workspace-shell"
                                hx-swap="outerHTML">
-                                <i class="fa-solid fa-pen"></i> Edit
+                                <i class="fa-solid fa-pen"></i> @T.T("Edit")
                             </a>
                             <a asp-action="Setup"
                                asp-route-id="@item.Id"
@@ -241,7 +242,7 @@
                                hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
                                hx-target="#businesses-workspace-shell"
                                hx-swap="outerHTML">
-                                <i class="fa-solid fa-sliders"></i> Setup
+                                <i class="fa-solid fa-sliders"></i> @T.T("Setup")
                             </a>
                             <a asp-action="Locations"
                                asp-route-businessId="@item.Id"
@@ -249,7 +250,7 @@
                                hx-get="@Url.Action("Locations", "Businesses", new { businessId = item.Id })"
                                hx-target="#businesses-workspace-shell"
                                hx-swap="outerHTML">
-                                <i class="fa-solid fa-location-dot"></i> Locations
+                                <i class="fa-solid fa-location-dot"></i> @T.T("Locations")
                             </a>
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger"

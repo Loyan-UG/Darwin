@@ -14,24 +14,21 @@
                    Style="{StaticResource TitleLabelStyle}" />
 
             <Label Text="{x:Static res:AppResources.MemberPreferencesSubtitle}"
-                   FontSize="14"
-                   Opacity="0.85" />
+                   Style="{StaticResource SecondaryBodyLabelStyle}" />
 
             <Label Text="{Binding SuccessMessage}"
-                   TextColor="Green"
-                   FontSize="14"
+                   Style="{StaticResource SuccessLabelStyle}"
                    IsVisible="{Binding HasSuccess}" />
 
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   FontSize="14"
+                   Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}" />
 
             <Button Text="{x:Static res:AppResources.MemberPreferencesRefreshButton}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Command="{Binding RefreshCommand}" />
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+            <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                         <Label Text="{x:Static res:AppResources.MemberPreferencesMarketingConsentLabel}"
@@ -76,8 +73,7 @@
                     </Grid>
 
                     <Label Text="{Binding AcceptsTermsAtText}"
-                           FontSize="13"
-                           TextColor="{StaticResource Neutral600}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}"
                            IsVisible="{Binding HasAcceptsTermsAt}" />
 
                     <Button Text="{x:Static res:AppResources.MemberPreferencesSaveButton}"

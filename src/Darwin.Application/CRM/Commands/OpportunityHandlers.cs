@@ -1,8 +1,10 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CRM.Commands
 {
@@ -10,11 +12,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<OpportunityCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateOpportunityHandler(IAppDbContext db, IValidator<OpportunityCreateDto> validator)
+        public CreateOpportunityHandler(IAppDbContext db, IValidator<OpportunityCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(OpportunityCreateDto dto, CancellationToken ct = default)
@@ -28,7 +32,7 @@ namespace Darwin.Application.CRM.Commands
 
             if (!customerExists)
             {
-                throw new InvalidOperationException("Customer not found.");
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
             }
 
             var opportunity = new Opportunity
@@ -57,11 +61,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<OpportunityEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateOpportunityHandler(IAppDbContext db, IValidator<OpportunityEditDto> validator)
+        public UpdateOpportunityHandler(IAppDbContext db, IValidator<OpportunityEditDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(OpportunityEditDto dto, CancellationToken ct = default)
@@ -75,12 +81,12 @@ namespace Darwin.Application.CRM.Commands
 
             if (opportunity is null)
             {
-                throw new InvalidOperationException("Opportunity not found.");
+                throw new InvalidOperationException(_localizer["OpportunityNotFound"]);
             }
 
             if (!opportunity.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             opportunity.CustomerId = dto.CustomerId;

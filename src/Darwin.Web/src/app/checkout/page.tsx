@@ -7,6 +7,7 @@ import {
   readSingleSearchParam,
   toCheckoutAddress,
 } from "@/features/checkout/helpers";
+import { getRequestCulture } from "@/lib/request-culture";
 
 export const metadata = {
   title: "Checkout",
@@ -18,6 +19,7 @@ type CheckoutRouteProps = {
 
 export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const culture = await getRequestCulture();
   const model = await getCartViewModel();
   const draft = readCheckoutDraftFromSearchParams(resolvedSearchParams);
   const checkoutError = readSingleSearchParam(resolvedSearchParams?.checkoutError);
@@ -40,6 +42,7 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
 
   return (
     <CheckoutPage
+      culture={culture}
       model={model}
       draft={draft}
       intent={intent}

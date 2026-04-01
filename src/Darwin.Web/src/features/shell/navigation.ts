@@ -1,46 +1,14 @@
 import type { ShellLink, ShellLinkGroup } from "@/features/shell/types";
+import { getShellCopy } from "@/features/shell/copy";
 
-export const fallbackPrimaryNavigation: ShellLink[] = [
-  { label: "Home", href: "/" },
-  { label: "Catalog", href: "/catalog" },
-  { label: "Account", href: "/account" },
-  { label: "Loyalty", href: "/loyalty" },
-  { label: "Orders", href: "/orders" },
-  { label: "Invoices", href: "/invoices" },
-];
+export function getFallbackPrimaryNavigation(culture: string): ShellLink[] {
+  return getShellCopy(culture).fallbackPrimaryNavigation;
+}
 
-export const utilityLinks: ShellLink[] = [
-  { label: "Open storefront", href: "/catalog" },
-  { label: "Cart", href: "/cart" },
-  { label: "Checkout", href: "/checkout" },
-];
+export function getUtilityLinks(culture: string): ShellLink[] {
+  return getShellCopy(culture).utilityLinks;
+}
 
-export const fallbackFooterGroups: ShellLinkGroup[] = [
-  {
-    title: "Storefront",
-    links: [
-      { label: "Catalog", href: "/catalog" },
-      { label: "Cart", href: "/cart" },
-      { label: "Checkout", href: "/checkout" },
-      { label: "Home", href: "/" },
-      { label: "Loyalty preview", href: "/loyalty" },
-    ],
-  },
-  {
-    title: "Member",
-    links: [
-      { label: "Account", href: "/account" },
-      { label: "Loyalty", href: "/loyalty" },
-      { label: "Orders", href: "/orders" },
-      { label: "Invoices", href: "/invoices" },
-    ],
-  },
-  {
-    title: "Platform",
-    links: [
-      { label: "Theme foundation", href: "/" },
-      { label: "Config-driven behavior", href: "/account" },
-      { label: "Commerce scaffolding", href: "/orders" },
-    ],
-  },
-];
+export function getFallbackFooterGroups(culture: string): ShellLinkGroup[] {
+  return getShellCopy(culture).footerGroups;
+}

@@ -7,6 +7,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Services
 {
@@ -28,14 +29,16 @@ namespace Darwin.Application.Loyalty.Services
     {
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScanSessionTokenResolver"/> class.
         /// </summary>
-        public ScanSessionTokenResolver(IAppDbContext db, IClock clock)
+        public ScanSessionTokenResolver(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -163,7 +166,7 @@ namespace Darwin.Application.Loyalty.Services
 
             if (businessId == Guid.Empty)
             {
-                throw new ArgumentException("BusinessId must not be empty.", nameof(businessId));
+                throw new ArgumentException(_localizer["BusinessIdRequired"], nameof(businessId));
             }
 
             if (token.ConsumedAtUtc is not null)

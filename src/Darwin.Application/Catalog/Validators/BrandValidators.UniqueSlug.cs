@@ -5,6 +5,7 @@ using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -15,13 +16,13 @@ namespace Darwin.Application.Catalog.Validators
     {
         private readonly IAppDbContext _db;
 
-        public BrandCreateUniqueSlugValidator(IAppDbContext db)
+        public BrandCreateUniqueSlugValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
 
             RuleFor(x => x.Slug)
                 .MaximumLength(256)
-                .MustAsync(BeUniqueSlug).WithMessage("Slug must be unique.")
+                .MustAsync(BeUniqueSlug).WithMessage(localizer["SlugMustBeUnique"])
                 .When(x => !string.IsNullOrWhiteSpace(x.Slug));
         }
 
@@ -39,13 +40,13 @@ namespace Darwin.Application.Catalog.Validators
     {
         private readonly IAppDbContext _db;
 
-        public BrandEditUniqueSlugValidator(IAppDbContext db)
+        public BrandEditUniqueSlugValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
 
             RuleFor(x => x.Slug)
                 .MaximumLength(256)
-                .MustAsync(BeUniqueSlug).WithMessage("Slug must be unique.")
+                .MustAsync(BeUniqueSlug).WithMessage(localizer["SlugMustBeUnique"])
                 .When(x => !string.IsNullOrWhiteSpace(x.Slug));
         }
 

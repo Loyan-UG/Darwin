@@ -6,10 +6,11 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     x:Class="Darwin.Mobile.Consumer.Views.RegisterPage"
     x:DataType="vm:RegisterViewModel"
+    NavigationPage.HasNavigationBar="False"
     Title="{x:Static res:AppResources.RegisterTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24,28,24,32" Spacing="18">
+        <VerticalStackLayout Padding="24,12,24,24" Spacing="14">
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.RegisterTitle}"

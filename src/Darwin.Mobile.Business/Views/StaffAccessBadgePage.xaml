@@ -14,10 +14,9 @@
                    Style="{StaticResource TitleLabelStyle}" />
 
             <Label Text="{x:Static res:AppResources.StaffAccessBadgeDescription}"
-                   FontSize="14"
-                   Opacity="0.8" />
+                   Style="{StaticResource SecondaryBodyLabelStyle}" />
 
-            <Border StrokeThickness="1" Padding="16">
+            <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
                     <Image Source="{Binding BadgeImage}"
                            HeightRequest="240"
@@ -26,6 +25,7 @@
 
                     <Label Text="{Binding BadgeSummary}"
                            HorizontalTextAlignment="Center"
+                           Style="{StaticResource BodyLabelStyle}"
                            FontAttributes="Bold" />
 
                     <Label Text="{Binding OperatorRoleDisplay}"
@@ -35,15 +35,17 @@
                            HorizontalTextAlignment="Center" />
 
                     <Label Text="{Binding ErrorMessage}"
-                           TextColor="Red"
+                           Style="{StaticResource ErrorLabelStyle}"
                            IsVisible="{Binding HasError}"
                            HorizontalTextAlignment="Center" />
 
                     <Button Text="{x:Static res:AppResources.StaffAccessBadgeRefreshButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding RefreshBadgeCommand}" />
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
-                                       IsRunning="{Binding IsBusy}" />
+                                       IsRunning="{Binding IsBusy}"
+                                       Color="{StaticResource BrandGold500}" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

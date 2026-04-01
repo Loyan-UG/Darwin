@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Identity.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Validators
 {
@@ -51,10 +52,10 @@ namespace Darwin.Application.Identity.Validators
 
     public sealed class RevokeRefreshRequestValidator : AbstractValidator<RevokeRefreshRequestDto>
     {
-        public RevokeRefreshRequestValidator()
+        public RevokeRefreshRequestValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x).Must(x => x.UserId.HasValue || !string.IsNullOrWhiteSpace(x.RefreshToken))
-                           .WithMessage("Either UserId or RefreshToken must be provided.");
+                           .WithMessage(localizer["EitherUserIdOrRefreshTokenRequired"]);
         }
     }
 }

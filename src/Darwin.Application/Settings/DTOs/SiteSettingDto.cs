@@ -29,6 +29,7 @@ namespace Darwin.Application.Settings.DTOs
         public string? TimeZone { get; set; } = "Europe/Berlin";
         public string? DateFormat { get; set; } = "yyyy-MM-dd";
         public string? TimeFormat { get; set; } = "HH:mm";
+        public string? AdminTextOverridesJson { get; set; }
 
         // -------- JWT / Access-Refresh token settings --------
 

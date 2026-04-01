@@ -8,6 +8,7 @@ using Darwin.Application.Catalog.Validators;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Darwin.Application.Common.Html;
+using Microsoft.Extensions.Localization;
 
 
 namespace Darwin.Application.Catalog.Commands
@@ -37,14 +38,21 @@ namespace Darwin.Application.Catalog.Commands
         private readonly IMapper _mapper;
         private readonly IValidator<ProductCreateDto> _validator;
         private readonly IHtmlSanitizer _sanitizer;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
 
-        public CreateProductHandler(IAppDbContext db, IMapper mapper, IValidator<ProductCreateDto> validator, IHtmlSanitizer sanitizer)
+        public CreateProductHandler(
+            IAppDbContext db,
+            IMapper mapper,
+            IValidator<ProductCreateDto> validator,
+            IHtmlSanitizer sanitizer,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _mapper = mapper;
             _validator = validator;
             _sanitizer = sanitizer;
+            _localizer = localizer;
         }
 
         public async Task<Guid> HandleAsync(ProductCreateDto dto, CancellationToken ct = default)
@@ -56,7 +64,7 @@ namespace Darwin.Application.Catalog.Commands
             // Ensure simple product has exactly one variant (business rule example)
             if (product.Kind == Domain.Enums.ProductKind.Simple && product.Variants.Count == 0)
             {
-                throw new ValidationException("Simple product must contain one variant.");
+                throw new ValidationException(_localizer["SimpleProductMustContainOneVariant"]);
             }
 
             // SANITIZE translations:

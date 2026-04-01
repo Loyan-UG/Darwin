@@ -16,6 +16,7 @@ public partial class RegisterPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        NavigationPage.SetHasNavigationBar(this, false);
     }
 
     private async void OnLegalHubClicked(object? sender, EventArgs e)

@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Shipping.ShippingMethodEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] ?? false;
 }
@@ -6,14 +7,14 @@
 <div id="shipping-method-editor-shell">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h1 class="mb-1">@(isCreate ? "Create Shipping Method" : "Edit Shipping Method")</h1>
-            <p class="text-muted mb-0">Use this screen to manage carrier/service combinations and the rate tiers used by checkout and order shipping snapshots.</p>
+            <h1 class="mb-1">@(isCreate ? T.T("CreateShippingMethod") : T.T("EditShippingMethod"))</h1>
+            <p class="text-muted mb-0">@T.T("ShippingMethodEditorIntro")</p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "ShippingMethods")"
            hx-target="#shipping-methods-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Back</a>
+           hx-push-url="true">@T.T("Back")</a>
     </div>
 
     <form asp-action="@(isCreate ? "Create" : "Edit")"

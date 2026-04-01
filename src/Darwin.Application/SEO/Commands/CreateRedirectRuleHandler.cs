@@ -3,6 +3,7 @@ using Darwin.Application.SEO.DTOs;
 using Darwin.Application.SEO.Validators;
 using Darwin.Domain.Entities.SEO;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,13 +15,14 @@ namespace Darwin.Application.SEO.Commands
     public sealed class CreateRedirectRuleHandler
     {
         private readonly IAppDbContext _db;
-        private readonly RedirectRuleCreateValidator _vBasic = new();
+        private readonly RedirectRuleCreateValidator _vBasic;
         private readonly RedirectRuleCreateUniqueValidator _vUnique;
 
-        public CreateRedirectRuleHandler(IAppDbContext db)
+        public CreateRedirectRuleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
-            _vUnique = new RedirectRuleCreateUniqueValidator(db);
+            _vBasic = new RedirectRuleCreateValidator(localizer);
+            _vUnique = new RedirectRuleCreateUniqueValidator(db, localizer);
         }
 
         public async Task HandleAsync(RedirectRuleCreateDto dto, CancellationToken ct = default)

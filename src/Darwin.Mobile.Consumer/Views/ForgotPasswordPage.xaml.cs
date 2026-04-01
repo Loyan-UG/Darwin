@@ -20,6 +20,7 @@ public partial class ForgotPasswordPage : ContentPage
 
         // Injected view model keeps this page lean and consistent with DI-first architecture.
         BindingContext = viewModel;
+        NavigationPage.SetHasNavigationBar(this, false);
     }
 
     /// <summary>

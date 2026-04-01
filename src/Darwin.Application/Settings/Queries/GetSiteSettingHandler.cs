@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
@@ -52,6 +52,7 @@ namespace Darwin.Application.Settings.Queries
                 TimeZone = s.TimeZone,
                 DateFormat = s.DateFormat,
                 TimeFormat = s.TimeFormat,
+            AdminTextOverridesJson = s.AdminTextOverridesJson,
 
                 // JWT
                 JwtEnabled = s.JwtEnabled,

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Darwin.Application.Billing;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Enums;
+using Darwin.WebAdmin.Localization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.WebAdmin.ViewModels.Businesses
@@ -96,8 +97,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string? ContactPhoneE164 { get; set; }
         public BusinessCategoryKind Category { get; set; } = BusinessCategoryKind.Unknown;
         public string DefaultCurrency { get; set; } = "EUR";
-        public string DefaultCulture { get; set; } = "de-DE";
+        public string DefaultCulture { get; set; } = AdminCultureCatalog.DefaultCulture;
         public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
+        public string? AdminTextOverridesJson { get; set; }
         public string? BrandDisplayName { get; set; }
         public string? BrandLogoUrl { get; set; }
         public string? BrandPrimaryColorHex { get; set; }

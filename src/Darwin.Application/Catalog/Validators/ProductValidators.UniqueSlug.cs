@@ -5,6 +5,7 @@ using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -16,12 +17,12 @@ namespace Darwin.Application.Catalog.Validators
     {
         private readonly IAppDbContext _db;
 
-        public ProductCreateUniqueSlugValidator(IAppDbContext db)
+        public ProductCreateUniqueSlugValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             RuleForEach(x => x.Translations)
                 .MustAsync(BeUniqueSlug)
-                .WithMessage("Slug must be unique per culture.");
+                .WithMessage(localizer["SlugMustBeUniquePerCulture"]);
         }
 
         /// <summary>
@@ -42,12 +43,12 @@ namespace Darwin.Application.Catalog.Validators
     {
         private readonly IAppDbContext _db;
 
-        public ProductEditUniqueSlugValidator(IAppDbContext db)
+        public ProductEditUniqueSlugValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             RuleForEach(x => x.Translations)
                 .MustAsync(BeUniqueSlug)
-                .WithMessage("Slug must be unique per culture.");
+                .WithMessage(localizer["SlugMustBeUniquePerCulture"]);
         }
 
         /// <summary>

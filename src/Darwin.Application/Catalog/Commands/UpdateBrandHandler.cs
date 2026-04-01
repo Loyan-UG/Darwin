@@ -7,6 +7,7 @@ using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Validators;
 using Darwin.Application.Common.Html;
 using Darwin.Domain.Entities.Catalog;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Catalog.Commands
@@ -18,9 +19,15 @@ namespace Darwin.Application.Catalog.Commands
     public sealed class UpdateBrandHandler
     {
         private readonly IAppDbContext _db;
-        private readonly BrandEditDtoValidator _validator = new();
+        private readonly BrandEditDtoValidator _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateBrandHandler(IAppDbContext db) => _db = db;
+        public UpdateBrandHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+            _validator = new BrandEditDtoValidator(localizer);
+        }
 
         public async Task HandleAsync(BrandEditDto dto, CancellationToken ct = default)
         {
@@ -32,11 +39,11 @@ namespace Darwin.Application.Catalog.Commands
                 .Include(b => b.Translations)
                 .FirstOrDefaultAsync(b => b.Id == dto.Id, ct);
 
-            if (brand is null) throw new InvalidOperationException("Brand not found.");
+            if (brand is null) throw new InvalidOperationException(_localizer["BrandNotFound"]);
 
             // Concurrency check
             if (!brand.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             // Unique slug check if changed
             if (!string.Equals(brand.Slug, dto.Slug, StringComparison.OrdinalIgnoreCase) &&

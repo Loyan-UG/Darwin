@@ -1,8 +1,11 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.Json;
 using Darwin.Application.Settings.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Settings.Validators
 {
@@ -12,14 +15,14 @@ namespace Darwin.Application.Settings.Validators
     /// </summary>
     public sealed class SiteSettingEditValidator : AbstractValidator<SiteSettingDto>
     {
-        public SiteSettingEditValidator()
+        public SiteSettingEditValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotNull();
 
             // -------- Basic site information --------
             RuleFor(x => x.Title)
-                .NotEmpty().WithMessage("Title is required.")
+                .NotEmpty().WithMessage(localizer["SiteSettingTitleRequired"])
                 .MaximumLength(200);
 
             RuleFor(x => x.LogoUrl)
@@ -42,18 +45,18 @@ namespace Darwin.Application.Settings.Validators
             RuleFor(x => x.JwtAccessTokenMinutes)
                 .GreaterThanOrEqualTo(1)
                 .LessThanOrEqualTo(1440)
-                .WithMessage("JwtAccessTokenMinutes must be between 1 and 1440 minutes.");
+                .WithMessage(localizer["SiteSettingJwtAccessTokenMinutesRange"]);
 
             RuleFor(x => x.JwtRefreshTokenDays)
                 .GreaterThanOrEqualTo(1)
                 .LessThanOrEqualTo(3650)
-                .WithMessage("JwtRefreshTokenDays must be between 1 and 3650 days.");
+                .WithMessage(localizer["SiteSettingJwtRefreshTokenDaysRange"]);
 
             RuleFor(x => x.JwtSigningKey)
                 .NotEmpty()
                 .MinimumLength(32)
                 .MaximumLength(2048)
-                .WithMessage("JwtSigningKey must be a non-empty high-entropy secret.");
+                .WithMessage(localizer["SiteSettingJwtSigningKeyEntropy"]);
 
             RuleFor(x => x.JwtPreviousSigningKey)
                 .MinimumLength(32)
@@ -63,49 +66,49 @@ namespace Darwin.Application.Settings.Validators
             RuleFor(x => x.JwtClockSkewSeconds)
                 .GreaterThanOrEqualTo(0)
                 .LessThanOrEqualTo(3600)
-                .WithMessage("JwtClockSkewSeconds must be between 0 and 3600 seconds.");
+                .WithMessage(localizer["SiteSettingJwtClockSkewSecondsRange"]);
 
 
             // -------- Mobile bootstrap --------
             RuleFor(x => x.MobileQrTokenRefreshSeconds)
                 .GreaterThan(0)
                 .LessThanOrEqualTo(3600)
-                .WithMessage("MobileQrTokenRefreshSeconds must be between 1 and 3600 seconds.");
+                .WithMessage(localizer["SiteSettingMobileQrTokenRefreshSecondsRange"]);
 
             RuleFor(x => x.MobileMaxOutboxItems)
                 .GreaterThan(0)
                 .LessThanOrEqualTo(10000)
-                .WithMessage("MobileMaxOutboxItems must be between 1 and 10000.");
+                .WithMessage(localizer["SiteSettingMobileMaxOutboxItemsRange"]);
 
             RuleFor(x => x.BusinessManagementWebsiteUrl)
                 .MaximumLength(500)
                 .Must(BeHttpsAbsoluteUrl)
                 .When(x => !string.IsNullOrWhiteSpace(x.BusinessManagementWebsiteUrl))
-                .WithMessage("BusinessManagementWebsiteUrl must be an absolute HTTPS URL.");
+                .WithMessage(localizer["SiteSettingBusinessManagementWebsiteUrlHttps"]);
 
             RuleFor(x => x.ImpressumUrl)
                 .MaximumLength(500)
                 .Must(BeHttpsAbsoluteUrl)
                 .When(x => !string.IsNullOrWhiteSpace(x.ImpressumUrl))
-                .WithMessage("ImpressumUrl must be an absolute HTTPS URL.");
+                .WithMessage(localizer["SiteSettingImpressumUrlHttps"]);
 
             RuleFor(x => x.PrivacyPolicyUrl)
                 .MaximumLength(500)
                 .Must(BeHttpsAbsoluteUrl)
                 .When(x => !string.IsNullOrWhiteSpace(x.PrivacyPolicyUrl))
-                .WithMessage("PrivacyPolicyUrl must be an absolute HTTPS URL.");
+                .WithMessage(localizer["SiteSettingPrivacyPolicyUrlHttps"]);
 
             RuleFor(x => x.BusinessTermsUrl)
                 .MaximumLength(500)
                 .Must(BeHttpsAbsoluteUrl)
                 .When(x => !string.IsNullOrWhiteSpace(x.BusinessTermsUrl))
-                .WithMessage("BusinessTermsUrl must be an absolute HTTPS URL.");
+                .WithMessage(localizer["SiteSettingBusinessTermsUrlHttps"]);
 
             RuleFor(x => x.AccountDeletionUrl)
                 .MaximumLength(500)
                 .Must(BeHttpsAbsoluteUrl)
                 .When(x => !string.IsNullOrWhiteSpace(x.AccountDeletionUrl))
-                .WithMessage("AccountDeletionUrl must be an absolute HTTPS URL.");
+                .WithMessage(localizer["SiteSettingAccountDeletionUrlHttps"]);
 
             // -------- Phase-1 payment and shipping providers --------
             RuleFor(x => x.StripePublishableKey)
@@ -127,7 +130,7 @@ namespace Darwin.Application.Settings.Validators
             RuleFor(x => x.DefaultVatRatePercent)
                 .GreaterThanOrEqualTo(0)
                 .LessThanOrEqualTo(100)
-                .WithMessage("DefaultVatRatePercent must be between 0 and 100.");
+                .WithMessage(localizer["SiteSettingDefaultVatRatePercentRange"]);
 
             RuleFor(x => x.InvoiceIssuerLegalName)
                 .MaximumLength(200)
@@ -152,7 +155,7 @@ namespace Darwin.Application.Settings.Validators
             RuleFor(x => x.InvoiceIssuerCountry)
                 .Matches("^[A-Z]{2}$")
                 .When(x => !string.IsNullOrWhiteSpace(x.InvoiceIssuerCountry))
-                .WithMessage("InvoiceIssuerCountry must be a 2-letter uppercase country code.");
+                .WithMessage(localizer["SiteSettingInvoiceIssuerCountryCode"]);
 
             RuleFor(x => x.DhlEnvironment)
                 .MaximumLength(50)
@@ -162,7 +165,7 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(500)
                 .Must(BeHttpsAbsoluteUrl)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlApiBaseUrl))
-                .WithMessage("DhlApiBaseUrl must be an absolute HTTPS URL.");
+                .WithMessage(localizer["SiteSettingDhlApiBaseUrlHttps"]);
 
             RuleFor(x => x.DhlApiKey)
                 .MaximumLength(256)
@@ -204,17 +207,17 @@ namespace Darwin.Application.Settings.Validators
             RuleFor(x => x.DhlShipperCountry)
                 .Matches("^[A-Z]{2}$")
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperCountry))
-                .WithMessage("DhlShipperCountry must be a 2-letter uppercase country code.");
+                .WithMessage(localizer["SiteSettingDhlShipperCountryCode"]);
 
             RuleFor(x => x.ShipmentAttentionDelayHours)
                 .GreaterThanOrEqualTo(1)
                 .LessThanOrEqualTo(720)
-                .WithMessage("ShipmentAttentionDelayHours must be between 1 and 720.");
+                .WithMessage(localizer["SiteSettingShipmentAttentionDelayHoursRange"]);
 
             RuleFor(x => x.ShipmentTrackingGraceHours)
                 .GreaterThanOrEqualTo(1)
                 .LessThanOrEqualTo(720)
-                .WithMessage("ShipmentTrackingGraceHours must be between 1 and 720.");
+                .WithMessage(localizer["SiteSettingShipmentTrackingGraceHoursRange"]);
 
 
 
@@ -222,23 +225,23 @@ namespace Darwin.Application.Settings.Validators
             RuleFor(x => x.SoftDeleteRetentionDays)
                 .GreaterThanOrEqualTo(1)
                 .LessThanOrEqualTo(3650)
-                .WithMessage("SoftDeleteRetentionDays must be between 1 and 3650 days.");
+                .WithMessage(localizer["SiteSettingSoftDeleteRetentionDaysRange"]);
 
             RuleFor(x => x.SoftDeleteCleanupBatchSize)
                 .GreaterThanOrEqualTo(1)
                 .LessThanOrEqualTo(100_000)
-                .WithMessage("SoftDeleteCleanupBatchSize must be between 1 and 100000.");
+                .WithMessage(localizer["SiteSettingSoftDeleteCleanupBatchSizeRange"]);
 
             // -------- Localization --------
             RuleFor(x => x.DefaultCulture)
                 .NotEmpty().MaximumLength(10)
                 .Must(IsCulture)
-                .WithMessage("DefaultCulture must be like 'de-DE'.");
+                .WithMessage(localizer["SiteSettingDefaultCultureFormat"]);
 
             RuleFor(x => x.SupportedCulturesCsv)
                 .NotEmpty()
                 .Must(AllCulturesValid)
-                .WithMessage("SupportedCulturesCsv must be comma-separated cultures like 'de-DE,en-US'.");
+                .WithMessage(localizer["SiteSettingSupportedCulturesCsvFormat"]);
 
             RuleFor(x => x.DefaultCountry)
                 .Matches("^[A-Z]{2}$")
@@ -260,10 +263,16 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.TimeFormat));
 
+        RuleFor(x => x.AdminTextOverridesJson)
+            .MaximumLength(16000)
+            .Must(BeAdminTextOverridesJson)
+            .When(x => !string.IsNullOrWhiteSpace(x.AdminTextOverridesJson))
+            .WithMessage(localizer["SiteSettingAdminTextOverridesJsonInvalid"]);
+
             // -------- Measurement --------
             RuleFor(x => x.MeasurementSystem)
                 .Must(v => v == "Metric" || v == "Imperial")
-                .WithMessage("MeasurementSystem must be 'Metric' or 'Imperial'.");
+                .WithMessage(localizer["SiteSettingMeasurementSystemInvalid"]);
 
             RuleFor(x => x.DisplayWeightUnit)
                 .MaximumLength(10)
@@ -455,7 +464,7 @@ namespace Darwin.Application.Settings.Validators
                 .Must(x => string.IsNullOrWhiteSpace(x) ||
                            string.Equals(x, "Sms", StringComparison.OrdinalIgnoreCase) ||
                            string.Equals(x, "WhatsApp", StringComparison.OrdinalIgnoreCase))
-                .WithMessage("Preferred phone verification channel must be Sms or WhatsApp.");
+                .WithMessage(localizer["SiteSettingPhoneVerificationPreferredChannelInvalid"]);
         }
 
         private static bool IsCulture(string culture)
@@ -476,6 +485,24 @@ namespace Darwin.Application.Settings.Validators
         {
             return Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
                    string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+        }
+
+    private static bool BeAdminTextOverridesJson(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return true;
+            }
+
+            try
+            {
+                var root = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
+                return root is not null;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
     }
 }

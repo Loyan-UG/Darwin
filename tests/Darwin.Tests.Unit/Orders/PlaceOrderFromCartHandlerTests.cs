@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.CartCheckout.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
@@ -13,6 +14,7 @@ using Darwin.Domain.Entities.Shipping;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Orders;
 
@@ -102,8 +104,9 @@ public sealed class PlaceOrderFromCartHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db), new RateShipmentHandler(db));
-        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db), checkoutIntentHandler);
+        var localizer = new TestStringLocalizer();
+        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db, localizer), checkoutIntentHandler, localizer);
 
         var result = await handler.HandleAsync(new PlaceOrderFromCartDto
         {
@@ -257,8 +260,9 @@ public sealed class PlaceOrderFromCartHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db), new RateShipmentHandler(db));
-        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db), checkoutIntentHandler);
+        var localizer = new TestStringLocalizer();
+        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db, localizer), checkoutIntentHandler, localizer);
 
         var result = await handler.HandleAsync(new PlaceOrderFromCartDto
         {
@@ -341,8 +345,9 @@ public sealed class PlaceOrderFromCartHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db), new RateShipmentHandler(db));
-        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db), checkoutIntentHandler);
+        var localizer = new TestStringLocalizer();
+        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db, localizer), checkoutIntentHandler, localizer);
 
         var action = () => handler.HandleAsync(new PlaceOrderFromCartDto
         {
@@ -361,7 +366,7 @@ public sealed class PlaceOrderFromCartHandlerTests
         }, TestContext.Current.CancellationToken);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Saved billing address not found.");
+            .WithMessage("SavedAddressNotFound");
     }
 
     private sealed class PlaceOrderFromCartTestDbContext : DbContext, IAppDbContext
@@ -478,5 +483,18 @@ public sealed class PlaceOrderFromCartHandlerTests
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }
+    }
+
+    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 }

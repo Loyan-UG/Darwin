@@ -2,18 +2,19 @@ using System;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Enums;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Orders.Validators
 {
     public sealed class OrderCreateValidator : AbstractValidator<OrderCreateDto>
     {
-        public OrderCreateValidator()
+        public OrderCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Currency).NotEmpty().Length(3);
             RuleFor(x => x.BillingAddressJson).NotEmpty();
             RuleFor(x => x.ShippingAddressJson).NotEmpty();
             RuleFor(x => x.Lines).NotEmpty();
-            RuleForEach(x => x.Lines).SetValidator(new OrderLineCreateValidator());
+            RuleForEach(x => x.Lines).SetValidator(new OrderLineCreateValidator(localizer));
 
             RuleFor(x => x.ShippingTotalMinor).GreaterThanOrEqualTo(0);
             RuleFor(x => x.DiscountTotalMinor).GreaterThanOrEqualTo(0);
@@ -22,12 +23,12 @@ namespace Darwin.Application.Orders.Validators
 
     public sealed class OrderLineCreateValidator : AbstractValidator<OrderLineCreateDto>
     {
-        public OrderLineCreateValidator()
+        public OrderLineCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.VariantId).NotEmpty();
             RuleFor(x => x.WarehouseId)
                 .Must(x => !x.HasValue || x.Value != Guid.Empty)
-                .WithMessage("WarehouseId must be a valid identifier when provided.");
+                .WithMessage(localizer["WarehouseIdValidWhenProvided"]);
             RuleFor(x => x.Name).NotEmpty().MaximumLength(512);
             RuleFor(x => x.Sku).NotEmpty().MaximumLength(128);
             RuleFor(x => x.Quantity).GreaterThan(0);
@@ -58,7 +59,7 @@ namespace Darwin.Application.Orders.Validators
 
     public sealed class ShipmentCreateValidator : AbstractValidator<ShipmentCreateDto>
     {
-        public ShipmentCreateValidator()
+        public ShipmentCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.OrderId).NotEmpty();
             RuleFor(x => x.Carrier).NotEmpty().MaximumLength(64);
@@ -78,14 +79,14 @@ namespace Darwin.Application.Orders.Validators
 
     public sealed class UpdateOrderStatusValidator : AbstractValidator<UpdateOrderStatusDto>
     {
-        public UpdateOrderStatusValidator()
+        public UpdateOrderStatusValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.OrderId).NotEmpty();
             RuleFor(x => x.RowVersion).NotNull();
             RuleFor(x => x.NewStatus).IsInEnum();
             RuleFor(x => x.WarehouseId)
                 .Must(x => !x.HasValue || x.Value != Guid.Empty)
-                .WithMessage("WarehouseId must be a valid identifier when provided.");
+                .WithMessage(localizer["WarehouseIdValidWhenProvided"]);
         }
     }
 
@@ -103,18 +104,18 @@ namespace Darwin.Application.Orders.Validators
 
     public sealed class OrderInvoiceCreateValidator : AbstractValidator<OrderInvoiceCreateDto>
     {
-        public OrderInvoiceCreateValidator()
+        public OrderInvoiceCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.OrderId).NotEmpty();
             RuleFor(x => x.BusinessId)
                 .Must(x => !x.HasValue || x.Value != Guid.Empty)
-                .WithMessage("BusinessId must be a valid identifier when provided.");
+                .WithMessage(localizer["BusinessIdValidWhenProvided"]);
             RuleFor(x => x.CustomerId)
                 .Must(x => !x.HasValue || x.Value != Guid.Empty)
-                .WithMessage("CustomerId must be a valid identifier when provided.");
+                .WithMessage(localizer["CustomerIdValidWhenProvided"]);
             RuleFor(x => x.PaymentId)
                 .Must(x => !x.HasValue || x.Value != Guid.Empty)
-                .WithMessage("PaymentId must be a valid identifier when provided.");
+                .WithMessage(localizer["PaymentIdValidWhenProvided"]);
         }
     }
 }

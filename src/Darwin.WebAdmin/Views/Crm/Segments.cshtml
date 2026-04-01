@@ -1,13 +1,14 @@
 @model Darwin.WebAdmin.ViewModels.CRM.CustomerSegmentsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Customer Segments";
+    ViewData["Title"] = T.T("CustomerSegments");
 }
 
 <div id="crm-segments-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1 class="mb-1">Customer Segments</h1>
-        <p class="text-muted mb-0">Review CRM segmentation hygiene before campaigns, support filters, and reporting depend on it.</p>
+        <h1 class="mb-1">@T.T("CustomerSegments")</h1>
+        <p class="text-muted mb-0">@T.T("CustomerSegmentsIntro")</p>
     </div>
     <a asp-action="CreateSegment"
        hx-get="@Url.Action("CreateSegment", "Crm")"
@@ -15,27 +16,27 @@
        hx-swap="outerHTML"
        hx-push-url="true"
        class="btn btn-primary">
-        <i class="fa fa-plus"></i> New Segment
+        <i class="fa fa-plus"></i> @T.T("NewSegment")
     </a>
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.SegmentSummary.TotalCount</div></div></div>
-    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">In Use</div><div class="fs-4 fw-semibold">@Model.SegmentSummary.InUseCount</div></div></div>
-    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">Empty</div><div class="fs-4 fw-semibold">@Model.SegmentSummary.EmptyCount</div></div></div>
-    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">Missing Description</div><div class="fs-4 fw-semibold">@Model.SegmentSummary.MissingDescriptionCount</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Total")</div><div class="fs-4 fw-semibold">@Model.SegmentSummary.TotalCount</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("InUse")</div><div class="fs-4 fw-semibold">@Model.SegmentSummary.InUseCount</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Empty")</div><div class="fs-4 fw-semibold">@Model.SegmentSummary.EmptyCount</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("MissingDescription")</div><div class="fs-4 fw-semibold">@Model.SegmentSummary.MissingDescriptionCount</div></div></div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Segment Ops Playbooks</div>
+        <div class="card-header">@T.T("SegmentOpsPlaybooks")</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Queue</th>
-                        <th>Scope</th>
-                        <th>Operator Action</th>
+                        <th>@T.T("Queue")</th>
+                        <th>@T.T("Scope")</th>
+                        <th>@T.T("OperatorAction")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,37 +60,37 @@
       hx-swap="outerHTML"
       hx-push-url="true">
     <div class="col-md-4">
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search segments" />
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchSegmentsPlaceholder")" />
     </div>
     <div class="col-md-3">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-secondary">Search</button>
+        <button type="submit" class="btn btn-outline-secondary">@T.T("Search")</button>
     </div>
 </form>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a asp-action="Segments" asp-route-filter="Empty" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "Empty" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">Empty</a>
-    <a asp-action="Segments" asp-route-filter="InUse" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "InUse" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">In Use</a>
-    <a asp-action="Segments" asp-route-filter="MissingDescription" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "MissingDescription" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Missing Description</a>
+    <a asp-action="Segments" asp-route-filter="Empty" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "Empty" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Empty")</a>
+    <a asp-action="Segments" asp-route-filter="InUse" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "InUse" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("InUse")</a>
+    <a asp-action="Segments" asp-route-filter="MissingDescription" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "MissingDescription" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("MissingDescription")</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th class="text-end">Members</th>
-                <th>Status</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("Description")</th>
+                <th class="text-end">@T.T("Members")</th>
+                <th>@T.T("Status")</th>
                 <th class="text-end"></th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="5" class="text-center text-muted">No segments found.</td></tr>
+                <tr><td colspan="5" class="text-center text-muted">@T.T("NoSegmentsFound")</td></tr>
             }
             else
             {
@@ -102,19 +103,19 @@
                         <td>
                             @if (item.MemberCount > 0)
                             {
-                                <span class="badge text-bg-primary">In use</span>
+                                <span class="badge text-bg-primary">@T.T("InUse")</span>
                             }
                             else
                             {
-                                <span class="badge text-bg-warning">Empty</span>
+                                <span class="badge text-bg-warning">@T.T("Empty")</span>
                             }
                             @if (!item.HasDescription)
                             {
-                                <div><span class="badge text-bg-secondary mt-1">Missing description</span></div>
+                                <div><span class="badge text-bg-secondary mt-1">@T.T("MissingDescription")</span></div>
                             }
                         </td>
                         <td class="text-end">
-                            <a asp-action="EditSegment" asp-route-id="@item.Id" hx-get="@Url.Action("EditSegment", "Crm", new { id = item.Id })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a asp-action="EditSegment" asp-route-id="@item.Id" hx-get="@Url.Action("EditSegment", "Crm", new { id = item.Id })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Edit")</a>
                         </td>
                     </tr>
                 }

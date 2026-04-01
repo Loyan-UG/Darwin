@@ -10,6 +10,7 @@ using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Pricing;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.CartCheckout.Commands
@@ -21,17 +22,24 @@ namespace Darwin.Application.CartCheckout.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IAddOnPricingService _addOnPricing;
+        private readonly IValidator<CartAddItemDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public AddItemToCartHandler(IAppDbContext db, IAddOnPricingService addOnPricing)
+        public AddItemToCartHandler(
+            IAppDbContext db,
+            IAddOnPricingService addOnPricing,
+            IValidator<CartAddItemDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _addOnPricing = addOnPricing;
+            _validator = validator;
+            _localizer = localizer;
         }
 
         public async Task<Guid> HandleAsync(CartAddItemDto dto, CancellationToken ct = default)
         {
-            if (dto.VariantId == Guid.Empty) throw new ValidationException("Variant is required.");
-            if (dto.Quantity <= 0) throw new ValidationException("Quantity must be greater than zero.");
+            await _validator.ValidateAndThrowAsync(dto, ct);
 
             // Resolve or create cart by (UserId|AnonymousId)
             var cart = await _db.Set<Cart>()
@@ -57,7 +65,7 @@ namespace Darwin.Application.CartCheckout.Commands
             var variant = await _db.Set<ProductVariant>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == dto.VariantId && !v.IsDeleted, ct)
-                ?? throw new ValidationException("Variant not found.");
+                ?? throw new ValidationException(_localizer["VariantNotFound"]);
 
             if (string.IsNullOrWhiteSpace(cart.Currency))
             {
@@ -67,7 +75,7 @@ namespace Darwin.Application.CartCheckout.Commands
             var tax = await _db.Set<TaxCategory>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Id == variant.TaxCategoryId && !t.IsDeleted, ct)
-                ?? throw new ValidationException("Tax category not found.");
+                ?? throw new ValidationException(_localizer["TaxCategoryNotFound"]);
 
             // Validate add-on selections and compute adjusted unit price
             await _addOnPricing.ValidateSelectionsForVariantAsync(variant.Id, dto.SelectedAddOnValueIds, ct);

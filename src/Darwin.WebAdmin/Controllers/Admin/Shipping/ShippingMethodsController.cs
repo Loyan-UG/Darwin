@@ -123,7 +123,7 @@ public sealed class ShippingMethodsController : AdminBaseController
         try
         {
             await _create.HandleAsync(dto, ct);
-            TempData["Success"] = "Shipping method created.";
+            SetSuccessMessage("ShippingMethodCreatedMessage");
             return RedirectOrHtmx(nameof(Index), new { });
         }
         catch (Exception ex)
@@ -139,7 +139,7 @@ public sealed class ShippingMethodsController : AdminBaseController
         var dto = await _getForEdit.HandleAsync(id, ct);
         if (dto is null)
         {
-            TempData["Error"] = "Shipping method not found.";
+            SetErrorMessage("ShippingMethodNotFoundMessage");
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -192,12 +192,12 @@ public sealed class ShippingMethodsController : AdminBaseController
         try
         {
             await _update.HandleAsync(dto, ct);
-            TempData["Success"] = "Shipping method updated.";
+            SetSuccessMessage("ShippingMethodUpdatedMessage");
             return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
         catch (DbUpdateConcurrencyException)
         {
-            TempData["Error"] = "Concurrency conflict. Reload and try again.";
+            SetErrorMessage("ShippingMethodConcurrencyMessage");
             return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
         catch (Exception ex)

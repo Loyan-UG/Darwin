@@ -4,6 +4,36 @@ export type WebPageAction = {
   variant?: "primary" | "secondary";
 };
 
+export type WebPageCard = {
+  id: string;
+  eyebrow?: string;
+  title: string;
+  description: string;
+  href: string;
+  ctaLabel?: string;
+  meta?: string;
+};
+
+export type HeroPagePart = {
+  id: string;
+  kind: "hero";
+  eyebrow: string;
+  title: string;
+  description: string;
+  actions: WebPageAction[];
+  highlights: string[];
+};
+
+export type CardGridPagePart = {
+  id: string;
+  kind: "card-grid";
+  eyebrow: string;
+  title: string;
+  description: string;
+  cards: WebPageCard[];
+  emptyMessage: string;
+};
+
 export type BlankStatePagePart = {
   id: string;
   kind: "blank-state";
@@ -13,4 +43,4 @@ export type BlankStatePagePart = {
   actions: WebPageAction[];
 };
 
-export type WebPagePart = BlankStatePagePart;
+export type WebPagePart = HeroPagePart | CardGridPagePart | BlankStatePagePart;

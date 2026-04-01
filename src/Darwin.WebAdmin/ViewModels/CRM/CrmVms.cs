@@ -1,5 +1,6 @@
 using Darwin.Domain.Enums;
 using Darwin.Application.CRM.DTOs;
+using Darwin.WebAdmin.Localization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
@@ -16,7 +17,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
         public CustomerQueueFilter Filter { get; set; } = CustomerQueueFilter.All;
-        public string PlatformDefaultCulture { get; set; } = "de-DE";
+        public string PlatformDefaultCulture { get; set; } = AdminCultureCatalog.DefaultCulture;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
     }
 
@@ -87,14 +88,14 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
-        [Display(Name = "Linked user")]
+        [Display(Name = "CustomerLinkedUser")]
         public Guid? UserId { get; set; }
 
-        [Display(Name = "First name")]
+        [Display(Name = "CustomerFirstName")]
         [StringLength(120)]
         public string FirstName { get; set; } = string.Empty;
 
-        [Display(Name = "Last name")]
+        [Display(Name = "CustomerLastName")]
         [StringLength(120)]
         public string LastName { get; set; } = string.Empty;
 
@@ -105,14 +106,14 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         [StringLength(50)]
         public string? Phone { get; set; }
 
-        [Display(Name = "Company")]
+        [Display(Name = "CustomerCompanyName")]
         [StringLength(200)]
         public string? CompanyName { get; set; }
 
-        [Display(Name = "Tax profile")]
+        [Display(Name = "CustomerTaxProfileType")]
         public CustomerTaxProfileType TaxProfileType { get; set; } = CustomerTaxProfileType.Consumer;
 
-        [Display(Name = "VAT ID")]
+        [Display(Name = "CustomerVatId")]
         [StringLength(64)]
         public string? VatId { get; set; }
 

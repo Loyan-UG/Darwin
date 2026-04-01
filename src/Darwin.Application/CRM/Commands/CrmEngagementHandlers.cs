@@ -1,8 +1,10 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CRM.Commands
 {
@@ -13,11 +15,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<InteractionCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateInteractionHandler(IAppDbContext db, IValidator<InteractionCreateDto> validator)
+        public CreateInteractionHandler(IAppDbContext db, IValidator<InteractionCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(InteractionCreateDto dto, CancellationToken ct = default)
@@ -33,7 +37,7 @@ namespace Darwin.Application.CRM.Commands
 
                 if (!customerExists)
                 {
-                    throw new InvalidOperationException("Customer not found.");
+                    throw new InvalidOperationException(_localizer["CustomerNotFound"]);
                 }
             }
 
@@ -46,7 +50,7 @@ namespace Darwin.Application.CRM.Commands
 
                 if (!leadExists)
                 {
-                    throw new InvalidOperationException("Lead not found.");
+                    throw new InvalidOperationException(_localizer["LeadNotFound"]);
                 }
             }
 
@@ -59,7 +63,7 @@ namespace Darwin.Application.CRM.Commands
 
                 if (!opportunityExists)
                 {
-                    throw new InvalidOperationException("Opportunity not found.");
+                    throw new InvalidOperationException(_localizer["OpportunityNotFound"]);
                 }
             }
 
@@ -91,11 +95,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<ConsentCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateConsentHandler(IAppDbContext db, IValidator<ConsentCreateDto> validator)
+        public CreateConsentHandler(IAppDbContext db, IValidator<ConsentCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(ConsentCreateDto dto, CancellationToken ct = default)
@@ -109,7 +115,7 @@ namespace Darwin.Application.CRM.Commands
 
             if (!customerExists)
             {
-                throw new InvalidOperationException("Customer not found.");
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
             }
 
             var consent = new Consent
@@ -134,11 +140,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<CustomerSegmentEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateCustomerSegmentHandler(IAppDbContext db, IValidator<CustomerSegmentEditDto> validator)
+        public CreateCustomerSegmentHandler(IAppDbContext db, IValidator<CustomerSegmentEditDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(CustomerSegmentEditDto dto, CancellationToken ct = default)
@@ -155,7 +163,7 @@ namespace Darwin.Application.CRM.Commands
 
             if (exists)
             {
-                throw new InvalidOperationException("A segment with the same name already exists.");
+                throw new InvalidOperationException(_localizer["CustomerSegmentNameAlreadyExists"]);
             }
 
             var segment = new CustomerSegment
@@ -177,11 +185,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<CustomerSegmentEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateCustomerSegmentHandler(IAppDbContext db, IValidator<CustomerSegmentEditDto> validator)
+        public UpdateCustomerSegmentHandler(IAppDbContext db, IValidator<CustomerSegmentEditDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(CustomerSegmentEditDto dto, CancellationToken ct = default)
@@ -194,12 +204,12 @@ namespace Darwin.Application.CRM.Commands
 
             if (segment is null)
             {
-                throw new InvalidOperationException("Segment not found.");
+                throw new InvalidOperationException(_localizer["CustomerSegmentNotFound"]);
             }
 
             if (!segment.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             var normalizedName = dto.Name.Trim();
@@ -210,7 +220,7 @@ namespace Darwin.Application.CRM.Commands
 
             if (exists)
             {
-                throw new InvalidOperationException("A segment with the same name already exists.");
+                throw new InvalidOperationException(_localizer["CustomerSegmentNameAlreadyExists"]);
             }
 
             segment.Name = normalizedName;
@@ -226,11 +236,13 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<AssignCustomerSegmentDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public AssignCustomerSegmentHandler(IAppDbContext db, IValidator<AssignCustomerSegmentDto> validator)
+        public AssignCustomerSegmentHandler(IAppDbContext db, IValidator<AssignCustomerSegmentDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(AssignCustomerSegmentDto dto, CancellationToken ct = default)
@@ -244,7 +256,7 @@ namespace Darwin.Application.CRM.Commands
 
             if (!customerExists)
             {
-                throw new InvalidOperationException("Customer not found.");
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
             }
 
             var segmentExists = await _db.Set<CustomerSegment>()
@@ -254,7 +266,7 @@ namespace Darwin.Application.CRM.Commands
 
             if (!segmentExists)
             {
-                throw new InvalidOperationException("Segment not found.");
+                throw new InvalidOperationException(_localizer["CustomerSegmentNotFound"]);
             }
 
             var exists = await _db.Set<CustomerSegmentMembership>()
@@ -264,7 +276,7 @@ namespace Darwin.Application.CRM.Commands
 
             if (exists)
             {
-                throw new InvalidOperationException("Customer is already assigned to this segment.");
+                throw new InvalidOperationException(_localizer["CustomerAlreadyAssignedToSegment"]);
             }
 
             var membership = new CustomerSegmentMembership
@@ -285,10 +297,12 @@ namespace Darwin.Application.CRM.Commands
     public sealed class RemoveCustomerSegmentMembershipHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public RemoveCustomerSegmentMembershipHandler(IAppDbContext db)
+        public RemoveCustomerSegmentMembershipHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(Guid membershipId, CancellationToken ct = default)
@@ -299,7 +313,7 @@ namespace Darwin.Application.CRM.Commands
 
             if (membership is null)
             {
-                throw new InvalidOperationException("Membership not found.");
+                throw new InvalidOperationException(_localizer["CustomerSegmentMembershipNotFound"]);
             }
 
             _db.Set<CustomerSegmentMembership>().Remove(membership);

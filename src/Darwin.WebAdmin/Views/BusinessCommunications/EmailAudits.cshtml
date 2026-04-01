@@ -1,25 +1,26 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Email Delivery Audits";
+    ViewData["Title"] = T.T("EmailDeliveryAudits");
 }
 
 <div id="business-communication-audits-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1"><i class="fa-solid fa-envelope-open-text me-2"></i>Email Delivery Audits</h1>
-        <p class="text-muted mb-0">Recent SMTP-based transactional delivery attempts and failures.</p>
+        <h1 class="mb-1"><i class="fa-solid fa-envelope-open-text me-2"></i>@T.T("EmailDeliveryAudits")</h1>
+        <p class="text-muted mb-0">@T.T("RecentSmtpAttempts")</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Index" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-communication-audits-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Back to Communications</a>
+           hx-push-url="true">@T.T("BackToCommunications")</a>
     </div>
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Operator Playbooks by Flow</div>
+    <div class="card-header">@T.T("OperatorPlaybooksByFlow")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
             This queue now supports controlled retry only for live invitation, activation, and password-reset flows after safe target resolution. Everything else should still use the flow-specific actions below instead of blind replay.
@@ -38,11 +39,11 @@
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = playbook.FlowKey, businessId = Model.BusinessId })"
                                hx-target="#business-communication-audits-workspace-shell"
-                               hx-swap="outerHTML">Open Failed</a>
+                               hx-swap="outerHTML">@T.T("OpenFailed")</a>
                         </div>
                         <div class="small text-muted mb-2">@playbook.ScopeNote</div>
-                        <div class="small"><strong>Allowed action:</strong> @playbook.AllowedAction</div>
-                        <div class="small text-muted mt-2"><strong>Escalation:</strong> @playbook.EscalationRule</div>
+                        <div class="small"><strong>@T.T("AllowedAction"):</strong> @playbook.AllowedAction</div>
+                        <div class="small text-muted mt-2"><strong>@T.T("Escalation"):</strong> @playbook.EscalationRule</div>
                     </div>
                 </div>
             }
@@ -61,7 +62,7 @@
        class="btn btn-sm btn-outline-danger"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Failed Only</a>
+       hx-swap="outerHTML">@T.T("FailedOnly")</a>
     <a asp-action="EmailAudits"
        asp-route-stalePendingOnly="true"
        asp-route-businessLinkedFailuresOnly="false"
@@ -71,7 +72,7 @@
        class="btn btn-sm btn-outline-warning"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = true, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Stale Pending</a>
+       hx-swap="outerHTML">@T.T("StalePending")</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-businessLinkedFailuresOnly="true"
@@ -82,7 +83,7 @@
        class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", businessLinkedFailuresOnly = true, stalePendingOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Business-linked Failures</a>
+       hx-swap="outerHTML">@T.T("BusinessLinkedFailures")</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-stalePendingOnly="false"
@@ -93,7 +94,7 @@
        class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = true, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Repeated Failures</a>
+       hx-swap="outerHTML">@T.T("RepeatedFailures")</a>
     <a asp-action="EmailAudits"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
@@ -105,7 +106,7 @@
        class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = true, retryReadyOnly = false, retryBlockedOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Prior Success Context</a>
+       hx-swap="outerHTML">@T.T("PriorSuccessContext")</a>
     <a asp-action="EmailAudits"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
@@ -117,7 +118,7 @@
        class="btn btn-sm btn-outline-success"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = true, retryBlockedOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Retry Ready</a>
+       hx-swap="outerHTML">@T.T("RetryReady")</a>
     <a asp-action="EmailAudits"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
@@ -130,7 +131,7 @@
        class="btn btn-sm btn-outline-warning"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = true, highChainVolumeOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Retry Blocked</a>
+       hx-swap="outerHTML">@T.T("RetryBlocked")</a>
     <a asp-action="EmailAudits"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
@@ -143,7 +144,7 @@
        class="btn btn-sm btn-outline-dark"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = true, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Heavy Chains</a>
+       hx-swap="outerHTML">@T.T("HeavyChains")</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-flowKey="BusinessInvitation"
@@ -155,7 +156,7 @@
        class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Failed Invitations</a>
+       hx-swap="outerHTML">@T.T("FailedInvitations")</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-flowKey="AccountActivation"
@@ -167,7 +168,7 @@
        class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Failed Activations</a>
+       hx-swap="outerHTML">@T.T("FailedActivations")</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-flowKey="PasswordReset"
@@ -179,7 +180,7 @@
        class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Failed Password Resets</a>
+       hx-swap="outerHTML">@T.T("FailedPasswordResets")</a>
     <a asp-action="EmailAudits"
        asp-route-flowKey="AdminCommunicationTest"
        asp-route-status="Failed"
@@ -191,14 +192,14 @@
        class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AdminCommunicationTest", status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
-       hx-swap="outerHTML">Failed Admin Tests</a>
+       hx-swap="outerHTML">@T.T("FailedAdminTests")</a>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(Model.RecipientEmail))
 {
     <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
         <div>
-            <strong>Exact chain mode:</strong> showing the delivery chain for <code>@Model.RecipientEmail</code>
+            <strong>@T.T("ExactChainMode"):</strong> showing the delivery chain for <code>@Model.RecipientEmail</code>
             @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
             {
                 <span> in flow <code>@Model.FlowKey</code></span>
@@ -221,7 +222,7 @@
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { query = Model.Query, status = Model.Status, flowKey = Model.FlowKey, stalePendingOnly = Model.StalePendingOnly, businessLinkedFailuresOnly = Model.BusinessLinkedFailuresOnly, repeatedFailuresOnly = Model.RepeatedFailuresOnly, priorSuccessOnly = Model.PriorSuccessOnly, retryReadyOnly = Model.RetryReadyOnly, retryBlockedOnly = Model.RetryBlockedOnly, highChainVolumeOnly = Model.HighChainVolumeOnly, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = Model.BusinessId })"
            hx-target="#business-communication-audits-workspace-shell"
-           hx-swap="outerHTML">Leave Exact Chain</a>
+           hx-swap="outerHTML">@T.T("LeaveExactChain")</a>
     </div>
 
     @if (Model.ChainSummary is not null)
@@ -236,7 +237,7 @@
                class="btn btn-sm @(Model.ChainFollowUpOnly || Model.ChainResolvedOnly ? "btn-outline-secondary" : "btn-dark")"
                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = Model.BusinessId })"
                hx-target="#business-communication-audits-workspace-shell"
-               hx-swap="outerHTML">Whole Chain</a>
+               hx-swap="outerHTML">@T.T("WholeChain")</a>
             <a asp-action="EmailAudits"
                asp-route-recipientEmail="@Model.RecipientEmail"
                asp-route-flowKey="@Model.FlowKey"
@@ -246,7 +247,7 @@
                class="btn btn-sm @(Model.ChainFollowUpOnly ? "btn-warning" : "btn-outline-warning")"
                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = true, chainResolvedOnly = false, businessId = Model.BusinessId })"
                hx-target="#business-communication-audits-workspace-shell"
-               hx-swap="outerHTML">Needs Follow-up</a>
+               hx-swap="outerHTML">@T.T("NeedsFollowUp")</a>
             <a asp-action="EmailAudits"
                asp-route-recipientEmail="@Model.RecipientEmail"
                asp-route-flowKey="@Model.FlowKey"
@@ -256,43 +257,43 @@
                class="btn btn-sm @(Model.ChainResolvedOnly ? "btn-success" : "btn-outline-success")"
                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = false, chainResolvedOnly = true, businessId = Model.BusinessId })"
                hx-target="#business-communication-audits-workspace-shell"
-               hx-swap="outerHTML">Resolved History</a>
+               hx-swap="outerHTML">@T.T("ResolvedHistory")</a>
         </div>
 
         <div class="row g-3 mb-4">
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Chain Attempts</div>
+                    <div class="text-muted small">@T.T("ChainAttempts")</div>
                     <div class="fs-4 fw-semibold">@Model.ChainSummary.TotalAttempts</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Chain Failed</div>
+                    <div class="text-muted small">@T.T("ChainFailed")</div>
                     <div class="fs-4 fw-semibold">@Model.ChainSummary.FailedCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Chain Sent</div>
+                    <div class="text-muted small">@T.T("ChainSent")</div>
                     <div class="fs-4 fw-semibold">@Model.ChainSummary.SentCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Chain Pending</div>
+                    <div class="text-muted small">@T.T("ChainPending")</div>
                     <div class="fs-4 fw-semibold">@Model.ChainSummary.PendingCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Needs Follow-up</div>
+                    <div class="text-muted small">@T.T("NeedsFollowUp")</div>
                     <div class="fs-4 fw-semibold">@Model.ChainSummary.NeedsOperatorFollowUpCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Chain Profile</div>
+                    <div class="text-muted small">@T.T("ChainProfile")</div>
                     <div class="fw-semibold mt-1">@Model.ChainSummary.StatusMix</div>
                 </div>
             </div>

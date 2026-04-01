@@ -1,25 +1,26 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessCommunicationOpsVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Business Communications";
+    ViewData["Title"] = T.T("CommunicationOpsTitle");
 }
 
 <div id="business-communications-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1"><i class="fa-solid fa-envelope-circle-check me-2"></i>Business Communications</h1>
-        <p class="text-muted mb-0">Operational visibility for phase-1 communication readiness before full template and delivery-log tooling exists.</p>
+        <h1 class="mb-1"><i class="fa-solid fa-envelope-circle-check me-2"></i>@T.T("CommunicationOpsTitle")</h1>
+        <p class="text-muted mb-0">@T.T("CommunicationOpsIntro")</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="ChannelAudits" class="btn btn-outline-secondary"
            hx-get="@Url.Action("ChannelAudits", "BusinessCommunications")"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">SMS / WhatsApp Audits</a>
+           hx-push-url="true">@T.T("SmsWhatsAppAudits")</a>
         <a asp-action="EmailAudits" class="btn btn-outline-secondary"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Email Audits</a>
+           hx-push-url="true">@T.T("EmailAudits")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
            hx-target="#business-communications-workspace-shell"
@@ -47,7 +48,7 @@
                   hx-target="#business-communications-workspace-shell"
                   hx-swap="outerHTML">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline-primary">Send Test Email</button>
+                <button type="submit" class="btn btn-outline-primary">@T.T("SendTestEmail")</button>
             </form>
         }
         @if (Model.Transport.CanSendTestSms)
@@ -57,7 +58,7 @@
                   hx-target="#business-communications-workspace-shell"
                   hx-swap="outerHTML">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline-primary">Send Test SMS</button>
+                <button type="submit" class="btn btn-outline-primary">@T.T("SendTestSms")</button>
             </form>
         }
         @if (Model.Transport.CanSendTestWhatsApp)
@@ -67,7 +68,7 @@
                   hx-target="#business-communications-workspace-shell"
                   hx-swap="outerHTML">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline-primary">Send Test WhatsApp</button>
+                <button type="submit" class="btn btn-outline-primary">@T.T("SendTestWhatsApp")</button>
             </form>
         }
     </div>
@@ -76,26 +77,26 @@
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Email Transport</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.EmailTransportConfigured ? "Ready" : "Needs setup")</div>
+            <div class="text-muted small">@T.T("EmailTransport")</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.EmailTransportConfigured ? T.T("Ready") : T.T("NeedsSetup"))</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">SMS Transport</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.SmsTransportConfigured ? "Ready" : "Not ready")</div>
+            <div class="text-muted small">@T.T("SmsTransport")</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.SmsTransportConfigured ? T.T("Ready") : T.T("NotReady"))</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">WhatsApp Transport</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.WhatsAppTransportConfigured ? "Ready" : "Not ready")</div>
+            <div class="text-muted small">@T.T("WhatsAppTransport")</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.WhatsAppTransportConfigured ? T.T("Ready") : T.T("NotReady"))</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Admin Alert Routing</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.AdminAlertRoutingConfigured ? "Configured" : "Missing")</div>
+            <div class="text-muted small">@T.T("AdminAlertRouting")</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.AdminAlertRoutingConfigured ? T.T("Configured") : T.T("Missing"))</div>
         </div>
     </div>
 </div>
@@ -103,15 +104,15 @@
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Transactional Subject Prefix</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.TransactionalSubjectPrefixConfigured ? Model.Transport.TransactionalSubjectPrefix : "No prefix configured")</div>
+            <div class="text-muted small">@T.T("TransactionalSubjectPrefix")</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.TransactionalSubjectPrefixConfigured ? Model.Transport.TransactionalSubjectPrefix : T.T("NoPrefixConfigured"))</div>
             <div class="small text-muted mt-2">Applied to the current invitation, activation, and password-reset email subjects.</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Communication Test Inbox</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.TestInboxConfigured ? Model.Transport.TestInboxEmail : "Not rerouting")</div>
+            <div class="text-muted small">@T.T("CommunicationTestInbox")</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.TestInboxConfigured ? Model.Transport.TestInboxEmail : T.T("NotRerouting"))</div>
             <div class="small text-muted mt-2">When configured, current transactional emails are redirected here and include the original recipient in the body.</div>
             @if (Model.Transport.CanSendTestEmail)
             {
@@ -125,8 +126,8 @@
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">SMS Test Target</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.SmsTestRecipientConfigured ? Model.Transport.TestSmsRecipientE164 : "Not configured")</div>
+            <div class="text-muted small">@T.T("SmsTestTarget")</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.SmsTestRecipientConfigured ? Model.Transport.TestSmsRecipientE164 : T.T("NotConfigured"))</div>
             <div class="small text-muted mt-2">Used for operator-side SMS transport tests before live rollout.</div>
             @if (Model.Transport.CanSendTestSms)
             {
@@ -136,8 +137,8 @@
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">WhatsApp Test Target</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.WhatsAppTestRecipientConfigured ? Model.Transport.TestWhatsAppRecipientE164 : "Not configured")</div>
+            <div class="text-muted small">@T.T("WhatsAppTestTarget")</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.WhatsAppTestRecipientConfigured ? Model.Transport.TestWhatsAppRecipientE164 : T.T("NotConfigured"))</div>
             <div class="small text-muted mt-2">Used for operator-side WhatsApp transport tests before live rollout.</div>
             @if (Model.Transport.CanSendTestWhatsApp)
             {
@@ -203,7 +204,7 @@
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Recent SMS / WhatsApp Activity</div>
+        <div class="card-header">@T.T("RecentSmsWhatsAppActivity")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
             This is the current multi-channel audit baseline. It covers the live SMS and WhatsApp families we already use for phone verification and operator diagnostics, without pretending a full outbox or generic notification bus exists yet.
@@ -212,18 +213,18 @@
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>When (UTC)</th>
-                        <th>Channel</th>
-                        <th>Flow</th>
-                        <th>Recipient</th>
-                        <th>Status</th>
-                        <th>Preview</th>
+                        <th>@T.T("WhenUtc")</th>
+                        <th>@T.T("Channel")</th>
+                        <th>@T.T("Flow")</th>
+                        <th>@T.T("Recipient")</th>
+                        <th>@T.T("Status")</th>
+                        <th>@T.T("Preview")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.RecentChannelAudits.Count == 0)
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-3">No SMS or WhatsApp activity has been recorded yet.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-3">@T.T("NoSmsWhatsAppActivityYet")</td></tr>
                 }
                 else
                 {
@@ -232,16 +233,16 @@
                         <tr>
                             <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                             <td><span class="badge text-bg-light">@item.Channel</span> <span class="small text-muted">@item.Provider</span></td>
-                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</td>
                             <td>@item.RecipientAddress</td>
                             <td>
                                 @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-success">Sent</span>
+                                    <span class="badge text-bg-success">@T.T("Sent")</span>
                                 }
                                 else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-danger">Failed</span>
+                                    <span class="badge text-bg-danger">@T.T("Failed")</span>
                                 }
                                 else
                                 {
@@ -267,6 +268,112 @@
                hx-target="#business-communications-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">Open Full SMS / WhatsApp Audit Log</a>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Live SMS / WhatsApp Message Families</div>
+    <div class="card-body">
+        <div class="alert alert-secondary">
+            These are the current live non-email message families. Operators can see the effective template, token surface, target path, and policy boundary without waiting for one exact-chain incident to reconstruct that context.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Family</th>
+                        <th>Channel</th>
+                        <th>Current Template</th>
+                        <th>Rendered Preview</th>
+                        <th>Tokens</th>
+                        <th>Target / Policy</th>
+                        <th>Usage Guidance</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.ChannelTemplateFamilies.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-3">No live SMS or WhatsApp message families are currently exposed.</td></tr>
+                }
+                else
+                {
+                    foreach (var family in Model.ChannelTemplateFamilies)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@family.FamilyName</td>
+                            <td><span class="badge text-bg-light">@family.Channel</span></td>
+                            <td><div class="small">@family.CurrentTemplate</div></td>
+                            <td><div class="small text-body-secondary">@family.ExamplePreview</div></td>
+                            <td><code>@family.SupportedTokens</code></td>
+                            <td>
+                                <div class="small">@family.TargetSurface</div>
+                                <div class="small text-muted mt-1">@family.PolicyNote</div>
+                            </td>
+                            <td>
+                                <div class="small">@family.SafeUsageNote</div>
+                                <div class="small text-muted mt-1">@family.RolloutBoundary</div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a asp-controller="SiteSettings"
+                                       asp-action="Edit"
+                                       asp-fragment="@family.ActionFragment"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = family.ActionFragment })"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@family.ActionLabel</a>
+                                    @if (string.Equals(family.FamilyName, "Phone Verification", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <a asp-action="ChannelAudits"
+                                           asp-route-phoneVerificationOnly="true"
+                                           asp-route-channel="@family.Channel"
+                                           class="btn btn-sm btn-outline-dark"
+                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, channel = family.Channel })"
+                                           hx-target="#business-communications-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">Open Verification Audits</a>
+                                    }
+                                    else if (string.Equals(family.FamilyName, "Admin Communication Test", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <a asp-action="ChannelAudits"
+                                           asp-route-adminTestOnly="true"
+                                           asp-route-channel="@family.Channel"
+                                           class="btn btn-sm btn-outline-dark"
+                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, channel = family.Channel })"
+                                           hx-target="#business-communications-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">Open Test Audits</a>
+                                        @if (string.Equals(family.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.Transport.CanSendTestSms)
+                                        {
+                                            <form asp-action="SendTestSms" method="post" class="d-inline"
+                                                  hx-post="@Url.Action("SendTestSms", "BusinessCommunications")"
+                                                  hx-target="#business-communications-workspace-shell"
+                                                  hx-swap="outerHTML">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rerun SMS Test</button>
+                                            </form>
+                                        }
+                                        else if (string.Equals(family.Channel, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.Transport.CanSendTestWhatsApp)
+                                        {
+                                            <form asp-action="SendTestWhatsApp" method="post" class="d-inline"
+                                                  hx-post="@Url.Action("SendTestWhatsApp", "BusinessCommunications")"
+                                                  hx-target="#business-communications-workspace-shell"
+                                                  hx-swap="outerHTML">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rerun WhatsApp Test</button>
+                                            </form>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

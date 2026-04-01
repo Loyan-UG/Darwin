@@ -1,13 +1,14 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSupportQueueVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Business Support Queue";
+    ViewData["Title"] = T.T("BusinessSupportQueueTitle");
 }
 
 <div id="business-support-queue-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1"><i class="fa-solid fa-life-ring me-2"></i>Business Support Queue</h1>
-        <p class="text-muted mb-0">Unified onboarding, activation, invitation, and failed-email triage surface for support operators.</p>
+        <h1 class="mb-1"><i class="fa-solid fa-life-ring me-2"></i>@T.T("BusinessSupportQueueTitle")</h1>
+        <p class="text-muted mb-0">@T.T("BusinessSupportQueueIntro")</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Index"
@@ -15,20 +16,20 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
            hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML">Businesses</a>
+           hx-swap="outerHTML">@T.T("Businesses")</a>
         <a asp-controller="BusinessCommunications"
            asp-action="Index"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML">Communications</a>
+           hx-swap="outerHTML">@T.T("Communications")</a>
         <a asp-controller="BusinessCommunications"
            asp-action="EmailAudits"
            asp-route-status="Failed"
            class="btn btn-outline-danger"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed" })"
            hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML">Failed Emails</a>
+           hx-swap="outerHTML">@T.T("FailedEmails")</a>
     </div>
 </div>
 

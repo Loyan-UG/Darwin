@@ -1,11 +1,12 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.PurchaseOrderEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
-    ViewData["Title"] = isCreate ? "Create Purchase Order" : "Edit Purchase Order";
+    ViewData["Title"] = isCreate ? T.T("CreatePurchaseOrder") : T.T("EditPurchaseOrder");
 }
 
 <div id="inventory-purchase-order-editor-shell">
-    <h1 class="mb-3">@(isCreate ? "Create Purchase Order" : "Edit Purchase Order")</h1>
+    <h1 class="mb-3">@(isCreate ? T.T("CreatePurchaseOrder") : T.T("EditPurchaseOrder"))</h1>
 
     <form asp-action="@(isCreate ? "CreatePurchaseOrder" : "EditPurchaseOrder")"
           method="post"
@@ -20,8 +21,8 @@
         }
         <partial name="_PurchaseOrderForm" model="Model" />
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+            <button type="submit" class="btn btn-primary">@T.T("Save")</button>
+            <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 </div>

@@ -7,6 +7,7 @@ using Darwin.Application.Pricing.Validators;
 using Darwin.Domain.Entities.Pricing;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Pricing.Commands
 {
@@ -16,9 +17,18 @@ namespace Darwin.Application.Pricing.Commands
     public sealed class UpdateTaxCategoryHandler
     {
         private readonly IAppDbContext _db;
-        private readonly TaxCategoryEditValidator _validator = new();
+        private readonly IValidator<TaxCategoryEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateTaxCategoryHandler(IAppDbContext db) => _db = db;
+        public UpdateTaxCategoryHandler(
+            IAppDbContext db,
+            IValidator<TaxCategoryEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = validator;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(TaxCategoryEditDto dto, CancellationToken ct = default)
         {
@@ -26,14 +36,14 @@ namespace Darwin.Application.Pricing.Commands
             if (!v.IsValid) throw new ValidationException(v.Errors);
 
             var entity = await _db.Set<TaxCategory>().FirstOrDefaultAsync(t => t.Id == dto.Id, ct);
-            if (entity is null) throw new InvalidOperationException("Tax category not found.");
+            if (entity is null) throw new InvalidOperationException(_localizer["TaxCategoryNotFound"]);
 
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             var exists = await _db.Set<TaxCategory>().AsNoTracking()
                 .AnyAsync(t => t.Id != dto.Id && t.Name.ToLower() == dto.Name.ToLower(), ct);
-            if (exists) throw new ValidationException("Tax category name must be unique.");
+            if (exists) throw new ValidationException(_localizer["TaxCategoryNameMustBeUnique"]);
 
             entity.Name = dto.Name.Trim();
             entity.VatRate = dto.VatRate;

@@ -591,6 +591,10 @@ namespace Darwin.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AdminTextOverridesJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("ApprovedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -6555,6 +6559,10 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<string>("AdminAlertSmsRecipientsCsv")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("AdminTextOverridesJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("AllowReverseCharge")
                         .HasColumnType("bit");

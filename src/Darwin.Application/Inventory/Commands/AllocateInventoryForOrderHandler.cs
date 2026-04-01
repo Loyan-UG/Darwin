@@ -10,6 +10,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Orders;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Inventory.Commands
@@ -25,9 +26,18 @@ namespace Darwin.Application.Inventory.Commands
     public sealed class AllocateInventoryForOrderHandler
     {
         private readonly IAppDbContext _db;
-        private readonly InventoryAllocateForOrderValidator _validator = new();
+        private readonly IValidator<InventoryAllocateForOrderDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public AllocateInventoryForOrderHandler(IAppDbContext db) => _db = db;
+        public AllocateInventoryForOrderHandler(
+            IAppDbContext db,
+            IValidator<InventoryAllocateForOrderDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = validator;
+            _localizer = localizer;
+        }
 
         /// <summary>
         /// Executes allocation for all lines in a single order. Uses SQL set-based updates where possible.
@@ -42,7 +52,7 @@ namespace Darwin.Application.Inventory.Commands
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.Id == dto.OrderId && !o.IsDeleted, ct);
             if (order is null)
-                throw new InvalidOperationException("Order not found.");
+                throw new InvalidOperationException(_localizer["OrderNotFound"]);
 
             var variantIds = dto.Lines.Select(l => l.VariantId).Distinct().ToList();
             var existingVariantIds = await _db.Set<ProductVariant>()
@@ -52,7 +62,7 @@ namespace Darwin.Application.Inventory.Commands
                 .ToListAsync(ct);
 
             if (existingVariantIds.Count != variantIds.Count)
-                throw new ValidationException("One or more variants do not exist.");
+                throw new ValidationException(_localizer["InventoryVariantsMissing"]);
 
             // Idempotency: check existing ledger rows for this order (Reason = ShipmentAllocation)
             var alreadyAllocated = await _db.Set<InventoryTransaction>()
@@ -67,6 +77,7 @@ namespace Darwin.Application.Inventory.Commands
                     _db,
                     line.VariantId,
                     line.WarehouseId ?? dto.WarehouseId,
+                    _localizer,
                     ct);
 
                 if (alreadyAllocated.Any(x => x.ProductVariantId == line.VariantId && x.WarehouseId == warehouseId))
@@ -78,7 +89,7 @@ namespace Darwin.Application.Inventory.Commands
                         ct);
 
                 if (stockLevel is null || stockLevel.ReservedQuantity < line.Quantity)
-                    throw new ValidationException($"Insufficient reserved stock for variant {line.VariantId}.");
+                    throw new ValidationException(_localizer["InsufficientReservedStockForVariant", line.VariantId]);
 
                 stockLevel.ReservedQuantity -= line.Quantity;
 
@@ -92,7 +103,7 @@ namespace Darwin.Application.Inventory.Commands
                     ReferenceId = dto.OrderId
                 });
 
-                await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, line.VariantId, ct);
+                await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, line.VariantId, _localizer, ct);
             }
 
             await _db.SaveChangesAsync(ct);

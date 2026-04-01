@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Validators;
@@ -9,6 +10,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Businesses;
 
@@ -21,7 +23,8 @@ public sealed class BusinessCreateUpdateHandlersTests
     public async Task CreateBusiness_Should_DefaultPendingApprovalBusinesses_ToInactive()
     {
         await using var db = BusinessCreateUpdateTestDbContext.Create();
-        var handler = new CreateBusinessHandler(db, new BusinessCreateDtoValidator());
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateBusinessHandler(db, new BusinessCreateDtoValidator(localizer));
 
         var id = await handler.HandleAsync(new BusinessCreateDto
         {
@@ -48,12 +51,13 @@ public sealed class BusinessCreateUpdateHandlersTests
     public async Task UpdateBusiness_Should_NotActivatePendingApprovalBusiness()
     {
         await using var db = BusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
         var entity = CreateBusiness(BusinessOperationalStatus.PendingApproval, isActive: false);
 
         db.Set<Business>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator());
+        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator(localizer), localizer);
 
         await handler.HandleAsync(new BusinessEditDto
         {
@@ -77,13 +81,14 @@ public sealed class BusinessCreateUpdateHandlersTests
     public async Task UpdateBusiness_Should_AllowApprovedBusiness_ToRemainActive()
     {
         await using var db = BusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
         var entity = CreateBusiness(BusinessOperationalStatus.Approved, isActive: true);
         entity.ApprovedAtUtc = new DateTime(2030, 1, 5, 8, 0, 0, DateTimeKind.Utc);
 
         db.Set<Business>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator());
+        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator(localizer), localizer);
 
         await handler.HandleAsync(new BusinessEditDto
         {
@@ -127,6 +132,19 @@ public sealed class BusinessCreateUpdateHandlersTests
             IsActive = isActive,
             RowVersion = [1, 2, 3]
         };
+    }
+
+    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class BusinessCreateUpdateTestDbContext : DbContext, IAppDbContext

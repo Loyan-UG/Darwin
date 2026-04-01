@@ -181,7 +181,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 var id = await _createWarehouse.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Warehouse created.";
+                SetSuccessMessage("WarehouseCreatedMessage");
                 return RedirectOrHtmx(nameof(EditWarehouse), new { id });
             }
             catch (Exception ex)
@@ -198,7 +198,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var dto = await _getWarehouseForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Warehouse not found.";
+                SetErrorMessage("WarehouseNotFoundMessage");
                 return RedirectOrHtmx(nameof(Warehouses), new { });
             }
 
@@ -240,12 +240,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 await _updateWarehouse.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Warehouse updated.";
+                SetSuccessMessage("WarehouseUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditWarehouse), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the warehouse and try again.";
+                SetErrorMessage("WarehouseConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditWarehouse), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -336,7 +336,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 var id = await _createSupplier.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Supplier created.";
+                SetSuccessMessage("SupplierCreatedMessage");
                 return RedirectOrHtmx(nameof(EditSupplier), new { id });
             }
             catch (Exception ex)
@@ -353,7 +353,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var dto = await _getSupplierForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Supplier not found.";
+                SetErrorMessage("SupplierNotFoundMessage");
                 return RedirectOrHtmx(nameof(Suppliers), new { });
             }
 
@@ -397,12 +397,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 await _updateSupplier.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Supplier updated.";
+                SetSuccessMessage("SupplierUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditSupplier), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the supplier and try again.";
+                SetErrorMessage("SupplierConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditSupplier), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -464,7 +464,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = await BuildInventoryAdjustActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
             if (vm is null)
             {
-                TempData["Error"] = "Stock level not found.";
+                SetErrorMessage("StockLevelNotFoundMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId });
             }
 
@@ -492,7 +492,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     ReferenceId = vm.ReferenceId
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Stock adjusted.";
+                SetSuccessMessage("StockAdjustedMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
             }
             catch (Exception ex)
@@ -509,7 +509,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = await BuildInventoryReserveActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
             if (vm is null)
             {
-                TempData["Error"] = "Stock level not found.";
+                SetErrorMessage("StockLevelNotFoundMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId });
             }
 
@@ -537,7 +537,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     ReferenceId = vm.ReferenceId
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Stock reserved.";
+                SetSuccessMessage("StockReservedMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
             }
             catch (Exception ex)
@@ -554,7 +554,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = await BuildInventoryReleaseActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
             if (vm is null)
             {
-                TempData["Error"] = "Stock level not found.";
+                SetErrorMessage("StockLevelNotFoundMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId });
             }
 
@@ -582,7 +582,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     ReferenceId = vm.ReferenceId
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Reservation released.";
+                SetSuccessMessage("ReservationReleasedMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
             }
             catch (Exception ex)
@@ -599,7 +599,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = await BuildInventoryReturnReceiptActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
             if (vm is null)
             {
-                TempData["Error"] = "Stock level not found.";
+                SetErrorMessage("StockLevelNotFoundMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId });
             }
 
@@ -627,7 +627,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     ReferenceId = vm.ReferenceId
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Return receipt processed.";
+                SetSuccessMessage("ReturnReceiptProcessedMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
             }
             catch (Exception ex)
@@ -672,7 +672,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 var id = await _createStockLevel.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Stock level created.";
+                SetSuccessMessage("StockLevelCreatedMessage");
                 return RedirectOrHtmx(nameof(EditStockLevel), new { id });
             }
             catch (Exception ex)
@@ -689,7 +689,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var dto = await _getStockLevelForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Stock level not found.";
+                SetErrorMessage("StockLevelNotFoundMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { });
             }
 
@@ -735,12 +735,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 await _updateStockLevel.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Stock level updated.";
+                SetSuccessMessage("StockLevelUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditStockLevel), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the stock level and try again.";
+                SetErrorMessage("StockLevelConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditStockLevel), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -843,7 +843,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 var id = await _createStockTransfer.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Stock transfer created.";
+                SetSuccessMessage("StockTransferCreatedMessage");
                 return RedirectOrHtmx(nameof(EditStockTransfer), new { id });
             }
             catch (Exception ex)
@@ -861,7 +861,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var dto = await _getStockTransferForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Stock transfer not found.";
+                SetErrorMessage("StockTransferNotFoundMessage");
                 return RedirectOrHtmx(nameof(StockTransfers), new { });
             }
 
@@ -911,12 +911,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 await _updateStockTransfer.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Stock transfer updated.";
+                SetSuccessMessage("StockTransferUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditStockTransfer), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the stock transfer and try again.";
+                SetErrorMessage("StockTransferConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditStockTransfer), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -1022,7 +1022,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 var id = await _createPurchaseOrder.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Purchase order created.";
+                SetSuccessMessage("PurchaseOrderCreatedMessage");
                 return RedirectOrHtmx(nameof(EditPurchaseOrder), new { id });
             }
             catch (Exception ex)
@@ -1040,7 +1040,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var dto = await _getPurchaseOrderForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Purchase order not found.";
+                SetErrorMessage("PurchaseOrderNotFoundMessage");
                 return RedirectOrHtmx(nameof(PurchaseOrders), new { });
             }
 
@@ -1098,12 +1098,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             try
             {
                 await _updatePurchaseOrder.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Purchase order updated.";
+                SetSuccessMessage("PurchaseOrderUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditPurchaseOrder), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the purchase order and try again.";
+                SetErrorMessage("PurchaseOrderConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditPurchaseOrder), new { id = vm.Id });
             }
             catch (Exception ex)

@@ -1,0 +1,51 @@
+{
+  "shellTagline": "Web storefront",
+  "shellBadge": "Cartzilla-inspirierte Shell",
+  "menuSourceLabel": "Menuequelle",
+  "cmsFallbackTitle": "CMS-Navigation-Fallback ist aktiv.",
+  "footerEyebrow": "Darwin.Web",
+  "footerTitle": "Grundlage fuer den oeffentlichen Storefront und das Member-Portal",
+  "footerDescription": "Theme-isolierte Shell, CMS-gestuetzte Navigation und Route-Struktur stehen bereit, damit weitere Storefront- und Member-Slices ohne Architektur-Neustart landen koennen.",
+  "fallbackPrimaryNavigation": [
+    { "label": "Start", "href": "/" },
+    { "label": "Katalog", "href": "/catalog" },
+    { "label": "Konto", "href": "/account" },
+    { "label": "Treue", "href": "/loyalty" },
+    { "label": "Bestellungen", "href": "/orders" },
+    { "label": "Rechnungen", "href": "/invoices" }
+  ],
+  "utilityLinks": [
+    { "label": "Store oeffnen", "href": "/catalog" },
+    { "label": "Warenkorb", "href": "/cart" },
+    { "label": "Checkout", "href": "/checkout" }
+  ],
+  "footerGroups": [
+    {
+      "title": "Storefront",
+      "links": [
+        { "label": "Katalog", "href": "/catalog" },
+        { "label": "Warenkorb", "href": "/cart" },
+        { "label": "Checkout", "href": "/checkout" },
+        { "label": "Start", "href": "/" },
+        { "label": "Treue", "href": "/loyalty" }
+      ]
+    },
+    {
+      "title": "Mitglied",
+      "links": [
+        { "label": "Konto", "href": "/account" },
+        { "label": "Treue", "href": "/loyalty" },
+        { "label": "Bestellungen", "href": "/orders" },
+        { "label": "Rechnungen", "href": "/invoices" }
+      ]
+    },
+    {
+      "title": "Plattform",
+      "links": [
+        { "label": "Theme-Grundlage", "href": "/" },
+        { "label": "Konfigurationslogik", "href": "/account" },
+        { "label": "Commerce-Grundgeruest", "href": "/orders" }
+      ]
+    }
+  ]
+}

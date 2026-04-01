@@ -1,22 +1,23 @@
 @model IReadOnlyList<Darwin.WebAdmin.ViewModels.Businesses.BusinessListItemVm>
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="support-queue-attention" class="card h-100">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Attention Businesses</span>
+        <span>@T.T("AttentionBusinesses")</span>
         <div class="d-flex gap-2">
             <button type="button"
                     class="btn btn-sm btn-outline-secondary"
                     hx-get="@Url.Action("SupportQueueAttentionFragment", "Businesses")"
                     hx-target="#support-queue-attention"
                     hx-swap="outerHTML">
-                Refresh
+                @T.T("Refresh")
             </button>
             <a asp-action="Index"
                asp-route-attentionOnly="true"
                class="btn btn-sm btn-outline-secondary"
                hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
                hx-target="#business-support-queue-workspace-shell"
-               hx-swap="outerHTML">Full Queue</a>
+               hx-swap="outerHTML">@T.T("FullQueue")</a>
         </div>
     </div>
     <div class="card-body">
@@ -24,16 +25,16 @@
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Business</th>
-                        <th>Status</th>
-                        <th>Signals</th>
-                        <th class="text-end">Actions</th>
+                        <th>@T.T("BusinessLabel")</th>
+                        <th>@T.T("Status")</th>
+                        <th>@T.T("Signals")</th>
+                        <th class="text-end">@T.T("Actions")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.Count == 0)
                 {
-                    <tr><td colspan="4" class="text-center text-muted py-4">No attention businesses are currently queued.</td></tr>
+                    <tr><td colspan="4" class="text-center text-muted py-4">@T.T("NoAttentionBusinessesQueued")</td></tr>
                 }
                 else
                 {
@@ -51,25 +52,25 @@
                                 <span class="badge text-bg-secondary">@item.OperationalStatus</span>
                                 @if (!item.IsActive)
                                 {
-                                    <span class="badge text-bg-warning ms-1">Inactive</span>
+                                    <span class="badge text-bg-warning ms-1">@T.T("Inactive")</span>
                                 }
                             </td>
                             <td>
                                 @if (item.ActiveOwnerCount == 0)
                                 {
-                                    <div class="small text-muted">Missing owner</div>
+                                    <div class="small text-muted">@T.T("MissingOwner")</div>
                                 }
                                 @if (item.PrimaryLocationCount == 0)
                                 {
-                                    <div class="small text-muted">Missing primary location</div>
+                                    <div class="small text-muted">@T.T("MissingPrimaryLocation")</div>
                                 }
                                 @if (!item.HasContactEmailConfigured)
                                 {
-                                    <div class="small text-muted">Missing contact email</div>
+                                    <div class="small text-muted">@T.T("MissingContactEmail")</div>
                                 }
                                 @if (!item.HasLegalNameConfigured)
                                 {
-                                    <div class="small text-muted">Missing legal name</div>
+                                    <div class="small text-muted">@T.T("MissingLegalName")</div>
                                 }
                             </td>
                             <td class="text-end">
@@ -78,21 +79,21 @@
                                    class="btn btn-sm btn-outline-primary"
                                    hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
                                    hx-target="#business-support-queue-workspace-shell"
-                                   hx-swap="outerHTML">Setup</a>
+                                   hx-swap="outerHTML">@T.T("Setup")</a>
                                 <a asp-action="Members"
                                    asp-route-businessId="@item.Id"
                                    asp-route-filter="Attention"
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id, filter = "Attention" })"
                                    hx-target="#business-support-queue-workspace-shell"
-                                   hx-swap="outerHTML">Members</a>
+                                   hx-swap="outerHTML">@T.T("Members")</a>
                                 <a asp-action="Invitations"
                                    asp-route-businessId="@item.Id"
                                    asp-route-filter="Open"
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id, filter = "Open" })"
                                    hx-target="#business-support-queue-workspace-shell"
-                                   hx-swap="outerHTML">Invites</a>
+                                   hx-swap="outerHTML">@T.T("Invites")</a>
                             </td>
                         </tr>
                     }

@@ -208,6 +208,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     FirstName = data.First,
                     LastName = data.Last,
                     IsActive = true,
+                    EmailConfirmed = true,
                     Locale = "de-DE",
                     Timezone = "Europe/Berlin",
                     Currency = "EUR",
@@ -239,6 +240,57 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             }
             else
             {
+                // Seeded test users must stay usable for local/mobile debug sign-in.
+                // Keep these flags aligned even when the user already exists from an older database state.
+                var requiresSave = false;
+
+                if (!user.IsActive)
+                {
+                    user.IsActive = true;
+                    requiresSave = true;
+                }
+
+                if (!user.EmailConfirmed)
+                {
+                    user.EmailConfirmed = true;
+                    requiresSave = true;
+                }
+
+                if (!string.Equals(user.FirstName, data.First, StringComparison.Ordinal))
+                {
+                    user.FirstName = data.First;
+                    requiresSave = true;
+                }
+
+                if (!string.Equals(user.LastName, data.Last, StringComparison.Ordinal))
+                {
+                    user.LastName = data.Last;
+                    requiresSave = true;
+                }
+
+                if (!string.Equals(user.Locale, "de-DE", StringComparison.Ordinal))
+                {
+                    user.Locale = "de-DE";
+                    requiresSave = true;
+                }
+
+                if (!string.Equals(user.Timezone, "Europe/Berlin", StringComparison.Ordinal))
+                {
+                    user.Timezone = "Europe/Berlin";
+                    requiresSave = true;
+                }
+
+                if (!string.Equals(user.Currency, "EUR", StringComparison.Ordinal))
+                {
+                    user.Currency = "EUR";
+                    requiresSave = true;
+                }
+
+                if (requiresSave)
+                {
+                    await db.SaveChangesAsync(ct);
+                }
+
                 var hasRole = await db.Set<UserRole>()
                     .AnyAsync(x => x.UserId == user.Id && x.RoleId == roleId, ct);
                 if (!hasRole)

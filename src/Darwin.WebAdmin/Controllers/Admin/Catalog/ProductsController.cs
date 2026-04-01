@@ -170,7 +170,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _createProduct.HandleAsync(dto, ct);
-                TempData["Success"] = "Product has been created successfully.";
+                SetSuccessMessage("ProductCreated");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (FluentValidation.ValidationException ex)
@@ -190,7 +190,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var dto = await _getProductForEdit.HandleAsync(id, ct);
             if (dto == null)
             {
-                TempData["Error"] = "Product not found.";
+                SetErrorMessage("ProductNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -299,12 +299,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _updateProduct.HandleAsync(dto, ct);
-                TempData["Success"] = "Product has been updated successfully.";
+                SetSuccessMessage("ProductUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user. Please reload and try again.");
+                ModelState.AddModelError(string.Empty, T("ProductConcurrencyConflict"));
                 await LoadLookupsAsync(ct);
                 EnsureProductDefaults(vm);
                 return RenderEditEditor(vm);
@@ -324,8 +324,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
         {
-            try { await _softDeleteProduct.HandleAsync(id, ct); TempData["Success"] = "Product deleted."; }
-            catch { TempData["Error"] = "Failed to delete the product."; }
+            try { await _softDeleteProduct.HandleAsync(id, ct); SetSuccessMessage("ProductDeleted"); }
+            catch { SetErrorMessage("ProductDeleteFailed"); }
             return RedirectOrHtmx(nameof(Index), new { });
         }
 

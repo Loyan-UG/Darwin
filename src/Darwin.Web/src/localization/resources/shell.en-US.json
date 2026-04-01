@@ -1,0 +1,51 @@
+{
+  "shellTagline": "Web storefront",
+  "shellBadge": "Cartzilla-inspired shell",
+  "menuSourceLabel": "Menu source",
+  "cmsFallbackTitle": "CMS navigation fallback is active.",
+  "footerEyebrow": "Darwin.Web",
+  "footerTitle": "Public storefront and member portal foundation",
+  "footerDescription": "Theme-isolated shell, CMS-backed navigation, and route scaffolding are now in place so later storefront and member slices can land without restarting the architecture.",
+  "fallbackPrimaryNavigation": [
+    { "label": "Home", "href": "/" },
+    { "label": "Catalog", "href": "/catalog" },
+    { "label": "Account", "href": "/account" },
+    { "label": "Loyalty", "href": "/loyalty" },
+    { "label": "Orders", "href": "/orders" },
+    { "label": "Invoices", "href": "/invoices" }
+  ],
+  "utilityLinks": [
+    { "label": "Open storefront", "href": "/catalog" },
+    { "label": "Cart", "href": "/cart" },
+    { "label": "Checkout", "href": "/checkout" }
+  ],
+  "footerGroups": [
+    {
+      "title": "Storefront",
+      "links": [
+        { "label": "Catalog", "href": "/catalog" },
+        { "label": "Cart", "href": "/cart" },
+        { "label": "Checkout", "href": "/checkout" },
+        { "label": "Home", "href": "/" },
+        { "label": "Loyalty", "href": "/loyalty" }
+      ]
+    },
+    {
+      "title": "Member",
+      "links": [
+        { "label": "Account", "href": "/account" },
+        { "label": "Loyalty", "href": "/loyalty" },
+        { "label": "Orders", "href": "/orders" },
+        { "label": "Invoices", "href": "/invoices" }
+      ]
+    },
+    {
+      "title": "Platform",
+      "links": [
+        { "label": "Theme foundation", "href": "/" },
+        { "label": "Config-driven behavior", "href": "/account" },
+        { "label": "Commerce scaffolding", "href": "/orders" }
+      ]
+    }
+  ]
+}

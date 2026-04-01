@@ -6,6 +6,7 @@ using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Commands
 {
@@ -16,11 +17,16 @@ namespace Darwin.Application.Catalog.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<CategoryEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateCategoryHandler(IAppDbContext db, IValidator<CategoryEditDto> validator)
+        public UpdateCategoryHandler(
+            IAppDbContext db,
+            IValidator<CategoryEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         public async Task HandleAsync(CategoryEditDto dto, CancellationToken ct = default)
@@ -32,11 +38,11 @@ namespace Darwin.Application.Catalog.Commands
                 .FirstOrDefaultAsync(c => c.Id == dto.Id, ct);
 
             if (entity == null)
-                throw new ValidationException("Category not found.");
+                throw new ValidationException(_localizer["CategoryNotFound"]);
 
             // Concurrency
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("The category was modified by another user.");
+                throw new DbUpdateConcurrencyException(_localizer["CategoryModifiedByAnotherUser"]);
 
             entity.ParentId = dto.ParentId;
             entity.IsActive = dto.IsActive;

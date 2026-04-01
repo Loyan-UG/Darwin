@@ -10,6 +10,7 @@ using Darwin.Application.Catalog.Services;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CartCheckout.Commands
 {
@@ -21,17 +22,22 @@ namespace Darwin.Application.CartCheckout.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IAddOnPricingService _addOnPricing;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public AddOrIncreaseCartItemHandler(IAppDbContext db, IAddOnPricingService addOnPricing)
+        public AddOrIncreaseCartItemHandler(
+            IAppDbContext db,
+            IAddOnPricingService addOnPricing,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _addOnPricing = addOnPricing;
+            _localizer = localizer;
         }
 
         public async Task<Guid> HandleAsync(CartAddItemDto dto, CancellationToken ct = default)
         {
             if (dto.UserId == null && string.IsNullOrWhiteSpace(dto.AnonymousId))
-                throw new InvalidOperationException("Either UserId or AnonymousId is required.");
+                throw new InvalidOperationException(_localizer["EitherUserIdOrAnonymousIdRequired"]);
 
             // Locate or create cart
             var cart = await _db.Set<Cart>()
@@ -57,7 +63,7 @@ namespace Darwin.Application.CartCheckout.Commands
             var variant = await _db.Set<ProductVariant>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == dto.VariantId && !v.IsDeleted, ct)
-                ?? throw new InvalidOperationException("Variant not found.");
+                ?? throw new InvalidOperationException(_localizer["VariantNotFound"]);
 
             // Validate add-on selections and compute delta
             var selIds = dto.SelectedAddOnValueIds?.Distinct().ToList() ?? new List<Guid>();

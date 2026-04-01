@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Catalog.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -52,13 +53,13 @@ namespace Darwin.Application.Catalog.Validators
     /// </remarks>
     public sealed class ProductCreateDtoValidator : AbstractValidator<ProductCreateDto>
     {
-        public ProductCreateDtoValidator()
+        public ProductCreateDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleForEach(x => x.Translations).SetValidator(new ProductTranslationDtoValidator());
-            RuleFor(x => x.Translations).NotEmpty().WithMessage("At least one translation is required.");
+            RuleFor(x => x.Translations).NotEmpty().WithMessage(localizer["AtLeastOneTranslationRequired"]);
 
             RuleForEach(x => x.Variants).SetValidator(new ProductVariantCreateDtoValidator());
-            RuleFor(x => x.Variants).NotEmpty().WithMessage("At least one variant is required.");
+            RuleFor(x => x.Variants).NotEmpty().WithMessage(localizer["AtLeastOneVariantRequired"]);
         }
     }
 }

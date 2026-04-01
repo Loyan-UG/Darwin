@@ -5,6 +5,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,15 +30,20 @@ namespace Darwin.Application.CartCheckout.Queries
     public sealed class ComputeCartSummaryHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ComputeCartSummaryHandler(IAppDbContext db) => _db = db;
+        public ComputeCartSummaryHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task<CartSummaryDto> HandleAsync(Guid cartId, CancellationToken ct = default)
         {
             var cart = await _db.Set<Cart>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == cartId && !c.IsDeleted, ct)
-                ?? throw new InvalidOperationException("Cart not found.");
+                ?? throw new InvalidOperationException(_localizer["CartNotFound"]);
 
             // Load active lines
             var lines = await _db.Set<CartItem>()
@@ -72,14 +78,14 @@ namespace Darwin.Application.CartCheckout.Queries
                 .ToListAsync(ct);
 
             if (variants.Count != variantIds.Count)
-                throw new InvalidOperationException("Some variants were not found or are deleted.");
+                throw new InvalidOperationException(_localizer["CartVariantsNoLongerAvailable"]);
 
             // Currency consistency (phase 1: single currency across lines)
             var distinctVariantCurrencies = variants.Select(v => v.Currency).Distinct().ToList();
             if (distinctVariantCurrencies.Count > 1)
-                throw new InvalidOperationException("Mixed currencies in a single cart are not supported.");
+                throw new InvalidOperationException(_localizer["MixedCartCurrenciesNotSupported"]);
             if (!string.Equals(distinctVariantCurrencies[0], cart.Currency, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Cart currency differs from variant currency.");
+                throw new InvalidOperationException(_localizer["CartCurrencyDiffersFromVariantCurrency"]);
 
             // Load tax categories for VAT
             var taxIds = variants.Select(v => v.TaxCategoryId).Distinct().ToList();
@@ -140,7 +146,7 @@ namespace Darwin.Application.CartCheckout.Queries
                 var unitNet = v.BasePriceNetMinor + addOnDelta;
 
                 if (!vatByTaxId.TryGetValue(v.TaxCategoryId, out var vatRate))
-                    throw new InvalidOperationException("Tax category missing for variant.");
+                    throw new InvalidOperationException(_localizer["TaxCategoryMissingForVariant"]);
 
                 // Compute line totals
                 var quantity = line.Quantity;
@@ -189,7 +195,7 @@ namespace Darwin.Application.CartCheckout.Queries
                     if (promo.Type == PromotionType.Amount)
                     {
                         if (!string.Equals(promo.Currency, result.Currency, StringComparison.OrdinalIgnoreCase))
-                            throw new InvalidOperationException("Promotion currency does not match cart currency.");
+                            throw new InvalidOperationException(_localizer["PromotionCurrencyDoesNotMatchCartCurrency"]);
                     }
 
                     // Min subtotal net gate

@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Validators;
@@ -7,6 +8,7 @@ using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.CRM;
 
@@ -46,7 +48,7 @@ public sealed class TransitionInvoiceStatusHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new TransitionInvoiceStatusHandler(db, new InvoiceStatusTransitionValidator());
+        var handler = new TransitionInvoiceStatusHandler(db, new InvoiceStatusTransitionValidator(), new TestStringLocalizer());
 
         await handler.HandleAsync(new InvoiceStatusTransitionDto
         {
@@ -93,7 +95,7 @@ public sealed class TransitionInvoiceStatusHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new TransitionInvoiceStatusHandler(db, new InvoiceStatusTransitionValidator());
+        var handler = new TransitionInvoiceStatusHandler(db, new InvoiceStatusTransitionValidator(), new TestStringLocalizer());
 
         var act = () => handler.HandleAsync(new InvoiceStatusTransitionDto
         {
@@ -103,7 +105,7 @@ public sealed class TransitionInvoiceStatusHandlerTests
         }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Paid invoices must be refunded before cancellation.");
+            .WithMessage("PaidInvoicesMustBeRefundedBeforeCancellation");
     }
 
     [Fact]
@@ -135,7 +137,7 @@ public sealed class TransitionInvoiceStatusHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new TransitionInvoiceStatusHandler(db, new InvoiceStatusTransitionValidator());
+        var handler = new TransitionInvoiceStatusHandler(db, new InvoiceStatusTransitionValidator(), new TestStringLocalizer());
 
         await handler.HandleAsync(new InvoiceStatusTransitionDto
         {
@@ -199,5 +201,18 @@ public sealed class TransitionInvoiceStatusHandlerTests
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }
+    }
+
+    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 }

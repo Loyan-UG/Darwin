@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Settings.SiteSettingVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Site Settings";
+    ViewData["Title"] = T.T("EditSiteSettings");
 }
 
 <div id="site-settings-editor-shell">
-<h1 class="mb-3">Site Settings</h1>
+<h1 class="mb-3">@T.T("SiteSettingsTitle")</h1>
 
 <form asp-action="Edit"
       method="post"
@@ -19,31 +20,31 @@
     <input type="hidden" asp-for="RowVersion" />
 
     <div class="alert alert-secondary mb-4" role="alert">
-        <div class="fw-semibold mb-2">Settings Categories</div>
+        <div class="fw-semibold mb-2">@T.T("SettingsCategories")</div>
         <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-basics">General</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-localization">Localization</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-security">Security</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-mobile">Mobile</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-business-app">Business App</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-basics">@T.T("General")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-localization">@T.T("Localization")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-security">@T.T("Security")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-mobile">@T.T("Mobile")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-business-app">@T.T("BusinessApp")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-payments">Payments</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-tax">Tax & Invoicing</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-tax">@T.T("TaxAndInvoicing")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-shipping">Shipping</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-retention">Operational</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-measurement">Units</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-seo">SEO</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-analytics">Analytics</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-retention">@T.T("Operational")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-measurement">@T.T("Units")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-seo">@T.T("Seo")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-analytics">@T.T("Analytics")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-whatsapp">WhatsApp</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-webauthn">WebAuthn</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-webauthn">@T.T("WebAuthn")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-smtp">SMTP</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-sms">SMS</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-admin-routing">Admin Alerts</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-communications-policy">Communication Policy</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-admin-routing">@T.T("AdminAlerts")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-communications-policy">@T.T("CommunicationPolicy")</a>
         </div>
     </div>
 
     <div class="card mb-4">
-        <div class="card-header">Settings Ownership Matrix</div>
+        <div class="card-header">@T.T("SettingsOwnershipMatrix")</div>
         <div class="card-body">
             <div class="small text-muted mb-3">
                 Use site settings only for platform-wide defaults, provider credentials, and shared policy. Business-specific branding, sender identity, local defaults, and communication enablement belong in business setup.
@@ -175,7 +176,7 @@
 
     <!-- Basics -->
     <div id="site-settings-basics" class="card mb-4">
-        <div class="card-header">Basics</div>
+        <div class="card-header">@T.T("General")</div>
         <div class="card-body">
             <div class="mb-3">
                 <label asp-for="Title" class="form-label"></label>
@@ -203,7 +204,7 @@
 
     <!-- Localization -->
     <div id="site-settings-localization" class="card mb-4">
-        <div class="card-header">Localization</div>
+        <div class="card-header">@T.T("Localization")</div>
         <div class="card-body">
             <div class="alert alert-secondary mb-3">
                 Platform localization owns fallback culture, supported cultures, shared date/time formatting, and the default currency/country baseline. Tenant-specific wording and day-to-day customer-facing defaults still belong in business setup and CRM support follow-up.
@@ -294,6 +295,16 @@
             </div>
             <div class="alert alert-light border small mb-0">
                 Fallback rule: keep <code>SupportedCulturesCsv</code> aligned with what admin and customer surfaces can actually render. Add a business-level override only when one tenant must differ from the platform default; otherwise update the global fallback here and review tenant defaults from Business Setup.
+            </div>
+
+            <div class="mt-3">
+                <label asp-for="AdminTextOverridesJson" class="form-label"></label>
+                <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="6" placeholder='{"de-DE":{"Logout":"Abmelden"},"en-US":{"Logout":"Sign out"}}'></textarea>
+                <span asp-validation-for="AdminTextOverridesJson" class="text-danger"></span>
+                <div class="form-text">
+                    Optional platform-level wording overrides layered on top of shared admin resources. Use JSON in the form
+                    <code>{"de-DE":{"Key":"Value"},"en-US":{"Key":"Value"}}</code>.
+                </div>
             </div>
 
             <div class="row">

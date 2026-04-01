@@ -7,6 +7,7 @@ using Darwin.Application.Shipping.Validators;
 using Darwin.Domain.Entities.Shipping;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Shipping.Commands
 {
@@ -17,9 +18,18 @@ namespace Darwin.Application.Shipping.Commands
     public sealed class CreateShippingMethodHandler
     {
         private readonly IAppDbContext _db;
-        private readonly ShippingMethodCreateValidator _validator = new();
+        private readonly IValidator<ShippingMethodCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateShippingMethodHandler(IAppDbContext db) => _db = db;
+        public CreateShippingMethodHandler(
+            IAppDbContext db,
+            IValidator<ShippingMethodCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = validator;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(ShippingMethodCreateDto dto, CancellationToken ct = default)
         {
@@ -29,7 +39,7 @@ namespace Darwin.Application.Shipping.Commands
             var exists = await _db.Set<ShippingMethod>().AsNoTracking()
                 .AnyAsync(m => m.Carrier == dto.Carrier && m.Service == dto.Service, ct);
             if (exists)
-                throw new ValidationException("Carrier/Service combination must be unique.");
+                throw new ValidationException(_localizer["ShippingMethodCarrierServiceMustBeUnique"]);
 
             var method = new ShippingMethod
             {

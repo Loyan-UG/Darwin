@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Darwin.Application.Catalog.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -9,11 +10,11 @@ namespace Darwin.Application.Catalog.Validators
     /// </summary>
     public sealed class BrandCreateDtoValidator : AbstractValidator<BrandCreateDto>
     {
-        public BrandCreateDtoValidator()
+        public BrandCreateDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Translations)
-                .NotNull().WithMessage("Translations are required.")
-                .Must(t => t.Count > 0).WithMessage("At least one translation is required.");
+                .NotNull().WithMessage(localizer["TranslationsRequired"])
+                .Must(t => t.Count > 0).WithMessage(localizer["AtLeastOneTranslationRequired"]);
 
             RuleForEach(x => x.Translations).ChildRules(tr =>
             {
@@ -31,14 +32,14 @@ namespace Darwin.Application.Catalog.Validators
     /// </summary>
     public sealed class BrandEditDtoValidator : AbstractValidator<BrandEditDto>
     {
-        public BrandEditDtoValidator()
+        public BrandEditDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotNull();
 
             RuleFor(x => x.Translations)
-                .NotNull().WithMessage("Translations are required.")
-                .Must(t => t.Count > 0).WithMessage("At least one translation is required.");
+                .NotNull().WithMessage(localizer["TranslationsRequired"])
+                .Must(t => t.Count > 0).WithMessage(localizer["AtLeastOneTranslationRequired"]);
 
             RuleForEach(x => x.Translations).ChildRules(tr =>
             {

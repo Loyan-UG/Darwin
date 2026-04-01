@@ -1,52 +1,53 @@
 @using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Payments";
+    ViewData["Title"] = T.T("Payments");
 }
 
 <div id="billing-payments-workspace-shell">
-<h1 class="mb-3">Payments</h1>
+<h1 class="mb-3">@T.T("Payments")</h1>
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Stripe Phase-1 Readiness</span>
+        <span>@T.T("StripeReadiness")</span>
         <a asp-controller="SiteSettings"
            asp-action="Edit"
            asp-fragment="site-settings-payments"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
            hx-target="#billing-payments-workspace-shell"
-           hx-swap="outerHTML">Open Payment Settings</a>
+           hx-swap="outerHTML">@T.T("OpenPaymentSettings")</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Enabled</div>
-                    <div class="fw-semibold mt-1">@(Model.Stripe.Enabled ? "Yes" : "No")</div>
+                    <div class="text-muted small">@T.T("Enabled")</div>
+                    <div class="fw-semibold mt-1">@(Model.Stripe.Enabled ? T.T("Yes") : T.T("No"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Publishable Key</div>
+                    <div class="text-muted small">@T.T("PublishableKey")</div>
                     <div class="fw-semibold mt-1">@(Model.Stripe.PublishableKeyConfigured ? "Ready" : "Missing")</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Secret Key</div>
+                    <div class="text-muted small">@T.T("SecretKey")</div>
                     <div class="fw-semibold mt-1">@(Model.Stripe.SecretKeyConfigured ? "Ready" : "Missing")</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Webhook Secret</div>
+                    <div class="text-muted small">@T.T("WebhookSecret")</div>
                     <div class="fw-semibold mt-1">@(Model.Stripe.WebhookSecretConfigured ? "Ready" : "Missing")</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Merchant Identity</div>
+                    <div class="text-muted small">@T.T("MerchantIdentity")</div>
                     <div class="fw-semibold mt-1">@(Model.Stripe.MerchantDisplayNameConfigured ? Model.Stripe.MerchantDisplayName : "Missing")</div>
                 </div>
             </div>
@@ -56,50 +57,50 @@
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Tax & Invoicing Readiness</span>
+        <span>@T.T("TaxInvoicingReadiness")</span>
         <a asp-controller="SiteSettings"
            asp-action="Edit"
            asp-fragment="site-settings-tax"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
            hx-target="#billing-payments-workspace-shell"
-           hx-swap="outerHTML">Open Tax Settings</a>
+           hx-swap="outerHTML">@T.T("OpenTaxSettings")</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">VAT Enabled</div>
-                    <div class="fw-semibold mt-1">@(Model.Tax.VatEnabled ? "Yes" : "No")</div>
+                    <div class="text-muted small">@T.T("VatEnabled")</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.VatEnabled ? T.T("Yes") : T.T("No"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Default VAT</div>
+                    <div class="text-muted small">@T.T("DefaultVat")</div>
                     <div class="fw-semibold mt-1">@Model.Tax.DefaultVatRatePercent.ToString("0.##")%</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Price Mode</div>
-                    <div class="fw-semibold mt-1">@(Model.Tax.PricesIncludeVat ? "VAT Inclusive" : "VAT Exclusive")</div>
+                    <div class="text-muted small">@T.T("PriceMode")</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.PricesIncludeVat ? T.T("VatInclusive") : T.T("VatExclusive"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Reverse Charge</div>
-                    <div class="fw-semibold mt-1">@(Model.Tax.AllowReverseCharge ? "Allowed" : "Disabled")</div>
+                    <div class="text-muted small">@T.T("ReverseCharge")</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.AllowReverseCharge ? T.T("Allowed") : T.T("Disabled"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Issuer</div>
+                    <div class="text-muted small">@T.T("Issuer")</div>
                     <div class="fw-semibold mt-1">@(Model.Tax.IssuerConfigured ? Model.Tax.InvoiceIssuerLegalName : "Missing")</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Tax ID</div>
+                    <div class="text-muted small">@T.T("TaxId")</div>
                     <div class="fw-semibold mt-1">@(Model.Tax.InvoiceIssuerTaxIdConfigured ? "Ready" : "Missing")</div>
                 </div>
             </div>
@@ -112,12 +113,12 @@
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Webhook Lifecycle Visibility</span>
+        <span>@T.T("WebhookLifecycleVisibility")</span>
         <a asp-action="Webhooks"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Webhooks", "Billing")"
            hx-target="#billing-payments-workspace-shell"
-           hx-swap="outerHTML">Open Webhook Queue</a>
+           hx-swap="outerHTML">@T.T("OpenWebhookQueue")</a>
     </div>
     <div class="card-body">
         <div class="row g-3">

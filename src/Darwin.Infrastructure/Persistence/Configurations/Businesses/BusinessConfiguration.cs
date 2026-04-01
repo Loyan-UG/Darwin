@@ -55,6 +55,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
                 .IsRequired()
                 .HasMaxLength(64);
 
+            builder.Property(x => x.AdminTextOverridesJson)
+                .HasMaxLength(16000);
+
             builder.Property(x => x.BrandDisplayName)
                 .HasMaxLength(200);
 

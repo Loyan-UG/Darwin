@@ -1,9 +1,8 @@
-﻿using Darwin.Application.Abstractions.Persistence;
-using Darwin.Application.Catalog.DTOs;
+using Darwin.Application;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Catalog;
-using Darwin.Shared.Results;
-using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,12 +17,18 @@ namespace Darwin.Application.Catalog.Commands
     public sealed class AttachAddOnGroupToCategoriesHandler
     {
         private readonly IAppDbContext _db;
-        public AttachAddOnGroupToCategoriesHandler(IAppDbContext db) => _db = db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public AttachAddOnGroupToCategoriesHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(Guid groupId, IEnumerable<Guid> categoryIds, CancellationToken ct = default)
         {
             var groupExists = await _db.Set<AddOnGroup>().AnyAsync(g => g.Id == groupId && !g.IsDeleted, ct);
-            if (!groupExists) throw new InvalidOperationException("Add-on group not found.");
+            if (!groupExists) throw new InvalidOperationException(_localizer["AddOnGroupNotFound"]);
 
             var existing = await _db.Set<AddOnGroupCategory>()
                 .Where(x => x.AddOnGroupId == groupId)

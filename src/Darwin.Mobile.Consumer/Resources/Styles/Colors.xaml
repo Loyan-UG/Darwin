@@ -7,7 +7,9 @@
     <Color x:Key="Neutral0">#FFFFFF</Color>
     <Color x:Key="Neutral50">#FFFFFF</Color>
     <Color x:Key="Neutral100">#FFF8E7</Color>
+    <Color x:Key="Neutral200">#FFF8E7</Color>
     <Color x:Key="Neutral300">#FFF8E7</Color>
+    <Color x:Key="Neutral600">#717182</Color>
     <Color x:Key="Neutral700">#717182</Color>
     <Color x:Key="Neutral900">#2C2416</Color>
 
@@ -19,7 +21,7 @@
     <Color x:Key="Success500">#1F8B4C</Color>
     <Color x:Key="Warning500">#B7791F</Color>
     <Color x:Key="Danger500">#C53030</Color>
-    <Color x:Key="Info500">#2B6CB0</Color>
+    <Color x:Key="Info500">#E09F1A</Color>
 
     <SolidColorBrush x:Key="BrushBackground" Color="{StaticResource Neutral50}" />
     <SolidColorBrush x:Key="BrushSurface" Color="{StaticResource Neutral0}" />

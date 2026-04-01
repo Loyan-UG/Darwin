@@ -19,6 +19,7 @@ public partial class LoginPage
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         BindingContext = viewModel;
 
+        NavigationPage.SetHasNavigationBar(this, false);
         Shell.SetNavBarIsVisible(this, false);
         Shell.SetFlyoutBehavior(this, FlyoutBehavior.Disabled);
 
@@ -65,12 +66,27 @@ public partial class LoginPage
         await PushPageSafelyAsync<RegisterPage>();
     }
 
+    private async void OnRegisterTapped(object? sender, TappedEventArgs e)
+    {
+        await PushPageSafelyAsync<RegisterPage>();
+    }
+
     private async void OnForgotPasswordClicked(object? sender, EventArgs e)
     {
         await PushPageSafelyAsync<ForgotPasswordPage>();
     }
 
+    private async void OnForgotPasswordTapped(object? sender, TappedEventArgs e)
+    {
+        await PushPageSafelyAsync<ForgotPasswordPage>();
+    }
+
     private async void OnLegalHubClicked(object? sender, EventArgs e)
+    {
+        await PushPageSafelyAsync<LegalHubPage>();
+    }
+
+    private async void OnLegalHubTapped(object? sender, TappedEventArgs e)
     {
         await PushPageSafelyAsync<LegalHubPage>();
     }

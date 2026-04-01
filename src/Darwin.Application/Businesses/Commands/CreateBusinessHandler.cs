@@ -47,6 +47,7 @@ namespace Darwin.Application.Businesses.Commands
                 DefaultCurrency = dto.DefaultCurrency.Trim(),
                 DefaultCulture = dto.DefaultCulture.Trim(),
                 DefaultTimeZoneId = dto.DefaultTimeZoneId.Trim(),
+                AdminTextOverridesJson = string.IsNullOrWhiteSpace(dto.AdminTextOverridesJson) ? null : dto.AdminTextOverridesJson.Trim(),
                 BrandDisplayName = string.IsNullOrWhiteSpace(dto.BrandDisplayName) ? null : dto.BrandDisplayName.Trim(),
                 BrandLogoUrl = string.IsNullOrWhiteSpace(dto.BrandLogoUrl) ? null : dto.BrandLogoUrl.Trim(),
                 BrandPrimaryColorHex = string.IsNullOrWhiteSpace(dto.BrandPrimaryColorHex) ? null : dto.BrandPrimaryColorHex.Trim(),

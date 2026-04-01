@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderRefundsPageVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="refunds-grid-content"
      hx-boost="true"
@@ -8,22 +9,22 @@
     <form asp-controller="Orders" asp-action="Refunds" method="get" class="d-flex gap-2 mb-3">
         <input type="hidden" name="orderId" value="@Model.OrderId" />
         <select name="filter" asp-items="Model.FilterItems" class="form-select form-select-sm"></select>
-        <button class="btn btn-sm btn-outline-secondary" type="submit">Apply</button>
+        <button class="btn btn-sm btn-outline-secondary" type="submit">@T.T("Apply")</button>
     </form>
     <div class="d-flex gap-2 flex-wrap mb-3">
-        <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.RefundQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")">Pending</a>
-        <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" asp-route-filter="Completed" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.RefundQueueFilter.Completed ? "btn-success" : "btn-outline-success")">Completed</a>
-        <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">Clear</a>
+        <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.RefundQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")">@T.T("Pending")</a>
+        <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" asp-route-filter="Completed" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.RefundQueueFilter.Completed ? "btn-success" : "btn-outline-success")">@T.T("Completed")</a>
+        <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">@T.T("Clear")</a>
     </div>
     @if (Model.ReturnedShipmentCount > 0)
     {
         <div class="alert alert-warning d-flex justify-content-between align-items-start gap-3">
             <div>
-                <div class="fw-semibold">Returned shipment follow-up is open on this order.</div>
-                <div class="small mb-0">Returned shipments: @Model.ReturnedShipmentCount. Use the shipment tab to confirm carrier state, then record the refund from this order.</div>
+                <div class="fw-semibold">@T.T("ReturnedShipmentFollowUpOpen")</div>
+                <div class="small mb-0">@T.T("ReturnedShipments"): @Model.ReturnedShipmentCount. @T.T("ReturnedShipmentFollowUpNote")</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="tab" data-bs-target="#shipments">Review Shipments</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="tab" data-bs-target="#shipments">@T.T("ReviewShipments")</button>
                 @if (Model.DefaultRefundPaymentId.HasValue)
                 {
                     <a asp-controller="Orders"
@@ -35,7 +36,7 @@
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">
-                        Start Return Refund
+                        @T.T("StartReturnRefund")
                     </a>
                 }
             </div>
@@ -45,18 +46,18 @@
         <table class="table table-sm table-striped align-middle">
             <thead>
                 <tr>
-                    <th>Payment</th>
-                    <th>Reason</th>
-                    <th class="text-end">Amount</th>
-                    <th>Status</th>
-                    <th>Created (UTC)</th>
-                    <th class="text-end">Actions</th>
+                    <th>@T.T("Payment")</th>
+                    <th>@T.T("Reason")</th>
+                    <th class="text-end">@T.T("Amount")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("CreatedUtc")</th>
+                    <th class="text-end">@T.T("Actions")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="6" class="text-center text-muted">No refunds.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted">@T.T("NoRefunds")</td></tr>
                 }
                 else
                 {
@@ -66,7 +67,7 @@
                             <td>
                                 <div class="fw-semibold">@item.PaymentProvider</div>
                                 <div class="small text-muted">@item.PaymentProviderReference</div>
-                                <div class="small text-muted">Payment status: @item.PaymentStatus</div>
+                                <div class="small text-muted">@T.T("PaymentStatus"): @item.PaymentStatus</div>
                             </td>
                             <td>@item.Reason</td>
                             <td class="text-end">@item.Currency @((item.AmountMinor / 100.0M).ToString("0.00"))</td>
@@ -81,7 +82,7 @@
                                    hx-target="#order-operation-shell"
                                    hx-swap="innerHTML"
                                    hx-push-url="false">
-                                    Payment
+                                    @T.T("Payment")
                                 </a>
                             </td>
                         </tr>

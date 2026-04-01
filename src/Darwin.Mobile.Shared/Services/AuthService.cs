@@ -139,6 +139,7 @@ public sealed class AuthService : IAuthService, IDisposable
         var (rt, rtex) = await _store.GetRefreshAsync().ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(rt) || rtex is null || rtex <= DateTime.UtcNow)
         {
+            await ClearLocalSessionAsync(ct).ConfigureAwait(false);
             return false;
         }
 
@@ -159,7 +160,7 @@ public sealed class AuthService : IAuthService, IDisposable
             var effectiveDeviceId = await ResolveEffectiveDeviceIdAsync(deviceId: null).ConfigureAwait(false);
             var preferredBusinessId = await TryGetPreferredBusinessIdFromStoredAccessTokenAsync().ConfigureAwait(false);
 
-            var res = await _api.PostAsync<RefreshTokenRequest, TokenResponse>(
+            var refreshResult = await _api.PostResultAsync<RefreshTokenRequest, TokenResponse>(
                 ApiRoutes.Auth.Refresh,
                 new RefreshTokenRequest
                 {
@@ -169,15 +170,22 @@ public sealed class AuthService : IAuthService, IDisposable
                 },
                 ct).ConfigureAwait(false);
 
-            if (res is null)
+            if (!refreshResult.Succeeded || refreshResult.Value is null)
             {
+                if (LooksLikeDefinitiveRefreshFailure(refreshResult.Error))
+                {
+                    await ClearLocalSessionAsync(ct).ConfigureAwait(false);
+                }
+
                 return false;
             }
 
+            var res = refreshResult.Value;
             ValidateTokenForApp(res.AccessToken, _opts);
 
             await _store.SaveAsync(res.AccessToken, res.AccessTokenExpiresAtUtc, res.RefreshToken, res.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
             _api.SetBearerToken(res.AccessToken);
+            await TryRefreshBootstrapCacheAsync(ct).ConfigureAwait(false);
 
             return true;
         }
@@ -413,17 +421,31 @@ public sealed class AuthService : IAuthService, IDisposable
                 return true;
             }
 
-            var refreshed = await TryRefreshAsync(ct).ConfigureAwait(false);
-            if (refreshed)
+            var refreshedWithinWindow = await TryRefreshAsync(ct).ConfigureAwait(false);
+            if (refreshedWithinWindow)
             {
                 return true;
+            }
+
+            var (currentAccessToken, currentAccessExpiresUtc) = await _store.GetAccessAsync().ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(currentAccessToken) ||
+                (currentAccessExpiresUtc.HasValue && currentAccessExpiresUtc.Value <= DateTime.UtcNow))
+            {
+                _api.SetBearerToken(null);
+                return false;
             }
 
             _api.SetBearerToken(accessToken);
             return true;
         }
 
-        return await TryRefreshAsync(ct).ConfigureAwait(false);
+        var refreshedFromExpiredSession = await TryRefreshAsync(ct).ConfigureAwait(false);
+        if (!refreshedFromExpiredSession)
+        {
+            _api.SetBearerToken(null);
+        }
+
+        return refreshedFromExpiredSession;
     }
 
     private async Task<string> ResolveEffectiveDeviceIdAsync(string? deviceId)
@@ -461,6 +483,29 @@ public sealed class AuthService : IAuthService, IDisposable
         await _cache.SetAsync(BootstrapCacheKey, boot, BootstrapCacheTtl, ct).ConfigureAwait(false);
 
         return boot;
+    }
+
+    private async Task TryRefreshBootstrapCacheAsync(CancellationToken ct)
+    {
+        try
+        {
+            var bootstrap = await _api.GetAsync<AppBootstrapResponse>(ApiRoutes.Meta.Bootstrap, ct).ConfigureAwait(false);
+            if (bootstrap is null)
+            {
+                return;
+            }
+
+            ApplyBootstrap(bootstrap);
+            await _cache.SetAsync(BootstrapCacheKey, bootstrap, BootstrapCacheTtl, ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            // Token refresh must stay usable even if bootstrap revalidation is temporarily unavailable.
+        }
     }
 
     private async Task<Guid?> TryGetPreferredBusinessIdFromStoredAccessTokenAsync()
@@ -516,6 +561,28 @@ public sealed class AuthService : IAuthService, IDisposable
 
         return error.Contains("401", StringComparison.OrdinalIgnoreCase) ||
                error.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool LooksLikeDefinitiveRefreshFailure(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return false;
+        }
+
+        return error.Contains("401", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("refresh token", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("expired", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("revoked", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("invalid token", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task ClearLocalSessionAsync(CancellationToken ct)
+    {
+        await _store.ClearAsync().ConfigureAwait(false);
+        await _cache.ClearAsync(ct).ConfigureAwait(false);
+        _api.SetBearerToken(null);
     }
 
     /// <summary>

@@ -1,63 +1,64 @@
 @using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.RefundsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Refunds";
+    ViewData["Title"] = T.T("RefundQueueTitle");
 }
 
 <div id="billing-refunds-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1">Refund Queue</h1>
-        <p class="text-muted mb-0">Cross-order refund review for finance support and Stripe-first post-payment follow-up.</p>
+        <h1 class="mb-1">@T.T("RefundQueueTitle")</h1>
+        <p class="text-muted mb-0">@T.T("RefundQueueIntro")</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Pending" class="btn btn-outline-warning btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Pending })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Pending</a>
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Pending })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">@T.T("Pending")</a>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Completed" class="btn btn-outline-success btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Completed })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Completed</a>
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Completed })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">@T.T("Completed")</a>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Failed" class="btn btn-outline-danger btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Failed })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Failed</a>
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Failed })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">@T.T("Failed")</a>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Stripe" class="btn btn-outline-primary btn-sm"
            hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Stripe })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Stripe</a>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.NeedsSupport" class="btn btn-outline-danger btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.NeedsSupport })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Needs Support</a>
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.NeedsSupport })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">@T.T("NeedsSupport")</a>
         <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary btn-sm"
-           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Back to Payments</a>
+           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">@T.T("BackToPayments")</a>
     </div>
 </div>
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Webhook Anomaly Visibility</span>
+        <span>@T.T("WebhookAnomalyVisibility")</span>
         <a asp-action="Webhooks"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Webhooks", "Billing")"
            hx-target="#billing-refunds-workspace-shell"
-           hx-swap="outerHTML">Open Webhook Queue</a>
+           hx-swap="outerHTML">@T.T("OpenWebhookQueue")</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Payment Exceptions</div>
+                    <div class="text-muted small">@T.T("PaymentExceptions")</div>
                     <div class="fs-4 fw-semibold">@Model.Webhooks.PaymentExceptionCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Dispute Signals</div>
+                    <div class="text-muted small">@T.T("DisputeSignals")</div>
                     <div class="fs-4 fw-semibold">@Model.Webhooks.DisputeSignalCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Retry Pending</div>
+                    <div class="text-muted small">@T.T("RetryPending")</div>
                     <div class="fs-4 fw-semibold">@Model.Webhooks.RetryPendingCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Failed Deliveries</div>
+                    <div class="text-muted small">@T.T("FailedDeliveries")</div>
                     <div class="fs-4 fw-semibold">@Model.Webhooks.FailedDeliveryCount</div>
                 </div>
             </div>
@@ -68,13 +69,13 @@
                class="btn btn-sm btn-outline-warning"
                hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
                hx-target="#billing-refunds-workspace-shell"
-               hx-swap="outerHTML">Review Payment Exceptions</a>
+               hx-swap="outerHTML">@T.T("ReviewPaymentExceptions")</a>
             <a asp-action="Webhooks"
                asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
                class="btn btn-sm btn-outline-dark"
                hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
                hx-target="#billing-refunds-workspace-shell"
-               hx-swap="outerHTML">Review Dispute Signals</a>
+               hx-swap="outerHTML">@T.T("ReviewDisputeSignals")</a>
         </div>
         <div class="small text-muted mt-3">
             Refund triage may depend on callback-level evidence. Use these subsets when Stripe refund or charge behavior looks inconsistent with the queue row alone.
@@ -85,19 +86,19 @@
 <div class="row g-3 mb-3">
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Pending</div>
+            <div class="text-muted small">@T.T("Pending")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Completed</div>
+            <div class="text-muted small">@T.T("Completed")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.CompletedCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Failed</div>
+            <div class="text-muted small">@T.T("Failed")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.FailedCount</div>
         </div>
     </div>
@@ -109,14 +110,14 @@
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Needs Support</div>
+            <div class="text-muted small">@T.T("NeedsSupport")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.NeedsSupportCount</div>
         </div>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Phase-1 Refund Support Playbooks</div>
+    <div class="card-header">@T.T("RefundSupportPlaybooks")</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
@@ -150,40 +151,40 @@
           hx-target="#billing-refunds-workspace-shell"
           hx-swap="outerHTML">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search refunds" />
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("Search")" />
         <select name="queue" class="form-select">
             <option value="">All queues</option>
-            <option value="@BillingRefundQueueFilter.Pending" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Pending)">Pending</option>
-            <option value="@BillingRefundQueueFilter.Completed" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Completed)">Completed</option>
-            <option value="@BillingRefundQueueFilter.Failed" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Failed)">Failed</option>
+            <option value="@BillingRefundQueueFilter.Pending" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Pending)">@T.T("Pending")</option>
+            <option value="@BillingRefundQueueFilter.Completed" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Completed)">@T.T("Completed")</option>
+            <option value="@BillingRefundQueueFilter.Failed" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Failed)">@T.T("Failed")</option>
             <option value="@BillingRefundQueueFilter.Stripe" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Stripe)">Stripe</option>
-            <option value="@BillingRefundQueueFilter.NeedsSupport" selected="@(Model.QueueFilter == BillingRefundQueueFilter.NeedsSupport)">Needs Support</option>
+            <option value="@BillingRefundQueueFilter.NeedsSupport" selected="@(Model.QueueFilter == BillingRefundQueueFilter.NeedsSupport)">@T.T("NeedsSupport")</option>
         </select>
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Reset</a>
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">@T.T("Reset")</a>
     </form>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Open Payments</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">@T.T("OpenPayments")</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Order</th>
+                <th>@T.T("Order")</th>
                 <th>Payment</th>
                 <th>Customer</th>
-                <th>Reason</th>
-                <th>Timeline</th>
-                <th class="text-end">Amount</th>
-                <th class="text-end">Actions</th>
+                <th>@T.T("Reason")</th>
+                <th>@T.T("Timeline")</th>
+                <th class="text-end">@T.T("Amount")</th>
+                <th class="text-end">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="7" class="text-center text-muted">No refunds found.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">@T.T("NoRefundsFound")</td></tr>
         }
         else
         {

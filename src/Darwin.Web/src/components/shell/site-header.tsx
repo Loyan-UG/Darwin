@@ -1,11 +1,16 @@
 import Link from "next/link";
+import { CultureSwitcher } from "@/components/shell/culture-switcher";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { getShellCopy } from "@/features/shell/copy";
 import type { ShellLink } from "@/features/shell/types";
+import { formatResource, getSharedResource } from "@/localization";
 
 type SiteHeaderProps = {
   navigation: ShellLink[];
   utilityLinks: ShellLink[];
   activeThemeName: string;
+  culture: string;
+  supportedCultures: string[];
   menuSource: "cms" | "fallback";
   menuStatus:
     | "ok"
@@ -21,10 +26,18 @@ export function SiteHeader({
   navigation,
   utilityLinks,
   activeThemeName,
+  culture,
+  supportedCultures,
   menuSource,
   menuStatus,
   menuMessage,
 }: SiteHeaderProps) {
+  const copy = getShellCopy(culture);
+  const shared = getSharedResource(culture);
+  const localizedMenuSource = shared.menuSourceValues[menuSource];
+  const fallbackMessage = menuMessage ??
+    formatResource(shared.menuMessages.fallbackDefault, { menuStatus });
+
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--color-border-soft)] bg-[rgba(248,244,231,0.9)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-col gap-4 px-5 py-4 sm:px-6 lg:px-8">
@@ -34,9 +47,9 @@ export function SiteHeader({
             <span>{activeThemeName}</span>
           </div>
           <div className="flex items-center gap-3">
-            <span>Menu source: {menuSource}</span>
+            <span>{copy.menuSourceLabel}: {localizedMenuSource}</span>
             <span className="hidden h-1 w-1 rounded-full bg-[var(--color-border-strong)] sm:inline-flex" />
-            <span>Cartzilla-inspired shell</span>
+            <span>{copy.shellBadge}</span>
           </div>
         </div>
 
@@ -51,7 +64,7 @@ export function SiteHeader({
                   Darwin
                 </span>
                 <span className="block text-sm text-[var(--color-text-secondary)]">
-                  Web storefront
+                  {copy.shellTagline}
                 </span>
               </span>
             </Link>
@@ -70,6 +83,10 @@ export function SiteHeader({
           </nav>
 
           <div className="flex flex-wrap items-center gap-2">
+            <CultureSwitcher
+              currentCulture={culture}
+              supportedCultures={supportedCultures}
+            />
             {utilityLinks.map((link, index) => (
               <Link
                 key={link.href}
@@ -89,8 +106,8 @@ export function SiteHeader({
         {menuSource === "fallback" && (
           <StatusBanner
             tone="warning"
-            title="CMS navigation fallback is active."
-            message={menuMessage ?? `Main navigation is currently rendering from the emergency fallback because the CMS menu fetch returned status "${menuStatus}".`}
+            title={copy.cmsFallbackTitle}
+            message={fallbackMessage}
           />
         )}
       </div>

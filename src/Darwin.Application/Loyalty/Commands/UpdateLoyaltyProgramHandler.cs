@@ -7,6 +7,7 @@ using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Validators;
 using Darwin.Domain.Entities.Loyalty;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Loyalty.Commands
@@ -17,11 +18,17 @@ namespace Darwin.Application.Loyalty.Commands
     public sealed class UpdateLoyaltyProgramHandler
     {
         private readonly IAppDbContext _db;
-        private readonly LoyaltyProgramEditValidator _validator = new();
+        private readonly IValidator<LoyaltyProgramEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateLoyaltyProgramHandler(IAppDbContext db)
+        public UpdateLoyaltyProgramHandler(
+            IAppDbContext db,
+            IValidator<LoyaltyProgramEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(LoyaltyProgramEditDto dto, CancellationToken ct = default)
@@ -33,10 +40,10 @@ namespace Darwin.Application.Loyalty.Commands
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (entity is null || entity.IsDeleted)
-                throw new ValidationException("Loyalty program not found.");
+                throw new ValidationException(_localizer["LoyaltyProgramNotFound"]);
 
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
-                throw new ValidationException("Concurrency conflict. The program was modified by another process.");
+                throw new ValidationException(_localizer["ConcurrencyConflictProgramModified"]);
 
             entity.Name = dto.Name.Trim();
             entity.AccrualMode = dto.AccrualMode;

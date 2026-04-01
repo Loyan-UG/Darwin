@@ -1,11 +1,12 @@
 @model Darwin.WebAdmin.ViewModels.Shipping.ShippingMethodEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <input type="hidden" asp-for="Id" />
 <input type="hidden" asp-for="RowVersion" />
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
 <div class="card mb-4">
-    <div class="card-header">Method Details</div>
+    <div class="card-header">@T.T("MethodDetails")</div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-6">
@@ -24,9 +25,9 @@
                 <span asp-validation-for="Service" class="text-danger"></span>
             </div>
             <div class="col-md-6">
-                <label asp-for="CountriesCsv" class="form-label">Countries CSV</label>
+                <label asp-for="CountriesCsv" class="form-label">@T.T("CountriesCsv")</label>
                 <input asp-for="CountriesCsv" class="form-control" placeholder="DE,AT,CH" />
-                <div class="form-text">Leave empty to make the method generally available.</div>
+                <div class="form-text">@T.T("LeaveCountriesEmpty")</div>
             </div>
             <div class="col-md-3">
                 <label asp-for="Currency" class="form-label"></label>
@@ -44,9 +45,9 @@
 
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Rate Tiers</span>
+        <span>@T.T("RateTiers")</span>
         <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.darwinAdmin.addShippingRateRow()">
-            <i class="fa-solid fa-plus"></i> Add Rate
+            <i class="fa-solid fa-plus"></i> @T.T("AddRate")
         </button>
     </div>
     <div class="card-body">
@@ -54,10 +55,10 @@
             <table class="table table-sm align-middle" id="shipping-rates-table">
                 <thead>
                     <tr>
-                        <th>Max Mass</th>
-                        <th>Max Subtotal Net</th>
-                        <th>Price Minor</th>
-                        <th style="width:80px">Sort</th>
+                        <th>@T.T("MaxMass")</th>
+                        <th>@T.T("MaxSubtotalNet")</th>
+                        <th>@T.T("PriceMinor")</th>
+                        <th style="width:80px">@T.T("Sort")</th>
                         <th style="width:80px"></th>
                     </tr>
                 </thead>
@@ -89,14 +90,14 @@
             </table>
         </div>
         <div class="form-text">
-            Rate tiers are evaluated by shipment mass and subtotal thresholds. Phase 1 keeps this as a simple admin-managed matrix without provider-specific live quoting.
+            @T.T("ShippingRateTiersHelp")
         </div>
     </div>
 </div>
 
 <div class="d-flex gap-2">
     <button type="submit" class="btn btn-primary">
-        <i class="fa-solid fa-floppy-disk"></i> Save
+        <i class="fa-solid fa-floppy-disk"></i> @T.T("Save")
     </button>
     <a asp-action="Index"
        class="btn btn-outline-secondary"
@@ -104,7 +105,7 @@
        hx-target="#shipping-methods-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">
-        Cancel
+        @T.T("Cancel")
     </a>
 </div>
 

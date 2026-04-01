@@ -13,37 +13,33 @@
             <Label Text="{x:Static res:AppResources.AccountDeletionTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+            <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.AccountDeletionWarningTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16"
-                           TextColor="DarkRed" />
+                           Style="{StaticResource SectionHeadingLabelStyle}"
+                           TextColor="{StaticResource Danger500}" />
 
                     <Label Text="{x:Static res:AppResources.AccountDeletionWarningBody}"
-                           LineBreakMode="WordWrap" />
+                           Style="{StaticResource BodyLabelStyle}" />
 
                     <Label Text="{x:Static res:AppResources.AccountDeletionRetentionHint}"
-                           FontSize="13"
-                           LineBreakMode="WordWrap"
-                           Opacity="0.8" />
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
 
                     <Label Text="{x:Static res:AppResources.AccountDeletionLogoutHint}"
-                           FontSize="13"
-                           LineBreakMode="WordWrap"
-                           Opacity="0.8" />
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                         <CheckBox IsChecked="{Binding ConfirmIrreversibleDeletion}"
                                   VerticalOptions="Start" />
                         <Label Grid.Column="1"
                                Text="{x:Static res:AppResources.AccountDeletionConfirmationLabel}"
+                               Style="{StaticResource BodyLabelStyle}"
                                VerticalOptions="Center"
                                LineBreakMode="WordWrap" />
                     </Grid>
 
                     <Label Text="{Binding ErrorMessage}"
-                           TextColor="Red"
+                           Style="{StaticResource ErrorLabelStyle}"
                            IsVisible="{Binding HasError}" />
 
                     <Button Text="{x:Static res:AppResources.AccountDeletionContinueButton}"

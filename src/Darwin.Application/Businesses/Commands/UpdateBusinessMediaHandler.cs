@@ -7,6 +7,7 @@ using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -17,11 +18,16 @@ namespace Darwin.Application.Businesses.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<BusinessMediaEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateBusinessMediaHandler(IAppDbContext db, IValidator<BusinessMediaEditDto> validator)
+        public UpdateBusinessMediaHandler(
+            IAppDbContext db,
+            IValidator<BusinessMediaEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(BusinessMediaEditDto dto, CancellationToken ct = default)
@@ -32,12 +38,12 @@ namespace Darwin.Application.Businesses.Commands
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (entity is null)
-                throw new InvalidOperationException("Business media not found.");
+                throw new InvalidOperationException(_localizer["BusinessMediaNotFound"]);
 
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
             if (!currentVersion.SequenceEqual(requestVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             entity.BusinessLocationId = dto.BusinessLocationId;
             entity.Url = dto.Url.Trim();

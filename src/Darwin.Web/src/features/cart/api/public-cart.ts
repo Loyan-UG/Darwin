@@ -113,3 +113,16 @@ export async function removePublicCartItem(input: {
     }),
   });
 }
+
+export async function applyPublicCartCoupon(input: {
+  cartId: string;
+  couponCode?: string;
+}) {
+  return fetchCartJson<PublicCartSummary>("/api/v1/public/cart/coupon", {
+    method: "POST",
+    body: JSON.stringify({
+      cartId: input.cartId,
+      couponCode: input.couponCode ?? null,
+    }),
+  });
+}

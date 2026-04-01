@@ -14,69 +14,60 @@
                    Style="{StaticResource TitleLabelStyle}" />
 
             <Label Text="{x:Static res:AppResources.SubscriptionDescription}"
-                   FontSize="14"
-                   Opacity="0.85" />
+                   Style="{StaticResource SecondaryBodyLabelStyle}" />
 
-            <Border StrokeThickness="1" Padding="16">
+            <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.SubscriptionStatusSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
 
                     <Label Text="{Binding SubscriptionSummaryText}"
-                           LineBreakMode="WordWrap" />
+                           Style="{StaticResource BodyLabelStyle}" />
 
                     <Label Text="{Binding SubscriptionDatesText}"
-                           FontSize="12"
-                           Opacity="0.75"
-                           LineBreakMode="WordWrap"
+                           Style="{StaticResource CaptionLabelStyle}"
                            IsVisible="{Binding HasSubscriptionStatus}" />
 
                     <Label Text="{Binding SubscriptionPolicyNotice}"
-                           FontSize="12"
-                           Opacity="0.85"
-                           LineBreakMode="WordWrap" />
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
 
                     <Button Text="{x:Static res:AppResources.SubscriptionRefreshStatusButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding RefreshSubscriptionStatusCommand}" />
                 </VerticalStackLayout>
             </Border>
 
-            <Border StrokeThickness="1" Padding="16">
+            <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.SubscriptionManagementSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
 
                     <Label Text="{Binding ManagementWebsiteHint}"
-                           LineBreakMode="WordWrap" />
+                           Style="{StaticResource BodyLabelStyle}" />
 
                     <Label Text="{Binding ManagementWebsiteDetails}"
-                           FontSize="12"
-                           Opacity="0.75"
-                           LineBreakMode="WordWrap" />
+                           Style="{StaticResource CaptionLabelStyle}" />
 
                     <Label Text="{x:Static res:AppResources.SubscriptionManagementWebsiteUrlLabel}"
-                           FontAttributes="Bold"
-                           FontSize="13"
+                           Style="{StaticResource FormLabelStyle}"
                            IsVisible="{Binding IsManagementWebsiteConfigured}" />
 
                     <Label Text="{Binding ManagementWebsiteUrlText}"
-                           FontSize="12"
-                           Opacity="0.75"
-                           LineBreakMode="WordWrap"
+                           Style="{StaticResource CaptionLabelStyle}"
                            IsVisible="{Binding IsManagementWebsiteConfigured}" />
 
                     <Label Text="{Binding ErrorMessage}"
-                           TextColor="Red"
+                           Style="{StaticResource ErrorLabelStyle}"
                            IsVisible="{Binding HasError}" />
 
                     <Button Text="{x:Static res:AppResources.SubscriptionOpenManagementWebsiteButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding OpenManagementWebsiteCommand}"
                             IsEnabled="{Binding IsManagementWebsiteConfigured}" />
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
-                                       IsRunning="{Binding IsBusy}" />
+                                       IsRunning="{Binding IsBusy}"
+                                       Color="{StaticResource BrandGold500}" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

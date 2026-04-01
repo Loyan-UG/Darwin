@@ -178,7 +178,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     RulesJson = vm.RulesJson
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Loyalty program created.";
+                SetSuccessMessage("LoyaltyProgramCreated");
                 return RedirectOrHtmx(nameof(EditProgram), new { id });
             }
             catch (ValidationException ex)
@@ -195,7 +195,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var dto = await _getProgramForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Loyalty program not found.";
+                SetErrorMessage("LoyaltyProgramNotFound");
                 return RedirectOrHtmx(nameof(Programs), new { });
             }
 
@@ -238,7 +238,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     RowVersion = vm.RowVersion
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Loyalty program updated.";
+                SetSuccessMessage("LoyaltyProgramUpdated");
                 return RedirectOrHtmx(nameof(EditProgram), new { id = vm.Id });
             }
             catch (ValidationException ex)
@@ -259,7 +259,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Loyalty program deleted." : result.Error;
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyProgramDeleted") : result.Error ?? T("LoyaltyProgramDeleteFailed");
             return RedirectOrHtmx(nameof(Programs), new { businessId });
         }
 
@@ -269,7 +269,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var program = await _getProgramForEdit.HandleAsync(loyaltyProgramId, ct).ConfigureAwait(false);
             if (program is null)
             {
-                TempData["Error"] = "Loyalty program not found.";
+                SetErrorMessage("LoyaltyProgramNotFound");
                 return RedirectOrHtmx(nameof(Programs), new { });
             }
 
@@ -315,7 +315,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var program = await _getProgramForEdit.HandleAsync(loyaltyProgramId, ct).ConfigureAwait(false);
             if (program is null)
             {
-                TempData["Error"] = "Loyalty program not found.";
+                SetErrorMessage("LoyaltyProgramNotFound");
                 return RedirectOrHtmx(nameof(Programs), new { });
             }
 
@@ -345,7 +345,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     MetadataJson = vm.MetadataJson
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Reward tier created.";
+                SetSuccessMessage("LoyaltyRewardTierCreated");
                 return RedirectOrHtmx(nameof(EditRewardTier), new { id, loyaltyProgramId = vm.LoyaltyProgramId });
             }
             catch (ValidationException ex)
@@ -364,14 +364,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var program = await _getProgramForEdit.HandleAsync(loyaltyProgramId, ct).ConfigureAwait(false);
             if (program is null)
             {
-                TempData["Error"] = "Loyalty program not found.";
+                SetErrorMessage("LoyaltyProgramNotFound");
                 return RedirectOrHtmx(nameof(Programs), new { });
             }
 
             var tier = await _getRewardTierForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (tier is null)
             {
-                TempData["Error"] = "Reward tier not found.";
+                SetErrorMessage("LoyaltyRewardTierNotFound");
                 return RedirectOrHtmx(nameof(RewardTiers), new { loyaltyProgramId });
             }
 
@@ -410,7 +410,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     RowVersion = vm.RowVersion
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Reward tier updated.";
+                SetSuccessMessage("LoyaltyRewardTierUpdated");
                 return RedirectOrHtmx(nameof(EditRewardTier), new { id = vm.Id, loyaltyProgramId = vm.LoyaltyProgramId });
             }
             catch (ValidationException ex)
@@ -433,7 +433,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Reward tier deleted." : result.Error;
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyRewardTierDeleted") : result.Error ?? T("LoyaltyRewardTierDeleteFailed");
             return RedirectOrHtmx(nameof(RewardTiers), new { loyaltyProgramId });
         }
 
@@ -514,7 +514,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 return RenderAccountCreateEditor(vm);
             }
 
-            TempData["Success"] = "Loyalty account created.";
+            SetSuccessMessage("LoyaltyAccountCreated");
             return RedirectOrHtmx(nameof(AccountDetails), new { id = result.Value.Id });
         }
 
@@ -530,7 +530,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 var result = await _getCampaigns.HandleAsync(businessId.Value, page, pageSize, filter, ct).ConfigureAwait(false);
                 if (!result.Succeeded || result.Value is null)
                 {
-                    TempData["Error"] = result.Error ?? "Unable to load loyalty campaigns.";
+                    TempData["Error"] = result.Error ?? T("LoyaltyCampaignsLoadFailed");
                 }
                 else
                 {
@@ -618,7 +618,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 return RenderCampaignEditor(vm, isCreate: true);
             }
 
-            TempData["Success"] = "Loyalty campaign created.";
+            SetSuccessMessage("LoyaltyCampaignCreated");
             return RedirectOrHtmx(nameof(EditCampaign), new { id = result.Value, businessId = vm.BusinessId });
         }
 
@@ -629,7 +629,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var campaign = result.Succeeded ? result.Value?.Items.FirstOrDefault(x => x.Id == id) : null;
             if (campaign is null)
             {
-                TempData["Error"] = "Loyalty campaign not found.";
+                SetErrorMessage("LoyaltyCampaignNotFound");
                 return RedirectOrHtmx(nameof(Campaigns), new { businessId });
             }
 
@@ -691,7 +691,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 return RenderCampaignEditor(vm, isCreate: false);
             }
 
-            TempData["Success"] = "Loyalty campaign updated.";
+            SetSuccessMessage("LoyaltyCampaignUpdated");
             return RedirectOrHtmx(nameof(EditCampaign), new { id = vm.Id, businessId = vm.BusinessId });
         }
 
@@ -708,8 +708,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }, ct).ConfigureAwait(false);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? (isActive ? "Loyalty campaign activated." : "Loyalty campaign deactivated.")
-                : result.Error;
+                ? T(isActive ? "LoyaltyCampaignActivated" : "LoyaltyCampaignDeactivated")
+                : result.Error ?? T("LoyaltyCampaignActivationFailed");
 
             return RedirectOrHtmx(nameof(Campaigns), new { businessId });
         }
@@ -818,7 +818,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var account = await _getAccountForAdmin.HandleAsync(id, ct).ConfigureAwait(false);
             if (account is null)
             {
-                TempData["Error"] = "Loyalty account not found.";
+                SetErrorMessage("LoyaltyAccountNotFound");
                 return RedirectOrHtmx(nameof(Accounts), new { });
             }
 
@@ -868,7 +868,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var account = await _getAccountForAdmin.HandleAsync(loyaltyAccountId, ct).ConfigureAwait(false);
             if (account is null)
             {
-                TempData["Error"] = "Loyalty account not found.";
+                SetErrorMessage("LoyaltyAccountNotFound");
                 return RedirectOrHtmx(nameof(Accounts), new { });
             }
 
@@ -899,7 +899,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     RowVersion = vm.RowVersion
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = "Loyalty points adjusted.";
+                SetSuccessMessage("LoyaltyPointsAdjusted");
                 return RedirectOrHtmx(nameof(AccountDetails), new { id = vm.LoyaltyAccountId });
             }
             catch (ValidationException ex)
@@ -921,7 +921,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Loyalty account suspended." : result.Error;
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyAccountSuspended") : result.Error ?? T("LoyaltyAccountSuspendFailed");
             return RedirectOrHtmx(nameof(AccountDetails), new { id });
         }
 
@@ -935,7 +935,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Loyalty account activated." : result.Error;
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyAccountActivated") : result.Error ?? T("LoyaltyAccountActivateFailed");
             return RedirectOrHtmx(nameof(AccountDetails), new { id });
         }
 
@@ -951,8 +951,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }, ct).ConfigureAwait(false);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Redemption confirmed."
-                : result.Error;
+                ? T("LoyaltyRedemptionConfirmed")
+                : result.Error ?? T("LoyaltyRedemptionConfirmFailed");
 
             return RedirectOrHtmx(nameof(AccountDetails), new { id = loyaltyAccountId });
         }

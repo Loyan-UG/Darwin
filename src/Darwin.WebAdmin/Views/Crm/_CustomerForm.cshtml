@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.CRM.CustomerEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div class="row g-3">
     <div class="col-md-6">
         <label asp-for="UserId" class="form-label"></label>
         <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
-        <div class="form-text">When a linked user is selected, contact data should be treated as identity-owned.</div>
+        <div class="form-text">@T.T("LinkedUserOwnershipNote")</div>
     </div>
 
     <div class="col-md-6">
@@ -59,22 +60,22 @@
 @if (!string.IsNullOrWhiteSpace(Model.EffectiveEmail) || !string.IsNullOrWhiteSpace(Model.EffectiveFirstName))
 {
     <div class="alert alert-info mt-4 mb-0">
-        <strong>Effective profile</strong><br />
-        Name: @($"{Model.EffectiveFirstName} {Model.EffectiveLastName}".Trim())<br />
-        Email: @Model.EffectiveEmail<br />
-        Phone: @Model.EffectivePhone<br />
-        Tax profile: @Model.TaxProfileType
+        <strong>@T.T("EffectiveProfile")</strong><br />
+        @T.T("Name"): @($"{Model.EffectiveFirstName} {Model.EffectiveLastName}".Trim())<br />
+        @T.T("Email"): @Model.EffectiveEmail<br />
+        @T.T("Phone"): @Model.EffectivePhone<br />
+        @T.T("TaxProfile"): @Model.TaxProfileType
         @if (!string.IsNullOrWhiteSpace(Model.VatId))
         {
-            <><br />VAT ID: @Model.VatId</>
+            <><br />@T.T("TaxId"): @Model.VatId</>
         }
     </div>
 }
 
 <div class="d-flex justify-content-between align-items-center mt-4">
-    <h3 class="mb-0">CRM Addresses</h3>
+    <h3 class="mb-0">@T.T("CrmAddresses")</h3>
     <button type="button" class="btn btn-outline-secondary btn-sm" id="addCustomerAddress">
-        <i class="fa fa-plus"></i> Add address
+        <i class="fa fa-plus"></i> @T.T("AddAddress")
     </button>
 </div>
 
@@ -124,7 +125,7 @@
                 </div>
             </div>
             <div class="text-end mt-3">
-                <button type="button" class="btn btn-sm btn-outline-danger remove-address">Remove</button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-address">@T.T("Remove")</button>
             </div>
         </div>
     </div>
@@ -136,15 +137,15 @@
         <input type="hidden" name="Addresses[__index__].Id" value="" />
         <input type="hidden" name="Addresses[__index__].AddressId" value="" />
         <div class="row g-3">
-            <div class="col-md-6"><label class="form-label">Line1</label><input class="form-control" name="Addresses[__index__].Line1" /></div>
-            <div class="col-md-6"><label class="form-label">Line2</label><input class="form-control" name="Addresses[__index__].Line2" /></div>
-            <div class="col-md-4"><label class="form-label">PostalCode</label><input class="form-control" name="Addresses[__index__].PostalCode" /></div>
-            <div class="col-md-4"><label class="form-label">City</label><input class="form-control" name="Addresses[__index__].City" /></div>
-            <div class="col-md-4"><label class="form-label">State</label><input class="form-control" name="Addresses[__index__].State" /></div>
-            <div class="col-md-4"><label class="form-label">Country</label><input class="form-control" name="Addresses[__index__].Country" value="DE" /></div>
-            <div class="col-md-4"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" value="true" name="Addresses[__index__].IsDefaultBilling" /><input type="hidden" name="Addresses[__index__].IsDefaultBilling" value="false" /><label class="form-check-label">IsDefaultBilling</label></div></div>
-            <div class="col-md-4"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" value="true" name="Addresses[__index__].IsDefaultShipping" /><input type="hidden" name="Addresses[__index__].IsDefaultShipping" value="false" /><label class="form-check-label">IsDefaultShipping</label></div></div>
+            <div class="col-md-6"><label class="form-label">@T.T("AddressLine1")</label><input class="form-control" name="Addresses[__index__].Line1" /></div>
+            <div class="col-md-6"><label class="form-label">@T.T("AddressLine2")</label><input class="form-control" name="Addresses[__index__].Line2" /></div>
+            <div class="col-md-4"><label class="form-label">@T.T("PostalCode")</label><input class="form-control" name="Addresses[__index__].PostalCode" /></div>
+            <div class="col-md-4"><label class="form-label">@T.T("City")</label><input class="form-control" name="Addresses[__index__].City" /></div>
+            <div class="col-md-4"><label class="form-label">@T.T("State")</label><input class="form-control" name="Addresses[__index__].State" /></div>
+            <div class="col-md-4"><label class="form-label">@T.T("Country")</label><input class="form-control" name="Addresses[__index__].Country" value="DE" /></div>
+            <div class="col-md-4"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" value="true" name="Addresses[__index__].IsDefaultBilling" /><input type="hidden" name="Addresses[__index__].IsDefaultBilling" value="false" /><label class="form-check-label">@T.T("DefaultBilling")</label></div></div>
+            <div class="col-md-4"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" value="true" name="Addresses[__index__].IsDefaultShipping" /><input type="hidden" name="Addresses[__index__].IsDefaultShipping" value="false" /><label class="form-check-label">@T.T("DefaultShipping")</label></div></div>
         </div>
-        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-address">Remove</button></div>
+        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-address">@T.T("Remove")</button></div>
     </div></div>
 </template>

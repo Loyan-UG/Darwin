@@ -6,16 +6,17 @@ using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Validators
 {
     public sealed class CategoryCreateUniqueSlugValidator : AbstractValidator<CategoryCreateDto>
     {
         private readonly IAppDbContext _db;
-        public CategoryCreateUniqueSlugValidator(IAppDbContext db)
+        public CategoryCreateUniqueSlugValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
-            RuleForEach(x => x.Translations).MustAsync(BeUniqueSlug).WithMessage("Slug must be unique per culture.");
+            RuleForEach(x => x.Translations).MustAsync(BeUniqueSlug).WithMessage(localizer["SlugMustBeUniquePerCulture"]);
         }
 
         private async Task<bool> BeUniqueSlug(CategoryTranslationDto t, CancellationToken ct)
@@ -29,10 +30,10 @@ namespace Darwin.Application.Catalog.Validators
     public sealed class CategoryEditUniqueSlugValidator : AbstractValidator<CategoryEditDto>
     {
         private readonly IAppDbContext _db;
-        public CategoryEditUniqueSlugValidator(IAppDbContext db)
+        public CategoryEditUniqueSlugValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
-            RuleForEach(x => x.Translations).MustAsync(BeUniqueSlug).WithMessage("Slug must be unique per culture.");
+            RuleForEach(x => x.Translations).MustAsync(BeUniqueSlug).WithMessage(localizer["SlugMustBeUniquePerCulture"]);
         }
 
         private async Task<bool> BeUniqueSlug(CategoryEditDto dto, CategoryTranslationDto t, CancellationToken ct)

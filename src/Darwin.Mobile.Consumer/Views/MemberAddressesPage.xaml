@@ -9,75 +9,41 @@
     Title="{x:Static res:AppResources.MemberAddressesTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
-            <Label Text="{x:Static res:AppResources.MemberAddressesTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
-
-            <Label Text="{Binding SuccessMessage}"
-                   TextColor="Green"
-                   FontSize="14"
-                   IsVisible="{Binding HasSuccess}" />
-
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   FontSize="14"
-                   IsVisible="{Binding HasError}" />
-
-            <HorizontalStackLayout Spacing="12">
-                <Button Text="{x:Static res:AppResources.MemberAddressesRefreshButton}"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding RefreshCommand}" />
-                <Button Text="{x:Static res:AppResources.MemberAddressesCreateButton}"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        Command="{Binding StartCreateCommand}" />
-            </HorizontalStackLayout>
-
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+            <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.MemberAddressesSavedSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
+                    <Label Text="{x:Static res:AppResources.MemberAddressesTitle}" Style="{StaticResource TitleLabelStyle}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesRefreshButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
+                        <Button Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesCreateButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding StartCreateCommand}" />
+                    </Grid>
+                    <Label Text="{Binding SuccessMessage}" Style="{StaticResource SuccessLabelStyle}" IsVisible="{Binding HasSuccess}" />
+                    <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
+                </VerticalStackLayout>
+            </Border>
 
-                    <Label Text="{x:Static res:AppResources.MemberAddressesEmpty}"
-                           FontSize="13"
-                           IsVisible="{Binding HasAddresses, Converter={StaticResource InverseBoolConverter}}" />
-
-                    <VerticalStackLayout Spacing="10"
-                                         BindableLayout.ItemsSource="{Binding Addresses}"
-                                         IsVisible="{Binding HasAddresses}">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.MemberAddressesSavedSectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberAddressesEmpty}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasAddresses, Converter={StaticResource InverseBoolConverter}}" />
+                    <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Addresses}" IsVisible="{Binding HasAddresses}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberAddressItemViewModel">
-                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
-                                    <VerticalStackLayout Spacing="6">
-                                        <Label Text="{Binding FullName}" FontAttributes="Bold" />
-                                        <Label Text="{Binding Summary}" FontSize="13" LineBreakMode="WordWrap" />
-                                        <Label Text="{Binding Company}" FontSize="13" IsVisible="{Binding HasCompany}" />
+                                <Border Style="{StaticResource MutedCardBorderStyle}">
+                                    <VerticalStackLayout Spacing="8">
+                                        <Label Text="{Binding FullName}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                        <Label Text="{Binding Summary}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Company}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasCompany}" />
                                         <HorizontalStackLayout Spacing="8">
-                                            <Label Text="{x:Static res:AppResources.MemberAddressesDefaultBillingBadge}"
-                                                   FontSize="12"
-                                                   IsVisible="{Binding IsDefaultBilling}" />
-                                            <Label Text="{x:Static res:AppResources.MemberAddressesDefaultShippingBadge}"
-                                                   FontSize="12"
-                                                   IsVisible="{Binding IsDefaultShipping}" />
+                                            <Label Text="{x:Static res:AppResources.MemberAddressesDefaultBillingBadge}" Style="{StaticResource CaptionLabelStyle}" IsVisible="{Binding IsDefaultBilling}" />
+                                            <Label Text="{x:Static res:AppResources.MemberAddressesDefaultShippingBadge}" Style="{StaticResource CaptionLabelStyle}" IsVisible="{Binding IsDefaultShipping}" />
                                         </HorizontalStackLayout>
-                                        <HorizontalStackLayout Spacing="8">
-                                            <Button Text="{x:Static res:AppResources.MemberAddressesEditButton}"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}"
-                                                    CommandParameter="{Binding .}" />
-                                            <Button Text="{x:Static res:AppResources.MemberAddressesSetBillingButton}"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultBillingCommand}"
-                                                    CommandParameter="{Binding .}" />
-                                            <Button Text="{x:Static res:AppResources.MemberAddressesSetShippingButton}"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultShippingCommand}"
-                                                    CommandParameter="{Binding .}" />
-                                            <Button Text="{x:Static res:AppResources.MemberAddressesDeleteButton}"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}"
-                                                    CommandParameter="{Binding .}" />
-                                        </HorizontalStackLayout>
+                                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                                            <Button Grid.Row="0" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesEditButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}" CommandParameter="{Binding .}" />
+                                            <Button Grid.Row="0" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesDeleteButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}" CommandParameter="{Binding .}" />
+                                            <Button Grid.Row="1" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesSetBillingButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultBillingCommand}" CommandParameter="{Binding .}" />
+                                            <Button Grid.Row="1" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesSetShippingButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultShippingCommand}" CommandParameter="{Binding .}" />
+                                        </Grid>
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -86,67 +52,97 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{Binding EditorTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{Binding EditorTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                    <Label Text="{x:Static res:AppResources.MemberAddressesFullNameLabel}" />
-                    <Entry Text="{Binding FullName}" />
-
-                    <Label Text="{x:Static res:AppResources.MemberAddressesCompanyLabel}" />
-                    <Entry Text="{Binding Company}" />
-
-                    <Label Text="{x:Static res:AppResources.MemberAddressesStreet1Label}" />
-                    <Entry Text="{Binding Street1}" />
-
-                    <Label Text="{x:Static res:AppResources.MemberAddressesStreet2Label}" />
-                    <Entry Text="{Binding Street2}" />
-
-                    <Label Text="{x:Static res:AppResources.MemberAddressesPostalCodeLabel}" />
-                    <Entry Text="{Binding PostalCode}" />
-
-                    <Label Text="{x:Static res:AppResources.MemberAddressesCityLabel}" />
-                    <Entry Text="{Binding City}" />
-
-                    <Label Text="{x:Static res:AppResources.MemberAddressesStateLabel}" />
-                    <Entry Text="{Binding State}" />
-
-                    <Label Text="{x:Static res:AppResources.MemberAddressesCountryCodeLabel}" />
-                    <Entry Text="{Binding CountryCode}" />
-
-                    <Label Text="{x:Static res:AppResources.MemberAddressesPhoneLabel}" />
-                    <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" />
-
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Label Text="{x:Static res:AppResources.MemberAddressesDefaultBillingSwitchLabel}"
-                               VerticalOptions="Center"
-                               LineBreakMode="WordWrap" />
-                        <Switch Grid.Column="1" IsToggled="{Binding IsDefaultBilling}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="8">
+                            <Label Text="{x:Static res:AppResources.MemberAddressesFullNameLabel}" Style="{StaticResource FormLabelStyle}" />
+                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                                <Entry Text="{Binding FullName}" Style="{StaticResource FormEntryStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="8">
+                            <Label Text="{x:Static res:AppResources.MemberAddressesCompanyLabel}" Style="{StaticResource FormLabelStyle}" />
+                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                                <Entry Text="{Binding Company}" Style="{StaticResource FormEntryStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
                     </Grid>
 
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Label Text="{x:Static res:AppResources.MemberAddressesDefaultShippingSwitchLabel}"
-                               VerticalOptions="Center"
-                               LineBreakMode="WordWrap" />
-                        <Switch Grid.Column="1" IsToggled="{Binding IsDefaultShipping}" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.MemberAddressesStreet1Label}" Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Text="{Binding Street1}" Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.MemberAddressesStreet2Label}" Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Text="{Binding Street2}" Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="8">
+                            <Label Text="{x:Static res:AppResources.MemberAddressesPostalCodeLabel}" Style="{StaticResource FormLabelStyle}" />
+                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                                <Entry Text="{Binding PostalCode}" Style="{StaticResource FormEntryStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="8">
+                            <Label Text="{x:Static res:AppResources.MemberAddressesCityLabel}" Style="{StaticResource FormLabelStyle}" />
+                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                                <Entry Text="{Binding City}" Style="{StaticResource FormEntryStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
                     </Grid>
 
-                    <HorizontalStackLayout Spacing="12">
-                        <Button Text="{x:Static res:AppResources.MemberAddressesSaveButton}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Command="{Binding SaveCommand}" />
-                        <Button Text="{x:Static res:AppResources.MemberAddressesCancelButton}"
-                                Style="{StaticResource SecondaryButtonStyle}"
-                                Command="{Binding CancelEditCommand}" />
-                    </HorizontalStackLayout>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="8">
+                            <Label Text="{x:Static res:AppResources.MemberAddressesStateLabel}" Style="{StaticResource FormLabelStyle}" />
+                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                                <Entry Text="{Binding State}" Style="{StaticResource FormEntryStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="8">
+                            <Label Text="{x:Static res:AppResources.MemberAddressesCountryCodeLabel}" Style="{StaticResource FormLabelStyle}" />
+                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                                <Entry Text="{Binding CountryCode}" Style="{StaticResource FormEntryStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.MemberAddressesPhoneLabel}" Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Border Style="{StaticResource MutedCardBorderStyle}">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Label Text="{x:Static res:AppResources.MemberAddressesDefaultBillingSwitchLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" Style="{StaticResource BodyLabelStyle}" />
+                                <Switch Grid.Column="1" IsToggled="{Binding IsDefaultBilling}" />
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Label Text="{x:Static res:AppResources.MemberAddressesDefaultShippingSwitchLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" Style="{StaticResource BodyLabelStyle}" />
+                                <Switch Grid.Column="1" IsToggled="{Binding IsDefaultShipping}" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesSaveButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SaveCommand}" />
+                        <Button Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesCancelButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding CancelEditCommand}" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 
-            <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrandGold500}" />
+            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

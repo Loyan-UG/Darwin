@@ -1,15 +1,16 @@
 @using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 @if (Model.OrderId.HasValue || Model.InvoiceId.HasValue || Model.CustomerId.HasValue || Model.UserId.HasValue)
 {
     <div class="alert alert-light border mb-3">
-        <div class="fw-semibold mb-2">Related Records</div>
+        <div class="fw-semibold mb-2">@T.T("RelatedRecords")</div>
         <div class="row g-2 small">
             @if (Model.OrderId.HasValue)
             {
                 <div class="col-md-6">
-                    <strong>Order:</strong>
+                    <strong>@T.T("Order"):</strong>
                     <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" class="text-decoration-none">
                         @(string.IsNullOrWhiteSpace(Model.OrderNumber) ? Model.OrderId.Value.ToString() : Model.OrderNumber)
                     </a>
@@ -18,7 +19,7 @@
             @if (Model.InvoiceId.HasValue)
             {
                 <div class="col-md-6">
-                    <strong>Invoice:</strong> <code>@Model.InvoiceId</code>
+                    <strong>@T.T("Invoice"):</strong> <code>@Model.InvoiceId</code>
                     @if (Model.InvoiceStatus.HasValue)
                     {
                         <span class="text-muted">(@Model.InvoiceStatus)</span>
@@ -28,7 +29,7 @@
             @if (Model.CustomerId.HasValue)
             {
                 <div class="col-md-6">
-                    <strong>Customer:</strong>
+                    <strong>@T.T("Customer"):</strong>
                     <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="text-decoration-none">
                         @(string.IsNullOrWhiteSpace(Model.CustomerDisplayName) ? Model.CustomerId.Value.ToString() : Model.CustomerDisplayName)
                     </a>
@@ -41,7 +42,7 @@
             @if (Model.UserId.HasValue)
             {
                 <div class="col-md-6">
-                    <strong>User:</strong>
+                    <strong>@T.T("Users"):</strong>
                     <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId.Value" class="text-decoration-none">
                         @(string.IsNullOrWhiteSpace(Model.UserDisplayName) ? Model.UserId.Value.ToString() : Model.UserDisplayName)
                     </a>
@@ -59,16 +60,16 @@
     <div class="col-md-4">
         <div class="card border-0 bg-light h-100">
             <div class="card-body py-3">
-                <div class="small text-uppercase text-muted fw-semibold">Lifecycle</div>
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("Lifecycle")</div>
                 <div class="fs-5">@Model.Status</div>
-                <div class="small text-muted mt-1">Created @Model.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                <div class="small text-muted mt-1">@T.T("Created") @Model.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
                 @if (Model.PaidAtUtc.HasValue)
                 {
-                    <div class="small">Paid @Model.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div class="small">@T.T("Paid") @Model.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                 }
                 @if (Model.LastFinancialEventAtUtc.HasValue)
                 {
-                    <div class="small">Last event @Model.LastFinancialEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div class="small">@T.T("LastEvent") @Model.LastFinancialEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                 }
                 @if (Model.IsStripe)
                 {
@@ -80,7 +81,7 @@
     <div class="col-md-4">
         <div class="card border-0 bg-light h-100">
             <div class="card-body py-3">
-                <div class="small text-uppercase text-muted fw-semibold">Recorded Amount</div>
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("RecordedAmount")</div>
                 <div class="fs-5">@Model.Currency @((Model.AmountMinor / 100M).ToString("0.00"))</div>
             </div>
         </div>
@@ -88,7 +89,7 @@
     <div class="col-md-2">
         <div class="card border-0 bg-light h-100">
             <div class="card-body py-3">
-                <div class="small text-uppercase text-muted fw-semibold">Refunded</div>
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("Refunded")</div>
                 <div class="fs-5 @(Model.RefundedAmountMinor > 0 ? "text-warning" : string.Empty)">
                     @Model.Currency @((Model.RefundedAmountMinor / 100M).ToString("0.00"))
                 </div>
@@ -98,7 +99,7 @@
     <div class="col-md-2">
         <div class="card border-0 bg-light h-100">
             <div class="card-body py-3">
-                <div class="small text-uppercase text-muted fw-semibold">Net Collected</div>
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("NetCollected")</div>
                 <div class="fs-5">@Model.Currency @((Model.NetCapturedAmountMinor / 100M).ToString("0.00"))</div>
             </div>
         </div>
@@ -107,56 +108,56 @@
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Reconciliation and Dispute Snapshot</span>
+        <span>@T.T("ReconciliationAndDisputeSnapshot")</span>
         <div class="d-flex flex-wrap gap-2">
-            <a asp-controller="Settings" asp-action="PaymentSettings" class="btn btn-sm btn-outline-secondary">Payment Settings</a>
-            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.NeedsReconciliation" class="btn btn-sm btn-outline-warning">Needs Reconciliation Queue</a>
-            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.DisputeFollowUp" class="btn btn-sm btn-outline-danger">Dispute Follow-up Queue</a>
+            <a asp-controller="Settings" asp-action="PaymentSettings" class="btn btn-sm btn-outline-secondary">@T.T("PaymentSettings")</a>
+            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.NeedsReconciliation" class="btn btn-sm btn-outline-warning">@T.T("NeedsReconciliationQueue")</a>
+            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.DisputeFollowUp" class="btn btn-sm btn-outline-danger">@T.T("DisputeFollowUpQueue")</a>
         </div>
     </div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-3">
-                <div class="small text-uppercase text-muted fw-semibold">Provider Ref</div>
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("ProviderRef")</div>
                 <div class="fw-semibold">@Model.ProviderReferenceState</div>
             </div>
             <div class="col-md-3">
-                <div class="small text-uppercase text-muted fw-semibold">Open Age</div>
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("OpenAge")</div>
                 <div class="fw-semibold">@Model.OpenAgeHours h</div>
             </div>
             <div class="col-md-3">
-                <div class="small text-uppercase text-muted fw-semibold">Reconciliation</div>
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("Reconciliation")</div>
                 <div>
                     @if (Model.NeedsReconciliation)
                     {
-                        <span class="badge text-bg-warning">Needs reconciliation</span>
+                        <span class="badge text-bg-warning">@T.T("NeedsReconciliation")</span>
                     }
                     else
                     {
-                        <span class="badge text-bg-success">No open reconciliation flag</span>
+                        <span class="badge text-bg-success">@T.T("NoOpenReconciliationFlag")</span>
                     }
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="small text-uppercase text-muted fw-semibold">Dispute Review</div>
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("DisputeReview")</div>
                 <div>
                     @if (Model.NeedsDisputeFollowUp)
                     {
-                        <span class="badge text-bg-danger">Dispute follow-up</span>
+                        <span class="badge text-bg-danger">@T.T("DisputeFollowUp")</span>
                     }
                     else
                     {
-                        <span class="badge text-bg-secondary">No dispute flag</span>
+                        <span class="badge text-bg-secondary">@T.T("NoDisputeFlag")</span>
                     }
                 </div>
             </div>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-3">
-            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions" class="btn btn-sm btn-outline-warning">Payment Exceptions</a>
-            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals" class="btn btn-sm btn-outline-danger">Dispute Signals</a>
+            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions" class="btn btn-sm btn-outline-warning">@T.T("PaymentExceptions")</a>
+            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals" class="btn btn-sm btn-outline-danger">@T.T("DisputeSignals")</a>
             @if (Model.OrderId.HasValue)
             {
-                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-secondary">Open Order Payments</a>
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-secondary">@T.T("OpenOrderPayments")</a>
             }
         </div>
     </div>
@@ -165,7 +166,7 @@
 @if (!string.IsNullOrWhiteSpace(Model.FailureReason))
 {
     <div class="alert alert-danger mb-3">
-        <div class="fw-semibold">Recorded Failure Reason</div>
+        <div class="fw-semibold">@T.T("RecordedFailureReason")</div>
         <div class="small">@Model.FailureReason</div>
     </div>
 }
@@ -173,15 +174,15 @@
 @if (Model.SupportPlaybooks.Count > 0)
 {
     <div class="card mb-3">
-        <div class="card-header">Payment Support Playbooks</div>
+        <div class="card-header">@T.T("PaymentSupportPlaybooks")</div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Queue</th>
-                            <th>Scope</th>
-                            <th>Operator Action</th>
+                            <th>@T.T("Queue")</th>
+                            <th>@T.T("Scope")</th>
+                            <th>@T.T("OperatorAction")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -204,10 +205,10 @@
 {
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Refund Timeline</span>
+            <span>@T.T("RefundTimeline")</span>
             @if (Model.OrderId.HasValue)
             {
-                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary">Open Order Refunds</a>
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary">@T.T("OpenOrderRefunds")</a>
             }
         </div>
         <div class="card-body">
@@ -215,10 +216,10 @@
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Created</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th class="text-end">Amount</th>
+                            <th>@T.T("Created")</th>
+                            <th>@T.T("Reason")</th>
+                            <th>@T.T("Status")</th>
+                            <th class="text-end">@T.T("Amount")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -229,7 +230,7 @@
                                 <div>@refund.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
                                 @if (refund.CompletedAtUtc.HasValue)
                                 {
-                                    <div class="small text-muted">Completed @refund.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                    <div class="small text-muted">@T.T("Completed") @refund.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                                 }
                             </td>
                             <td>@refund.Reason</td>
@@ -247,8 +248,8 @@
 @if (Model.OrderId.HasValue)
 {
     <div class="d-flex flex-wrap gap-2 mb-3">
-        <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId.Value" asp-route-paymentId="@Model.Id" class="btn btn-sm btn-outline-danger">Add Refund For This Payment</a>
-        <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary">Open Order Refunds</a>
+        <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId.Value" asp-route-paymentId="@Model.Id" class="btn btn-sm btn-outline-danger">@T.T("AddRefundForThisPayment")</a>
+        <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary">@T.T("OpenOrderRefunds")</a>
     </div>
 }
 
@@ -281,7 +282,7 @@
     <div class="col-md-4">
         <label asp-for="AmountMinor" class="form-label"></label>
         <input asp-for="AmountMinor" class="form-control" />
-        <div class="form-text">Minor units.</div>
+        <div class="form-text">@T.T("MinorUnits")</div>
     </div>
     <div class="col-md-4">
         <label asp-for="ProviderTransactionRef" class="form-label"></label>
@@ -296,7 +297,7 @@
         <input asp-for="OrderId" class="form-control" />
         @if (!string.IsNullOrWhiteSpace(Model.OrderNumber))
         {
-            <div class="form-text">Linked order: @Model.OrderNumber</div>
+            <div class="form-text">@T.T("LinkedOrder"): @Model.OrderNumber</div>
         }
     </div>
     <div class="col-md-6">
@@ -307,11 +308,11 @@
             <div class="form-text">
                 @if (Model.InvoiceStatus.HasValue)
                 {
-                    <span>Status: @Model.InvoiceStatus</span>
+                    <span>@T.T("Status"): @Model.InvoiceStatus</span>
                 }
                 @if (Model.InvoiceTotalGrossMinor.HasValue)
                 {
-                    <span class="ms-2">Total: @Model.Currency @((Model.InvoiceTotalGrossMinor.Value / 100M).ToString("0.00"))</span>
+                    <span class="ms-2">@T.T("Total"): @Model.Currency @((Model.InvoiceTotalGrossMinor.Value / 100M).ToString("0.00"))</span>
                 }
             </div>
         }

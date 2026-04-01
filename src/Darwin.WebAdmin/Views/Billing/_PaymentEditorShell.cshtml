@@ -1,11 +1,12 @@
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
-    ViewData["Title"] = isCreate ? "Create Payment" : "Edit Payment";
+    ViewData["Title"] = isCreate ? T.T("CreatePayment") : T.T("EditPayment");
 }
 
 <div id="billing-payment-editor-shell">
-    <h1 class="mb-3">@(isCreate ? "Create Payment" : "Edit Payment")</h1>
+    <h1 class="mb-3">@(isCreate ? T.T("CreatePayment") : T.T("EditPayment"))</h1>
 
     <form asp-action="@(isCreate ? "CreatePayment" : "EditPayment")"
           method="post"
@@ -20,13 +21,13 @@
         }
         <partial name="_PaymentForm" model="Model" />
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary">@T.T("Save")</button>
             <a asp-action="Payments"
                asp-route-businessId="@Model.BusinessId"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })"
                hx-target="#billing-payment-editor-shell"
-               hx-swap="outerHTML">Back</a>
+               hx-swap="outerHTML">@T.T("BackToPayments")</a>
         </div>
     </form>
 </div>

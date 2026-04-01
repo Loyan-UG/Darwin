@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Loyalty.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Validators
 {
@@ -10,7 +11,7 @@ namespace Darwin.Application.Loyalty.Validators
     /// </summary>
     public sealed class AdjustLoyaltyPointsValidator : AbstractValidator<AdjustLoyaltyPointsDto>
     {
-        public AdjustLoyaltyPointsValidator()
+        public AdjustLoyaltyPointsValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.LoyaltyAccountId)
                 .NotEmpty();
@@ -20,7 +21,7 @@ namespace Darwin.Application.Loyalty.Validators
 
             RuleFor(x => x.PointsDelta)
                 .NotEqual(0)
-                .WithMessage("PointsDelta must not be zero.");
+                .WithMessage(localizer["PointsDeltaMustNotBeZero"]);
 
             RuleFor(x => x.Reason)
                 .MaximumLength(1000);
@@ -32,7 +33,7 @@ namespace Darwin.Application.Loyalty.Validators
             {
                 RuleFor(x => x.Reason)
                     .NotEmpty()
-                    .WithMessage("Reason is required when subtracting points.");
+                    .WithMessage(localizer["ReasonRequiredWhenSubtractingPoints"]);
             });
         }
     }

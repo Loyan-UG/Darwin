@@ -3,6 +3,7 @@ using Darwin.Application.SEO.DTOs;
 using Darwin.Domain.Entities.SEO;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,10 +16,10 @@ namespace Darwin.Application.SEO.Validators
     {
         private readonly IAppDbContext _db;
 
-        public RedirectRuleCreateUniqueValidator(IAppDbContext db)
+        public RedirectRuleCreateUniqueValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
-            RuleFor(x => x.FromPath).MustAsync(BeUnique).WithMessage("FromPath must be unique.");
+            RuleFor(x => x.FromPath).MustAsync(BeUnique).WithMessage(localizer["FromPathMustBeUnique"]);
         }
 
         private async Task<bool> BeUnique(string from, CancellationToken ct)
@@ -32,10 +33,10 @@ namespace Darwin.Application.SEO.Validators
     {
         private readonly IAppDbContext _db;
 
-        public RedirectRuleEditUniqueValidator(IAppDbContext db)
+        public RedirectRuleEditUniqueValidator(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
-            RuleFor(x => x).MustAsync(BeUnique).WithMessage("FromPath must be unique.");
+            RuleFor(x => x).MustAsync(BeUnique).WithMessage(localizer["FromPathMustBeUnique"]);
         }
 
         private async Task<bool> BeUnique(RedirectRuleEditDto dto, CancellationToken ct)

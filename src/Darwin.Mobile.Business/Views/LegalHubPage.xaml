@@ -14,28 +14,31 @@
                    Style="{StaticResource TitleLabelStyle}" />
 
             <Label Text="{x:Static res:AppResources.LegalHubSubtitle}"
-                   FontSize="14"
-                   LineBreakMode="WordWrap"
-                   Opacity="0.85" />
+                   Style="{StaticResource SecondaryBodyLabelStyle}" />
 
             <Button Text="{x:Static res:AppResources.LegalImpressumButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding OpenImpressumCommand}" />
 
             <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding OpenPrivacyPolicyCommand}" />
 
             <Button Text="{x:Static res:AppResources.LegalTermsButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding OpenTermsCommand}" />
 
             <Button Text="{x:Static res:AppResources.LegalAccountDeletionButton}"
+                    Style="{StaticResource OutlinedButtonStyle}"
                     Clicked="OnAccountDeletionClicked" />
 
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
+                   Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               IsRunning="{Binding IsBusy}" />
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrandGold500}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

@@ -7,6 +7,7 @@ using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Orders;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Commands
@@ -17,9 +18,18 @@ namespace Darwin.Application.Orders.Commands
     public sealed class AddShipmentHandler
     {
         private readonly IAppDbContext _db;
-        private readonly ShipmentCreateValidator _validator = new();
+        private readonly IValidator<ShipmentCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public AddShipmentHandler(IAppDbContext db) => _db = db;
+        public AddShipmentHandler(
+            IAppDbContext db,
+            IValidator<ShipmentCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = validator;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(ShipmentCreateDto dto, CancellationToken ct = default)
         {
@@ -28,13 +38,13 @@ namespace Darwin.Application.Orders.Commands
 
             var order = await _db.Set<Order>().Include(o => o.Lines)
                 .FirstOrDefaultAsync(o => o.Id == dto.OrderId, ct);
-            if (order is null) throw new InvalidOperationException("Order not found.");
+            if (order is null) throw new InvalidOperationException(_localizer["OrderNotFound"]);
 
             // Validate lines belong to this order
             var lineIds = order.Lines.Select(l => l.Id).ToHashSet();
             foreach (var sl in dto.Lines)
                 if (!lineIds.Contains(sl.OrderLineId))
-                    throw new ValidationException("Invalid shipment line: order line does not belong to the order.");
+                    throw new ValidationException(_localizer["InvalidShipmentLineOrderMismatch"]);
 
             var shipment = new Shipment
             {

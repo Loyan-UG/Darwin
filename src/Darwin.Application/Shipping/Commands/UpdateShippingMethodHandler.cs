@@ -7,6 +7,7 @@ using Darwin.Application.Shipping.Validators;
 using Darwin.Domain.Entities.Shipping;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Shipping.Commands
 {
@@ -17,9 +18,18 @@ namespace Darwin.Application.Shipping.Commands
     public sealed class UpdateShippingMethodHandler
     {
         private readonly IAppDbContext _db;
-        private readonly ShippingMethodEditValidator _validator = new();
+        private readonly IValidator<ShippingMethodEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateShippingMethodHandler(IAppDbContext db) => _db = db;
+        public UpdateShippingMethodHandler(
+            IAppDbContext db,
+            IValidator<ShippingMethodEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = validator;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(ShippingMethodEditDto dto, CancellationToken ct = default)
         {
@@ -30,15 +40,15 @@ namespace Darwin.Application.Shipping.Commands
                 .Include(m => m.Rates)
                 .FirstOrDefaultAsync(m => m.Id == dto.Id, ct);
 
-            if (method is null) throw new InvalidOperationException("Shipping method not found.");
+            if (method is null) throw new InvalidOperationException(_localizer["ShippingMethodNotFound"]);
 
             if (!method.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             var exists = await _db.Set<ShippingMethod>().AsNoTracking()
                 .AnyAsync(m => m.Id != dto.Id && m.Carrier == dto.Carrier && m.Service == dto.Service, ct);
             if (exists)
-                throw new ValidationException("Carrier/Service combination must be unique.");
+                throw new ValidationException(_localizer["ShippingMethodCarrierServiceMustBeUnique"]);
 
             method.Name = dto.Name.Trim();
             method.Carrier = dto.Carrier.Trim();

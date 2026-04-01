@@ -127,7 +127,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             try
             {
                 await _create.HandleAsync(dto, ct);
-                TempData["Success"] = "Page created successfully.";
+                SetSuccessMessage("PageCreated");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (FluentValidation.ValidationException ex)
@@ -147,7 +147,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             var dto = await _get.HandleAsync(id, ct);
             if (dto == null)
             {
-                TempData["Error"] = "Page not found.";
+                SetErrorMessage("PageNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -208,7 +208,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             try
             {
                 await _update.HandleAsync(dto, ct);
-                TempData["Success"] = "Page updated successfully.";
+                SetSuccessMessage("PageUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
@@ -236,11 +236,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             try
             {
                 await _softDeletePage.HandleAsync(id, rowVersion, ct);
-                TempData["Success"] = "Page deleted.";
+                SetSuccessMessage("PageDeleted");
             }
             catch
             {
-                TempData["Error"] = "Failed to delete the page.";
+                SetErrorMessage("PageDeleteFailed");
             }
             return RedirectOrHtmx(nameof(Index), new { });
         }

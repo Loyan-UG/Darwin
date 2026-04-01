@@ -6,6 +6,7 @@ using Darwin.Application.Inventory.Validators;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Inventory;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Inventory.Commands
 {
@@ -13,22 +14,29 @@ namespace Darwin.Application.Inventory.Commands
     {
         private readonly IAppDbContext _db;
         private readonly InventoryReleaseReservationValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ReleaseInventoryReservationHandler(IAppDbContext db) => _db = db;
+        public ReleaseInventoryReservationHandler(
+            IAppDbContext db,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(InventoryReleaseReservationDto dto, CancellationToken ct = default)
         {
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new FluentValidation.ValidationException(v.Errors);
 
-            var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, ct);
+            var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, _localizer, ct);
             var stockLevel = await _db.Set<StockLevel>()
                 .FirstOrDefaultAsync(
                     x => x.WarehouseId == warehouseId && x.ProductVariantId == dto.VariantId,
                     ct);
 
             if (stockLevel is null || stockLevel.ReservedQuantity < dto.Quantity)
-                throw new DbUpdateConcurrencyException("Release failed due to concurrent change or insufficient reserved.");
+                throw new DbUpdateConcurrencyException(_localizer["InventoryReleaseFailedDueToConcurrentChangeOrInsufficientReserved"]);
 
             stockLevel.ReservedQuantity -= dto.Quantity;
             stockLevel.AvailableQuantity += dto.Quantity;
@@ -43,7 +51,7 @@ namespace Darwin.Application.Inventory.Commands
                 ReferenceId = dto.ReferenceId
             });
 
-            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, ct);
+            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, _localizer, ct);
             await _db.SaveChangesAsync(ct);
         }
     }

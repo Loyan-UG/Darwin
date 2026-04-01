@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
+import { formatResource, getCatalogResource } from "@/localization";
 import { formatMoney } from "@/lib/formatting";
 
 type CatalogPageProps = {
+  culture: string;
   categories: PublicCategorySummary[];
   products: PublicProductSummary[];
   activeCategorySlug?: string;
@@ -30,6 +32,7 @@ function buildCatalogHref(categorySlug?: string, page = 1) {
 }
 
 export function CatalogPage({
+  culture,
   categories,
   products,
   activeCategorySlug,
@@ -38,35 +41,95 @@ export function CatalogPage({
   pageSize,
   dataStatus,
 }: CatalogPageProps) {
+  const copy = getCatalogResource(culture);
   const hasProducts = products.length > 0;
   const totalPages = Math.max(1, Math.ceil(totalProducts / pageSize));
+  const activeCategory =
+    categories.find((category) => category.slug === activeCategorySlug) ?? null;
+  const offerProducts = products.filter(
+    (product) =>
+      typeof product.compareAtPriceMinor === "number" &&
+      product.compareAtPriceMinor > product.priceMinor,
+  );
+
+  function getSavingsPercent(product: PublicProductSummary) {
+    if (
+      typeof product.compareAtPriceMinor !== "number" ||
+      product.compareAtPriceMinor <= product.priceMinor
+    ) {
+      return null;
+    }
+
+    return Math.round(
+      ((product.compareAtPriceMinor - product.priceMinor) /
+        product.compareAtPriceMinor) *
+        100,
+    );
+  }
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-brand)]">
-            Catalog browsing
+            {copy.heroEyebrow}
           </p>
           <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-                Storefront catalog now reads from `Darwin.WebApi`
+                {copy.heroTitle}
               </h1>
               <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
-                Categories and product cards are now driven by the public catalog contracts. This keeps storefront work aligned with real CMS/catalog data instead of placeholder-only pages.
+                {copy.heroDescription}
               </p>
+              {activeCategory ? (
+                <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
+                    {copy.activeCategoryEyebrow}
+                  </p>
+                  <p className="mt-2 text-xl font-semibold text-[var(--color-text-primary)]">
+                    {activeCategory.name}
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {activeCategory.description ??
+                      copy.categoryFallbackDescription}
+                  </p>
+                </div>
+              ) : null}
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
-                Current result set
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
-                {totalProducts}
-              </p>
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                published products visible through the current query
-              </p>
+            <div className="grid gap-4 sm:grid-cols-3 lg:w-[24rem]">
+              {[
+                {
+                  label: copy.currentResultsLabel,
+                  value: String(totalProducts),
+                  note: copy.currentResultsNote,
+                },
+                {
+                  label: copy.visibleOffersLabel,
+                  value: String(offerProducts.length),
+                  note: copy.visibleOffersNote,
+                },
+                {
+                  label: copy.categoriesLabel,
+                  value: String(categories.length),
+                  note: copy.categoriesNote,
+                },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
+                    {item.value}
+                  </p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {item.note}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -74,16 +137,36 @@ export function CatalogPage({
         {(dataStatus?.categories !== "ok" || dataStatus?.products !== "ok") && (
           <StatusBanner
             tone="warning"
-            title="Storefront data is running in degraded mode."
-            message={`Categories: ${dataStatus?.categories ?? "unknown"}. Products: ${dataStatus?.products ?? "unknown"}. The page stays available, but public API connectivity or payload quality needs attention.`}
+            title={copy.degradedTitle}
+            message={formatResource(copy.degradedMessage, {
+              categoriesStatus: dataStatus?.categories ?? "unknown",
+              productsStatus: dataStatus?.products ?? "unknown",
+            })}
           />
         )}
 
         <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-5 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-              Categories
+              {copy.categoriesTitle}
             </p>
+            {activeCategory ? (
+              <div className="mt-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <p className="font-semibold text-[var(--color-text-primary)]">
+                  {copy.browsingCategoryPrefix} {activeCategory.name}
+                </p>
+                <p>
+                  {activeCategory.description ??
+                    copy.categoryFallbackDescription}
+                </p>
+                <Link
+                  href="/catalog"
+                  className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-white/70"
+                >
+                  {copy.clearCategory}
+                </Link>
+              </div>
+            ) : null}
             <div className="mt-5 flex flex-col gap-2">
               <Link
                 href={buildCatalogHref(undefined)}
@@ -93,7 +176,7 @@ export function CatalogPage({
                     : "rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 }
               >
-                All products
+                {copy.allProducts}
               </Link>
               {categories.map((category) => (
                 <Link
@@ -120,13 +203,13 @@ export function CatalogPage({
             {!hasProducts ? (
               <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
-                  No results
+                  {copy.noResultsEyebrow}
                 </p>
                 <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-[var(--color-text-primary)]">
-                  No published products matched this category yet.
+                  {copy.noResultsTitle}
                 </h2>
                 <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
-                  The storefront shell stays stable, but catalog content for this slice is empty. This is now observable instead of silently hiding behind placeholders.
+                  {copy.noResultsDescription}
                 </p>
               </div>
             ) : (
@@ -146,38 +229,50 @@ export function CatalogPage({
                         />
                       ) : (
                         <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
-                          No media
+                          {copy.noMedia}
                         </span>
                       )}
                     </div>
                     <div className="mt-5 flex flex-1 flex-col">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
-                        Storefront product
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
+                          {copy.productEyebrow}
+                        </p>
+                        {getSavingsPercent(product) ? (
+                          <span className="rounded-full bg-[var(--color-brand)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-contrast)]">
+                            {copy.savePrefix} {getSavingsPercent(product)}%
+                          </span>
+                        ) : null}
+                      </div>
                       <h2 className="mt-3 text-xl font-semibold text-[var(--color-text-primary)]">
                         <Link href={`/catalog/${product.slug}`} className="transition hover:text-[var(--color-brand)]">
                           {product.name}
                         </Link>
                       </h2>
                       <p className="mt-3 flex-1 text-sm leading-7 text-[var(--color-text-secondary)]">
-                        {product.shortDescription ?? "Published product card delivered from the public catalog surface."}
+                        {product.shortDescription ?? copy.productDescriptionFallback}
                       </p>
                       <div className="mt-5 flex items-end justify-between gap-4">
                         <div>
                           <p className="text-lg font-semibold text-[var(--color-text-primary)]">
-                            {formatMoney(product.priceMinor, product.currency)}
+                            {formatMoney(product.priceMinor, product.currency, culture)}
                           </p>
                           {product.compareAtPriceMinor ? (
-                            <p className="text-sm text-[var(--color-text-muted)] line-through">
-                              {formatMoney(product.compareAtPriceMinor, product.currency)}
-                            </p>
+                            <div className="mt-1">
+                              <p className="text-sm text-[var(--color-text-muted)] line-through">
+                                {formatMoney(product.compareAtPriceMinor, product.currency, culture)}
+                              </p>
+                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-accent)]">
+                                {copy.merchandisingPriceDrop}
+                              </p>
+                            </div>
                           ) : null}
                         </div>
                         <Link
                           href={`/catalog/${product.slug}`}
                           className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                         >
-                          View details
+                          {copy.viewDetails}
                         </Link>
                       </div>
                     </div>
@@ -193,17 +288,17 @@ export function CatalogPage({
                   href={buildCatalogHref(activeCategorySlug, Math.max(1, currentPage - 1))}
                   className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
                 >
-                  Previous
+                  {copy.previous}
                 </Link>
                 <p className="text-sm text-[var(--color-text-secondary)]">
-                  Page {currentPage} of {totalPages}
+                  {formatResource(copy.pageLabel, { currentPage, totalPages })}
                 </p>
                 <Link
                   aria-disabled={currentPage >= totalPages}
                   href={buildCatalogHref(activeCategorySlug, Math.min(totalPages, currentPage + 1))}
                   className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
                 >
-                  Next
+                  {copy.next}
                 </Link>
               </div>
             )}

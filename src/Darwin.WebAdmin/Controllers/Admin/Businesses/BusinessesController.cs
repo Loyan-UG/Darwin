@@ -385,6 +385,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
                 DefaultTimeZoneId = vm.DefaultTimeZoneId,
+                AdminTextOverridesJson = vm.AdminTextOverridesJson,
                 BrandDisplayName = vm.BrandDisplayName,
                 BrandLogoUrl = vm.BrandLogoUrl,
                 BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
@@ -433,7 +434,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var dto = await _getBusinessForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -449,7 +450,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var dto = await _getBusinessForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -465,7 +466,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -486,7 +487,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -662,6 +663,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
                 DefaultTimeZoneId = vm.DefaultTimeZoneId,
+                AdminTextOverridesJson = vm.AdminTextOverridesJson,
                 BrandDisplayName = vm.BrandDisplayName,
                 BrandLogoUrl = vm.BrandLogoUrl,
                 BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
@@ -678,12 +680,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             try
             {
                 await _updateBusiness.HandleAsync(dto, ct);
-                TempData["Success"] = "Business updated.";
+                SetSuccessMessage("BusinessUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the business and try again.";
+                SetErrorMessage("BusinessConcurrencyConflict");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -719,6 +721,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
                 DefaultTimeZoneId = vm.DefaultTimeZoneId,
+                AdminTextOverridesJson = vm.AdminTextOverridesJson,
                 BrandDisplayName = vm.BrandDisplayName,
                 BrandLogoUrl = vm.BrandLogoUrl,
                 BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
@@ -735,12 +738,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             try
             {
                 await _updateBusiness.HandleAsync(dto, ct);
-                TempData["Success"] = "Business setup saved.";
+                SetSuccessMessage("BusinessSetupSaved");
                 return RedirectOrHtmx(nameof(Setup), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the business and try again.";
+                SetErrorMessage("BusinessConcurrencyConflict");
                 return RedirectOrHtmx(nameof(Setup), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -779,7 +782,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     RowVersion = rowVersion ?? Array.Empty<byte>()
                 }, ct);
 
-                TempData["Success"] = "Business approved for operational use.";
+                SetSuccessMessage("BusinessApproved");
             }
             catch (Exception ex)
             {
@@ -802,7 +805,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Note = note
                 }, ct);
 
-                TempData["Success"] = "Business suspended.";
+                SetSuccessMessage("BusinessSuspended");
             }
             catch (Exception ex)
             {
@@ -824,7 +827,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     RowVersion = rowVersion ?? Array.Empty<byte>()
                 }, ct);
 
-                TempData["Success"] = "Business reactivated.";
+                SetSuccessMessage("BusinessReactivated");
             }
             catch (Exception ex)
             {
@@ -841,7 +844,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -891,7 +894,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -931,7 +934,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     InternalNote = vm.InternalNote
                 }, ct);
 
-                TempData["Success"] = "Business location created.";
+                SetSuccessMessage("BusinessLocationCreated");
                 return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId });
             }
             catch (Exception ex)
@@ -949,14 +952,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var dto = await _getBusinessLocationForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
-                TempData["Error"] = "Business location not found.";
+                SetErrorMessage("BusinessLocationNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var business = await LoadBusinessContextAsync(dto.BusinessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -1014,12 +1017,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     InternalNote = vm.InternalNote
                 }, ct);
 
-                TempData["Success"] = "Business location updated.";
+                SetSuccessMessage("BusinessLocationUpdated");
                 return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the location and try again.";
+                SetErrorMessage("BusinessLocationConcurrencyConflict");
                 return RedirectOrHtmx(nameof(EditLocation), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -1059,7 +1062,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -1106,7 +1109,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -1147,7 +1150,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -1185,7 +1188,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -1222,7 +1225,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Note = vm.Note
                 }, ct);
 
-                TempData["Success"] = "Invitation sent.";
+                SetSuccessMessage("BusinessInvitationSent");
                 return RedirectOrHtmx(nameof(Invitations), new { businessId = vm.BusinessId });
             }
             catch (Exception ex)
@@ -1245,7 +1248,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Id = id,
                     ExpiresInDays = 7
                 }, ct);
-                TempData["Success"] = "Invitation reissued and emailed again.";
+                SetSuccessMessage("BusinessInvitationReissued");
             }
             catch (Exception ex)
             {
@@ -1266,7 +1269,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Id = id,
                     Note = "Revoked from WebAdmin."
                 }, ct);
-                TempData["Success"] = "Invitation revoked.";
+                SetSuccessMessage("BusinessInvitationRevoked");
             }
             catch (Exception ex)
             {
@@ -1283,7 +1286,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -1319,7 +1322,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     IsActive = vm.IsActive
                 }, ct);
 
-                TempData["Success"] = "Business member assigned.";
+                SetSuccessMessage("BusinessMemberAssigned");
                 return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId });
             }
             catch (Exception ex)
@@ -1338,14 +1341,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var dto = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
-                TempData["Error"] = "Business member not found.";
+                SetErrorMessage("BusinessMemberNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var business = await LoadBusinessContextAsync(dto.BusinessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -1376,14 +1379,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var dto = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
-                TempData["Error"] = "Business member not found.";
+                SetErrorMessage("BusinessMemberNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var business = await LoadBusinessContextAsync(dto.BusinessId, ct);
             if (business is null)
             {
-                TempData["Error"] = "Business not found.";
+                SetErrorMessage("BusinessNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -1437,12 +1440,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     RowVersion = vm.RowVersion ?? Array.Empty<byte>()
                 }, ct);
 
-                TempData["Success"] = "Business member updated.";
+                SetSuccessMessage("BusinessMemberUpdated");
                 return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the membership and try again.";
+                SetErrorMessage("BusinessMemberConcurrencyConflict");
                 return RedirectOrHtmx(nameof(EditMember), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -1466,7 +1469,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     RowVersion = rowVersion ?? Array.Empty<byte>()
                 }, ct);
 
-                TempData["Success"] = "Business member removed.";
+                SetSuccessMessage("BusinessMemberRemoved");
             }
             catch (Exception ex)
             {
@@ -1496,7 +1499,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     OverrideActorDisplayName = GetCurrentActorDisplayName()
                 }, ct);
 
-                TempData["Success"] = "Business member removed under controlled owner override.";
+                SetSuccessMessage("BusinessMemberRemovedOverride");
                 return RedirectOrHtmx(nameof(Members), new { businessId });
             }
             catch (Exception ex)
@@ -1517,7 +1520,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
-                TempData["Error"] = "Business member not found.";
+                SetErrorMessage("BusinessMemberNotFound");
                 return RedirectMemberSupport(returnToEdit, id, businessId);
             }
 
@@ -1529,8 +1532,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Activation email sent."
-                : (result.Error ?? "Failed to send activation email.");
+                ? T("BusinessMemberActivationEmailSent")
+                : (result.Error ?? T("BusinessMemberActivationEmailFailed"));
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1546,7 +1549,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
-                TempData["Error"] = "Business member not found.";
+                SetErrorMessage("BusinessMemberNotFound");
                 return RedirectMemberSupport(returnToEdit, id, businessId);
             }
 
@@ -1556,8 +1559,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Email marked as confirmed."
-                : (result.Error ?? "Failed to confirm email.");
+                ? T("BusinessMemberEmailConfirmed")
+                : (result.Error ?? T("BusinessMemberEmailConfirmFailed"));
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1573,7 +1576,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
-                TempData["Error"] = "Business member not found.";
+                SetErrorMessage("BusinessMemberNotFound");
                 return RedirectMemberSupport(returnToEdit, id, businessId);
             }
 
@@ -1585,8 +1588,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Password reset email sent."
-                : (result.Error ?? "Failed to send password reset email.");
+                ? T("BusinessMemberPasswordResetSent")
+                : (result.Error ?? T("BusinessMemberPasswordResetFailed"));
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1602,7 +1605,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
-                TempData["Error"] = "Business member not found.";
+                SetErrorMessage("BusinessMemberNotFound");
                 return RedirectMemberSupport(returnToEdit, id, businessId);
             }
 
@@ -1612,8 +1615,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Account locked."
-                : (result.Error ?? "Failed to lock account.");
+                ? T("BusinessMemberAccountLocked")
+                : (result.Error ?? T("BusinessMemberAccountLockFailed"));
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1629,7 +1632,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
-                TempData["Error"] = "Business member not found.";
+                SetErrorMessage("BusinessMemberNotFound");
                 return RedirectMemberSupport(returnToEdit, id, businessId);
             }
 
@@ -1639,8 +1642,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Account unlocked."
-                : (result.Error ?? "Failed to unlock account.");
+                ? T("BusinessMemberAccountUnlocked")
+                : (result.Error ?? T("BusinessMemberAccountUnlockFailed"));
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1983,6 +1986,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 DefaultCurrency = dto.DefaultCurrency,
                 DefaultCulture = dto.DefaultCulture,
                 DefaultTimeZoneId = dto.DefaultTimeZoneId,
+                AdminTextOverridesJson = dto.AdminTextOverridesJson,
                 BrandDisplayName = dto.BrandDisplayName,
                 BrandLogoUrl = dto.BrandLogoUrl,
                 BrandPrimaryColorHex = dto.BrandPrimaryColorHex,

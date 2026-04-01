@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Commands
@@ -21,14 +22,20 @@ namespace Darwin.Application.Orders.Commands
     public sealed class AddPaymentHandler
     {
         private readonly IAppDbContext _db;
-        private readonly PaymentCreateValidator _validator = new();
+        private readonly IValidator<PaymentCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes the handler with the application DbContext abstraction.
         /// </summary>
-        public AddPaymentHandler(IAppDbContext db)
+        public AddPaymentHandler(
+            IAppDbContext db,
+            IValidator<PaymentCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -45,16 +52,16 @@ namespace Darwin.Application.Orders.Commands
                 .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.Id == dto.OrderId, ct);
             if (order is null)
-                throw new ValidationException("Order not found.");
+                throw new ValidationException(_localizer["OrderNotFound"]);
 
             // Currency must match the order currency to keep amounts consistent in reporting/export.
             if (!string.Equals(order.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase))
-                throw new ValidationException("Payment currency does not match order currency.");
+                throw new ValidationException(_localizer["PaymentCurrencyMustMatchOrderCurrency"]);
 
             // Basic sanity: strictly positive amount and not above grand total.
             // (If partial payments/refunds are later allowed, replace this with a policy-aware check.)
             if (dto.AmountMinor <= 0 || dto.AmountMinor > order.GrandTotalGrossMinor)
-                throw new ValidationException("Invalid payment amount.");
+                throw new ValidationException(_localizer["InvalidPaymentAmount"]);
 
             // Map to domain entity.
             var payment = new Payment

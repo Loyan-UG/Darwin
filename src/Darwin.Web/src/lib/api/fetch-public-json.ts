@@ -30,19 +30,29 @@ function logFetchFailure(key: string, path: string, error: unknown) {
   console.error(`Darwin.Web public API fetch failed for ${path}`, error);
 }
 
-export async function fetchPublicJson<T>(
+async function sendPublicJson<T>(
   path: string,
   key: string,
+  init?: RequestInit,
 ): Promise<PublicApiFetchResult<T>> {
   const { webApiBaseUrl } = getSiteRuntimeConfig();
 
   try {
     const response = await fetch(`${webApiBaseUrl}${path}`, {
-      next: {
-        revalidate: 60,
-      },
+      ...(init ?? {}),
+      ...(init?.method && init.method !== "GET"
+        ? {
+            cache: "no-store" as const,
+          }
+        : {
+            next: {
+              revalidate: 60,
+            },
+          }),
       headers: {
         Accept: "application/json",
+        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...(init?.headers ?? {}),
       },
     });
 
@@ -83,4 +93,22 @@ export async function fetchPublicJson<T>(
       message: "Public API could not be reached.",
     };
   }
+}
+
+export async function fetchPublicJson<T>(
+  path: string,
+  key: string,
+): Promise<PublicApiFetchResult<T>> {
+  return sendPublicJson<T>(path, key);
+}
+
+export async function postPublicJson<T>(
+  path: string,
+  key: string,
+  body: unknown,
+): Promise<PublicApiFetchResult<T>> {
+  return sendPublicJson<T>(path, key, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }

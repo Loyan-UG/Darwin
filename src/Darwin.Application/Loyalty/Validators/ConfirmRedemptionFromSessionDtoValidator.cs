@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Loyalty.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Validators
 {
@@ -8,11 +9,11 @@ namespace Darwin.Application.Loyalty.Validators
     /// </summary>
     public sealed class ConfirmRedemptionFromSessionDtoValidator : AbstractValidator<ConfirmRedemptionFromSessionDto>
     {
-        public ConfirmRedemptionFromSessionDtoValidator()
+        public ConfirmRedemptionFromSessionDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.ScanSessionToken)
                 .NotEmpty()
-                .WithMessage("ScanSessionToken is required.")
+                .WithMessage(localizer["ScanSessionTokenRequired"])
                 .MaximumLength(4000);
         }
     }

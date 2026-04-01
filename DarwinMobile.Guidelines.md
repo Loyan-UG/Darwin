@@ -175,9 +175,9 @@ Mobile should continue to feel user-owned and locale-aware, not merely tied to a
 ## 8. Color System & Design Tokens (Gold-First, Light Theme v1)
 
 ### 8.1 Principles
-- **Gold is an accent, not a canvas.** Use it to signal brand and key actions, not as large backgrounds.
 - **Semantic tokens only.** UI code references semantic tokens (e.g., `Color.Brand.Primary`) instead of raw hex values.
-- **Contrast-first.** Avoid gold text on white. If gold is used as a background, the text must be near-black (not white).
+- **Consumer palette is fixed.** The Consumer app must follow the approved gold/warm-neutral palette exactly until a newer written approval replaces it.
+- **White text is button-only.** In Consumer, white text is reserved for text rendered on filled primary buttons. All non-button text must use the primary or secondary text tokens.
 
 ---
 
@@ -187,18 +187,18 @@ Mobile should continue to feel user-owned and locale-aware, not merely tied to a
 These are the *only* places where hex values are allowed.
 
 **Brand (Gold)**
-- `Base.BrandGold.500`  (main accent)
-- `Base.BrandGold.600`  (pressed/active)
-- `Base.BrandGold.300`  (subtle highlight)
-- `Base.BrandGold.800`  (dark gold for icons/borders if needed)
+- `Base.BrandGold.500`  = `#F4B223` (main accent, focus border, primary link, primary button gradient start)
+- `Base.BrandGold.600`  = `#E09F1A` (pressed/active)
+- `Base.BrandGold.300`  = `#FFD24C` (subtle highlight, primary button gradient end)
+- `Base.BrandGold.800`  = optional darker gold only if a stronger border is truly needed
 
 **Neutrals (warm, premium)**
-- `Base.Neutral.0`      (pure white)
-- `Base.Neutral.50`     (warm off-white background)
-- `Base.Neutral.100`    (surface)
-- `Base.Neutral.200`    (border)
-- `Base.Neutral.600`    (secondary text)
-- `Base.Neutral.900`    (primary text)
+- `Base.Neutral.0`      = `#FFFFFF` (top background and on-primary text only)
+- `Base.Neutral.50`     = `#FFFFFF` (page background)
+- `Base.Neutral.100`    = `#FFF8E7` (default input border, subtle neutral fill)
+- `Base.Neutral.200`    = `#FFF8E7` (default border)
+- `Base.Neutral.600`    = `#717182` (secondary text, legal links)
+- `Base.Neutral.900`    = `#2C2416` (primary text, headings)
 
 **Status**
 - `Base.Success.*`
@@ -206,7 +206,7 @@ These are the *only* places where hex values are allowed.
 - `Base.Error.*`
 - `Base.Info.*`
 
-> Note: We will set exact hex values after the final logo gold is confirmed (or extracted). Until then, keep placeholders and enforce semantic usage.
+> These Consumer palette values are approved and must be used exactly unless replaced by a newer written design decision.
 
 #### 8.2.2 Semantic Tokens (UI-facing)
 These are used everywhere in UI.
@@ -220,7 +220,7 @@ These are used everywhere in UI.
 **Text**
 - `Color.Text.Primary`         -> `Base.Neutral.900`
 - `Color.Text.Secondary`       -> `Base.Neutral.600`
-- `Color.Text.OnBrand`         -> `Base.Neutral.900` (important: avoid white text on gold in light theme)
+- `Color.Text.OnBrand`         -> `Base.Neutral.0`
 - `Color.Text.Disabled`        -> derived from neutrals (e.g., 40–60% opacity)
 
 **Surfaces**
@@ -240,22 +240,22 @@ These are used everywhere in UI.
 - `Color.Status.Info`
 
 **States**
-- `Color.State.FocusRing`      -> brand or info (must be visible)
+- `Color.State.FocusRing`      -> `Base.BrandGold.500`
 - `Color.State.Selection`      -> `Color.Brand.Subtle` (light tint)
 - `Color.State.OverlayScrim`   -> neutral w/ opacity
 
 ---
 
-### 8.3 Gold Usage Rules (Practical)
+### 8.3 Consumer Usage Rules (Practical)
 
 #### Allowed (recommended)
-- Primary CTA button background using `Color.Brand.Primary` with **dark text** (`Color.Text.OnBrand`).
+- Primary CTA button background using a left-to-right gradient from `Color.Brand.Primary` to `Color.Brand.Subtle` with `Color.Text.OnBrand`.
 - Selected tab indicator / active chip outline.
-- Loyalty emphasis: points badge, progress bar fill, “reward unlocked” accent.
-- Small decorative line under top bar, or subtle header highlight.
+- Input focus border.
+- Primary brand links such as `Sign Up`.
 
 #### Avoid
-- Gold text on white backgrounds (low contrast).
+- White text outside filled primary buttons.
 - Large gold panels or full-screen gold backgrounds.
 - Using multiple gold shades in the same component without clear hierarchy.
 
@@ -264,9 +264,9 @@ These are used everywhere in UI.
 ### 8.4 Component-Level Color Mapping (Light Theme)
 
 **Buttons**
-- Primary: background `Color.Brand.Primary`, text `Color.Text.OnBrand`, pressed `Color.Brand.PrimaryPressed`
+- Primary: gradient background (`Color.Brand.Primary` -> `Color.Brand.Subtle`), text `Color.Text.OnBrand`, pressed gradient starts at `Color.Brand.PrimaryPressed`
 - Secondary: background `Color.Surface.Default`, border `Color.Border.Subtle`, text `Color.Text.Primary`
-- Tertiary: text-only using `Color.Brand.Outline` (or `Color.Text.Primary` if not a brand action)
+- Tertiary: text-only using `Color.Brand.Primary` (or `Color.Text.Secondary` for legal links)
 - Disabled: `Color.Surface.Disabled` + `Color.Text.Disabled`
 
 **Cards / Lists**
@@ -278,6 +278,16 @@ These are used everywhere in UI.
 - Border default: `Color.Border.Subtle`
 - Focus border / ring: `Color.State.FocusRing`
 - Error border: `Color.Status.Error`
+
+### 8.5 Consumer-Specific UI Rules (Current Approved Direction)
+
+- Filled primary buttons in Consumer must share the same visual treatment as the approved `Login` button.
+- Corner radii in Consumer must stay restrained:
+  - inputs and buttons: small radius
+  - cards: modest radius
+  - avoid pill-shaped controls unless a later design pass explicitly approves them
+- `Rechtliches` and similar legal-entry links must use the secondary text color, not the primary brand link color.
+- Layout density in Consumer must avoid avoidable scrolling on common phone sizes. Do not introduce large decorative gaps that push core actions below the fold without a product reason.
 
 ---
 
@@ -436,7 +446,8 @@ We will keep the same component set but allow different density presets:
 
 Rules:
 - Default cards: `Radius.12`
-- Primary buttons: `Radius.12` or `Radius.Pill` (choose one and stick to it)
+- Consumer buttons and inputs: `Radius.8`
+- Primary buttons must not use pill styling in Consumer unless explicitly approved later
 - Chips/badges: `Radius.Pill`
 
 ---

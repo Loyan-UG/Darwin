@@ -125,7 +125,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             if (!ModelState.IsValid)
             {
-                TempData["Warning"] = "Please fix validation errors and try again.";
+                SetWarningMessage("ValidationErrorsRetry");
                 return RenderCreateEditor(model);
             }
 
@@ -139,11 +139,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _create.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? "Failed to create role.";
+                TempData["Error"] = result.Error ?? T("RoleCreateFailed");
                 return RenderCreateEditor(model);
             }
 
-            TempData["Success"] = "Role created successfully.";
+            SetSuccessMessage("RoleCreated");
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -156,7 +156,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var dto = await _getRoleForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
-                TempData["Warning"] = "Role not found.";
+                SetWarningMessage("RoleNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -209,7 +209,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             if (!ModelState.IsValid)
             {
-                TempData["Warning"] = "Please fix validation errors and try again.";
+                SetWarningMessage("ValidationErrorsRetry");
                 return RenderEditEditor(model);
             }
 
@@ -226,11 +226,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _update.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? "Failed to update role.";
+                TempData["Error"] = result.Error ?? T("RoleUpdateFailed");
                 return RenderEditEditor(model);
             }
 
-            TempData["Success"] = "Role updated successfully.";
+            SetSuccessMessage("RoleUpdated");
             return RedirectOrHtmx(nameof(Edit), new { id = model.Id });
         }
 
@@ -245,18 +245,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             try
             {
                 await _delete.HandleAsync(id, ct);
-                TempData["Success"] = "Role deleted successfully.";
+                SetSuccessMessage("RoleDeleted");
             }
             catch (InvalidOperationException ex)
             {
                 // System role or business rule violation.
                 TempData["Warning"] = string.IsNullOrWhiteSpace(ex.Message)
-                    ? "This role is system-protected and cannot be deleted."
+                    ? T("RoleSystemProtectedDelete")
                     : ex.Message;
             }
             catch (Exception)
             {
-                TempData["Error"] = "Failed to delete role.";
+                SetErrorMessage("RoleDeleteFailed");
             }
 
             return RedirectOrHtmx(nameof(Index), new { });
@@ -319,7 +319,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var vm = await BuildRolePermissionsVmAsync(id, null, null, ct);
             if (vm is null)
             {
-                TempData["Error"] = "Failed to load role permissions.";
+                SetErrorMessage("RolePermissionsLoadFailed");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -349,12 +349,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _updateRolePerms.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? "Failed to update role permissions.";
+                TempData["Error"] = result.Error ?? T("RolePermissionsUpdateFailed");
                 var failedVm = await BuildRolePermissionsVmAsync(vm.RoleId, vm.SelectedPermissionIds, vm.RowVersion, ct);
                 return failedVm is null ? RedirectOrHtmx(nameof(Index), new { }) : RenderPermissionsEditor(failedVm);
             }
 
-            TempData["Success"] = "Permissions updated.";
+            SetSuccessMessage("RolePermissionsUpdated");
             return RedirectOrHtmx(nameof(Permissions), new { id = vm.RoleId });
         }
 

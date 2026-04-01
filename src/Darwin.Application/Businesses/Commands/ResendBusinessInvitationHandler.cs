@@ -12,6 +12,7 @@ using Darwin.Domain.Enums;
 using Darwin.Shared.Security;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -25,19 +26,22 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IClock _clock;
         private readonly IBusinessInvitationLinkBuilder _businessInvitationLinkBuilder;
         private readonly IValidator<BusinessInvitationResendDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public ResendBusinessInvitationHandler(
             IAppDbContext db,
             IEmailSender emailSender,
             IClock clock,
             IBusinessInvitationLinkBuilder businessInvitationLinkBuilder,
-            IValidator<BusinessInvitationResendDto> validator)
+            IValidator<BusinessInvitationResendDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _businessInvitationLinkBuilder = businessInvitationLinkBuilder ?? throw new ArgumentNullException(nameof(businessInvitationLinkBuilder));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(BusinessInvitationResendDto dto, CancellationToken ct = default)
@@ -47,19 +51,19 @@ namespace Darwin.Application.Businesses.Commands
             var invitation = await _db.Set<BusinessInvitation>()
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
             if (invitation is null)
-                throw new InvalidOperationException("Invitation not found.");
+                throw new InvalidOperationException(_localizer["InvitationNotFound"]);
 
             if (invitation.Status == BusinessInvitationStatus.Accepted)
-                throw new InvalidOperationException("Accepted invitations cannot be resent.");
+                throw new InvalidOperationException(_localizer["AcceptedInvitationsCannotBeResent"]);
 
             if (invitation.Status == BusinessInvitationStatus.Revoked)
-                throw new InvalidOperationException("Revoked invitations cannot be resent. Create a new invitation instead.");
+                throw new InvalidOperationException(_localizer["RevokedInvitationsCannotBeResent"]);
 
             var business = await _db.Set<Business>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == invitation.BusinessId, ct);
             if (business is null)
-                throw new InvalidOperationException("Business not found.");
+                throw new InvalidOperationException(_localizer["BusinessNotFound"]);
 
             invitation.Token = RandomTokenGenerator.UrlSafeToken(32);
             invitation.ExpiresAtUtc = _clock.UtcNow.AddDays(dto.ExpiresInDays);

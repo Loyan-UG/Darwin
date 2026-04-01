@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Commands
 {
@@ -25,10 +26,10 @@ namespace Darwin.Application.Catalog.Commands
         /// <summary>
         /// Initializes a new handler instance with the application DbContext abstraction and validator.
         /// </summary>
-        public SoftDeleteAddOnGroupHandler(IAppDbContext db)
+        public SoftDeleteAddOnGroupHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _validator = new AddOnGroupDeleteValidator();
+            _validator = new AddOnGroupDeleteValidator(localizer);
         }
 
         /// <summary>

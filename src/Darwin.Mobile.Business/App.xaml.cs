@@ -54,7 +54,21 @@ public partial class App : Application
     {
         try
         {
-            await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None);
+            var refreshed = await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None);
+            if (refreshed)
+            {
+                return;
+            }
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (Windows.Count == 0)
+                {
+                    return;
+                }
+
+                Windows[0].Page = new AppShell($"//{Constants.Routes.Login}");
+            });
         }
         catch
         {

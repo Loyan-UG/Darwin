@@ -1,13 +1,17 @@
-﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui;
 using Darwin.Mobile.Business.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Handlers;
 using Microsoft.Maui.Hosting;
 using UraniumUI;
 using UraniumUI.Icons.FontAwesome;
 using UraniumUI.Icons.MaterialIcons;
-using UraniumUI.Material;
 using ZXing.Net.Maui;
 using ZXing.Net.Maui.Controls;
+#if ANDROID
+using Android.Content.Res;
+using Android.Graphics;
+#endif
 
 namespace Darwin.Mobile.Business;
 
@@ -28,7 +32,6 @@ public static class MauiProgram
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
             .UseUraniumUI()
-            .UseUraniumUIMaterial()
             .UseBarcodeReader() // Registers ZXing barcode scanner services
             .ConfigureFonts(fonts =>
             {
@@ -41,11 +44,41 @@ public static class MauiProgram
 
         // Register Business services, pages, and view models.
         builder.Services.AddBusinessApp();
+        ConfigurePlatformControlColors();
 
-    #if DEBUG
+#if DEBUG
         builder.Logging.AddDebug();
-    #endif
+#endif
 
         return builder.Build();
+    }
+
+    /// <summary>
+    /// Forces native input controls to use the approved Business gold tint instead of platform defaults.
+    /// </summary>
+    private static void ConfigurePlatformControlColors()
+    {
+#if ANDROID
+        var goldTint = ColorStateList.ValueOf(Color.ParseColor("#F4B223"));
+        var goldHighlight = Color.ParseColor("#F4B223");
+
+        EntryHandler.Mapper.AppendToMapping("BusinessGoldInputTint", static (handler, view) =>
+        {
+            handler.PlatformView.BackgroundTintList = goldTint;
+            handler.PlatformView.SetHighlightColor(goldHighlight);
+        });
+
+        EditorHandler.Mapper.AppendToMapping("BusinessGoldInputTint", static (handler, view) =>
+        {
+            handler.PlatformView.BackgroundTintList = goldTint;
+            handler.PlatformView.SetHighlightColor(goldHighlight);
+        });
+
+        PickerHandler.Mapper.AppendToMapping("BusinessGoldInputTint", static (handler, view) =>
+        {
+            handler.PlatformView.BackgroundTintList = goldTint;
+            handler.PlatformView.SetHighlightColor(goldHighlight);
+        });
+#endif
     }
 }

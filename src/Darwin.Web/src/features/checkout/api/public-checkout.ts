@@ -4,6 +4,7 @@ import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
 import type {
   PublicCheckoutAddress,
   PublicCheckoutIntent,
+  PublicStorefrontPaymentCompletion,
   PublicStorefrontOrderConfirmation,
   PublicStorefrontPaymentIntent,
   PlaceOrderFromCartResponse,
@@ -111,6 +112,28 @@ export async function createPublicStorefrontPaymentIntent(input: {
       body: JSON.stringify({
         orderNumber: input.orderNumber || undefined,
         provider: input.provider || undefined,
+      }),
+    },
+  );
+}
+
+export async function completePublicStorefrontPayment(input: {
+  orderId: string;
+  paymentId: string;
+  orderNumber?: string;
+  providerReference?: string;
+  outcome: "Succeeded" | "Cancelled" | "Failed";
+  failureReason?: string;
+}) {
+  return fetchCheckoutJson<PublicStorefrontPaymentCompletion>(
+    `/api/v1/public/checkout/orders/${input.orderId}/payments/${input.paymentId}/complete`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        orderNumber: input.orderNumber || undefined,
+        providerReference: input.providerReference || undefined,
+        outcome: input.outcome,
+        failureReason: input.failureReason || undefined,
       }),
     },
   );

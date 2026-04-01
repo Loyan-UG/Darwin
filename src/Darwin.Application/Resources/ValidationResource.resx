@@ -1,0 +1,566 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SiteSettingTitleRequired" xml:space="preserve">
+    <value>Title is required.</value>
+  </data>
+  <data name="SiteSettingJwtAccessTokenMinutesRange" xml:space="preserve">
+    <value>JwtAccessTokenMinutes must be between 1 and 1440 minutes.</value>
+  </data>
+  <data name="SiteSettingJwtRefreshTokenDaysRange" xml:space="preserve">
+    <value>JwtRefreshTokenDays must be between 1 and 3650 days.</value>
+  </data>
+  <data name="SiteSettingJwtSigningKeyEntropy" xml:space="preserve">
+    <value>JwtSigningKey must be a non-empty high-entropy secret.</value>
+  </data>
+  <data name="SiteSettingJwtClockSkewSecondsRange" xml:space="preserve">
+    <value>JwtClockSkewSeconds must be between 0 and 3600 seconds.</value>
+  </data>
+  <data name="SiteSettingMobileQrTokenRefreshSecondsRange" xml:space="preserve">
+    <value>MobileQrTokenRefreshSeconds must be between 1 and 3600 seconds.</value>
+  </data>
+  <data name="SiteSettingMobileMaxOutboxItemsRange" xml:space="preserve">
+    <value>MobileMaxOutboxItems must be between 1 and 10000.</value>
+  </data>
+  <data name="SiteSettingBusinessManagementWebsiteUrlHttps" xml:space="preserve">
+    <value>BusinessManagementWebsiteUrl must be an absolute HTTPS URL.</value>
+  </data>
+  <data name="SiteSettingImpressumUrlHttps" xml:space="preserve">
+    <value>ImpressumUrl must be an absolute HTTPS URL.</value>
+  </data>
+  <data name="SiteSettingPrivacyPolicyUrlHttps" xml:space="preserve">
+    <value>PrivacyPolicyUrl must be an absolute HTTPS URL.</value>
+  </data>
+  <data name="SiteSettingBusinessTermsUrlHttps" xml:space="preserve">
+    <value>BusinessTermsUrl must be an absolute HTTPS URL.</value>
+  </data>
+  <data name="SiteSettingAccountDeletionUrlHttps" xml:space="preserve">
+    <value>AccountDeletionUrl must be an absolute HTTPS URL.</value>
+  </data>
+  <data name="SiteSettingDefaultVatRatePercentRange" xml:space="preserve">
+    <value>DefaultVatRatePercent must be between 0 and 100.</value>
+  </data>
+  <data name="SiteSettingInvoiceIssuerCountryCode" xml:space="preserve">
+    <value>InvoiceIssuerCountry must be a 2-letter uppercase country code.</value>
+  </data>
+  <data name="SiteSettingDhlApiBaseUrlHttps" xml:space="preserve">
+    <value>DhlApiBaseUrl must be an absolute HTTPS URL.</value>
+  </data>
+  <data name="SiteSettingDhlShipperCountryCode" xml:space="preserve">
+    <value>DhlShipperCountry must be a 2-letter uppercase country code.</value>
+  </data>
+  <data name="SiteSettingShipmentAttentionDelayHoursRange" xml:space="preserve">
+    <value>ShipmentAttentionDelayHours must be between 1 and 720.</value>
+  </data>
+  <data name="SiteSettingShipmentTrackingGraceHoursRange" xml:space="preserve">
+    <value>ShipmentTrackingGraceHours must be between 1 and 720.</value>
+  </data>
+  <data name="SiteSettingSoftDeleteRetentionDaysRange" xml:space="preserve">
+    <value>SoftDeleteRetentionDays must be between 1 and 3650 days.</value>
+  </data>
+  <data name="SiteSettingSoftDeleteCleanupBatchSizeRange" xml:space="preserve">
+    <value>SoftDeleteCleanupBatchSize must be between 1 and 100000.</value>
+  </data>
+  <data name="SiteSettingDefaultCultureFormat" xml:space="preserve">
+    <value>DefaultCulture must be like 'de-DE'.</value>
+  </data>
+  <data name="SiteSettingSupportedCulturesCsvFormat" xml:space="preserve">
+    <value>SupportedCulturesCsv must be comma-separated cultures like 'de-DE,en-US'.</value>
+  </data>
+  <data name="SiteSettingMeasurementSystemInvalid" xml:space="preserve">
+    <value>MeasurementSystem must be 'Metric' or 'Imperial'.</value>
+  </data>
+  <data name="SiteSettingPhoneVerificationPreferredChannelInvalid" xml:space="preserve">
+    <value>Preferred phone verification channel must be Sms or WhatsApp.</value>
+  </data>
+  <data name="JournalEntryLineDebitOrCreditRequired" xml:space="preserve">
+    <value>Each journal line must contain either a debit or a credit amount.</value>
+  </data>
+  <data name="JournalEntryBalancedRequired" xml:space="preserve">
+    <value>Journal entry must be balanced.</value>
+  </data>
+  <data name="CustomerBusinessRequiresCompanyName" xml:space="preserve">
+    <value>Business customers should include a company name.</value>
+  </data>
+  <data name="InteractionSingleTargetRequired" xml:space="preserve">
+    <value>Exactly one CRM target must be selected for an interaction.</value>
+  </data>
+  <data name="ConsentRevocationTimestampRequired" xml:space="preserve">
+    <value>Revoked consents must include a revocation timestamp.</value>
+  </data>
+  <data name="TranslationsRequired" xml:space="preserve">
+    <value>Translations are required.</value>
+  </data>
+  <data name="AtLeastOneTranslationRequired" xml:space="preserve">
+    <value>At least one translation is required.</value>
+  </data>
+  <data name="AtLeastOneVariantRequired" xml:space="preserve">
+    <value>At least one variant is required.</value>
+  </data>
+  <data name="MenuUrlMustBeSupported" xml:space="preserve">
+    <value>Menu URLs must be rooted app paths like '/catalog' or absolute http/https URLs.</value>
+  </data>
+  <data name="RedirectRuleFromPathMustBeAppRelative" xml:space="preserve">
+    <value>FromPath must be app-relative and start with '/'.</value>
+  </data>
+  <data name="EitherUserIdOrRefreshTokenRequired" xml:space="preserve">
+    <value>Either UserId or RefreshToken must be provided.</value>
+  </data>
+  <data name="WarehouseIdValidWhenProvided" xml:space="preserve">
+    <value>WarehouseId must be a valid identifier when provided.</value>
+  </data>
+  <data name="BusinessIdValidWhenProvided" xml:space="preserve">
+    <value>BusinessId must be a valid identifier when provided.</value>
+  </data>
+  <data name="CustomerIdValidWhenProvided" xml:space="preserve">
+    <value>CustomerId must be a valid identifier when provided.</value>
+  </data>
+  <data name="PaymentIdValidWhenProvided" xml:space="preserve">
+    <value>PaymentId must be a valid identifier when provided.</value>
+  </data>
+  <data name="PointsDeltaMustNotBeZero" xml:space="preserve">
+    <value>PointsDelta must not be zero.</value>
+  </data>
+  <data name="ReasonRequiredWhenSubtractingPoints" xml:space="preserve">
+    <value>Reason is required when subtracting points.</value>
+  </data>
+  <data name="ScanSessionTokenRequired" xml:space="preserve">
+    <value>ScanSessionToken is required.</value>
+  </data>
+  <data name="PointsPositiveInteger" xml:space="preserve">
+    <value>Points must be a positive integer.</value>
+  </data>
+  <data name="BusinessIdRequired" xml:space="preserve">
+    <value>Business id is required.</value>
+  <comment>Validation/business message when business id is missing.</comment></data>
+  <data name="ModeInvalid" xml:space="preserve">
+    <value>Mode is invalid.</value>
+  </data>
+  <data name="AtLeastOneRewardRequiredForRedemption" xml:space="preserve">
+    <value>At least one reward must be selected for redemption.</value>
+  </data>
+  <data name="RewardTierIdCannotBeEmpty" xml:space="preserve">
+    <value>Reward tier id cannot be empty.</value>
+  </data>
+  <data name="DuplicateVariantLinesNotAllowed" xml:space="preserve">
+    <value>Duplicate variant lines are not allowed.</value>
+  </data>
+  <data name="EitherUserIdOrAnonymousIdRequired" xml:space="preserve">
+    <value>Either UserId or AnonymousId must be provided.</value>
+  </data>
+  <data name="OrderNotFound" xml:space="preserve">
+    <value>Order not found.</value>
+  </data>
+  <data name="PaymentCurrencyMustMatchOrderCurrency" xml:space="preserve">
+    <value>Payment currency does not match order currency.</value>
+  </data>
+  <data name="InvalidPaymentAmount" xml:space="preserve">
+    <value>Invalid payment amount.</value>
+  </data>
+  <data name="InvalidShipmentLineOrderMismatch" xml:space="preserve">
+    <value>Invalid shipment line: order line does not belong to the order.</value>
+  </data>
+  <data name="RefundsNotAllowedForFailedOrVoidedPayments" xml:space="preserve">
+    <value>Refunds cannot be recorded against failed or voided payments.</value>
+  </data>
+  <data name="RefundCurrencyMustMatchPaymentCurrency" xml:space="preserve">
+    <value>Refund currency does not match the payment currency.</value>
+  </data>
+  <data name="RefundAmountExceedsRemainingCapturedAmount" xml:space="preserve">
+    <value>Refund amount exceeds the remaining captured amount.</value>
+  </data>
+  <data name="ConcurrencyConflictOrderModified" xml:space="preserve">
+    <value>Concurrency conflict. The order was modified by another process.</value>
+  </data>
+  <data name="OrderTransitionNotAllowed" xml:space="preserve">
+    <value>Transition {0} to {1} is not allowed.</value>
+  </data>
+  <data name="LoyaltyProgramAlreadyExistsForBusiness" xml:space="preserve">
+    <value>A loyalty program already exists for this business.</value>
+  </data>
+  <data name="LoyaltyProgramNotFound" xml:space="preserve">
+    <value>Loyalty program not found.</value>
+  </data>
+  <data name="ConcurrencyConflictProgramModified" xml:space="preserve">
+    <value>Concurrency conflict. The program was modified by another process.</value>
+  </data>
+  <data name="RewardTierNotFound" xml:space="preserve">
+    <value>Reward tier not found.</value>
+  </data>
+  <data name="ConcurrencyConflictRewardTierModified" xml:space="preserve">
+    <value>Concurrency conflict. The tier was modified by another process.</value>
+  </data>
+  <data name="InventoryVariantsMissing" xml:space="preserve">
+    <value>One or more variants do not exist.</value>
+  </data>
+  <data name="InsufficientReservedStockForVariant" xml:space="preserve">
+    <value>Insufficient reserved stock for variant {0}.</value>
+  </data>
+  <data name="InvalidStockTransferStatus" xml:space="preserve">
+    <value>Invalid stock transfer status.</value>
+  </data>
+  <data name="InvalidPurchaseOrderStatus" xml:space="preserve">
+    <value>Invalid purchase order status.</value>
+  </data>
+  <data name="VariantNotFound" xml:space="preserve">
+    <value>Variant not found.</value>
+  </data>
+  <data name="TaxCategoryNotFound" xml:space="preserve">
+    <value>Tax category not found.</value>
+  </data>
+  <data name="LoyaltyAccountNotFound" xml:space="preserve">
+    <value>Loyalty account not found.</value>
+  </data>
+  <data name="BusinessMismatchForLoyaltyAccount" xml:space="preserve">
+    <value>Business mismatch for loyalty account.</value>
+  </data>
+  <data name="ConcurrencyConflictLoyaltyAccountModified" xml:space="preserve">
+    <value>Concurrency conflict. The loyalty account was modified by another process.</value>
+  </data>
+  <data name="LoyaltyAccountMustBeActiveForAdjustment" xml:space="preserve">
+    <value>The loyalty account is not active and cannot be adjusted.</value>
+  </data>
+  <data name="LoyaltyAdjustmentWouldResultInNegativeBalance" xml:space="preserve">
+    <value>The adjustment would result in a negative points balance.</value>
+  </data>
+  <data name="CouponCodeMustBeUniqueAmongActivePromotions" xml:space="preserve">
+    <value>Coupon code must be unique among active promotions.</value>
+  </data>
+  <data name="TaxCategoryNameMustBeUnique" xml:space="preserve">
+    <value>Tax category name must be unique.</value>
+  </data>
+  <data name="ShippingMethodCarrierServiceMustBeUnique" xml:space="preserve">
+    <value>Carrier/Service combination must be unique.</value>
+  </data>
+  <data name="FromPathMustBeUnique" xml:space="preserve">
+    <value>FromPath must be unique.</value>
+  </data>
+  <data name="ShippingMethodSameNameCarrierServiceAlreadyExists" xml:space="preserve">
+    <value>A shipping method with the same Name, Carrier, and Service already exists.</value>
+  </data>
+  <data name="ShippingMethodDifferentRecordAlreadyUsesNameCarrierService" xml:space="preserve">
+    <value>A different shipping method already uses this Name, Carrier, and Service.</value>
+  </data>
+  <data name="RowVersionRequired" xml:space="preserve">
+    <value>RowVersion is required.</value>
+  </data>
+  <data name="IdRequired" xml:space="preserve">
+    <value>Id is required.</value>
+  </data>
+  <data name="SlugMustBeUnique" xml:space="preserve">
+    <value>Slug must be unique.</value>
+  </data>
+  <data name="SlugMustBeUniquePerCulture" xml:space="preserve">
+    <value>Slug must be unique per culture.</value>
+  </data>
+  <data name="SimpleProductMustContainOneVariant" xml:space="preserve">
+    <value>Simple product must contain one variant.</value>
+  </data>
+  <data name="CategoryNotFound" xml:space="preserve">
+    <value>Category not found.</value>
+  </data>
+  <data name="PageNotFound" xml:space="preserve">
+    <value>Page not found.</value>
+  </data>
+  <data name="SiteSettingRowNotFound" xml:space="preserve">
+    <value>SiteSetting row not found.</value>
+  </data>
+  <data name="BillingPlanCodeMustBeUnique" xml:space="preserve">
+    <value>Billing plan code must be unique.</value>
+  </data>
+  <data name="BillingPlanNotFound" xml:space="preserve">
+    <value>Billing plan not found.</value>
+  </data>
+  <data name="ConcurrencyConflictDetected" xml:space="preserve">
+    <value>Concurrency conflict detected.</value>
+  </data>
+  <data name="InvoiceNotFound" xml:space="preserve">
+    <value>Invoice not found.</value>
+  </data>
+  <data name="LinkedCustomerNotFound" xml:space="preserve">
+    <value>Linked customer not found.</value>
+  </data>
+  <data name="LinkedPaymentNotFound" xml:space="preserve">
+    <value>Linked payment not found.</value>
+  </data>
+  <data name="LinkedPaymentAlreadyAssignedToAnotherInvoice" xml:space="preserve">
+    <value>Linked payment is already assigned to another invoice.</value>
+  </data>
+  <data name="InvoicesCannotBeMarkedAsPaidWhileLinkedPaymentIsFailedVoidedOrRefunded" xml:space="preserve">
+    <value>Invoices cannot be marked as paid while the linked payment is failed, voided, or refunded.</value>
+  </data>
+  <data name="PaidInvoicesMustBeRefundedBeforeCancellation" xml:space="preserve">
+    <value>Paid invoices must be refunded before cancellation.</value>
+  </data>
+  <data name="UnsupportedInvoiceStatusTransition" xml:space="preserve">
+    <value>Unsupported invoice status transition.</value>
+  </data>
+  <data name="OnlyInvoicesWithLinkedPaymentCanBeRefunded" xml:space="preserve">
+    <value>Only invoices with a linked payment can be refunded.</value>
+  </data>
+  <data name="OnlyCapturedOrCompletedPaymentsCanBeRefunded" xml:space="preserve">
+    <value>Only captured or completed payments can be refunded. Void the invoice/payment if funds were not collected.</value>
+  </data>
+  <data name="RefundCurrencyMustMatchLinkedInvoiceAndPaymentCurrency" xml:space="preserve">
+    <value>Refund currency must match the linked invoice and payment currency.</value>
+  </data>
+  <data name="NoRefundableAmountRemainingOnInvoice" xml:space="preserve">
+    <value>There is no refundable amount remaining on the invoice.</value>
+  </data>
+  <data name="RefundAmountExceedsRemainingRefundableAmountOnInvoice" xml:space="preserve">
+    <value>Refund amount exceeds the remaining refundable amount on the invoice.</value>
+  </data>
+  <data name="PaymentNotFound" xml:space="preserve">
+    <value>Payment not found.</value>
+  </data>
+  <data name="FinancialAccountNotFound" xml:space="preserve">
+    <value>Financial account not found.</value>
+  </data>
+  <data name="ExpenseNotFound" xml:space="preserve">
+    <value>Expense not found.</value>
+  </data>
+  <data name="JournalEntryNotFound" xml:space="preserve">
+    <value>Journal entry not found.</value>
+  </data>
+  <data name="BusinessNotFound" xml:space="preserve">
+    <value>Business not found.</value>
+  </data>
+  <data name="CustomerNotFound" xml:space="preserve">
+    <value>Customer not found.</value>
+  </data>
+  <data name="LeadNotFound" xml:space="preserve">
+    <value>Lead not found.</value>
+  </data>
+  <data name="OpportunityNotFound" xml:space="preserve">
+    <value>Opportunity not found.</value>
+  </data>
+  <data name="LinkedUserNotFound" xml:space="preserve">
+    <value>Linked user not found.</value>
+  </data>
+  <data name="CustomerSegmentNameAlreadyExists" xml:space="preserve">
+    <value>A segment with the same name already exists.</value>
+  </data>
+  <data name="CustomerSegmentNotFound" xml:space="preserve">
+    <value>Segment not found.</value>
+  </data>
+  <data name="CustomerAlreadyAssignedToSegment" xml:space="preserve">
+    <value>Customer is already assigned to this segment.</value>
+  </data>
+  <data name="CustomerSegmentMembershipNotFound" xml:space="preserve">
+    <value>Membership not found.</value>
+  </data>
+  <data name="AddOnGroupNotFound" xml:space="preserve">
+    <value>Add-on group not found.</value>
+  </data>
+  <data name="MediaAssetNotFound" xml:space="preserve">
+    <value>Media asset not found.</value>
+  </data>
+  <data name="BrandNotFound" xml:space="preserve">
+    <value>Brand not found.</value>
+  </data>
+  <data name="ProductNotFound" xml:space="preserve">
+    <value>Product not found.</value>
+  </data>
+  <data name="MenuNotFound" xml:space="preserve">
+    <value>Menu not found.</value>
+  </data>
+  <data name="PromotionNotFound" xml:space="preserve">
+    <value>Promotion not found.</value>
+  </data>
+  <data name="RedirectRuleNotFound" xml:space="preserve">
+    <value>Redirect rule not found.</value>
+  </data>
+  <data name="ShippingMethodNotFound" xml:space="preserve">
+    <value>Shipping method not found.</value>
+  </data>
+  <data name="InventoryReleaseFailedDueToConcurrentChangeOrInsufficientReserved" xml:space="preserve">
+    <value>Release failed due to concurrent change or insufficient reserved quantity.</value>
+  </data>
+  <data name="CategoryModifiedByAnotherUser" xml:space="preserve">
+    <value>The category was modified by another user.</value>
+  </data>
+  <data name="ProductModifiedByAnotherUserPleaseReload" xml:space="preserve">
+    <value>The product was modified by another user. Please reload and try again.</value>
+  </data>
+  <data name="PageModifiedByAnotherUser" xml:space="preserve">
+    <value>The page was modified by another user.</value>
+  </data>
+  <data name="CurrentUserIdNotAvailable" xml:space="preserve">
+    <value>Current user id is not available.</value>
+  </data>
+  <data name="SettingsModifiedByAnotherUser" xml:space="preserve">
+    <value>The settings were modified by another user.</value>
+  </data>
+  <data name="BusinessInvitationEmailAlreadyBelongsToExistingMember" xml:space="preserve">
+    <value>This email already belongs to a member of the business. Assign or update the existing membership instead.</value>
+  </data>
+  <data name="BusinessInvitationPendingOrExpiredAlreadyExistsForEmail" xml:space="preserve">
+    <value>A pending or expired invitation already exists for this email. Use resend instead of creating a duplicate invitation.</value>
+  </data>
+  <data name="InvitationNotFound" xml:space="preserve">
+    <value>Invitation not found.</value>
+  </data>
+  <data name="AcceptedInvitationsCannotBeResent" xml:space="preserve">
+    <value>Accepted invitations cannot be resent.</value>
+  </data>
+  <data name="RevokedInvitationsCannotBeResent" xml:space="preserve">
+    <value>Revoked invitations cannot be resent. Create a new invitation instead.</value>
+  </data>
+  <data name="AcceptedInvitationsCannotBeRevoked" xml:space="preserve">
+    <value>Accepted invitations cannot be revoked.</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>User not found.</value>
+  </data>
+  <data name="BusinessMemberUserAlreadyAssignedToSelectedBusiness" xml:space="preserve">
+    <value>This user is already assigned to the selected business.</value>
+  </data>
+  <data name="BusinessMemberNotFound" xml:space="preserve">
+    <value>Business member not found.</value>
+  </data>
+  <data name="AtLeastOneActiveOwnerMustRemainAssignedToBusiness" xml:space="preserve">
+    <value>At least one active owner must remain assigned to the business. Open the membership details to force an override with an explicit reason.</value>
+  </data>
+  <data name="CartNotFound" xml:space="preserve">
+    <value>Cart not found.</value>
+  </data>
+  <data name="CouponIsInvalidOrInactive" xml:space="preserve">
+    <value>Coupon is invalid or inactive.</value>
+  </data>
+  <data name="CartLineNotFound" xml:space="preserve">
+    <value>Cart line not found.</value>
+  </data>
+  <data name="QuantityMustBeZeroOrPositive" xml:space="preserve">
+    <value>Quantity must be zero or positive.</value>
+  </data>
+  <data name="CartIdRequired" xml:space="preserve">
+    <value>CartId is required.</value>
+  </data>
+  <data name="ShippingTotalMinorMustBeZeroOrPositive" xml:space="preserve">
+    <value>ShippingTotalMinor must be zero or positive.</value>
+  </data>
+  <data name="CartDoesNotBelongToCurrentUser" xml:space="preserve">
+    <value>Cart does not belong to the current user.</value>
+  </data>
+  <data name="CartIsEmpty" xml:space="preserve">
+    <value>Cart is empty.</value>
+  </data>
+  <data name="ShippingMethodRequiredForCurrentCheckout" xml:space="preserve">
+    <value>A shipping method is required for the current checkout.</value>
+  </data>
+  <data name="ShippingTotalDoesNotMatchAuthoritativeCheckoutIntent" xml:space="preserve">
+    <value>Shipping total does not match the authoritative checkout intent.</value>
+  </data>
+  <data name="ShippingTotalMustBeZeroWhenCheckoutDoesNotRequireShipping" xml:space="preserve">
+    <value>Shipping total must be zero when checkout does not require shipping.</value>
+  </data>
+  <data name="CartSummaryMissingRequiredLineForCheckout" xml:space="preserve">
+    <value>Cart summary is missing a line required for checkout.</value>
+  </data>
+  <data name="SignedInUserRequiredToUseSavedAddress" xml:space="preserve">
+    <value>A signed-in user is required to use a saved {0} address.</value>
+  </data>
+  <data name="SavedAddressNotFound" xml:space="preserve">
+    <value>Saved {0} address not found.</value>
+  </data>
+  <data name="AddressRequired" xml:space="preserve">
+    <value>A {0} address is required.</value>
+  </data>
+  <data name="AddressIncomplete" xml:space="preserve">
+    <value>The {0} address is incomplete.</value>
+  </data>
+  <data name="OrderIdRequired" xml:space="preserve">
+    <value>OrderId is required.</value>
+  </data>
+  <data name="OrderConfirmationContextIsInvalid" xml:space="preserve">
+    <value>Order confirmation context is invalid.</value>
+  </data>
+  <data name="PaymentCannotBeInitiatedForCancelledOrRefundedOrder" xml:space="preserve">
+    <value>Payment cannot be initiated for a cancelled or refunded order.</value>
+  </data>
+  <data name="OrderIsAlreadySettled" xml:space="preserve">
+    <value>Order is already settled.</value>
+  </data>
+  <data name="OrderIdAndPaymentIdAreRequired" xml:space="preserve">
+    <value>OrderId and PaymentId are required.</value>
+  </data>
+  <data name="PaymentNotFoundForOrder" xml:space="preserve">
+    <value>Payment not found for the order.</value>
+  </data>
+  <data name="PaymentIsAlreadyFinalized" xml:space="preserve">
+    <value>Payment is already finalized.</value>
+  </data>
+  <data name="UnsupportedStorefrontPaymentOutcome" xml:space="preserve">
+    <value>Unsupported storefront payment outcome.</value>
+  </data>
+  <data name="CartVariantsNoLongerAvailable" xml:space="preserve">
+    <value>One or more cart variants are no longer available.</value>
+  </data>
+  <data name="NoShippingOptionsAvailableForCurrentCheckout" xml:space="preserve">
+    <value>No shipping options are available for the current checkout.</value>
+  </data>
+  <data name="SelectedShippingMethodInvalidForCurrentCheckout" xml:space="preserve">
+    <value>Selected shipping method is not valid for the current checkout.</value>
+  </data>
+  <data name="SignedInUserRequiredToUseSavedShippingAddress" xml:space="preserve">
+    <value>A signed-in user is required to use a saved shipping address.</value>
+  </data>
+  <data name="SavedShippingAddressNotFound" xml:space="preserve">
+    <value>Saved shipping address not found.</value>
+  </data>
+  <data name="ShippingAddressWithCountryCodeRequired" xml:space="preserve">
+    <value>A shipping address with a country code is required.</value>
+  </data>
+  <data name="OwningProductNotFound" xml:space="preserve">
+    <value>Owning product not found.</value>
+  </data>
+  <data name="NoAddOnsApplicableButSelectionsWereProvided" xml:space="preserve">
+    <value>No add-ons are applicable to this product, but selections were provided.</value>
+  </data>
+  <data name="SelectedAddOnValuesDoNotBelongToApplicableGroups" xml:space="preserve">
+    <value>One or more selected add-on values do not belong to applicable groups.</value>
+  </data>
+  <data name="AddOnGroupRequiresMinimumSelections" xml:space="preserve">
+    <value>Add-on group '{0}' requires at least {1} selection(s).</value>
+  </data>
+  <data name="AddOnGroupAllowsMaximumSelections" xml:space="preserve">
+    <value>Add-on group '{0}' allows at most {1} selection(s).</value>
+  </data>
+  <data name="AddOnGroupAllowsOnlySingleSelection" xml:space="preserve">
+    <value>Add-on group '{0}' allows only one selection (single-choice).</value>
+  </data>
+  <data name="DuplicateAddOnSelectionsAreNotAllowed" xml:space="preserve">
+    <value>Duplicate add-on selections are not allowed.</value>
+  </data>
+  <data name="NoWarehouseIsConfigured" xml:space="preserve">
+    <value>No warehouse is configured.</value>
+  </data>
+  <data name="InsufficientAvailableStock" xml:space="preserve">
+    <value>Insufficient available stock.</value>
+  </data>
+  <data name="InsufficientAvailableStockForReservation" xml:space="preserve">
+    <value>Insufficient available stock for reservation.</value>
+  </data>
+  <data name="SiteSettingAdminTextOverridesJsonInvalid" xml:space="preserve">
+    <value>Admin UI text overrides JSON must be a valid object map in the form { ""de-DE"": { ""Key"": ""Value"" } }.</value>
+  </data>
+  <data name="BusinessAdminTextOverridesJsonInvalid" xml:space="preserve">
+    <value>Business admin text overrides must be valid JSON.</value>
+    <comment>Validation message for invalid business-level admin text override JSON.</comment>
+  </data>
+  <data name="LoyaltyAccountIdRequired" xml:space="preserve">
+    <value>Loyalty account id is required.</value>
+    <comment>Validation/business message when loyalty account id is missing.</comment>
+  </data>
+</root>

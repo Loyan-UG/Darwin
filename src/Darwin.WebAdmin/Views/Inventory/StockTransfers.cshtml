@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockTransfersListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Stock Transfers";
+    ViewData["Title"] = T.T("StockTransfersTitle");
 }
 
 <div id="inventory-stock-transfers-workspace-shell">
-<h1 class="mb-3">Stock Transfers</h1>
+<h1 class="mb-3">@T.T("StockTransfersTitle")</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="StockTransfers" method="get" class="d-flex gap-2"
@@ -14,20 +15,20 @@
           hx-push-url="true">
         <input type="hidden" name="businessId" value="@ViewBag.BusinessId" />
         <select name="warehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search transfers">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchTransfersPlaceholder")">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
            hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
            hx-target="#inventory-stock-transfers-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
+           hx-push-url="true">@T.T("Reset")</a>
     </form>
     <a asp-action="CreateStockTransfer" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary"
        hx-get="@Url.Action("CreateStockTransfer", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">New Transfer</a>
+       hx-push-url="true">@T.T("NewTransfer")</a>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
@@ -35,29 +36,29 @@
        hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Draft" })"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Draft</a>
+       hx-push-url="true">@T.T("Draft")</a>
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="InTransit" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockTransferQueueFilter.InTransit ? "btn-warning" : "btn-outline-warning")"
        hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "InTransit" })"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">In Transit</a>
+       hx-push-url="true">@T.T("InTransit")</a>
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Completed" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockTransferQueueFilter.Completed ? "btn-success" : "btn-outline-success")"
        hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Completed" })"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Completed</a>
+       hx-push-url="true">@T.T("Completed")</a>
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
        hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query })"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">Clear Queue Filters</a>
+       hx-push-url="true">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card h-100">
             <div class="card-body">
-                <div class="text-muted small">Total</div>
+                <div class="text-muted small">@T.T("Total")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
             </div>
         </div>
@@ -65,7 +66,7 @@
     <div class="col-md-3">
         <div class="card h-100 border-secondary-subtle">
             <div class="card-body">
-                <div class="text-muted small">Draft</div>
+                <div class="text-muted small">@T.T("Draft")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.DraftCount</div>
             </div>
         </div>
@@ -73,7 +74,7 @@
     <div class="col-md-3">
         <div class="card h-100 border-warning-subtle">
             <div class="card-body">
-                <div class="text-muted small">In Transit</div>
+                <div class="text-muted small">@T.T("InTransit")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.InTransitCount</div>
             </div>
         </div>
@@ -81,7 +82,7 @@
     <div class="col-md-3">
         <div class="card h-100 border-success-subtle">
             <div class="card-body">
-                <div class="text-muted small">Completed</div>
+                <div class="text-muted small">@T.T("Completed")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.CompletedCount</div>
             </div>
         </div>
@@ -91,14 +92,14 @@
 @if (Model.Playbooks.Count > 0)
 {
     <div class="card mb-4">
-        <div class="card-header">Stock Transfer Ops Playbooks</div>
+        <div class="card-header">@T.T("StockTransferOpsPlaybooks")</div>
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead>
                 <tr>
-                    <th>Playbook</th>
-                    <th>When It Applies</th>
-                    <th>Operator Action</th>
+                    <th>@T.T("Playbook")</th>
+                    <th>@T.T("WhenItApplies")</th>
+                    <th>@T.T("OperatorAction")</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -118,11 +119,11 @@
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>From</th><th>To</th><th>Status</th><th>Lines</th><th>Created</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>@T.T("From")</th><th>@T.T("To")</th><th>@T.T("Status")</th><th>@T.T("Lines")</th><th>@T.T("Created")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">No stock transfers found.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted">@T.T("NoStockTransfersFound")</td></tr>
         }
         else
         {
@@ -134,11 +135,11 @@
                     <td>
                         @if (string.Equals(item.Status, "InTransit", StringComparison.OrdinalIgnoreCase))
                         {
-                            <span class="badge text-bg-warning">In Transit</span>
+                            <span class="badge text-bg-warning">@T.T("InTransit")</span>
                         }
                         else if (string.Equals(item.Status, "Completed", StringComparison.OrdinalIgnoreCase))
                         {
-                            <span class="badge text-bg-success">Completed</span>
+                            <span class="badge text-bg-success">@T.T("Completed")</span>
                         }
                         else
                         {
@@ -151,7 +152,7 @@
                            hx-get="@Url.Action("EditStockTransfer", "Inventory", new { id = item.Id })"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">Edit</a></td>
+                           hx-push-url="true">@T.T("Edit")</a></td>
                 </tr>
             }
         }

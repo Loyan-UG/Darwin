@@ -7,6 +7,7 @@ using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Pricing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CartCheckout.Commands
 {
@@ -18,12 +19,17 @@ namespace Darwin.Application.CartCheckout.Commands
     public sealed class ApplyCouponHandler
     {
         private readonly IAppDbContext _db;
-        public ApplyCouponHandler(IAppDbContext db) => _db = db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+        public ApplyCouponHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(CartApplyCouponDto dto, CancellationToken ct = default)
         {
             var cart = await _db.Set<Cart>().FirstOrDefaultAsync(c => c.Id == dto.CartId && !c.IsDeleted, ct)
-                       ?? throw new InvalidOperationException("Cart not found.");
+                       ?? throw new InvalidOperationException(_localizer["CartNotFound"]);
 
             // Clear
             if (string.IsNullOrWhiteSpace(dto.CouponCode))
@@ -46,7 +52,7 @@ namespace Darwin.Application.CartCheckout.Commands
                     ct);
 
             if (promo == null)
-                throw new InvalidOperationException("Coupon is invalid or inactive.");
+                throw new InvalidOperationException(_localizer["CouponIsInvalidOrInactive"]);
 
             // (Optional) You can add more checks here: max redemptions, per-customer limits, etc.
             cart.CouponCode = dto.CouponCode!.Trim();

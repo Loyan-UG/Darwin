@@ -1,15 +1,16 @@
 @model IReadOnlyList<Darwin.WebAdmin.ViewModels.Businesses.BusinessSupportFailedEmailVm>
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="support-queue-failed-emails" class="card h-100">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Recent Failed Email Events</span>
+        <span>@T.T("RecentFailedEmailEvents")</span>
         <div class="d-flex gap-2">
             <button type="button"
                     class="btn btn-sm btn-outline-secondary"
                     hx-get="@Url.Action("SupportQueueFailedEmailsFragment", "Businesses")"
                     hx-target="#support-queue-failed-emails"
                     hx-swap="outerHTML">
-                Refresh
+                @T.T("Refresh")
             </button>
             <a asp-controller="BusinessCommunications"
                asp-action="EmailAudits"
@@ -17,13 +18,13 @@
                class="btn btn-sm btn-outline-secondary"
                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed" })"
                hx-target="#business-support-queue-workspace-shell"
-               hx-swap="outerHTML">Full Audit Log</a>
+               hx-swap="outerHTML">@T.T("FullAuditLog")</a>
         </div>
     </div>
     <div class="card-body">
         @if (Model.Count == 0)
         {
-            <div class="text-muted">No failed phase-1 email events are currently queued.</div>
+            <div class="text-muted">@T.T("NoFailedEmailEventsQueued")</div>
         }
         else
         {
@@ -33,7 +34,7 @@
                     <div class="list-group-item px-0">
                         <div class="d-flex justify-content-between gap-2">
                             <div>
-                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</div>
+                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</div>
                                 <div class="small text-muted">@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</div>
                             </div>
                             @if (item.BusinessId.HasValue)
@@ -44,7 +45,7 @@
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
                                    hx-target="#business-support-queue-workspace-shell"
-                                   hx-swap="outerHTML">Business</a>
+                                   hx-swap="outerHTML">@T.T("BusinessLabel")</a>
                             }
                         </div>
                         <div class="small mt-2">@item.RecipientEmail</div>
@@ -63,7 +64,7 @@
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.FlowKey, businessId = item.BusinessId })"
                                hx-target="#business-support-queue-workspace-shell"
-                               hx-swap="outerHTML">Open Similar Failures</a>
+                               hx-swap="outerHTML">@T.T("OpenSimilarFailures")</a>
                             @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                             {
                                 <a asp-action="Invitations"
@@ -72,7 +73,7 @@
                                    class="btn btn-sm btn-outline-primary"
                                    hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, filter = "Open" })"
                                    hx-target="#business-support-queue-workspace-shell"
-                                   hx-swap="outerHTML">Open Invitations</a>
+                                   hx-swap="outerHTML">@T.T("OpenInvitations")</a>
                             }
                             else if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase))
                             {
@@ -82,7 +83,7 @@
                                    class="btn btn-sm btn-outline-primary"
                                    hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, filter = "PendingActivation" })"
                                    hx-target="#business-support-queue-workspace-shell"
-                                   hx-swap="outerHTML">Open Members</a>
+                                   hx-swap="outerHTML">@T.T("OpenMembers")</a>
                             }
                         </div>
                     </div>

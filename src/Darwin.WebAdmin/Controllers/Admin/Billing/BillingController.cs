@@ -182,7 +182,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 var id = await _createBillingPlan.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Billing plan created.";
+                SetSuccessMessage("BillingPlanCreatedMessage");
                 return RedirectOrHtmx(nameof(EditPlan), new { id });
             }
             catch (Exception ex)
@@ -199,7 +199,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var dto = await _getBillingPlanForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Billing plan not found.";
+                SetErrorMessage("BillingPlanNotFoundMessage");
                 return RedirectOrHtmx(nameof(Plans), new { });
             }
 
@@ -253,12 +253,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 await _updateBillingPlan.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Billing plan updated.";
+                SetSuccessMessage("BillingPlanUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditPlan), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the billing plan and try again.";
+                SetErrorMessage("BillingPlanConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditPlan), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -745,7 +745,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 var id = await _createPayment.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Payment created.";
+                SetSuccessMessage("PaymentCreatedMessage");
                 return RedirectOrHtmx(nameof(EditPayment), new { id });
             }
             catch (Exception ex)
@@ -762,7 +762,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var dto = await _getPaymentForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Payment not found.";
+                SetErrorMessage("PaymentNotFoundMessage");
                 return RedirectOrHtmx(nameof(Payments), new { });
             }
 
@@ -846,12 +846,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 await _updatePayment.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Payment updated.";
+                SetSuccessMessage("PaymentUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditPayment), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the payment and try again.";
+                SetErrorMessage("PaymentConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditPayment), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -976,7 +976,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 var id = await _createAccount.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Financial account created.";
+                SetSuccessMessage("FinancialAccountCreatedMessage");
                 return RedirectOrHtmx(nameof(EditFinancialAccount), new { id });
             }
             catch (Exception ex)
@@ -993,7 +993,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var dto = await _getAccountForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Financial account not found.";
+                SetErrorMessage("FinancialAccountNotFoundMessage");
                 return RedirectOrHtmx(nameof(FinancialAccounts), new { });
             }
 
@@ -1033,12 +1033,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 await _updateAccount.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Financial account updated.";
+                SetSuccessMessage("FinancialAccountUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditFinancialAccount), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the financial account and try again.";
+                SetErrorMessage("FinancialAccountConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditFinancialAccount), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -1124,7 +1124,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 var id = await _createExpense.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Expense created.";
+                SetSuccessMessage("ExpenseCreatedMessage");
                 return RedirectOrHtmx(nameof(EditExpense), new { id });
             }
             catch (Exception ex)
@@ -1141,7 +1141,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var dto = await _getExpenseForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Expense not found.";
+                SetErrorMessage("ExpenseNotFoundMessage");
                 return RedirectOrHtmx(nameof(Expenses), new { });
             }
 
@@ -1185,12 +1185,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 await _updateExpense.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Expense updated.";
+                SetSuccessMessage("ExpenseUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditExpense), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the expense and try again.";
+                SetErrorMessage("ExpenseConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditExpense), new { id = vm.Id });
             }
             catch (Exception ex)
@@ -1288,7 +1288,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 var id = await _createJournalEntry.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Journal entry created.";
+                SetSuccessMessage("JournalEntryCreatedMessage");
                 return RedirectOrHtmx(nameof(EditJournalEntry), new { id });
             }
             catch (Exception ex)
@@ -1306,7 +1306,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var dto = await _getJournalEntryForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
-                TempData["Error"] = "Journal entry not found.";
+                SetErrorMessage("JournalEntryNotFoundMessage");
                 return RedirectOrHtmx(nameof(JournalEntries), new { });
             }
 
@@ -1362,12 +1362,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             try
             {
                 await _updateJournalEntry.HandleAsync(dto, ct).ConfigureAwait(false);
-                TempData["Success"] = "Journal entry updated.";
+                SetSuccessMessage("JournalEntryUpdatedMessage");
                 return RedirectOrHtmx(nameof(EditJournalEntry), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
-                TempData["Error"] = "Concurrency conflict. Reload the journal entry and try again.";
+                SetErrorMessage("JournalEntryConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditJournalEntry), new { id = vm.Id });
             }
             catch (Exception ex)

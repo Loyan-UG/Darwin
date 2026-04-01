@@ -23,7 +23,7 @@ It is separate from `Darwin.WebAdmin`, which remains the staff-facing operationa
 
 - `In Progress`: the front-office direction is defined and the main WebAdmin/operator prerequisites are now documented
 - `Execution can start`: the public/member `Darwin.WebApi` surface is now broad enough to support a real first slice instead of only speculative planning
-- `Current codebase state`: `src/Darwin.Web` is still a minimal Next.js starter and has not yet been reshaped into a real storefront/member-portal architecture
+- `Current codebase state`: `src/Darwin.Web` has already moved beyond the raw starter into a real storefront/member-portal shell with live public and member API consumption
 - `Dependency-heavy`: it still depends on `Darwin.WebApi`, core backend rules, and operational readiness from `Darwin.WebAdmin`
 
 The previous platform priority was to finish `WebAdmin` and the admin/backend capabilities needed for real operations and onboarding first.
@@ -72,7 +72,7 @@ The first web slice is now in place:
 - a theme-isolated storefront shell now exists in `Darwin.Web`
 - the shell uses a Cartzilla-inspired visual direction without coupling feature logic to one theme
 - primary navigation now attempts to load from the public CMS menu contract and falls back to app-defined links when the API or seed data is unavailable
-- the home page is intentionally minimal and built through a reusable page-part composition path
+- the home page now uses reusable hero/card web parts and can surface live CMS/catalog spotlight data without coupling page structure to one theme
 - route scaffolding now exists for catalog, account, loyalty, orders, and invoices so later slices can bind feature data without reworking the shell
 
 The next storefront slice is now also underway:
@@ -80,10 +80,81 @@ The next storefront slice is now also underway:
 - the catalog listing page now consumes public category and product contracts from `Darwin.WebApi`
 - product-detail routing now consumes the public product-by-slug contract
 - a public CMS index route now consumes the published CMS page list contract
+- CMS detail pages now expose route metadata, related-page navigation, and visible degraded-state handling instead of collapsing non-404 failures into a not-found route
 - a public cart route now consumes the public cart contract and supports server-side add/update/remove flows for anonymous storefront usage
 - a public checkout route now consumes checkout-intent and order-placement contracts with inline address capture and shipping selection
 - a public confirmation route now consumes storefront confirmation data and exposes payment-handoff retry through the payment-intent contract
 - degraded-mode storefront data states are now visible in the UI instead of silently collapsing into placeholder-only behavior
+- catalog list/detail now pass the active request culture into the canonical public catalog endpoints, so storefront localization no longer depends on the backend default culture leaking through
+- catalog merchandising polish now stays within the real public contract set: selected-category context, compare-at savings badges, and category-linked navigation were added without pretending search/facets/sort already exist
+
+The first account self-service foundation is now also in place:
+
+- `/account` is now a real self-service hub instead of a pure placeholder
+- public registration now runs through the member auth register endpoint
+- activation email request and token confirmation now run through the member auth activation endpoints
+- password reset request and completion now run through the member auth reset endpoints
+- browser sign-in persistence, member profile editing, addresses, and the authenticated portal remain a distinct follow-up slice because the final browser auth/session transport is still an explicit platform decision
+
+The next member-portal slice is now also in place:
+
+- `Darwin.Web` now has a provisional browser session layer that stores member session state in web-owned cookies rather than exposing raw tokens in the UI
+- the provisional browser session layer now refreshes member access tokens near expiry and retries protected member fetches once before forcing a new sign-in
+- the authenticated account route now renders profile, preference, and linked CRM context snapshots from the member API surface
+- editable member profile and communication/account preferences now run through the canonical member profile endpoints
+- reusable member address-book create/update/delete/default flows now run through the canonical member address endpoints
+- phone verification request/confirm now runs inside the profile surface through the canonical SMS/WhatsApp verification endpoints and shared profile confirmation flag
+- orders and invoices now render authenticated history pages plus detail routes with payment-retry handoff
+- loyalty now renders the authenticated overview instead of remaining a placeholder page
+- loyalty business detail routes now render business-scoped dashboard, rewards, and cursor-paged timeline data from the member contracts
+- this remains an implementation boundary, not a permanent architecture verdict; deeper BFF/session hardening can still replace the current web-owned cookie wrapper later
+
+The next localization/config-driven slice is now also in place:
+
+- `Darwin.Web` now treats `de-DE` and `en-US` as the current supported front-office cultures and resolves the active culture through config plus a web-owned culture cookie
+- query-string culture switching now lands through middleware so `?culture=de-DE|en-US` becomes a persisted preference instead of an ad hoc page-only toggle
+- shell fallback navigation/footer copy now follows the active culture instead of staying hardcoded in one language
+- shared shell/catalog/storefront-commerce wording is now moving onto resource bundles under `src/Darwin.Web/src/localization/resources`, aligned with the same de/en-first additive strategy already being established across WebAdmin and mobile
+- money and date formatting across catalog, cart, checkout, orders, invoices, and loyalty now follow the active request culture instead of assuming `de-DE`
+- profile locale editing now follows the supported-cultures config instead of accepting an unrestricted free-text locale
+- multilingual CMS/content operations still remain a separate platform dependency; the current slice only makes the web runtime localization-ready and aligned with the shared de/en baseline
+
+The next loyalty engagement slice is now also in place:
+
+- `/loyalty` now consumes both the aggregate overview and the richer `my/businesses` contract so joined loyalty places render with business image/category/city context instead of only flat account summaries
+- `/loyalty/[businessId]` now consumes personalized promotions for the selected business in addition to dashboard, rewards, and timeline data
+- promotion CTA interactions now post through the canonical member promotions tracking endpoint instead of inventing a web-local engagement event path
+
+The next loyalty discovery slice is now also in place:
+
+- `/loyalty` now also consumes public business discovery plus category-kinds metadata, so loyalty-ready businesses remain browseable before the member signs in or joins a business
+- `/loyalty/[businessId]` now uses canonical public business detail as the pre-join experience for anonymous or not-yet-joined members instead of collapsing immediately into an auth-only route
+- direct join from `/loyalty/[businessId]` now posts through the canonical member loyalty join contract and can optionally pass a preferred business location
+- member-only balances, promotions, and timeline data remain behind the authenticated portal, so public discovery does not fork the loyalty contract model away from mobile/member usage
+- `/loyalty` now also supports query-driven latitude/longitude/radius proximity filtering and a server-rendered coordinate preview driven by the same public discovery result set
+- `Darwin.Web` deliberately does not consume `public/businesses/map` yet for the loyalty surface, because that contract currently lacks a loyalty-active filter and could mix non-loyalty businesses into a loyalty-only discovery page
+
+The next loyalty scan-preparation slice is now also in place:
+
+- `/loyalty/[businessId]` now prepares canonical browser-side scan sessions for accrual or redemption through `POST /api/v1/member/loyalty/scan/prepare`
+- branch selection and redeemable reward selection now feed directly into that canonical member contract instead of relying on a web-local scan model
+- the returned short-lived scan token is intentionally kept in a short-lived web-owned cookie and rendered back on the page, rather than being exposed in the URL
+- the active prepared token now also renders as a real QR image on `/loyalty/[businessId]`, making the browser-prepared flow directly usable for staff-side scanning
+- camera/scanner-specific browser flows still remain later-phase; the current slice focuses on making the shared scan-preparation contract usable from the web portal without inventing a separate web token model
+
+The next member-commerce hardening slice is now also in place:
+
+- order detail now renders canonical member payment attempts, shipment snapshots, linked invoice summaries, and direct document download against the member order contract
+- invoice detail now renders canonical payment summary plus direct document download against the member invoice contract
+- document download links now resolve against the configured `Darwin.WebApi` base URL instead of incorrectly treating API contract paths as internal Next.js routes
+
+The next storefront-commerce hardening slice is now also in place:
+
+- the public cart now consumes the canonical coupon apply/clear contract instead of ignoring available promotion/billing adjustments
+- cart line presentation now shows unit net, add-on delta, VAT rate, line net, VAT, and line gross from the canonical cart snapshot instead of only a single gross total
+- checkout summary now surfaces coupon state plus shipment-mass/shipping-country context from the live checkout intent so DHL-first and tax presentation are less opaque during storefront review
+- storefront confirmation now finalizes hosted-checkout return and cancellation through the canonical payment-completion endpoint instead of only showing a post-redirect snapshot
+- a short-lived web-owned payment handoff cookie now exists purely to bridge the PSP return into canonical completion; the order/payment status still comes from `Darwin.WebApi`
 
 ## 3. Position in the Architecture
 
@@ -443,6 +514,7 @@ So `Darwin.Web` should be built to:
 
 - consume locale/fallback data explicitly where exposed
 - keep strings and content rendering localization-ready from day one
+- keep UI copy in resource files instead of letting feature components grow app-local text dictionaries
 - avoid assuming the current platform default culture is the same thing as a user-owned locale preference
 
 ## 11. Configuration-Driven Behavior

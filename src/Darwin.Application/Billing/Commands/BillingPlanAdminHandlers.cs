@@ -4,15 +4,25 @@ using Darwin.Application.Billing.Validators;
 using Darwin.Domain.Entities.Billing;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Billing.Commands;
 
 public sealed class CreateBillingPlanHandler
 {
     private readonly IAppDbContext _db;
-    private readonly BillingPlanCreateValidator _validator = new();
+    private readonly IValidator<BillingPlanCreateDto> _validator;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public CreateBillingPlanHandler(IAppDbContext db) => _db = db;
+    public CreateBillingPlanHandler(
+        IAppDbContext db,
+        IValidator<BillingPlanCreateDto> validator,
+        IStringLocalizer<ValidationResource> localizer)
+    {
+        _db = db;
+        _validator = validator;
+        _localizer = localizer;
+    }
 
     public async Task<Guid> HandleAsync(BillingPlanCreateDto dto, CancellationToken ct = default)
     {
@@ -26,7 +36,7 @@ public sealed class CreateBillingPlanHandler
             .ConfigureAwait(false);
         if (exists)
         {
-            throw new ValidationException("Billing plan code must be unique.");
+            throw new ValidationException(_localizer["BillingPlanCodeMustBeUnique"]);
         }
 
         var entity = new BillingPlan
@@ -52,9 +62,18 @@ public sealed class CreateBillingPlanHandler
 public sealed class UpdateBillingPlanHandler
 {
     private readonly IAppDbContext _db;
-    private readonly BillingPlanEditValidator _validator = new();
+    private readonly IValidator<BillingPlanEditDto> _validator;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public UpdateBillingPlanHandler(IAppDbContext db) => _db = db;
+    public UpdateBillingPlanHandler(
+        IAppDbContext db,
+        IValidator<BillingPlanEditDto> validator,
+        IStringLocalizer<ValidationResource> localizer)
+    {
+        _db = db;
+        _validator = validator;
+        _localizer = localizer;
+    }
 
     public async Task HandleAsync(BillingPlanEditDto dto, CancellationToken ct = default)
     {
@@ -66,12 +85,12 @@ public sealed class UpdateBillingPlanHandler
             .ConfigureAwait(false);
         if (entity is null)
         {
-            throw new InvalidOperationException("Billing plan not found.");
+            throw new InvalidOperationException(_localizer["BillingPlanNotFound"]);
         }
 
         if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
         {
-            throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+            throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
         }
 
         var normalizedCode = dto.Code.Trim().ToUpperInvariant();
@@ -81,7 +100,7 @@ public sealed class UpdateBillingPlanHandler
             .ConfigureAwait(false);
         if (exists)
         {
-            throw new ValidationException("Billing plan code must be unique.");
+            throw new ValidationException(_localizer["BillingPlanCodeMustBeUnique"]);
         }
 
         entity.Code = normalizedCode;

@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderInvoicesPageVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="invoices-grid-content"
      hx-boost="true"
@@ -8,31 +9,31 @@
     <form asp-controller="Orders" asp-action="Invoices" method="get" class="d-flex gap-2 mb-3">
         <input type="hidden" name="orderId" value="@Model.OrderId" />
         <select name="filter" asp-items="Model.FilterItems" class="form-select form-select-sm"></select>
-        <button class="btn btn-sm btn-outline-secondary" type="submit">Apply</button>
+        <button class="btn btn-sm btn-outline-secondary" type="submit">@T.T("Apply")</button>
     </form>
     <div class="d-flex gap-2 flex-wrap mb-3">
-        <a asp-controller="Orders" asp-action="Invoices" asp-route-orderId="@Model.OrderId" asp-route-filter="Outstanding" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.InvoiceQueueFilter.Outstanding ? "btn-danger" : "btn-outline-danger")">Outstanding</a>
-        <a asp-controller="Orders" asp-action="Invoices" asp-route-orderId="@Model.OrderId" asp-route-filter="Paid" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.InvoiceQueueFilter.Paid ? "btn-success" : "btn-outline-success")">Paid</a>
-        <a asp-controller="Orders" asp-action="Invoices" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">Clear</a>
+        <a asp-controller="Orders" asp-action="Invoices" asp-route-orderId="@Model.OrderId" asp-route-filter="Outstanding" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.InvoiceQueueFilter.Outstanding ? "btn-danger" : "btn-outline-danger")">@T.T("Outstanding")</a>
+        <a asp-controller="Orders" asp-action="Invoices" asp-route-orderId="@Model.OrderId" asp-route-filter="Paid" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.InvoiceQueueFilter.Paid ? "btn-success" : "btn-outline-success")">@T.T("Paid")</a>
+        <a asp-controller="Orders" asp-action="Invoices" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">@T.T("Clear")</a>
     </div>
     <div class="table-responsive">
         <table class="table table-sm table-striped align-middle">
             <thead>
                 <tr>
-                    <th>Invoice</th>
-                    <th>Customer</th>
-                    <th>Tax Profile</th>
-                    <th>Payment</th>
-                    <th class="text-end">Total</th>
-                    <th>Status</th>
-                    <th>Issued (UTC)</th>
-                    <th>Due (UTC)</th>
+                    <th>@T.T("Invoice")</th>
+                    <th>@T.T("Customer")</th>
+                    <th>@T.T("TaxProfile")</th>
+                    <th>@T.T("Payment")</th>
+                    <th class="text-end">@T.T("Total")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("IssuedUtc")</th>
+                    <th>@T.T("DueUtc")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="8" class="text-center text-muted">No invoices.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted">@T.T("NoInvoices")</td></tr>
                 }
                 else
                 {
@@ -73,7 +74,7 @@
                                     }
                                     else if (item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business)
                                     {
-                                        <div class="small text-danger">VAT ID missing</div>
+                                        <div class="small text-danger">@T.T("VatIdMissing")</div>
                                     }
                                 }
                                 else
@@ -99,7 +100,7 @@
                                            hx-target="#order-operation-shell"
                                            hx-swap="innerHTML"
                                            hx-push-url="false">
-                                            Payment
+                                            @T.T("Payment")
                                         </a>
                                     </div>
                                 }
@@ -109,16 +110,16 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <div class="small text-muted">Net: @item.Currency @((item.TotalNetMinor / 100.0M).ToString("0.00"))</div>
-                                <div class="small text-muted">Tax: @item.Currency @((item.TotalTaxMinor / 100.0M).ToString("0.00"))</div>
-                                <div class="fw-semibold">Gross: @item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="small text-muted">@T.T("Net"): @item.Currency @((item.TotalNetMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="small text-muted">@T.T("Tax"): @item.Currency @((item.TotalTaxMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="fw-semibold">@T.T("Gross"): @item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
                                 @if (item.RefundedAmountMinor > 0)
                                 {
-                                    <div class="small text-warning">Refunded: @item.Currency @((item.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>
+                                    <div class="small text-warning">@T.T("Refunded"): @item.Currency @((item.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>
                                 }
-                                <div class="small text-muted">Settled: @item.Currency @((item.SettledAmountMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="small text-muted">@T.T("Settled"): @item.Currency @((item.SettledAmountMinor / 100.0M).ToString("0.00"))</div>
                                 <div class="small @(item.BalanceMinor > 0 ? "text-danger" : "text-success")">
-                                    Balance: @item.Currency @((item.BalanceMinor / 100.0M).ToString("0.00"))
+                                    @T.T("Balance"): @item.Currency @((item.BalanceMinor / 100.0M).ToString("0.00"))
                                 </div>
                             </td>
                             <td>@item.Status</td>
@@ -134,7 +135,7 @@
                                        hx-target="#order-operation-shell"
                                        hx-swap="innerHTML"
                                        hx-push-url="false">
-                                        Invoice
+                                        @T.T("Invoice")
                                     </a>
                                 </div>
                             </td>

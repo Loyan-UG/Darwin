@@ -10,123 +10,73 @@
 
     <Grid>
         <ScrollView>
-            <VerticalStackLayout Padding="20,18,20,28" Spacing="18">
+            <VerticalStackLayout Padding="20,16,20,22" Spacing="14">
                 <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="{x:Static res:AppResources.ProfileTitle}"
-                               Style="{StaticResource SectionEyebrowLabelStyle}" />
-
+                    <VerticalStackLayout Spacing="8">
                         <Label Text="{x:Static res:AppResources.ProfileSectionTitle}"
-                               Style="{StaticResource SectionHeadingLabelStyle}" />
-
+                               Style="{StaticResource TitleLabelStyle}" />
                         <Label Text="{Binding Email}"
                                Style="{StaticResource BodyLabelStyle}" />
+                        <Label Text="{Binding SuccessMessage}"
+                               Style="{StaticResource SuccessLabelStyle}"
+                               IsVisible="{Binding HasSuccess}" />
+                        <Label Text="{Binding ErrorMessage}"
+                               Style="{StaticResource ErrorLabelStyle}"
+                               IsVisible="{Binding HasError}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="12">
+                    <VerticalStackLayout Spacing="10">
                         <Label Text="{x:Static res:AppResources.ProfileSectionTitle}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                        <Label Text="{x:Static res:AppResources.EmailLabel}"
-                               Style="{StaticResource CaptionLabelStyle}" />
-                        <Entry Text="{Binding Email}" IsReadOnly="True" />
-
-                        <Label Text="{x:Static res:AppResources.FirstNameLabel}"
-                               Style="{StaticResource CaptionLabelStyle}" />
-                        <Entry Text="{Binding FirstName}" />
-
-                        <Label Text="{x:Static res:AppResources.LastNameLabel}"
-                               Style="{StaticResource CaptionLabelStyle}" />
-                        <Entry Text="{Binding LastName}" />
-
-                        <Label Text="{x:Static res:AppResources.PhoneLabel}"
-                               Style="{StaticResource CaptionLabelStyle}" />
-                        <Entry Text="{Binding PhoneE164}" Placeholder="+49123456789" Keyboard="Telephone" />
-
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                <Label Text="{x:Static res:AppResources.LocaleLabel}"
-                                       Style="{StaticResource CaptionLabelStyle}" />
-                                <Entry Text="{Binding Locale}" Placeholder="de-DE" />
+                                <Label Text="{x:Static res:AppResources.FirstNameLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding FirstName}" Style="{StaticResource FormEntryStyle}" /></Border>
                             </VerticalStackLayout>
-
                             <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Label Text="{x:Static res:AppResources.CurrencyLabel}"
-                                       Style="{StaticResource CaptionLabelStyle}" />
-                                <Entry Text="{Binding Currency}" Placeholder="EUR" />
+                                <Label Text="{x:Static res:AppResources.LastNameLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding LastName}" Style="{StaticResource FormEntryStyle}" /></Border>
                             </VerticalStackLayout>
                         </Grid>
 
-                        <Label Text="{x:Static res:AppResources.TimezoneLabel}"
-                               Style="{StaticResource CaptionLabelStyle}" />
-                        <Entry Text="{Binding Timezone}" Placeholder="Europe/Berlin" />
+                        <Label Text="{x:Static res:AppResources.EmailLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Email}" IsReadOnly="True" Style="{StaticResource FormEntryStyle}" /></Border>
 
-                        <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasSuccess}">
-                            <Label Text="{Binding SuccessMessage}"
-                                   TextColor="{StaticResource Success500}"
-                                   FontSize="14" />
-                        </Border>
+                        <Label Text="{x:Static res:AppResources.PhoneLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding PhoneE164}" Placeholder="+49123456789" Keyboard="Telephone" Style="{StaticResource FormEntryStyle}" /></Border>
 
-                        <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasError}">
-                            <Label Text="{Binding ErrorMessage}"
-                                   TextColor="{StaticResource Danger500}"
-                                   FontSize="14" />
-                        </Border>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="{x:Static res:AppResources.LocaleLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Locale}" Placeholder="de-DE" Style="{StaticResource FormEntryStyle}" /></Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="{x:Static res:AppResources.CurrencyLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Currency}" Placeholder="EUR" Style="{StaticResource FormEntryStyle}" /></Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Label Text="{x:Static res:AppResources.TimezoneLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Timezone}" Placeholder="Europe/Berlin" Style="{StaticResource FormEntryStyle}" /></Border>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <Button Grid.Column="0"
                                     Text="{x:Static res:AppResources.SaveProfileButton}"
                                     Style="{StaticResource PrimaryButtonStyle}"
                                     Command="{Binding SaveProfileCommand}" />
-
                             <Button Grid.Column="1"
                                     Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
-                                    Style="{StaticResource SoftButtonStyle}"
+                                    Style="{StaticResource OutlinedButtonStyle}"
                                     Clicked="OnAccountDeletionClicked" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
 
                 <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="{x:Static res:AppResources.ProfilePushRegistrationSectionTitle}"
-                               Style="{StaticResource SectionHeadingLabelStyle}" />
-
-                        <Border Style="{StaticResource MutedCardBorderStyle}">
-                            <VerticalStackLayout Spacing="6">
-                                <Label Text="{Binding PushRegistrationStatus}"
-                                       Style="{StaticResource BodyLabelStyle}" />
-                                <Label Text="{Binding LastPushSyncAtText}"
-                                       Style="{StaticResource SecondaryBodyLabelStyle}"
-                                       IsVisible="{Binding HasLastPushSyncAt}" />
-                                <Label Text="{Binding PushPermissionStateText}"
-                                       Style="{StaticResource SecondaryBodyLabelStyle}" />
-                                <Label Text="{Binding PushTokenAvailabilityText}"
-                                       Style="{StaticResource SecondaryBodyLabelStyle}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Button Text="{x:Static res:AppResources.ProfilePushRegistrationSyncButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Command="{Binding SyncPushRegistrationCommand}" />
-
-                        <Label Text="{x:Static res:AppResources.ProfilePushOpenSettingsHint}"
-                               Style="{StaticResource SecondaryBodyLabelStyle}" />
-
-                        <Button Text="{x:Static res:AppResources.ProfilePushOpenSettingsButton}"
-                                Style="{StaticResource SoftButtonStyle}"
-                                Command="{Binding OpenNotificationSettingsCommand}" />
-
-                        <ActivityIndicator IsVisible="{Binding IsPushSyncBusy}"
-                                           IsRunning="{Binding IsPushSyncBusy}"
-                                           Color="{StaticResource BrandGold500}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="12">
+                    <VerticalStackLayout Spacing="10">
                         <Label Text="{x:Static res:AppResources.ProfileAddressesSectionTitle}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
@@ -167,17 +117,50 @@
                                     Text="{x:Static res:AppResources.ProfileManageAddressesButton}"
                                     Style="{StaticResource OutlinedButtonStyle}"
                                     Clicked="OnManageAddressesClicked" />
-
                             <Button Grid.Column="1"
                                     Text="{x:Static res:AppResources.ProfileManagePreferencesButton}"
-                                    Style="{StaticResource SoftButtonStyle}"
+                                    Style="{StaticResource OutlinedButtonStyle}"
                                     Clicked="OnManagePreferencesClicked" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
 
                 <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="12">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="{x:Static res:AppResources.ProfilePushRegistrationSectionTitle}"
+                               Style="{StaticResource SectionHeadingLabelStyle}" />
+
+                        <Border Style="{StaticResource MutedCardBorderStyle}">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="{Binding PushRegistrationStatus}" Style="{StaticResource BodyLabelStyle}" />
+                                <Label Text="{Binding LastPushSyncAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasLastPushSyncAt}" />
+                                <Label Text="{Binding PushPermissionStateText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                <Label Text="{Binding PushTokenAvailabilityText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Grid.Column="0"
+                                    Text="{x:Static res:AppResources.ProfilePushRegistrationSyncButton}"
+                                    Style="{StaticResource OutlinedButtonStyle}"
+                                    Command="{Binding SyncPushRegistrationCommand}" />
+                            <Button Grid.Column="1"
+                                    Text="{x:Static res:AppResources.ProfilePushOpenSettingsButton}"
+                                    Style="{StaticResource OutlinedButtonStyle}"
+                                    Command="{Binding OpenNotificationSettingsCommand}" />
+                        </Grid>
+
+                        <Label Text="{x:Static res:AppResources.ProfilePushOpenSettingsHint}"
+                               Style="{StaticResource SecondaryBodyLabelStyle}" />
+
+                        <ActivityIndicator IsVisible="{Binding IsPushSyncBusy}"
+                                           IsRunning="{Binding IsPushSyncBusy}"
+                                           Color="{StaticResource BrandGold500}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource CardBorderStyle}">
+                    <VerticalStackLayout Spacing="10">
                         <Label Text="{x:Static res:AppResources.ProfileCustomerContextSectionTitle}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
@@ -188,20 +171,16 @@
                         <VerticalStackLayout Spacing="8" IsVisible="{Binding HasLinkedCustomerContext}">
                             <Label Text="{Binding LinkedCustomerDisplayName, StringFormat='{x:Static res:AppResources.ProfileCustomerDisplayNameFormat}'}"
                                    Style="{StaticResource BodyLabelStyle}" />
-
                             <Label Text="{Binding LinkedCustomerCompanyName, StringFormat='{x:Static res:AppResources.ProfileCustomerCompanyFormat}'}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"
                                    IsVisible="{Binding HasLinkedCustomerCompanyName}" />
-
                             <Label Text="{Binding LinkedCustomerSegmentsSummary, StringFormat='{x:Static res:AppResources.ProfileCustomerSegmentsFormat}'}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"
                                    LineBreakMode="WordWrap"
                                    IsVisible="{Binding HasLinkedCustomerSegments}" />
-
                             <Label Text="{Binding LinkedCustomerLastInteractionText}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"
                                    LineBreakMode="WordWrap" />
-
                             <Button Text="{x:Static res:AppResources.ProfileViewCustomerContextButton}"
                                     Style="{StaticResource OutlinedButtonStyle}"
                                     Clicked="OnViewCustomerContextClicked" />

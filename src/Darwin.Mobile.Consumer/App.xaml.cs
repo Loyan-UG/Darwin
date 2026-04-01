@@ -67,6 +67,7 @@ public partial class App : Application
             var refreshed = await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None).ConfigureAwait(false);
             if (!refreshed)
             {
+                await _appRootNavigator.NavigateToLoginAsync();
                 return;
             }
 

@@ -1,34 +1,34 @@
-﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Anmelden";
+    ViewData["Title"] = T.T("Login");
     var returnUrl = (string?)ViewData["ReturnUrl"] ?? "";
 }
 
-<h1 class="mb-3">Anmelden</h1>
+<h1 class="mb-3">@T.T("Login")</h1>
 
 <form asp-action="LoginPost" asp-controller="Account" method="post" class="mb-3">
     @Html.AntiForgeryToken()
     <input type="hidden" name="returnUrl" value="@returnUrl" />
     <div class="mb-3">
-        <label for="email" class="form-label">E-Mail</label>
+        <label for="email" class="form-label">@T.T("Email")</label>
         <input id="email" name="email" type="email" class="form-control" required />
         <span class="text-danger field-validation-valid" data-valmsg-for="email" data-valmsg-replace="true"></span>
     </div>
     <div class="mb-3">
-        <label for="password" class="form-label">Passwort</label>
+        <label for="password" class="form-label">@T.T("Password")</label>
         <input id="password" name="password" type="password" class="form-control" required />
         <span class="text-danger field-validation-valid" data-valmsg-for="password" data-valmsg-replace="true"></span>
     </div>
     <div class="form-check mb-3">
         <input id="rememberMe" name="rememberMe" type="checkbox" class="form-check-input" />
-        <label for="rememberMe" class="form-check-label">Angemeldet bleiben</label>
+        <label for="rememberMe" class="form-check-label">@T.T("RememberMe")</label>
     </div>
     <div class="text-end">
-        <button class="btn btn-primary" type="submit">Anmelden</button>
+        <button class="btn btn-primary" type="submit">@T.T("Login")</button>
     </div>
 </form>
 
-<!-- Passkey UI kept hidden until user resolution flow is wired (server expects userId). -->
 <fieldset class="d-none">
     <form id="passkey-form" method="post" action="/account/webauthn/finish-login">
         @Html.AntiForgeryToken()
@@ -38,15 +38,14 @@
         <input type="hidden" name="rememberMe" value="true" />
         <input type="hidden" name="returnUrl" value="@returnUrl" />
     </form>
-    <button id="passkey-btn" class="btn btn-secondary mt-2" type="button">Mit Passkey anmelden</button>
+    <button id="passkey-btn" class="btn btn-secondary mt-2" type="button">@T.T("LoginWithPasskey")</button>
 </fieldset>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // TODO: Resolve userId by email before begin-login and unhide this block when available.
         document.getElementById('passkey-btn')?.addEventListener('click', () => {
-            alert('Passkey-Anmeldung wird vorbereitet.');
+            alert('@T.T("PasskeyPreparing")');
         });
     </script>
 }

@@ -4,6 +4,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Validators;
 using Darwin.Domain.Entities.CMS;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CMS.Commands
 {
@@ -13,9 +14,13 @@ namespace Darwin.Application.CMS.Commands
     public sealed class CreateMenuHandler
     {
         private readonly IAppDbContext _db;
-        private readonly MenuCreateDtoValidator _validator = new();
+        private readonly MenuCreateDtoValidator _validator;
 
-        public CreateMenuHandler(IAppDbContext db) => _db = db;
+        public CreateMenuHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = new MenuCreateDtoValidator(localizer);
+        }
 
         public async Task HandleAsync(MenuCreateDto dto, CancellationToken ct = default)
         {

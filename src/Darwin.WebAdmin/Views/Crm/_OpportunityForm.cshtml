@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.CRM.OpportunityEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div class="row g-3">
     <div class="col-md-6">
@@ -25,15 +26,15 @@
     <div class="col-md-4">
         <label asp-for="EstimatedValueMinor" class="form-label"></label>
         <input asp-for="EstimatedValueMinor" class="form-control" />
-        <div class="form-text">Minor units. Example: 1299 = EUR 12.99</div>
+        <div class="form-text">@T.T("MinorUnitsExample")</div>
         <span asp-validation-for="EstimatedValueMinor" class="text-danger"></span>
     </div>
 </div>
 
 <div class="d-flex justify-content-between align-items-center mt-4">
-    <h3 class="mb-0">Opportunity Items</h3>
+    <h3 class="mb-0">@T.T("OpportunityItems")</h3>
     <button type="button" class="btn btn-outline-secondary btn-sm" id="addOpportunityLine">
-        <i class="fa fa-plus"></i> Add line
+        <i class="fa fa-plus"></i> @T.T("AddLine")
     </button>
 </div>
 
@@ -58,7 +59,7 @@
                 </div>
             </div>
             <div class="text-end mt-3">
-                <button type="button" class="btn btn-sm btn-outline-danger remove-line">Remove</button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-line">@T.T("Remove")</button>
             </div>
         </div>
     </div>
@@ -70,7 +71,7 @@
         <input type="hidden" name="Items[__index__].Id" value="" />
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="form-label">ProductVariantId</label>
+                <label class="form-label">@T.T("ProductVariant")</label>
                 <select class="form-select" name="Items[__index__].ProductVariantId">
                     @foreach (var option in Model.VariantOptions)
                     {
@@ -78,9 +79,9 @@
                     }
                 </select>
             </div>
-            <div class="col-md-3"><label class="form-label">Quantity</label><input class="form-control" name="Items[__index__].Quantity" value="1" /></div>
-            <div class="col-md-3"><label class="form-label">UnitPriceMinor</label><input class="form-control" name="Items[__index__].UnitPriceMinor" value="0" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("Quantity")</label><input class="form-control" name="Items[__index__].Quantity" value="1" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("UnitPriceMinor")</label><input class="form-control" name="Items[__index__].UnitPriceMinor" value="0" /></div>
         </div>
-        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line">Remove</button></div>
+        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line">@T.T("Remove")</button></div>
     </div></div>
 </template>

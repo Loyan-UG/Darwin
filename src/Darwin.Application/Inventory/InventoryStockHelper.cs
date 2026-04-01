@@ -2,6 +2,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Inventory;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Inventory
 {
@@ -21,6 +22,7 @@ namespace Darwin.Application.Inventory
             IAppDbContext db,
             Guid productVariantId,
             Guid? warehouseId,
+            IStringLocalizer<ValidationResource> localizer,
             CancellationToken ct)
         {
             if (warehouseId.HasValue)
@@ -32,7 +34,7 @@ namespace Darwin.Application.Inventory
 
                 if (!requestedWarehouseExists)
                 {
-                    throw new InvalidOperationException("Warehouse not found.");
+                    throw new InvalidOperationException(localizer["WarehouseNotFound"]);
                 }
 
                 return warehouseId.Value;
@@ -62,7 +64,7 @@ namespace Darwin.Application.Inventory
 
             if (fallbackWarehouseId == Guid.Empty)
             {
-                throw new InvalidOperationException("No warehouse is configured.");
+                throw new InvalidOperationException(localizer["NoWarehouseIsConfigured"]);
             }
 
             return fallbackWarehouseId;
@@ -106,6 +108,7 @@ namespace Darwin.Application.Inventory
         public static async Task RefreshLegacyVariantStockAsync(
             IAppDbContext db,
             Guid productVariantId,
+            IStringLocalizer<ValidationResource> localizer,
             CancellationToken ct)
         {
             var totals = await db.Set<StockLevel>()
@@ -126,7 +129,7 @@ namespace Darwin.Application.Inventory
 
             if (variant is null)
             {
-                throw new InvalidOperationException("Variant not found.");
+                throw new InvalidOperationException(localizer["VariantNotFound"]);
             }
 
             var availableQuantity = totals?.Available ?? 0;

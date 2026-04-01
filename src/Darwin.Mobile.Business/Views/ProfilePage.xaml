@@ -13,48 +13,65 @@
             <Label Text="{x:Static res:AppResources.ProfileTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
-            <Border StrokeThickness="1" Padding="16">
+            <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.ProfileSectionTitle}" FontAttributes="Bold" FontSize="16" />
+                    <Label Text="{x:Static res:AppResources.ProfileSectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                    <Label Text="{x:Static res:AppResources.EmailLabel}" />
-                    <Entry Text="{Binding Email}" IsReadOnly="True" />
+                    <Label Text="{x:Static res:AppResources.EmailLabel}" Style="{StaticResource FormLabelStyle}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Text="{Binding Email}" IsReadOnly="True" Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                    <Label Text="{x:Static res:AppResources.FirstNameLabel}" />
-                    <Entry Text="{Binding FirstName}" />
+                    <Label Text="{x:Static res:AppResources.FirstNameLabel}" Style="{StaticResource FormLabelStyle}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Text="{Binding FirstName}" Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                    <Label Text="{x:Static res:AppResources.LastNameLabel}" />
-                    <Entry Text="{Binding LastName}" />
+                    <Label Text="{x:Static res:AppResources.LastNameLabel}" Style="{StaticResource FormLabelStyle}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Text="{Binding LastName}" Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                    <Label Text="{x:Static res:AppResources.PhoneLabel}" />
-                    <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" Placeholder="+49123456789" />
+                    <Label Text="{x:Static res:AppResources.PhoneLabel}" Style="{StaticResource FormLabelStyle}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" Placeholder="+49123456789" Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                    <Label Text="{x:Static res:AppResources.LocaleLabel}" />
-                    <Entry Text="{Binding Locale}" Placeholder="de-DE" />
+                    <Label Text="{x:Static res:AppResources.LocaleLabel}" Style="{StaticResource FormLabelStyle}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Text="{Binding Locale}" Placeholder="de-DE" Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                    <Label Text="{x:Static res:AppResources.TimezoneLabel}" />
-                    <Entry Text="{Binding Timezone}" Placeholder="Europe/Berlin" />
+                    <Label Text="{x:Static res:AppResources.TimezoneLabel}" Style="{StaticResource FormLabelStyle}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Text="{Binding Timezone}" Placeholder="Europe/Berlin" Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                    <Label Text="{x:Static res:AppResources.CurrencyLabel}" />
-                    <Entry Text="{Binding Currency}" Placeholder="EUR" />
+                    <Label Text="{x:Static res:AppResources.CurrencyLabel}" Style="{StaticResource FormLabelStyle}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Text="{Binding Currency}" Placeholder="EUR" Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
                     <!-- Keep feedback directly above primary action for better visibility while keyboard is open. -->
                     <Label Text="{Binding SuccessMessage}"
-                           TextColor="Green"
+                           Style="{StaticResource SuccessLabelStyle}"
                            IsVisible="{Binding HasSuccess}" />
 
                     <Label Text="{Binding ErrorMessage}"
-                           TextColor="Red"
+                           Style="{StaticResource ErrorLabelStyle}"
                            IsVisible="{Binding HasError}" />
 
                     <Button Text="{x:Static res:AppResources.SaveProfileButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding SaveCommand}" />
 
                     <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
+                            Style="{StaticResource OutlinedButtonStyle}"
                             Clicked="OnAccountDeletionClicked" />
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
-                                       IsRunning="{Binding IsBusy}" />
+                                       IsRunning="{Binding IsBusy}"
+                                       Color="{StaticResource BrandGold500}" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

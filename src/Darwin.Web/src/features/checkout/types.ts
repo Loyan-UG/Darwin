@@ -108,3 +108,11 @@ export type PublicStorefrontOrderConfirmation = {
   lines: PublicStorefrontOrderConfirmationLine[];
   payments: PublicStorefrontOrderConfirmationPayment[];
 };
+
+export type PublicStorefrontPaymentCompletion = {
+  orderId: string;
+  paymentId: string;
+  orderStatus: string;
+  paymentStatus: string;
+  paidAtUtc?: string | null;
+};

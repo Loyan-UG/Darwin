@@ -7,6 +7,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Loyalty;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Queries
 {
@@ -22,15 +23,17 @@ namespace Darwin.Application.Loyalty.Queries
     public sealed class GetLoyaltyAccountTransactionsHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GetLoyaltyAccountTransactionsHandler"/> class.
         /// </summary>
         /// <param name="db">Application database abstraction used for querying loyalty entities.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="db"/> is null.</exception>
-        public GetLoyaltyAccountTransactionsHandler(IAppDbContext db)
+        public GetLoyaltyAccountTransactionsHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -55,7 +58,7 @@ namespace Darwin.Application.Loyalty.Queries
         {
             if (loyaltyAccountId == Guid.Empty)
             {
-                throw new ArgumentException("Loyalty account id must not be empty.", nameof(loyaltyAccountId));
+                throw new ArgumentException(_localizer["LoyaltyAccountIdRequired"], nameof(loyaltyAccountId));
             }
 
             if (maxCount <= 0)

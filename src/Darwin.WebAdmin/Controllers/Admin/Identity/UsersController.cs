@@ -167,11 +167,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _registerUser.HandleAsync(dto, defaultRoleId: null, ct);
             if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, result.Error ?? "Failed to create user.");
+                ModelState.AddModelError(string.Empty, result.Error ?? T("UserCreateFailedMessage"));
                 return RenderCreateEditor(vm);
             }
 
-            TempData["Success"] = "User created.";
+            SetSuccessMessage("UserCreatedMessage");
             return RedirectOrHtmx(nameof(Edit), new { id = result.Value });
         }
 
@@ -184,7 +184,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!result.Succeeded || result.Value is null)
             {
-                TempData["Error"] = result.Error ?? "User not found.";
+                SetErrorMessage("UserNotFoundMessage");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -241,11 +241,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded)
             {
                 // Could be validation or concurrency; Application layer provides message.
-                ModelState.AddModelError(string.Empty, result.Error ?? "Failed to update user.");
+                ModelState.AddModelError(string.Empty, result.Error ?? T("UserUpdateFailedMessage"));
                 return await RenderEditEditorAsync(vm, ct);
             }
 
-            TempData["Success"] = "User updated.";
+            SetSuccessMessage("UserUpdatedMessage");
             return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
 
@@ -294,11 +294,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 if (!string.IsNullOrWhiteSpace(result.Error))
                     ModelState.AddModelError(string.Empty, result.Error);
 
-                TempData["Error"] = "Failed to change email.";
+                SetErrorMessage("ChangeEmailFailedMessage");
                 return RenderChangeEmailEditor(vm);
             }
 
-            TempData["Success"] = "Email change requested. The user must confirm the new email before signing in.";
+            SetSuccessMessage("EmailChangeRequestedMessage");
             return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
 
@@ -311,8 +311,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             var result = await _confirmUserEmail.HandleAsync(new UserAdminActionDto { Id = id }, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Email marked as confirmed."
-                : (result.Error ?? "Failed to confirm email.");
+                ? T("EmailConfirmedMessage")
+                : (result.Error ?? T("ConfirmEmailFailedMessage"));
 
             return RedirectOrHtmx(nameof(Edit), new { id });
         }
@@ -327,7 +327,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!userResult.Succeeded || userResult.Value is null)
             {
-                TempData["Error"] = userResult.Error ?? "User not found.";
+                TempData["Error"] = userResult.Error ?? T("UserNotFoundMessage");
                 return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
             }
 
@@ -336,8 +336,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Activation email sent."
-                : (result.Error ?? "Failed to send activation email.");
+                ? T("ActivationEmailSentMessage")
+                : (result.Error ?? T("ActivationEmailSendFailedMessage"));
 
             return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
         }
@@ -352,7 +352,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!userResult.Succeeded || userResult.Value is null)
             {
-                TempData["Error"] = userResult.Error ?? "User not found.";
+                TempData["Error"] = userResult.Error ?? T("UserNotFoundMessage");
                 return RedirectOrHtmx(nameof(Edit), new { id });
             }
 
@@ -361,8 +361,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Password reset email sent."
-                : (result.Error ?? "Failed to send password reset email.");
+                ? T("PasswordResetEmailSentMessage")
+                : (result.Error ?? T("PasswordResetEmailSendFailedMessage"));
 
             return RedirectOrHtmx(nameof(Edit), new { id });
         }
@@ -376,8 +376,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             var result = await _lockUser.HandleAsync(new UserAdminActionDto { Id = id }, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Account locked."
-                : (result.Error ?? "Failed to lock account.");
+                ? T("AccountLockedMessage")
+                : (result.Error ?? T("AccountLockFailedMessage"));
 
             return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
         }
@@ -391,8 +391,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             var result = await _unlockUser.HandleAsync(new UserAdminActionDto { Id = id }, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Account unlocked."
-                : (result.Error ?? "Failed to unlock account.");
+                ? T("AccountUnlockedMessage")
+                : (result.Error ?? T("AccountUnlockFailedMessage"));
 
             return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
         }
@@ -434,7 +434,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!ModelState.IsValid || vm.NewPassword != vm.ConfirmNewPassword)
             {
                 if (vm.NewPassword != vm.ConfirmNewPassword)
-                    ModelState.AddModelError(nameof(vm.ConfirmNewPassword), "Passwords do not match.");
+                    ModelState.AddModelError(nameof(vm.ConfirmNewPassword), T("PasswordsDoNotMatchMessage"));
                 return RenderChangePasswordEditor(vm);
             }
 
@@ -447,12 +447,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
             var result = await _setUserPasswordByAdmin.HandleAsync(dto, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Password changed successfully."
-                : (result.Error ?? "Failed to change password.");
+                ? T("PasswordChangedMessage")
+                : (result.Error ?? T("ChangePasswordFailedMessage"));
 
             if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, result.Error ?? "Failed to change password.");
+                ModelState.AddModelError(string.Empty, result.Error ?? T("ChangePasswordFailedMessage"));
                 return RenderChangePasswordEditor(vm);
             }
 
@@ -471,7 +471,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             var dto = new UserDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
             var result = await _softDeleteUser.HandleAsync(dto, ct);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "User deleted." : (result.Error ?? "Failed to delete user.");
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("UserDeletedMessage") : (result.Error ?? T("UserDeleteFailedMessage"));
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -501,7 +501,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         public async Task<IActionResult> CreateAddress(UserAddressCreateVm vm, CancellationToken ct = default)
         {
             // Server-side validation is enforced in the Application layer; Web layer keeps basic shape checks.
-            if (!ModelState.IsValid) return BadRequest("Invalid address.");
+            if (!ModelState.IsValid) return BadRequest(T("InvalidAddressMessage"));
 
             var dto = new AddressCreateDto
             {
@@ -520,10 +520,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             };
 
             var result = await _createAddress.HandleAsync(dto, ct);
-            if (!result.Succeeded) return BadRequest(result.Error ?? "Failed to create address.");
+            if (!result.Succeeded) return BadRequest(result.Error ?? T("AddressCreateFailedMessage"));
 
             // Success message for alerts
-            TempData["Success"] = "Address created successfully.";
+            SetSuccessMessage("AddressCreatedMessage");
 
             // Return refreshed addresses section (partial)
             return await AddressesSection(vm.UserId, ct);
@@ -536,7 +536,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditAddress(UserAddressEditVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return BadRequest("Invalid address.");
+            if (!ModelState.IsValid) return BadRequest(T("InvalidAddressMessage"));
 
             var dto = new AddressEditDto
             {
@@ -556,9 +556,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             };
 
             var result = await _updateAddress.HandleAsync(dto, ct);
-            if (!result.Succeeded) return BadRequest(result.Error ?? "Failed to update address.");
+            if (!result.Succeeded) return BadRequest(result.Error ?? T("AddressUpdateFailedMessage"));
 
-            TempData["Success"] = "Address updated successfully.";
+            SetSuccessMessage("AddressUpdatedMessage");
 
             return await AddressesSection(vm.UserId, ct);
         }
@@ -573,9 +573,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             var dto = new AddressDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
             var result = await _softDeleteAddress.HandleAsync(dto, ct);
-            if (!result.Succeeded) return BadRequest(result.Error ?? "Failed to delete address.");
+            if (!result.Succeeded) return BadRequest(result.Error ?? T("AddressDeleteFailedMessage"));
 
-            TempData["Success"] = "Address deleted successfully.";
+            SetSuccessMessage("AddressDeletedMessage");
             return await AddressesSection(userId, ct);
         }
 
@@ -592,11 +592,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var asShipping = string.Equals(kind, "Shipping", StringComparison.OrdinalIgnoreCase);
 
             var result = await _setDefaultAddress.HandleAsync(userId, id, asBilling, asShipping, ct);
-            if (!result.Succeeded) return BadRequest(result.Error ?? "Failed to set default.");
+            if (!result.Succeeded) return BadRequest(result.Error ?? T("SetDefaultAddressFailedMessage"));
 
             TempData["Success"] = asBilling
-                ? "Default billing address set."
-                : "Default shipping address set.";
+                ? T("DefaultBillingAddressSetMessage")
+                : T("DefaultShippingAddressSetMessage");
 
             return await AddressesSection(userId, ct);
         }
@@ -652,7 +652,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var vm = await BuildUserRolesVmAsync(id, ct);
             if (vm is null)
             {
-                TempData["Error"] = "Failed to load user roles.";
+                SetErrorMessage("UserRolesLoadFailedMessage");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -685,11 +685,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _updateUserRoles.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, result.Error ?? "Failed to update user roles.");
+                ModelState.AddModelError(string.Empty, result.Error ?? T("UserRolesUpdateFailedMessage"));
                 return await RenderRolesEditorAsync(vm, ct);
             }
 
-            TempData["Success"] = "User roles updated.";
+            SetSuccessMessage("UserRolesUpdatedMessage");
             return await RedirectToUserRolesReturnTargetAsync(vm, ct);
         }
 
@@ -750,7 +750,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var hydrated = await BuildUserRolesVmAsync(vm.UserId, ct);
             if (hydrated is null)
             {
-                TempData["Error"] = "Failed to load user roles.";
+                SetErrorMessage("UserRolesLoadFailedMessage");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 

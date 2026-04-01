@@ -185,7 +185,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _create.HandleAsync(dto, ct); // Application: Task (no Result)
-                TempData["Success"] = "Add-on group created.";
+                SetSuccessMessage("AddOnGroupCreated");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (FluentValidation.ValidationException ex)
@@ -208,7 +208,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var dto = await _getForEdit.HandleAsync(id, ct); // returns DTO directly
             if (dto is null)
             {
-                TempData["Error"] = "Add-on group not found.";
+                SetErrorMessage("AddOnGroupNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -277,7 +277,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _update.HandleAsync(dto, ct); // Application: Task (no Result)
-                TempData["Success"] = "Add-on group updated.";
+                SetSuccessMessage("AddOnGroupUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
@@ -307,13 +307,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 var dto = new AddOnGroupDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
                 var result = await _softDelete.HandleAsync(dto, ct);
                 if (!result.Succeeded)
-                    TempData["Warning"] = result.Error ?? "Failed to delete add-on group.";
+                    TempData["Warning"] = result.Error ?? T("AddOnGroupDeleteFailed");
                 else
-                    TempData["Success"] = "Add-on group deleted.";
+                    SetSuccessMessage("AddOnGroupDeleted");
             }
             catch (Exception)
             {
-                TempData["Error"] = "Failed to delete add-on group.";
+                SetErrorMessage("AddOnGroupDeleteFailed");
             }
             return RedirectOrHtmx(nameof(Index), new { });
         }
@@ -330,7 +330,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
             {
-                TempData["Error"] = "Add-on group not found.";
+                SetErrorMessage("AddOnGroupNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -372,11 +372,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var result = await _attachProducts.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? "Failed to attach to products.";
+                TempData["Error"] = result.Error ?? T("AddOnGroupAttachProductsFailed");
                 return RedirectOrHtmx(nameof(AttachToProducts), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query });
             }
 
-            TempData["Success"] = "Attached to products.";
+            SetSuccessMessage("AddOnGroupAttachedToProducts");
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -388,7 +388,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
             {
-                TempData["Error"] = "Add-on group not found.";
+                SetErrorMessage("AddOnGroupNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -426,7 +426,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     (vm.SelectedCategoryIds ?? new List<Guid>()).ToArray(),
                     ct);
 
-                TempData["Success"] = "Attached to categories.";
+                SetSuccessMessage("AddOnGroupAttachedToCategories");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (Exception ex)
@@ -444,7 +444,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
             {
-                TempData["Error"] = "Add-on group not found.";
+                SetErrorMessage("AddOnGroupNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -482,7 +482,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     (vm.SelectedBrandIds ?? new List<Guid>()).ToArray(),
                     ct);
 
-                TempData["Success"] = "Attached to brands.";
+                SetSuccessMessage("AddOnGroupAttachedToBrands");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (Exception ex)
@@ -509,7 +509,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var dto = await _getForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
-                TempData["Error"] = "Add-on group not found.";
+                SetErrorMessage("AddOnGroupNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             
@@ -557,11 +557,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var result = await _attachVariants.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? "Failed to attach to variants.";
+                TempData["Error"] = result.Error ?? T("AddOnGroupAttachVariantsFailed");
                 return RedirectOrHtmx(nameof(AttachToVariants), new { id = vm.AddOnGroupId, q = vm.Query, page = vm.Page, pageSize = vm.PageSize });
             }
 
-            TempData["Success"] = "Attached to variants.";
+            SetSuccessMessage("AddOnGroupAttachedToVariants");
             return RedirectOrHtmx(nameof(Index), new { });
         }
 

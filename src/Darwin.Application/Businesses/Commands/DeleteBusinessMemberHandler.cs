@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -18,11 +19,16 @@ namespace Darwin.Application.Businesses.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<BusinessMemberDeleteDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public DeleteBusinessMemberHandler(IAppDbContext db, IValidator<BusinessMemberDeleteDto> validator)
+        public DeleteBusinessMemberHandler(
+            IAppDbContext db,
+            IValidator<BusinessMemberDeleteDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(BusinessMemberDeleteDto dto, CancellationToken ct = default)
@@ -37,7 +43,7 @@ namespace Darwin.Application.Businesses.Commands
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
             if (!currentVersion.SequenceEqual(requestVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             if (entity.Role == BusinessMemberRole.Owner && entity.IsActive)
             {
@@ -51,7 +57,7 @@ namespace Darwin.Application.Businesses.Commands
                 if (!hasAnotherActiveOwner)
                 {
                     if (!dto.AllowLastOwnerOverride)
-                        throw new InvalidOperationException("At least one active owner must remain assigned to the business. Open the membership details to force an override with an explicit reason.");
+                        throw new InvalidOperationException(_localizer["AtLeastOneActiveOwnerMustRemainAssignedToBusiness"]);
 
                     _db.Set<BusinessOwnerOverrideAudit>().Add(new BusinessOwnerOverrideAudit
                     {

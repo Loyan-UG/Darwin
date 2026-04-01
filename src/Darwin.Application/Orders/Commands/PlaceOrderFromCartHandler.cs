@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Orders.Commands;
 
@@ -20,6 +21,7 @@ public sealed class PlaceOrderFromCartHandler
     private readonly IAppDbContext _db;
     private readonly ComputeCartSummaryHandler _computeCartSummaryHandler;
     private readonly Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler _createStorefrontCheckoutIntentHandler;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlaceOrderFromCartHandler"/> class.
@@ -27,11 +29,13 @@ public sealed class PlaceOrderFromCartHandler
     public PlaceOrderFromCartHandler(
         IAppDbContext db,
         ComputeCartSummaryHandler computeCartSummaryHandler,
-        Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler createStorefrontCheckoutIntentHandler)
+        Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler createStorefrontCheckoutIntentHandler,
+        IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
         _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -42,29 +46,29 @@ public sealed class PlaceOrderFromCartHandler
         ArgumentNullException.ThrowIfNull(dto);
         if (dto.CartId == Guid.Empty)
         {
-            throw new InvalidOperationException("CartId is required.");
+            throw new InvalidOperationException(_localizer["CartIdRequired"]);
         }
 
         if (dto.ShippingTotalMinor < 0)
         {
-            throw new InvalidOperationException("ShippingTotalMinor must be zero or positive.");
+            throw new InvalidOperationException(_localizer["ShippingTotalMinorMustBeZeroOrPositive"]);
         }
 
         var cart = await _db.Set<Cart>()
             .Include(x => x.Items)
             .FirstOrDefaultAsync(x => x.Id == dto.CartId && !x.IsDeleted, ct)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException("Cart not found.");
+            ?? throw new InvalidOperationException(_localizer["CartNotFound"]);
 
         if (cart.UserId.HasValue && dto.UserId != cart.UserId)
         {
-            throw new InvalidOperationException("Cart does not belong to the current user.");
+            throw new InvalidOperationException(_localizer["CartDoesNotBelongToCurrentUser"]);
         }
 
         var activeItems = cart.Items.Where(x => !x.IsDeleted && x.Quantity > 0).ToList();
         if (activeItems.Count == 0)
         {
-            throw new InvalidOperationException("Cart is empty.");
+            throw new InvalidOperationException(_localizer["CartIsEmpty"]);
         }
 
         var summary = await _computeCartSummaryHandler.HandleAsync(cart.Id, ct).ConfigureAwait(false);
@@ -88,17 +92,17 @@ public sealed class PlaceOrderFromCartHandler
         {
             if (checkoutIntent.SelectedShippingMethodId is null)
             {
-                throw new InvalidOperationException("A shipping method is required for the current checkout.");
+                throw new InvalidOperationException(_localizer["ShippingMethodRequiredForCurrentCheckout"]);
             }
 
             if (dto.ShippingTotalMinor != checkoutIntent.SelectedShippingTotalMinor)
             {
-                throw new InvalidOperationException("Shipping total does not match the authoritative checkout intent.");
+                throw new InvalidOperationException(_localizer["ShippingTotalDoesNotMatchAuthoritativeCheckoutIntent"]);
             }
         }
         else if (dto.ShippingTotalMinor != 0)
         {
-            throw new InvalidOperationException("Shipping total must be zero when checkout does not require shipping.");
+            throw new InvalidOperationException(_localizer["ShippingTotalMustBeZeroWhenCheckoutDoesNotRequireShipping"]);
         }
 
         var selectedShippingOption = checkoutIntent.SelectedShippingMethodId.HasValue
@@ -128,12 +132,12 @@ public sealed class PlaceOrderFromCartHandler
         {
             if (!variants.TryGetValue(cartItem.VariantId, out var variant))
             {
-                throw new InvalidOperationException("Variant not found.");
+                throw new InvalidOperationException(_localizer["VariantNotFound"]);
             }
 
             if (!summaryLinesByKey.TryGetValue(BuildSummaryKey(cartItem.VariantId, cartItem.SelectedAddOnValueIdsJson), out var summaryLine))
             {
-                throw new InvalidOperationException("Cart summary is missing a line required for checkout.");
+                throw new InvalidOperationException(_localizer["CartSummaryMissingRequiredLineForCheckout"]);
             }
 
             var name = translations.TryGetValue(variant.ProductId, out var translation)
@@ -222,7 +226,7 @@ public sealed class PlaceOrderFromCartHandler
         {
             if (!userId.HasValue || userId == Guid.Empty)
             {
-                throw new InvalidOperationException($"A signed-in user is required to use a saved {role} address.");
+                throw new InvalidOperationException(_localizer["SignedInUserRequiredToUseSavedAddress", role]);
             }
 
             var address = await _db.Set<Address>()
@@ -232,7 +236,7 @@ public sealed class PlaceOrderFromCartHandler
 
             if (address is null)
             {
-                throw new InvalidOperationException($"Saved {role} address not found.");
+                throw new InvalidOperationException(_localizer["SavedAddressNotFound", role]);
             }
 
             return JsonSerializer.Serialize(new CheckoutAddressDto
@@ -251,14 +255,14 @@ public sealed class PlaceOrderFromCartHandler
 
         if (inlineAddress is null)
         {
-            throw new InvalidOperationException($"A {role} address is required.");
+            throw new InvalidOperationException(_localizer["AddressRequired", role]);
         }
 
         ValidateInlineAddress(inlineAddress, role);
         return JsonSerializer.Serialize(inlineAddress);
     }
 
-    private static void ValidateInlineAddress(CheckoutAddressDto address, string role)
+    private void ValidateInlineAddress(CheckoutAddressDto address, string role)
     {
         if (string.IsNullOrWhiteSpace(address.FullName) ||
             string.IsNullOrWhiteSpace(address.Street1) ||
@@ -266,7 +270,7 @@ public sealed class PlaceOrderFromCartHandler
             string.IsNullOrWhiteSpace(address.City) ||
             string.IsNullOrWhiteSpace(address.CountryCode))
         {
-            throw new InvalidOperationException($"The {role} address is incomplete.");
+            throw new InvalidOperationException(_localizer["AddressIncomplete", role]);
         }
     }
 

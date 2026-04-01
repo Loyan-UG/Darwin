@@ -2,6 +2,7 @@
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Enums;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Validators
 {
@@ -13,27 +14,27 @@ namespace Darwin.Application.Loyalty.Validators
         /// <summary>
         /// Initializes a new instance of the <see cref="PrepareScanSessionDtoValidator"/> class.
         /// </summary>
-        public PrepareScanSessionDtoValidator()
+        public PrepareScanSessionDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.BusinessId)
                 .NotEqual(Guid.Empty)
-                .WithMessage("BusinessId is required.");
+                .WithMessage(localizer["BusinessIdRequired"]);
 
             RuleFor(x => x.Mode)
                 .IsInEnum()
-                .WithMessage("Mode is invalid.");
+                .WithMessage(localizer["ModeInvalid"]);
 
             When(x => x.Mode == LoyaltyScanMode.Redemption, () =>
             {
                 RuleFor(x => x.SelectedRewardTierIds)
                     .NotNull()
-                    .WithMessage("At least one reward must be selected for redemption.")
+                    .WithMessage(localizer["AtLeastOneRewardRequiredForRedemption"])
                     .Must(list => list.Count > 0)
-                    .WithMessage("At least one reward must be selected for redemption.");
+                    .WithMessage(localizer["AtLeastOneRewardRequiredForRedemption"]);
 
                 RuleForEach(x => x.SelectedRewardTierIds)
                     .NotEqual(Guid.Empty)
-                    .WithMessage("Reward tier id cannot be empty.");
+                    .WithMessage(localizer["RewardTierIdCannotBeEmpty"]);
             });
 
             RuleFor(x => x.DeviceId)

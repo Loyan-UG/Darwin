@@ -1,4 +1,5 @@
-﻿using Darwin.WebApi.Middleware;
+using Darwin.Infrastructure.Extensions;
+using Darwin.WebApi.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
@@ -21,7 +22,7 @@ namespace Darwin.WebApi.Extensions
         /// </summary>
         /// <param name="app">The configured <see cref="WebApplication"/> instance.</param>
         /// <returns>The same <see cref="WebApplication"/> for chaining (if desired).</returns>
-        public static WebApplication UseWebApiStartup(this WebApplication app)
+        public static async Task<WebApplication> UseWebApiStartupAsync(this WebApplication app)
         {
             if (app is null) throw new ArgumentNullException(nameof(app));
 
@@ -29,10 +30,11 @@ namespace Darwin.WebApi.Extensions
 
             if (env.IsDevelopment())
             {
-                // Developer-friendly exception page and Swagger UI in development.
+                // Developer-friendly exception page, DB bootstrap, and Swagger UI in development.
                 app.UseDeveloperExceptionPage();
+                await app.Services.MigrateAndSeedAsync();
                 app.UseSwagger();
-                app.UseSwaggerUI(); // This requires Swashbuckle.AspNetCore.SwaggerUI package and using directive
+                app.UseSwaggerUI();
             }
             else
             {
@@ -55,7 +57,6 @@ namespace Darwin.WebApi.Extensions
             app.UseAuthentication();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
-
 
             app.UseAuthorization();
 

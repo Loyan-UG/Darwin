@@ -7,15 +7,11 @@
     Title="{x:Static res:AppResources.SettingsTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,18,20,28" Spacing="18">
+        <VerticalStackLayout Padding="20,18,20,28" Spacing="14">
             <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="10">
+                <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static res:AppResources.SettingsTitle}"
-                           Style="{StaticResource SectionEyebrowLabelStyle}" />
-
-                    <Label Text="{x:Static res:AppResources.SettingsTitle}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
-
+                           Style="{StaticResource TitleLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.SettingsSubtitle}"
                            Style="{StaticResource BodyLabelStyle}" />
                 </VerticalStackLayout>
@@ -26,21 +22,27 @@
                     <Label Text="{x:Static res:AppResources.SettingsProfileButton}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                    <Button Text="{x:Static res:AppResources.SettingsProfileButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Clicked="OnProfileClicked" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0"
+                                Text="{x:Static res:AppResources.SettingsProfileButton}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Clicked="OnProfileClicked" />
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.SettingsPreferencesButton}"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                Clicked="OnMemberPreferencesClicked" />
+                    </Grid>
 
-                    <Button Text="{x:Static res:AppResources.SettingsOrdersAndInvoicesButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Clicked="OnMemberCommerceClicked" />
-
-                    <Button Text="{x:Static res:AppResources.SettingsPreferencesButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Clicked="OnMemberPreferencesClicked" />
-
-                    <Button Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Clicked="OnChangePasswordClicked" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0"
+                                Text="{x:Static res:AppResources.SettingsOrdersAndInvoicesButton}"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                Clicked="OnMemberCommerceClicked" />
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                Clicked="OnChangePasswordClicked" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 
@@ -50,11 +52,11 @@
                            Style="{StaticResource SectionHeadingLabelStyle}" />
 
                     <Button Text="{x:Static res:AppResources.SettingsLegalHubButton}"
-                            Style="{StaticResource SoftButtonStyle}"
+                            Style="{StaticResource OutlinedButtonStyle}"
                             Clicked="OnLegalHubClicked" />
 
                     <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
-                            Style="{StaticResource SoftButtonStyle}"
+                            Style="{StaticResource OutlinedButtonStyle}"
                             Clicked="OnAccountDeletionClicked" />
                 </VerticalStackLayout>
             </Border>

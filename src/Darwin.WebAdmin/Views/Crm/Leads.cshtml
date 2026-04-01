@@ -1,31 +1,32 @@
 @model Darwin.WebAdmin.ViewModels.CRM.LeadsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "CRM Leads";
+    ViewData["Title"] = T.T("CrmLeadsTitle");
 }
 
 <div id="crm-leads-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">Leads</h1>
+    <h1 class="mb-0">@T.T("Leads")</h1>
     <a asp-action="Index"
        hx-get="@Url.Action("Index", "Crm")"
        hx-target="#crm-leads-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
-       class="btn btn-outline-secondary">Overview</a>
+       class="btn btn-outline-secondary">@T.T("Overview")</a>
 </div>
 
 <div class="row g-3 mb-3">
     <div class="col-md-3">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">Customers</div><div class="fs-4 fw-semibold">@Model.Summary.CustomerCount</div></div></div>
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Customers")</div><div class="fs-4 fw-semibold">@Model.Summary.CustomerCount</div></div></div>
     </div>
     <div class="col-md-3">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">Leads</div><div class="fs-4 fw-semibold">@Model.Summary.LeadCount</div></div></div>
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Leads")</div><div class="fs-4 fw-semibold">@Model.Summary.LeadCount</div></div></div>
     </div>
     <div class="col-md-3">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">Qualified</div><div class="fs-4 fw-semibold">@Model.Summary.QualifiedLeadCount</div></div></div>
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Qualified")</div><div class="fs-4 fw-semibold">@Model.Summary.QualifiedLeadCount</div></div></div>
     </div>
     <div class="col-md-3">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">Open Pipeline</div><div class="fs-4 fw-semibold">EUR @((Model.Summary.OpenPipelineMinor / 100.0M).ToString("0.00"))</div></div></div>
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("OpenPipeline")</div><div class="fs-4 fw-semibold">EUR @((Model.Summary.OpenPipelineMinor / 100.0M).ToString("0.00"))</div></div></div>
     </div>
 </div>
 
@@ -35,9 +36,9 @@
           hx-target="#crm-leads-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search leads">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchLeadsPlaceholder")">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> @T.T("Search")</button>
     </form>
 
     <a asp-action="CreateLead"
@@ -46,36 +47,36 @@
        hx-swap="outerHTML"
        hx-push-url="true"
        class="btn btn-primary">
-        <i class="fa fa-plus"></i> New Lead
+        <i class="fa fa-plus"></i> @T.T("NewLead")
     </a>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="Leads" asp-route-filter="Qualified" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Qualified" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Qualified ? "btn-warning" : "btn-outline-warning")">Qualified</a>
-    <a asp-action="Leads" asp-route-filter="Unassigned" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unassigned" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Unassigned ? "btn-info" : "btn-outline-info")">Unassigned</a>
-    <a asp-action="Leads" asp-route-filter="Unconverted" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unconverted" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Unconverted ? "btn-primary" : "btn-outline-primary")">Unconverted</a>
-    <a asp-action="Leads" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+    <a asp-action="Leads" asp-route-filter="Qualified" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Qualified" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Qualified ? "btn-warning" : "btn-outline-warning")">@T.T("Qualified")</a>
+    <a asp-action="Leads" asp-route-filter="Unassigned" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unassigned" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Unassigned ? "btn-info" : "btn-outline-info")">@T.T("Unassigned")</a>
+    <a asp-action="Leads" asp-route-filter="Unconverted" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unconverted" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Unconverted ? "btn-primary" : "btn-outline-primary")">@T.T("Unconverted")</a>
+    <a asp-action="Leads" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Company</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Status</th>
-                <th>Owner</th>
-                <th>Interactions</th>
-                <th>Updated (UTC)</th>
-                <th class="text-end">Actions</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("Company")</th>
+                <th>@T.T("Email")</th>
+                <th>@T.T("Phone")</th>
+                <th>@T.T("Status")</th>
+                <th>@T.T("Owner")</th>
+                <th>@T.T("Interactions")</th>
+                <th>@T.T("UpdatedUtc")</th>
+                <th class="text-end">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="9" class="text-center text-muted">No leads found.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted">@T.T("NoLeadsFound")</td></tr>
         }
         else
         {
@@ -94,10 +95,10 @@
                         @if (item.CustomerId.HasValue)
                         {
                             <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-success">
-                                <i class="fa fa-user"></i> Customer
+                                <i class="fa fa-user"></i> @T.T("Customer")
                             </a>
                             <a asp-action="CreateOpportunity" asp-route-customerId="@item.CustomerId.Value" hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = item.CustomerId.Value })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
-                                <i class="fa fa-briefcase"></i> Opportunity
+                                <i class="fa fa-briefcase"></i> @T.T("Opportunity")
                             </a>
                         }
                         else if (item.Status == Darwin.Domain.Enums.LeadStatus.Qualified)
@@ -108,15 +109,15 @@
                                 <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
                                 <input type="hidden" name="CopyNotesToCustomer" value="true" />
                                 <button type="submit" class="btn btn-sm btn-outline-success">
-                                    <i class="fa fa-arrow-right"></i> Convert
+                                    <i class="fa fa-arrow-right"></i> @T.T("Convert")
                                 </button>
                             </form>
                         }
                         <a asp-action="EditLead" asp-route-id="@item.Id" asp-fragment="lead-interactions-grid" hx-get="@Url.Action("EditLead", "Crm", new { id = item.Id, fragment = "lead-interactions-grid" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
-                            <i class="fa fa-comments"></i> Interactions
+                            <i class="fa fa-comments"></i> @T.T("Interactions")
                         </a>
                         <a asp-action="EditLead" asp-route-id="@item.Id" hx-get="@Url.Action("EditLead", "Crm", new { id = item.Id })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
-                            <i class="fa fa-pen"></i> Edit
+                            <i class="fa fa-pen"></i> @T.T("Edit")
                         </a>
                     </td>
                 </tr>

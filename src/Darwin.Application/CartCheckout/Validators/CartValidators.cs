@@ -1,14 +1,15 @@
 ﻿using Darwin.Application.CartCheckout.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CartCheckout.Validators
 {
     public sealed class CartKeyValidator : AbstractValidator<CartKeyDto>
     {
-        public CartKeyValidator()
+        public CartKeyValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x).Must(k => k.UserId.HasValue || !string.IsNullOrWhiteSpace(k.AnonymousId))
-                .WithMessage("Either UserId or AnonymousId must be provided.");
+                .WithMessage(localizer["EitherUserIdOrAnonymousIdRequired"]);
         }
     }
 
@@ -18,13 +19,13 @@ namespace Darwin.Application.CartCheckout.Validators
     /// </summary>
     public sealed class CartAddItemValidator : AbstractValidator<CartAddItemDto>
     {
-        public CartAddItemValidator()
+        public CartAddItemValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.VariantId).NotEmpty();
             RuleFor(x => x.Quantity).GreaterThan(0);
             RuleFor(x => new { x.UserId, x.AnonymousId })
                 .Must(x => x.UserId != null || !string.IsNullOrWhiteSpace(x.AnonymousId))
-                .WithMessage("Either UserId or AnonymousId is required.");
+                .WithMessage(localizer["EitherUserIdOrAnonymousIdRequired"]);
         }
     }
 

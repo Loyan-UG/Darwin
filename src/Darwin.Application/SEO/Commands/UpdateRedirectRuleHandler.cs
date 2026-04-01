@@ -4,6 +4,7 @@ using Darwin.Application.SEO.Validators;
 using Darwin.Domain.Entities.SEO;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,13 +17,16 @@ namespace Darwin.Application.SEO.Commands
     public sealed class UpdateRedirectRuleHandler
     {
         private readonly IAppDbContext _db;
-        private readonly RedirectRuleEditValidator _vBasic = new();
+        private readonly RedirectRuleEditValidator _vBasic;
         private readonly RedirectRuleEditUniqueValidator _vUnique;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateRedirectRuleHandler(IAppDbContext db)
+        public UpdateRedirectRuleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
-            _vUnique = new RedirectRuleEditUniqueValidator(db);
+            _localizer = localizer;
+            _vBasic = new RedirectRuleEditValidator(localizer);
+            _vUnique = new RedirectRuleEditUniqueValidator(db, localizer);
         }
 
         public async Task HandleAsync(RedirectRuleEditDto dto, CancellationToken ct = default)
@@ -33,10 +37,10 @@ namespace Darwin.Application.SEO.Commands
             if (!r2.IsValid) throw new ValidationException(r2.Errors);
 
             var entity = await _db.Set<RedirectRule>().FirstOrDefaultAsync(r => r.Id == dto.Id && !r.IsDeleted, ct);
-            if (entity is null) throw new InvalidOperationException("Redirect rule not found.");
+            if (entity is null) throw new InvalidOperationException(_localizer["RedirectRuleNotFound"]);
 
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             entity.FromPath = dto.FromPath.Trim();
             entity.To = dto.To.Trim();

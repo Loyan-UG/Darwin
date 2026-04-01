@@ -2,6 +2,7 @@ import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
 import type { PublicStorefrontOrderConfirmation } from "@/features/checkout/types";
+import { formatResource, getCommerceResource } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
 
 type ParsedAddress = {
@@ -17,10 +18,15 @@ type ParsedAddress = {
 };
 
 type OrderConfirmationPageProps = {
+  culture: string;
   confirmation: PublicStorefrontOrderConfirmation | null;
   status: string;
   message?: string;
   checkoutStatus?: string;
+  paymentCompletionStatus?: string;
+  paymentOutcome?: string;
+  paymentStatus?: string;
+  orderStatus?: string;
   paymentError?: string;
   cancelled?: boolean;
 };
@@ -34,11 +40,13 @@ function parseAddress(rawJson: string): ParsedAddress | null {
   }
 }
 
-function renderAddress(address: ParsedAddress | null) {
+function renderAddress(address: ParsedAddress | null, culture: string) {
+  const copy = getCommerceResource(culture);
+
   if (!address) {
     return (
       <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
-        Snapshot unavailable.
+        {copy.snapshotUnavailable}
       </p>
     );
   }
@@ -46,7 +54,7 @@ function renderAddress(address: ParsedAddress | null) {
   return (
     <div className="text-sm leading-7 text-[var(--color-text-secondary)]">
       <p className="font-semibold text-[var(--color-text-primary)]">
-        {address.fullName || "Recipient unavailable"}
+        {address.fullName || copy.recipientUnavailable}
       </p>
       {address.company ? <p>{address.company}</p> : null}
       <p>{address.street1}</p>
@@ -63,34 +71,45 @@ function renderAddress(address: ParsedAddress | null) {
 
 function hasSuccessfulPayment(confirmation: PublicStorefrontOrderConfirmation) {
   return confirmation.payments.some((payment) => {
-    const status = payment.status.toLowerCase();
-    return status === "paid" || status === "succeeded" || status === "completed";
+    const currentStatus = payment.status.toLowerCase();
+    return currentStatus === "paid"
+      || currentStatus === "succeeded"
+      || currentStatus === "completed";
   });
 }
 
 export function OrderConfirmationPage({
+  culture,
   confirmation,
   status,
   message,
   checkoutStatus,
+  paymentCompletionStatus,
+  paymentOutcome,
+  paymentStatus,
+  orderStatus,
   paymentError,
   cancelled,
 }: OrderConfirmationPageProps) {
+  const copy = getCommerceResource(culture);
+
   if (!confirmation) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
         <div className="w-full rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
           <StatusBanner
             tone="warning"
-            title="Order confirmation is unavailable."
-            message={message ?? `The public confirmation endpoint returned status "${status}".`}
+            title={copy.orderConfirmationUnavailableTitle}
+            message={message ?? formatResource(copy.orderConfirmationUnavailableMessage, {
+              status,
+            })}
           />
           <div className="mt-8">
             <Link
               href="/catalog"
               className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
-              Back to catalog
+              {copy.backToCatalog}
             </Link>
           </div>
         </div>
@@ -107,35 +126,63 @@ export function OrderConfirmationPage({
       <div className="flex w-full flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            Order confirmation
+            {copy.orderConfirmationEyebrow}
           </p>
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-            Order {confirmation.orderNumber} is now on the storefront timeline
+            {formatResource(copy.orderConfirmationTitle, {
+              orderNumber: confirmation.orderNumber,
+            })}
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
-            This screen reads the authoritative storefront confirmation contract from `Darwin.WebApi` and keeps payment handoff visible instead of hiding it behind placeholder text.
+            {copy.orderConfirmationDescription}
           </p>
         </div>
 
         {checkoutStatus === "order-placed" && (
           <StatusBanner
-            title="Order placed"
-            message="The cart was successfully converted into an order. The next step is payment handoff unless the order is already marked as paid."
+            title={copy.orderPlacedTitle}
+            message={copy.orderPlacedMessage}
+          />
+        )}
+
+        {paymentCompletionStatus === "completed" && (
+          <StatusBanner
+            title={
+              paymentOutcome === "Cancelled"
+                ? copy.paymentCancelledTitle
+                : copy.paymentReconciledTitle
+            }
+            message={formatResource(copy.paymentReconciledMessage, {
+              orderStatus: orderStatus ?? confirmation.status,
+              paymentStatus: paymentStatus ?? copy.unavailable,
+            })}
+          />
+        )}
+
+        {paymentCompletionStatus === "missing-context" && (
+          <StatusBanner
+            tone="warning"
+            title={copy.missingContextTitle}
+            message={copy.missingContextMessage}
           />
         )}
 
         {cancelled && (
           <StatusBanner
             tone="warning"
-            title="Hosted checkout was cancelled."
-            message="The shopper returned from the payment handoff without completing payment. The order remains visible here and payment can be retried."
+            title={copy.hostedCheckoutCancelledTitle}
+            message={copy.hostedCheckoutCancelledMessage}
           />
         )}
 
         {paymentError && (
           <StatusBanner
             tone="warning"
-            title="Payment handoff failed"
+            title={
+              paymentCompletionStatus === "failed"
+                ? copy.paymentCompletionFailedTitle
+                : copy.paymentHandoffFailedTitle
+            }
             message={paymentError}
           />
         )}
@@ -143,8 +190,10 @@ export function OrderConfirmationPage({
         {status !== "ok" && (
           <StatusBanner
             tone="warning"
-            title="Confirmation loaded with warnings."
-            message={message ?? `Confirmation fetch returned status "${status}".`}
+            title={copy.confirmationWarningsTitle}
+            message={message ?? formatResource(copy.confirmationWarningsMessage, {
+              status,
+            })}
           />
         )}
 
@@ -154,22 +203,22 @@ export function OrderConfirmationPage({
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                    Billing address
+                    {copy.billingAddressTitle}
                   </p>
-                  <div className="mt-3">{renderAddress(billingAddress)}</div>
+                  <div className="mt-3">{renderAddress(billingAddress, culture)}</div>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                    Shipping address
+                    {copy.shippingAddressTitle}
                   </p>
-                  <div className="mt-3">{renderAddress(shippingAddress)}</div>
+                  <div className="mt-3">{renderAddress(shippingAddress, culture)}</div>
                 </div>
               </div>
             </div>
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                Order lines
+                {copy.orderLinesTitle}
               </p>
               <div className="mt-5 flex flex-col gap-4">
                 {confirmation.lines.map((line) => (
@@ -183,13 +232,18 @@ export function OrderConfirmationPage({
                           {line.name}
                         </h2>
                         <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">
-                          SKU: {line.sku} | Qty: {line.quantity}
+                          {formatResource(copy.skuQtyLine, {
+                            sku: line.sku,
+                            quantity: line.quantity,
+                          })}
                         </p>
                       </div>
                       <div className="text-right text-sm leading-7 text-[var(--color-text-secondary)]">
-                        <p>{formatMoney(line.unitPriceGrossMinor, confirmation.currency)} each</p>
+                        <p>
+                          {formatMoney(line.unitPriceGrossMinor, confirmation.currency, culture)} {copy.eachSuffix}
+                        </p>
                         <p className="font-semibold text-[var(--color-text-primary)]">
-                          {formatMoney(line.lineGrossMinor, confirmation.currency)}
+                          {formatMoney(line.lineGrossMinor, confirmation.currency, culture)}
                         </p>
                       </div>
                     </div>
@@ -202,45 +256,45 @@ export function OrderConfirmationPage({
           <div className="flex flex-col gap-5">
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                Summary
+                {copy.summaryTitle}
               </p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex items-center justify-between">
-                  <span>Status</span>
+                  <span>{copy.statusLabel}</span>
                   <span>{confirmation.status}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Created</span>
-                  <span>{formatDateTime(confirmation.createdAtUtc)}</span>
+                  <span>{copy.createdLabel}</span>
+                  <span>{formatDateTime(confirmation.createdAtUtc, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Subtotal net</span>
-                  <span>{formatMoney(confirmation.subtotalNetMinor, confirmation.currency)}</span>
+                  <span>{copy.subtotalNetLabel}</span>
+                  <span>{formatMoney(confirmation.subtotalNetMinor, confirmation.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Tax total</span>
-                  <span>{formatMoney(confirmation.taxTotalMinor, confirmation.currency)}</span>
+                  <span>{copy.taxTotalLabel}</span>
+                  <span>{formatMoney(confirmation.taxTotalMinor, confirmation.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Shipping</span>
-                  <span>{formatMoney(confirmation.shippingTotalMinor, confirmation.currency)}</span>
+                  <span>{copy.shippingLabel}</span>
+                  <span>{formatMoney(confirmation.shippingTotalMinor, confirmation.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Discount</span>
-                  <span>{formatMoney(confirmation.discountTotalMinor, confirmation.currency)}</span>
+                  <span>{copy.discountLabel}</span>
+                  <span>{formatMoney(confirmation.discountTotalMinor, confirmation.currency, culture)}</span>
                 </div>
                 <div className="flex items-center justify-between border-t border-[var(--color-border-soft)] pt-3 text-base font-semibold text-[var(--color-text-primary)]">
-                  <span>Grand total</span>
-                  <span>{formatMoney(confirmation.grandTotalGrossMinor, confirmation.currency)}</span>
+                  <span>{copy.grandTotalLabel}</span>
+                  <span>{formatMoney(confirmation.grandTotalGrossMinor, confirmation.currency, culture)}</span>
                 </div>
               </div>
 
               {(confirmation.shippingMethodName || confirmation.shippingCarrier || confirmation.shippingService) && (
                 <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  <p className="font-semibold text-[var(--color-text-primary)]">Shipping snapshot</p>
-                  <p>{confirmation.shippingMethodName ?? "Method unavailable"}</p>
+                  <p className="font-semibold text-[var(--color-text-primary)]">{copy.shippingSnapshotTitle}</p>
+                  <p>{confirmation.shippingMethodName ?? copy.methodUnavailable}</p>
                   <p>
-                    {confirmation.shippingCarrier ?? "Carrier unavailable"}
+                    {confirmation.shippingCarrier ?? copy.carrierUnavailable}
                     {confirmation.shippingService ? ` / ${confirmation.shippingService}` : ""}
                   </p>
                 </div>
@@ -249,7 +303,7 @@ export function OrderConfirmationPage({
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                Payments
+                {copy.paymentsTitle}
               </p>
               <div className="mt-4 flex flex-col gap-3">
                 {confirmation.payments.length > 0 ? (
@@ -261,14 +315,14 @@ export function OrderConfirmationPage({
                       <p className="font-semibold text-[var(--color-text-primary)]">
                         {payment.provider} - {payment.status}
                       </p>
-                      <p>{formatMoney(payment.amountMinor, payment.currency)}</p>
-                      <p>Reference: {payment.providerReference ?? "Unavailable"}</p>
-                      {payment.paidAtUtc ? <p>Paid: {formatDateTime(payment.paidAtUtc)}</p> : null}
+                      <p>{formatMoney(payment.amountMinor, payment.currency, culture)}</p>
+                      <p>{copy.referenceLabel} {payment.providerReference ?? copy.unavailable}</p>
+                      {payment.paidAtUtc ? <p>{copy.paidLabel} {formatDateTime(payment.paidAtUtc, culture)}</p> : null}
                     </div>
                   ))
                 ) : (
                   <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
-                    No payment attempts are attached yet.
+                    {copy.noPaymentAttemptsMessage}
                   </p>
                 )}
               </div>
@@ -281,7 +335,7 @@ export function OrderConfirmationPage({
                     type="submit"
                     className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                   >
-                    Continue to payment
+                    {copy.continueToPayment}
                   </button>
                 </form>
               )}
@@ -289,8 +343,8 @@ export function OrderConfirmationPage({
               {paid && (
                 <div className="mt-6">
                   <StatusBanner
-                    title="Payment is already recorded."
-                    message="No additional payment handoff is required for this order."
+                    title={copy.paymentRecordedTitle}
+                    message={copy.paymentRecordedMessage}
                   />
                 </div>
               )}
@@ -301,7 +355,7 @@ export function OrderConfirmationPage({
                 href="/catalog"
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
               >
-                Continue shopping
+                {copy.continueShopping}
               </Link>
             </div>
           </div>

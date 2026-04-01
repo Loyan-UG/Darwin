@@ -5,23 +5,25 @@
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     x:Class="Darwin.Mobile.Business.Views.AcceptInvitationPage"
     x:DataType="vm:AcceptInvitationViewModel"
-    Title="{x:Static res:AppResources.InvitationAcceptanceTitle}"
-    BackgroundColor="{DynamicResource PageBackgroundColor}">
+    Title="{x:Static res:AppResources.InvitationAcceptanceTitle}">
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
             <Label Text="{x:Static res:AppResources.InvitationAcceptanceTitle}"
-                   FontSize="24"
-                   FontAttributes="Bold" />
+                   Style="{StaticResource TitleLabelStyle}" />
 
             <Label Text="{x:Static res:AppResources.InvitationTokenLabel}"
-                   FontAttributes="Bold" />
+                   Style="{StaticResource FormLabelStyle}" />
 
-            <Entry Placeholder="{x:Static res:AppResources.InvitationTokenPlaceholder}"
-                   Text="{Binding InvitationToken}"
-                   AutomationId="InvitationTokenEntry" />
+            <Border Style="{StaticResource FormFieldBorderStyle}">
+                <Entry Placeholder="{x:Static res:AppResources.InvitationTokenPlaceholder}"
+                       Text="{Binding InvitationToken}"
+                       Style="{StaticResource FormEntryStyle}"
+                       AutomationId="InvitationTokenEntry" />
+            </Border>
 
             <Button Text="{x:Static res:AppResources.InvitationPreviewButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding PreviewInvitationCommand}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
                     AutomationId="PreviewInvitationButton" />
@@ -29,12 +31,11 @@
             <ActivityIndicator IsRunning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}" />
 
-            <Border StrokeThickness="1"
-                    Padding="16"
+            <Border Style="{StaticResource CardBorderStyle}"
                     IsVisible="{Binding HasPreview}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding InvitationHint}"
-                           LineBreakMode="WordWrap" />
+                           Style="{StaticResource BodyLabelStyle}" />
 
                     <Grid ColumnDefinitions="Auto,*"
                           RowDefinitions="Auto,Auto,Auto,Auto"
@@ -43,75 +44,89 @@
                         <Label Grid.Row="0"
                                Grid.Column="0"
                                Text="{x:Static res:AppResources.InvitationBusinessLabel}"
-                               FontAttributes="Bold" />
+                               Style="{StaticResource FormLabelStyle}" />
                         <Label Grid.Row="0"
                                Grid.Column="1"
-                               Text="{Binding BusinessName}" />
+                               Text="{Binding BusinessName}"
+                               Style="{StaticResource BodyLabelStyle}" />
 
                         <Label Grid.Row="1"
                                Grid.Column="0"
                                Text="{x:Static res:AppResources.InvitationInvitedEmailLabel}"
-                               FontAttributes="Bold" />
+                               Style="{StaticResource FormLabelStyle}" />
                         <Label Grid.Row="1"
                                Grid.Column="1"
-                               Text="{Binding InvitedEmail}" />
+                               Text="{Binding InvitedEmail}"
+                               Style="{StaticResource BodyLabelStyle}" />
 
                         <Label Grid.Row="2"
                                Grid.Column="0"
                                Text="{x:Static res:AppResources.InvitationRoleLabel}"
-                               FontAttributes="Bold" />
+                               Style="{StaticResource FormLabelStyle}" />
                         <Label Grid.Row="2"
                                Grid.Column="1"
-                               Text="{Binding InvitationRole}" />
+                               Text="{Binding InvitationRole}"
+                               Style="{StaticResource BodyLabelStyle}" />
 
                         <Label Grid.Row="3"
                                Grid.Column="0"
                                Text="{x:Static res:AppResources.InvitationExpiresAtLabel}"
-                               FontAttributes="Bold" />
+                               Style="{StaticResource FormLabelStyle}" />
                         <Label Grid.Row="3"
                                Grid.Column="1"
-                               Text="{Binding InvitationExpiresAtDisplay}" />
+                               Text="{Binding InvitationExpiresAtDisplay}"
+                               Style="{StaticResource BodyLabelStyle}" />
                     </Grid>
 
                     <Label Text="{x:Static res:AppResources.InvitationStatusLabel}"
-                           FontAttributes="Bold" />
-                    <Label Text="{Binding InvitationStatus}" />
+                           Style="{StaticResource FormLabelStyle}" />
+                    <Label Text="{Binding InvitationStatus}"
+                           Style="{StaticResource BodyLabelStyle}" />
                 </VerticalStackLayout>
             </Border>
 
             <VerticalStackLayout Spacing="12"
                                  IsVisible="{Binding RequiresAccountDetails}">
-                <Entry Placeholder="{x:Static res:AppResources.FirstNameLabel}"
-                       Text="{Binding FirstName}"
-                       AutomationId="InvitationFirstNameEntry" />
+                <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <Entry Placeholder="{x:Static res:AppResources.FirstNameLabel}"
+                           Text="{Binding FirstName}"
+                           Style="{StaticResource FormEntryStyle}"
+                           AutomationId="InvitationFirstNameEntry" />
+                </Border>
 
-                <Entry Placeholder="{x:Static res:AppResources.LastNameLabel}"
-                       Text="{Binding LastName}"
-                       AutomationId="InvitationLastNameEntry" />
+                <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <Entry Placeholder="{x:Static res:AppResources.LastNameLabel}"
+                           Text="{Binding LastName}"
+                           Style="{StaticResource FormEntryStyle}"
+                           AutomationId="InvitationLastNameEntry" />
+                </Border>
 
-                <Entry Placeholder="{x:Static res:AppResources.InvitationPasswordLabel}"
-                       IsPassword="True"
-                       Text="{Binding Password}"
-                       AutomationId="InvitationPasswordEntry" />
+                <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <Entry Placeholder="{x:Static res:AppResources.InvitationPasswordLabel}"
+                           IsPassword="True"
+                           Text="{Binding Password}"
+                           Style="{StaticResource FormEntryStyle}"
+                           AutomationId="InvitationPasswordEntry" />
+                </Border>
 
-                <Entry Placeholder="{x:Static res:AppResources.InvitationConfirmPasswordLabel}"
-                       IsPassword="True"
-                       Text="{Binding ConfirmPassword}"
-                       AutomationId="InvitationConfirmPasswordEntry" />
+                <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <Entry Placeholder="{x:Static res:AppResources.InvitationConfirmPasswordLabel}"
+                           IsPassword="True"
+                           Text="{Binding ConfirmPassword}"
+                           Style="{StaticResource FormEntryStyle}"
+                           AutomationId="InvitationConfirmPasswordEntry" />
+                </Border>
             </VerticalStackLayout>
 
             <Button Text="{x:Static res:AppResources.InvitationAcceptButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding AcceptInvitationCommand}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
                     IsVisible="{Binding HasPreview}"
-                    HeightRequest="48"
-                    CornerRadius="6"
                     AutomationId="AcceptInvitationButton" />
 
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Crimson"
-                   FontSize="14"
-                   LineBreakMode="WordWrap"
+                   Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}"
                    AutomationId="InvitationErrorLabel" />
         </VerticalStackLayout>

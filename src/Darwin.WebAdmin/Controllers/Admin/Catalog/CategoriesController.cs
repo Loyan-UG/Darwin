@@ -132,7 +132,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _create.HandleAsync(dto, ct);
-                TempData["Success"] = "Category created successfully.";
+                SetSuccessMessage("CategoryCreated");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (FluentValidation.ValidationException ex)
@@ -152,7 +152,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var dto = await _getForEdit.HandleAsync(id, ct);
             if (dto == null)
             {
-                TempData["Error"] = "Category not found.";
+                SetErrorMessage("CategoryNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -208,7 +208,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _update.HandleAsync(dto, ct);
-                TempData["Success"] = "Category updated successfully.";
+                SetSuccessMessage("CategoryUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
@@ -242,11 +242,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             try
             {
                 await _softDelete.HandleAsync(id, ct);
-                TempData["Success"] = "Category deleted.";
+                SetSuccessMessage("CategoryDeleted");
             }
             catch (Exception)
             {
-                TempData["Error"] = "Failed to delete the category.";
+                SetErrorMessage("CategoryDeleteFailed");
             }
 
             return RedirectOrHtmx(nameof(Index), new { });

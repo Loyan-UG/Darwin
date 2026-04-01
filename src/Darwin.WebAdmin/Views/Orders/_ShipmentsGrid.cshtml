@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderShipmentsPageVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="shipments-grid-content"
      hx-boost="true"
@@ -8,33 +9,33 @@
     <form asp-controller="Orders" asp-action="Shipments" method="get" class="d-flex gap-2 mb-3">
         <input type="hidden" name="orderId" value="@Model.OrderId" />
         <select name="filter" asp-items="Model.FilterItems" class="form-select form-select-sm"></select>
-        <button class="btn btn-sm btn-outline-secondary" type="submit">Apply</button>
+        <button class="btn btn-sm btn-outline-secondary" type="submit">@T.T("Apply")</button>
     </form>
     <div class="d-flex gap-2 flex-wrap mb-3">
-        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")">Pending/Packed</a>
-        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Shipped" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Shipped ? "btn-primary" : "btn-outline-primary")">Shipped/Delivered</a>
-        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Returned" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Returned ? "btn-dark" : "btn-outline-dark")">Returned</a>
-        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="CarrierReview" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">Carrier Review</a>
-        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="ReturnFollowUp" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.ReturnFollowUp ? "btn-dark" : "btn-outline-dark")">Return Follow-up</a>
-        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="AwaitingHandoff" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.AwaitingHandoff ? "btn-danger" : "btn-outline-danger")">Awaiting Handoff</a>
-        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="TrackingOverdue" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.TrackingOverdue ? "btn-danger" : "btn-outline-danger")">Tracking Overdue</a>
-        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">Clear</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")">@T.T("PendingPacked")</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Shipped" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Shipped ? "btn-primary" : "btn-outline-primary")">@T.T("ShippedDelivered")</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Returned" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Returned ? "btn-dark" : "btn-outline-dark")">@T.T("Returned")</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="CarrierReview" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">@T.T("CarrierReview")</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="ReturnFollowUp" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.ReturnFollowUp ? "btn-dark" : "btn-outline-dark")">@T.T("ReturnFollowUp")</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="AwaitingHandoff" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.AwaitingHandoff ? "btn-danger" : "btn-outline-danger")">@T.T("AwaitingHandoff")</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="TrackingOverdue" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.TrackingOverdue ? "btn-danger" : "btn-outline-danger")">@T.T("TrackingOverdue")</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">@T.T("Clear")</a>
     </div>
     <div class="table-responsive">
         <table class="table table-sm table-striped align-middle">
             <thead>
                 <tr>
-                    <th>Carrier</th>
-                    <th>Tracking</th>
-                    <th>Status</th>
-                    <th>Created (UTC)</th>
-                    <th class="text-end">Actions</th>
+                    <th>@T.T("Carrier")</th>
+                    <th>@T.T("Tracking")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("CreatedUtc")</th>
+                    <th class="text-end">@T.T("Actions")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="5" class="text-center text-muted">No shipments.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted">@T.T("NoShipments")</td></tr>
                 }
                 else
                 {
@@ -55,33 +56,33 @@
                                 <div class="small text-muted mt-1">@s.TrackingState</div>
                                 @if (s.TrackingOverdue)
                                 {
-                                    <div><span class="badge text-bg-danger mt-1">Tracking overdue</span></div>
+                                    <div><span class="badge text-bg-danger mt-1">@T.T("TrackingOverdueBadge")</span></div>
                                 }
                             </td>
                             <td>
                                 @s.Status
                                 @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned)
                                 {
-                                    <div><span class="badge text-bg-dark mt-1">Returned parcel</span></div>
+                                    <div><span class="badge text-bg-dark mt-1">@T.T("ReturnedParcel")</span></div>
                                 }
                                 @if (s.AwaitingHandoff)
                                 {
-                                    <div><span class="badge text-bg-danger mt-1">Awaiting handoff</span></div>
+                                    <div><span class="badge text-bg-danger mt-1">@T.T("AwaitingHandoff")</span></div>
                                 }
                                 @if (s.NeedsCarrierReview)
                                 {
-                                    <div><span class="badge text-bg-warning mt-1">Carrier review</span></div>
+                                    <div><span class="badge text-bg-warning mt-1">@T.T("CarrierReview")</span></div>
                                 }
                                 @if (s.NeedsReturnFollowUp)
                                 {
-                                    <div><span class="badge text-bg-dark mt-1">Return follow-up</span></div>
+                                    <div><span class="badge text-bg-dark mt-1">@T.T("ReturnFollowUp")</span></div>
                                 }
                             </td>
                             <td>
                                 <div>@s.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</div>
                                 @if (s.LastCarrierEventAtUtc.HasValue)
                                 {
-                                    <div class="small text-muted mt-1">Last event @s.LastCarrierEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                    <div class="small text-muted mt-1">@T.T("LastEvent") @s.LastCarrierEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                                 }
                                 @if (!string.IsNullOrWhiteSpace(s.ExceptionNote))
                                 {
@@ -89,7 +90,7 @@
                                 }
                                 @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned)
                                 {
-                                    <div class="small text-muted mt-1">Use refund + restock follow-up from this order.</div>
+                                    <div class="small text-muted mt-1">@T.T("UseRefundRestockFollowUp")</div>
                                 }
                             </td>
                             <td class="text-end">
@@ -99,7 +100,7 @@
                                             type="button"
                                             data-bs-toggle="tab"
                                             data-bs-target="#refunds">
-                                        Review Refunds
+                                        @T.T("ReviewRefunds")
                                     </button>
                                 }
                                 @if (s.NeedsReturnFollowUp)
@@ -109,7 +110,7 @@
                                        asp-route-orderId="@Model.OrderId"
                                        asp-route-filter="CarrierReview"
                                        class="btn btn-sm btn-outline-dark">
-                                        Carrier Review
+                                        @T.T("CarrierReview")
                                     </a>
                                 }
                                 @if (needsServiceResolution)
@@ -122,7 +123,7 @@
                                        hx-target="#order-operation-shell"
                                        hx-swap="innerHTML"
                                        hx-push-url="false">
-                                        Shipping Methods
+                                        @T.T("ShippingMethods")
                                     </a>
                                 }
                                 @if (needsThresholdReview)
@@ -135,7 +136,7 @@
                                        hx-target="#order-operation-shell"
                                        hx-swap="innerHTML"
                                        hx-push-url="false">
-                                        Shipping Settings
+                                        @T.T("ShippingSettings")
                                     </a>
                                 }
                                 @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned && Model.DefaultRefundPaymentId.HasValue)
@@ -149,7 +150,7 @@
                                        hx-target="#order-operation-shell"
                                        hx-swap="innerHTML"
                                        hx-push-url="false">
-                                        Start Refund
+                                        @T.T("StartRefund")
                                     </a>
                                 }
                             </td>

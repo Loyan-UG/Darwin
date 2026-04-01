@@ -9,164 +9,109 @@
     Title="{x:Static res:AppResources.MemberCommerceTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
-            <Label Text="{x:Static res:AppResources.MemberCommerceTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
-
-            <Label Text="{x:Static res:AppResources.MemberCommerceSubtitle}"
-                   FontSize="14"
-                   Opacity="0.85" />
-
-            <Label Text="{Binding SuccessMessage}"
-                   TextColor="Green"
-                   FontSize="14"
-                   IsVisible="{Binding HasSuccess}" />
-
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   FontSize="14"
-                   IsVisible="{Binding HasError}" />
-
-            <Button Text="{x:Static res:AppResources.MemberCommerceRefreshButton}"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    Command="{Binding RefreshCommand}" />
-
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+            <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.MemberCommerceOrdersSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
+                    <Label Text="{x:Static res:AppResources.MemberCommerceTitle}" Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberCommerceSubtitle}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Button Text="{x:Static res:AppResources.MemberCommerceRefreshButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
+                    <Label Text="{Binding SuccessMessage}" Style="{StaticResource SuccessLabelStyle}" IsVisible="{Binding HasSuccess}" />
+                    <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
+                </VerticalStackLayout>
+            </Border>
 
-                    <Label Text="{x:Static res:AppResources.MemberCommerceOrdersEmpty}"
-                           FontSize="13"
-                           IsVisible="{Binding HasOrders, Converter={StaticResource InverseBoolConverter}}" />
-
-                    <VerticalStackLayout Spacing="10"
-                                         BindableLayout.ItemsSource="{Binding Orders}"
-                                         IsVisible="{Binding HasOrders}">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.MemberCommerceOrdersSectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberCommerceOrdersEmpty}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasOrders, Converter={StaticResource InverseBoolConverter}}" />
+                    <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Orders}" IsVisible="{Binding HasOrders}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCommerceOrderItemViewModel">
-                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
+                                <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="{Binding OrderNumber}" FontAttributes="Bold" />
-                                        <Label Text="{Binding StatusText}" FontSize="13" />
-                                        <Label Text="{Binding CreatedAtText}" FontSize="13" />
-                                        <Label Text="{Binding TotalText}" FontSize="13" />
-                                        <Button Text="{x:Static res:AppResources.MemberCommerceViewOrderButton}"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewOrderCommand}"
-                                                CommandParameter="{Binding .}" />
+                                        <Label Text="{Binding OrderNumber}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                        <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Button Text="{x:Static res:AppResources.MemberCommerceViewOrderButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewOrderCommand}" CommandParameter="{Binding .}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
 
-                    <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12"
-                            IsVisible="{Binding HasSelectedOrder}">
+                    <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasSelectedOrder}">
                         <VerticalStackLayout Spacing="8">
-                            <Label Text="{Binding SelectedOrder.HeaderTitle}" FontAttributes="Bold" />
-                            <Label Text="{Binding SelectedOrder.StatusText}" FontSize="13" />
-                            <Label Text="{Binding SelectedOrder.CreatedAtText}" FontSize="13" />
-                            <Label Text="{Binding SelectedOrder.TotalText}" FontSize="13" />
-                            <Label Text="{Binding SelectedOrder.ShippingMethodText}"
-                                   FontSize="13"
-                                   IsVisible="{Binding SelectedOrder.HasShippingMethod}" />
-                            <Label Text="{Binding SelectedOrder.PaymentsCountText}" FontSize="13" />
-                            <Label Text="{Binding SelectedOrder.InvoicesCountText}" FontSize="13" />
-
-                            <VerticalStackLayout Spacing="4"
-                                                 BindableLayout.ItemsSource="{Binding SelectedOrder.LineSummaries}">
+                            <Label Text="{Binding SelectedOrder.HeaderTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                            <Label Text="{Binding SelectedOrder.StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Label Text="{Binding SelectedOrder.CreatedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Label Text="{Binding SelectedOrder.TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Label Text="{Binding SelectedOrder.ShippingMethodText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding SelectedOrder.HasShippingMethod}" />
+                            <Label Text="{Binding SelectedOrder.PaymentsCountText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Label Text="{Binding SelectedOrder.InvoicesCountText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding SelectedOrder.LineSummaries}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate>
-                                        <Label Text="{Binding .}" FontSize="13" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding .}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" />
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
-
-                            <Button Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    Command="{Binding RetryOrderPaymentCommand}"
-                                    IsVisible="{Binding SelectedOrder.CanRetryPayment}" />
-
-                            <Button Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}"
-                                    Style="{StaticResource SecondaryButtonStyle}"
-                                    Command="{Binding CopyOrderDocumentCommand}"
-                                    IsVisible="{Binding SelectedOrder.HasDocument}" />
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Button Grid.Column="0" Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RetryOrderPaymentCommand}" IsVisible="{Binding SelectedOrder.CanRetryPayment}" />
+                                <Button Grid.Column="1" Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding CopyOrderDocumentCommand}" IsVisible="{Binding SelectedOrder.HasDocument}" />
+                            </Grid>
                         </VerticalStackLayout>
                     </Border>
                 </VerticalStackLayout>
             </Border>
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+            <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.MemberCommerceInvoicesSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-
-                    <Label Text="{x:Static res:AppResources.MemberCommerceInvoicesEmpty}"
-                           FontSize="13"
-                           IsVisible="{Binding HasInvoices, Converter={StaticResource InverseBoolConverter}}" />
-
-                    <VerticalStackLayout Spacing="10"
-                                         BindableLayout.ItemsSource="{Binding Invoices}"
-                                         IsVisible="{Binding HasInvoices}">
+                    <Label Text="{x:Static res:AppResources.MemberCommerceInvoicesSectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberCommerceInvoicesEmpty}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasInvoices, Converter={StaticResource InverseBoolConverter}}" />
+                    <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Invoices}" IsVisible="{Binding HasInvoices}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCommerceInvoiceItemViewModel">
-                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
+                                <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="{Binding ReferenceNumber}" FontAttributes="Bold" />
-                                        <Label Text="{Binding BusinessName}" FontSize="13" IsVisible="{Binding HasBusinessName}" />
-                                        <Label Text="{Binding StatusText}" FontSize="13" />
-                                        <Label Text="{Binding DueDateText}" FontSize="13" />
-                                        <Label Text="{Binding TotalText}" FontSize="13" />
-                                        <Label Text="{Binding BalanceText}" FontSize="13" />
-                                        <Button Text="{x:Static res:AppResources.MemberCommerceViewInvoiceButton}"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewInvoiceCommand}"
-                                                CommandParameter="{Binding .}" />
+                                        <Label Text="{Binding ReferenceNumber}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                        <Label Text="{Binding BusinessName}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasBusinessName}" />
+                                        <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding DueDateText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding BalanceText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Button Text="{x:Static res:AppResources.MemberCommerceViewInvoiceButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewInvoiceCommand}" CommandParameter="{Binding .}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
 
-                    <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12"
-                            IsVisible="{Binding HasSelectedInvoice}">
+                    <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasSelectedInvoice}">
                         <VerticalStackLayout Spacing="8">
-                            <Label Text="{Binding SelectedInvoice.HeaderTitle}" FontAttributes="Bold" />
-                            <Label Text="{Binding SelectedInvoice.StatusText}" FontSize="13" />
-                            <Label Text="{Binding SelectedInvoice.DueDateText}" FontSize="13" />
-                            <Label Text="{Binding SelectedInvoice.TotalText}" FontSize="13" />
-                            <Label Text="{Binding SelectedInvoice.BalanceText}" FontSize="13" />
-                            <Label Text="{Binding SelectedInvoice.PaymentSummaryText}" FontSize="13" LineBreakMode="WordWrap" />
-
-                            <VerticalStackLayout Spacing="4"
-                                                 BindableLayout.ItemsSource="{Binding SelectedInvoice.LineSummaries}">
+                            <Label Text="{Binding SelectedInvoice.HeaderTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                            <Label Text="{Binding SelectedInvoice.StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Label Text="{Binding SelectedInvoice.DueDateText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Label Text="{Binding SelectedInvoice.TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Label Text="{Binding SelectedInvoice.BalanceText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <Label Text="{Binding SelectedInvoice.PaymentSummaryText}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" />
+                            <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding SelectedInvoice.LineSummaries}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate>
-                                        <Label Text="{Binding .}" FontSize="13" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding .}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" />
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
-
-                            <Button Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    Command="{Binding RetryInvoicePaymentCommand}"
-                                    IsVisible="{Binding SelectedInvoice.CanRetryPayment}" />
-
-                            <Button Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}"
-                                    Style="{StaticResource SecondaryButtonStyle}"
-                                    Command="{Binding CopyInvoiceDocumentCommand}"
-                                    IsVisible="{Binding SelectedInvoice.HasDocument}" />
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Button Grid.Column="0" Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RetryInvoicePaymentCommand}" IsVisible="{Binding SelectedInvoice.CanRetryPayment}" />
+                                <Button Grid.Column="1" Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding CopyInvoiceDocumentCommand}" IsVisible="{Binding SelectedInvoice.HasDocument}" />
+                            </Grid>
                         </VerticalStackLayout>
                     </Border>
                 </VerticalStackLayout>
             </Border>
 
-            <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrandGold500}" />
+            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

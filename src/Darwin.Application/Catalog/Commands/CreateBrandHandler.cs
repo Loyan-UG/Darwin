@@ -6,6 +6,7 @@ using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Validators;
 using Darwin.Application.Common.Html;
 using Darwin.Domain.Entities.Catalog;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Catalog.Commands
@@ -17,9 +18,13 @@ namespace Darwin.Application.Catalog.Commands
     public sealed class CreateBrandHandler
     {
         private readonly IAppDbContext _db;
-        private readonly BrandCreateDtoValidator _validator = new();
+        private readonly BrandCreateDtoValidator _validator;
 
-        public CreateBrandHandler(IAppDbContext db) => _db = db;
+        public CreateBrandHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = new BrandCreateDtoValidator(localizer);
+        }
 
         public async Task HandleAsync(BrandCreateDto dto, CancellationToken ct = default)
         {

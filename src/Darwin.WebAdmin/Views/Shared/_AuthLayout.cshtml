@@ -1,9 +1,16 @@
+@using System.Globalization
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var currentCulture = CultureInfo.CurrentUICulture?.Name ?? "de-DE";
+    var languageOptions = T.GetSupportedLanguageOptions();
+    var returnUrl = $"{Context?.Request?.Path}{Context?.Request?.QueryString}";
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@currentCulture">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] - Darwin Admin</title>
+    <title>@ViewData["Title"] - @T.T("DarwinAdmin")</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-3I1H8n+..." crossorigin="anonymous" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" rel="stylesheet" />
@@ -16,7 +23,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="Darwin" />
+    <meta name="apple-mobile-web-app-title" content="@T.T("DarwinAdmin")" />
     <link rel="manifest" href="/site.webmanifest" />
 </head>
 <body class="bg-light">
@@ -27,6 +34,19 @@
                     <a asp-controller="Account" asp-action="Login" class="text-decoration-none">
                         <img src="~/images/DarwinLogo.png" alt="Darwin" class="img-fluid" style="max-height:140px;" />
                     </a>
+                </div>
+                <div class="d-flex justify-content-end mb-3">
+                <form asp-controller="Culture" asp-action="SetCulture" method="post" class="d-inline-flex align-items-center gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <label for="auth-culture-switcher" class="small text-muted mb-0">@T.T("Language")</label>
+                        <select id="auth-culture-switcher" name="culture" class="form-select form-select-sm" onchange="this.form.submit()">
+                            @foreach (var option in languageOptions)
+                            {
+                                <option value="@option.Culture" selected="@(string.Equals(currentCulture, option.Culture, StringComparison.OrdinalIgnoreCase))">@option.Label</option>
+                            }
+                        </select>
+                    </form>
                 </div>
 
                 <div class="card shadow-sm border-0">

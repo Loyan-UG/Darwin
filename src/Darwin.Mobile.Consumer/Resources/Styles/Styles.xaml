@@ -9,9 +9,16 @@
     </Style>
 
     <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource BrushPrimary}" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="{StaticResource BrandGold500}" Offset="0" />
+                    <GradientStop Color="{StaticResource BrandGold300}" Offset="1" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
         <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
-        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="18,14" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="16" />
@@ -20,9 +27,21 @@
             <VisualStateGroupList>
                 <VisualStateGroup Name="CommonStates">
                     <VisualState Name="Normal" />
+                    <VisualState Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="{StaticResource BrandGold600}" Offset="0" />
+                                        <GradientStop Color="{StaticResource BrandGold500}" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource Neutral100}" />
+                            <Setter Property="Background" Value="{StaticResource BrushBorder}" />
                             <Setter Property="TextColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
                             <Setter Property="Opacity" Value="1" />
                         </VisualState.Setters>
@@ -32,9 +51,12 @@
         </Setter>
     </Style>
 
+    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}" />
+
     <Style x:Key="LinkButtonStyle" TargetType="Button">
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource BrushLink}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Padding" Value="0" />
@@ -43,6 +65,11 @@
             <VisualStateGroupList>
                 <VisualStateGroup Name="CommonStates">
                     <VisualState Name="Normal" />
+                    <VisualState Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="TextColor" Value="{StaticResource BrushPrimaryPressed}" />
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="TextColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
@@ -56,7 +83,8 @@
 
     <Style x:Key="LegalLinkButtonStyle" TargetType="Button">
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource BrushLegalLink}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="BorderWidth" Value="0" />
@@ -64,6 +92,11 @@
             <VisualStateGroupList>
                 <VisualStateGroup Name="CommonStates">
                     <VisualState Name="Normal" />
+                    <VisualState Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="TextColor" Value="{StaticResource BrushPrimaryPressed}" />
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="TextColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
@@ -117,7 +150,7 @@
     <Style x:Key="SectionEyebrowLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource BrushPrimaryPressed}" />
+        <Setter Property="TextColor" Value="{StaticResource BrushPrimary}" />
         <Setter Property="CharacterSpacing" Value="1.2" />
         <Setter Property="TextTransform" Value="Uppercase" />
     </Style>
@@ -147,7 +180,7 @@
         <Setter Property="Padding" Value="18" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="22" />
+                <RoundRectangle CornerRadius="12" />
             </Setter.Value>
         </Setter>
     </Style>
@@ -173,7 +206,7 @@
         <Setter Property="Padding" Value="14,6" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
+                <RoundRectangle CornerRadius="8" />
             </Setter.Value>
         </Setter>
     </Style>
@@ -219,24 +252,29 @@
         </Setter>
     </Style>
 
-    <Style x:Key="OutlinedButtonStyle" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource BrushSurface}" />
-        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
-        <Setter Property="CornerRadius" Value="14" />
+    <Style x:Key="OutlinedButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
         <Setter Property="Padding" Value="16,12" />
-        <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="BorderColor" Value="{StaticResource BrandGold500}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup Name="CommonStates">
                     <VisualState Name="Normal" />
+                    <VisualState Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="{StaticResource BrandGold600}" Offset="0" />
+                                        <GradientStop Color="{StaticResource BrandGold500}" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource BrushBackground}" />
+                            <Setter Property="Background" Value="{StaticResource BrushBorder}" />
                             <Setter Property="TextColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
-                            <Setter Property="BorderColor" Value="{StaticResource BrushBorder}" />
                             <Setter Property="Opacity" Value="1" />
                         </VisualState.Setters>
                     </VisualState>
@@ -245,23 +283,31 @@
         </Setter>
     </Style>
 
-    <Style x:Key="SoftButtonStyle" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource BrushBackground}" />
-        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
-        <Setter Property="CornerRadius" Value="14" />
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource OutlinedButtonStyle}" />
+
+    <Style x:Key="SoftButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
         <Setter Property="Padding" Value="16,12" />
-        <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="BorderColor" Value="{StaticResource Neutral100}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup Name="CommonStates">
                     <VisualState Name="Normal" />
+                    <VisualState Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="{StaticResource BrandGold600}" Offset="0" />
+                                        <GradientStop Color="{StaticResource BrandGold500}" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="TextColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
-                            <Setter Property="BorderColor" Value="{StaticResource BrushBorder}" />
+                            <Setter Property="Background" Value="{StaticResource BrushBorder}" />
                             <Setter Property="Opacity" Value="1" />
                         </VisualState.Setters>
                     </VisualState>

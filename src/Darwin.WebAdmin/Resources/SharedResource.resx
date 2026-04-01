@@ -1,0 +1,3224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Change Password</value>
+  </data>
+  <data name="User" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>New password</value>
+  </data>
+  <data name="ConfirmNewPassword" xml:space="preserve">
+    <value>Confirm new password</value>
+  </data>
+  <data name="AtLeast8Characters" xml:space="preserve">
+    <value>At least 8 characters</value>
+  </data>
+  <data name="MustMatchNewPassword" xml:space="preserve">
+    <value>Must match the new password</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Locale" xml:space="preserve">
+    <value>Locale</value>
+  </data>
+  <data name="TimeZone" xml:space="preserve">
+    <value>Time Zone</value>
+  </data>
+  <data name="Currency" xml:space="preserve">
+    <value>Currency</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="NewEmail" xml:space="preserve">
+    <value>New email</value>
+  </data>
+  <data name="The {0} field is required." xml:space="preserve">
+    <value>The {0} field is required.</value>
+  </data>
+  <data name="Password must be at least 8 characters." xml:space="preserve">
+    <value>Password must be at least 8 characters.</value>
+  </data>
+  <data name="Passwords do not match." xml:space="preserve">
+    <value>Passwords do not match.</value>
+  </data>
+  <data name="EmailPasswordRequiredMessage" xml:space="preserve">
+    <value>Email and password are required.</value>
+  </data>
+  <data name="InvalidCredentialsMessage" xml:space="preserve">
+    <value>Invalid credentials.</value>
+  </data>
+  <data name="UnexpectedLoginResultMessage" xml:space="preserve">
+    <value>Unexpected login result.</value>
+  </data>
+  <data name="InvalidTwoFactorFlowMessage" xml:space="preserve">
+    <value>Invalid 2FA flow.</value>
+  </data>
+  <data name="InvalidCodeMessage" xml:space="preserve">
+    <value>Invalid code.</value>
+  </data>
+  <data name="UnableToCompleteSignInMessage" xml:space="preserve">
+    <value>Unable to complete sign-in.</value>
+  </data>
+  <data name="FailedToBeginPasskeyLoginMessage" xml:space="preserve">
+    <value>Failed to begin passkey login.</value>
+  </data>
+  <data name="PasskeyLoginFailedMessage" xml:space="preserve">
+    <value>Passkey login failed.</value>
+  </data>
+  <data name="RegistrationFailedMessage" xml:space="preserve">
+    <value>Registration failed.</value>
+  </data>
+  <data name="SettingsUpdatedMessage" xml:space="preserve">
+    <value>Settings have been updated.</value>
+  </data>
+  <data name="SettingsConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict: the settings were modified by another user.</value>
+  </data>
+  <data name="CreatePayment" xml:space="preserve">
+    <value>Create Payment</value>
+  </data>
+  <data name="EditPayment" xml:space="preserve">
+    <value>Edit Payment</value>
+  </data>
+  <data name="CreateJournalEntry" xml:space="preserve">
+    <value>Create Journal Entry</value>
+  </data>
+  <data name="EditJournalEntry" xml:space="preserve">
+    <value>Edit Journal Entry</value>
+  </data>
+  <data name="CreateExpense" xml:space="preserve">
+    <value>Create Expense</value>
+  </data>
+  <data name="EditExpense" xml:space="preserve">
+    <value>Edit Expense</value>
+  </data>
+  <data name="CreateFinancialAccount" xml:space="preserve">
+    <value>Create Financial Account</value>
+  </data>
+  <data name="EditFinancialAccount" xml:space="preserve">
+    <value>Edit Financial Account</value>
+  </data>
+  <data name="CreatePurchaseOrder" xml:space="preserve">
+    <value>Create Purchase Order</value>
+  </data>
+  <data name="EditPurchaseOrder" xml:space="preserve">
+    <value>Edit Purchase Order</value>
+  </data>
+  <data name="PurchaseOrderLines" xml:space="preserve">
+    <value>Purchase Order Lines</value>
+  </data>
+  <data name="UnitCost" xml:space="preserve">
+    <value>Unit Cost</value>
+  </data>
+  <data name="TotalCost" xml:space="preserve">
+    <value>Total Cost</value>
+  </data>
+  <data name="Debit" xml:space="preserve">
+    <value>Debit</value>
+  </data>
+  <data name="Credit" xml:space="preserve">
+    <value>Credit</value>
+  </data>
+  <data name="Memo" xml:space="preserve">
+    <value>Memo</value>
+  </data>
+  <data name="Account" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="MethodDetails" xml:space="preserve">
+    <value>Method Details</value>
+  </data>
+  <data name="CountriesCsv" xml:space="preserve">
+    <value>Countries CSV</value>
+  </data>
+  <data name="LeaveCountriesEmpty" xml:space="preserve">
+    <value>Leave empty to make the method generally available.</value>
+  </data>
+  <data name="RateTiers" xml:space="preserve">
+    <value>Rate Tiers</value>
+  </data>
+  <data name="AddRate" xml:space="preserve">
+    <value>Add Rate</value>
+  </data>
+  <data name="MaxMass" xml:space="preserve">
+    <value>Max Mass</value>
+  </data>
+  <data name="MaxSubtotalNet" xml:space="preserve">
+    <value>Max Subtotal Net</value>
+  </data>
+  <data name="PriceMinor" xml:space="preserve">
+    <value>Price Minor</value>
+  </data>
+  <data name="Sort" xml:space="preserve">
+    <value>Sort</value>
+  </data>
+  <data name="ShippingRateTiersHelp" xml:space="preserve">
+    <value>Rate tiers are evaluated by shipment mass and subtotal thresholds. Phase 1 keeps this as a simple admin-managed matrix without provider-specific live quoting.</value>
+  </data>
+  <data name="CreateShippingMethod" xml:space="preserve">
+    <value>Create Shipping Method</value>
+  </data>
+  <data name="EditShippingMethod" xml:space="preserve">
+    <value>Edit Shipping Method</value>
+  </data>
+  <data name="ShippingMethodEditorIntro" xml:space="preserve">
+    <value>Use this screen to manage carrier/service combinations and the rate tiers used by checkout and order shipping snapshots.</value>
+  </data>
+  <data name="ShippingMethodCreatedMessage" xml:space="preserve">
+    <value>Shipping method created.</value>
+  </data>
+  <data name="ShippingMethodNotFoundMessage" xml:space="preserve">
+    <value>Shipping method not found.</value>
+  </data>
+  <data name="ShippingMethodUpdatedMessage" xml:space="preserve">
+    <value>Shipping method updated.</value>
+  </data>
+  <data name="ShippingMethodConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload and try again.</value>
+  </data>
+  <data name="UserCreatedMessage" xml:space="preserve">
+    <value>User created.</value>
+  </data>
+  <data name="UserNotFoundMessage" xml:space="preserve">
+    <value>User not found.</value>
+  </data>
+  <data name="UserUpdatedMessage" xml:space="preserve">
+    <value>User updated.</value>
+  </data>
+  <data name="ChangeEmailFailedMessage" xml:space="preserve">
+    <value>Failed to change email.</value>
+  </data>
+  <data name="EmailChangeRequestedMessage" xml:space="preserve">
+    <value>Email change requested. The user must confirm the new email before signing in.</value>
+  </data>
+  <data name="EmailConfirmedMessage" xml:space="preserve">
+    <value>Email marked as confirmed.</value>
+  </data>
+  <data name="ConfirmEmailFailedMessage" xml:space="preserve">
+    <value>Failed to confirm email.</value>
+  </data>
+  <data name="ActivationEmailSentMessage" xml:space="preserve">
+    <value>Activation email sent.</value>
+  </data>
+  <data name="ActivationEmailSendFailedMessage" xml:space="preserve">
+    <value>Failed to send activation email.</value>
+  </data>
+  <data name="PasswordResetEmailSentMessage" xml:space="preserve">
+    <value>Password reset email sent.</value>
+  </data>
+  <data name="PasswordResetEmailSendFailedMessage" xml:space="preserve">
+    <value>Failed to send password reset email.</value>
+  </data>
+  <data name="AccountLockedMessage" xml:space="preserve">
+    <value>Account locked.</value>
+  </data>
+  <data name="AccountLockFailedMessage" xml:space="preserve">
+    <value>Failed to lock account.</value>
+  </data>
+  <data name="AccountUnlockedMessage" xml:space="preserve">
+    <value>Account unlocked.</value>
+  </data>
+  <data name="AccountUnlockFailedMessage" xml:space="preserve">
+    <value>Failed to unlock account.</value>
+  </data>
+  <data name="PasswordsDoNotMatchMessage" xml:space="preserve">
+    <value>Passwords do not match.</value>
+  </data>
+  <data name="PasswordChangedMessage" xml:space="preserve">
+    <value>Password changed successfully.</value>
+  </data>
+  <data name="ChangePasswordFailedMessage" xml:space="preserve">
+    <value>Failed to change password.</value>
+  </data>
+  <data name="UserDeletedMessage" xml:space="preserve">
+    <value>User deleted.</value>
+  </data>
+  <data name="UserDeleteFailedMessage" xml:space="preserve">
+    <value>Failed to delete user.</value>
+  </data>
+  <data name="InvalidAddressMessage" xml:space="preserve">
+    <value>Invalid address.</value>
+  </data>
+  <data name="AddressCreateFailedMessage" xml:space="preserve">
+    <value>Failed to create address.</value>
+  </data>
+  <data name="AddressCreatedMessage" xml:space="preserve">
+    <value>Address created successfully.</value>
+  </data>
+  <data name="AddressUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update address.</value>
+  </data>
+  <data name="AddressUpdatedMessage" xml:space="preserve">
+    <value>Address updated successfully.</value>
+  </data>
+  <data name="AddressDeleteFailedMessage" xml:space="preserve">
+    <value>Failed to delete address.</value>
+  </data>
+  <data name="AddressDeletedMessage" xml:space="preserve">
+    <value>Address deleted successfully.</value>
+  </data>
+  <data name="SetDefaultAddressFailedMessage" xml:space="preserve">
+    <value>Failed to set default.</value>
+  </data>
+  <data name="DefaultBillingAddressSetMessage" xml:space="preserve">
+    <value>Default billing address set.</value>
+  </data>
+  <data name="DefaultShippingAddressSetMessage" xml:space="preserve">
+    <value>Default shipping address set.</value>
+  </data>
+  <data name="UserRolesLoadFailedMessage" xml:space="preserve">
+    <value>Failed to load user roles.</value>
+  </data>
+  <data name="UserRolesUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update user roles.</value>
+  </data>
+  <data name="UserRolesUpdatedMessage" xml:space="preserve">
+    <value>User roles updated.</value>
+  </data>
+  <data name="SiteSettingTitle" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="SiteSettingLogoUrl" xml:space="preserve">
+    <value>Logo URL</value>
+  </data>
+  <data name="SiteSettingContactEmail" xml:space="preserve">
+    <value>Contact Email</value>
+  </data>
+  <data name="SiteSettingHomeSlug" xml:space="preserve">
+    <value>Home Slug</value>
+  </data>
+  <data name="SiteSettingDefaultCulture" xml:space="preserve">
+    <value>Default Culture</value>
+  </data>
+  <data name="SiteSettingSupportedCulturesCsv" xml:space="preserve">
+    <value>Supported Cultures</value>
+  </data>
+  <data name="SiteSettingDefaultCountry" xml:space="preserve">
+    <value>Default Country</value>
+  </data>
+  <data name="SiteSettingDefaultCurrency" xml:space="preserve">
+    <value>Default Currency</value>
+  </data>
+  <data name="SiteSettingTimeZone" xml:space="preserve">
+    <value>Time Zone</value>
+  </data>
+  <data name="SiteSettingDateFormat" xml:space="preserve">
+    <value>Date Format</value>
+  </data>
+  <data name="SiteSettingTimeFormat" xml:space="preserve">
+    <value>Time Format</value>
+  </data>
+  <data name="SiteSettingJwtEnabled" xml:space="preserve">
+    <value>JWT Enabled</value>
+  </data>
+  <data name="SiteSettingJwtIssuer" xml:space="preserve">
+    <value>JWT Issuer</value>
+  </data>
+  <data name="SiteSettingJwtAudience" xml:space="preserve">
+    <value>JWT Audience</value>
+  </data>
+  <data name="SiteSettingJwtAccessTokenMinutes" xml:space="preserve">
+    <value>Access Token Lifetime (Minutes)</value>
+  </data>
+  <data name="SiteSettingJwtRefreshTokenDays" xml:space="preserve">
+    <value>Refresh Token Lifetime (Days)</value>
+  </data>
+  <data name="SiteSettingJwtSigningKey" xml:space="preserve">
+    <value>Signing Key</value>
+  </data>
+  <data name="SiteSettingJwtPreviousSigningKey" xml:space="preserve">
+    <value>Previous Signing Key</value>
+  </data>
+  <data name="SiteSettingJwtEmitScopes" xml:space="preserve">
+    <value>Emit Scopes</value>
+  </data>
+  <data name="SiteSettingJwtSingleDeviceOnly" xml:space="preserve">
+    <value>Single Device Only</value>
+  </data>
+  <data name="SiteSettingJwtRequireDeviceBinding" xml:space="preserve">
+    <value>Require Device Binding</value>
+  </data>
+  <data name="SiteSettingJwtClockSkewSeconds" xml:space="preserve">
+    <value>Clock Skew Seconds</value>
+  </data>
+  <data name="SiteSettingMobileQrTokenRefreshSeconds" xml:space="preserve">
+    <value>QR Token Refresh Seconds</value>
+  </data>
+  <data name="SiteSettingMobileMaxOutboxItems" xml:space="preserve">
+    <value>Max Outbox Items</value>
+  </data>
+  <data name="SiteSettingBusinessManagementWebsiteUrl" xml:space="preserve">
+    <value>Business Management Website</value>
+  </data>
+  <data name="SiteSettingImpressumUrl" xml:space="preserve">
+    <value>Impressum URL</value>
+  </data>
+  <data name="SiteSettingPrivacyPolicyUrl" xml:space="preserve">
+    <value>Privacy Policy URL</value>
+  </data>
+  <data name="SiteSettingBusinessTermsUrl" xml:space="preserve">
+    <value>Business Terms URL</value>
+  </data>
+  <data name="SiteSettingAccountDeletionUrl" xml:space="preserve">
+    <value>Account Deletion URL</value>
+  </data>
+  <data name="SiteSettingStripeEnabled" xml:space="preserve">
+    <value>Enable Stripe</value>
+  </data>
+  <data name="SiteSettingStripePublishableKey" xml:space="preserve">
+    <value>Stripe Publishable Key</value>
+  </data>
+  <data name="SiteSettingStripeSecretKey" xml:space="preserve">
+    <value>Stripe Secret Key</value>
+  </data>
+  <data name="SiteSettingStripeWebhookSecret" xml:space="preserve">
+    <value>Stripe Webhook Secret</value>
+  </data>
+  <data name="SiteSettingStripeMerchantDisplayName" xml:space="preserve">
+    <value>Stripe Merchant Display Name</value>
+  </data>
+  <data name="SiteSettingVatEnabled" xml:space="preserve">
+    <value>VAT Enabled</value>
+  </data>
+  <data name="SiteSettingDefaultVatRatePercent" xml:space="preserve">
+    <value>Default VAT Rate (%)</value>
+  </data>
+  <data name="SiteSettingPricesIncludeVat" xml:space="preserve">
+    <value>Prices Include VAT</value>
+  </data>
+  <data name="SiteSettingAllowReverseCharge" xml:space="preserve">
+    <value>Allow Reverse Charge</value>
+  </data>
+  <data name="SiteSettingInvoiceIssuerLegalName" xml:space="preserve">
+    <value>Invoice Issuer Legal Name</value>
+  </data>
+  <data name="SiteSettingInvoiceIssuerTaxId" xml:space="preserve">
+    <value>Invoice Issuer Tax ID</value>
+  </data>
+  <data name="SiteSettingInvoiceIssuerAddressLine1" xml:space="preserve">
+    <value>Invoice Issuer Address Line 1</value>
+  </data>
+  <data name="SiteSettingInvoiceIssuerPostalCode" xml:space="preserve">
+    <value>Invoice Issuer Postal Code</value>
+  </data>
+  <data name="SiteSettingInvoiceIssuerCity" xml:space="preserve">
+    <value>Invoice Issuer City</value>
+  </data>
+  <data name="SiteSettingInvoiceIssuerCountry" xml:space="preserve">
+    <value>Invoice Issuer Country</value>
+  </data>
+  <data name="SiteSettingDhlEnabled" xml:space="preserve">
+    <value>Enable DHL</value>
+  </data>
+  <data name="SiteSettingDhlEnvironment" xml:space="preserve">
+    <value>DHL Environment</value>
+  </data>
+  <data name="SiteSettingDhlApiBaseUrl" xml:space="preserve">
+    <value>DHL API Base URL</value>
+  </data>
+  <data name="SiteSettingDhlApiKey" xml:space="preserve">
+    <value>DHL API Key</value>
+  </data>
+  <data name="SiteSettingDhlApiSecret" xml:space="preserve">
+    <value>DHL API Secret</value>
+  </data>
+  <data name="SiteSettingDhlAccountNumber" xml:space="preserve">
+    <value>DHL Account Number</value>
+  </data>
+  <data name="SiteSettingDhlShipperName" xml:space="preserve">
+    <value>DHL Shipper Name</value>
+  </data>
+  <data name="SiteSettingDhlShipperEmail" xml:space="preserve">
+    <value>DHL Shipper Email</value>
+  </data>
+  <data name="SiteSettingDhlShipperPhoneE164" xml:space="preserve">
+    <value>DHL Shipper Phone (E.164)</value>
+  </data>
+  <data name="SiteSettingDhlShipperStreet" xml:space="preserve">
+    <value>DHL Shipper Street</value>
+  </data>
+  <data name="SiteSettingDhlShipperPostalCode" xml:space="preserve">
+    <value>DHL Shipper Postal Code</value>
+  </data>
+  <data name="SiteSettingDhlShipperCity" xml:space="preserve">
+    <value>DHL Shipper City</value>
+  </data>
+  <data name="SiteSettingDhlShipperCountry" xml:space="preserve">
+    <value>DHL Shipper Country</value>
+  </data>
+  <data name="SiteSettingShipmentAttentionDelayHours" xml:space="preserve">
+    <value>Shipment Attention Delay (Hours)</value>
+  </data>
+  <data name="SiteSettingShipmentTrackingGraceHours" xml:space="preserve">
+    <value>Tracking Grace (Hours)</value>
+  </data>
+  <data name="SiteSettingSoftDeleteCleanupEnabled" xml:space="preserve">
+    <value>Soft Delete Cleanup Enabled</value>
+  </data>
+  <data name="SiteSettingSoftDeleteRetentionDays" xml:space="preserve">
+    <value>Soft Delete Retention Days</value>
+  </data>
+  <data name="SiteSettingSoftDeleteCleanupBatchSize" xml:space="preserve">
+    <value>Soft Delete Cleanup Batch Size</value>
+  </data>
+  <data name="SiteSettingMeasurementSystem" xml:space="preserve">
+    <value>Measurement System</value>
+  </data>
+  <data name="SiteSettingDisplayWeightUnit" xml:space="preserve">
+    <value>Display Weight Unit</value>
+  </data>
+  <data name="SiteSettingDisplayLengthUnit" xml:space="preserve">
+    <value>Display Length Unit</value>
+  </data>
+  <data name="SiteSettingMeasurementSettingsJson" xml:space="preserve">
+    <value>Measurement Settings (JSON)</value>
+  </data>
+  <data name="SiteSettingNumberFormattingOverridesJson" xml:space="preserve">
+    <value>Number Formatting Overrides (JSON)</value>
+  </data>
+  <data name="SiteSettingEnableCanonical" xml:space="preserve">
+    <value>Enable Canonical</value>
+  </data>
+  <data name="SiteSettingHreflangEnabled" xml:space="preserve">
+    <value>Hreflang Enabled</value>
+  </data>
+  <data name="SiteSettingSeoTitleTemplate" xml:space="preserve">
+    <value>SEO Title Template</value>
+  </data>
+  <data name="SiteSettingSeoMetaDescriptionTemplate" xml:space="preserve">
+    <value>SEO Meta Description Template</value>
+  </data>
+  <data name="SiteSettingOpenGraphDefaultsJson" xml:space="preserve">
+    <value>OpenGraph Defaults (JSON)</value>
+  </data>
+  <data name="SiteSettingGoogleAnalyticsId" xml:space="preserve">
+    <value>Google Analytics ID</value>
+  </data>
+  <data name="SiteSettingGoogleTagManagerId" xml:space="preserve">
+    <value>Google Tag Manager ID</value>
+  </data>
+  <data name="SiteSettingGoogleSearchConsoleVerification" xml:space="preserve">
+    <value>Google Search Console Verification</value>
+  </data>
+  <data name="SiteSettingFeatureFlagsJson" xml:space="preserve">
+    <value>Feature Flags (JSON)</value>
+  </data>
+  <data name="SiteSettingWhatsAppEnabled" xml:space="preserve">
+    <value>Enable WhatsApp</value>
+  </data>
+  <data name="SiteSettingWhatsAppBusinessPhoneId" xml:space="preserve">
+    <value>Business Phone ID</value>
+  </data>
+  <data name="SiteSettingWhatsAppAccessToken" xml:space="preserve">
+    <value>Access Token</value>
+  </data>
+  <data name="SiteSettingWhatsAppFromPhoneE164" xml:space="preserve">
+    <value>From Phone (E.164)</value>
+  </data>
+  <data name="SiteSettingWhatsAppAdminRecipientsCsv" xml:space="preserve">
+    <value>Admin Recipients (CSV)</value>
+  </data>
+  <data name="SiteSettingWebAuthnRelyingPartyId" xml:space="preserve">
+    <value>WebAuthn RP ID</value>
+  </data>
+  <data name="SiteSettingWebAuthnRelyingPartyName" xml:space="preserve">
+    <value>WebAuthn RP Name</value>
+  </data>
+  <data name="SiteSettingWebAuthnAllowedOriginsCsv" xml:space="preserve">
+    <value>WebAuthn Allowed Origins (CSV)</value>
+  </data>
+  <data name="SiteSettingWebAuthnRequireUserVerification" xml:space="preserve">
+    <value>Require User Verification</value>
+  </data>
+  <data name="SiteSettingSmtpEnabled" xml:space="preserve">
+    <value>Enable SMTP</value>
+  </data>
+  <data name="SiteSettingSmtpHost" xml:space="preserve">
+    <value>SMTP Host</value>
+  </data>
+  <data name="SiteSettingSmtpPort" xml:space="preserve">
+    <value>SMTP Port</value>
+  </data>
+  <data name="SiteSettingSmtpEnableSsl" xml:space="preserve">
+    <value>Enable SSL</value>
+  </data>
+  <data name="SiteSettingSmtpUsername" xml:space="preserve">
+    <value>SMTP Username</value>
+  </data>
+  <data name="SiteSettingSmtpPassword" xml:space="preserve">
+    <value>SMTP Password</value>
+  </data>
+  <data name="SiteSettingSmtpFromAddress" xml:space="preserve">
+    <value>From Address</value>
+  </data>
+  <data name="SiteSettingSmtpFromDisplayName" xml:space="preserve">
+    <value>From Display Name</value>
+  </data>
+  <data name="SiteSettingSmsEnabled" xml:space="preserve">
+    <value>Enable SMS</value>
+  </data>
+  <data name="SiteSettingSmsProvider" xml:space="preserve">
+    <value>SMS Provider</value>
+  </data>
+  <data name="SiteSettingSmsFromPhoneE164" xml:space="preserve">
+    <value>From Phone (E.164)</value>
+  </data>
+  <data name="SiteSettingSmsApiKey" xml:space="preserve">
+    <value>API Key</value>
+  </data>
+  <data name="SiteSettingSmsApiSecret" xml:space="preserve">
+    <value>API Secret</value>
+  </data>
+  <data name="SiteSettingSmsExtraSettingsJson" xml:space="preserve">
+    <value>Extra Settings (JSON)</value>
+  </data>
+  <data name="SiteSettingAdminAlertEmailsCsv" xml:space="preserve">
+    <value>Admin Alert Emails (CSV)</value>
+  </data>
+  <data name="SiteSettingAdminAlertSmsRecipientsCsv" xml:space="preserve">
+    <value>Admin Alert SMS Recipients (CSV, E.164)</value>
+  </data>
+  <data name="SiteSettingTransactionalEmailSubjectPrefix" xml:space="preserve">
+    <value>Transactional Email Subject Prefix</value>
+  </data>
+  <data name="SiteSettingCommunicationTestInboxEmail" xml:space="preserve">
+    <value>Communication Test Inbox</value>
+  </data>
+  <data name="SiteSettingCommunicationTestSmsRecipientE164" xml:space="preserve">
+    <value>Communication Test SMS Recipient</value>
+  </data>
+  <data name="SiteSettingCommunicationTestWhatsAppRecipientE164" xml:space="preserve">
+    <value>Communication Test WhatsApp Recipient</value>
+  </data>
+  <data name="SiteSettingCommunicationTestEmailSubjectTemplate" xml:space="preserve">
+    <value>Communication Test Email Subject Template</value>
+  </data>
+  <data name="SiteSettingCommunicationTestEmailBodyTemplate" xml:space="preserve">
+    <value>Communication Test Email Body Template</value>
+  </data>
+  <data name="SiteSettingCommunicationTestSmsTemplate" xml:space="preserve">
+    <value>Communication Test SMS Template</value>
+  </data>
+  <data name="SiteSettingCommunicationTestWhatsAppTemplate" xml:space="preserve">
+    <value>Communication Test WhatsApp Template</value>
+  </data>
+  <data name="SiteSettingBusinessInvitationEmailSubjectTemplate" xml:space="preserve">
+    <value>Business Invitation Subject Template</value>
+  </data>
+  <data name="SiteSettingBusinessInvitationEmailBodyTemplate" xml:space="preserve">
+    <value>Business Invitation Body Template</value>
+  </data>
+  <data name="SiteSettingAccountActivationEmailSubjectTemplate" xml:space="preserve">
+    <value>Account Activation Subject Template</value>
+  </data>
+  <data name="SiteSettingAccountActivationEmailBodyTemplate" xml:space="preserve">
+    <value>Account Activation Body Template</value>
+  </data>
+  <data name="SiteSettingPasswordResetEmailSubjectTemplate" xml:space="preserve">
+    <value>Password Reset Subject Template</value>
+  </data>
+  <data name="SiteSettingPasswordResetEmailBodyTemplate" xml:space="preserve">
+    <value>Password Reset Body Template</value>
+  </data>
+  <data name="SiteSettingPhoneVerificationSmsTemplate" xml:space="preserve">
+    <value>Phone Verification SMS Template</value>
+  </data>
+  <data name="SiteSettingPhoneVerificationWhatsAppTemplate" xml:space="preserve">
+    <value>Phone Verification WhatsApp Template</value>
+  </data>
+  <data name="SiteSettingPhoneVerificationPreferredChannel" xml:space="preserve">
+    <value>Preferred Phone Verification Channel</value>
+  </data>
+  <data name="SiteSettingPhoneVerificationAllowFallback" xml:space="preserve">
+    <value>Allow Verification Channel Fallback</value>
+  </data>
+  <data name="PaymentOrderId" xml:space="preserve">
+    <value>Order ID</value>
+  </data>
+  <data name="PaymentInvoiceId" xml:space="preserve">
+    <value>Invoice ID</value>
+  </data>
+  <data name="CustomerLinkedUser" xml:space="preserve">
+    <value>Linked user</value>
+  </data>
+  <data name="CustomerFirstName" xml:space="preserve">
+    <value>First name</value>
+  </data>
+  <data name="CustomerLastName" xml:space="preserve">
+    <value>Last name</value>
+  </data>
+  <data name="CustomerCompanyName" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="CustomerTaxProfileType" xml:space="preserve">
+    <value>Tax profile</value>
+  </data>
+  <data name="CustomerVatId" xml:space="preserve">
+    <value>VAT ID</value>
+  </data>
+  <data name="DarwinAdmin" xml:space="preserve">
+    <value>Darwin Admin</value>
+  </data>
+  <data name="CurrentUserFallback" xml:space="preserve">
+    <value>My Profile</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Logout</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Catalog" xml:space="preserve">
+    <value>Catalog</value>
+  </data>
+  <data name="Products" xml:space="preserve">
+    <value>Products</value>
+  </data>
+  <data name="Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Brands" xml:space="preserve">
+    <value>Brands</value>
+  </data>
+  <data name="AddOnGroups" xml:space="preserve">
+    <value>Add-on Groups</value>
+  </data>
+  <data name="Cms" xml:space="preserve">
+    <value>CMS</value>
+  </data>
+  <data name="Pages" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="Media" xml:space="preserve">
+    <value>Media</value>
+  </data>
+  <data name="Orders" xml:space="preserve">
+    <value>Orders</value>
+  </data>
+  <data name="Shipments" xml:space="preserve">
+    <value>Shipments</value>
+  </data>
+  <data name="ShippingMethods" xml:space="preserve">
+    <value>Shipping Methods</value>
+  </data>
+  <data name="Crm" xml:space="preserve">
+    <value>CRM</value>
+  </data>
+  <data name="Overview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="Customers" xml:space="preserve">
+    <value>Customers</value>
+  </data>
+  <data name="Leads" xml:space="preserve">
+    <value>Leads</value>
+  </data>
+  <data name="Opportunities" xml:space="preserve">
+    <value>Opportunities</value>
+  </data>
+  <data name="Invoices" xml:space="preserve">
+    <value>Invoices</value>
+  </data>
+  <data name="Segments" xml:space="preserve">
+    <value>Segments</value>
+  </data>
+  <data name="Loyalty" xml:space="preserve">
+    <value>Loyalty</value>
+  </data>
+  <data name="Programs" xml:space="preserve">
+    <value>Programs</value>
+  </data>
+  <data name="Campaigns" xml:space="preserve">
+    <value>Campaigns</value>
+  </data>
+  <data name="Accounts" xml:space="preserve">
+    <value>Accounts</value>
+  </data>
+  <data name="Redemptions" xml:space="preserve">
+    <value>Redemptions</value>
+  </data>
+  <data name="ScanSessions" xml:space="preserve">
+    <value>Scan Sessions</value>
+  </data>
+  <data name="Inventory" xml:space="preserve">
+    <value>Inventory</value>
+  </data>
+  <data name="Warehouses" xml:space="preserve">
+    <value>Warehouses</value>
+  </data>
+  <data name="Suppliers" xml:space="preserve">
+    <value>Suppliers</value>
+  </data>
+  <data name="StockLevels" xml:space="preserve">
+    <value>Stock Levels</value>
+  </data>
+  <data name="Transfers" xml:space="preserve">
+    <value>Transfers</value>
+  </data>
+  <data name="PurchaseOrders" xml:space="preserve">
+    <value>Purchase Orders</value>
+  </data>
+  <data name="Billing" xml:space="preserve">
+    <value>Billing</value>
+  </data>
+  <data name="Payments" xml:space="preserve">
+    <value>Payments</value>
+  </data>
+  <data name="BillingPlans" xml:space="preserve">
+    <value>Billing Plans</value>
+  </data>
+  <data name="Expenses" xml:space="preserve">
+    <value>Expenses</value>
+  </data>
+  <data name="JournalEntries" xml:space="preserve">
+    <value>Journal Entries</value>
+  </data>
+  <data name="BusinessSetup" xml:space="preserve">
+    <value>Business Setup</value>
+  </data>
+  <data name="Businesses" xml:space="preserve">
+    <value>Businesses</value>
+  </data>
+  <data name="MobileOps" xml:space="preserve">
+    <value>Mobile Ops</value>
+  </data>
+  <data name="Communications" xml:space="preserve">
+    <value>Communications</value>
+  </data>
+  <data name="Identity" xml:space="preserve">
+    <value>Identity</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Roles" xml:space="preserve">
+    <value>Roles</value>
+  </data>
+  <data name="Permissions" xml:space="preserve">
+    <value>Permissions</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="AdminPanel" xml:space="preserve">
+    <value>Admin Panel</value>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Keep me signed in</value>
+  </data>
+  <data name="LoginWithPasskey" xml:space="preserve">
+    <value>Sign in with passkey</value>
+  </data>
+  <data name="PasskeyPreparing" xml:space="preserve">
+    <value>Passkey sign-in is being prepared.</value>
+  </data>
+  <data name="CreateAccount" xml:space="preserve">
+    <value>Create account</value>
+  </data>
+  <data name="SiteSettingsTitle" xml:space="preserve">
+    <value>Site Settings</value>
+  </data>
+  <data name="EditSiteSettings" xml:space="preserve">
+    <value>Edit Site Settings</value>
+  </data>
+  <data name="SettingsCategories" xml:space="preserve">
+    <value>Settings Categories</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Localization" xml:space="preserve">
+    <value>Localization</value>
+  </data>
+  <data name="Security" xml:space="preserve">
+    <value>Security</value>
+  </data>
+  <data name="Mobile" xml:space="preserve">
+    <value>Mobile</value>
+  </data>
+  <data name="BusinessApp" xml:space="preserve">
+    <value>Business App</value>
+  </data>
+  <data name="TaxAndInvoicing" xml:space="preserve">
+    <value>Tax &amp; Invoicing</value>
+  </data>
+  <data name="Operational" xml:space="preserve">
+    <value>Operational</value>
+  </data>
+  <data name="Units" xml:space="preserve">
+    <value>Units</value>
+  </data>
+  <data name="Seo" xml:space="preserve">
+    <value>SEO</value>
+  </data>
+  <data name="Analytics" xml:space="preserve">
+    <value>Analytics</value>
+  </data>
+  <data name="WebAuthn" xml:space="preserve">
+    <value>WebAuthn</value>
+  </data>
+  <data name="AdminAlerts" xml:space="preserve">
+    <value>Admin Alerts</value>
+  </data>
+  <data name="CommunicationPolicy" xml:space="preserve">
+    <value>Communication Policy</value>
+  </data>
+  <data name="SettingsOwnershipMatrix" xml:space="preserve">
+    <value>Settings Ownership Matrix</value>
+  </data>
+  <data name="CommunicationOpsTitle" xml:space="preserve">
+    <value>Business Communications</value>
+  </data>
+  <data name="CommunicationOpsIntro" xml:space="preserve">
+    <value>Operational visibility for communication readiness before full template and delivery-log tooling exists.</value>
+  </data>
+  <data name="SmsWhatsAppAudits" xml:space="preserve">
+    <value>SMS / WhatsApp Audits</value>
+  </data>
+  <data name="EmailAudits" xml:space="preserve">
+    <value>Email Audits</value>
+  </data>
+  <data name="SendTestEmail" xml:space="preserve">
+    <value>Send Test Email</value>
+  </data>
+  <data name="SendTestSms" xml:space="preserve">
+    <value>Send Test SMS</value>
+  </data>
+  <data name="SendTestWhatsApp" xml:space="preserve">
+    <value>Send Test WhatsApp</value>
+  </data>
+  <data name="EmailTransport" xml:space="preserve">
+    <value>Email Transport</value>
+  </data>
+  <data name="SmsTransport" xml:space="preserve">
+    <value>SMS Transport</value>
+  </data>
+  <data name="WhatsAppTransport" xml:space="preserve">
+    <value>WhatsApp Transport</value>
+  </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="NeedsSetup" xml:space="preserve">
+    <value>Needs setup</value>
+  </data>
+  <data name="NotReady" xml:space="preserve">
+    <value>Not ready</value>
+  </data>
+  <data name="Configured" xml:space="preserve">
+    <value>Configured</value>
+  </data>
+  <data name="Missing" xml:space="preserve">
+    <value>Missing</value>
+  </data>
+  <data name="AdminAlertRouting" xml:space="preserve">
+    <value>Admin Alert Routing</value>
+  </data>
+  <data name="TransactionalSubjectPrefix" xml:space="preserve">
+    <value>Transactional Subject Prefix</value>
+  </data>
+  <data name="NoPrefixConfigured" xml:space="preserve">
+    <value>No prefix configured</value>
+  </data>
+  <data name="CommunicationTestInbox" xml:space="preserve">
+    <value>Communication Test Inbox</value>
+  </data>
+  <data name="NotRerouting" xml:space="preserve">
+    <value>Not rerouting</value>
+  </data>
+  <data name="SmsTestTarget" xml:space="preserve">
+    <value>SMS Test Target</value>
+  </data>
+  <data name="WhatsAppTestTarget" xml:space="preserve">
+    <value>WhatsApp Test Target</value>
+  </data>
+  <data name="NotConfigured" xml:space="preserve">
+    <value>Not configured</value>
+  </data>
+  <data name="RecentSmsWhatsAppActivity" xml:space="preserve">
+    <value>Recent SMS / WhatsApp Activity</value>
+  </data>
+  <data name="NoSmsWhatsAppActivityYet" xml:space="preserve">
+    <value>No SMS or WhatsApp activity has been recorded yet.</value>
+  </data>
+  <data name="WhenUtc" xml:space="preserve">
+    <value>When (UTC)</value>
+  </data>
+  <data name="Channel" xml:space="preserve">
+    <value>Channel</value>
+  </data>
+  <data name="Flow" xml:space="preserve">
+    <value>Flow</value>
+  </data>
+  <data name="Recipient" xml:space="preserve">
+    <value>Recipient</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="Unclassified" xml:space="preserve">
+    <value>Unclassified</value>
+  </data>
+  <data name="Sent" xml:space="preserve">
+    <value>Sent</value>
+  </data>
+  <data name="Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="OrdersTitle" xml:space="preserve">
+    <value>Orders</value>
+  </data>
+  <data name="ShipmentsQueue" xml:space="preserve">
+    <value>Shipments Queue</value>
+  </data>
+  <data name="SearchOrdersPlaceholder" xml:space="preserve">
+    <value>Search by order number or currency</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="OpenQueue" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="PaymentIssues" xml:space="preserve">
+    <value>Payment Issues</value>
+  </data>
+  <data name="FulfillmentAttention" xml:space="preserve">
+    <value>Fulfillment Attention</value>
+  </data>
+  <data name="ClearQueueFilters" xml:space="preserve">
+    <value>Clear Queue Filters</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Ops" xml:space="preserve">
+    <value>Ops</value>
+  </data>
+  <data name="CreatedUtc" xml:space="preserve">
+    <value>Created (UTC)</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="NoOrders" xml:space="preserve">
+    <value>No orders.</value>
+  </data>
+  <data name="PaymentsCount" xml:space="preserve">
+    <value>Payments</value>
+  </data>
+  <data name="FailedCount" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="ShipmentsCount" xml:space="preserve">
+    <value>Shipments</value>
+  </data>
+  <data name="Shipment" xml:space="preserve">
+    <value>Shipment</value>
+  </data>
+  <data name="Invoice" xml:space="preserve">
+    <value>Invoice</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="BackToOrders" xml:space="preserve">
+    <value>Back to Orders</value>
+  </data>
+  <data name="Shipping" xml:space="preserve">
+    <value>Shipping</value>
+  </data>
+  <data name="NotSelected" xml:space="preserve">
+    <value>Not selected</value>
+  </data>
+  <data name="CarrierService" xml:space="preserve">
+    <value>Carrier/Service</value>
+  </data>
+  <data name="WarehouseAuto" xml:space="preserve">
+    <value>Warehouse (Auto)</value>
+  </data>
+  <data name="ChangeStatus" xml:space="preserve">
+    <value>Change Status</value>
+  </data>
+  <data name="AddPayment" xml:space="preserve">
+    <value>Add Payment</value>
+  </data>
+  <data name="AddShipment" xml:space="preserve">
+    <value>Add Shipment</value>
+  </data>
+  <data name="AddRefund" xml:space="preserve">
+    <value>Add Refund</value>
+  </data>
+  <data name="CreateInvoice" xml:space="preserve">
+    <value>Create Invoice</value>
+  </data>
+  <data name="TaxPriceSnapshot" xml:space="preserve">
+    <value>Tax &amp; Price Snapshot</value>
+  </data>
+  <data name="SubtotalNet" xml:space="preserve">
+    <value>Subtotal Net</value>
+  </data>
+  <data name="TaxTotal" xml:space="preserve">
+    <value>Tax Total</value>
+  </data>
+  <data name="Discounts" xml:space="preserve">
+    <value>Discounts</value>
+  </data>
+  <data name="TaxSnapshotNote" xml:space="preserve">
+    <value>Gross totals remain the operational source of truth, while this snapshot exposes the net/tax split currently persisted on the order.</value>
+  </data>
+  <data name="CurrentTaxPolicy" xml:space="preserve">
+    <value>Current Tax Policy</value>
+  </data>
+  <data name="MissingData" xml:space="preserve">
+    <value>Missing data</value>
+  </data>
+  <data name="ReviewInvoices" xml:space="preserve">
+    <value>Review Invoices</value>
+  </data>
+  <data name="ReturnSupportBaseline" xml:space="preserve">
+    <value>Return Support Baseline</value>
+  </data>
+  <data name="OpenReturnedQueue" xml:space="preserve">
+    <value>Open Returned Queue</value>
+  </data>
+  <data name="ReturnedShipments" xml:space="preserve">
+    <value>Returned Shipments</value>
+  </data>
+  <data name="ReturnedWithoutTracking" xml:space="preserve">
+    <value>Returned Without Tracking</value>
+  </data>
+  <data name="CarrierReviewRows" xml:space="preserve">
+    <value>Carrier Review Rows</value>
+  </data>
+  <data name="RefundPath" xml:space="preserve">
+    <value>Refund Path</value>
+  </data>
+  <data name="CheckPaymentsFirst" xml:space="preserve">
+    <value>Check payments first</value>
+  </data>
+  <data name="ReviewShipments" xml:space="preserve">
+    <value>Review Shipments</value>
+  </data>
+  <data name="ReviewRefunds" xml:space="preserve">
+    <value>Review Refunds</value>
+  </data>
+  <data name="StartReturnRefund" xml:space="preserve">
+    <value>Start Return Refund</value>
+  </data>
+  <data name="CarrierReviewQueue" xml:space="preserve">
+    <value>Carrier Review Queue</value>
+  </data>
+  <data name="ReturnSupportNote" xml:space="preserve">
+    <value>Phase-1 returns support uses existing shipment and refund records. Returned parcels can be triaged here, while restock and deeper RMA workflow remain later-phase work.</value>
+  </data>
+  <data name="InventoryAllocation" xml:space="preserve">
+    <value>Inventory Allocation</value>
+  </data>
+  <data name="InventoryAllocationSubtitle" xml:space="preserve">
+    <value>Allocate reserved stock and finalize picking</value>
+  </data>
+  <data name="InventoryAllocationNote" xml:space="preserve">
+    <value>When allocation succeeds, the order transitions to &lt;code&gt;Shipped&lt;/code&gt; (idempotent).</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="Provider" xml:space="preserve">
+    <value>Provider</value>
+  </data>
+  <data name="Reference" xml:space="preserve">
+    <value>Reference</value>
+  </data>
+  <data name="PaidUtc" xml:space="preserve">
+    <value>Paid (UTC)</value>
+  </data>
+  <data name="NoPayments" xml:space="preserve">
+    <value>No payments.</value>
+  </data>
+  <data name="Refund" xml:space="preserve">
+    <value>Refund</value>
+  </data>
+  <data name="ReturnedShipmentFollowUpOpen" xml:space="preserve">
+    <value>Returned shipment follow-up is open on this order.</value>
+  </data>
+  <data name="ReturnedShipmentFollowUpNote" xml:space="preserve">
+    <value>Use the shipment tab to confirm carrier state, then record the refund from this order.</value>
+  </data>
+  <data name="NoRefunds" xml:space="preserve">
+    <value>No refunds.</value>
+  </data>
+  <data name="PaymentStatus" xml:space="preserve">
+    <value>Payment status</value>
+  </data>
+  <data name="Outstanding" xml:space="preserve">
+    <value>Outstanding</value>
+  </data>
+  <data name="Paid" xml:space="preserve">
+    <value>Paid</value>
+  </data>
+  <data name="IssuedUtc" xml:space="preserve">
+    <value>Issued (UTC)</value>
+  </data>
+  <data name="DueUtc" xml:space="preserve">
+    <value>Due (UTC)</value>
+  </data>
+  <data name="NoInvoices" xml:space="preserve">
+    <value>No invoices.</value>
+  </data>
+  <data name="PendingPacked" xml:space="preserve">
+    <value>Pending/Packed</value>
+  </data>
+  <data name="ShippedDelivered" xml:space="preserve">
+    <value>Shipped/Delivered</value>
+  </data>
+  <data name="Returned" xml:space="preserve">
+    <value>Returned</value>
+  </data>
+  <data name="CarrierReview" xml:space="preserve">
+    <value>Carrier Review</value>
+  </data>
+  <data name="ReturnFollowUp" xml:space="preserve">
+    <value>Return Follow-up</value>
+  </data>
+  <data name="AwaitingHandoff" xml:space="preserve">
+    <value>Awaiting Handoff</value>
+  </data>
+  <data name="TrackingOverdue" xml:space="preserve">
+    <value>Tracking Overdue</value>
+  </data>
+  <data name="Carrier" xml:space="preserve">
+    <value>Carrier</value>
+  </data>
+  <data name="Tracking" xml:space="preserve">
+    <value>Tracking</value>
+  </data>
+  <data name="NoShipments" xml:space="preserve">
+    <value>No shipments.</value>
+  </data>
+  <data name="TrackingOverdueBadge" xml:space="preserve">
+    <value>Tracking overdue</value>
+  </data>
+  <data name="ReturnedParcel" xml:space="preserve">
+    <value>Returned parcel</value>
+  </data>
+  <data name="LastEvent" xml:space="preserve">
+    <value>Last event</value>
+  </data>
+  <data name="UseRefundRestockFollowUp" xml:space="preserve">
+    <value>Use refund and restock follow-up from this order.</value>
+  </data>
+  <data name="ShippingSettings" xml:space="preserve">
+    <value>Shipping Settings</value>
+  </data>
+  <data name="StartRefund" xml:space="preserve">
+    <value>Start Refund</value>
+  </data>
+  <data name="BusinessesTitle" xml:space="preserve">
+    <value>Businesses</value>
+  </data>
+  <data name="BusinessesIntro" xml:space="preserve">
+    <value>Create and maintain merchant tenants, owner assignments, and operational readiness.</value>
+  </data>
+  <data name="SupportQueue" xml:space="preserve">
+    <value>Support Queue</value>
+  </data>
+  <data name="CreateBusiness" xml:space="preserve">
+    <value>Create Business</value>
+  </data>
+  <data name="NeedsAttention" xml:space="preserve">
+    <value>Needs Attention</value>
+  </data>
+  <data name="PendingApproval" xml:space="preserve">
+    <value>Pending Approval</value>
+  </data>
+  <data name="Suspended" xml:space="preserve">
+    <value>Suspended</value>
+  </data>
+  <data name="SearchBusinessesPlaceholder" xml:space="preserve">
+    <value>Search by business or legal name</value>
+  </data>
+  <data name="NeedsAttentionOnly" xml:space="preserve">
+    <value>Needs attention only</value>
+  </data>
+  <data name="Business" xml:space="preserve">
+    <value>Business</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="Owners" xml:space="preserve">
+    <value>Owners</value>
+  </data>
+  <data name="Members" xml:space="preserve">
+    <value>Members</value>
+  </data>
+  <data name="Invitations" xml:space="preserve">
+    <value>Invitations</value>
+  </data>
+  <data name="Locations" xml:space="preserve">
+    <value>Locations</value>
+  </data>
+  <data name="Attention" xml:space="preserve">
+    <value>Attention</value>
+  </data>
+  <data name="NoBusinessesFound" xml:space="preserve">
+    <value>No businesses found.</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="ApprovedInactive" xml:space="preserve">
+    <value>Approved, inactive</value>
+  </data>
+  <data name="MissingText" xml:space="preserve">
+    <value>Missing</value>
+  </data>
+  <data name="ApprovalPending" xml:space="preserve">
+    <value>Approval pending</value>
+  </data>
+  <data name="MissingActiveOwner" xml:space="preserve">
+    <value>Missing active owner</value>
+  </data>
+  <data name="MissingPrimaryLocation" xml:space="preserve">
+    <value>Missing primary location</value>
+  </data>
+  <data name="MissingContactEmail" xml:space="preserve">
+    <value>Missing contact email</value>
+  </data>
+  <data name="MissingLegalName" xml:space="preserve">
+    <value>Missing legal name</value>
+  </data>
+  <data name="PendingInvites" xml:space="preserve">
+    <value>pending invite(s)</value>
+  </data>
+  <data name="Subscription" xml:space="preserve">
+    <value>Subscription</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Setup" xml:space="preserve">
+    <value>Setup</value>
+  </data>
+  <data name="CrmOverviewTitle" xml:space="preserve">
+    <value>CRM Overview</value>
+  </data>
+  <data name="CrmCustomersTitle" xml:space="preserve">
+    <value>CRM Customers</value>
+  </data>
+  <data name="CrmLeadsTitle" xml:space="preserve">
+    <value>CRM Leads</value>
+  </data>
+  <data name="CrmOpportunitiesTitle" xml:space="preserve">
+    <value>CRM Opportunities</value>
+  </data>
+  <data name="SearchCustomersPlaceholder" xml:space="preserve">
+    <value>Search customers</value>
+  </data>
+  <data name="SearchLeadsPlaceholder" xml:space="preserve">
+    <value>Search leads</value>
+  </data>
+  <data name="SearchOpportunitiesPlaceholder" xml:space="preserve">
+    <value>Search opportunities</value>
+  </data>
+  <data name="SearchInvoicesPlaceholder" xml:space="preserve">
+    <value>Search by id, order, customer, payment</value>
+  </data>
+  <data name="NewCustomer" xml:space="preserve">
+    <value>New Customer</value>
+  </data>
+  <data name="NewLead" xml:space="preserve">
+    <value>New Lead</value>
+  </data>
+  <data name="NewOpportunity" xml:space="preserve">
+    <value>New Opportunity</value>
+  </data>
+  <data name="PlatformFallbackCulture" xml:space="preserve">
+    <value>Platform fallback culture</value>
+  </data>
+  <data name="VisibleLocaleFallbacks" xml:space="preserve">
+    <value>Visible locale fallbacks</value>
+  </data>
+  <data name="VisibleLinkedUserLocales" xml:space="preserve">
+    <value>Visible linked-user locales</value>
+  </data>
+  <data name="LinkedUser" xml:space="preserve">
+    <value>Linked User</value>
+  </data>
+  <data name="NeedsSegmentation" xml:space="preserve">
+    <value>Needs Segmentation</value>
+  </data>
+  <data name="HasOpportunities" xml:space="preserve">
+    <value>Has Opportunities</value>
+  </data>
+  <data name="LocaleFallback" xml:space="preserve">
+    <value>Locale Fallback</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Company" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="TaxProfile" xml:space="preserve">
+    <value>Tax Profile</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="NoCustomersFound" xml:space="preserve">
+    <value>No customers found.</value>
+  </data>
+  <data name="Fallback" xml:space="preserve">
+    <value>Fallback</value>
+  </data>
+  <data name="UserLocale" xml:space="preserve">
+    <value>User locale</value>
+  </data>
+  <data name="VatIdMissing" xml:space="preserve">
+    <value>VAT ID missing</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Interactions" xml:space="preserve">
+    <value>Interactions</value>
+  </data>
+  <data name="Opportunity" xml:space="preserve">
+    <value>Opportunity</value>
+  </data>
+  <data name="Customer" xml:space="preserve">
+    <value>Customer</value>
+  </data>
+  <data name="Qualified" xml:space="preserve">
+    <value>Qualified</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Unassigned</value>
+  </data>
+  <data name="Unconverted" xml:space="preserve">
+    <value>Unconverted</value>
+  </data>
+  <data name="Convert" xml:space="preserve">
+    <value>Convert</value>
+  </data>
+  <data name="Owner" xml:space="preserve">
+    <value>Owner</value>
+  </data>
+  <data name="UpdatedUtc" xml:space="preserve">
+    <value>Updated (UTC)</value>
+  </data>
+  <data name="NoLeadsFound" xml:space="preserve">
+    <value>No leads found.</value>
+  </data>
+  <data name="ClosingSoon" xml:space="preserve">
+    <value>Closing Soon</value>
+  </data>
+  <data name="HighValue" xml:space="preserve">
+    <value>High Value</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Stage" xml:space="preserve">
+    <value>Stage</value>
+  </data>
+  <data name="Estimated" xml:space="preserve">
+    <value>Estimated</value>
+  </data>
+  <data name="CloseDate" xml:space="preserve">
+    <value>Close date</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Items</value>
+  </data>
+  <data name="NoOpportunitiesFound" xml:space="preserve">
+    <value>No opportunities found.</value>
+  </data>
+  <data name="QualifiedLeads" xml:space="preserve">
+    <value>Qualified Leads</value>
+  </data>
+  <data name="OpenOpportunities" xml:space="preserve">
+    <value>Open Opportunities</value>
+  </data>
+  <data name="Interactions7d" xml:space="preserve">
+    <value>Interactions (7d)</value>
+  </data>
+  <data name="OpenPipeline" xml:space="preserve">
+    <value>Open Pipeline</value>
+  </data>
+  <data name="InvoicesQueueIntro" xml:space="preserve">
+    <value>CRM and order-generated invoices in one operational queue.</value>
+  </data>
+  <data name="TaxInvoicingPolicy" xml:space="preserve">
+    <value>Tax &amp; Invoicing Policy</value>
+  </data>
+  <data name="InvoicesTaxPolicyNote" xml:space="preserve">
+    <value>This is a phase-1 VAT support surface for invoice review. It exposes current tax defaults and issuer identity without claiming full tax-engine automation or compliance completion.</value>
+  </data>
+  <data name="ArchiveReadiness" xml:space="preserve">
+    <value>Archive Readiness</value>
+  </data>
+  <data name="NeedsIssuerData" xml:space="preserve">
+    <value>Needs issuer data</value>
+  </data>
+  <data name="EInvoiceBaseline" xml:space="preserve">
+    <value>E-Invoice Baseline</value>
+  </data>
+  <data name="TaxSettings" xml:space="preserve">
+    <value>Tax Settings</value>
+  </data>
+  <data name="CompleteIssuerData" xml:space="preserve">
+    <value>Complete Issuer Data</value>
+  </data>
+  <data name="ReviewEInvoiceBaseline" xml:space="preserve">
+    <value>Review E-Invoice Baseline</value>
+  </data>
+  <data name="NetTaxGross" xml:space="preserve">
+    <value>Net / Tax / Gross</value>
+  </data>
+  <data name="Due" xml:space="preserve">
+    <value>Due</value>
+  </data>
+  <data name="Net" xml:space="preserve">
+    <value>Net</value>
+  </data>
+  <data name="Tax" xml:space="preserve">
+    <value>Tax</value>
+  </data>
+  <data name="Gross" xml:space="preserve">
+    <value>Gross</value>
+  </data>
+  <data name="Settled" xml:space="preserve">
+    <value>Settled</value>
+  </data>
+  <data name="Balance" xml:space="preserve">
+    <value>Balance</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="FixVatId" xml:space="preserve">
+    <value>Fix VAT ID</value>
+  </data>
+  <data name="Post" xml:space="preserve">
+    <value>Post</value>
+  </data>
+  <data name="MarkPaid" xml:space="preserve">
+    <value>Mark Paid</value>
+  </data>
+  <data name="RefundQueueTitle" xml:space="preserve">
+    <value>Refund Queue</value>
+  </data>
+  <data name="RefundQueueIntro" xml:space="preserve">
+    <value>Cross-order refund review for finance support and Stripe-first post-payment follow-up.</value>
+  </data>
+  <data name="Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="NeedsSupport" xml:space="preserve">
+    <value>Needs Support</value>
+  </data>
+  <data name="BackToPayments" xml:space="preserve">
+    <value>Back to Payments</value>
+  </data>
+  <data name="WebhookAnomalyVisibility" xml:space="preserve">
+    <value>Webhook Anomaly Visibility</value>
+  </data>
+  <data name="OpenWebhookQueue" xml:space="preserve">
+    <value>Open Webhook Queue</value>
+  </data>
+  <data name="RetryPending" xml:space="preserve">
+    <value>Retry Pending</value>
+  </data>
+  <data name="FailedDeliveries" xml:space="preserve">
+    <value>Failed Deliveries</value>
+  </data>
+  <data name="ReviewPaymentExceptions" xml:space="preserve">
+    <value>Review Payment Exceptions</value>
+  </data>
+  <data name="ReviewDisputeSignals" xml:space="preserve">
+    <value>Review Dispute Signals</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="OpenPayments" xml:space="preserve">
+    <value>Open Payments</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="Reason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="Timeline" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="Amount" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="NoRefundsFound" xml:space="preserve">
+    <value>No refunds found.</value>
+  </data>
+  <data name="PaymentSupportPlaybooks" xml:space="preserve">
+    <value>Phase-1 Payment Support Playbooks</value>
+  </data>
+  <data name="RefundSupportPlaybooks" xml:space="preserve">
+    <value>Phase-1 Refund Support Playbooks</value>
+  </data>
+  <data name="StripeReadiness" xml:space="preserve">
+    <value>Stripe Phase-1 Readiness</value>
+  </data>
+  <data name="OpenPaymentSettings" xml:space="preserve">
+    <value>Open Payment Settings</value>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="PublishableKey" xml:space="preserve">
+    <value>Publishable Key</value>
+  </data>
+  <data name="SecretKey" xml:space="preserve">
+    <value>Secret Key</value>
+  </data>
+  <data name="WebhookSecret" xml:space="preserve">
+    <value>Webhook Secret</value>
+  </data>
+  <data name="MerchantIdentity" xml:space="preserve">
+    <value>Merchant Identity</value>
+  </data>
+  <data name="TaxInvoicingReadiness" xml:space="preserve">
+    <value>Tax &amp; Invoicing Readiness</value>
+  </data>
+  <data name="OpenTaxSettings" xml:space="preserve">
+    <value>Open Tax Settings</value>
+  </data>
+  <data name="VatEnabled" xml:space="preserve">
+    <value>VAT Enabled</value>
+  </data>
+  <data name="DefaultVat" xml:space="preserve">
+    <value>Default VAT</value>
+  </data>
+  <data name="PriceMode" xml:space="preserve">
+    <value>Price Mode</value>
+  </data>
+  <data name="VatInclusive" xml:space="preserve">
+    <value>VAT Inclusive</value>
+  </data>
+  <data name="VatExclusive" xml:space="preserve">
+    <value>VAT Exclusive</value>
+  </data>
+  <data name="ReverseCharge" xml:space="preserve">
+    <value>Reverse Charge</value>
+  </data>
+  <data name="Allowed" xml:space="preserve">
+    <value>Allowed</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="Issuer" xml:space="preserve">
+    <value>Issuer</value>
+  </data>
+  <data name="TaxId" xml:space="preserve">
+    <value>Tax ID</value>
+  </data>
+  <data name="WebhookLifecycleVisibility" xml:space="preserve">
+    <value>Webhook Lifecycle Visibility</value>
+  </data>
+  <data name="ActiveSubscriptions" xml:space="preserve">
+    <value>Active Subscriptions</value>
+  </data>
+  <data name="Succeeded" xml:space="preserve">
+    <value>Succeeded</value>
+  </data>
+  <data name="PaymentExceptions" xml:space="preserve">
+    <value>Payment Exceptions</value>
+  </data>
+  <data name="DisputeSignals" xml:space="preserve">
+    <value>Dispute Signals</value>
+  </data>
+  <data name="Unlinked" xml:space="preserve">
+    <value>Unlinked</value>
+  </data>
+  <data name="ProviderLinked" xml:space="preserve">
+    <value>Provider-linked</value>
+  </data>
+  <data name="MissingProviderRef" xml:space="preserve">
+    <value>Missing Provider Ref</value>
+  </data>
+  <data name="FailedStripe" xml:space="preserve">
+    <value>Failed Stripe</value>
+  </data>
+  <data name="NeedsReconciliation" xml:space="preserve">
+    <value>Needs Reconciliation</value>
+  </data>
+  <data name="DisputeFollowUp" xml:space="preserve">
+    <value>Dispute Follow-up</value>
+  </data>
+  <data name="WarehousesTitle" xml:space="preserve">
+    <value>Warehouses</value>
+  </data>
+  <data name="StockTransfersTitle" xml:space="preserve">
+    <value>Stock Transfers</value>
+  </data>
+  <data name="StockLevelsTitle" xml:space="preserve">
+    <value>Stock Levels</value>
+  </data>
+  <data name="SearchWarehousesPlaceholder" xml:space="preserve">
+    <value>Search warehouses</value>
+  </data>
+  <data name="SearchSuppliersPlaceholder" xml:space="preserve">
+    <value>Search suppliers</value>
+  </data>
+  <data name="SearchPurchaseOrdersPlaceholder" xml:space="preserve">
+    <value>Search purchase orders</value>
+  </data>
+  <data name="SearchStockLevelsPlaceholder" xml:space="preserve">
+    <value>Search stock levels</value>
+  </data>
+  <data name="SearchTransfersPlaceholder" xml:space="preserve">
+    <value>Search transfers</value>
+  </data>
+  <data name="NewWarehouse" xml:space="preserve">
+    <value>New Warehouse</value>
+  </data>
+  <data name="NewSupplier" xml:space="preserve">
+    <value>New Supplier</value>
+  </data>
+  <data name="NewPurchaseOrder" xml:space="preserve">
+    <value>New Purchase Order</value>
+  </data>
+  <data name="NewStockLevel" xml:space="preserve">
+    <value>New Stock Level</value>
+  </data>
+  <data name="NewTransfer" xml:space="preserve">
+    <value>New Transfer</value>
+  </data>
+  <data name="LowStock" xml:space="preserve">
+    <value>Low Stock</value>
+  </data>
+  <data name="Reserved" xml:space="preserve">
+    <value>Reserved</value>
+  </data>
+  <data name="InTransit" xml:space="preserve">
+    <value>In Transit</value>
+  </data>
+  <data name="NoStockLevels" xml:space="preserve">
+    <value>No Stock Levels</value>
+  </data>
+  <data name="NoStockLevelsFound" xml:space="preserve">
+    <value>No stock levels found.</value>
+  </data>
+  <data name="NoWarehousesFound" xml:space="preserve">
+    <value>No warehouses found.</value>
+  </data>
+  <data name="ReorderPoint" xml:space="preserve">
+    <value>Reorder Point</value>
+  </data>
+  <data name="Adjust" xml:space="preserve">
+    <value>Adjust</value>
+  </data>
+  <data name="Reserve" xml:space="preserve">
+    <value>Reserve</value>
+  </data>
+  <data name="Release" xml:space="preserve">
+    <value>Release</value>
+  </data>
+  <data name="Return" xml:space="preserve">
+    <value>Return</value>
+  </data>
+  <data name="Ledger" xml:space="preserve">
+    <value>Ledger</value>
+  </data>
+  <data name="WarehouseOpsPlaybooks" xml:space="preserve">
+    <value>Warehouse Ops Playbooks</value>
+  </data>
+  <data name="SupplierOpsPlaybooks" xml:space="preserve">
+    <value>Supplier Ops Playbooks</value>
+  </data>
+  <data name="PurchaseOrderOpsPlaybooks" xml:space="preserve">
+    <value>Purchase Order Ops Playbooks</value>
+  </data>
+  <data name="StockTransferOpsPlaybooks" xml:space="preserve">
+    <value>Stock Transfer Ops Playbooks</value>
+  </data>
+  <data name="Playbook" xml:space="preserve">
+    <value>Playbook</value>
+  </data>
+  <data name="WhenItApplies" xml:space="preserve">
+    <value>When It Applies</value>
+  </data>
+  <data name="OperatorAction" xml:space="preserve">
+    <value>Operator Action</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="MissingAddress" xml:space="preserve">
+    <value>Missing Address</value>
+  </data>
+  <data name="MissingAddressBadge" xml:space="preserve">
+    <value>Missing address</value>
+  </data>
+  <data name="HasPurchaseOrders" xml:space="preserve">
+    <value>Has Purchase Orders</value>
+  </data>
+  <data name="OrderNumber" xml:space="preserve">
+    <value>Order Number</value>
+  </data>
+  <data name="Supplier" xml:space="preserve">
+    <value>Supplier</value>
+  </data>
+  <data name="Lines" xml:space="preserve">
+    <value>Lines</value>
+  </data>
+  <data name="Ordered" xml:space="preserve">
+    <value>Ordered</value>
+  </data>
+  <data name="From" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="To" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="Standard" xml:space="preserve">
+    <value>Standard</value>
+  </data>
+  <data name="Empty" xml:space="preserve">
+    <value>Empty</value>
+  </data>
+  <data name="NoSuppliersFound" xml:space="preserve">
+    <value>No suppliers found.</value>
+  </data>
+  <data name="NoPurchaseOrdersFound" xml:space="preserve">
+    <value>No purchase orders found.</value>
+  </data>
+  <data name="NoStockTransfersFound" xml:space="preserve">
+    <value>No stock transfers found.</value>
+  </data>
+  <data name="InventoryLedger" xml:space="preserve">
+    <value>Inventory Ledger</value>
+  </data>
+  <data name="Inbound" xml:space="preserve">
+    <value>Inbound</value>
+  </data>
+  <data name="Outbound" xml:space="preserve">
+    <value>Outbound</value>
+  </data>
+  <data name="Reservations" xml:space="preserve">
+    <value>Reservations</value>
+  </data>
+  <data name="LedgerOpsPlaybooks" xml:space="preserve">
+    <value>Ledger Ops Playbooks</value>
+  </data>
+  <data name="Warehouse" xml:space="preserve">
+    <value>Warehouse</value>
+  </data>
+  <data name="QtyDelta" xml:space="preserve">
+    <value>Qty Delta</value>
+  </data>
+  <data name="NoLedgerEntries" xml:space="preserve">
+    <value>No ledger entries.</value>
+  </data>
+  <data name="BusinessSupportQueueTitle" xml:space="preserve">
+    <value>Business Support Queue</value>
+  </data>
+  <data name="BusinessSupportQueueIntro" xml:space="preserve">
+    <value>Unified onboarding, activation, invitation, and failed-email triage surface for support operators.</value>
+  </data>
+  <data name="FailedEmails" xml:space="preserve">
+    <value>Failed Emails</value>
+  </data>
+  <data name="RefreshSummary" xml:space="preserve">
+    <value>Refresh Summary</value>
+  </data>
+  <data name="OpenBusinessQueue" xml:space="preserve">
+    <value>Open business queue</value>
+  </data>
+  <data name="OpenPendingApprovals" xml:space="preserve">
+    <value>Open pending approvals</value>
+  </data>
+  <data name="OpenFailedInvitationEmails" xml:space="preserve">
+    <value>Open failed invitation emails</value>
+  </data>
+  <data name="PendingActivation" xml:space="preserve">
+    <value>Pending Activation</value>
+  </data>
+  <data name="OpenFailedActivationEmails" xml:space="preserve">
+    <value>Open failed activation emails</value>
+  </data>
+  <data name="SuspendedBusinesses" xml:space="preserve">
+    <value>Suspended businesses</value>
+  </data>
+  <data name="BusinessesMissingOwner" xml:space="preserve">
+    <value>Businesses missing owner</value>
+  </data>
+  <data name="LockedMembers" xml:space="preserve">
+    <value>Locked members</value>
+  </data>
+  <data name="OpenFailedPasswordResets" xml:space="preserve">
+    <value>Open failed password resets</value>
+  </data>
+  <data name="AttentionBusinesses" xml:space="preserve">
+    <value>Attention Businesses</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="FullQueue" xml:space="preserve">
+    <value>Full Queue</value>
+  </data>
+  <data name="Signals" xml:space="preserve">
+    <value>Signals</value>
+  </data>
+  <data name="NoAttentionBusinessesQueued" xml:space="preserve">
+    <value>No attention businesses are currently queued.</value>
+  </data>
+  <data name="Inactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="MissingOwner" xml:space="preserve">
+    <value>Missing owner</value>
+  </data>
+  <data name="Invites" xml:space="preserve">
+    <value>Invites</value>
+  </data>
+  <data name="RecentFailedEmailEvents" xml:space="preserve">
+    <value>Recent Failed Email Events</value>
+  </data>
+  <data name="FullAuditLog" xml:space="preserve">
+    <value>Full Audit Log</value>
+  </data>
+  <data name="NoFailedEmailEventsQueued" xml:space="preserve">
+    <value>No failed phase-1 email events are currently queued.</value>
+  </data>
+  <data name="BusinessLabel" xml:space="preserve">
+    <value>Business</value>
+  </data>
+  <data name="OpenSimilarFailures" xml:space="preserve">
+    <value>Open Similar Failures</value>
+  </data>
+  <data name="OpenInvitations" xml:space="preserve">
+    <value>Open Invitations</value>
+  </data>
+  <data name="OpenMembers" xml:space="preserve">
+    <value>Open Members</value>
+  </data>
+  <data name="BusinessSetupTitle" xml:space="preserve">
+    <value>Business Setup</value>
+  </data>
+  <data name="EditBusiness" xml:space="preserve">
+    <value>Edit Business</value>
+  </data>
+  <data name="OverrideAudit" xml:space="preserve">
+    <value>Override Audit</value>
+  </data>
+  <data name="OperationalStatus" xml:space="preserve">
+    <value>Operational Status</value>
+  </data>
+  <data name="BusinessIsActive" xml:space="preserve">
+    <value>Business is active</value>
+  </data>
+  <data name="BusinessIsInactive" xml:space="preserve">
+    <value>Business is inactive</value>
+  </data>
+  <data name="Checklist" xml:space="preserve">
+    <value>Checklist</value>
+  </data>
+  <data name="Complete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  <data name="Incomplete" xml:space="preserve">
+    <value>Incomplete</value>
+  </data>
+  <data name="Defaults" xml:space="preserve">
+    <value>Defaults</value>
+  </data>
+  <data name="GoLiveReadiness" xml:space="preserve">
+    <value>Go-live Readiness</value>
+  </data>
+  <data name="OperationallyReady" xml:space="preserve">
+    <value>Operationally ready</value>
+  </data>
+  <data name="StillPendingSetup" xml:space="preserve">
+    <value>Still pending setup</value>
+  </data>
+  <data name="ApprovalChecklistRequirement" xml:space="preserve">
+    <value>Approval and checklist must both be satisfied.</value>
+  </data>
+  <data name="SetupIncompleteWarning" xml:space="preserve">
+    <value>Setup is still incomplete. Finish owner assignment, primary location, legal name, and contact email before operational approval.</value>
+  </data>
+  <data name="SettingsOwnership" xml:space="preserve">
+    <value>Settings Ownership</value>
+  </data>
+  <data name="OpenGlobalSettings" xml:space="preserve">
+    <value>Open Global Settings</value>
+  </data>
+  <data name="BusinessProfile" xml:space="preserve">
+    <value>Business Profile</value>
+  </data>
+  <data name="BusinessName" xml:space="preserve">
+    <value>Business name</value>
+  </data>
+  <data name="LegalName" xml:space="preserve">
+    <value>Legal name</value>
+  </data>
+  <data name="TaxVatId" xml:space="preserve">
+    <value>Tax / VAT ID</value>
+  </data>
+  <data name="Website" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="ContactPhoneE164" xml:space="preserve">
+    <value>Contact phone (E.164)</value>
+  </data>
+  <data name="ShortDescription" xml:space="preserve">
+    <value>Short description</value>
+  </data>
+  <data name="LocalizationOperationalDefaults" xml:space="preserve">
+    <value>Localization and Operational Defaults</value>
+  </data>
+  <data name="OpenGlobalLocalization" xml:space="preserve">
+    <value>Open Global Localization</value>
+  </data>
+  <data name="CustomerLocaleReview" xml:space="preserve">
+    <value>Customer Locale Review</value>
+  </data>
+  <data name="CustomerSegments" xml:space="preserve">
+    <value>Customer Segments</value>
+  </data>
+  <data name="CustomerSegmentsIntro" xml:space="preserve">
+    <value>Review CRM segmentation hygiene before campaigns, support filters, and reporting depend on it.</value>
+  </data>
+  <data name="NewSegment" xml:space="preserve">
+    <value>New Segment</value>
+  </data>
+  <data name="InUse" xml:space="preserve">
+    <value>In Use</value>
+  </data>
+  <data name="MissingDescription" xml:space="preserve">
+    <value>Missing Description</value>
+  </data>
+  <data name="SegmentOpsPlaybooks" xml:space="preserve">
+    <value>Segment Ops Playbooks</value>
+  </data>
+  <data name="Queue" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="Scope" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="SearchSegmentsPlaceholder" xml:space="preserve">
+    <value>Search segments</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="NoSegmentsFound" xml:space="preserve">
+    <value>No segments found.</value>
+  </data>
+  <data name="RelatedRecords" xml:space="preserve">
+    <value>Related Records</value>
+  </data>
+  <data name="MinorUnits" xml:space="preserve">
+    <value>Minor units.</value>
+  </data>
+  <data name="LinkedOrder" xml:space="preserve">
+    <value>Linked order</value>
+  </data>
+  <data name="CreateWarehouse" xml:space="preserve">
+    <value>Create Warehouse</value>
+  </data>
+  <data name="EditWarehouse" xml:space="preserve">
+    <value>Edit Warehouse</value>
+  </data>
+  <data name="CreateSupplier" xml:space="preserve">
+    <value>Create Supplier</value>
+  </data>
+  <data name="EditSupplier" xml:space="preserve">
+    <value>Edit Supplier</value>
+  </data>
+  <data name="CreateStockTransfer" xml:space="preserve">
+    <value>Create Stock Transfer</value>
+  </data>
+  <data name="EditStockTransfer" xml:space="preserve">
+    <value>Edit Stock Transfer</value>
+  </data>
+  <data name="EditCustomer" xml:space="preserve">
+    <value>Edit Customer</value>
+  </data>
+  <data name="QuickStatus" xml:space="preserve">
+    <value>Quick Status</value>
+  </data>
+  <data name="PostInvoice" xml:space="preserve">
+    <value>Post Invoice</value>
+  </data>
+  <data name="SetOpen" xml:space="preserve">
+    <value>Set Open</value>
+  </data>
+  <data name="VoidInvoice" xml:space="preserve">
+    <value>Void Invoice</value>
+  </data>
+  <data name="Current" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="BaselineReady" xml:space="preserve">
+    <value>Baseline ready</value>
+  </data>
+  <data name="CustomerTaxProfile" xml:space="preserve">
+    <value>Customer Tax Profile</value>
+  </data>
+  <data name="RefundedSettled" xml:space="preserve">
+    <value>Refunded / Settled</value>
+  </data>
+  <data name="OpenBalance" xml:space="preserve">
+    <value>Open Balance</value>
+  </data>
+  <data name="RefundWorkflow" xml:space="preserve">
+    <value>Refund Workflow</value>
+  </data>
+  <data name="RefundWorkflowNote" xml:space="preserve">
+    <value>Use refund when captured funds must be returned. Use void only if funds were not collected.</value>
+  </data>
+  <data name="MaxRefundableNow" xml:space="preserve">
+    <value>Max refundable now</value>
+  </data>
+  <data name="RefundAmountMinor" xml:space="preserve">
+    <value>Refund amount (minor)</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="TransferLines" xml:space="preserve">
+    <value>Transfer Lines</value>
+  </data>
+  <data name="AddLine" xml:space="preserve">
+    <value>Add line</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="UserCreateFailedMessage" xml:space="preserve">
+    <value>Failed to create user.</value>
+  </data>
+  <data name="UserUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update user.</value>
+  </data>
+  <data name="ProductVariant" xml:space="preserve">
+    <value>Product Variant</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Quantity</value>
+  </data>
+  <data name="LinkedUserOwnershipNote" xml:space="preserve">
+    <value>When a linked user is selected, contact data should be treated as identity-owned.</value>
+  </data>
+  <data name="EffectiveProfile" xml:space="preserve">
+    <value>Effective profile</value>
+  </data>
+  <data name="CrmAddresses" xml:space="preserve">
+    <value>CRM Addresses</value>
+  </data>
+  <data name="AddAddress" xml:space="preserve">
+    <value>Add address</value>
+  </data>
+  <data name="AddressLine1" xml:space="preserve">
+    <value>Address line 1</value>
+  </data>
+  <data name="AddressLine2" xml:space="preserve">
+    <value>Address line 2</value>
+  </data>
+  <data name="PostalCode" xml:space="preserve">
+    <value>Postal code</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="Country" xml:space="preserve">
+    <value>Country</value>
+  </data>
+  <data name="DefaultBilling" xml:space="preserve">
+    <value>Default billing</value>
+  </data>
+  <data name="DefaultShipping" xml:space="preserve">
+    <value>Default shipping</value>
+  </data>
+  <data name="MinorUnitsExample" xml:space="preserve">
+    <value>Minor units. Example: 1299 = EUR 12.99</value>
+  </data>
+  <data name="OpportunityItems" xml:space="preserve">
+    <value>Opportunity Items</value>
+  </data>
+  <data name="UnitPriceMinor" xml:space="preserve">
+    <value>Unit price (minor)</value>
+  </data>
+  <data name="EmailDeliveryAudits" xml:space="preserve">
+    <value>Email Delivery Audits</value>
+  </data>
+  <data name="RecentSmtpAttempts" xml:space="preserve">
+    <value>Recent SMTP-based transactional delivery attempts and failures.</value>
+  </data>
+  <data name="BackToCommunications" xml:space="preserve">
+    <value>Back to Communications</value>
+  </data>
+  <data name="OperatorPlaybooksByFlow" xml:space="preserve">
+    <value>Operator Playbooks by Flow</value>
+  </data>
+  <data name="OpenFailed" xml:space="preserve">
+    <value>Open Failed</value>
+  </data>
+  <data name="AllowedAction" xml:space="preserve">
+    <value>Allowed action</value>
+  </data>
+  <data name="Escalation" xml:space="preserve">
+    <value>Escalation</value>
+  </data>
+  <data name="FailedOnly" xml:space="preserve">
+    <value>Failed Only</value>
+  </data>
+  <data name="StalePending" xml:space="preserve">
+    <value>Stale Pending</value>
+  </data>
+  <data name="BusinessLinkedFailures" xml:space="preserve">
+    <value>Business-linked Failures</value>
+  </data>
+  <data name="RepeatedFailures" xml:space="preserve">
+    <value>Repeated Failures</value>
+  </data>
+  <data name="PriorSuccessContext" xml:space="preserve">
+    <value>Prior Success Context</value>
+  </data>
+  <data name="RetryReady" xml:space="preserve">
+    <value>Retry Ready</value>
+  </data>
+  <data name="RetryBlocked" xml:space="preserve">
+    <value>Retry Blocked</value>
+  </data>
+  <data name="HeavyChains" xml:space="preserve">
+    <value>Heavy Chains</value>
+  </data>
+  <data name="FailedInvitations" xml:space="preserve">
+    <value>Failed Invitations</value>
+  </data>
+  <data name="FailedActivations" xml:space="preserve">
+    <value>Failed Activations</value>
+  </data>
+  <data name="FailedPasswordResets" xml:space="preserve">
+    <value>Failed Password Resets</value>
+  </data>
+  <data name="FailedAdminTests" xml:space="preserve">
+    <value>Failed Admin Tests</value>
+  </data>
+  <data name="ExactChainMode" xml:space="preserve">
+    <value>Exact chain mode</value>
+  </data>
+  <data name="LeaveExactChain" xml:space="preserve">
+    <value>Leave Exact Chain</value>
+  </data>
+  <data name="WholeChain" xml:space="preserve">
+    <value>Whole Chain</value>
+  </data>
+  <data name="NeedsFollowUp" xml:space="preserve">
+    <value>Needs Follow-up</value>
+  </data>
+  <data name="ResolvedHistory" xml:space="preserve">
+    <value>Resolved History</value>
+  </data>
+  <data name="ChainAttempts" xml:space="preserve">
+    <value>Chain Attempts</value>
+  </data>
+  <data name="ChainFailed" xml:space="preserve">
+    <value>Chain Failed</value>
+  </data>
+  <data name="ChainSent" xml:space="preserve">
+    <value>Chain Sent</value>
+  </data>
+  <data name="ChainPending" xml:space="preserve">
+    <value>Chain Pending</value>
+  </data>
+  <data name="ChainProfile" xml:space="preserve">
+    <value>Chain Profile</value>
+  </data>
+  <data name="SmsWhatsAppAuditsTitle" xml:space="preserve">
+    <value>SMS / WhatsApp Audits</value>
+  </data>
+  <data name="NonEmailDeliveryHistory" xml:space="preserve">
+    <value>Operator-facing history for live non-email delivery families.</value>
+  </data>
+  <data name="PhoneVerification" xml:space="preserve">
+    <value>Phone Verification</value>
+  </data>
+  <data name="AdminTests" xml:space="preserve">
+    <value>Admin Tests</value>
+  </data>
+  <data name="ActionReady" xml:space="preserve">
+    <value>Action Ready</value>
+  </data>
+  <data name="ActionBlocked" xml:space="preserve">
+    <value>Action Blocked</value>
+  </data>
+  <data name="EscalationCandidates" xml:space="preserve">
+    <value>Escalation Candidates</value>
+  </data>
+  <data name="ProviderReview" xml:space="preserve">
+    <value>Provider Review</value>
+  </data>
+  <data name="ProviderReviewMode" xml:space="preserve">
+    <value>Provider review mode</value>
+  </data>
+  <data name="LeaveProviderReview" xml:space="preserve">
+    <value>Leave Provider Review</value>
+  </data>
+  <data name="Attempts24h" xml:space="preserve">
+    <value>24h Attempts</value>
+  </data>
+  <data name="PressureState" xml:space="preserve">
+    <value>Pressure State</value>
+  </data>
+  <data name="RecoveryState" xml:space="preserve">
+    <value>Recovery State</value>
+  </data>
+  <data name="RecommendedNextStep" xml:space="preserve">
+    <value>Recommended next step</value>
+  </data>
+  <data name="EscalationRule" xml:space="preserve">
+    <value>Escalation rule</value>
+  </data>
+  <data name="OpenVerificationPolicy" xml:space="preserve">
+    <value>Open Verification Policy</value>
+  </data>
+  <data name="SmsSettings" xml:space="preserve">
+    <value>SMS Settings</value>
+  </data>
+  <data name="WhatsAppSettings" xml:space="preserve">
+    <value>WhatsApp Settings</value>
+  </data>
+  <data name="TestTargets" xml:space="preserve">
+    <value>Test Targets</value>
+  </data>
+  <data name="RerunTestSms" xml:space="preserve">
+    <value>Rerun Test SMS</value>
+  </data>
+  <data name="RerunTestWhatsApp" xml:space="preserve">
+    <value>Rerun Test WhatsApp</value>
+  </data>
+  <data name="WebhookDeliveries" xml:space="preserve">
+    <value>Webhook Deliveries</value>
+  </data>
+  <data name="QueueScope" xml:space="preserve">
+    <value>Queue Scope</value>
+  </data>
+  <data name="Global" xml:space="preserve">
+    <value>Global</value>
+  </data>
+  <data name="WebhookSupportPlaybooks" xml:space="preserve">
+    <value>Webhook Support Playbooks</value>
+  </data>
+  <data name="ActiveWebhookSubscriptions" xml:space="preserve">
+    <value>Active Webhook Subscriptions</value>
+  </data>
+  <data name="EventType" xml:space="preserve">
+    <value>Event Type</value>
+  </data>
+  <data name="CallbackUrl" xml:space="preserve">
+    <value>Callback URL</value>
+  </data>
+  <data name="NoWebhookSubscriptionsFound" xml:space="preserve">
+    <value>No webhook subscriptions found.</value>
+  </data>
+  <data name="AllDeliveries" xml:space="preserve">
+    <value>All deliveries</value>
+  </data>
+  <data name="PaymentsLabel" xml:space="preserve">
+    <value>Payments</value>
+  </data>
+  <data name="PaymentSettings" xml:space="preserve">
+    <value>Payment Settings</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="Callback" xml:space="preserve">
+    <value>Callback</value>
+  </data>
+  <data name="Attempts" xml:space="preserve">
+    <value>Attempts</value>
+  </data>
+  <data name="Correlation" xml:space="preserve">
+    <value>Correlation</value>
+  </data>
+  <data name="OperatorFollowUp" xml:space="preserve">
+    <value>Operator Follow-up</value>
+  </data>
+  <data name="NoWebhookDeliveriesFound" xml:space="preserve">
+    <value>No webhook deliveries found.</value>
+  </data>
+  <data name="InactiveSubscription" xml:space="preserve">
+    <value>Inactive subscription</value>
+  </data>
+  <data name="DisputeSignal" xml:space="preserve">
+    <value>Dispute signal</value>
+  </data>
+  <data name="PaymentException" xml:space="preserve">
+    <value>Payment exception</value>
+  </data>
+  <data name="RetryPathUsed" xml:space="preserve">
+    <value>Retry path used</value>
+  </data>
+  <data name="Lifecycle" xml:space="preserve">
+    <value>Lifecycle</value>
+  </data>
+  <data name="RecordedAmount" xml:space="preserve">
+    <value>Recorded Amount</value>
+  </data>
+  <data name="Refunded" xml:space="preserve">
+    <value>Refunded</value>
+  </data>
+  <data name="NetCollected" xml:space="preserve">
+    <value>Net Collected</value>
+  </data>
+  <data name="ReconciliationAndDisputeSnapshot" xml:space="preserve">
+    <value>Reconciliation and Dispute Snapshot</value>
+  </data>
+  <data name="NeedsReconciliationQueue" xml:space="preserve">
+    <value>Needs Reconciliation Queue</value>
+  </data>
+  <data name="DisputeFollowUpQueue" xml:space="preserve">
+    <value>Dispute Follow-up Queue</value>
+  </data>
+  <data name="ProviderRef" xml:space="preserve">
+    <value>Provider Ref</value>
+  </data>
+  <data name="OpenAge" xml:space="preserve">
+    <value>Open Age</value>
+  </data>
+  <data name="Reconciliation" xml:space="preserve">
+    <value>Reconciliation</value>
+  </data>
+  <data name="DisputeReview" xml:space="preserve">
+    <value>Dispute Review</value>
+  </data>
+  <data name="NoOpenReconciliationFlag" xml:space="preserve">
+    <value>No open reconciliation flag</value>
+  </data>
+  <data name="NoDisputeFlag" xml:space="preserve">
+    <value>No dispute flag</value>
+  </data>
+  <data name="OpenOrderPayments" xml:space="preserve">
+    <value>Open Order Payments</value>
+  </data>
+  <data name="RecordedFailureReason" xml:space="preserve">
+    <value>Recorded Failure Reason</value>
+  </data>
+  <data name="RefundTimeline" xml:space="preserve">
+    <value>Refund Timeline</value>
+  </data>
+  <data name="OpenOrderRefunds" xml:space="preserve">
+    <value>Open Order Refunds</value>
+  </data>
+  <data name="AddRefundForThisPayment" xml:space="preserve">
+    <value>Add Refund For This Payment</value>
+  </data>
+  <data name="CustomerCreatedMessage" xml:space="preserve">
+    <value>Customer created.</value>
+  </data>
+  <data name="CustomerNotFoundMessage" xml:space="preserve">
+    <value>Customer not found.</value>
+  </data>
+  <data name="CustomerUpdatedMessage" xml:space="preserve">
+    <value>Customer updated.</value>
+  </data>
+  <data name="CustomerConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the customer and try again.</value>
+  </data>
+  <data name="InvoiceNotFoundMessage" xml:space="preserve">
+    <value>Invoice not found.</value>
+  </data>
+  <data name="InvoiceUpdatedMessage" xml:space="preserve">
+    <value>Invoice updated.</value>
+  </data>
+  <data name="InvoiceConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the invoice and try again.</value>
+  </data>
+  <data name="InvoiceRefundRecordedMessage" xml:space="preserve">
+    <value>Invoice refund recorded.</value>
+  </data>
+  <data name="LeadCreatedMessage" xml:space="preserve">
+    <value>Lead created.</value>
+  </data>
+  <data name="LeadNotFoundMessage" xml:space="preserve">
+    <value>Lead not found.</value>
+  </data>
+  <data name="LeadUpdatedMessage" xml:space="preserve">
+    <value>Lead updated.</value>
+  </data>
+  <data name="LeadConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the lead and try again.</value>
+  </data>
+  <data name="OpportunityCreatedMessage" xml:space="preserve">
+    <value>Opportunity created.</value>
+  </data>
+  <data name="OpportunityNotFoundMessage" xml:space="preserve">
+    <value>Opportunity not found.</value>
+  </data>
+  <data name="OpportunityUpdatedMessage" xml:space="preserve">
+    <value>Opportunity updated.</value>
+  </data>
+  <data name="OpportunityConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the opportunity and try again.</value>
+  </data>
+  <data name="LeadConvertedMessage" xml:space="preserve">
+    <value>Lead converted to customer.</value>
+  </data>
+  <data name="SegmentCreatedMessage" xml:space="preserve">
+    <value>Segment created.</value>
+  </data>
+  <data name="SegmentNotFoundMessage" xml:space="preserve">
+    <value>Segment not found.</value>
+  </data>
+  <data name="SegmentUpdatedMessage" xml:space="preserve">
+    <value>Segment updated.</value>
+  </data>
+  <data name="SegmentConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the segment and try again.</value>
+  </data>
+  <data name="InteractionAddedMessage" xml:space="preserve">
+    <value>Interaction added.</value>
+  </data>
+  <data name="ConsentAddedMessage" xml:space="preserve">
+    <value>Consent record added.</value>
+  </data>
+  <data name="SegmentAssignedMessage" xml:space="preserve">
+    <value>Segment assigned.</value>
+  </data>
+  <data name="SegmentRemovedMessage" xml:space="preserve">
+    <value>Segment removed.</value>
+  </data>
+  <data name="WarehouseCreatedMessage" xml:space="preserve">
+    <value>Warehouse created.</value>
+  </data>
+  <data name="WarehouseNotFoundMessage" xml:space="preserve">
+    <value>Warehouse not found.</value>
+  </data>
+  <data name="WarehouseUpdatedMessage" xml:space="preserve">
+    <value>Warehouse updated.</value>
+  </data>
+  <data name="WarehouseConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the warehouse and try again.</value>
+  </data>
+  <data name="SupplierCreatedMessage" xml:space="preserve">
+    <value>Supplier created.</value>
+  </data>
+  <data name="SupplierNotFoundMessage" xml:space="preserve">
+    <value>Supplier not found.</value>
+  </data>
+  <data name="SupplierUpdatedMessage" xml:space="preserve">
+    <value>Supplier updated.</value>
+  </data>
+  <data name="SupplierConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the supplier and try again.</value>
+  </data>
+  <data name="StockLevelNotFoundMessage" xml:space="preserve">
+    <value>Stock level not found.</value>
+  </data>
+  <data name="StockAdjustedMessage" xml:space="preserve">
+    <value>Stock adjusted.</value>
+  </data>
+  <data name="StockReservedMessage" xml:space="preserve">
+    <value>Stock reserved.</value>
+  </data>
+  <data name="ReservationReleasedMessage" xml:space="preserve">
+    <value>Reservation released.</value>
+  </data>
+  <data name="ReturnReceiptProcessedMessage" xml:space="preserve">
+    <value>Return receipt processed.</value>
+  </data>
+  <data name="StockLevelCreatedMessage" xml:space="preserve">
+    <value>Stock level created.</value>
+  </data>
+  <data name="StockLevelUpdatedMessage" xml:space="preserve">
+    <value>Stock level updated.</value>
+  </data>
+  <data name="StockLevelConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the stock level and try again.</value>
+  </data>
+  <data name="StockTransferCreatedMessage" xml:space="preserve">
+    <value>Stock transfer created.</value>
+  </data>
+  <data name="StockTransferNotFoundMessage" xml:space="preserve">
+    <value>Stock transfer not found.</value>
+  </data>
+  <data name="StockTransferUpdatedMessage" xml:space="preserve">
+    <value>Stock transfer updated.</value>
+  </data>
+  <data name="StockTransferConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the stock transfer and try again.</value>
+  </data>
+  <data name="PurchaseOrderCreatedMessage" xml:space="preserve">
+    <value>Purchase order created.</value>
+  </data>
+  <data name="PurchaseOrderNotFoundMessage" xml:space="preserve">
+    <value>Purchase order not found.</value>
+  </data>
+  <data name="PurchaseOrderUpdatedMessage" xml:space="preserve">
+    <value>Purchase order updated.</value>
+  </data>
+  <data name="PurchaseOrderConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the purchase order and try again.</value>
+  </data>
+  <data name="BillingPlanCreatedMessage" xml:space="preserve">
+    <value>Billing plan created.</value>
+  </data>
+  <data name="BillingPlanNotFoundMessage" xml:space="preserve">
+    <value>Billing plan not found.</value>
+  </data>
+  <data name="BillingPlanUpdatedMessage" xml:space="preserve">
+    <value>Billing plan updated.</value>
+  </data>
+  <data name="BillingPlanConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the billing plan and try again.</value>
+  </data>
+  <data name="PaymentCreatedMessage" xml:space="preserve">
+    <value>Payment created.</value>
+  </data>
+  <data name="PaymentNotFoundMessage" xml:space="preserve">
+    <value>Payment not found.</value>
+  </data>
+  <data name="PaymentUpdatedMessage" xml:space="preserve">
+    <value>Payment updated.</value>
+  </data>
+  <data name="PaymentConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the payment and try again.</value>
+  </data>
+  <data name="FinancialAccountCreatedMessage" xml:space="preserve">
+    <value>Financial account created.</value>
+  </data>
+  <data name="FinancialAccountNotFoundMessage" xml:space="preserve">
+    <value>Financial account not found.</value>
+  </data>
+  <data name="FinancialAccountUpdatedMessage" xml:space="preserve">
+    <value>Financial account updated.</value>
+  </data>
+  <data name="FinancialAccountConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the financial account and try again.</value>
+  </data>
+  <data name="ExpenseCreatedMessage" xml:space="preserve">
+    <value>Expense created.</value>
+  </data>
+  <data name="ExpenseNotFoundMessage" xml:space="preserve">
+    <value>Expense not found.</value>
+  </data>
+  <data name="ExpenseUpdatedMessage" xml:space="preserve">
+    <value>Expense updated.</value>
+  </data>
+  <data name="ExpenseConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the expense and try again.</value>
+  </data>
+  <data name="JournalEntryCreatedMessage" xml:space="preserve">
+    <value>Journal entry created.</value>
+  </data>
+  <data name="JournalEntryNotFoundMessage" xml:space="preserve">
+    <value>Journal entry not found.</value>
+  </data>
+  <data name="JournalEntryUpdatedMessage" xml:space="preserve">
+    <value>Journal entry updated.</value>
+  </data>
+  <data name="JournalEntryConcurrencyMessage" xml:space="preserve">
+    <value>Concurrency conflict. Reload the journal entry and try again.</value>
+  </data>
+  <data name="SiteSettingAdminTextOverridesJson" xml:space="preserve">
+    <value>Admin UI text overrides JSON</value>
+  </data>
+  <data name="BusinessAdminTextOverridesJson" xml:space="preserve">
+    <value>Business admin text overrides</value>
+    <comment>Business-scoped admin UI wording overrides JSON.</comment>
+  </data>
+  <data name="BusinessCommunicationProfileNotFound" xml:space="preserve">
+    <value>Business communication profile not found.</value>
+    <comment>Admin alert when business communication profile is missing.</comment>
+  </data>
+  <data name="EmailFlowRetriedSuccessfully" xml:space="preserve">
+    <value>Email flow retried successfully using the current live target.</value>
+    <comment>Success message after retrying an email flow.</comment>
+  </data>
+  <data name="EmailTransportNotReadyForCommunicationTest" xml:space="preserve">
+    <value>SMTP transport is not ready. Complete email settings before sending a communication test email.</value>
+    <comment>Error when email transport is not ready for a communication test.</comment>
+  </data>
+  <data name="CommunicationTestInboxNotConfigured" xml:space="preserve">
+    <value>Communication test inbox is not configured. Add it in site settings before sending a test email.</value>
+    <comment>Error when communication test inbox is missing.</comment>
+  </data>
+  <data name="SmsTransportNotReadyForCommunicationTest" xml:space="preserve">
+    <value>SMS transport is not ready. Complete SMS provider settings before sending a test SMS.</value>
+    <comment>Error when SMS transport is not ready for a communication test.</comment>
+  </data>
+  <data name="CommunicationTestSmsRecipientNotConfigured" xml:space="preserve">
+    <value>Communication test SMS recipient is not configured.</value>
+    <comment>Error when communication test SMS recipient is missing.</comment>
+  </data>
+  <data name="WhatsAppTransportNotReadyForCommunicationTest" xml:space="preserve">
+    <value>WhatsApp transport is not ready. Complete WhatsApp provider settings before sending a test message.</value>
+    <comment>Error when WhatsApp transport is not ready for a communication test.</comment>
+  </data>
+  <data name="CommunicationTestWhatsAppRecipientNotConfigured" xml:space="preserve">
+    <value>Communication test WhatsApp recipient is not configured.</value>
+    <comment>Error when communication test WhatsApp recipient is missing.</comment>
+  </data>
+  <data name="AddOnGroupCreated" xml:space="preserve">
+    <value>Add-on group created.</value>
+    <comment>Success message after creating an add-on group.</comment>
+  </data>
+  <data name="AddOnGroupNotFound" xml:space="preserve">
+    <value>Add-on group not found.</value>
+    <comment>Error when add-on group is missing.</comment>
+  </data>
+  <data name="AddOnGroupUpdated" xml:space="preserve">
+    <value>Add-on group updated.</value>
+    <comment>Success message after updating an add-on group.</comment>
+  </data>
+  <data name="AddOnGroupDeleted" xml:space="preserve">
+    <value>Add-on group deleted.</value>
+    <comment>Success message after deleting an add-on group.</comment>
+  </data>
+  <data name="AddOnGroupDeleteFailed" xml:space="preserve">
+    <value>Failed to delete add-on group.</value>
+    <comment>Error when deleting an add-on group fails.</comment>
+  </data>
+  <data name="AddOnGroupAttachProductsFailed" xml:space="preserve">
+    <value>Failed to attach to products.</value>
+    <comment>Error when attaching an add-on group to products fails.</comment>
+  </data>
+  <data name="AddOnGroupAttachedToProducts" xml:space="preserve">
+    <value>Attached to products.</value>
+    <comment>Success message after attaching an add-on group to products.</comment>
+  </data>
+  <data name="AddOnGroupAttachedToCategories" xml:space="preserve">
+    <value>Attached to categories.</value>
+    <comment>Success message after attaching an add-on group to categories.</comment>
+  </data>
+  <data name="AddOnGroupAttachedToBrands" xml:space="preserve">
+    <value>Attached to brands.</value>
+    <comment>Success message after attaching an add-on group to brands.</comment>
+  </data>
+  <data name="AddOnGroupAttachVariantsFailed" xml:space="preserve">
+    <value>Failed to attach to variants.</value>
+    <comment>Error when attaching an add-on group to variants fails.</comment>
+  </data>
+  <data name="AddOnGroupAttachedToVariants" xml:space="preserve">
+    <value>Attached to variants.</value>
+    <comment>Success message after attaching an add-on group to variants.</comment>
+  </data>
+  <data name="BrandCreated" xml:space="preserve">
+    <value>Brand created.</value>
+    <comment>Success message after creating a brand.</comment>
+  </data>
+  <data name="BrandNotFound" xml:space="preserve">
+    <value>Brand not found.</value>
+    <comment>Error when brand is missing.</comment>
+  </data>
+  <data name="BrandUpdated" xml:space="preserve">
+    <value>Brand updated.</value>
+    <comment>Success message after updating a brand.</comment>
+  </data>
+  <data name="BrandConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. The brand was modified by another process. Please reload and try again.</value>
+    <comment>Error when brand edit has a concurrency conflict.</comment>
+  </data>
+  <data name="BrandDeleted" xml:space="preserve">
+    <value>Brand deleted.</value>
+    <comment>Success message after deleting a brand.</comment>
+  </data>
+  <data name="BrandDeleteFailed" xml:space="preserve">
+    <value>Failed to delete brand.</value>
+    <comment>Error when deleting a brand fails.</comment>
+  </data>
+  <data name="CategoryCreated" xml:space="preserve">
+    <value>Category created successfully.</value>
+    <comment>Success message after creating a category.</comment>
+  </data>
+  <data name="CategoryNotFound" xml:space="preserve">
+    <value>Category not found.</value>
+    <comment>Error when category is missing.</comment>
+  </data>
+  <data name="CategoryUpdated" xml:space="preserve">
+    <value>Category updated successfully.</value>
+    <comment>Success message after updating a category.</comment>
+  </data>
+  <data name="CategoryDeleted" xml:space="preserve">
+    <value>Category deleted.</value>
+    <comment>Success message after deleting a category.</comment>
+  </data>
+  <data name="CategoryDeleteFailed" xml:space="preserve">
+    <value>Failed to delete the category.</value>
+    <comment>Error when deleting a category fails.</comment>
+  </data>
+  <data name="PageCreated" xml:space="preserve">
+    <value>Page created successfully.</value>
+    <comment>Success message after creating a page.</comment>
+  </data>
+  <data name="PageNotFound" xml:space="preserve">
+    <value>Page not found.</value>
+    <comment>Error when page is missing.</comment>
+  </data>
+  <data name="PageUpdated" xml:space="preserve">
+    <value>Page updated successfully.</value>
+    <comment>Success message after updating a page.</comment>
+  </data>
+  <data name="PageDeleted" xml:space="preserve">
+    <value>Page deleted.</value>
+    <comment>Success message after deleting a page.</comment>
+  </data>
+  <data name="PageDeleteFailed" xml:space="preserve">
+    <value>Failed to delete the page.</value>
+    <comment>Error when deleting a page fails.</comment>
+  </data>
+  <data name="ValidationErrorsRetry" xml:space="preserve">
+    <value>Please fix validation errors and try again.</value>
+    <comment>Warning shown when the user must correct validation errors before retrying.</comment>
+  </data>
+  <data name="PermissionsLoadFailed" xml:space="preserve">
+    <value>Failed to load permissions.</value>
+    <comment>Error shown when the permissions list cannot be loaded.</comment>
+  </data>
+  <data name="PermissionCreateFailed" xml:space="preserve">
+    <value>Failed to create permission.</value>
+    <comment>Error shown when creating a permission fails.</comment>
+  </data>
+  <data name="PermissionCreated" xml:space="preserve">
+    <value>Permission created successfully.</value>
+    <comment>Success message after creating a permission.</comment>
+  </data>
+  <data name="PermissionNotFound" xml:space="preserve">
+    <value>Permission not found.</value>
+    <comment>Error shown when a permission cannot be found.</comment>
+  </data>
+  <data name="PermissionUpdateFailed" xml:space="preserve">
+    <value>Failed to update permission.</value>
+    <comment>Error shown when updating a permission fails.</comment>
+  </data>
+  <data name="PermissionUpdated" xml:space="preserve">
+    <value>Permission updated successfully.</value>
+    <comment>Success message after updating a permission.</comment>
+  </data>
+  <data name="PermissionDeleteFailed" xml:space="preserve">
+    <value>Failed to delete permission.</value>
+    <comment>Error shown when deleting a permission fails.</comment>
+  </data>
+  <data name="PermissionDeleted" xml:space="preserve">
+    <value>Permission deleted successfully.</value>
+    <comment>Success message after deleting a permission.</comment>
+  </data>
+  <data name="RoleCreateFailed" xml:space="preserve">
+    <value>Failed to create role.</value>
+    <comment>Error shown when creating a role fails.</comment>
+  </data>
+  <data name="RoleCreated" xml:space="preserve">
+    <value>Role created successfully.</value>
+    <comment>Success message after creating a role.</comment>
+  </data>
+  <data name="RoleNotFound" xml:space="preserve">
+    <value>Role not found.</value>
+    <comment>Error shown when a role cannot be found.</comment>
+  </data>
+  <data name="RoleUpdateFailed" xml:space="preserve">
+    <value>Failed to update role.</value>
+    <comment>Error shown when updating a role fails.</comment>
+  </data>
+  <data name="RoleUpdated" xml:space="preserve">
+    <value>Role updated successfully.</value>
+    <comment>Success message after updating a role.</comment>
+  </data>
+  <data name="RoleDeleted" xml:space="preserve">
+    <value>Role deleted successfully.</value>
+    <comment>Success message after deleting a role.</comment>
+  </data>
+  <data name="RoleSystemProtectedDelete" xml:space="preserve">
+    <value>This role is system-protected and cannot be deleted.</value>
+    <comment>Warning shown when attempting to delete a protected system role.</comment>
+  </data>
+  <data name="RoleDeleteFailed" xml:space="preserve">
+    <value>Failed to delete role.</value>
+    <comment>Error shown when deleting a role fails.</comment>
+  </data>
+  <data name="RolePermissionsLoadFailed" xml:space="preserve">
+    <value>Failed to load role permissions.</value>
+    <comment>Error shown when the role permissions editor cannot be loaded.</comment>
+  </data>
+  <data name="RolePermissionsUpdateFailed" xml:space="preserve">
+    <value>Failed to update role permissions.</value>
+    <comment>Error shown when saving role permissions fails.</comment>
+  </data>
+  <data name="RolePermissionsUpdated" xml:space="preserve">
+    <value>Permissions updated.</value>
+    <comment>Success message after updating role permissions.</comment>
+  </data>
+  <data name="MediaUploaded" xml:space="preserve">
+    <value>Media uploaded.</value>
+    <comment>Success message after uploading a media asset.</comment>
+  </data>
+  <data name="MediaAssetNotFound" xml:space="preserve">
+    <value>Media asset not found.</value>
+    <comment>Error shown when a media asset cannot be found.</comment>
+  </data>
+  <data name="MediaUpdated" xml:space="preserve">
+    <value>Media updated.</value>
+    <comment>Success message after updating a media asset.</comment>
+  </data>
+  <data name="MediaConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. Reload the media asset and try again.</value>
+    <comment>Error shown when a media asset update hits a concurrency conflict.</comment>
+  </data>
+  <data name="MediaDeleted" xml:space="preserve">
+    <value>Media asset deleted from the library.</value>
+    <comment>Success message after removing a media asset from the library.</comment>
+  </data>
+  <data name="OrderNotFound" xml:space="preserve">
+    <value>Order not found.</value>
+    <comment>Error shown when an order cannot be found.</comment>
+  </data>
+  <data name="OrderPaymentAdded" xml:space="preserve">
+    <value>Payment added.</value>
+    <comment>Success message after adding an order payment.</comment>
+  </data>
+  <data name="OrderShipmentAdded" xml:space="preserve">
+    <value>Shipment added.</value>
+    <comment>Success message after adding an order shipment.</comment>
+  </data>
+  <data name="OrderRefundAdded" xml:space="preserve">
+    <value>Refund added.</value>
+    <comment>Success message after adding an order refund.</comment>
+  </data>
+  <data name="OrderInvoiceCreated" xml:space="preserve">
+    <value>Invoice created.</value>
+    <comment>Success message after creating an order invoice.</comment>
+  </data>
+  <data name="ConcurrencyTokenMissing" xml:space="preserve">
+    <value>Missing concurrency token.</value>
+    <comment>Error shown when a required concurrency token is missing.</comment>
+  </data>
+  <data name="OrderStatusUpdatedFormat" xml:space="preserve">
+    <value>Order status updated to {0}.</value>
+    <comment>Success message after changing an order status. Parameter 0 is the new status.</comment>
+  </data>
+  <data name="LoyaltyProgramCreated" xml:space="preserve">
+    <value>Loyalty program created.</value>
+    <comment>Success message after creating a loyalty program.</comment>
+  </data>
+  <data name="LoyaltyProgramNotFound" xml:space="preserve">
+    <value>Loyalty program not found.</value>
+    <comment>Error shown when a loyalty program cannot be found.</comment>
+  </data>
+  <data name="LoyaltyProgramUpdated" xml:space="preserve">
+    <value>Loyalty program updated.</value>
+    <comment>Success message after updating a loyalty program.</comment>
+  </data>
+  <data name="LoyaltyProgramDeleted" xml:space="preserve">
+    <value>Loyalty program deleted.</value>
+    <comment>Success message after deleting a loyalty program.</comment>
+  </data>
+  <data name="LoyaltyProgramDeleteFailed" xml:space="preserve">
+    <value>Failed to delete loyalty program.</value>
+    <comment>Error shown when deleting a loyalty program fails.</comment>
+  </data>
+  <data name="LoyaltyRewardTierCreated" xml:space="preserve">
+    <value>Reward tier created.</value>
+    <comment>Success message after creating a loyalty reward tier.</comment>
+  </data>
+  <data name="LoyaltyRewardTierNotFound" xml:space="preserve">
+    <value>Reward tier not found.</value>
+    <comment>Error shown when a loyalty reward tier cannot be found.</comment>
+  </data>
+  <data name="LoyaltyRewardTierUpdated" xml:space="preserve">
+    <value>Reward tier updated.</value>
+    <comment>Success message after updating a loyalty reward tier.</comment>
+  </data>
+  <data name="LoyaltyRewardTierDeleted" xml:space="preserve">
+    <value>Reward tier deleted.</value>
+    <comment>Success message after deleting a loyalty reward tier.</comment>
+  </data>
+  <data name="LoyaltyRewardTierDeleteFailed" xml:space="preserve">
+    <value>Failed to delete reward tier.</value>
+    <comment>Error shown when deleting a loyalty reward tier fails.</comment>
+  </data>
+  <data name="LoyaltyAccountCreated" xml:space="preserve">
+    <value>Loyalty account created.</value>
+    <comment>Success message after creating a loyalty account.</comment>
+  </data>
+  <data name="LoyaltyCampaignsLoadFailed" xml:space="preserve">
+    <value>Unable to load loyalty campaigns.</value>
+    <comment>Error shown when loyalty campaigns cannot be loaded.</comment>
+  </data>
+  <data name="LoyaltyCampaignCreated" xml:space="preserve">
+    <value>Loyalty campaign created.</value>
+    <comment>Success message after creating a loyalty campaign.</comment>
+  </data>
+  <data name="LoyaltyCampaignNotFound" xml:space="preserve">
+    <value>Loyalty campaign not found.</value>
+    <comment>Error shown when a loyalty campaign cannot be found.</comment>
+  </data>
+  <data name="LoyaltyCampaignUpdated" xml:space="preserve">
+    <value>Loyalty campaign updated.</value>
+    <comment>Success message after updating a loyalty campaign.</comment>
+  </data>
+  <data name="LoyaltyCampaignActivated" xml:space="preserve">
+    <value>Loyalty campaign activated.</value>
+    <comment>Success message after activating a loyalty campaign.</comment>
+  </data>
+  <data name="LoyaltyCampaignDeactivated" xml:space="preserve">
+    <value>Loyalty campaign deactivated.</value>
+    <comment>Success message after deactivating a loyalty campaign.</comment>
+  </data>
+  <data name="LoyaltyCampaignActivationFailed" xml:space="preserve">
+    <value>Failed to update loyalty campaign activation.</value>
+    <comment>Error shown when activating or deactivating a loyalty campaign fails.</comment>
+  </data>
+  <data name="LoyaltyAccountNotFound" xml:space="preserve">
+    <value>Loyalty account not found.</value>
+    <comment>Error shown when a loyalty account cannot be found.</comment>
+  </data>
+  <data name="LoyaltyPointsAdjusted" xml:space="preserve">
+    <value>Loyalty points adjusted.</value>
+    <comment>Success message after adjusting loyalty points.</comment>
+  </data>
+  <data name="LoyaltyAccountSuspended" xml:space="preserve">
+    <value>Loyalty account suspended.</value>
+    <comment>Success message after suspending a loyalty account.</comment>
+  </data>
+  <data name="LoyaltyAccountSuspendFailed" xml:space="preserve">
+    <value>Failed to suspend loyalty account.</value>
+    <comment>Error shown when suspending a loyalty account fails.</comment>
+  </data>
+  <data name="LoyaltyAccountActivated" xml:space="preserve">
+    <value>Loyalty account activated.</value>
+    <comment>Success message after activating a loyalty account.</comment>
+  </data>
+  <data name="LoyaltyAccountActivateFailed" xml:space="preserve">
+    <value>Failed to activate loyalty account.</value>
+    <comment>Error shown when activating a loyalty account fails.</comment>
+  </data>
+  <data name="LoyaltyRedemptionConfirmed" xml:space="preserve">
+    <value>Redemption confirmed.</value>
+    <comment>Success message after confirming a loyalty redemption.</comment>
+  </data>
+  <data name="LoyaltyRedemptionConfirmFailed" xml:space="preserve">
+    <value>Failed to confirm redemption.</value>
+    <comment>Error shown when confirming a loyalty redemption fails.</comment>
+  </data>
+  <data name="ProductCreated" xml:space="preserve">
+    <value>Product has been created successfully.</value>
+    <comment>Success message after creating a product.</comment>
+  </data>
+  <data name="ProductNotFound" xml:space="preserve">
+    <value>Product not found.</value>
+    <comment>Error shown when a product cannot be found.</comment>
+  </data>
+  <data name="ProductUpdated" xml:space="preserve">
+    <value>Product has been updated successfully.</value>
+    <comment>Success message after updating a product.</comment>
+  </data>
+  <data name="ProductConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict: the record was modified by another user. Please reload and try again.</value>
+    <comment>Error shown when a product edit hits a concurrency conflict.</comment>
+  </data>
+  <data name="ProductDeleted" xml:space="preserve">
+    <value>Product deleted.</value>
+    <comment>Success message after deleting a product.</comment>
+  </data>
+  <data name="ProductDeleteFailed" xml:space="preserve">
+    <value>Failed to delete the product.</value>
+    <comment>Error shown when deleting a product fails.</comment>
+  </data>
+  <data name="BusinessNotFound" xml:space="preserve">
+    <value>Business not found.</value>
+    <comment>Error shown when a business cannot be found.</comment>
+  </data>
+  <data name="BusinessUpdated" xml:space="preserve">
+    <value>Business updated.</value>
+    <comment>Success message after updating a business.</comment>
+  </data>
+  <data name="BusinessConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. Reload the business and try again.</value>
+    <comment>Error shown when a business edit hits a concurrency conflict.</comment>
+  </data>
+  <data name="BusinessSetupSaved" xml:space="preserve">
+    <value>Business setup saved.</value>
+    <comment>Success message after saving business setup.</comment>
+  </data>
+  <data name="BusinessApproved" xml:space="preserve">
+    <value>Business approved for operational use.</value>
+    <comment>Success message after approving a business.</comment>
+  </data>
+  <data name="BusinessSuspended" xml:space="preserve">
+    <value>Business suspended.</value>
+    <comment>Success message after suspending a business.</comment>
+  </data>
+  <data name="BusinessReactivated" xml:space="preserve">
+    <value>Business reactivated.</value>
+    <comment>Success message after reactivating a business.</comment>
+  </data>
+  <data name="BusinessLocationCreated" xml:space="preserve">
+    <value>Business location created.</value>
+    <comment>Success message after creating a business location.</comment>
+  </data>
+  <data name="BusinessLocationNotFound" xml:space="preserve">
+    <value>Business location not found.</value>
+    <comment>Error shown when a business location cannot be found.</comment>
+  </data>
+  <data name="BusinessLocationUpdated" xml:space="preserve">
+    <value>Business location updated.</value>
+    <comment>Success message after updating a business location.</comment>
+  </data>
+  <data name="BusinessLocationConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. Reload the location and try again.</value>
+    <comment>Error shown when a business location edit hits a concurrency conflict.</comment>
+  </data>
+  <data name="BusinessInvitationSent" xml:space="preserve">
+    <value>Invitation sent.</value>
+    <comment>Success message after sending a business invitation.</comment>
+  </data>
+  <data name="BusinessInvitationReissued" xml:space="preserve">
+    <value>Invitation reissued and emailed again.</value>
+    <comment>Success message after resending a business invitation.</comment>
+  </data>
+  <data name="BusinessInvitationRevoked" xml:space="preserve">
+    <value>Invitation revoked.</value>
+    <comment>Success message after revoking a business invitation.</comment>
+  </data>
+  <data name="BusinessMemberAssigned" xml:space="preserve">
+    <value>Business member assigned.</value>
+    <comment>Success message after assigning a business member.</comment>
+  </data>
+  <data name="BusinessMemberNotFound" xml:space="preserve">
+    <value>Business member not found.</value>
+    <comment>Error shown when a business member cannot be found.</comment>
+  </data>
+  <data name="BusinessMemberUpdated" xml:space="preserve">
+    <value>Business member updated.</value>
+    <comment>Success message after updating a business member.</comment>
+  </data>
+  <data name="BusinessMemberConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. Reload the membership and try again.</value>
+    <comment>Error shown when a business membership edit hits a concurrency conflict.</comment>
+  </data>
+  <data name="BusinessMemberRemoved" xml:space="preserve">
+    <value>Business member removed.</value>
+    <comment>Success message after removing a business member.</comment>
+  </data>
+  <data name="BusinessMemberRemovedOverride" xml:space="preserve">
+    <value>Business member removed under controlled owner override.</value>
+    <comment>Success message after removing a business member using owner override.</comment>
+  </data>
+  <data name="BusinessMemberActivationEmailSent" xml:space="preserve">
+    <value>Activation email sent.</value>
+    <comment>Success message after sending a member activation email.</comment>
+  </data>
+  <data name="BusinessMemberActivationEmailFailed" xml:space="preserve">
+    <value>Failed to send activation email.</value>
+    <comment>Error shown when sending a member activation email fails.</comment>
+  </data>
+  <data name="BusinessMemberEmailConfirmed" xml:space="preserve">
+    <value>Email marked as confirmed.</value>
+    <comment>Success message after marking a member email as confirmed.</comment>
+  </data>
+  <data name="BusinessMemberEmailConfirmFailed" xml:space="preserve">
+    <value>Failed to confirm email.</value>
+    <comment>Error shown when confirming a member email fails.</comment>
+  </data>
+  <data name="BusinessMemberPasswordResetSent" xml:space="preserve">
+    <value>Password reset email sent.</value>
+    <comment>Success message after sending a member password reset email.</comment>
+  </data>
+  <data name="BusinessMemberPasswordResetFailed" xml:space="preserve">
+    <value>Failed to send password reset email.</value>
+    <comment>Error shown when sending a member password reset email fails.</comment>
+  </data>
+  <data name="BusinessMemberAccountLocked" xml:space="preserve">
+    <value>Account locked.</value>
+    <comment>Success message after locking a member account.</comment>
+  </data>
+  <data name="BusinessMemberAccountLockFailed" xml:space="preserve">
+    <value>Failed to lock account.</value>
+    <comment>Error shown when locking a member account fails.</comment>
+  </data>
+  <data name="BusinessMemberAccountUnlocked" xml:space="preserve">
+    <value>Account unlocked.</value>
+    <comment>Success message after unlocking a member account.</comment>
+  </data>
+  <data name="BusinessMemberAccountUnlockFailed" xml:space="preserve">
+    <value>Failed to unlock account.</value>
+    <comment>Error shown when unlocking a member account fails.</comment>
+  </data>
+  <data name="MobileOperationsSiteSettingsMissing" xml:space="preserve">
+    <value>Site settings are missing. Configure system settings before relying on mobile operations diagnostics.</value>
+    <comment>Error shown when mobile operations diagnostics cannot run because site settings are missing.</comment>
+  </data>
+</root>

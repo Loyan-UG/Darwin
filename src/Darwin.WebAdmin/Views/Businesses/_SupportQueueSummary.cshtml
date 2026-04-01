@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSupportSummaryVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="support-queue-summary" class="position-relative">
     <div class="d-flex justify-content-end mb-2">
@@ -7,38 +8,38 @@
                 hx-get="@Url.Action("SupportQueueSummaryFragment", "Businesses")"
                 hx-target="#support-queue-summary"
                 hx-swap="outerHTML">
-            Refresh Summary
+            @T.T("RefreshSummary")
         </button>
     </div>
 
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small">Needs Attention</div>
+                <div class="text-muted small">@T.T("NeedsAttention")</div>
                 <div class="fs-4 fw-semibold">@Model.AttentionBusinessCount</div>
                 <a asp-action="Index"
                    asp-route-attentionOnly="true"
                    class="small"
                    hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
                    hx-target="#business-support-queue-workspace-shell"
-                   hx-swap="outerHTML">Open business queue</a>
+                   hx-swap="outerHTML">@T.T("OpenBusinessQueue")</a>
             </div>
         </div>
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small">Pending Approval</div>
+                <div class="text-muted small">@T.T("PendingApproval")</div>
                 <div class="fs-4 fw-semibold">@Model.PendingApprovalBusinessCount</div>
                 <a asp-action="Index"
                    asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval"
                    class="small"
                    hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval })"
                    hx-target="#business-support-queue-workspace-shell"
-                   hx-swap="outerHTML">Open pending approvals</a>
+                   hx-swap="outerHTML">@T.T("OpenPendingApprovals")</a>
             </div>
         </div>
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small">Open Invitations</div>
+                <div class="text-muted small">@T.T("Invitations")</div>
                 <div class="fs-4 fw-semibold">@Model.OpenInvitationCount</div>
                 <a asp-controller="BusinessCommunications"
                    asp-action="EmailAudits"
@@ -47,12 +48,12 @@
                    class="small"
                    hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation" })"
                    hx-target="#business-support-queue-workspace-shell"
-                   hx-swap="outerHTML">Open failed invitation emails</a>
+                   hx-swap="outerHTML">@T.T("OpenFailedInvitationEmails")</a>
             </div>
         </div>
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small">Pending Activation</div>
+                <div class="text-muted small">@T.T("PendingActivation")</div>
                 <div class="fs-4 fw-semibold">@Model.PendingActivationMemberCount</div>
                 <a asp-controller="BusinessCommunications"
                    asp-action="EmailAudits"
@@ -61,17 +62,17 @@
                    class="small"
                    hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation" })"
                    hx-target="#business-support-queue-workspace-shell"
-                   hx-swap="outerHTML">Open failed activation emails</a>
+                   hx-swap="outerHTML">@T.T("OpenFailedActivationEmails")</a>
             </div>
         </div>
     </div>
 
     <div class="small text-muted mb-4">
-        Suspended businesses: <strong>@Model.SuspendedBusinessCount</strong>
+        @T.T("SuspendedBusinesses"): <strong>@Model.SuspendedBusinessCount</strong>
         <span class="mx-2">|</span>
-        Businesses missing owner: <strong>@Model.MissingOwnerBusinessCount</strong>
+        @T.T("BusinessesMissingOwner"): <strong>@Model.MissingOwnerBusinessCount</strong>
         <span class="mx-2">|</span>
-        Locked members: <strong>@Model.LockedMemberCount</strong>
+        @T.T("LockedMembers"): <strong>@Model.LockedMemberCount</strong>
         <span class="mx-2">|</span>
         <a asp-controller="BusinessCommunications"
            asp-action="EmailAudits"
@@ -79,6 +80,6 @@
            asp-route-flowKey="PasswordReset"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset" })"
            hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML">Open failed password resets</a>
+           hx-swap="outerHTML">@T.T("OpenFailedPasswordResets")</a>
     </div>
 </div>

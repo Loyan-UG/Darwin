@@ -49,13 +49,19 @@ using Darwin.Infrastructure.Extensions;
 using Darwin.Infrastructure.Security.Jwt;
 using Darwin.Infrastructure.Security.LoginRateLimiter;
 using Darwin.WebAdmin.Auth;
+using Darwin.WebAdmin.Infrastructure;
+using Darwin.WebAdmin.Localization;
+using Darwin.WebAdmin;
 using Darwin.WebAdmin.Services.Admin;
 using Darwin.WebAdmin.Services.Seo;
 using Darwin.WebAdmin.Services.Settings;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System;
 using System.Reflection;
 
@@ -104,7 +110,11 @@ namespace Darwin.WebAdmin.Extensions
 
 
             services.AddHttpContextAccessor();
-            services.AddScoped<Infrastructure.PermissionRazorHelper>();
+            services.AddScoped<PermissionRazorHelper>();
+            services.AddLocalization(options => options.ResourcesPath = "Resources");
+            services.AddScoped<IAdminTextLocalizer, AdminTextLocalizer>();
+            services.AddSingleton<IDisplayMetadataProvider, SharedDisplayMetadataProvider>();
+            services.AddSingleton<IConfigureOptions<MvcOptions>, ConfigureDisplayMetadataLocalization>();
 
             // Cookie authentication (default scheme for Challenge/SignIn/SignOut)
             services
@@ -440,7 +450,11 @@ namespace Darwin.WebAdmin.Extensions
                     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
                 })
                 .AddViewLocalization()
-                .AddDataAnnotationsLocalization()
+                .AddDataAnnotationsLocalization(options =>
+                {
+                    options.DataAnnotationLocalizerProvider = (_, factory) =>
+                        factory.Create(typeof(SharedResource));
+                })
 #if DEBUG
                 .AddRazorRuntimeCompilation()
 #endif
@@ -470,31 +484,31 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<IValidator<ProductCreateDto>>(sp =>
             {
                 // Base product validation (translations, variants, required fields)
-                var baseValidator = new ProductCreateDtoValidator();
+                var baseValidator = new ProductCreateDtoValidator(sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 // Unique slug validation for product
-                var unique = new ProductCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                var unique = new ProductCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<ProductCreateDto>(baseValidator, unique);
             });
 
             services.AddScoped<IValidator<ProductEditDto>>(sp =>
             {
                 var baseValidator = new ProductEditDtoValidator();
-                var unique = new ProductEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                var unique = new ProductEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<ProductEditDto>(baseValidator, unique);
             });
 
             // Composite validators for Category (Create/Edit) combining base + unique slug
             services.AddScoped<IValidator<CategoryCreateDto>>(sp =>
             {
-                var baseValidator = new CategoryCreateDtoValidator();
-                var unique = new CategoryCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                var baseValidator = new CategoryCreateDtoValidator(sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
+                var unique = new CategoryCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<CategoryCreateDto>(baseValidator, unique);
             });
 
             services.AddScoped<IValidator<CategoryEditDto>>(sp =>
             {
                 var baseValidator = new CategoryEditDtoValidator();
-                var unique = new CategoryEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                var unique = new CategoryEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<CategoryEditDto>(baseValidator, unique);
             });
 
@@ -502,14 +516,14 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<IValidator<PageCreateDto>>(sp =>
             {
                 var baseValidator = new PageCreateDtoValidator();
-                var unique = new PageCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                var unique = new PageCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<PageCreateDto>(baseValidator, unique);
             });
 
             services.AddScoped<IValidator<PageEditDto>>(sp =>
             {
                 var baseValidator = new PageEditDtoValidator();
-                var unique = new PageEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                var unique = new PageEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<PageEditDto>(baseValidator, unique);
             });
             // Settings validator for SiteSettingDto (combined read/update).  We use
@@ -519,15 +533,15 @@ namespace Darwin.WebAdmin.Extensions
             // Composite validators for Brands (Create/Edit) combining base + unique slug
             services.AddScoped<IValidator<BrandCreateDto>>(sp =>
             {
-                var baseValidator = new BrandCreateDtoValidator();
-                var unique = new BrandCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                var baseValidator = new BrandCreateDtoValidator(sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
+                var unique = new BrandCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<BrandCreateDto>(baseValidator, unique);
             });
 
             services.AddScoped<IValidator<BrandEditDto>>(sp =>
             {
-                var baseValidator = new BrandEditDtoValidator();
-                var unique = new BrandEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                var baseValidator = new BrandEditDtoValidator(sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
+                var unique = new BrandEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<BrandEditDto>(baseValidator, unique);
             });
 
@@ -535,14 +549,14 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<IValidator<ShippingMethodCreateDto>>(sp =>
             {
                 var baseValidator = new ShippingMethodCreateValidator();
-                var unique = new ShippingMethodCreateUniqueNameValidator(sp.GetRequiredService<IAppDbContext>());
+                var unique = new ShippingMethodCreateUniqueNameValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<ShippingMethodCreateDto>(baseValidator, unique);
             });
 
             services.AddScoped<IValidator<ShippingMethodEditDto>>(sp =>
             {
                 var baseValidator = new ShippingMethodEditValidator();
-                var unique = new ShippingMethodEditUniqueNameValidator(sp.GetRequiredService<IAppDbContext>());
+                var unique = new ShippingMethodEditUniqueNameValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<ShippingMethodEditDto>(baseValidator, unique);
             });
 

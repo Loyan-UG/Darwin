@@ -1,0 +1,15 @@
+{
+  "cultureDisplayNames": {
+    "de-DE": "Deutsch",
+    "en-US": "English"
+  },
+  "menuSourceValues": {
+    "cms": "CMS",
+    "fallback": "Notfall-Fallback"
+  },
+  "menuMessages": {
+    "emptyMenu": "Das oeffentliche CMS-Menue \"{menuName}\" hat keine Top-Level-Links geliefert.",
+    "notFound": "Das oeffentliche CMS-Menue \"{menuName}\" wurde nicht gefunden.",
+    "fallbackDefault": "Die Hauptnavigation wird derzeit aus dem Notfall-Fallback gerendert, weil der CMS-Menueabruf den Status \"{menuStatus}\" geliefert hat."
+  }
+}

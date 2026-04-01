@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Inventory.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Inventory.Validators
 {
@@ -38,7 +39,7 @@ namespace Darwin.Application.Inventory.Validators
     /// </summary>
     public sealed class InventoryAllocateForOrderValidator : AbstractValidator<InventoryAllocateForOrderDto>
     {
-        public InventoryAllocateForOrderValidator()
+        public InventoryAllocateForOrderValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.OrderId).NotEmpty();
             RuleFor(x => x.Lines).NotNull().NotEmpty();
@@ -47,7 +48,7 @@ namespace Darwin.Application.Inventory.Validators
             // Optional: ensure no duplicate variant lines in a single request
             RuleFor(x => x.Lines)
                 .Must(lines => lines.Select(l => l.VariantId).Distinct().Count() == lines.Count)
-                .WithMessage("Duplicate variant lines are not allowed.");
+                .WithMessage(localizer["DuplicateVariantLinesNotAllowed"]);
         }
     }
 

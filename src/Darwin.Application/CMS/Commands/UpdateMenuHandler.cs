@@ -6,6 +6,7 @@ using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Validators;
 using Darwin.Domain.Entities.CMS;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CMS.Commands
 {
@@ -15,9 +16,15 @@ namespace Darwin.Application.CMS.Commands
     public sealed class UpdateMenuHandler
     {
         private readonly IAppDbContext _db;
-        private readonly MenuEditDtoValidator _validator = new();
+        private readonly MenuEditDtoValidator _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateMenuHandler(IAppDbContext db) => _db = db;
+        public UpdateMenuHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+            _validator = new MenuEditDtoValidator(localizer);
+        }
 
         public async Task HandleAsync(MenuEditDto dto, CancellationToken ct = default)
         {
@@ -30,11 +37,11 @@ namespace Darwin.Application.CMS.Commands
                 .ThenInclude(i => i.Translations)
                 .FirstOrDefaultAsync(m => m.Id == dto.Id, ct);
 
-            if (menu is null) throw new InvalidOperationException("Menu not found.");
+            if (menu is null) throw new InvalidOperationException(_localizer["MenuNotFound"]);
 
             // Concurrency check
             if (!menu.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             // Update scalar
             menu.Name = dto.Name.Trim();

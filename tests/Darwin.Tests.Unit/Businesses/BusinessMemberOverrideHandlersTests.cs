@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
@@ -9,6 +10,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Businesses;
 
@@ -27,7 +29,7 @@ public sealed class BusinessMemberOverrideHandlersTests
         db.Set<BusinessMember>().Add(membership);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateBusinessMemberHandler(db, new BusinessMemberEditDtoValidator());
+        var handler = new UpdateBusinessMemberHandler(db, new BusinessMemberEditDtoValidator(), new TestStringLocalizer());
 
         await handler.HandleAsync(new BusinessMemberEditDto
         {
@@ -64,7 +66,7 @@ public sealed class BusinessMemberOverrideHandlersTests
         db.Set<BusinessMember>().Add(membership);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new DeleteBusinessMemberHandler(db, new BusinessMemberDeleteDtoValidator());
+        var handler = new DeleteBusinessMemberHandler(db, new BusinessMemberDeleteDtoValidator(), new TestStringLocalizer());
 
         await handler.HandleAsync(new BusinessMemberDeleteDto
         {
@@ -129,5 +131,18 @@ public sealed class BusinessMemberOverrideHandlersTests
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }
+    }
+
+    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 }

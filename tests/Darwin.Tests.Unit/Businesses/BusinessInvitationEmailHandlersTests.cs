@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
@@ -15,6 +16,7 @@ using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Businesses;
 
@@ -47,7 +49,8 @@ public sealed class BusinessInvitationEmailHandlersTests
             new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
             new FixedCurrentUserService(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")),
             new FixedBusinessInvitationLinkBuilder("darwin-business://InvitationAcceptance?token=MAGIC"),
-            new BusinessInvitationCreateDtoValidator());
+            new BusinessInvitationCreateDtoValidator(),
+            new TestStringLocalizer());
 
         await handler.HandleAsync(new BusinessInvitationCreateDto
         {
@@ -101,7 +104,8 @@ public sealed class BusinessInvitationEmailHandlersTests
             new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
             new FixedCurrentUserService(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")),
             new NullBusinessInvitationLinkBuilder(),
-            new BusinessInvitationCreateDtoValidator());
+            new BusinessInvitationCreateDtoValidator(),
+            new TestStringLocalizer());
 
         await handler.HandleAsync(new BusinessInvitationCreateDto
         {
@@ -153,7 +157,8 @@ public sealed class BusinessInvitationEmailHandlersTests
             emailSender,
             new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
             new NullBusinessInvitationLinkBuilder(),
-            new BusinessInvitationResendDtoValidator());
+            new BusinessInvitationResendDtoValidator(),
+            new TestStringLocalizer());
 
         await handler.HandleAsync(new BusinessInvitationResendDto
         {
@@ -303,5 +308,18 @@ public sealed class BusinessInvitationEmailHandlersTests
                 builder.Property(x => x.SupportedCulturesCsv).IsRequired();
             });
         }
+    }
+
+    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 }

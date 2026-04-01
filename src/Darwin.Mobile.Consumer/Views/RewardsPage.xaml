@@ -11,10 +11,10 @@
 
     <Grid>
         <ScrollView>
-            <VerticalStackLayout Padding="20,18,20,28" Spacing="18">
+            <VerticalStackLayout Padding="20,16,20,22" Spacing="14">
 
                 <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="10">
+                    <VerticalStackLayout Spacing="8">
                         <Label Text="{x:Static res:AppResources.RewardsTitle}"
                                Style="{StaticResource SectionEyebrowLabelStyle}" />
 
@@ -48,7 +48,7 @@
                 </Border>
 
                 <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasAccounts}">
-                    <VerticalStackLayout Spacing="12">
+                    <VerticalStackLayout Spacing="10">
                         <Label Text="{x:Static res:AppResources.RewardsOverviewTitle}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
@@ -73,7 +73,7 @@
 
                 <VerticalStackLayout IsVisible="{Binding HasAccounts}" Spacing="14">
                     <Border Style="{StaticResource CardBorderStyle}">
-                        <VerticalStackLayout Spacing="12">
+                        <VerticalStackLayout Spacing="10">
                             <Label Text="{x:Static res:AppResources.RewardsBusinessPickerLabel}"
                                    Style="{StaticResource SectionHeadingLabelStyle}" />
 
@@ -115,7 +115,7 @@
                     </Border>
 
                     <Border Style="{StaticResource CardBorderStyle}">
-                        <VerticalStackLayout Spacing="12">
+                        <VerticalStackLayout Spacing="10">
                             <Label Text="{x:Static res:AppResources.RewardsNextRewardSectionTitle}"
                                    Style="{StaticResource SectionHeadingLabelStyle}" />
 
@@ -169,7 +169,7 @@
                         </VerticalStackLayout>
                     </Border>
 
-                    <VerticalStackLayout Spacing="12">
+                    <VerticalStackLayout Spacing="10">
                         <Label Text="{x:Static res:AppResources.RewardsAvailableRewardsLabel}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
@@ -205,7 +205,7 @@
                         </CollectionView>
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="12">
+                    <VerticalStackLayout Spacing="10">
                         <Label Text="{x:Static res:AppResources.RewardsHistoryLabel}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 

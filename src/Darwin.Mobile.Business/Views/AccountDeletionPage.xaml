@@ -13,30 +13,29 @@
             <Label Text="{x:Static res:AppResources.AccountDeletionTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
-            <Border StrokeThickness="1" Padding="16">
+            <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.AccountDeletionWarningTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16"
-                           TextColor="DarkRed" />
+                           Style="{StaticResource SectionHeadingLabelStyle}"
+                           TextColor="{StaticResource Danger500}" />
 
                     <Label Text="{x:Static res:AppResources.AccountDeletionWarningBody}"
-                           LineBreakMode="WordWrap" />
+                           Style="{StaticResource BodyLabelStyle}" />
 
                     <Label Text="{x:Static res:AppResources.AccountDeletionExternalHint}"
-                           FontSize="13"
-                           LineBreakMode="WordWrap"
-                           Opacity="0.8" />
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
 
                     <Label Text="{Binding ErrorMessage}"
-                           TextColor="Red"
+                           Style="{StaticResource ErrorLabelStyle}"
                            IsVisible="{Binding HasError}" />
 
                     <Button Text="{x:Static res:AppResources.AccountDeletionContinueButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding ContinueCommand}" />
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
-                                       IsRunning="{Binding IsBusy}" />
+                                       IsRunning="{Binding IsBusy}"
+                                       Color="{StaticResource BrandGold500}" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

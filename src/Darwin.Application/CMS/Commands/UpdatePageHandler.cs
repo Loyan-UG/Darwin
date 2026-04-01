@@ -7,6 +7,7 @@ using Darwin.Application.Common.Html;
 using Darwin.Domain.Entities.CMS;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CMS.Commands
 {
@@ -14,11 +15,16 @@ namespace Darwin.Application.CMS.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<PageEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdatePageHandler(IAppDbContext db, IValidator<PageEditDto> validator)
+        public UpdatePageHandler(
+            IAppDbContext db,
+            IValidator<PageEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         public async Task HandleAsync(PageEditDto dto, CancellationToken ct = default)
@@ -30,10 +36,10 @@ namespace Darwin.Application.CMS.Commands
                 .FirstOrDefaultAsync(p => p.Id == dto.Id, ct);
 
             if (entity == null)
-                throw new ValidationException("Page not found.");
+                throw new ValidationException(_localizer["PageNotFound"]);
 
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
-                throw new DbUpdateConcurrencyException("The page was modified by another user.");
+                throw new DbUpdateConcurrencyException(_localizer["PageModifiedByAnotherUser"]);
 
             var sanitizer = HtmlSanitizerFactory.Create();
 

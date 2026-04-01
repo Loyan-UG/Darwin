@@ -7,37 +7,20 @@
     x:Class="Darwin.Mobile.Consumer.Views.LoginPage"
     x:DataType="vm:LoginViewModel"
     Title="{x:Static res:AppResources.LoginTitle}"
+    NavigationPage.HasNavigationBar="False"
     BackgroundColor="{StaticResource Neutral0}">
 
     <ScrollView x:Name="RootScrollView">
-        <VerticalStackLayout Padding="24,32,24,28" Spacing="18">
-            <Border StrokeThickness="0"
-                    HorizontalOptions="Center"
-                    WidthRequest="132"
-                    HeightRequest="132"
-                    StrokeShape="RoundRectangle 66">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="{StaticResource BrandGold500}" Offset="0" />
-                        <GradientStop Color="{StaticResource BrandGold300}" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
-                <Grid Padding="22">
-                    <Image Source="loyan_logo.png"
-                           Aspect="AspectFit" />
-                </Grid>
-            </Border>
+        <VerticalStackLayout Padding="24,0,24,24" Spacing="14">
+            <Image Source="loyan_logo.png"
+                   Aspect="AspectFit"
+                   HeightRequest="112"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,4" />
 
-            <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.LoginTitle}"
-                           Style="{StaticResource TitleLabelStyle}"
-                           HorizontalOptions="Center" />
-                    <Label Text="{Binding LoginReadinessMessage}"
-                           Style="{StaticResource SecondaryBodyLabelStyle}"
-                           HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </Border>
+            <Label Text="{x:Static res:AppResources.LoginTitle}"
+                   Style="{StaticResource TitleLabelStyle}"
+                   HorizontalOptions="Center" />
 
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="14">
@@ -71,46 +54,66 @@
                         </Border>
                     </VerticalStackLayout>
 
+                    <Label Text="{Binding ErrorMessage}"
+                           Style="{StaticResource ErrorLabelStyle}"
+                           IsVisible="{Binding HasError}" />
+
+                    <Label Text="{Binding InfoMessage}"
+                           Style="{StaticResource InfoLabelStyle}"
+                           IsVisible="{Binding HasInfo}" />
+
                     <Button Text="{x:Static res:AppResources.LoginButton}"
                             Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding LoginCommand}"
                             IsEnabled="{Binding IsLoginReady}" />
 
-                    <Grid ColumnDefinitions="*,*"
-                          ColumnSpacing="12">
-                        <Button Text="{x:Static res:AppResources.RegisterButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Clicked="OnRegisterClicked" />
+                    <HorizontalStackLayout Spacing="18"
+                                           HorizontalOptions="Center">
+                        <Label Text="{x:Static res:AppResources.RegisterButton}"
+                               TextColor="{StaticResource BrushOnSurface}"
+                               FontAttributes="Bold"
+                               FontSize="14">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnRegisterTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
 
-                        <Button Grid.Column="1"
-                                Text="{x:Static res:AppResources.ForgotPasswordButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Clicked="OnForgotPasswordClicked" />
-                    </Grid>
+                        <Label Text="{x:Static res:AppResources.ForgotPasswordButton}"
+                               TextColor="{StaticResource BrushOnSurface}"
+                               FontAttributes="Bold"
+                               FontSize="14">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnForgotPasswordTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
 
-                    <Button Text="{x:Static res:AppResources.RequestActivationEmailButton}"
-                            Style="{StaticResource LinkButtonStyle}"
-                            HorizontalOptions="Start"
-                            Command="{Binding RequestActivationEmailCommand}" />
+                    <Label Text="{x:Static res:AppResources.RequestActivationEmailButton}"
+                           TextColor="{StaticResource BrushOnSurface}"
+                           FontAttributes="Bold"
+                           FontSize="14"
+                           HorizontalTextAlignment="Center"
+                           HorizontalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding RequestActivationEmailCommand}" />
+                        </Label.GestureRecognizers>
+                    </Label>
                 </VerticalStackLayout>
             </Border>
-
-            <Label Text="{Binding ErrorMessage}"
-                   Style="{StaticResource ErrorLabelStyle}"
-                   IsVisible="{Binding HasError}" />
-
-            <Label Text="{Binding InfoMessage}"
-                   Style="{StaticResource InfoLabelStyle}"
-                   IsVisible="{Binding HasInfo}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
                                Color="{StaticResource BrandGold500}" />
 
-            <Button Text="{x:Static res:AppResources.LegalHubTitle}"
-                    Style="{StaticResource LegalLinkButtonStyle}"
-                    HorizontalOptions="Center"
-                    Clicked="OnLegalHubClicked" />
+            <Label Text="{x:Static res:AppResources.LegalHubTitle}"
+                   TextColor="{StaticResource BrushOnSurfaceSecondary}"
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   HorizontalOptions="Center">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLegalHubTapped" />
+                </Label.GestureRecognizers>
+            </Label>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

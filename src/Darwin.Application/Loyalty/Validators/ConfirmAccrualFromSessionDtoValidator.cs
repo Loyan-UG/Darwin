@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Loyalty.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Validators
 {
@@ -8,16 +9,16 @@ namespace Darwin.Application.Loyalty.Validators
     /// </summary>
     public sealed class ConfirmAccrualFromSessionDtoValidator : AbstractValidator<ConfirmAccrualFromSessionDto>
     {
-        public ConfirmAccrualFromSessionDtoValidator()
+        public ConfirmAccrualFromSessionDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.ScanSessionToken)
                 .NotEmpty()
-                .WithMessage("ScanSessionToken is required.")
+                .WithMessage(localizer["ScanSessionTokenRequired"])
                 .MaximumLength(4000);
 
             RuleFor(x => x.Points)
                 .GreaterThan(0)
-                .WithMessage("Points must be a positive integer.");
+                .WithMessage(localizer["PointsPositiveInteger"]);
 
             RuleFor(x => x.Note)
                 .MaximumLength(500)

@@ -2,12 +2,14 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
+using Darwin.Application;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Orders;
 
@@ -47,7 +49,7 @@ public sealed class OrderBillingHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new AddRefundHandler(db, new RefundCreateValidator());
+        var handler = new AddRefundHandler(db, new RefundCreateValidator(), new TestStringLocalizer());
 
         await handler.HandleAsync(new RefundCreateDto
         {
@@ -123,7 +125,8 @@ public sealed class OrderBillingHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CreateOrderInvoiceHandler(db, new OrderInvoiceCreateValidator());
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateOrderInvoiceHandler(db, new OrderInvoiceCreateValidator(localizer), localizer);
 
         var invoiceId = await handler.HandleAsync(new OrderInvoiceCreateDto
         {
@@ -225,5 +228,18 @@ public sealed class OrderBillingHandlerTests
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }
+    }
+
+    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 }

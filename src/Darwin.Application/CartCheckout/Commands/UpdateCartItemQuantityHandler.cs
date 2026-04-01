@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CartCheckout.Commands
 {
@@ -16,7 +17,12 @@ namespace Darwin.Application.CartCheckout.Commands
     public sealed class UpdateCartItemQuantityHandler
     {
         private readonly IAppDbContext _db;
-        public UpdateCartItemQuantityHandler(IAppDbContext db) => _db = db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+        public UpdateCartItemQuantityHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(CartUpdateQtyDto dto, CancellationToken ct = default)
         {
@@ -28,7 +34,7 @@ namespace Darwin.Application.CartCheckout.Commands
                     (dto.SelectedAddOnValueIdsJson == null || i.SelectedAddOnValueIdsJson == dto.SelectedAddOnValueIdsJson),
                     ct);
 
-            if (line == null) throw new InvalidOperationException("Cart line not found.");
+            if (line == null) throw new InvalidOperationException(_localizer["CartLineNotFound"]);
 
             if (dto.Quantity == 0)
             {
@@ -40,7 +46,7 @@ namespace Darwin.Application.CartCheckout.Commands
             }
             else
             {
-                throw new InvalidOperationException("Quantity must be zero or positive.");
+                throw new InvalidOperationException(_localizer["QuantityMustBeZeroOrPositive"]);
             }
 
             await _db.SaveChangesAsync(ct);

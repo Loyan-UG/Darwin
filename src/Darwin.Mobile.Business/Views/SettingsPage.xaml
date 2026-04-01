@@ -9,60 +9,39 @@
     Title="{x:Static res:AppResources.SettingsTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24,24,24,32"
-                             Spacing="18">
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
             <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.SettingsTitle}"
-                           Style="{StaticResource TitleLabelStyle}" />
-                    <Label Text="{x:Static res:AppResources.SettingsSubtitle}"
-                           Style="{StaticResource BodyLabelStyle}" />
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{x:Static res:AppResources.SettingsTitle}" Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.SettingsSubtitle}" Style="{StaticResource BodyLabelStyle}" />
                 </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="{x:Static res:AppResources.ProfileTitle}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
-
-                    <Button Text="{x:Static res:AppResources.SettingsProfileButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Command="{Binding OpenProfileCommand}" />
-
-                    <Button Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Command="{Binding OpenChangePasswordCommand}" />
+                    <Label Text="{x:Static res:AppResources.ProfileTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0" Text="{x:Static res:AppResources.SettingsProfileButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding OpenProfileCommand}" />
+                        <Button Grid.Column="1" Text="{x:Static res:AppResources.SettingsChangePasswordButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding OpenChangePasswordCommand}" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="{x:Static res:AppResources.HomeStatusTitle}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
-
-                    <Button Text="{x:Static res:AppResources.SettingsStaffAccessBadgeButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Command="{Binding OpenStaffAccessBadgeCommand}" />
-
-                    <Button Text="{x:Static res:AppResources.SettingsSubscriptionButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Command="{Binding OpenSubscriptionCommand}" />
+                    <Label Text="{x:Static res:AppResources.HomeStatusTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0" Text="{x:Static res:AppResources.SettingsStaffAccessBadgeButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding OpenStaffAccessBadgeCommand}" />
+                        <Button Grid.Column="1" Text="{x:Static res:AppResources.SettingsSubscriptionButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding OpenSubscriptionCommand}" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="{x:Static res:AppResources.LegalHubTitle}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
-
-                    <Button Text="{x:Static res:AppResources.SettingsLegalHubButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Command="{Binding OpenLegalHubCommand}" />
-
-                    <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
-                            Style="{StaticResource DangerLinkButtonStyle}"
-                            HorizontalOptions="Start"
-                            Command="{Binding OpenAccountDeletionCommand}" />
+                    <Label Text="{x:Static res:AppResources.LegalHubTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Button Text="{x:Static res:AppResources.SettingsLegalHubButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding OpenLegalHubCommand}" />
+                    <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}" Style="{StaticResource DangerLinkButtonStyle}" HorizontalOptions="Start" Command="{Binding OpenAccountDeletionCommand}" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

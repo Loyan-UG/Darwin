@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Catalog.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -15,10 +16,10 @@ namespace Darwin.Application.Catalog.Validators
 
     public sealed class CategoryCreateDtoValidator : AbstractValidator<CategoryCreateDto>
     {
-        public CategoryCreateDtoValidator()
+        public CategoryCreateDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleForEach(x => x.Translations).SetValidator(new CategoryTranslationDtoValidator());
-            RuleFor(x => x.Translations).NotEmpty().WithMessage("At least one translation is required.");
+            RuleFor(x => x.Translations).NotEmpty().WithMessage(localizer["AtLeastOneTranslationRequired"]);
         }
     }
 

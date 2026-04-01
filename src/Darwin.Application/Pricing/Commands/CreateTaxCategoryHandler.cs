@@ -6,6 +6,7 @@ using Darwin.Application.Pricing.Validators;
 using Darwin.Domain.Entities.Pricing;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Pricing.Commands
 {
@@ -15,9 +16,18 @@ namespace Darwin.Application.Pricing.Commands
     public sealed class CreateTaxCategoryHandler
     {
         private readonly IAppDbContext _db;
-        private readonly TaxCategoryCreateValidator _validator = new();
+        private readonly IValidator<TaxCategoryCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateTaxCategoryHandler(IAppDbContext db) => _db = db;
+        public CreateTaxCategoryHandler(
+            IAppDbContext db,
+            IValidator<TaxCategoryCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _validator = validator;
+            _localizer = localizer;
+        }
 
         public async Task HandleAsync(TaxCategoryCreateDto dto, CancellationToken ct = default)
         {
@@ -26,7 +36,7 @@ namespace Darwin.Application.Pricing.Commands
 
             var exists = await _db.Set<TaxCategory>().AsNoTracking()
                 .AnyAsync(t => t.Name.ToLower() == dto.Name.ToLower(), ct);
-            if (exists) throw new ValidationException("Tax category name must be unique.");
+            if (exists) throw new ValidationException(_localizer["TaxCategoryNameMustBeUnique"]);
 
             var entity = new TaxCategory
             {

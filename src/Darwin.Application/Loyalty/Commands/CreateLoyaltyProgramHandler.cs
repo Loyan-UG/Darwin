@@ -7,6 +7,7 @@ using Darwin.Application.Loyalty.Validators;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Shared.Results;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Loyalty.Commands
@@ -17,11 +18,17 @@ namespace Darwin.Application.Loyalty.Commands
     public sealed class CreateLoyaltyProgramHandler
     {
         private readonly IAppDbContext _db;
-        private readonly LoyaltyProgramCreateValidator _validator = new();
+        private readonly IValidator<LoyaltyProgramCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateLoyaltyProgramHandler(IAppDbContext db)
+        public CreateLoyaltyProgramHandler(
+            IAppDbContext db,
+            IValidator<LoyaltyProgramCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -37,7 +44,7 @@ namespace Darwin.Application.Loyalty.Commands
                 .AnyAsync(x => x.BusinessId == dto.BusinessId && !x.IsDeleted, ct);
 
             if (exists)
-                throw new ValidationException("A loyalty program already exists for this business.");
+                throw new ValidationException(_localizer["LoyaltyProgramAlreadyExistsForBusiness"]);
 
             var entity = new LoyaltyProgram
             {
