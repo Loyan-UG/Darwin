@@ -142,6 +142,7 @@ The next storefront slice is now also underway:
 - `/catalog` now also includes a page-local visible-result search/sort lens, but it stays explicitly limited to the already loaded server page and intentionally does not pretend to be a scalable cross-catalog search experience
 - `/catalog` now also surfaces visible-vs-loaded-vs-total result summaries plus first/last page jumps, so catalog window navigation is more complete without implying true backend search/facets support
 - `/catalog` now also surfaces an offer-focus window plus a buying-guide summary from the live visible product set, so merchandising signals stay explicit even before true backend search/facets land
+- `/catalog` and `/catalog/[slug]` now also surface live cart/checkout continuity from the canonical public cart contract, so browse and product evaluation can hand off directly into an already active purchase flow instead of behaving like isolated discovery routes
 - product detail now also reuses the product's primary category plus the existing category-product listing contract to show related products without inventing a recommendation-specific API
 - product detail now also surfaces degraded related-product follow-up state explicitly when that category-based follow-up fetch fails, instead of silently flattening adjacent catalog discovery
 - product detail now also exposes breadcrumb, product-reference snapshot, and explicit storefront handoff actions so the conversion route stays oriented inside the broader front-office system

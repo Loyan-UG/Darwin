@@ -1,4 +1,6 @@
 import { ProductDetailPage } from "@/components/catalog/product-detail-page";
+import { getPublicCart } from "@/features/cart/api/public-cart";
+import { getAnonymousCartId } from "@/features/cart/cookies";
 import {
   getPublicCategories,
   getPublicProductBySlug,
@@ -53,7 +55,8 @@ export default async function ProductDetailRoute({
 }: ProductDetailRouteProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
-  const [productResult, categoriesResult, cmsPagesResult] = await Promise.all([
+  const anonymousCartId = await getAnonymousCartId();
+  const [productResult, categoriesResult, cmsPagesResult, cartResult] = await Promise.all([
     getPublicProductBySlug(slug, culture),
     getPublicCategories(culture),
     getPublishedPages({
@@ -61,6 +64,9 @@ export default async function ProductDetailRoute({
       pageSize: 3,
       culture,
     }),
+    anonymousCartId
+      ? getPublicCart(anonymousCartId)
+      : Promise.resolve({ data: null, status: "not-found" as const }),
   ]);
   const activeCategory =
     categoriesResult.data?.items.find(
@@ -87,6 +93,16 @@ export default async function ProductDetailRoute({
       primaryCategory={activeCategory}
       relatedProducts={relatedProducts}
       cmsPages={cmsPagesResult.data?.items ?? []}
+      cartSummary={
+        cartResult.data
+          ? {
+              status: cartResult.status,
+              itemCount: cartResult.data.items.length,
+              currency: cartResult.data.currency,
+              grandTotalGrossMinor: cartResult.data.grandTotalGrossMinor,
+            }
+          : null
+      }
       status={productResult.status}
       relatedProductsStatus={relatedProductsResult?.status}
       cmsPagesStatus={cmsPagesResult.status}

@@ -1,4 +1,6 @@
 import { CatalogPage } from "@/components/catalog/catalog-page";
+import { getPublicCart } from "@/features/cart/api/public-cart";
+import { getAnonymousCartId } from "@/features/cart/cookies";
 import {
   getPublicCategories,
   getPublicProducts,
@@ -154,7 +156,8 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
   );
   const visibleSort = readVisibleSort(resolvedSearchParams?.visibleSort);
 
-  const [categoriesResult, productsResult, cmsPagesResult] = await Promise.all([
+  const anonymousCartId = await getAnonymousCartId();
+  const [categoriesResult, productsResult, cmsPagesResult, cartResult] = await Promise.all([
     getPublicCategories(culture),
     getPublicProducts({
       page: safePage,
@@ -167,6 +170,9 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
       pageSize: 3,
       culture,
     }),
+    anonymousCartId
+      ? getPublicCart(anonymousCartId)
+      : Promise.resolve({ data: null, status: "not-found" as const }),
   ]);
   const loadedProducts = productsResult.data?.items ?? [];
   const visibleProducts = applyVisibleSort(
@@ -191,6 +197,16 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
       visibleSort={visibleSort}
       loadedProductsCount={loadedProducts.length}
       cmsPages={cmsPagesResult.data?.items ?? []}
+      cartSummary={
+        cartResult.data
+          ? {
+              status: cartResult.status,
+              itemCount: cartResult.data.items.length,
+              currency: cartResult.data.currency,
+              grandTotalGrossMinor: cartResult.data.grandTotalGrossMinor,
+            }
+          : null
+      }
       dataStatus={{
         categories: categoriesResult.status,
         products: productsResult.status,

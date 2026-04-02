@@ -17,6 +17,12 @@ type CatalogPageProps = {
   categories: PublicCategorySummary[];
   products: PublicProductSummary[];
   cmsPages: PublicPageSummary[];
+  cartSummary: {
+    status: string;
+    itemCount: number;
+    currency: string;
+    grandTotalGrossMinor: number;
+  } | null;
   activeCategorySlug?: string;
   totalProducts: number;
   currentPage: number;
@@ -50,6 +56,7 @@ export function CatalogPage({
   categories,
   products,
   cmsPages,
+  cartSummary,
   activeCategorySlug,
   totalProducts,
   currentPage,
@@ -358,6 +365,38 @@ export function CatalogPage({
               </div>
             </div>
           </section>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+            {copy.catalogCartWindowTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {cartSummary
+              ? formatResource(copy.catalogCartWindowMessage, {
+                  itemCount: cartSummary.itemCount,
+                  total: formatMoney(
+                    cartSummary.grandTotalGrossMinor,
+                    cartSummary.currency,
+                    culture,
+                  ),
+                })
+              : copy.catalogCartWindowFallback}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href={localizeHref("/cart", culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.catalogCartWindowCartCta}
+            </Link>
+            <Link
+              href={localizeHref("/checkout", culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.catalogCartWindowCheckoutCta}
+            </Link>
+          </div>
         </div>
 
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
