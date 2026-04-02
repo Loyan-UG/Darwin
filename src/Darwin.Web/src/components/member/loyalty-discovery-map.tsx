@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { BusinessSummary } from "@/features/businesses/types";
+import { formatResource, getMemberResource } from "@/localization";
 
 type LoyaltyDiscoveryMapProps = {
+  culture: string;
   businesses: BusinessSummary[];
   latitude?: number;
   longitude?: number;
@@ -14,7 +16,9 @@ type PositionedBusiness = {
   top: number;
 };
 
-function toPositionedBusinesses(businesses: BusinessSummary[]): PositionedBusiness[] {
+function toPositionedBusinesses(
+  businesses: BusinessSummary[],
+): PositionedBusiness[] {
   const withCoordinates = businesses.filter(
     (business): business is BusinessSummary & {
       location: NonNullable<BusinessSummary["location"]>;
@@ -25,34 +29,42 @@ function toPositionedBusinesses(businesses: BusinessSummary[]): PositionedBusine
     return [];
   }
 
-  const north = Math.max(...withCoordinates.map((business) => business.location.latitude));
-  const south = Math.min(...withCoordinates.map((business) => business.location.latitude));
-  const east = Math.max(...withCoordinates.map((business) => business.location.longitude));
-  const west = Math.min(...withCoordinates.map((business) => business.location.longitude));
+  const north = Math.max(
+    ...withCoordinates.map((business) => business.location.latitude),
+  );
+  const south = Math.min(
+    ...withCoordinates.map((business) => business.location.latitude),
+  );
+  const east = Math.max(
+    ...withCoordinates.map((business) => business.location.longitude),
+  );
+  const west = Math.min(
+    ...withCoordinates.map((business) => business.location.longitude),
+  );
   const latSpan = Math.max(0.02, north - south);
   const lonSpan = Math.max(0.02, east - west);
 
   return withCoordinates.map((business) => ({
     business,
-    left:
-      ((business.location.longitude - west) / lonSpan) * 100,
-    top:
-      ((north - business.location.latitude) / latSpan) * 100,
+    left: ((business.location.longitude - west) / lonSpan) * 100,
+    top: ((north - business.location.latitude) / latSpan) * 100,
   }));
 }
 
 export function LoyaltyDiscoveryMap({
+  culture,
   businesses,
   latitude,
   longitude,
   radiusKm,
 }: LoyaltyDiscoveryMapProps) {
+  const copy = getMemberResource(culture);
   const positionedBusinesses = toPositionedBusinesses(businesses);
 
   if (positionedBusinesses.length === 0) {
     return (
       <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-sm leading-7 text-[var(--color-text-secondary)]">
-        No coordinate-aware businesses were returned for the current discovery result, so map preview is unavailable.
+        {copy.mapPreviewUnavailableMessage}
       </div>
     );
   }
@@ -84,14 +96,14 @@ export function LoyaltyDiscoveryMap({
         ))}
         <div className="absolute bottom-4 left-4 rounded-full bg-white/85 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-primary)] shadow-sm">
           {typeof latitude === "number" && typeof longitude === "number"
-            ? `Proximity lens${radiusKm ? ` · ${radiusKm} km` : ""}`
-            : "Coordinate preview"}
+            ? `${copy.proximityLensLabel}${radiusKm ? ` | ${radiusKm} km` : ""}`
+            : copy.coordinatePreviewLabel}
         </div>
       </div>
 
       <div className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
-          Map legend
+          {copy.mapLegendTitle}
         </p>
         <div className="mt-4 flex flex-col gap-3">
           {positionedBusinesses.slice(0, 6).map(({ business }) => (
@@ -106,7 +118,9 @@ export function LoyaltyDiscoveryMap({
               <p>{business.city ?? business.category}</p>
               {business.distanceMeters ? (
                 <p>
-                  {(business.distanceMeters / 1000).toFixed(1)} km away
+                  {formatResource(copy.distanceKmAway, {
+                    value: (business.distanceMeters / 1000).toFixed(1),
+                  })}
                 </p>
               ) : null}
             </Link>

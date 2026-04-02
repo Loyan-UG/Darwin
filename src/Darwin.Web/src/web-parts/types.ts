@@ -14,6 +14,13 @@ export type WebPageCard = {
   meta?: string;
 };
 
+export type WebPageMetric = {
+  id: string;
+  label: string;
+  value: string;
+  note: string;
+};
+
 export type HeroPagePart = {
   id: string;
   kind: "hero";
@@ -22,6 +29,7 @@ export type HeroPagePart = {
   description: string;
   actions: WebPageAction[];
   highlights: string[];
+  panelTitle?: string;
 };
 
 export type CardGridPagePart = {
@@ -34,6 +42,15 @@ export type CardGridPagePart = {
   emptyMessage: string;
 };
 
+export type StatGridPagePart = {
+  id: string;
+  kind: "stat-grid";
+  eyebrow: string;
+  title: string;
+  description: string;
+  metrics: WebPageMetric[];
+};
+
 export type BlankStatePagePart = {
   id: string;
   kind: "blank-state";
@@ -43,4 +60,8 @@ export type BlankStatePagePart = {
   actions: WebPageAction[];
 };
 
-export type WebPagePart = HeroPagePart | CardGridPagePart | BlankStatePagePart;
+export type WebPagePart =
+  | HeroPagePart
+  | CardGridPagePart
+  | StatGridPagePart
+  | BlankStatePagePart;

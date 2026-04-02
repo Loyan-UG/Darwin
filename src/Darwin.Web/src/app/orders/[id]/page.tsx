@@ -2,11 +2,22 @@ import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { OrderDetailPage } from "@/components/member/order-detail-page";
 import { getCurrentMemberOrder } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { buildNoIndexMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Order detail",
-};
+export async function generateMetadata({ params }: OrderDetailRouteProps) {
+  const culture = await getRequestCulture();
+  const copy = getMemberResource(culture);
+  const { id } = await params;
+
+  return buildNoIndexMetadata(
+    culture,
+    copy.orderDetailMetaTitle,
+    undefined,
+    `/orders/${id}`,
+  );
+}
 
 type OrderDetailRouteProps = {
   params: Promise<{
@@ -24,6 +35,7 @@ export default async function OrderDetailRoute({
   searchParams,
 }: OrderDetailRouteProps) {
   const culture = await getRequestCulture();
+  const copy = getMemberResource(culture);
   const session = await getMemberSession();
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
@@ -31,8 +43,9 @@ export default async function OrderDetailRoute({
   if (!session) {
     return (
       <MemberAuthRequired
-        title="Member sign-in is required for order detail."
-        message="Order detail is now an authenticated member route."
+        culture={culture}
+        title={copy.orderDetailAuthRequiredTitle}
+        message={copy.orderDetailAuthRequiredMessage}
         returnPath={`/orders/${id}`}
       />
     );

@@ -1,59 +1,79 @@
+import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
   confirmEmailAction,
   requestEmailConfirmationAction,
 } from "@/features/account/actions";
+import { localizeHref } from "@/lib/locale-routing";
+import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type ActivationPageProps = {
+  culture: string;
   email?: string;
   token?: string;
   activationStatus?: string;
   activationError?: string;
+  returnPath?: string;
 };
 
-function getActivationMessage(status?: string) {
+function getActivationMessage(status: string | undefined, culture: string) {
+  const copy = getMemberResource(culture);
+
   switch (status) {
     case "requested":
-      return "If the account exists, the activation email has been requested through the current backend flow.";
+      return copy.activationRequestedMessage;
     case "confirmed":
-      return "The email confirmation request completed successfully. Browser sign-in is still a separate session decision.";
+      return copy.activationConfirmedMessage;
     default:
       return undefined;
   }
 }
 
 export function ActivationPage({
+  culture,
   email,
   token,
   activationStatus,
   activationError,
+  returnPath,
 }: ActivationPageProps) {
-  const statusMessage = getActivationMessage(activationStatus);
+  const copy = getMemberResource(culture);
+  const statusMessage = getActivationMessage(activationStatus, culture);
+  const resolvedActivationError = resolveLocalizedQueryMessage(
+    activationError,
+    copy,
+  );
+  const signInHref = `/account/sign-in?returnPath=${encodeURIComponent(
+    returnPath || "/account",
+  )}`;
+  const passwordHref = `/account/password?returnPath=${encodeURIComponent(
+    returnPath || "/account",
+  )}`;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            Activation
+            {copy.activationEyebrow}
           </p>
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-            Request or complete email confirmation
+            {copy.activationTitle}
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
-            This route exposes the existing backend confirmation lifecycle to the storefront without inventing a web-only activation system.
+            {copy.activationDescription}
           </p>
         </div>
 
         {statusMessage && (
-          <StatusBanner title="Activation flow updated" message={statusMessage} />
+          <StatusBanner title={copy.activationFlowUpdatedTitle} message={statusMessage} />
         )}
 
-        {activationError && (
+        {resolvedActivationError && (
           <StatusBanner
             tone="warning"
-            title="Activation flow failed"
-            message={activationError}
+            title={copy.activationFlowFailedTitle}
+            message={resolvedActivationError}
           />
         )}
 
@@ -62,21 +82,22 @@ export function ActivationPage({
             action={requestEmailConfirmationAction}
             className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
           >
+            <input type="hidden" name="returnPath" value={returnPath || "/account"} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-              Request confirmation
+              {copy.requestConfirmationEyebrow}
             </p>
             <h2 className="mt-3 text-3xl font-[family-name:var(--font-display)] text-[var(--color-text-primary)]">
-              Resend activation email
+              {copy.resendActivationTitle}
             </h2>
             <label className="mt-6 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-              Email
+              {copy.emailLabel}
               <input name="email" type="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
             <button
               type="submit"
               className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
-              Request activation email
+              {copy.requestActivationEmailCta}
             </button>
           </form>
 
@@ -84,19 +105,20 @@ export function ActivationPage({
             action={confirmEmailAction}
             className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
           >
+            <input type="hidden" name="returnPath" value={returnPath || "/account"} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-              Confirm email
+              {copy.confirmEmailEyebrow}
             </p>
             <h2 className="mt-3 text-3xl font-[family-name:var(--font-display)] text-[var(--color-text-primary)]">
-              Apply confirmation token
+              {copy.applyConfirmationTokenTitle}
             </h2>
             <div className="mt-6 grid gap-4">
               <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                Email
+                {copy.emailLabel}
                 <input name="email" type="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                Token
+                {copy.tokenLabel}
                 <input name="token" defaultValue={token} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
             </div>
@@ -104,9 +126,24 @@ export function ActivationPage({
               type="submit"
               className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
-              Confirm email
+              {copy.confirmEmailCta}
             </button>
           </form>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={localizeHref(signInHref, culture)}
+            className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+          >
+            {copy.signIn}
+          </Link>
+          <Link
+            href={localizeHref(passwordHref, culture)}
+            className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+          >
+            {copy.cardPasswordCta}
+          </Link>
         </div>
       </div>
     </section>

@@ -13,6 +13,8 @@ import {
   removePublicCartItem,
   updatePublicCartItem,
 } from "@/features/cart/api/public-cart";
+import { sanitizeAppPath } from "@/lib/locale-routing";
+import { toLocalizedQueryMessage } from "@/localization";
 
 function withCartFlash(path: string, key: string, value: string) {
   const separator = path.includes("?") ? "&" : "?";
@@ -27,16 +29,28 @@ function revalidateStorefrontPaths(paths: string[]) {
 
 export async function addToCartAction(formData: FormData) {
   const variantId = String(formData.get("variantId") ?? "").trim();
-  const returnPath = String(formData.get("returnPath") ?? "/catalog").trim();
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? "/catalog"),
+    "/catalog",
+  );
   const quantity = Number(formData.get("quantity") ?? "1");
   const productName = String(formData.get("productName") ?? "").trim();
-  const productHref = String(formData.get("productHref") ?? "").trim();
+  const productHref = sanitizeAppPath(
+    String(formData.get("productHref") ?? ""),
+    returnPath,
+  );
   const productImageUrl = String(formData.get("productImageUrl") ?? "").trim();
   const productImageAlt = String(formData.get("productImageAlt") ?? "").trim();
   const productSku = String(formData.get("productSku") ?? "").trim();
 
   if (!variantId || !Number.isFinite(quantity) || quantity <= 0) {
-    redirect(withCartFlash(returnPath, "cartError", "Invalid cart request."));
+    redirect(
+      withCartFlash(
+        returnPath,
+        "cartError",
+        toLocalizedQueryMessage("cartInvalidRequestMessage"),
+      ),
+    );
   }
 
   const anonymousId = await getOrCreateAnonymousCartId();
@@ -51,15 +65,15 @@ export async function addToCartAction(formData: FormData) {
       withCartFlash(
         returnPath,
         "cartError",
-        result.message ?? "Cart item could not be added.",
+        result.message ?? toLocalizedQueryMessage("cartAddFailedMessage"),
       ),
     );
   }
 
   await upsertCartDisplaySnapshot({
     variantId,
-    name: productName || "Storefront item",
-    href: productHref || returnPath,
+    name: productName,
+    href: productHref,
     imageUrl: productImageUrl || null,
     imageAlt: productImageAlt || null,
     sku: productSku || null,
@@ -79,7 +93,13 @@ export async function updateCartQuantityAction(formData: FormData) {
   ).trim();
 
   if (!cartId || !variantId || !Number.isFinite(quantity) || quantity < 0) {
-    redirect(withCartFlash("/cart", "cartError", "Invalid cart update request."));
+    redirect(
+      withCartFlash(
+        "/cart",
+        "cartError",
+        toLocalizedQueryMessage("cartUpdateInvalidMessage"),
+      ),
+    );
   }
 
   const result = await updatePublicCartItem({
@@ -94,7 +114,7 @@ export async function updateCartQuantityAction(formData: FormData) {
       withCartFlash(
         "/cart",
         "cartError",
-        result.message ?? "Cart quantity could not be updated.",
+        result.message ?? toLocalizedQueryMessage("cartUpdateFailedMessage"),
       ),
     );
   }
@@ -112,7 +132,13 @@ export async function removeCartItemAction(formData: FormData) {
   ).trim();
 
   if (!cartId || !variantId) {
-    redirect(withCartFlash("/cart", "cartError", "Invalid cart remove request."));
+    redirect(
+      withCartFlash(
+        "/cart",
+        "cartError",
+        toLocalizedQueryMessage("cartRemoveInvalidMessage"),
+      ),
+    );
   }
 
   const result = await removePublicCartItem({
@@ -126,7 +152,7 @@ export async function removeCartItemAction(formData: FormData) {
       withCartFlash(
         "/cart",
         "cartError",
-        result.message ?? "Cart item could not be removed.",
+        result.message ?? toLocalizedQueryMessage("cartRemoveFailedMessage"),
       ),
     );
   }
@@ -141,7 +167,13 @@ export async function applyCartCouponAction(formData: FormData) {
   const couponCode = String(formData.get("couponCode") ?? "").trim();
 
   if (!cartId) {
-    redirect(withCartFlash("/cart", "cartError", "Cart coupon request is missing the cart id."));
+    redirect(
+      withCartFlash(
+        "/cart",
+        "cartError",
+        toLocalizedQueryMessage("cartCouponMissingCartIdMessage"),
+      ),
+    );
   }
 
   const result = await applyPublicCartCoupon({
@@ -154,7 +186,7 @@ export async function applyCartCouponAction(formData: FormData) {
       withCartFlash(
         "/cart",
         "cartError",
-        result.message ?? "Coupon could not be applied.",
+        result.message ?? toLocalizedQueryMessage("cartCouponApplyFailedMessage"),
       ),
     );
   }

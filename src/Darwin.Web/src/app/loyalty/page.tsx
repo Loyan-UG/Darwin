@@ -8,11 +8,21 @@ import {
   getCurrentMemberLoyaltyOverview,
 } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { buildNoIndexMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Loyalty",
-};
+export async function generateMetadata() {
+  const culture = await getRequestCulture();
+  const copy = getMemberResource(culture);
+
+  return buildNoIndexMetadata(
+    culture,
+    copy.loyaltyMetaTitle,
+    copy.loyaltyMetaDescription,
+    "/loyalty",
+  );
+}
 
 type LoyaltyPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

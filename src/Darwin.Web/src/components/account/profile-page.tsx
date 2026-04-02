@@ -5,8 +5,15 @@ import {
   updateMemberProfileAction,
 } from "@/features/member-portal/actions";
 import type { MemberCustomerProfile } from "@/features/member-portal/types";
+import {
+  formatResource,
+  getMemberResource,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
+import { getCultureDisplayName } from "@/lib/culture";
 
 type ProfilePageProps = {
+  culture: string;
   profile: MemberCustomerProfile | null;
   supportedCultures: string[];
   status: string;
@@ -16,7 +23,37 @@ type ProfilePageProps = {
   phoneError?: string;
 };
 
+function getPhoneStatusBanner(
+  copy: ReturnType<typeof getMemberResource>,
+  phoneStatus: string | undefined,
+  phoneConfirmed: boolean,
+) {
+  if (phoneStatus === "requested") {
+    return {
+      title: copy.phoneCodeRequestedTitle,
+      message: copy.phoneCodeRequestedMessage,
+    };
+  }
+
+  if (phoneStatus === "confirmed") {
+    return {
+      title: copy.phoneVerifiedTitle,
+      message: copy.phoneVerifiedMessage,
+    };
+  }
+
+  if (phoneConfirmed) {
+    return {
+      title: copy.phoneAlreadyVerifiedTitle,
+      message: copy.phoneAlreadyVerifiedMessage,
+    };
+  }
+
+  return null;
+}
+
 export function ProfilePage({
+  culture,
   profile,
   supportedCultures,
   status,
@@ -25,32 +62,47 @@ export function ProfilePage({
   phoneStatus,
   phoneError,
 }: ProfilePageProps) {
+  const copy = getMemberResource(culture);
+  const resolvedProfileError = resolveLocalizedQueryMessage(profileError, copy);
+  const resolvedPhoneError = resolveLocalizedQueryMessage(phoneError, copy);
+  const phoneBanner = getPhoneStatusBanner(
+    copy,
+    phoneStatus,
+    Boolean(profile?.phoneNumberConfirmed),
+  );
+
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
-      <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <form
           action={updateMemberProfileAction}
           className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            Profile
+            {copy.profileEditEyebrow}
           </p>
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-            Edit member profile
+            {copy.profileEditTitle}
           </h1>
 
           {profileStatus === "saved" && (
             <div className="mt-6">
-              <StatusBanner title="Profile updated" message="The member profile was saved through the canonical profile endpoint." />
+              <StatusBanner
+                title={copy.profileUpdatedTitle}
+                message={copy.profileUpdatedMessage}
+              />
             </div>
           )}
 
-          {(profileError || status !== "ok") && (
+          {(resolvedProfileError || status !== "ok") && (
             <div className="mt-6">
               <StatusBanner
                 tone="warning"
-                title="Profile update needs attention"
-                message={profileError ?? `The member profile endpoint returned status "${status}".`}
+                title={copy.profileNeedsAttentionTitle}
+                message={
+                  resolvedProfileError ??
+                  formatResource(copy.profileNeedsAttentionMessage, { status })
+                }
               />
             </div>
           )}
@@ -58,47 +110,84 @@ export function ProfilePage({
           {profile ? (
             <>
               <input type="hidden" name="id" value={profile.id} />
-              <input type="hidden" name="rowVersion" value={profile.rowVersion ?? ""} />
               <input type="hidden" name="email" value={profile.email ?? ""} />
+              <input type="hidden" name="rowVersion" value={profile.rowVersion ?? ""} />
+
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.emailLabel}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                    {profile.email ?? copy.unavailable}
+                  </p>
+                </div>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  First name
-                  <input name="firstName" defaultValue={profile.firstName ?? ""} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+                  {copy.firstNameLabel}
+                  <input
+                    name="firstName"
+                    defaultValue={profile.firstName ?? ""}
+                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
+                  />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Last name
-                  <input name="lastName" defaultValue={profile.lastName ?? ""} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+                  {copy.lastNameLabel}
+                  <input
+                    name="lastName"
+                    defaultValue={profile.lastName ?? ""}
+                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
+                  />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
-                  Phone
-                  <input name="phoneE164" defaultValue={profile.phoneE164 ?? ""} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+                  {copy.phoneLabelBare}
+                  <input
+                    name="phoneE164"
+                    defaultValue={profile.phoneE164 ?? ""}
+                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
+                  />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Locale
-                  <select name="locale" defaultValue={profile.locale ?? supportedCultures[0] ?? "de-DE"} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none">
-                    {supportedCultures.map((culture) => (
-                      <option key={culture} value={culture}>
-                        {culture}
+                  {copy.localeLabel}
+                  <select
+                    name="locale"
+                    defaultValue={profile.locale ?? culture}
+                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
+                  >
+                    {supportedCultures.map((supportedCulture) => (
+                      <option key={supportedCulture} value={supportedCulture}>
+                        {getCultureDisplayName(supportedCulture)}
                       </option>
                     ))}
                   </select>
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Timezone
-                  <input name="timezone" defaultValue={profile.timezone ?? "Europe/Berlin"} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+                  {copy.currencyLabel}
+                  <input
+                    name="currency"
+                    defaultValue={profile.currency ?? "EUR"}
+                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal uppercase outline-none"
+                  />
                 </label>
-                <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Currency
-                  <input name="currency" defaultValue={profile.currency ?? "EUR"} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+                <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
+                  {copy.timezoneLabel}
+                  <input
+                    name="timezone"
+                    defaultValue={profile.timezone ?? "Europe/Berlin"}
+                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
+                  />
                 </label>
               </div>
-              <button type="submit" className="mt-8 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
-                Save profile
+
+              <button
+                type="submit"
+                className="mt-8 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+              >
+                {copy.saveProfileCta}
               </button>
             </>
           ) : (
             <p className="mt-6 text-sm leading-7 text-[var(--color-text-secondary)]">
-              No profile snapshot is currently available for editing.
+              {copy.noProfileEditMessage}
             </p>
           )}
         </form>
@@ -106,118 +195,93 @@ export function ProfilePage({
         <div className="flex flex-col gap-6">
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
-              Boundary
+              {copy.boundaryTitle}
             </p>
             <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-              Email remains display-only here. This page only edits the fields exposed by the canonical member profile contract.
+              {copy.boundaryProfileMessage}
             </p>
           </aside>
 
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
-              Phone verification
+              {copy.phoneVerificationEyebrow}
             </p>
             <h2 className="mt-4 text-2xl font-semibold text-[var(--color-text-primary)]">
-              Keep phone status aligned with the canonical profile contract
+              {copy.phoneVerificationTitle}
             </h2>
 
-            {profile?.phoneNumberConfirmed && (
+            {phoneBanner && (
               <div className="mt-6">
-                <StatusBanner
-                  title="Phone already verified"
-                  message="This member profile is already marked as phone-number confirmed."
-                />
+                <StatusBanner title={phoneBanner.title} message={phoneBanner.message} />
               </div>
             )}
 
-            {phoneStatus === "requested" && (
-              <div className="mt-6">
-                <StatusBanner
-                  title="Verification code requested"
-                  message="The backend accepted the phone verification request. The member should receive a code through the selected channel."
-                />
-              </div>
-            )}
-
-            {phoneStatus === "confirmed" && (
-              <div className="mt-6">
-                <StatusBanner
-                  title="Phone verified"
-                  message="The verification code was accepted and the member profile should now reflect a confirmed phone number."
-                />
-              </div>
-            )}
-
-            {phoneError && (
+            {resolvedPhoneError && (
               <div className="mt-6">
                 <StatusBanner
                   tone="warning"
-                  title="Phone verification needs attention"
-                  message={phoneError}
+                  title={copy.phoneNeedsAttentionTitle}
+                  message={resolvedPhoneError}
                 />
               </div>
             )}
 
             {profile ? (
-              <div className="mt-6 flex flex-col gap-6">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="mt-6 space-y-6">
+                <div className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   <p>
-                    Current phone:{" "}
                     <span className="font-semibold text-[var(--color-text-primary)]">
-                      {profile.phoneE164 ?? "Unavailable"}
-                    </span>
+                      {copy.currentPhoneLabel}
+                    </span>{" "}
+                    {profile.phoneE164 ?? copy.unavailable}
                   </p>
                   <p>
-                    Confirmed:{" "}
                     <span className="font-semibold text-[var(--color-text-primary)]">
-                      {profile.phoneNumberConfirmed ? "Yes" : "No"}
-                    </span>
+                      {copy.confirmedLabel}
+                    </span>{" "}
+                    {profile.phoneNumberConfirmed ? copy.yes : copy.no}
                   </p>
                 </div>
 
-                {!profile.phoneNumberConfirmed && (
-                  <>
-                    <form action={requestMemberPhoneVerificationAction} className="flex flex-col gap-4">
-                      <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                        Delivery channel
-                        <select
-                          name="channel"
-                          defaultValue="Sms"
-                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
-                        >
-                          <option value="Sms">SMS</option>
-                          <option value="WhatsApp">WhatsApp</option>
-                        </select>
-                      </label>
-                      <button
-                        type="submit"
-                        className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                      >
-                        Request verification code
-                      </button>
-                    </form>
+                <form action={requestMemberPhoneVerificationAction} className="space-y-4">
+                  <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                    {copy.deliveryChannelLabel}
+                    <select
+                      name="channel"
+                      defaultValue="Sms"
+                      className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
+                    >
+                      <option value="Sms">{copy.smsChannelLabel}</option>
+                      <option value="WhatsApp">{copy.whatsAppChannelLabel}</option>
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.requestVerificationCodeCta}
+                  </button>
+                </form>
 
-                    <form action={confirmMemberPhoneVerificationAction} className="flex flex-col gap-4">
-                      <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                        Verification code
-                        <input
-                          name="code"
-                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
-                        />
-                      </label>
-                      <button
-                        type="submit"
-                        className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-                      >
-                        Confirm phone
-                      </button>
-                    </form>
-                  </>
-                )}
+                <form action={confirmMemberPhoneVerificationAction} className="space-y-4">
+                  <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                    {copy.verificationCodeLabel}
+                    <input
+                      name="code"
+                      className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+                  >
+                    {copy.confirmPhoneCta}
+                  </button>
+                </form>
               </div>
             ) : (
               <p className="mt-6 text-sm leading-7 text-[var(--color-text-secondary)]">
-                Phone verification becomes available once the member profile can be loaded.
+                {copy.phoneVerificationUnavailable}
               </p>
             )}
           </aside>

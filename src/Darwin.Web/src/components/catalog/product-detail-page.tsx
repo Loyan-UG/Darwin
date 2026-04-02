@@ -4,7 +4,9 @@ import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
   PublicCategorySummary,
   PublicProductDetail,
+  PublicProductSummary,
 } from "@/features/catalog/types";
+import { localizeHref } from "@/lib/locale-routing";
 import { formatResource, getCatalogResource } from "@/localization";
 import { formatMoney } from "@/lib/formatting";
 
@@ -12,6 +14,7 @@ type ProductDetailPageProps = {
   culture: string;
   product: PublicProductDetail | null;
   primaryCategory: PublicCategorySummary | null;
+  relatedProducts: PublicProductSummary[];
   status: string;
 };
 
@@ -19,6 +22,7 @@ export function ProductDetailPage({
   culture,
   product,
   primaryCategory,
+  relatedProducts,
   status,
 }: ProductDetailPageProps) {
   const copy = getCatalogResource(culture);
@@ -34,7 +38,7 @@ export function ProductDetailPage({
           />
           <div className="mt-8">
             <Link
-              href="/catalog"
+              href={localizeHref("/catalog", culture)}
               className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
               {copy.backToCatalog}
@@ -67,6 +71,7 @@ export function ProductDetailPage({
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-col gap-8">
       <div className="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)] sm:p-8">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -110,7 +115,10 @@ export function ProductDetailPage({
           <div className="mt-4 flex flex-wrap gap-3">
             {primaryCategory ? (
               <Link
-                href={`/catalog?category=${encodeURIComponent(primaryCategory.slug)}`}
+                href={localizeHref(
+                  `/catalog?category=${encodeURIComponent(primaryCategory.slug)}`,
+                  culture,
+                )}
                 className="rounded-full bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
               >
                 {primaryCategory.name}
@@ -198,16 +206,17 @@ export function ProductDetailPage({
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            {primaryVariant ? (
-              <AddToCartForm
-                variantId={primaryVariant.id}
-                productName={product.name}
-                productHref={`/catalog/${product.slug}`}
-                productImageUrl={gallery[0]?.url ?? product.primaryImageUrl ?? null}
-                productImageAlt={gallery[0]?.alt ?? product.name}
-                productSku={primaryVariant.sku}
-                returnPath={`/catalog/${product.slug}`}
-              />
+              {primaryVariant ? (
+                <AddToCartForm
+                  culture={culture}
+                  variantId={primaryVariant.id}
+                  productName={product.name}
+                  productHref={localizeHref(`/catalog/${product.slug}`, culture)}
+                  productImageUrl={gallery[0]?.url ?? product.primaryImageUrl ?? null}
+                  productImageAlt={gallery[0]?.alt ?? product.name}
+                  productSku={primaryVariant.sku}
+                  returnPath={localizeHref(`/catalog/${product.slug}`, culture)}
+                />
             ) : (
               <StatusBanner
                 tone="warning"
@@ -216,7 +225,7 @@ export function ProductDetailPage({
               />
             )}
             <Link
-              href="/cart"
+              href={localizeHref("/cart", culture)}
               className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
             >
               {copy.openCart}
@@ -233,14 +242,17 @@ export function ProductDetailPage({
           <div className="mt-8">
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/catalog"
+                href={localizeHref("/catalog", culture)}
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
               >
                 {copy.backToCatalog}
               </Link>
               {primaryCategory ? (
                 <Link
-                  href={`/catalog?category=${encodeURIComponent(primaryCategory.slug)}`}
+                  href={localizeHref(
+                    `/catalog?category=${encodeURIComponent(primaryCategory.slug)}`,
+                    culture,
+                  )}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
                   {copy.moreFromPrefix} {primaryCategory.name}
@@ -249,6 +261,90 @@ export function ProductDetailPage({
             </div>
           </div>
         </div>
+      </div>
+
+      {primaryCategory ? (
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.relatedProductsTitle}
+              </p>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.relatedProductsDescription}
+              </p>
+            </div>
+            <Link
+              href={localizeHref(
+                `/catalog?category=${encodeURIComponent(primaryCategory.slug)}`,
+                culture,
+              )}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.moreFromPrefix} {primaryCategory.name}
+            </Link>
+          </div>
+
+          {relatedProducts.length > 0 ? (
+            <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {relatedProducts.map((relatedProduct) => (
+                <article
+                  key={relatedProduct.id}
+                  className="flex h-full flex-col rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4"
+                >
+                  <div className="flex min-h-40 items-center justify-center rounded-[1.25rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-4">
+                    {relatedProduct.primaryImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={relatedProduct.primaryImageUrl}
+                        alt={relatedProduct.name}
+                        className="max-h-28 w-auto object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                        {copy.noMedia}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-4 flex flex-1 flex-col">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                      <Link
+                        href={localizeHref(`/catalog/${relatedProduct.slug}`, culture)}
+                        className="transition hover:text-[var(--color-brand)]"
+                      >
+                        {relatedProduct.name}
+                      </Link>
+                    </h2>
+                    <p className="mt-2 flex-1 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {relatedProduct.shortDescription ??
+                        copy.productDescriptionFallback}
+                    </p>
+                    <div className="mt-4 flex items-end justify-between gap-3">
+                      <p className="text-base font-semibold text-[var(--color-text-primary)]">
+                        {formatMoney(
+                          relatedProduct.priceMinor,
+                          relatedProduct.currency,
+                          culture,
+                        )}
+                      </p>
+                      <Link
+                        href={localizeHref(`/catalog/${relatedProduct.slug}`, culture)}
+                        className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                      >
+                        {copy.openProductCta}
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-6 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.relatedProductsEmptyMessage}
+            </p>
+          )}
+        </div>
+      ) : null}
       </div>
     </section>
   );

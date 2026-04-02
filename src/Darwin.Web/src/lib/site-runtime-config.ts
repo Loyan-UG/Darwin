@@ -1,5 +1,6 @@
 type SiteRuntimeConfig = {
   webApiBaseUrl: string;
+  siteUrl: string;
   mainMenuName: string;
   defaultCulture: string;
   supportedCultures: string[];
@@ -28,6 +29,9 @@ export function getSiteRuntimeConfig(): SiteRuntimeConfig {
   return {
     webApiBaseUrl: trimTrailingSlash(
       process.env.DARWIN_WEBAPI_BASE_URL ?? "http://localhost:5134",
+    ),
+    siteUrl: trimTrailingSlash(
+      process.env.DARWIN_WEB_SITE_URL ?? "http://localhost:3000",
     ),
     mainMenuName: process.env.DARWIN_WEB_MAIN_MENU_NAME ?? "main-navigation",
     defaultCulture: supportedCultures.includes(defaultCulture)

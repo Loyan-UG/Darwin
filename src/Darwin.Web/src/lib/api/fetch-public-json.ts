@@ -1,4 +1,5 @@
 import "server-only";
+import { toLocalizedQueryMessage } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
 export type PublicApiFetchStatus =
@@ -60,7 +61,7 @@ async function sendPublicJson<T>(
       return {
         data: null,
         status: "not-found",
-        message: "Resource not found.",
+        message: toLocalizedQueryMessage("publicApiNotFoundMessage"),
       };
     }
 
@@ -68,7 +69,7 @@ async function sendPublicJson<T>(
       return {
         data: null,
         status: "http-error",
-        message: `Public API returned status ${response.status}.`,
+        message: toLocalizedQueryMessage("publicApiHttpErrorMessage"),
       };
     }
 
@@ -82,7 +83,7 @@ async function sendPublicJson<T>(
       return {
         data: null,
         status: "invalid-payload",
-        message: "Public API returned invalid JSON payload.",
+        message: toLocalizedQueryMessage("publicApiInvalidPayloadMessage"),
       };
     }
   } catch (error) {
@@ -90,7 +91,7 @@ async function sendPublicJson<T>(
     return {
       data: null,
       status: "network-error",
-      message: "Public API could not be reached.",
+      message: toLocalizedQueryMessage("publicApiNetworkErrorMessage"),
     };
   }
 }

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import { SiteShell } from "@/components/shell/site-shell";
 import { getShellModel } from "@/features/shell/get-shell-model";
-import { activeTheme } from "@/themes/registry";
+import { getSharedResource } from "@/localization";
+import { getRequestCulture } from "@/lib/request-culture";
+import { getSiteMetadataBase } from "@/lib/seo";
 import "./globals.css";
 
 const bodyFont = Manrope({
@@ -15,13 +17,19 @@ const displayFont = Fraunces({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: activeTheme.metadata.title,
-    template: `%s | ${activeTheme.metadata.title}`,
-  },
-  description: activeTheme.metadata.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const culture = await getRequestCulture();
+  const shared = getSharedResource(culture);
+
+  return {
+    metadataBase: getSiteMetadataBase(),
+    title: {
+      default: shared.siteTitle,
+      template: `%s | ${shared.siteTitle}`,
+    },
+    description: shared.siteDescription,
+  };
+}
 
 export default async function RootLayout({
   children,

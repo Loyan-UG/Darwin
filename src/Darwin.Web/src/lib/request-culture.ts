@@ -1,5 +1,6 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { REQUEST_CULTURE_HEADER } from "@/lib/locale-routing";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
 export function normalizeCulture(value: string | undefined | null) {
@@ -13,10 +14,12 @@ export function normalizeCulture(value: string | undefined | null) {
 
 export async function getRequestCulture() {
   const runtimeConfig = getSiteRuntimeConfig();
+  const headerStore = await headers();
   const cookieStore = await cookies();
 
   return normalizeCulture(
-    cookieStore.get(runtimeConfig.cultureCookieName)?.value ??
+    headerStore.get(REQUEST_CULTURE_HEADER) ??
+      cookieStore.get(runtimeConfig.cultureCookieName)?.value ??
       runtimeConfig.defaultCulture,
   );
 }

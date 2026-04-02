@@ -1,6 +1,7 @@
 import "server-only";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
+import { toLocalizedQueryMessage } from "@/localization";
 
 type TokenResponse = {
   accessToken: string;
@@ -31,7 +32,7 @@ async function postAuthJson<T>(
     });
 
     if (!response.ok) {
-      let detail = `Member auth API returned status ${response.status}.`;
+      let detail = toLocalizedQueryMessage("memberAuthHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
         detail = problem.detail ?? problem.title ?? detail;
@@ -61,7 +62,7 @@ async function postAuthJson<T>(
     return {
       data: null,
       status: "network-error",
-      message: "Member auth API could not be reached.",
+      message: toLocalizedQueryMessage("memberAuthNetworkErrorMessage"),
     };
   }
 }

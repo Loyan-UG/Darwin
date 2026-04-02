@@ -8,6 +8,7 @@ import {
 } from "@/features/shell/navigation";
 import type { ShellLink, ShellModel } from "@/features/shell/types";
 import { formatResource, getSharedResource } from "@/localization";
+import { localizeHref } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { activeTheme } from "@/themes/registry";
@@ -23,6 +24,13 @@ function mapMenuItemsToLinks(items: PublicMenuItem[]): ShellLink[] {
       label: item.label,
       href: item.url,
     }));
+}
+
+function localizeShellLinks(links: ShellLink[], culture: string) {
+  return links.map((link) => ({
+    ...link,
+    href: localizeHref(link.href, culture),
+  }));
 }
 
 function getMenuMessage(
@@ -49,11 +57,11 @@ export async function getShellModel(): Promise<ShellModel> {
   const culture = await getRequestCulture();
   const menuResult = await getPublicMenuByName(runtimeConfig.mainMenuName);
   const cmsLinks = menuResult.data
-    ? mapMenuItemsToLinks(menuResult.data.items)
+    ? localizeShellLinks(mapMenuItemsToLinks(menuResult.data.items), culture)
     : [];
   const primaryNavigation = cmsLinks.length > 0
     ? cmsLinks
-    : getFallbackPrimaryNavigation(culture);
+    : localizeShellLinks(getFallbackPrimaryNavigation(culture), culture);
   const menuStatus = cmsLinks.length > 0
     ? "ok"
     : menuResult.status === "ok"
@@ -76,7 +84,10 @@ export async function getShellModel(): Promise<ShellModel> {
     menuStatus,
     menuMessage,
     primaryNavigation,
-    utilityLinks: getUtilityLinks(culture),
-    footerGroups: getFallbackFooterGroups(culture),
+    utilityLinks: localizeShellLinks(getUtilityLinks(culture), culture),
+    footerGroups: getFallbackFooterGroups(culture).map((group) => ({
+      ...group,
+      links: localizeShellLinks(group.links, culture),
+    })),
   };
 }

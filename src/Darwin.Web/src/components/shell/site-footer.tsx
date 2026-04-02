@@ -1,5 +1,6 @@
 import { getShellCopy } from "@/features/shell/copy";
 import type { ShellLinkGroup } from "@/features/shell/types";
+import { localizeHref } from "@/lib/locale-routing";
 
 type SiteFooterProps = {
   groups: ShellLinkGroup[];
@@ -32,7 +33,10 @@ export function SiteFooter({ groups, culture }: SiteFooterProps) {
             <ul className="mt-4 space-y-3 text-sm text-[var(--color-text-secondary)]">
               {group.links.map((link) => (
                 <li key={link.href}>
-                  <a className="transition hover:text-[var(--color-brand)]" href={link.href}>
+                  <a
+                    className="transition hover:text-[var(--color-brand)]"
+                    href={localizeHref(link.href, culture)}
+                  >
                     {link.label}
                   </a>
                 </li>

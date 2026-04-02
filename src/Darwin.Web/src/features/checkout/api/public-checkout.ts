@@ -9,6 +9,7 @@ import type {
   PublicStorefrontPaymentIntent,
   PlaceOrderFromCartResponse,
 } from "@/features/checkout/types";
+import { toLocalizedQueryMessage } from "@/localization";
 
 async function fetchCheckoutJson<T>(
   path: string,
@@ -31,12 +32,12 @@ async function fetchCheckoutJson<T>(
       return {
         data: null,
         status: "not-found",
-        message: "Storefront checkout resource was not found.",
+        message: toLocalizedQueryMessage("storefrontCheckoutNotFoundMessage"),
       };
     }
 
     if (!response.ok) {
-      let detail = `Storefront checkout API returned status ${response.status}.`;
+      let detail = toLocalizedQueryMessage("storefrontCheckoutHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
         detail = problem.detail ?? problem.title ?? detail;
@@ -59,7 +60,7 @@ async function fetchCheckoutJson<T>(
     return {
       data: null,
       status: "network-error",
-      message: "Storefront checkout API could not be reached.",
+      message: toLocalizedQueryMessage("storefrontCheckoutNetworkErrorMessage"),
     };
   }
 }

@@ -7,11 +7,21 @@ import {
   readSingleSearchParam,
   toCheckoutAddress,
 } from "@/features/checkout/helpers";
+import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { buildNoIndexMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Checkout",
-};
+export async function generateMetadata() {
+  const culture = await getRequestCulture();
+  const copy = getCommerceResource(culture);
+
+  return buildNoIndexMetadata(
+    culture,
+    copy.checkoutMetaTitle,
+    copy.checkoutMetaDescription,
+    "/checkout",
+  );
+}
 
 type CheckoutRouteProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

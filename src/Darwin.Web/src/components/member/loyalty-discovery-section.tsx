@@ -5,8 +5,11 @@ import type {
   BusinessCategoryKind,
   BusinessSummary,
 } from "@/features/businesses/types";
+import { localizeHref } from "@/lib/locale-routing";
+import { formatResource, getMemberResource } from "@/localization";
 
 type LoyaltyDiscoverySectionProps = {
+  culture: string;
   businesses: BusinessSummary[];
   status: string;
   currentPage: number;
@@ -71,19 +74,27 @@ function buildDiscoveryHref(input: {
   return serialized ? `/loyalty?${serialized}` : "/loyalty";
 }
 
-function formatDistance(distanceMeters?: number | null) {
+function formatDistance(
+  distanceMeters: number | null | undefined,
+  copy: ReturnType<typeof getMemberResource>,
+) {
   if (!distanceMeters) {
     return null;
   }
 
   if (distanceMeters >= 1000) {
-    return `${(distanceMeters / 1000).toFixed(1)} km away`;
+    return formatResource(copy.distanceKmAway, {
+      value: (distanceMeters / 1000).toFixed(1),
+    });
   }
 
-  return `${distanceMeters} m away`;
+  return formatResource(copy.distanceMAway, {
+    value: Math.round(distanceMeters),
+  });
 }
 
 export function LoyaltyDiscoverySection({
+  culture,
   businesses,
   status,
   currentPage,
@@ -96,25 +107,27 @@ export function LoyaltyDiscoverySection({
   longitude,
   radiusKm,
   categoryKinds,
-  title = "Discover loyalty places",
-  description = "Public discovery now uses the canonical business-discovery contracts and keeps loyalty-ready businesses visible even before the member joins.",
+  title,
+  description,
 }: LoyaltyDiscoverySectionProps) {
+  const copy = getMemberResource(culture);
+
   return (
     <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-            Loyalty discovery
+            {copy.loyaltyDiscoveryEyebrow}
           </p>
           <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
-            {title}
+            {title ?? copy.discoveryTitleDefault}
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--color-text-secondary)]">
-            {description}
+            {description ?? copy.discoveryDescriptionDefault}
           </p>
         </div>
         <p className="rounded-full bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          {businesses.length} visible on this page
+          {formatResource(copy.visibleOnPageLabel, { count: businesses.length })}
         </p>
       </div>
 
@@ -122,51 +135,54 @@ export function LoyaltyDiscoverySection({
         <div className="mt-5">
           <StatusBanner
             tone="warning"
-            title="Business discovery loaded with warnings."
-            message={`Discovery status: ${status}. Public loyalty discovery should remain observable instead of silently disappearing.`}
+            title={copy.discoveryWarningsTitle}
+            message={formatResource(copy.discoveryWarningsMessage, { status })}
           />
         </div>
       )}
 
-      <form action="/loyalty" className="mt-5 grid gap-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-4 lg:grid-cols-6">
+      <form
+        action="/loyalty"
+        className="mt-5 grid gap-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-4 lg:grid-cols-6"
+      >
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          Search
+          {copy.searchLabel}
           <input
             type="text"
             name="query"
             defaultValue={query ?? ""}
-            placeholder="Coffee, bakery, florist..."
+            placeholder={copy.searchPlaceholder}
             className="rounded-2xl border border-[var(--color-border-soft)] bg-white/70 px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
           />
         </label>
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          City
+          {copy.cityLabel}
           <input
             type="text"
             name="city"
             defaultValue={city ?? ""}
-            placeholder="Berlin"
+            placeholder={copy.cityPlaceholder}
             className="rounded-2xl border border-[var(--color-border-soft)] bg-white/70 px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
           />
         </label>
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          Country
+          {copy.countryLabel}
           <input
             type="text"
             name="countryCode"
             defaultValue={countryCode ?? ""}
-            placeholder="DE"
+            placeholder={copy.countryPlaceholder}
             className="rounded-2xl border border-[var(--color-border-soft)] bg-white/70 px-4 py-3 text-sm font-normal uppercase text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
           />
         </label>
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          Category
+          {copy.categoryLabel}
           <select
             name="category"
             defaultValue={category ?? ""}
             className="rounded-2xl border border-[var(--color-border-soft)] bg-white/70 px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
           >
-            <option value="">All loyalty-ready categories</option>
+            <option value="">{copy.allLoyaltyReadyCategories}</option>
             {categoryKinds.map((item) => (
               <option key={item.key} value={item.key}>
                 {item.displayName}
@@ -175,7 +191,7 @@ export function LoyaltyDiscoverySection({
           </select>
         </label>
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          Latitude
+          {copy.latitudeLabel}
           <input
             type="number"
             step="0.0001"
@@ -186,7 +202,7 @@ export function LoyaltyDiscoverySection({
           />
         </label>
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          Longitude
+          {copy.longitudeLabel}
           <input
             type="number"
             step="0.0001"
@@ -197,7 +213,7 @@ export function LoyaltyDiscoverySection({
           />
         </label>
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          Radius km
+          {copy.radiusKmLabel}
           <input
             type="number"
             min="1"
@@ -214,13 +230,13 @@ export function LoyaltyDiscoverySection({
             type="submit"
             className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
           >
-            Apply filters
+            {copy.applyFiltersCta}
           </button>
           <Link
-            href="/loyalty"
+            href={localizeHref("/loyalty", culture)}
             className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
           >
-            Reset
+            {copy.resetCta}
           </Link>
         </div>
       </form>
@@ -228,19 +244,15 @@ export function LoyaltyDiscoverySection({
       {(typeof latitude === "number" || typeof longitude === "number") && (
         <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
           <p className="font-semibold text-[var(--color-text-primary)]">
-            Proximity mode is active.
+            {copy.proximityModeTitle}
           </p>
-          <p>
-            Discovery list ranking now uses the current latitude/longitude and
-            radius when they are valid. The visual map preview below is rendered
-            from the same discovery result set so loyalty-only filtering stays
-            consistent.
-          </p>
+          <p>{copy.proximityModeMessage}</p>
         </div>
       )}
 
       <div className="mt-5">
         <LoyaltyDiscoveryMap
+          culture={culture}
           businesses={businesses}
           latitude={latitude}
           longitude={longitude}
@@ -269,7 +281,7 @@ export function LoyaltyDiscoverySection({
                       {business.category}
                     </p>
                     <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                      No business media
+                      {copy.noBusinessMedia}
                     </p>
                   </div>
                 )}
@@ -279,10 +291,10 @@ export function LoyaltyDiscoverySection({
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                       {business.isOpenNow === true
-                        ? "Open now"
+                        ? copy.openNow
                         : business.isOpenNow === false
-                          ? "Closed now"
-                          : "Loyalty-ready"}
+                          ? copy.closedNow
+                          : copy.loyaltyReady}
                     </p>
                     <h3 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
                       {business.name}
@@ -294,25 +306,34 @@ export function LoyaltyDiscoverySection({
                 </div>
 
                 <div className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  <p>{business.shortDescription ?? "Public business detail is available for this loyalty place."}</p>
+                  <p>
+                    {business.shortDescription ??
+                      copy.publicBusinessDetailCardFallback}
+                  </p>
                   {business.city ? <p className="mt-2">{business.city}</p> : null}
                   {typeof business.rating === "number" ? (
                     <p>
-                      Rating {business.rating.toFixed(1)}
-                      {business.ratingCount ? ` from ${business.ratingCount} reviews` : ""}
+                      {formatResource(copy.ratingLabel, {
+                        rating: business.rating.toFixed(1),
+                        reviews: business.ratingCount
+                          ? formatResource(copy.reviewsSuffix, {
+                              count: business.ratingCount,
+                            })
+                          : "",
+                      })}
                     </p>
                   ) : null}
-                  {formatDistance(business.distanceMeters) ? (
-                    <p>{formatDistance(business.distanceMeters)}</p>
+                  {formatDistance(business.distanceMeters, copy) ? (
+                    <p>{formatDistance(business.distanceMeters, copy)}</p>
                   ) : null}
                 </div>
 
                 <div className="mt-5">
                   <Link
-                    href={`/loyalty/${business.id}`}
+                    href={localizeHref(`/loyalty/${business.id}`, culture)}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                   >
-                    Open loyalty place
+                    {copy.openLoyaltyPlaceCta}
                   </Link>
                 </div>
               </div>
@@ -321,7 +342,7 @@ export function LoyaltyDiscoverySection({
         </div>
       ) : (
         <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-sm leading-7 text-[var(--color-text-secondary)]">
-          No loyalty-ready businesses matched the current filters.
+          {copy.noDiscoveryMatchesMessage}
         </div>
       )}
 
@@ -329,38 +350,44 @@ export function LoyaltyDiscoverySection({
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <Link
             aria-disabled={currentPage <= 1}
-            href={buildDiscoveryHref({
-              page: Math.max(1, currentPage - 1),
-              query,
-              city,
-              countryCode,
-              category,
-              latitude,
-              longitude,
-              radiusKm,
-            })}
+            href={localizeHref(
+              buildDiscoveryHref({
+                page: Math.max(1, currentPage - 1),
+                query,
+                city,
+                countryCode,
+                category,
+                latitude,
+                longitude,
+                radiusKm,
+              }),
+              culture,
+            )}
             className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
           >
-            Previous
+            {copy.previous}
           </Link>
           <p className="text-sm text-[var(--color-text-secondary)]">
-            Discovery page {currentPage} of {totalPages}
+            {formatResource(copy.discoveryPageLabel, { currentPage, totalPages })}
           </p>
           <Link
             aria-disabled={currentPage >= totalPages}
-            href={buildDiscoveryHref({
-              page: Math.min(totalPages, currentPage + 1),
-              query,
-              city,
-              countryCode,
-              category,
-              latitude,
-              longitude,
-              radiusKm,
-            })}
+            href={localizeHref(
+              buildDiscoveryHref({
+                page: Math.min(totalPages, currentPage + 1),
+                query,
+                city,
+                countryCode,
+                category,
+                latitude,
+                longitude,
+                radiusKm,
+              }),
+              culture,
+            )}
             className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
           >
-            Next
+            {copy.next}
           </Link>
         </div>
       )}

@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { localizeHref } from "@/lib/locale-routing";
 import type { WebPagePart } from "@/web-parts/types";
 
 type PageComposerProps = {
   parts: WebPagePart[];
+  culture: string;
 };
 
-export function PageComposer({ parts }: PageComposerProps) {
+export function PageComposer({ parts, culture }: PageComposerProps) {
   return (
     <div className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 flex-col gap-8 px-5 py-10 sm:px-6 lg:px-8">
       {parts.map((part) => {
@@ -30,7 +32,7 @@ export function PageComposer({ parts }: PageComposerProps) {
                     {part.actions.map((action) => (
                       <Link
                         key={action.href}
-                        href={action.href}
+                        href={localizeHref(action.href, culture)}
                         className={
                           action.variant === "secondary"
                             ? "inline-flex items-center rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
@@ -45,7 +47,7 @@ export function PageComposer({ parts }: PageComposerProps) {
 
                 <div className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-6">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent)]">
-                    Page-part model
+                    {part.panelTitle ?? part.eyebrow}
                   </p>
                   <div className="mt-5 space-y-4">
                     {part.highlights.map((note) => (
@@ -58,6 +60,46 @@ export function PageComposer({ parts }: PageComposerProps) {
                     ))}
                   </div>
                 </div>
+              </div>
+            </section>
+          );
+        }
+
+        if (part.kind === "stat-grid") {
+          return (
+            <section
+              key={part.id}
+              className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+            >
+              <div className="max-w-3xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+                  {part.eyebrow}
+                </p>
+                <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl leading-tight text-[var(--color-text-primary)] sm:text-4xl">
+                  {part.title}
+                </h2>
+                <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
+                  {part.description}
+                </p>
+              </div>
+
+              <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                {part.metrics.map((metric) => (
+                  <article
+                    key={metric.id}
+                    className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                      {metric.label}
+                    </p>
+                    <p className="mt-3 text-3xl font-semibold text-[var(--color-text-primary)]">
+                      {metric.value}
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {metric.note}
+                    </p>
+                  </article>
+                ))}
               </div>
             </section>
           );
@@ -106,7 +148,7 @@ export function PageComposer({ parts }: PageComposerProps) {
                       ) : null}
                       <div className="mt-5">
                         <Link
-                          href={card.href}
+                          href={localizeHref(card.href, culture)}
                           className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                         >
                           {card.ctaLabel ?? "Open"}
@@ -144,7 +186,7 @@ export function PageComposer({ parts }: PageComposerProps) {
                   {part.actions.map((action) => (
                     <Link
                       key={action.href}
-                      href={action.href}
+                      href={localizeHref(action.href, culture)}
                       className={
                         action.variant === "secondary"
                           ? "inline-flex items-center rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"

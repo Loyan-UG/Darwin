@@ -19,6 +19,8 @@ import {
   writePreparedMemberLoyaltyScanSession,
 } from "@/features/member-portal/scan-session-cookie";
 import { getFreshMemberAccessToken } from "@/features/member-session/server";
+import { sanitizeAppPath } from "@/lib/locale-routing";
+import { toLocalizedQueryMessage } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
 function withFlash(path: string, key: string, value: string) {
@@ -31,7 +33,7 @@ async function createPaymentIntent(path: string) {
   if (!accessToken) {
     return {
       ok: false,
-      message: "A member session is required.",
+      message: toLocalizedQueryMessage("memberSessionRequiredMessage"),
     };
   }
 
@@ -50,7 +52,7 @@ async function createPaymentIntent(path: string) {
     });
 
     if (!response.ok) {
-      let detail = `Payment handoff returned status ${response.status}.`;
+      let detail = toLocalizedQueryMessage("memberPaymentHandoffHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
         detail = problem.detail ?? problem.title ?? detail;
@@ -72,21 +74,22 @@ async function createPaymentIntent(path: string) {
         }
       : {
           ok: false,
-          message: "Hosted checkout URL was not returned.",
+          message: toLocalizedQueryMessage("memberPaymentHandoffMissingUrlMessage"),
         };
   } catch {
     return {
       ok: false,
-      message: "Payment handoff endpoint could not be reached.",
+      message: toLocalizedQueryMessage("memberPaymentHandoffUnreachableMessage"),
     };
   }
 }
 
 export async function createMemberOrderPaymentIntentAction(formData: FormData) {
   const orderId = String(formData.get("orderId") ?? "").trim();
-  const failurePath =
-    String(formData.get("failurePath") ?? `/orders/${orderId}`).trim() ||
-    `/orders/${orderId}`;
+  const failurePath = sanitizeAppPath(
+    String(formData.get("failurePath") ?? `/orders/${orderId}`),
+    `/orders/${orderId}`,
+  );
 
   if (!orderId) {
     redirect("/orders");
@@ -100,7 +103,7 @@ export async function createMemberOrderPaymentIntentAction(formData: FormData) {
     const separator = failurePath.includes("?") ? "&" : "?";
     redirect(
       `${failurePath}${separator}paymentError=${encodeURIComponent(
-        result.message ?? "Payment handoff failed.",
+        result.message ?? toLocalizedQueryMessage("memberPaymentHandoffFailedMessage"),
       )}`,
     );
   }
@@ -120,7 +123,13 @@ export async function updateMemberProfileAction(formData: FormData) {
   const rowVersion = String(formData.get("rowVersion") ?? "").trim();
 
   if (!id || !rowVersion || !locale || !timezone || !currency) {
-    redirect(withFlash("/account/profile", "profileError", "Profile update is missing required fields."));
+    redirect(
+      withFlash(
+        "/account/profile",
+        "profileError",
+        toLocalizedQueryMessage("profileRequiredFieldsMessage"),
+      ),
+    );
   }
 
   const result = await updateCurrentMemberProfile({
@@ -136,7 +145,13 @@ export async function updateMemberProfileAction(formData: FormData) {
   });
 
   if (result.status !== "ok") {
-    redirect(withFlash("/account/profile", "profileError", result.message ?? "Profile update failed."));
+    redirect(
+      withFlash(
+        "/account/profile",
+        "profileError",
+        result.message ?? toLocalizedQueryMessage("profileUpdateFailedMessage"),
+      ),
+    );
   }
 
   redirect(withFlash("/account/profile", "profileStatus", "saved"));
@@ -145,7 +160,13 @@ export async function updateMemberProfileAction(formData: FormData) {
 export async function updateMemberPreferencesAction(formData: FormData) {
   const rowVersion = String(formData.get("rowVersion") ?? "").trim();
   if (!rowVersion) {
-    redirect(withFlash("/account/preferences", "preferencesError", "Preference update requires a row version."));
+    redirect(
+      withFlash(
+        "/account/preferences",
+        "preferencesError",
+        toLocalizedQueryMessage("preferencesRowVersionRequiredMessage"),
+      ),
+    );
   }
 
   const result = await updateCurrentMemberPreferences({
@@ -161,7 +182,14 @@ export async function updateMemberPreferencesAction(formData: FormData) {
   });
 
   if (result.status !== "ok") {
-    redirect(withFlash("/account/preferences", "preferencesError", result.message ?? "Preference update failed."));
+    redirect(
+      withFlash(
+        "/account/preferences",
+        "preferencesError",
+        result.message ??
+          toLocalizedQueryMessage("preferencesUpdateFailedMessage"),
+      ),
+    );
   }
 
   redirect(withFlash("/account/preferences", "preferencesStatus", "saved"));
@@ -178,7 +206,8 @@ export async function requestMemberPhoneVerificationAction(formData: FormData) {
       withFlash(
         "/account/profile",
         "phoneError",
-        result.message ?? "Phone verification request failed.",
+        result.message ??
+          toLocalizedQueryMessage("phoneVerificationRequestFailedMessage"),
       ),
     );
   }
@@ -193,7 +222,7 @@ export async function confirmMemberPhoneVerificationAction(formData: FormData) {
       withFlash(
         "/account/profile",
         "phoneError",
-        "Phone verification code is required.",
+        toLocalizedQueryMessage("phoneVerificationCodeRequiredMessage"),
       ),
     );
   }
@@ -207,7 +236,8 @@ export async function confirmMemberPhoneVerificationAction(formData: FormData) {
       withFlash(
         "/account/profile",
         "phoneError",
-        result.message ?? "Phone verification confirmation failed.",
+        result.message ??
+          toLocalizedQueryMessage("phoneVerificationConfirmFailedMessage"),
       ),
     );
   }
@@ -231,7 +261,13 @@ export async function createMemberAddressAction(formData: FormData) {
   });
 
   if (result.status !== "ok") {
-    redirect(withFlash("/account/addresses", "addressesError", result.message ?? "Address creation failed."));
+    redirect(
+      withFlash(
+        "/account/addresses",
+        "addressesError",
+        result.message ?? toLocalizedQueryMessage("addressCreateFailedMessage"),
+      ),
+    );
   }
 
   redirect(withFlash("/account/addresses", "addressesStatus", "created"));
@@ -242,7 +278,13 @@ export async function updateMemberAddressAction(formData: FormData) {
   const rowVersion = String(formData.get("rowVersion") ?? "").trim();
 
   if (!id || !rowVersion) {
-    redirect(withFlash("/account/addresses", "addressesError", "Address update requires id and row version."));
+    redirect(
+      withFlash(
+        "/account/addresses",
+        "addressesError",
+        toLocalizedQueryMessage("addressUpdateIdentifiersMessage"),
+      ),
+    );
   }
 
   const result = await updateCurrentMemberAddress(id, {
@@ -261,7 +303,13 @@ export async function updateMemberAddressAction(formData: FormData) {
   });
 
   if (result.status !== "ok") {
-    redirect(withFlash("/account/addresses", "addressesError", result.message ?? "Address update failed."));
+    redirect(
+      withFlash(
+        "/account/addresses",
+        "addressesError",
+        result.message ?? toLocalizedQueryMessage("addressUpdateFailedMessage"),
+      ),
+    );
   }
 
   redirect(withFlash("/account/addresses", "addressesStatus", "updated"));
@@ -272,12 +320,24 @@ export async function deleteMemberAddressAction(formData: FormData) {
   const rowVersion = String(formData.get("rowVersion") ?? "").trim();
 
   if (!id || !rowVersion) {
-    redirect(withFlash("/account/addresses", "addressesError", "Address delete requires id and row version."));
+    redirect(
+      withFlash(
+        "/account/addresses",
+        "addressesError",
+        toLocalizedQueryMessage("addressDeleteIdentifiersMessage"),
+      ),
+    );
   }
 
   const result = await deleteCurrentMemberAddress(id, rowVersion);
   if (result.status !== "ok") {
-    redirect(withFlash("/account/addresses", "addressesError", result.message ?? "Address delete failed."));
+    redirect(
+      withFlash(
+        "/account/addresses",
+        "addressesError",
+        result.message ?? toLocalizedQueryMessage("addressDeleteFailedMessage"),
+      ),
+    );
   }
 
   redirect(withFlash("/account/addresses", "addressesStatus", "deleted"));
@@ -289,7 +349,13 @@ export async function setMemberAddressDefaultAction(formData: FormData) {
   const asShipping = String(formData.get("asShipping") ?? "") === "true";
 
   if (!id || (!asBilling && !asShipping)) {
-    redirect(withFlash("/account/addresses", "addressesError", "Default address request is incomplete."));
+    redirect(
+      withFlash(
+        "/account/addresses",
+        "addressesError",
+        toLocalizedQueryMessage("addressDefaultIncompleteMessage"),
+      ),
+    );
   }
 
   const result = await setCurrentMemberAddressDefault(id, {
@@ -298,7 +364,13 @@ export async function setMemberAddressDefaultAction(formData: FormData) {
   });
 
   if (result.status !== "ok") {
-    redirect(withFlash("/account/addresses", "addressesError", result.message ?? "Default address update failed."));
+    redirect(
+      withFlash(
+        "/account/addresses",
+        "addressesError",
+        result.message ?? toLocalizedQueryMessage("addressDefaultFailedMessage"),
+      ),
+    );
   }
 
   redirect(withFlash("/account/addresses", "addressesStatus", "default-updated"));
@@ -310,15 +382,17 @@ export async function trackMemberPromotionInteractionAction(formData: FormData) 
   const title = String(formData.get("title") ?? "").trim();
   const ctaKind = String(formData.get("ctaKind") ?? "").trim();
   const eventType = String(formData.get("eventType") ?? "Open").trim();
-  const returnPath =
-    String(formData.get("returnPath") ?? "/loyalty").trim() || "/loyalty";
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? "/loyalty"),
+    "/loyalty",
+  );
 
   if (!businessId || !businessName || !title || !ctaKind) {
     redirect(
       withFlash(
         returnPath,
         "promotionError",
-        "Promotion tracking request is incomplete.",
+        toLocalizedQueryMessage("promotionTrackingIncompleteMessage"),
       ),
     );
   }
@@ -339,7 +413,8 @@ export async function trackMemberPromotionInteractionAction(formData: FormData) 
       withFlash(
         returnPath,
         "promotionError",
-        result.message ?? "Promotion interaction could not be recorded.",
+        result.message ??
+          toLocalizedQueryMessage("promotionTrackingFailedMessage"),
       ),
     );
   }
@@ -350,9 +425,10 @@ export async function trackMemberPromotionInteractionAction(formData: FormData) 
 export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
   const businessId = String(formData.get("businessId") ?? "").trim();
   const businessLocationId = String(formData.get("businessLocationId") ?? "").trim();
-  const returnPath =
-    String(formData.get("returnPath") ?? `/loyalty/${businessId}`).trim() ||
-    `/loyalty/${businessId}`;
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
+    `/loyalty/${businessId}`,
+  );
 
   if (!businessId) {
     redirect("/loyalty");
@@ -372,7 +448,7 @@ export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
       withFlash(
         returnPath,
         "joinError",
-        result.message ?? "Loyalty enrollment could not be completed.",
+        result.message ?? toLocalizedQueryMessage("loyaltyJoinFailedMessage"),
       ),
     );
   }
@@ -384,9 +460,10 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
   const businessId = String(formData.get("businessId") ?? "").trim();
   const businessLocationId = String(formData.get("businessLocationId") ?? "").trim();
   const mode = String(formData.get("mode") ?? "Accrual").trim();
-  const returnPath =
-    String(formData.get("returnPath") ?? `/loyalty/${businessId}`).trim() ||
-    `/loyalty/${businessId}`;
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
+    `/loyalty/${businessId}`,
+  );
   const selectedRewardTierIds = formData
     .getAll("selectedRewardTierIds")
     .map((value) => String(value).trim())
@@ -401,7 +478,7 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
       withFlash(
         returnPath,
         "scanError",
-        "Choose at least one reward before preparing a redemption scan.",
+        toLocalizedQueryMessage("scanRewardSelectionRequiredMessage"),
       ),
     );
   }
@@ -424,7 +501,7 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
       withFlash(
         returnPath,
         "scanError",
-        result.message ?? "Scan session could not be prepared.",
+        result.message ?? toLocalizedQueryMessage("scanPrepareFailedMessage"),
       ),
     );
   }
@@ -439,9 +516,10 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
 
 export async function clearMemberLoyaltyScanSessionAction(formData: FormData) {
   const businessId = String(formData.get("businessId") ?? "").trim();
-  const returnPath =
-    String(formData.get("returnPath") ?? `/loyalty/${businessId}`).trim() ||
-    `/loyalty/${businessId}`;
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
+    `/loyalty/${businessId}`,
+  );
 
   await clearPreparedMemberLoyaltyScanSession();
   redirect(withFlash(returnPath, "scanStatus", "cleared"));
@@ -449,9 +527,10 @@ export async function clearMemberLoyaltyScanSessionAction(formData: FormData) {
 
 export async function createMemberInvoicePaymentIntentAction(formData: FormData) {
   const invoiceId = String(formData.get("invoiceId") ?? "").trim();
-  const failurePath =
-    String(formData.get("failurePath") ?? `/invoices/${invoiceId}`).trim() ||
-    `/invoices/${invoiceId}`;
+  const failurePath = sanitizeAppPath(
+    String(formData.get("failurePath") ?? `/invoices/${invoiceId}`),
+    `/invoices/${invoiceId}`,
+  );
 
   if (!invoiceId) {
     redirect("/invoices");
@@ -465,7 +544,7 @@ export async function createMemberInvoicePaymentIntentAction(formData: FormData)
     const separator = failurePath.includes("?") ? "&" : "?";
     redirect(
       `${failurePath}${separator}paymentError=${encodeURIComponent(
-        result.message ?? "Payment handoff failed.",
+        result.message ?? toLocalizedQueryMessage("memberPaymentHandoffFailedMessage"),
       )}`,
     );
   }

@@ -8,6 +8,8 @@ import {
   requestMemberPasswordReset,
   resetMemberPassword,
 } from "@/features/account/api/member-auth";
+import { sanitizeAppPath } from "@/lib/locale-routing";
+import { toLocalizedQueryMessage } from "@/localization";
 
 function encodeQuery(values: Record<string, string | undefined>) {
   const params = new URLSearchParams();
@@ -22,18 +24,33 @@ function encodeQuery(values: Record<string, string | undefined>) {
   return query ? `?${query}` : "";
 }
 
+function buildAccountFlowPath(
+  pathname: string,
+  values: Record<string, string | undefined>,
+  returnPath: string,
+) {
+  return `${pathname}${encodeQuery({
+    ...values,
+    returnPath,
+  })}`;
+}
+
 export async function registerMemberAction(formData: FormData) {
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "").trim();
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? "/account"),
+    "/account",
+  );
 
   if (!firstName || !lastName || !email || !password) {
     redirect(
-      `/account/register${encodeQuery({
+      buildAccountFlowPath("/account/register", {
         email,
-        registerError: "All registration fields are required.",
-      })}`,
+        registerError: toLocalizedQueryMessage("registrationFieldsRequiredMessage"),
+      }, returnPath),
     );
   }
 
@@ -46,29 +63,34 @@ export async function registerMemberAction(formData: FormData) {
 
   if (result.status !== "ok") {
     redirect(
-      `/account/register${encodeQuery({
+      buildAccountFlowPath("/account/register", {
         email,
-        registerError: result.message ?? "Registration could not be completed.",
-      })}`,
+        registerError:
+          result.message ?? toLocalizedQueryMessage("registrationFailedMessage"),
+      }, returnPath),
     );
   }
 
   redirect(
-    `/account/register${encodeQuery({
+    buildAccountFlowPath("/account/register", {
       email,
       registerStatus: "registered",
-    })}`,
+    }, returnPath),
   );
 }
 
 export async function requestEmailConfirmationAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? "/account"),
+    "/account",
+  );
 
   if (!email) {
     redirect(
-      `/account/activation${encodeQuery({
-        activationError: "Email is required to request confirmation.",
-      })}`,
+      buildAccountFlowPath("/account/activation", {
+        activationError: toLocalizedQueryMessage("activationEmailRequiredMessage"),
+      }, returnPath),
     );
   }
 
@@ -78,33 +100,40 @@ export async function requestEmailConfirmationAction(formData: FormData) {
 
   if (result.status !== "ok") {
     redirect(
-      `/account/activation${encodeQuery({
+      buildAccountFlowPath("/account/activation", {
         email,
         activationError:
-          result.message ?? "Activation email could not be requested.",
-      })}`,
+          result.message ??
+          toLocalizedQueryMessage("activationRequestFailedMessage"),
+      }, returnPath),
     );
   }
 
   redirect(
-    `/account/activation${encodeQuery({
+    buildAccountFlowPath("/account/activation", {
       email,
       activationStatus: "requested",
-    })}`,
+    }, returnPath),
   );
 }
 
 export async function confirmEmailAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const token = String(formData.get("token") ?? "").trim();
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? "/account"),
+    "/account",
+  );
 
   if (!email || !token) {
     redirect(
-      `/account/activation${encodeQuery({
+      buildAccountFlowPath("/account/activation", {
         email,
         token,
-        activationError: "Email and token are both required to confirm the account.",
-      })}`,
+        activationError: toLocalizedQueryMessage(
+          "activationEmailTokenRequiredMessage",
+        ),
+      }, returnPath),
     );
   }
 
@@ -115,30 +144,38 @@ export async function confirmEmailAction(formData: FormData) {
 
   if (result.status !== "ok") {
     redirect(
-      `/account/activation${encodeQuery({
+      buildAccountFlowPath("/account/activation", {
         email,
         token,
-        activationError: result.message ?? "Email confirmation could not be completed.",
-      })}`,
+        activationError:
+          result.message ??
+          toLocalizedQueryMessage("activationConfirmFailedMessage"),
+      }, returnPath),
     );
   }
 
   redirect(
-    `/account/activation${encodeQuery({
+    buildAccountFlowPath("/account/activation", {
       email,
       activationStatus: "confirmed",
-    })}`,
+    }, returnPath),
   );
 }
 
 export async function requestPasswordResetAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? "/account"),
+    "/account",
+  );
 
   if (!email) {
     redirect(
-      `/account/password${encodeQuery({
-        passwordError: "Email is required to request a password reset.",
-      })}`,
+      buildAccountFlowPath("/account/password", {
+        passwordError: toLocalizedQueryMessage(
+          "passwordRequestEmailRequiredMessage",
+        ),
+      }, returnPath),
     );
   }
 
@@ -148,19 +185,20 @@ export async function requestPasswordResetAction(formData: FormData) {
 
   if (result.status !== "ok") {
     redirect(
-      `/account/password${encodeQuery({
+      buildAccountFlowPath("/account/password", {
         email,
         passwordError:
-          result.message ?? "Password reset request could not be completed.",
-      })}`,
+          result.message ??
+          toLocalizedQueryMessage("passwordRequestFailedMessage"),
+      }, returnPath),
     );
   }
 
   redirect(
-    `/account/password${encodeQuery({
+    buildAccountFlowPath("/account/password", {
       email,
       passwordStatus: "requested",
-    })}`,
+    }, returnPath),
   );
 }
 
@@ -168,14 +206,18 @@ export async function resetPasswordAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const token = String(formData.get("token") ?? "").trim();
   const newPassword = String(formData.get("newPassword") ?? "").trim();
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? "/account"),
+    "/account",
+  );
 
   if (!email || !token || !newPassword) {
     redirect(
-      `/account/password${encodeQuery({
+      buildAccountFlowPath("/account/password", {
         email,
         token,
-        passwordError: "Email, token, and new password are required.",
-      })}`,
+        passwordError: toLocalizedQueryMessage("passwordResetFieldsRequiredMessage"),
+      }, returnPath),
     );
   }
 
@@ -187,18 +229,19 @@ export async function resetPasswordAction(formData: FormData) {
 
   if (result.status !== "ok") {
     redirect(
-      `/account/password${encodeQuery({
+      buildAccountFlowPath("/account/password", {
         email,
         token,
-        passwordError: result.message ?? "Password could not be reset.",
-      })}`,
+        passwordError:
+          result.message ?? toLocalizedQueryMessage("passwordResetFailedMessage"),
+      }, returnPath),
     );
   }
 
   redirect(
-    `/account/password${encodeQuery({
+    buildAccountFlowPath("/account/password", {
       email,
       passwordStatus: "reset",
-    })}`,
+    }, returnPath),
   );
 }

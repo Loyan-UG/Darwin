@@ -7,6 +7,8 @@ import type {
   MemberCustomerProfile,
   MemberPreferences,
 } from "@/features/member-portal/types";
+import { localizeHref } from "@/lib/locale-routing";
+import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
 
 type MemberDashboardPageProps = {
@@ -30,6 +32,8 @@ export function MemberDashboardPage({
   customerContext,
   customerContextStatus,
 }: MemberDashboardPageProps) {
+  const copy = getMemberResource(culture);
+
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
@@ -37,13 +41,13 @@ export function MemberDashboardPage({
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-                Member dashboard
+                {copy.memberDashboardEyebrow}
               </p>
               <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-                Signed in as {session.email}
+                {formatResource(copy.memberDashboardTitle, { email: session.email })}
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
-                This dashboard reads the authenticated member profile surfaces through the new web-owned browser session layer.
+                {copy.memberDashboardDescription}
               </p>
             </div>
             <form action={signOutMemberAction}>
@@ -51,7 +55,7 @@ export function MemberDashboardPage({
                 type="submit"
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
               >
-                Sign out
+                {copy.signOut}
               </button>
             </form>
           </div>
@@ -60,8 +64,12 @@ export function MemberDashboardPage({
         {(profileStatus !== "ok" || preferencesStatus !== "ok" || customerContextStatus !== "ok") && (
           <StatusBanner
             tone="warning"
-            title="Some member data loaded with warnings."
-            message={`Profile: ${profileStatus}. Preferences: ${preferencesStatus}. CRM context: ${customerContextStatus}.`}
+            title={copy.memberDataWarningsTitle}
+            message={formatResource(copy.memberDataWarningsMessage, {
+              profileStatus,
+              preferencesStatus,
+              customerContextStatus,
+            })}
           />
         )}
 
@@ -69,42 +77,42 @@ export function MemberDashboardPage({
           <div className="grid gap-6">
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                Profile snapshot
+                {copy.profileSnapshotTitle}
               </p>
               {profile ? (
                 <div className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)] sm:grid-cols-2">
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Email:</span> {profile.email ?? session.email}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Name:</span> {[profile.firstName, profile.lastName].filter(Boolean).join(" ") || "Unavailable"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Phone:</span> {profile.phoneE164 ?? "Unavailable"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Phone verified:</span> {profile.phoneNumberConfirmed ? "Yes" : "No"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Locale:</span> {profile.locale ?? "Unavailable"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Timezone:</span> {profile.timezone ?? "Unavailable"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Currency:</span> {profile.currency ?? "Unavailable"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Access token expiry:</span> {formatDateTime(session.accessTokenExpiresAtUtc, culture)}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelEmail}</span> {profile.email ?? session.email}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelName}</span> {[profile.firstName, profile.lastName].filter(Boolean).join(" ") || copy.unavailable}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelPhone}</span> {profile.phoneE164 ?? copy.unavailable}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelPhoneVerified}</span> {profile.phoneNumberConfirmed ? copy.yes : copy.no}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelLocale}</span> {profile.locale ?? copy.unavailable}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelTimezone}</span> {profile.timezone ?? copy.unavailable}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelCurrency}</span> {profile.currency ?? copy.unavailable}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelAccessTokenExpiry}</span> {formatDateTime(session.accessTokenExpiresAtUtc, culture)}</p>
                 </div>
               ) : (
                 <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  Profile data is not currently available for this member session.
+                  {copy.profileUnavailable}
                 </p>
               )}
             </div>
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                Preference snapshot
+                {copy.preferencesSnapshotTitle}
               </p>
               {preferences ? (
                 <div className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)] sm:grid-cols-2">
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Marketing consent:</span> {preferences.marketingConsent ? "Granted" : "Not granted"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Email marketing:</span> {preferences.allowEmailMarketing ? "Allowed" : "Blocked"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">SMS marketing:</span> {preferences.allowSmsMarketing ? "Allowed" : "Blocked"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">WhatsApp marketing:</span> {preferences.allowWhatsAppMarketing ? "Allowed" : "Blocked"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Promotional push:</span> {preferences.allowPromotionalPushNotifications ? "Allowed" : "Blocked"}</p>
-                  <p><span className="font-semibold text-[var(--color-text-primary)]">Optional analytics:</span> {preferences.allowOptionalAnalyticsTracking ? "Allowed" : "Blocked"}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelMarketingConsent}</span> {preferences.marketingConsent ? copy.granted : copy.notGranted}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelEmailMarketing}</span> {preferences.allowEmailMarketing ? copy.allowed : copy.blocked}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelSmsMarketing}</span> {preferences.allowSmsMarketing ? copy.allowed : copy.blocked}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelWhatsAppMarketing}</span> {preferences.allowWhatsAppMarketing ? copy.allowed : copy.blocked}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelPromotionalPush}</span> {preferences.allowPromotionalPushNotifications ? copy.allowed : copy.blocked}</p>
+                  <p><span className="font-semibold text-[var(--color-text-primary)]">{copy.labelOptionalAnalytics}</span> {preferences.allowOptionalAnalyticsTracking ? copy.allowed : copy.blocked}</p>
                 </div>
               ) : (
                 <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  Preference data is not currently available for this member session.
+                  {copy.preferencesUnavailable}
                 </p>
               )}
             </div>
@@ -113,38 +121,38 @@ export function MemberDashboardPage({
           <div className="flex flex-col gap-5">
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                Portal routes
+                {copy.portalRoutesTitle}
               </p>
               <div className="mt-5 flex flex-col gap-2">
-                <Link href="/account/profile" className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">Profile</Link>
-                <Link href="/account/preferences" className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">Preferences</Link>
-                <Link href="/account/addresses" className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">Addresses</Link>
-                <Link href="/orders" className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">Orders</Link>
-                <Link href="/invoices" className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">Invoices</Link>
-                <Link href="/loyalty" className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">Loyalty</Link>
+                <Link href={localizeHref("/account/profile", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.profileRouteLabel}</Link>
+                <Link href={localizeHref("/account/preferences", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.preferencesRouteLabel}</Link>
+                <Link href={localizeHref("/account/addresses", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.addressesRouteLabel}</Link>
+                <Link href={localizeHref("/orders", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.ordersRouteLabel}</Link>
+                <Link href={localizeHref("/invoices", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.invoicesRouteLabel}</Link>
+                <Link href={localizeHref("/loyalty", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.loyaltyRouteLabel}</Link>
               </div>
             </div>
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                CRM context
+                {copy.crmContextTitle}
               </p>
               {customerContext ? (
                 <div className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   <p className="font-semibold text-[var(--color-text-primary)]">{customerContext.displayName}</p>
                   <p>{customerContext.email}</p>
                   {customerContext.companyName ? <p>{customerContext.companyName}</p> : null}
-                  <p>Interactions: {customerContext.interactionCount}</p>
+                  <p>{formatResource(copy.crmInteractionsLabel, { count: customerContext.interactionCount })}</p>
                   {customerContext.lastInteractionAtUtc ? (
-                    <p>Last interaction: {formatDateTime(customerContext.lastInteractionAtUtc, culture)}</p>
+                    <p>{formatResource(copy.crmLastInteractionLabel, { value: formatDateTime(customerContext.lastInteractionAtUtc, culture) })}</p>
                   ) : null}
                   {customerContext.segments.length > 0 ? (
-                    <p>Segments: {customerContext.segments.map((segment) => segment.name).join(", ")}</p>
+                    <p>{formatResource(copy.crmSegmentsLabel, { segments: customerContext.segments.map((segment) => segment.name).join(", ") })}</p>
                   ) : null}
                 </div>
               ) : (
                 <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  No linked CRM customer context is currently available.
+                  {copy.crmContextUnavailable}
                 </p>
               )}
             </div>

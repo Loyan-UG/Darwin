@@ -3,6 +3,7 @@ import { CultureSwitcher } from "@/components/shell/culture-switcher";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { getShellCopy } from "@/features/shell/copy";
 import type { ShellLink } from "@/features/shell/types";
+import { localizeHref } from "@/lib/locale-routing";
 import { formatResource, getSharedResource } from "@/localization";
 
 type SiteHeaderProps = {
@@ -55,7 +56,10 @@ export function SiteHeader({
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="inline-flex items-center gap-3">
+            <Link
+              href={localizeHref("/", culture)}
+              className="inline-flex items-center gap-3"
+            >
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-brand)] text-lg font-bold text-[var(--color-brand-contrast)]">
                 D
               </span>

@@ -8,6 +8,8 @@ import {
   getMemberRefreshToken,
   writeMemberSession,
 } from "@/features/member-session/cookies";
+import { sanitizeAppPath } from "@/lib/locale-routing";
+import { toLocalizedQueryMessage } from "@/localization";
 
 function buildSearch(values: Record<string, string | undefined>) {
   const params = new URLSearchParams();
@@ -24,13 +26,16 @@ function buildSearch(values: Record<string, string | undefined>) {
 export async function signInMemberAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "").trim();
-  const returnPath = String(formData.get("returnPath") ?? "/account").trim() || "/account";
+  const returnPath = sanitizeAppPath(
+    String(formData.get("returnPath") ?? "/account"),
+    "/account",
+  );
 
   if (!email || !password) {
     redirect(
       `/account/sign-in${buildSearch({
         email,
-        signInError: "Email and password are required.",
+        signInError: toLocalizedQueryMessage("signInCredentialsRequiredMessage"),
         returnPath,
       })}`,
     );
@@ -45,7 +50,7 @@ export async function signInMemberAction(formData: FormData) {
     redirect(
       `/account/sign-in${buildSearch({
         email,
-        signInError: result.message ?? "Sign-in failed.",
+        signInError: result.message ?? toLocalizedQueryMessage("signInFailedMessage"),
         returnPath,
       })}`,
     );

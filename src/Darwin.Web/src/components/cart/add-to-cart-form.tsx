@@ -1,6 +1,8 @@
 import { addToCartAction } from "@/features/cart/actions";
+import { getCommerceResource } from "@/localization";
 
 type AddToCartFormProps = {
+  culture: string;
   variantId: string;
   productName: string;
   productHref: string;
@@ -12,6 +14,7 @@ type AddToCartFormProps = {
 };
 
 export function AddToCartForm({
+  culture,
   variantId,
   productName,
   productHref,
@@ -21,6 +24,8 @@ export function AddToCartForm({
   returnPath,
   quantity = 1,
 }: AddToCartFormProps) {
+  const copy = getCommerceResource(culture);
+
   return (
     <form action={addToCartAction} className="contents">
       <input type="hidden" name="variantId" value={variantId} />
@@ -35,7 +40,7 @@ export function AddToCartForm({
         type="submit"
         className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
       >
-        Add to cart
+        {copy.addToCartCta}
       </button>
     </form>
   );

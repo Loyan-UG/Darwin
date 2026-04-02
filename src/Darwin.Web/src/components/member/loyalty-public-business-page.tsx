@@ -6,8 +6,15 @@ import type {
   BusinessLocation,
   LoyaltyRewardTierPublic,
 } from "@/features/businesses/types";
+import { localizeHref } from "@/lib/locale-routing";
+import {
+  formatResource,
+  getMemberResource,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 
 type LoyaltyPublicBusinessPageProps = {
+  culture: string;
   businessId: string;
   detail: BusinessDetail | null;
   detailStatus: string;
@@ -38,6 +45,7 @@ function formatRewardValue(reward: LoyaltyRewardTierPublic) {
 }
 
 export function LoyaltyPublicBusinessPage({
+  culture,
   businessId,
   detail,
   detailStatus,
@@ -45,6 +53,8 @@ export function LoyaltyPublicBusinessPage({
   joinStatus,
   joinError,
 }: LoyaltyPublicBusinessPageProps) {
+  const copy = getMemberResource(culture);
+  const resolvedJoinError = resolveLocalizedQueryMessage(joinError, copy);
   const locations = detail?.locations ?? [];
   const rewardTiers = detail?.loyaltyProgramPublic?.rewardTiers ?? [];
   const heroImage =
@@ -57,10 +67,10 @@ export function LoyaltyPublicBusinessPage({
           <div className="grid gap-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
             <div className="px-6 py-8 sm:px-8 sm:py-10">
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-                Loyalty place
+                {copy.loyaltyPlaceEyebrow}
               </p>
               <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-                {detail?.name ?? "Loyalty business"}
+                {detail?.name ?? copy.loyaltyBusinessFallback}
               </h1>
               <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-text-secondary)]">
                 {detail?.category ? (
@@ -75,28 +85,28 @@ export function LoyaltyPublicBusinessPage({
                 ) : null}
                 {detail?.loyaltyProgramPublic?.isActive ? (
                   <span className="rounded-full bg-[var(--color-surface-panel-strong)] px-4 py-2">
-                    Loyalty active
+                    {copy.loyaltyActiveLabel}
                   </span>
                 ) : null}
               </div>
               <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
                 {detail?.shortDescription ??
                   detail?.description ??
-                  "This business detail now reads from the public business contract, so discovery and pre-join loyalty UX can stay on the canonical platform surface."}
+                  copy.publicBusinessDetailFallback}
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 {isAuthenticated ? (
                   <form action={joinMemberLoyaltyBusinessAction}>
                     <input type="hidden" name="businessId" value={businessId} />
-                    <input type="hidden" name="returnPath" value={`/loyalty/${businessId}`} />
+                    <input type="hidden" name="returnPath" value={localizeHref(`/loyalty/${businessId}`, culture)} />
                     {locations.length > 0 ? (
                       <select
                         name="businessLocationId"
                         defaultValue=""
                         className="mb-3 block w-full rounded-2xl border border-[var(--color-border-soft)] bg-white/70 px-4 py-3 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
                       >
-                        <option value="">Join without selecting a preferred branch</option>
+                        <option value="">{copy.joinWithoutBranchSelection}</option>
                         {locations.map((location) => (
                           <option
                             key={location.businessLocationId}
@@ -114,30 +124,36 @@ export function LoyaltyPublicBusinessPage({
                       type="submit"
                       className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                     >
-                      Join loyalty
+                      {copy.joinLoyaltyCta}
                     </button>
                   </form>
                 ) : (
                   <div className="flex flex-wrap gap-3">
                     <Link
-                      href={`/account/sign-in?returnPath=${encodeURIComponent(`/loyalty/${businessId}`)}`}
+                      href={localizeHref(
+                        `/account/sign-in?returnPath=${encodeURIComponent(localizeHref(`/loyalty/${businessId}`, culture))}`,
+                        culture,
+                      )}
                       className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                     >
-                      Sign in to join
+                      {copy.signInToJoinCta}
                     </Link>
                     <Link
-                      href="/account/register"
+                      href={localizeHref(
+                        `/account/register?returnPath=${encodeURIComponent(localizeHref(`/loyalty/${businessId}`, culture))}`,
+                        culture,
+                      )}
                       className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                     >
-                      Create account
+                      {copy.loyaltyCreateAccountCta}
                     </Link>
                   </div>
                 )}
                 <Link
-                  href="/loyalty"
+                  href={localizeHref("/loyalty", culture)}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
-                  Back to loyalty
+                  {copy.backToLoyaltyCta}
                 </Link>
               </div>
             </div>
@@ -147,16 +163,16 @@ export function LoyaltyPublicBusinessPage({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={heroImage}
-                  alt={detail?.name ?? "Business media"}
+                  alt={detail?.name ?? copy.loyaltyBusinessFallback}
                   className="max-h-72 w-auto object-contain"
                 />
               ) : (
                 <div className="text-center">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
-                    {detail?.category ?? "Loyalty business"}
+                    {detail?.category ?? copy.loyaltyBusinessFallback}
                   </p>
                   <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                    No business media
+                    {copy.noBusinessMedia}
                   </p>
                 </div>
               )}
@@ -164,26 +180,28 @@ export function LoyaltyPublicBusinessPage({
           </div>
         </div>
 
-        {(detailStatus !== "ok" || joinError || joinStatus === "joined") && (
+        {(detailStatus !== "ok" || resolvedJoinError || joinStatus === "joined") && (
           <div className="flex flex-col gap-3">
             {detailStatus !== "ok" && (
               <StatusBanner
                 tone="warning"
-                title="Business detail loaded with warnings."
-                message={`Business detail status: ${detailStatus}. Public loyalty discovery remains visible instead of collapsing into a blank route.`}
+                title={copy.businessDetailWarningsTitle}
+                message={formatResource(copy.businessDetailWarningsMessage, {
+                  status: detailStatus,
+                })}
               />
             )}
             {joinStatus === "joined" && (
               <StatusBanner
-                title="Loyalty membership created."
-                message="The canonical member join contract completed. This route should now fall through to the full member dashboard on reload."
+                title={copy.loyaltyMembershipCreatedTitle}
+                message={copy.loyaltyMembershipCreatedMessage}
               />
             )}
-            {joinError && (
+            {resolvedJoinError && (
               <StatusBanner
                 tone="warning"
-                title="Loyalty join failed."
-                message={joinError}
+                title={copy.loyaltyJoinFailedTitle}
+                message={resolvedJoinError}
               />
             )}
           </div>
@@ -193,16 +211,16 @@ export function LoyaltyPublicBusinessPage({
           <div className="flex flex-col gap-6">
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                Program snapshot
+                {copy.programSnapshotTitle}
               </p>
               <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
-                {detail?.loyaltyProgramPublic?.name ?? "Published loyalty program"}
+                {detail?.loyaltyProgramPublic?.name ?? copy.publishedLoyaltyProgram}
               </h2>
               <div className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
                 <p>
                   {detail?.loyaltyProgramPublic
-                    ? "Reward tiers now come from the public loyalty-program contract, so pre-join storefront UX can explain value before the member enrolls."
-                    : "No active public loyalty program was returned for this business."}
+                    ? copy.programSnapshotDescription
+                    : copy.noActiveLoyaltyProgramMessage}
                 </p>
               </div>
 
@@ -230,28 +248,28 @@ export function LoyaltyPublicBusinessPage({
                       </div>
                       <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">
                         {reward.allowSelfRedemption
-                          ? "Self redemption available"
-                          : "Staff confirmation required"}
+                          ? copy.selfRedemptionAvailable
+                          : copy.staffConfirmationRequired}
                       </p>
                     </article>
                   ))}
                 </div>
               ) : (
                 <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  No public reward tiers are currently published for this business.
+                  {copy.noPublicRewardTiersMessage}
                 </p>
               )}
             </div>
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                Contact and details
+                {copy.contactDetailsTitle}
               </p>
               <div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {detail?.description ? <p>{detail.description}</p> : null}
                 {detail?.websiteUrl ? (
                   <p>
-                    Website:{" "}
+                    {copy.websiteLabel}{" "}
                     <a
                       href={detail.websiteUrl}
                       target="_blank"
@@ -262,15 +280,21 @@ export function LoyaltyPublicBusinessPage({
                     </a>
                   </p>
                 ) : null}
-                {detail?.contactEmail ? <p>Email: {detail.contactEmail}</p> : null}
+                {detail?.contactEmail ? (
+                  <p>
+                    {copy.emailShortLabel} {detail.contactEmail}
+                  </p>
+                ) : null}
                 {detail?.contactPhoneE164 ? (
-                  <p>Phone: {detail.contactPhoneE164}</p>
+                  <p>
+                    {copy.phoneContactLabel} {detail.contactPhoneE164}
+                  </p>
                 ) : null}
                 {!detail?.description &&
                 !detail?.websiteUrl &&
                 !detail?.contactEmail &&
                 !detail?.contactPhoneE164 ? (
-                  <p>No richer public contact metadata was returned for this business.</p>
+                  <p>{copy.noPublicContactMetadataMessage}</p>
                 ) : null}
               </div>
             </div>
@@ -279,7 +303,7 @@ export function LoyaltyPublicBusinessPage({
           <div className="flex flex-col gap-5">
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                Branches
+                {copy.branchesTitle}
               </p>
               {locations.length > 0 ? (
                 <div className="mt-5 flex flex-col gap-4">
@@ -292,11 +316,11 @@ export function LoyaltyPublicBusinessPage({
                         {location.name}
                       </p>
                       <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                        {formatLocation(location) || "No public address details"}
+                        {formatLocation(location) || copy.noPublicAddressDetails}
                       </p>
                       {location.isPrimary ? (
                         <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-accent)]">
-                          Primary branch
+                          {copy.primaryBranchLabel}
                         </p>
                       ) : null}
                     </article>
@@ -304,24 +328,22 @@ export function LoyaltyPublicBusinessPage({
                 </div>
               ) : (
                 <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  No public branch list is currently available for this business.
+                  {copy.noPublicBranchListMessage}
                 </p>
               )}
             </aside>
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                Join readiness
+                {copy.joinReadinessTitle}
               </p>
               <div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 <p>
                   {isAuthenticated
-                    ? "You can create the loyalty account directly from this page."
-                    : "Sign in first to create a loyalty account for this business."}
+                    ? copy.joinReadinessAuthenticated
+                    : copy.joinReadinessAnonymous}
                 </p>
-                <p>
-                  The join action uses the canonical member loyalty contract and does not depend on WebAdmin DTOs or a web-local enrollment workflow.
-                </p>
+                <p>{copy.joinReadinessContractNote}</p>
               </div>
             </aside>
           </div>

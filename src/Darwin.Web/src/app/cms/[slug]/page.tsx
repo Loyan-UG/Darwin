@@ -4,6 +4,9 @@ import {
   getPublicPageBySlug,
   getPublishedPages,
 } from "@/features/cms/api/public-cms";
+import { getRequestCulture } from "@/lib/request-culture";
+import { getSharedResource } from "@/localization";
+import { buildSeoMetadata, deriveSeoDescription } from "@/lib/seo";
 
 type CmsPageProps = {
   params: Promise<{
@@ -12,24 +15,40 @@ type CmsPageProps = {
 };
 
 export async function generateMetadata({ params }: CmsPageProps) {
+  const culture = await getRequestCulture();
+  const shared = getSharedResource(culture);
   const { slug } = await params;
   const pageResult = await getPublicPageBySlug(slug);
   const page = pageResult.data;
+  const path = `/cms/${encodeURIComponent(slug)}`;
 
   if (!page) {
-    return {
-      title: pageResult.status === "not-found" ? "Page not found" : "CMS page unavailable",
-    };
+    return buildSeoMetadata({
+      culture,
+      title:
+        pageResult.status === "not-found"
+          ? shared.cmsPageNotFoundTitle
+          : shared.cmsPageUnavailableTitle,
+      description: shared.cmsFallbackMetaDescription,
+      path,
+      noIndex: true,
+    });
   }
 
-  return {
+  return buildSeoMetadata({
+    culture,
     title: page.metaTitle ?? page.title,
     description:
-      page.metaDescription ?? "Published CMS content delivered from Darwin.WebApi.",
-  };
+      deriveSeoDescription(page.metaDescription, page.contentHtml) ??
+      shared.cmsFallbackMetaDescription,
+    path,
+    noIndex: pageResult.status !== "ok",
+    type: "article",
+  });
 }
 
 export default async function CmsPage({ params }: CmsPageProps) {
+  const culture = await getRequestCulture();
   const { slug } = await params;
   const [pageResult, relatedPagesSeed] = await Promise.all([
     getPublicPageBySlug(slug),
@@ -46,6 +65,7 @@ export default async function CmsPage({ params }: CmsPageProps) {
 
   return (
     <CmsPageDetail
+      culture={culture}
       page={page}
       status={pageResult.status}
       message={pageResult.message}

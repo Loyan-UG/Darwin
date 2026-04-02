@@ -1,10 +1,18 @@
 import "server-only";
-import { getPublicProducts } from "@/features/catalog/api/public-catalog";
+import {
+  getPublicCategories,
+  getPublicProducts,
+} from "@/features/catalog/api/public-catalog";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
+import { formatMoney } from "@/lib/formatting";
+import { getSupportedCultures } from "@/lib/request-culture";
+import { formatResource, getHomeResource } from "@/localization";
 import type { WebPagePart } from "@/web-parts/types";
 
-export async function getHomePageParts(): Promise<WebPagePart[]> {
-  const [pagesResult, productsResult] = await Promise.all([
+export async function getHomePageParts(culture: string): Promise<WebPagePart[]> {
+  const copy = getHomeResource(culture);
+  const supportedCultures = getSupportedCultures();
+  const [pagesResult, productsResult, categoriesResult] = await Promise.all([
     getPublishedPages({
       page: 1,
       pageSize: 3,
@@ -12,110 +20,141 @@ export async function getHomePageParts(): Promise<WebPagePart[]> {
     getPublicProducts({
       page: 1,
       pageSize: 3,
+      culture,
     }),
+    getPublicCategories(culture),
   ]);
 
   return [
     {
       id: "home-hero",
       kind: "hero",
-      eyebrow: "Darwin.Web",
-      title: "Storefront composition is now real, while the home page stays modular.",
-      description:
-        "The shell, CMS, catalog, cart, and checkout slices are now live against Darwin.WebApi. Home stays intentionally light, but it is no longer a single blank-state block.",
+      eyebrow: copy.heroEyebrow,
+      title: copy.heroTitle,
+      description: copy.heroDescription,
       actions: [
-        { label: "Browse catalog", href: "/catalog" },
-        { label: "Open checkout", href: "/checkout", variant: "secondary" },
+        { label: copy.browseCatalogCta, href: "/catalog" },
+        { label: copy.openCheckoutCta, href: "/checkout", variant: "secondary" },
       ],
       highlights: [
-        "Theme tokens and shell chrome stay outside feature slices.",
-        "Home sections are composed as explicit web parts instead of a one-off layout.",
-        `CMS pages status: ${pagesResult.status}. Catalog status: ${productsResult.status}.`,
+        copy.heroHighlightTheme,
+        copy.heroHighlightComposition,
+        formatResource(copy.heroHighlightStatus, {
+          pagesStatus: pagesResult.status,
+          productsStatus: productsResult.status,
+        }),
+      ],
+      panelTitle: copy.heroPanelTitle,
+    },
+    {
+      id: "home-metrics",
+      kind: "stat-grid",
+      eyebrow: copy.metricsEyebrow,
+      title: copy.metricsTitle,
+      description: copy.metricsDescription,
+      metrics: [
+        {
+          id: "metric-pages",
+          label: copy.metricPagesLabel,
+          value: String(pagesResult.data?.total ?? pagesResult.data?.items.length ?? 0),
+          note: copy.metricPagesNote,
+        },
+        {
+          id: "metric-products",
+          label: copy.metricProductsLabel,
+          value: String(
+            productsResult.data?.total ?? productsResult.data?.items.length ?? 0,
+          ),
+          note: copy.metricProductsNote,
+        },
+        {
+          id: "metric-categories",
+          label: copy.metricCategoriesLabel,
+          value: String(
+            categoriesResult.data?.total ??
+              categoriesResult.data?.items.length ??
+              0,
+          ),
+          note: copy.metricCategoriesNote,
+        },
+        {
+          id: "metric-cultures",
+          label: copy.metricCulturesLabel,
+          value: String(supportedCultures.length),
+          note: copy.metricCulturesNote,
+        },
       ],
     },
     {
       id: "home-shortcuts",
       kind: "card-grid",
-      eyebrow: "Storefront routes",
-      title: "The current public surface is already navigable end to end.",
-      description:
-        "These shortcuts represent the currently implemented foundation before richer merchandising or campaign composition is added.",
+      eyebrow: copy.shortcutsEyebrow,
+      title: copy.shortcutsTitle,
+      description: copy.shortcutsDescription,
       cards: [
         {
           id: "shortcut-cms",
-          eyebrow: "Public CMS",
-          title: "Published content pages",
-          description:
-            "Open the public CMS index and validate the same published page truth that WebAdmin now manages.",
+          eyebrow: copy.shortcutCmsEyebrow,
+          title: copy.shortcutCmsTitle,
+          description: copy.shortcutCmsDescription,
           href: "/cms",
-          ctaLabel: "Open CMS",
+          ctaLabel: copy.openCmsCta,
         },
         {
           id: "shortcut-catalog",
-          eyebrow: "Catalog",
-          title: "Catalog browsing",
-          description:
-            "Browse published categories and products directly from Darwin.WebApi without relying on starter placeholders.",
+          eyebrow: copy.shortcutCatalogEyebrow,
+          title: copy.shortcutCatalogTitle,
+          description: copy.shortcutCatalogDescription,
           href: "/catalog",
-          ctaLabel: "Browse catalog",
+          ctaLabel: copy.browseCatalogCta,
         },
         {
           id: "shortcut-account",
-          eyebrow: "Self-service",
-          title: "Account actions",
-          description:
-            "Registration, activation, and password-reset self-service can grow here before full authenticated member sessions arrive.",
+          eyebrow: copy.shortcutAccountEyebrow,
+          title: copy.shortcutAccountTitle,
+          description: copy.shortcutAccountDescription,
           href: "/account",
-          ctaLabel: "Open account",
+          ctaLabel: copy.openAccountCta,
         },
       ],
-      emptyMessage: "Storefront shortcuts are app-defined and should always be available.",
+      emptyMessage: copy.shortcutsEmptyMessage,
     },
     {
       id: "home-cms-spotlight",
       kind: "card-grid",
-      eyebrow: "CMS spotlight",
-      title: "Published pages are now available for storefront composition.",
-      description:
-        "This section is fed from the public CMS page list contract, not from a hard-coded marketing stub.",
+      eyebrow: copy.cmsSpotlightEyebrow,
+      title: copy.cmsSpotlightTitle,
+      description: copy.cmsSpotlightDescription,
       cards:
         pagesResult.data?.items.map((page) => ({
           id: page.id,
-          eyebrow: "CMS page",
+          eyebrow: copy.cmsPageEyebrow,
           title: page.title,
-          description:
-            page.metaDescription ??
-            "Published storefront content available through the public CMS contract.",
+          description: page.metaDescription ?? copy.cmsPageDescriptionFallback,
           href: `/cms/${page.slug}`,
-          ctaLabel: "Read page",
+          ctaLabel: copy.readPageCta,
           meta: page.slug,
         })) ?? [],
-      emptyMessage:
-        pagesResult.message ??
-        "No published CMS pages are available for the current home spotlight.",
+      emptyMessage: pagesResult.message ?? copy.cmsSpotlightEmptyMessage,
     },
     {
       id: "home-product-spotlight",
       kind: "card-grid",
-      eyebrow: "Storefront products",
-      title: "Representative public products can now be surfaced on home.",
-      description:
-        "This section deliberately uses the current public catalog contract so later merchandising can extend from real data instead of a fake hero grid.",
+      eyebrow: copy.productSpotlightEyebrow,
+      title: copy.productSpotlightTitle,
+      description: copy.productSpotlightDescription,
       cards:
         productsResult.data?.items.map((product) => ({
           id: product.id,
-          eyebrow: "Published product",
+          eyebrow: copy.productEyebrow,
           title: product.name,
-          description:
-            product.shortDescription ??
-            "Published product card delivered from the public catalog surface.",
+          description: product.shortDescription ?? copy.productDescriptionFallback,
           href: `/catalog/${product.slug}`,
-          ctaLabel: "View product",
-          meta: product.primaryImageUrl ? "Primary media available" : "Placeholder media path",
+          ctaLabel: copy.viewProductCta,
+          meta: formatMoney(product.priceMinor, product.currency, culture),
         })) ?? [],
       emptyMessage:
-        productsResult.message ??
-        "No published products are currently available for the home spotlight.",
+        productsResult.message ?? copy.productSpotlightEmptyMessage,
     },
   ];
 }

@@ -2,12 +2,24 @@ import { redirect } from "next/navigation";
 import { OrderConfirmationPage } from "@/components/checkout/order-confirmation-page";
 import { getPublicStorefrontOrderConfirmation } from "@/features/checkout/api/public-checkout";
 import { readStorefrontPaymentHandoff } from "@/features/checkout/cookies";
+import { getMemberSession } from "@/features/member-session/cookies";
 import { readSingleSearchParam } from "@/features/checkout/helpers";
+import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { buildNoIndexMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Order confirmation",
-};
+export async function generateMetadata({ params }: ConfirmationRouteProps) {
+  const culture = await getRequestCulture();
+  const copy = getCommerceResource(culture);
+  const { orderId } = await params;
+
+  return buildNoIndexMetadata(
+    culture,
+    copy.confirmationMetaTitle,
+    copy.confirmationMetaDescription,
+    `/checkout/orders/${orderId}/confirmation`,
+  );
+}
 
 type ConfirmationRouteProps = {
   params: Promise<{
@@ -59,6 +71,7 @@ export default async function OrderConfirmationRoute({
     resolvedParams.orderId,
     orderNumber,
   );
+  const memberSession = await getMemberSession();
 
   return (
     <OrderConfirmationPage
@@ -73,6 +86,7 @@ export default async function OrderConfirmationRoute({
       orderStatus={orderStatus}
       paymentError={paymentError}
       cancelled={cancelled}
+      hasMemberSession={Boolean(memberSession)}
     />
   );
 }

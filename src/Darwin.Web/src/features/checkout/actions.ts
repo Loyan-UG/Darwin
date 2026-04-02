@@ -14,6 +14,7 @@ import {
   readCheckoutDraftFromFormData,
   toCheckoutAddress,
 } from "@/features/checkout/helpers";
+import { toLocalizedQueryMessage } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 
 function revalidateCheckoutPaths() {
@@ -29,7 +30,7 @@ export async function placeStorefrontOrderAction(formData: FormData) {
   if (!cartId || !Number.isFinite(shippingTotalMinor) || shippingTotalMinor < 0) {
     redirect(
       `/checkout${buildCheckoutDraftSearch(draft, {
-        checkoutError: "Invalid checkout order request.",
+        checkoutError: toLocalizedQueryMessage("checkoutInvalidOrderRequestMessage"),
       })}`,
     );
   }
@@ -37,7 +38,9 @@ export async function placeStorefrontOrderAction(formData: FormData) {
   if (!isCheckoutAddressComplete(draft)) {
     redirect(
       `/checkout${buildCheckoutDraftSearch(draft, {
-        checkoutError: "Shipping and billing address fields are incomplete.",
+        checkoutError: toLocalizedQueryMessage(
+          "checkoutAddressIncompleteErrorMessage",
+        ),
       })}`,
     );
   }
@@ -54,7 +57,9 @@ export async function placeStorefrontOrderAction(formData: FormData) {
   if (!orderResult.data) {
     redirect(
       `/checkout${buildCheckoutDraftSearch(draft, {
-        checkoutError: orderResult.message ?? "Order could not be placed.",
+        checkoutError:
+          orderResult.message ??
+          toLocalizedQueryMessage("checkoutPlaceOrderFailedMessage"),
       })}`,
     );
   }
@@ -71,7 +76,11 @@ export async function createStorefrontPaymentIntentAction(formData: FormData) {
   const orderNumber = String(formData.get("orderNumber") ?? "").trim();
 
   if (!orderId) {
-    redirect("/checkout?checkoutError=Missing%20order%20identifier.");
+    redirect(
+      `/checkout?checkoutError=${encodeURIComponent(
+        toLocalizedQueryMessage("checkoutMissingOrderIdentifierMessage"),
+      )}`,
+    );
   }
 
   const paymentResult = await createPublicStorefrontPaymentIntent({
@@ -81,7 +90,8 @@ export async function createStorefrontPaymentIntentAction(formData: FormData) {
 
   if (!paymentResult.data || !paymentResult.data.checkoutUrl) {
     const paymentError =
-      paymentResult.message ?? "Hosted checkout could not be started.";
+      paymentResult.message ??
+      toLocalizedQueryMessage("checkoutHostedCheckoutStartFailedMessage");
     const suffix = orderNumber
       ? `?orderNumber=${encodeURIComponent(orderNumber)}&paymentError=${encodeURIComponent(paymentError)}`
       : `?paymentError=${encodeURIComponent(paymentError)}`;

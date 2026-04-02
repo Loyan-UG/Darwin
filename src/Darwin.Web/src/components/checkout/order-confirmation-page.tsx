@@ -2,8 +2,13 @@ import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
 import type { PublicStorefrontOrderConfirmation } from "@/features/checkout/types";
-import { formatResource, getCommerceResource } from "@/localization";
+import {
+  formatResource,
+  getCommerceResource,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { localizeHref } from "@/lib/locale-routing";
 
 type ParsedAddress = {
   fullName?: string;
@@ -29,6 +34,7 @@ type OrderConfirmationPageProps = {
   orderStatus?: string;
   paymentError?: string;
   cancelled?: boolean;
+  hasMemberSession?: boolean;
 };
 
 function parseAddress(rawJson: string): ParsedAddress | null {
@@ -90,8 +96,11 @@ export function OrderConfirmationPage({
   orderStatus,
   paymentError,
   cancelled,
+  hasMemberSession = false,
 }: OrderConfirmationPageProps) {
   const copy = getCommerceResource(culture);
+  const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
+  const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
 
   if (!confirmation) {
     return (
@@ -100,13 +109,13 @@ export function OrderConfirmationPage({
           <StatusBanner
             tone="warning"
             title={copy.orderConfirmationUnavailableTitle}
-            message={message ?? formatResource(copy.orderConfirmationUnavailableMessage, {
+            message={resolvedMessage ?? formatResource(copy.orderConfirmationUnavailableMessage, {
               status,
             })}
           />
           <div className="mt-8">
             <Link
-              href="/catalog"
+              href={localizeHref("/catalog", culture)}
               className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
               {copy.backToCatalog}
@@ -120,6 +129,32 @@ export function OrderConfirmationPage({
   const billingAddress = parseAddress(confirmation.billingAddressJson);
   const shippingAddress = parseAddress(confirmation.shippingAddressJson);
   const paid = hasSuccessfulPayment(confirmation);
+  const paymentNeedsAttention = !paid;
+  const orderTrackingHref = "/orders";
+  const signInHref = localizeHref(
+    `/account/sign-in?returnPath=${encodeURIComponent(orderTrackingHref)}`,
+    culture,
+  );
+  const registerHref = localizeHref(
+    `/account/register?returnPath=${encodeURIComponent(orderTrackingHref)}`,
+    culture,
+  );
+  const paymentStepTitle = resolvedPaymentError || cancelled || paymentCompletionStatus === "failed"
+    ? copy.nextStepPaymentRetryTitle
+    : paid
+      ? copy.nextStepPaymentDoneTitle
+      : copy.nextStepPaymentPendingTitle;
+  const paymentStepMessage = resolvedPaymentError || cancelled || paymentCompletionStatus === "failed"
+    ? copy.nextStepPaymentRetryMessage
+    : paid
+      ? copy.nextStepPaymentDoneMessage
+      : copy.nextStepPaymentPendingMessage;
+  const accountStepTitle = hasMemberSession
+    ? copy.nextStepAccountSignedInTitle
+    : copy.nextStepAccountGuestTitle;
+  const accountStepMessage = hasMemberSession
+    ? copy.nextStepAccountSignedInMessage
+    : copy.nextStepAccountGuestMessage;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -175,7 +210,7 @@ export function OrderConfirmationPage({
           />
         )}
 
-        {paymentError && (
+        {resolvedPaymentError && (
           <StatusBanner
             tone="warning"
             title={
@@ -183,7 +218,7 @@ export function OrderConfirmationPage({
                 ? copy.paymentCompletionFailedTitle
                 : copy.paymentHandoffFailedTitle
             }
-            message={paymentError}
+            message={resolvedPaymentError}
           />
         )}
 
@@ -191,7 +226,7 @@ export function OrderConfirmationPage({
           <StatusBanner
             tone="warning"
             title={copy.confirmationWarningsTitle}
-            message={message ?? formatResource(copy.confirmationWarningsMessage, {
+            message={resolvedMessage ?? formatResource(copy.confirmationWarningsMessage, {
               status,
             })}
           />
@@ -254,6 +289,100 @@ export function OrderConfirmationPage({
           </div>
 
           <div className="flex flex-col gap-5">
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.nextStepsTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.nextStepsDescription}
+              </p>
+              <div className="mt-5 grid gap-3">
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                    {copy.nextStepsPaymentLabel}
+                  </p>
+                  <h2 className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {paymentStepTitle}
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {paymentStepMessage}
+                  </p>
+                </article>
+
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                    {copy.nextStepsAccountLabel}
+                  </p>
+                  <h2 className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {accountStepTitle}
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {accountStepMessage}
+                  </p>
+                </article>
+
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                    {copy.nextStepsReferenceLabel}
+                  </p>
+                  <h2 className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {formatResource(copy.nextStepReferenceTitle, {
+                      orderNumber: confirmation.orderNumber,
+                    })}
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {copy.nextStepReferenceMessage}
+                  </p>
+                </article>
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                {paymentNeedsAttention ? (
+                  <form action={createStorefrontPaymentIntentAction}>
+                    <input type="hidden" name="orderId" value={confirmation.orderId} />
+                    <input type="hidden" name="orderNumber" value={confirmation.orderNumber} />
+                    <button
+                      type="submit"
+                      className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+                    >
+                      {copy.continueToPayment}
+                    </button>
+                  </form>
+                ) : null}
+
+                {hasMemberSession ? (
+                  <Link
+                    href={localizeHref(orderTrackingHref, culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.openOrdersCta}
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href={signInHref}
+                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                    >
+                      {copy.signInForTrackingCta}
+                    </Link>
+                    <Link
+                      href={registerHref}
+                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                    >
+                      {copy.createAccountForTrackingCta}
+                    </Link>
+                  </>
+                )}
+
+                <Link
+                  href={localizeHref("/catalog", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.continueShopping}
+                </Link>
+              </div>
+            </aside>
+
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.summaryTitle}
@@ -327,19 +456,6 @@ export function OrderConfirmationPage({
                 )}
               </div>
 
-              {!paid && (
-                <form action={createStorefrontPaymentIntentAction} className="mt-6">
-                  <input type="hidden" name="orderId" value={confirmation.orderId} />
-                  <input type="hidden" name="orderNumber" value={confirmation.orderNumber} />
-                  <button
-                    type="submit"
-                    className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-                  >
-                    {copy.continueToPayment}
-                  </button>
-                </form>
-              )}
-
               {paid && (
                 <div className="mt-6">
                   <StatusBanner
@@ -349,15 +465,6 @@ export function OrderConfirmationPage({
                 </div>
               )}
             </aside>
-
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/catalog"
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.continueShopping}
-              </Link>
-            </div>
           </div>
         </div>
       </div>

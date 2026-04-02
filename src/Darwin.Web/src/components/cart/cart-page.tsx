@@ -6,8 +6,13 @@ import {
   updateCartQuantityAction,
 } from "@/features/cart/actions";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
-import { formatResource, getCommerceResource } from "@/localization";
+import {
+  formatResource,
+  getCommerceResource,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 import { formatMoney } from "@/lib/formatting";
+import { localizeHref } from "@/lib/locale-routing";
 
 type CartPageProps = {
   culture: string;
@@ -44,6 +49,8 @@ export function CartPage({
   const statusMessage = statusMessageKey
     ? copy[statusMessageKey as keyof typeof copy]
     : undefined;
+  const resolvedCartError = resolveLocalizedQueryMessage(cartError, copy);
+  const resolvedModelMessage = resolveLocalizedQueryMessage(model.message, copy);
   const cart = model.cart;
 
   return (
@@ -68,11 +75,11 @@ export function CartPage({
           />
         )}
 
-        {cartError && (
+        {resolvedCartError && (
           <StatusBanner
             tone="warning"
             title={copy.cartActionFailedTitle}
-            message={cartError}
+            message={resolvedCartError}
           />
         )}
 
@@ -80,7 +87,7 @@ export function CartPage({
           <StatusBanner
             tone="warning"
             title={copy.cartDegradedTitle}
-            message={model.message ?? formatResource(copy.cartDegradedMessage, {
+            message={resolvedModelMessage ?? formatResource(copy.cartDegradedMessage, {
               status: model.status,
             })}
           />
@@ -99,7 +106,7 @@ export function CartPage({
             </p>
             <div className="mt-8">
               <Link
-                href="/catalog"
+                href={localizeHref("/catalog", culture)}
                 className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
               >
                 {copy.browseCatalog}
@@ -258,13 +265,13 @@ export function CartPage({
               </form>
               <div className="mt-6 flex flex-col gap-3">
                 <Link
-                  href="/checkout"
+                  href={localizeHref("/checkout", culture)}
                   className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                 >
                   {copy.startCheckout}
                 </Link>
                 <Link
-                  href="/catalog"
+                  href={localizeHref("/catalog", culture)}
                   className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
                   {copy.continueShopping}

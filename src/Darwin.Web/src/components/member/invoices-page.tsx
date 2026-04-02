@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { MemberInvoiceSummary } from "@/features/member-portal/types";
+import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
 
 type InvoicesPageProps = {
@@ -22,23 +23,25 @@ export function InvoicesPage({
   currentPage,
   totalPages,
 }: InvoicesPageProps) {
+  const copy = getMemberResource(culture);
+
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            Member invoices
+            {copy.invoicesEyebrow}
           </p>
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-            Invoice history now reads from the authenticated member billing surface
+            {copy.invoicesTitle}
           </h1>
         </div>
 
         {status !== "ok" && (
           <StatusBanner
             tone="warning"
-            title="Invoices loaded with warnings."
-            message={`The member invoices endpoint returned status "${status}".`}
+            title={copy.invoicesWarningsTitle}
+            message={formatResource(copy.invoicesWarningsMessage, { status })}
           />
         )}
 
@@ -59,7 +62,7 @@ export function InvoicesPage({
                     </Link>
                   </h2>
                   <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                    Created {formatDateTime(invoice.createdAtUtc, culture)}
+                    {copy.createdLabel} {formatDateTime(invoice.createdAtUtc, culture)}
                   </p>
                 </div>
                 <div className="text-right">
@@ -67,13 +70,15 @@ export function InvoicesPage({
                     {formatMoney(invoice.totalGrossMinor, invoice.currency, culture)}
                   </p>
                   <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
-                    Balance {formatMoney(invoice.balanceMinor, invoice.currency, culture)}
+                    {formatResource(copy.balanceLabel, {
+                      value: formatMoney(invoice.balanceMinor, invoice.currency, culture),
+                    })}
                   </p>
                   <Link
                     href={`/invoices/${invoice.id}`}
                     className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
-                    Open invoice
+                    {copy.openInvoiceCta}
                   </Link>
                 </div>
               </div>
@@ -83,7 +88,7 @@ export function InvoicesPage({
 
         {invoices.length === 0 && (
           <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
-            No member invoices were returned for this history page.
+            {copy.noInvoicesMessage}
           </div>
         )}
 
@@ -94,17 +99,17 @@ export function InvoicesPage({
               href={buildInvoicesHref(Math.max(1, currentPage - 1))}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
-              Previous
+              {copy.previous}
             </Link>
             <p className="text-sm text-[var(--color-text-secondary)]">
-              Page {currentPage} of {totalPages}
+              {formatResource(copy.pageLabel, { currentPage, totalPages })}
             </p>
             <Link
               aria-disabled={currentPage >= totalPages}
               href={buildInvoicesHref(Math.min(totalPages, currentPage + 1))}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
-              Next
+              {copy.next}
             </Link>
           </div>
         )}

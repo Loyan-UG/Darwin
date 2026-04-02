@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { getCultureDisplayName } from "@/lib/culture";
+import { buildLocalizedPath, isPublicLocalizedPath, stripCulturePrefix } from "@/lib/locale-routing";
 
 type CultureSwitcherProps = {
   currentCulture: string;
@@ -15,6 +16,15 @@ function buildCultureHref(
   culture: string,
 ) {
   const params = new URLSearchParams(searchParams.toString());
+  const strippedPath = stripCulturePrefix(pathname).pathname;
+
+  if (isPublicLocalizedPath(strippedPath)) {
+    params.delete("culture");
+    const query = params.toString();
+    const localizedPath = buildLocalizedPath(strippedPath, culture);
+    return query ? `${localizedPath}?${query}` : localizedPath;
+  }
+
   params.set("culture", culture);
   const query = params.toString();
   return query ? `${pathname}?${query}` : pathname;

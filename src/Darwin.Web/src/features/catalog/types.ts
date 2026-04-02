@@ -57,3 +57,10 @@ export type PublicProductDetail = PublicProductSummary & {
   variants: PublicProductVariant[];
   media: PublicProductMedia[];
 };
+
+export type CatalogVisibleSort =
+  | "featured"
+  | "name-asc"
+  | "price-asc"
+  | "price-desc"
+  | "savings-desc";

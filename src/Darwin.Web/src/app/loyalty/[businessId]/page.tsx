@@ -11,7 +11,9 @@ import {
 import { createQrCodeDataUrl } from "@/features/member-portal/qr-code";
 import { readPreparedMemberLoyaltyScanSession } from "@/features/member-portal/scan-session-cookie";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { buildNoIndexMetadata, deriveSeoDescription } from "@/lib/seo";
 
 type LoyaltyBusinessRouteProps = {
   params: Promise<{
@@ -30,12 +32,22 @@ type LoyaltyBusinessRouteProps = {
 };
 
 export async function generateMetadata({ params }: LoyaltyBusinessRouteProps) {
+  const culture = await getRequestCulture();
+  const copy = getMemberResource(culture);
   const { businessId } = await params;
   const businessResult = await getPublicBusinessDetail(businessId);
+  const business = businessResult.data;
 
-  return {
-    title: businessResult.data?.name ?? "Loyalty business",
-  };
+  return buildNoIndexMetadata(
+    culture,
+    business?.name ?? copy.loyaltyBusinessFallback,
+    deriveSeoDescription(
+      business?.shortDescription,
+      business?.description,
+      copy.loyaltyMetaDescription,
+    ),
+    `/loyalty/${businessId}`,
+  );
 }
 
 export default async function LoyaltyBusinessRoute({
@@ -51,6 +63,7 @@ export default async function LoyaltyBusinessRoute({
   if (!session) {
     return (
       <LoyaltyPublicBusinessPage
+        culture={culture}
         businessId={businessId}
         detail={publicBusinessResult.data}
         detailStatus={publicBusinessResult.status}
@@ -71,6 +84,7 @@ export default async function LoyaltyBusinessRoute({
   ) {
     return (
       <LoyaltyPublicBusinessPage
+        culture={culture}
         businessId={businessId}
         detail={businessDetail}
         detailStatus={

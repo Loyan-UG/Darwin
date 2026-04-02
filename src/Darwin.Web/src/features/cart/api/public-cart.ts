@@ -2,6 +2,7 @@ import "server-only";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
 import type { PublicCartSummary } from "@/features/cart/types";
+import { toLocalizedQueryMessage } from "@/localization";
 
 async function fetchCartJson<T>(
   path: string,
@@ -24,12 +25,12 @@ async function fetchCartJson<T>(
       return {
         data: null,
         status: "not-found",
-        message: "Storefront cart resource was not found.",
+        message: toLocalizedQueryMessage("storefrontCartNotFoundMessage"),
       };
     }
 
     if (!response.ok) {
-      let detail = `Storefront cart API returned status ${response.status}.`;
+      let detail = toLocalizedQueryMessage("storefrontCartHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
         detail = problem.detail ?? problem.title ?? detail;
@@ -52,7 +53,7 @@ async function fetchCartJson<T>(
     return {
       data: null,
       status: "network-error",
-      message: "Storefront cart API could not be reached.",
+      message: toLocalizedQueryMessage("storefrontCartNetworkErrorMessage"),
     };
   }
 }

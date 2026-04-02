@@ -2,11 +2,22 @@ import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { InvoiceDetailPage } from "@/components/member/invoice-detail-page";
 import { getCurrentMemberInvoice } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { buildNoIndexMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Invoice detail",
-};
+export async function generateMetadata({ params }: InvoiceDetailRouteProps) {
+  const culture = await getRequestCulture();
+  const copy = getMemberResource(culture);
+  const { id } = await params;
+
+  return buildNoIndexMetadata(
+    culture,
+    copy.invoiceDetailMetaTitle,
+    undefined,
+    `/invoices/${id}`,
+  );
+}
 
 type InvoiceDetailRouteProps = {
   params: Promise<{
@@ -24,6 +35,7 @@ export default async function InvoiceDetailRoute({
   searchParams,
 }: InvoiceDetailRouteProps) {
   const culture = await getRequestCulture();
+  const copy = getMemberResource(culture);
   const session = await getMemberSession();
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
@@ -31,8 +43,9 @@ export default async function InvoiceDetailRoute({
   if (!session) {
     return (
       <MemberAuthRequired
-        title="Member sign-in is required for invoice detail."
-        message="Invoice detail is now an authenticated member route."
+        culture={culture}
+        title={copy.invoiceDetailAuthRequiredTitle}
+        message={copy.invoiceDetailAuthRequiredMessage}
         returnPath={`/invoices/${id}`}
       />
     );

@@ -5,6 +5,7 @@ import {
   clearStorefrontPaymentHandoff,
   readStorefrontPaymentHandoff,
 } from "@/features/checkout/cookies";
+import { toLocalizedQueryMessage } from "@/localization";
 
 type FinalizeRouteContext = {
   params: Promise<{
@@ -85,7 +86,8 @@ export async function GET(request: NextRequest, context: FinalizeRouteContext) {
     redirectUrl.searchParams.set("paymentCompletionStatus", "failed");
     redirectUrl.searchParams.set(
       "paymentError",
-      result.message ?? "Hosted checkout return could not be reconciled.",
+      result.message ??
+        toLocalizedQueryMessage("checkoutPaymentCompletionFailedMessage"),
     );
     return NextResponse.redirect(redirectUrl);
   }

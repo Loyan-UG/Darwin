@@ -21,6 +21,7 @@ import type {
   MyLoyaltyOverview,
   PagedResponse,
 } from "@/features/member-portal/types";
+import { toLocalizedQueryMessage } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
 export type MemberApiFetchStatus =
@@ -46,7 +47,7 @@ async function fetchMemberJson<T>(
     return {
       data: null,
       status: "unauthenticated",
-      message: "A member session is required.",
+      message: toLocalizedQueryMessage("memberSessionRequiredMessage"),
     };
   }
 
@@ -75,7 +76,7 @@ async function fetchMemberJson<T>(
       return {
         data: null,
         status: "unauthorized",
-        message: "The member session is no longer authorized.",
+        message: toLocalizedQueryMessage("memberSessionUnauthorizedMessage"),
       };
     }
 
@@ -83,12 +84,12 @@ async function fetchMemberJson<T>(
       return {
         data: null,
         status: "not-found",
-        message: "Member resource was not found.",
+        message: toLocalizedQueryMessage("memberResourceNotFoundMessage"),
       };
     }
 
     if (!response.ok) {
-      let detail = `Member API returned status ${response.status}.`;
+      let detail = toLocalizedQueryMessage("memberApiHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
         detail = problem.detail ?? problem.title ?? detail;
@@ -112,14 +113,14 @@ async function fetchMemberJson<T>(
       return {
         data: null,
         status: "invalid-payload",
-        message: "Member API returned invalid JSON payload.",
+        message: toLocalizedQueryMessage("memberApiInvalidPayloadMessage"),
       };
     }
   } catch {
     return {
       data: null,
       status: "network-error",
-      message: "Member API could not be reached.",
+      message: toLocalizedQueryMessage("memberApiNetworkErrorMessage"),
     };
   }
 }
@@ -142,7 +143,7 @@ async function mutateMemberJson<T>(
     return {
       data: null,
       status: "unauthenticated",
-      message: "A member session is required.",
+      message: toLocalizedQueryMessage("memberSessionRequiredMessage"),
     };
   }
 
@@ -173,7 +174,7 @@ async function mutateMemberJson<T>(
       return {
         data: null,
         status: "unauthorized",
-        message: "The member session is no longer authorized.",
+        message: toLocalizedQueryMessage("memberSessionUnauthorizedMessage"),
       };
     }
 
@@ -181,12 +182,12 @@ async function mutateMemberJson<T>(
       return {
         data: null,
         status: "not-found",
-        message: "Member resource was not found.",
+        message: toLocalizedQueryMessage("memberResourceNotFoundMessage"),
       };
     }
 
     if (!response.ok) {
-      let detail = `Member API returned status ${response.status}.`;
+      let detail = toLocalizedQueryMessage("memberApiHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
         detail = problem.detail ?? problem.title ?? detail;
@@ -223,7 +224,7 @@ async function mutateMemberJson<T>(
     return {
       data: null,
       status: "network-error",
-      message: "Member API could not be reached.",
+      message: toLocalizedQueryMessage("memberApiNetworkErrorMessage"),
     };
   }
 }

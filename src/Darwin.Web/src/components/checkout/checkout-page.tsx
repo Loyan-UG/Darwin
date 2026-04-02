@@ -4,8 +4,13 @@ import { placeStorefrontOrderAction } from "@/features/checkout/actions";
 import { isCheckoutAddressComplete } from "@/features/checkout/helpers";
 import type { CheckoutDraft, PublicCheckoutIntent } from "@/features/checkout/types";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
-import { formatResource, getCommerceResource } from "@/localization";
+import {
+  formatResource,
+  getCommerceResource,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 import { formatMoney } from "@/lib/formatting";
+import { localizeHref } from "@/lib/locale-routing";
 
 type CheckoutPageProps = {
   culture: string;
@@ -38,6 +43,9 @@ export function CheckoutPage({
   checkoutError,
 }: CheckoutPageProps) {
   const copy = getCommerceResource(culture);
+  const resolvedCheckoutError = resolveLocalizedQueryMessage(checkoutError, copy);
+  const resolvedCartMessage = resolveLocalizedQueryMessage(model.message, copy);
+  const resolvedIntentMessage = resolveLocalizedQueryMessage(intentMessage, copy);
   const cart = model.cart;
   const addressComplete = isCheckoutAddressComplete(draft);
   const requiresShipping = intent?.requiresShipping ?? true;
@@ -47,6 +55,24 @@ export function CheckoutPage({
     !intent.shippingOptions.length ||
     Boolean(intent.selectedShippingMethodId || draft.selectedShippingMethodId);
   const canPlaceOrder = Boolean(cart && intent && hasSelectedShipping);
+  const readinessItems = [
+    {
+      label: copy.addressReadyLabel,
+      value: addressComplete ? copy.readyYes : copy.readyNo,
+    },
+    {
+      label: copy.shippingReadyLabel,
+      value: hasSelectedShipping ? copy.readyYes : copy.readyNo,
+    },
+    {
+      label: copy.intentReadyLabel,
+      value: intent ? copy.readyYes : copy.readyNo,
+    },
+    {
+      label: copy.couponStateLabel,
+      value: cart?.couponCode ? copy.couponAppliedState : copy.couponMissingState,
+    },
+  ];
 
   if (!cart) {
     return (
@@ -55,11 +81,11 @@ export function CheckoutPage({
           <StatusBanner
             tone="warning"
             title={copy.checkoutUnavailableTitle}
-            message={model.message ?? copy.checkoutUnavailableMessage}
+            message={resolvedCartMessage ?? copy.checkoutUnavailableMessage}
           />
           <div>
             <Link
-              href="/catalog"
+              href={localizeHref("/catalog", culture)}
               className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
               {copy.browseCatalog}
@@ -85,11 +111,11 @@ export function CheckoutPage({
           </p>
         </div>
 
-        {checkoutError && (
+        {resolvedCheckoutError && (
           <StatusBanner
             tone="warning"
             title={copy.checkoutActionFailedTitle}
-            message={checkoutError}
+            message={resolvedCheckoutError}
           />
         )}
 
@@ -104,7 +130,7 @@ export function CheckoutPage({
           <StatusBanner
             tone="warning"
             title={copy.previewDegradedTitle}
-            message={intentMessage ?? formatResource(copy.previewDegradedMessage, {
+            message={resolvedIntentMessage ?? formatResource(copy.previewDegradedMessage, {
               status: intentStatus,
             })}
           />
@@ -218,7 +244,7 @@ export function CheckoutPage({
                   {copy.refreshCheckoutPreview}
                 </button>
                 <Link
-                  href="/cart"
+                  href={localizeHref("/cart", culture)}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
                   {copy.backToCart}
@@ -228,6 +254,30 @@ export function CheckoutPage({
           </form>
 
           <div className="flex flex-col gap-5">
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.checkoutReadinessTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.checkoutReadinessDescription}
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {readinessItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </aside>
+
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.checkoutSummaryTitle}
@@ -300,6 +350,71 @@ export function CheckoutPage({
                   />
                 </div>
               )}
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.checkoutLinesTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.checkoutLinesDescription}
+              </p>
+              <div className="mt-5 flex flex-col gap-4">
+                {cart.items.map((item) => (
+                  <article
+                    key={`${item.variantId}:${item.selectedAddOnValueIdsJson}`}
+                    className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-3">
+                        {item.display?.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.display.imageUrl}
+                            alt={item.display.imageAlt || item.display.name}
+                            className="max-h-10 w-auto object-contain"
+                          />
+                        ) : (
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                            {copy.noImage}
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                              {item.display?.name ?? copy.storefrontVariantFallback}
+                            </p>
+                            <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                              {formatResource(copy.lineQuantityLabel, {
+                                quantity: item.quantity,
+                              })}
+                            </p>
+                          </div>
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {formatMoney(item.lineGrossMinor, cart.currency, culture)}
+                          </p>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--color-text-secondary)]">
+                          <span>
+                            {copy.lineTotalShortLabel}:{" "}
+                            {formatMoney(item.lineGrossMinor, cart.currency, culture)}
+                          </span>
+                          {item.display?.href ? (
+                            <Link
+                              href={item.display.href}
+                              className="font-semibold text-[var(--color-text-primary)] transition hover:text-[var(--color-brand)]"
+                            >
+                              {copy.returnToProductCta}
+                            </Link>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </aside>
 
             <form

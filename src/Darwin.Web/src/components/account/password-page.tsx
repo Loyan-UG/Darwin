@@ -1,59 +1,75 @@
+import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
   requestPasswordResetAction,
   resetPasswordAction,
 } from "@/features/account/actions";
+import { localizeHref } from "@/lib/locale-routing";
+import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type PasswordPageProps = {
+  culture: string;
   email?: string;
   token?: string;
   passwordStatus?: string;
   passwordError?: string;
+  returnPath?: string;
 };
 
-function getPasswordMessage(status?: string) {
+function getPasswordMessage(status: string | undefined, culture: string) {
+  const copy = getMemberResource(culture);
   switch (status) {
     case "requested":
-      return "If the account exists, the password-reset email has been requested through the current backend flow.";
+      return copy.passwordRequestedMessage;
     case "reset":
-      return "The password reset completed successfully. Browser sign-in remains a separate session decision.";
+      return copy.passwordResetMessage;
     default:
       return undefined;
   }
 }
 
 export function PasswordPage({
+  culture,
   email,
   token,
   passwordStatus,
   passwordError,
+  returnPath,
 }: PasswordPageProps) {
-  const statusMessage = getPasswordMessage(passwordStatus);
+  const copy = getMemberResource(culture);
+  const statusMessage = getPasswordMessage(passwordStatus, culture);
+  const resolvedPasswordError = resolveLocalizedQueryMessage(passwordError, copy);
+  const signInHref = `/account/sign-in?returnPath=${encodeURIComponent(
+    returnPath || "/account",
+  )}`;
+  const activationHref = `/account/activation?returnPath=${encodeURIComponent(
+    returnPath || "/account",
+  )}`;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            Password recovery
+            {copy.passwordRecoveryEyebrow}
           </p>
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-            Request or complete a password reset
+            {copy.passwordRecoveryTitle}
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
-            This route exposes the existing backend reset-token lifecycle and keeps the web client out of its own private reset implementation.
+            {copy.passwordRecoveryDescription}
           </p>
         </div>
 
         {statusMessage && (
-          <StatusBanner title="Password flow updated" message={statusMessage} />
+          <StatusBanner title={copy.passwordFlowUpdatedTitle} message={statusMessage} />
         )}
 
-        {passwordError && (
+        {resolvedPasswordError && (
           <StatusBanner
             tone="warning"
-            title="Password flow failed"
-            message={passwordError}
+            title={copy.passwordFlowFailedTitle}
+            message={resolvedPasswordError}
           />
         )}
 
@@ -62,21 +78,22 @@ export function PasswordPage({
             action={requestPasswordResetAction}
             className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
           >
+            <input type="hidden" name="returnPath" value={returnPath || "/account"} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-              Request reset
+              {copy.requestResetEyebrow}
             </p>
             <h2 className="mt-3 text-3xl font-[family-name:var(--font-display)] text-[var(--color-text-primary)]">
-              Send reset email
+              {copy.sendResetEmailTitle}
             </h2>
             <label className="mt-6 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-              Email
+              {copy.emailLabel}
               <input name="email" type="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
             <button
               type="submit"
               className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
-              Request reset email
+              {copy.requestResetEmailCta}
             </button>
           </form>
 
@@ -84,23 +101,24 @@ export function PasswordPage({
             action={resetPasswordAction}
             className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
           >
+            <input type="hidden" name="returnPath" value={returnPath || "/account"} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-              Complete reset
+              {copy.completeResetEyebrow}
             </p>
             <h2 className="mt-3 text-3xl font-[family-name:var(--font-display)] text-[var(--color-text-primary)]">
-              Apply reset token
+              {copy.applyResetTokenTitle}
             </h2>
             <div className="mt-6 grid gap-4">
               <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                Email
+                {copy.emailLabel}
                 <input name="email" type="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                Token
+                {copy.tokenLabel}
                 <input name="token" defaultValue={token} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-                New password
+                {copy.newPasswordLabel}
                 <input name="newPassword" type="password" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
             </div>
@@ -108,9 +126,24 @@ export function PasswordPage({
               type="submit"
               className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
-              Reset password
+              {copy.resetPasswordCta}
             </button>
           </form>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={localizeHref(signInHref, culture)}
+            className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+          >
+            {copy.signIn}
+          </Link>
+          <Link
+            href={localizeHref(activationHref, culture)}
+            className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+          >
+            {copy.activationFlowCta}
+          </Link>
         </div>
       </div>
     </section>

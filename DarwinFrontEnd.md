@@ -73,6 +73,7 @@ The first web slice is now in place:
 - the shell uses a Cartzilla-inspired visual direction without coupling feature logic to one theme
 - primary navigation now attempts to load from the public CMS menu contract and falls back to app-defined links when the API or seed data is unavailable
 - the home page now uses reusable hero/card web parts and can surface live CMS/catalog spotlight data without coupling page structure to one theme
+- the home page now also includes a stat-grid web part plus part-owned hero aside copy, so home composition is richer without pushing home-specific wording down into the generic composer
 - route scaffolding now exists for catalog, account, loyalty, orders, and invoices so later slices can bind feature data without reworking the shell
 
 The next storefront slice is now also underway:
@@ -83,10 +84,13 @@ The next storefront slice is now also underway:
 - CMS detail pages now expose route metadata, related-page navigation, and visible degraded-state handling instead of collapsing non-404 failures into a not-found route
 - a public cart route now consumes the public cart contract and supports server-side add/update/remove flows for anonymous storefront usage
 - a public checkout route now consumes checkout-intent and order-placement contracts with inline address capture and shipping selection
+- the checkout UI now also keeps readiness signals and live line-item review visible, so storefront conversion no longer depends only on totals plus the address form
 - a public confirmation route now consumes storefront confirmation data and exposes payment-handoff retry through the payment-intent contract
 - degraded-mode storefront data states are now visible in the UI instead of silently collapsing into placeholder-only behavior
 - catalog list/detail now pass the active request culture into the canonical public catalog endpoints, so storefront localization no longer depends on the backend default culture leaking through
 - catalog merchandising polish now stays within the real public contract set: selected-category context, compare-at savings badges, and category-linked navigation were added without pretending search/facets/sort already exist
+- `/catalog` now also includes a page-local visible-result search/sort lens, but it stays explicitly limited to the already loaded server page and intentionally does not pretend to be a scalable cross-catalog search experience
+- product detail now also reuses the product's primary category plus the existing category-product listing contract to show related products without inventing a recommendation-specific API
 
 The first account self-service foundation is now also in place:
 
@@ -114,10 +118,19 @@ The next localization/config-driven slice is now also in place:
 - `Darwin.Web` now treats `de-DE` and `en-US` as the current supported front-office cultures and resolves the active culture through config plus a web-owned culture cookie
 - query-string culture switching now lands through middleware so `?culture=de-DE|en-US` becomes a persisted preference instead of an ad hoc page-only toggle
 - shell fallback navigation/footer copy now follows the active culture instead of staying hardcoded in one language
-- shared shell/catalog/storefront-commerce wording is now moving onto resource bundles under `src/Darwin.Web/src/localization/resources`, aligned with the same de/en-first additive strategy already being established across WebAdmin and mobile
+- shared shell/catalog/storefront-commerce wording plus account-edit/member-commerce and loyalty discovery/public-detail wording now runs through resource bundles under `src/Darwin.Web/src/localization/resources`, aligned with the same de/en-first additive strategy already being established across WebAdmin and mobile
+- route-level metadata for shell, Home, CMS, catalog, checkout, account, orders, invoices, and loyalty now also resolves through the same culture-aware resource path instead of static page-level title/description literals
+- `Darwin.Web` now also centralizes canonical, Open Graph, Twitter, and `noindex` policy in `src/lib/seo.ts`, driven by the configured `DARWIN_WEB_SITE_URL` instead of ad hoc route metadata shaping
+- `Darwin.Web` now also exposes `robots.txt` and `sitemap.xml`, with sitemap entries derived from live public CMS/catalog contracts rather than a hand-maintained static URL list
+- public Home/CMS/catalog routes now also support locale-prefixed URLs through middleware rewrite plus request-level culture headers, instead of relying only on cookie/query-based culture switching for indexable pages
+- shell navigation, Home web parts, CMS browsing, and catalog browsing now also emit those locale-aware public links directly through a shared locale-routing helper, so non-default cultures do not depend on redirect-only navigation
+- member sign-in, account self-service return paths, loyalty action return paths, payment failure redirects, and storefront cart display snapshots now also sanitize app-local paths before redirecting or persisting UI links, so the front-office does not trust arbitrary user-supplied redirect targets
+- local web-owned validation and flash messages for register/activation/password/sign-in, cart/checkout, payment retry, profile/preferences/addresses, and loyalty join/scan/promotion flows now travel as localization keys and resolve inside the UI resource bundles instead of staying as server-action English fallbacks
+- generic public/member API fallback messages plus CMS index/detail degraded-mode copy now also resolve through resources, so network/not-found/http fallback states no longer depend on English-only client literals
 - money and date formatting across catalog, cart, checkout, orders, invoices, and loyalty now follow the active request culture instead of assuming `de-DE`
 - profile locale editing now follows the supported-cultures config instead of accepting an unrestricted free-text locale
 - multilingual CMS/content operations still remain a separate platform dependency; the current slice only makes the web runtime localization-ready and aligned with the shared de/en baseline
+- public account auth, the signed-in dashboard shell, profile/preferences/addresses, member orders/invoices, and loyalty surfaces including overview, discovery, public detail, and signed-in business detail now also consume resource-backed copy instead of app-local text blocks
 
 The next loyalty engagement slice is now also in place:
 
@@ -183,6 +196,7 @@ Delivery rules:
 - storefront DTOs must remain presentation-oriented
 - member DTOs must remain audience-specific
 - admin operational models must not leak into public/member delivery
+- if the web needs true storefront search, facets, or server-side sorting, those capabilities must land as explicit public catalog contracts rather than being reconstructed from one page of product cards
 
 ## 4.2 Confirmed WebApi Surfaces That Are Already Real
 
@@ -411,6 +425,9 @@ Typical split:
 - CMS pages: SSR or ISR
 - product/category pages: SSR or ISR
 - member pages: authenticated server/client fetch depending on session approach
+- public Home/CMS/catalog routes now also emit centralized canonical/Open Graph/Twitter metadata, while private or mixed member routes intentionally stay `noindex` until a cleaner public/member URL split exists
+- `robots.txt` and `sitemap.xml` should enumerate only public/indexable routes; public Home/CMS/catalog routes can now resolve under locale-prefixed URLs, but sitemap still stays on default-culture canonicals until backend slug mapping exists for safe detail-page alternates
+- because `/`, `/cms`, and `/catalog` already have stable cross-language path shapes, sitemap can enumerate their locale-prefixed variants now; CMS/product detail inventory still remains default-culture-only until backend exposes safe localized slug linking
 
 ## 8.1 Theme and Page-Composition Strategy
 
