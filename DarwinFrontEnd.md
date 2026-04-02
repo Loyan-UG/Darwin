@@ -114,6 +114,7 @@ The next storefront slice is now also underway:
 - CMS detail now also derives on-page section navigation and reading/structure metrics from the published HTML itself, so rich content remains navigable without needing a separate CMS-specific page-layout contract first
 - CMS detail anchor ids now also normalize diacritics before slugging section headings, so German and other accented headings keep stable in-page navigation ids instead of collapsing into weak fallback slugs
 - CMS index and CMS detail now also surface live catalog-category and live product follow-up windows, so public content routes can hand off directly into real commerce browse/detail paths instead of only pointing back to the generic catalog route
+- CMS index and CMS detail now also surface live cart/checkout continuity from the canonical public cart contract, so published content can hand off directly into an already active purchase flow instead of only into browse routes
 - a public cart route now consumes the public cart contract and supports server-side add/update/remove flows for anonymous storefront usage
 - the cart route now also reuses the public catalog contract for a small continue-shopping follow-up rail plus explicit cart next-step guidance, instead of leaving the shopper only with totals and checkout CTA
 - the cart route now also reuses saved member addresses when a browser member session exists, so checkout readiness is already visible before the shopper leaves cart for checkout
@@ -800,6 +801,8 @@ When the separate mobile-review chat starts, it should explicitly revisit these 
 
 ## 17. Recent Darwin.Web Hardening Notes
 
+- cart and checkout now also surface a live storefront-discovery window backed by published CMS pages, public categories, and visible product opportunities, so active purchase routes can hand shoppers back into content, browse, and upsell paths without dropping the current conversion flow
+- order confirmation now also surfaces that same live storefront-discovery window, so after-purchase shoppers can move directly into content, browse, and product follow-up instead of ending on a receipt-only route
 - document download links in member order and invoice detail now validate absolute and proxied WebApi URL shape before rendering anchors
 - if the backend contract returns a malformed document path, the web route now keeps the surface usable and shows an explicit unavailable state instead of rendering a broken or over-permissive download link
 - remaining loyalty discovery map links and linked-invoice detail handoffs now also honor locale-prefixed routing, closing another localized-route drift inside public/member continuity flows

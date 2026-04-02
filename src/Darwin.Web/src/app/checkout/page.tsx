@@ -1,5 +1,7 @@
 import { CheckoutPage } from "@/components/checkout/checkout-page";
 import { getCartViewModel } from "@/features/cart/server/get-cart-view-model";
+import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { createPublicCheckoutIntent } from "@/features/checkout/api/public-checkout";
 import {
   hasCheckoutDraftValues,
@@ -44,6 +46,19 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
   const [model, memberSession] = await Promise.all([
     getCartViewModel(),
     getMemberSession(),
+  ]);
+  const [cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
+    getPublishedPages({
+      page: 1,
+      pageSize: 3,
+      culture,
+    }),
+    getPublicCategories(culture),
+    getPublicProducts({
+      page: 1,
+      pageSize: 3,
+      culture,
+    }),
   ]);
   const requestedDraft = readCheckoutDraftFromSearchParams(resolvedSearchParams);
   const checkoutError = readSingleSearchParam(resolvedSearchParams?.checkoutError);
@@ -126,6 +141,12 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
       profilePrefillActive={!preferredMemberAddress && Boolean(memberProfile)}
       selectedMemberAddressId={effectiveSelectedMemberAddressId}
       hasMemberSession={Boolean(memberSession)}
+      cmsPages={cmsPagesResult.data?.items ?? []}
+      cmsPagesStatus={cmsPagesResult.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
+      products={productsResult.data?.items ?? []}
+      productsStatus={productsResult.status}
     />
   );
 }

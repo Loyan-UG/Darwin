@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import { getPublicCart } from "@/features/cart/api/public-cart";
+import { getAnonymousCartId } from "@/features/cart/cookies";
 import {
   getPublicCategories,
   getPublicProducts,
@@ -54,7 +56,8 @@ export async function generateMetadata({ params }: CmsPageProps) {
 export default async function CmsPage({ params }: CmsPageProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
-  const [pageResult, relatedPagesSeed, categoriesResult, productsResult] = await Promise.all([
+  const anonymousCartId = await getAnonymousCartId();
+  const [pageResult, relatedPagesSeed, categoriesResult, productsResult, cartResult] = await Promise.all([
     getPublicPageBySlug(slug, culture),
     getPublishedPageSet(culture),
     getPublicCategories(culture),
@@ -63,6 +66,9 @@ export default async function CmsPage({ params }: CmsPageProps) {
       pageSize: 3,
       culture,
     }),
+    anonymousCartId
+      ? getPublicCart(anonymousCartId)
+      : Promise.resolve({ data: null, status: "not-found" as const }),
   ]);
   const page = pageResult.data;
 
@@ -82,6 +88,16 @@ export default async function CmsPage({ params }: CmsPageProps) {
       categoriesStatus={categoriesResult.status}
       products={productsResult.data?.items ?? []}
       productsStatus={productsResult.status}
+      cartSummary={
+        cartResult.data
+          ? {
+              status: cartResult.status,
+              itemCount: cartResult.data.items.length,
+              currency: cartResult.data.currency,
+              grandTotalGrossMinor: cartResult.data.grandTotalGrossMinor,
+            }
+          : null
+      }
     />
   );
 }

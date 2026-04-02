@@ -1,4 +1,6 @@
 import { CmsPagesIndex } from "@/components/cms/cms-pages-index";
+import { getPublicCart } from "@/features/cart/api/public-cart";
+import { getAnonymousCartId } from "@/features/cart/cookies";
 import {
   getPublicCategories,
   getPublicProducts,
@@ -54,7 +56,8 @@ export default async function CmsIndexRoute({
   const culture = await getRequestCulture();
   const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
   const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
-  const [pagesResult, categoriesResult, productsResult] = await Promise.all([
+  const anonymousCartId = await getAnonymousCartId();
+  const [pagesResult, categoriesResult, productsResult, cartResult] = await Promise.all([
     getPublishedPages({
       page: safePage,
       pageSize: 12,
@@ -66,6 +69,9 @@ export default async function CmsIndexRoute({
       pageSize: 3,
       culture,
     }),
+    anonymousCartId
+      ? getPublicCart(anonymousCartId)
+      : Promise.resolve({ data: null, status: "not-found" as const }),
   ]);
   const visiblePages = visibleQuery
     ? (pagesResult.data?.items ?? []).filter((page) => {
@@ -95,6 +101,16 @@ export default async function CmsIndexRoute({
       categoriesStatus={categoriesResult.status}
       products={productsResult.data?.items ?? []}
       productsStatus={productsResult.status}
+      cartSummary={
+        cartResult.data
+          ? {
+              status: cartResult.status,
+              itemCount: cartResult.data.items.length,
+              currency: cartResult.data.currency,
+              grandTotalGrossMinor: cartResult.data.grandTotalGrossMinor,
+            }
+          : null
+      }
     />
   );
 }

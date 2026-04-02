@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { CommerceAuthHandoff } from "@/components/checkout/commerce-auth-handoff";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
+import { CommerceStorefrontWindow } from "@/components/checkout/commerce-storefront-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
   applyCartCouponAction,
   removeCartItemAction,
   updateCartQuantityAction,
 } from "@/features/cart/actions";
-import type { PublicProductSummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
 import {
   buildCheckoutDraftSearch,
@@ -40,6 +45,10 @@ type CartPageProps = {
   cartStatus?: string;
   cartError?: string;
   followUpProducts?: PublicProductSummary[];
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function getStatusMessage(status?: string) {
@@ -72,6 +81,10 @@ export function CartPage({
   cartStatus,
   cartError,
   followUpProducts = [],
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: CartPageProps) {
   const copy = getCommerceResource(culture);
   const statusMessageKey = getStatusMessage(cartStatus);
@@ -760,6 +773,16 @@ export function CartPage({
                 routeKey="cart"
               />
             )}
+
+            <CommerceStorefrontWindow
+              culture={culture}
+              cmsPages={cmsPages}
+              cmsPagesStatus={cmsPagesStatus}
+              categories={categories}
+              categoriesStatus={categoriesStatus}
+              products={followUpProducts}
+              productsStatus={followUpProducts.length > 0 ? "ok" : "empty"}
+            />
 
             <CommerceContinuationRail culture={culture} />
           </div>

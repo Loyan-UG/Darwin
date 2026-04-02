@@ -1,6 +1,7 @@
 import { CartPage } from "@/components/cart/cart-page";
-import { getPublicProducts } from "@/features/catalog/api/public-catalog";
+import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
 import type { PublicProductSummary } from "@/features/catalog/types";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { getCartViewModel } from "@/features/cart/server/get-cart-view-model";
 import {
   readAllowedSearchParam,
@@ -38,6 +39,14 @@ export default async function CartRoute({ searchParams }: CartRouteProps) {
   const [model, memberSession] = await Promise.all([
     getCartViewModel(),
     getMemberSession(),
+  ]);
+  const [cmsPagesResult, categoriesResult] = await Promise.all([
+    getPublishedPages({
+      page: 1,
+      pageSize: 3,
+      culture,
+    }),
+    getPublicCategories(culture),
   ]);
   const [memberAddressesResult, memberProfileResult, memberPreferencesResult] = memberSession
     ? await Promise.all([
@@ -85,6 +94,10 @@ export default async function CartRoute({ searchParams }: CartRouteProps) {
       ])}
       cartError={readSingleSearchParam(resolvedSearchParams?.cartError)}
       followUpProducts={followUpProducts}
+      cmsPages={cmsPagesResult.data?.items ?? []}
+      cmsPagesStatus={cmsPagesResult.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
     />
   );
 }

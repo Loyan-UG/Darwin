@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { CommerceAuthHandoff } from "@/components/checkout/commerce-auth-handoff";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
+import { CommerceStorefrontWindow } from "@/components/checkout/commerce-storefront-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { placeStorefrontOrderAction } from "@/features/checkout/actions";
 import { isCheckoutAddressComplete } from "@/features/checkout/helpers";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { CheckoutDraft, PublicCheckoutIntent } from "@/features/checkout/types";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
+import type { PublicPageSummary } from "@/features/cms/types";
 import type {
   MemberAddress,
   MemberCustomerProfile,
@@ -40,6 +46,12 @@ type CheckoutPageProps = {
   profilePrefillActive: boolean;
   selectedMemberAddressId?: string;
   hasMemberSession: boolean;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 function getFinalTotalMinor(
@@ -72,6 +84,12 @@ export function CheckoutPage({
   profilePrefillActive,
   selectedMemberAddressId,
   hasMemberSession,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
+  products,
+  productsStatus,
 }: CheckoutPageProps) {
   const copy = getCommerceResource(culture);
   const resolvedCheckoutError = resolveLocalizedQueryMessage(checkoutError, copy);
@@ -962,6 +980,16 @@ export function CheckoutPage({
                 {copy.placeOrderButton}
               </button>
             </form>
+
+            <CommerceStorefrontWindow
+              culture={culture}
+              cmsPages={cmsPages}
+              cmsPagesStatus={cmsPagesStatus}
+              categories={categories}
+              categoriesStatus={categoriesStatus}
+              products={products}
+              productsStatus={productsStatus}
+            />
 
             <CommerceContinuationRail culture={culture} includeCart />
           </div>

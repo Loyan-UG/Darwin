@@ -25,6 +25,12 @@ type CmsPageDetailProps = {
   categoriesStatus: string;
   products: PublicProductSummary[];
   productsStatus: string;
+  cartSummary: {
+    status: string;
+    itemCount: number;
+    currency: string;
+    grandTotalGrossMinor: number;
+  } | null;
 };
 
 export function CmsPageDetail({
@@ -38,6 +44,7 @@ export function CmsPageDetail({
   categoriesStatus,
   products,
   productsStatus,
+  cartSummary,
 }: CmsPageDetailProps) {
   const copy = getSharedResource(culture);
   const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
@@ -445,6 +452,38 @@ export function CmsPageDetail({
                 })}
               </p>
             )}
+          </div>
+
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.cmsCartWindowTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {cartSummary
+                ? formatResource(copy.cmsCartWindowMessage, {
+                    itemCount: cartSummary.itemCount,
+                    total: formatMoney(
+                      cartSummary.grandTotalGrossMinor,
+                      cartSummary.currency,
+                      culture,
+                    ),
+                  })
+                : copy.cmsCartWindowFallback}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href={localizeHref("/cart", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsCartWindowCartCta}
+              </Link>
+              <Link
+                href={localizeHref("/checkout", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsCartWindowCheckoutCta}
+              </Link>
+            </div>
           </div>
 
           <CmsContinuationRail culture={culture} description={copy.cmsFollowUpDescription} />

@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { OrderConfirmationPage } from "@/components/checkout/order-confirmation-page";
 import { getPublicStorefrontOrderConfirmation } from "@/features/checkout/api/public-checkout";
 import { readStorefrontPaymentHandoff } from "@/features/checkout/cookies";
@@ -81,12 +83,23 @@ export default async function OrderConfirmationRoute({
     );
   }
 
-  const [confirmationResult, memberSession] = await Promise.all([
+  const [confirmationResult, memberSession, cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
     getPublicStorefrontOrderConfirmation(
       resolvedParams.orderId,
       orderNumber,
     ),
     getMemberSession(),
+    getPublishedPages({
+      page: 1,
+      pageSize: 3,
+      culture,
+    }),
+    getPublicCategories(culture),
+    getPublicProducts({
+      page: 1,
+      pageSize: 3,
+      culture,
+    }),
   ]);
   const [memberOrdersResult, memberInvoicesResult, memberLoyaltyOverviewResult] =
     memberSession
@@ -121,6 +134,12 @@ export default async function OrderConfirmationRoute({
       memberInvoicesStatus={memberInvoicesResult?.status ?? "idle"}
       memberLoyaltyOverview={memberLoyaltyOverviewResult?.data ?? null}
       memberLoyaltyStatus={memberLoyaltyOverviewResult?.status ?? "idle"}
+      cmsPages={cmsPagesResult.data?.items ?? []}
+      cmsPagesStatus={cmsPagesResult.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
+      products={productsResult.data?.items ?? []}
+      productsStatus={productsResult.status}
     />
   );
 }

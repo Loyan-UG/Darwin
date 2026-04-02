@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
+import { CommerceStorefrontWindow } from "@/components/checkout/commerce-storefront-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
 import type { PublicStorefrontOrderConfirmation } from "@/features/checkout/types";
 import type {
@@ -34,6 +40,12 @@ type OrderConfirmationPageProps = {
   memberInvoicesStatus: string;
   memberLoyaltyOverview: MyLoyaltyOverview | null;
   memberLoyaltyStatus: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 function renderAddress(address: ParsedAddress | null, culture: string) {
@@ -108,6 +120,12 @@ export function OrderConfirmationPage({
   memberInvoicesStatus,
   memberLoyaltyOverview,
   memberLoyaltyStatus,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
+  products,
+  productsStatus,
 }: OrderConfirmationPageProps) {
   const copy = getCommerceResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
@@ -763,6 +781,16 @@ export function OrderConfirmationPage({
                 </div>
               )}
             </aside>
+
+            <CommerceStorefrontWindow
+              culture={culture}
+              cmsPages={cmsPages}
+              cmsPagesStatus={cmsPagesStatus}
+              categories={categories}
+              categoriesStatus={categoriesStatus}
+              products={products}
+              productsStatus={productsStatus}
+            />
 
             <CommerceContinuationRail
               culture={culture}
