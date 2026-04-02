@@ -418,6 +418,75 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
           );
         }
 
+        if (part.kind === "agenda-columns") {
+          return (
+            <section
+              key={part.id}
+              className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+            >
+              <div className="max-w-3xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
+                  {part.eyebrow}
+                </p>
+                <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl leading-tight text-[var(--color-text-primary)] sm:text-4xl">
+                  {part.title}
+                </h2>
+                <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
+                  {part.description}
+                </p>
+              </div>
+
+              {part.columns.length > 0 ? (
+                <div className="mt-8 grid gap-5 xl:grid-cols-3">
+                  {part.columns.map((column) => (
+                    <article
+                      key={column.id}
+                      className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                        {column.label}
+                      </p>
+                      <h3 className="mt-4 text-2xl font-semibold text-[var(--color-text-primary)]">
+                        {column.title}
+                      </h3>
+                      <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {column.description}
+                      </p>
+                      <div className="mt-5 flex flex-col gap-3">
+                        {column.bullets.map((bullet) => (
+                          <div
+                            key={bullet}
+                            className="rounded-2xl bg-[var(--color-surface-panel)] px-4 py-3 text-sm leading-7 text-[var(--color-text-secondary)]"
+                          >
+                            {bullet}
+                          </div>
+                        ))}
+                      </div>
+                      {column.meta ? (
+                        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                          {column.meta}
+                        </p>
+                      ) : null}
+                      <div className="mt-5">
+                        <Link
+                          href={localizeHref(column.href, culture)}
+                          className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                        >
+                          {column.ctaLabel}
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-8 rounded-[1.75rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {part.emptyMessage}
+                </div>
+              )}
+            </section>
+          );
+        }
+
         return (
           <section
             key={part.id}

@@ -79,6 +79,7 @@ The first web slice is now in place:
 - the home page now also includes a reusable status-list web part, so contract-backed CMS/catalog/account lanes remain actionable and theme-independent instead of collapsing into one-off home markup
 - the home page now also includes a reusable stage-flow web part, so Home communicates a staged storefront journey across CMS, catalog, and member follow-up instead of a loose collection of route teasers
 - the home page now also includes a reusable pair-panel web part, so CMS and catalog can be presented as coordinated storefront surfaces instead of only independent spotlight cards
+- the home page now also includes a reusable agenda-columns web part, so content, commerce, and member follow-up can be rendered as parallel front-office streams instead of only linear or pairwise sections
 - route scaffolding now exists for catalog, account, loyalty, orders, and invoices so later slices can bind feature data without reworking the shell
 
 The next storefront slice is now also underway:
@@ -88,20 +89,34 @@ The next storefront slice is now also underway:
 - a public CMS index route now consumes the published CMS page list contract
 - public CMS list/detail delivery now also follows the active request culture instead of relying on backend default-language behavior
 - the CMS index now also offers a visible-result search lens over the already loaded page set, but keeps that state explicit and non-canonical until a real public CMS search contract exists
+- the CMS index now also surfaces visible-vs-loaded-vs-total result summaries, so the public content route stays aware of the current published set instead of acting like an unbounded card grid
+- the CMS index now also groups the visible page set by title initials with quick-jump anchors, so public content browsing feels like an oriented set without inventing a separate CMS taxonomy contract
+- the CMS index now also derives a spotlight-plus-follow-up rail from the current visible result window, so the route can guide storefront reading without pretending a richer CMS curation contract already exists
+- the CMS index now also exposes explicit handoff cards into Home, Catalog, and Account, so public CMS browsing stays connected to the broader front-office system instead of ending in content-only loops
+- the CMS index pagination now also exposes first/last jumps while preserving the page-local visible-result lens, so public content window navigation is more complete without implying real backend search
 - CMS index empty states now also keep Home/Catalog follow-up actions visible instead of leaving the public content surface at a dead end
 - CMS detail pages now expose route metadata, related-page navigation, and visible degraded-state handling instead of collapsing non-404 failures into a not-found route
+- CMS detail now also derives previous/next adjacency from the published page list and keeps Home/Catalog/Account follow-up explicit, so long-form content does not end in a leaf route
+- CMS detail now also exposes breadcrumb and published-set position context, so long-form content remains oriented inside the broader public CMS set rather than feeling detached from storefront navigation
 - CMS detail now also derives on-page section navigation and reading/structure metrics from the published HTML itself, so rich content remains navigable without needing a separate CMS-specific page-layout contract first
+- CMS detail anchor ids now also normalize diacritics before slugging section headings, so German and other accented headings keep stable in-page navigation ids instead of collapsing into weak fallback slugs
 - a public cart route now consumes the public cart contract and supports server-side add/update/remove flows for anonymous storefront usage
 - the cart route now also reuses the public catalog contract for a small continue-shopping follow-up rail plus explicit cart next-step guidance, instead of leaving the shopper only with totals and checkout CTA
 - a public checkout route now consumes checkout-intent and order-placement contracts with inline address capture and shipping selection
 - the checkout UI now also keeps readiness signals and live line-item review visible, so storefront conversion no longer depends only on totals plus the address form
 - a public confirmation route now consumes storefront confirmation data and exposes payment-handoff retry through the payment-intent contract
 - the confirmation route now also keeps post-checkout guidance explicit, including payment-next-step messaging, account/order-history follow-up, and stable order-reference handling instead of a passive receipt-only view
+- confirmation and auth-required follow-up links now also sanitize app-local return targets centrally, and the confirmation UI derives displayed order/payment status from the authoritative confirmation snapshot instead of trusting query-carried status text
+- auth-required member entry points now also expose route-summary plus cross-surface follow-up panels, so protected routes do not regress to a minimal access wall while the rest of the portal carries richer orientation and handoff UX
+- cart, checkout, and confirmation now also share breadcrumb-style route orientation plus explicit cross-surface handoff cards, so the conversion chain stays connected to the wider storefront system instead of behaving like detached transactional pages
 - degraded-mode storefront data states are now visible in the UI instead of silently collapsing into placeholder-only behavior
 - catalog list/detail now pass the active request culture into the canonical public catalog endpoints, so storefront localization no longer depends on the backend default culture leaking through
 - catalog merchandising polish now stays within the real public contract set: selected-category context, compare-at savings badges, and category-linked navigation were added without pretending search/facets/sort already exist
 - `/catalog` now also includes a page-local visible-result search/sort lens, but it stays explicitly limited to the already loaded server page and intentionally does not pretend to be a scalable cross-catalog search experience
+- `/catalog` now also surfaces visible-vs-loaded-vs-total result summaries plus first/last page jumps, so catalog window navigation is more complete without implying true backend search/facets support
 - product detail now also reuses the product's primary category plus the existing category-product listing contract to show related products without inventing a recommendation-specific API
+- product detail now also surfaces degraded related-product follow-up state explicitly when that category-based follow-up fetch fails, instead of silently flattening adjacent catalog discovery
+- product detail now also exposes breadcrumb, product-reference snapshot, and explicit storefront handoff actions so the conversion route stays oriented inside the broader front-office system
 
 The first account self-service foundation is now also in place:
 
@@ -123,10 +138,15 @@ The next member-portal slice is now also in place:
 - profile phone-verification and address forms now also carry stronger client-side input/autocomplete guardrails so avoidable member-data mistakes are caught before the canonical API call
 - phone verification request/confirm now runs inside the profile surface through the canonical SMS/WhatsApp verification endpoints and shared profile confirmation flag
 - orders and invoices now render authenticated history pages plus detail routes with payment-retry handoff
+- unavailable order/invoice detail states now also keep explicit follow-up actions to account/catalog and their parent history routes instead of collapsing into warning-only dead ends
 - loyalty now renders the authenticated overview instead of remaining a placeholder page
 - member orders/invoices/loyalty now also follow the same shared member-portal navigation model as profile/preferences/addresses, so the authenticated portal behaves more like one subsystem than a set of detached routes
+- dashboard, orders, invoices, and loyalty overview now also expose breadcrumb-style route orientation plus cross-surface handoff actions, so the authenticated member area stays connected to the wider front-office system instead of behaving like a sealed portal island
+- profile/preferences/addresses plus order/invoice/loyalty-business detail routes now also expose the same breadcrumb-style route orientation and cross-surface handoff actions, so editor/detail screens stay inside the same front-office navigation model instead of collapsing back to isolated portal pages
+- dashboard and preferences now also surface explicit route-summary/follow-up panels, and address/order/invoice empty states now keep actionable catalog/account follow-up instead of ending in passive placeholder blocks
 - loyalty business detail routes now render business-scoped dashboard, rewards, and cursor-paged timeline data from the member contracts
 - loyalty business detail now also follows the shared member-portal navigation model, and browser-prepared scan-token state now clears stale/mismatched cookie state instead of silently drifting
+- loyalty overview, discovery, public business detail, and signed-in business detail now also expose explicit route-summary panels plus actionable empty/degraded follow-up CTAs, so loyalty routes stay observable and navigable instead of degrading into passive no-data states
 - this remains an implementation boundary, not a permanent architecture verdict; deeper BFF/session hardening can still replace the current web-owned cookie wrapper later
 
 The next localization/config-driven slice is now also in place:
@@ -141,8 +161,11 @@ The next localization/config-driven slice is now also in place:
 - public Home/CMS/catalog routes now also support locale-prefixed URLs through middleware rewrite plus request-level culture headers, instead of relying only on cookie/query-based culture switching for indexable pages
 - shell navigation, Home web parts, CMS browsing, and catalog browsing now also emit those locale-aware public links directly through a shared locale-routing helper, so non-default cultures do not depend on redirect-only navigation
 - member sign-in, account self-service return paths, loyalty action return paths, payment failure redirects, and storefront cart display snapshots now also sanitize app-local paths before redirecting or persisting UI links, so the front-office does not trust arbitrary user-supplied redirect targets
+- catalog, CMS, and loyalty public search/discovery routes now also normalize page/text/numeric search params through shared helpers and submit through locale-aware form actions, so public server-rendered filters do not drift across surfaces
 - local web-owned validation and flash messages for register/activation/password/sign-in, cart/checkout, payment retry, profile/preferences/addresses, and loyalty join/scan/promotion flows now travel as localization keys and resolve inside the UI resource bundles instead of staying as server-action English fallbacks
 - generic public/member API fallback messages plus CMS index/detail degraded-mode copy now also resolve through resources, so network/not-found/http fallback states no longer depend on English-only client literals
+- CMS detail unavailable state plus catalog index/detail now also expose route-summary diagnostics and actionable no-result/unavailable follow-up CTAs, so degraded public storefront routes stay observable and navigable instead of collapsing into passive warning blocks
+- cart, checkout, and confirmation now also expose route-summary diagnostics plus stronger empty/unavailable follow-up CTAs, so the conversion path stays observable and actionable instead of degrading into passive panels
 - money and date formatting across catalog, cart, checkout, orders, invoices, and loyalty now follow the active request culture instead of assuming `de-DE`
 - profile locale editing now follows the supported-cultures config instead of accepting an unrestricted free-text locale
 - multilingual CMS/content operations still remain a separate platform dependency; the current slice only makes the web runtime localization-ready and aligned with the shared de/en baseline

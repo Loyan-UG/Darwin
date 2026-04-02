@@ -54,6 +54,17 @@ export type WebPagePairPanel = {
   meta?: string;
 };
 
+export type WebPageAgendaColumn = {
+  id: string;
+  label: string;
+  title: string;
+  description: string;
+  href: string;
+  ctaLabel: string;
+  bullets: string[];
+  meta?: string;
+};
+
 export type WebPageMetric = {
   id: string;
   label: string;
@@ -131,6 +142,16 @@ export type PairPanelPagePart = {
   trailing: WebPagePairPanel;
 };
 
+export type AgendaColumnsPagePart = {
+  id: string;
+  kind: "agenda-columns";
+  eyebrow: string;
+  title: string;
+  description: string;
+  columns: WebPageAgendaColumn[];
+  emptyMessage: string;
+};
+
 export type BlankStatePagePart = {
   id: string;
   kind: "blank-state";
@@ -148,4 +169,5 @@ export type WebPagePart =
   | StatusListPagePart
   | StageFlowPagePart
   | PairPanelPagePart
+  | AgendaColumnsPagePart
   | BlankStatePagePart;

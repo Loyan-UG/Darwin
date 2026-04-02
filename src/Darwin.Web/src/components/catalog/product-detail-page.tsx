@@ -16,6 +16,7 @@ type ProductDetailPageProps = {
   primaryCategory: PublicCategorySummary | null;
   relatedProducts: PublicProductSummary[];
   status: string;
+  relatedProductsStatus?: string;
 };
 
 export function ProductDetailPage({
@@ -24,6 +25,7 @@ export function ProductDetailPage({
   primaryCategory,
   relatedProducts,
   status,
+  relatedProductsStatus,
 }: ProductDetailPageProps) {
   const copy = getCatalogResource(culture);
 
@@ -37,12 +39,20 @@ export function ProductDetailPage({
             message={formatResource(copy.productUnavailableMessage, { status })}
           />
           <div className="mt-8">
-            <Link
-              href={localizeHref("/catalog", culture)}
-              className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-            >
-              {copy.backToCatalog}
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={localizeHref("/catalog", culture)}
+                className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+              >
+                {copy.backToCatalog}
+              </Link>
+              <Link
+                href={localizeHref("/cms", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.productUnavailableCmsCta}
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -72,6 +82,56 @@ export function ProductDetailPage({
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
+      <nav
+        aria-label={copy.productBreadcrumbLabel}
+        className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)]"
+      >
+        <Link
+          href={localizeHref("/", culture)}
+          className="transition hover:text-[var(--color-brand)]"
+        >
+          {copy.productBreadcrumbHome}
+        </Link>
+        <span>/</span>
+        <Link
+          href={localizeHref("/catalog", culture)}
+          className="transition hover:text-[var(--color-brand)]"
+        >
+          {copy.productBreadcrumbCatalog}
+        </Link>
+        {primaryCategory ? (
+          <>
+            <span>/</span>
+            <Link
+              href={localizeHref(
+                `/catalog?category=${encodeURIComponent(primaryCategory.slug)}`,
+                culture,
+              )}
+              className="transition hover:text-[var(--color-brand)]"
+            >
+              {primaryCategory.name}
+            </Link>
+          </>
+        ) : null}
+        <span>/</span>
+        <span className="font-medium text-[var(--color-text-primary)]">
+          {product.name}
+        </span>
+      </nav>
+
+      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+          {copy.productRouteSummaryTitle}
+        </p>
+        <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+          {formatResource(copy.productRouteSummaryMessage, {
+            status,
+            relatedProductsStatus: relatedProductsStatus ?? "ok",
+            relatedCount: relatedProducts.length,
+          })}
+        </p>
+      </div>
+
       <div className="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)] sm:p-8">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -180,6 +240,37 @@ export function ProductDetailPage({
             </p>
           </div>
 
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.productReferenceSlugLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {product.slug}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.productReferenceMediaLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.productReferenceMediaValue, {
+                  count: product.media.length,
+                })}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.productReferenceVariantsLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.productReferenceVariantsValue, {
+                  count: product.variants.length,
+                })}
+              </p>
+            </div>
+          </div>
+
           <div className="mt-8 grid gap-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.variantSnapshotTitle}
@@ -230,6 +321,35 @@ export function ProductDetailPage({
             >
               {copy.openCart}
             </Link>
+          </div>
+
+          <div className="mt-8 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.productCrossSurfaceTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.productCrossSurfaceMessage}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href={localizeHref("/", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {copy.productCrossSurfaceHomeCta}
+              </Link>
+              <Link
+                href={localizeHref("/catalog", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {copy.backToCatalog}
+              </Link>
+              <Link
+                href={localizeHref("/account", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {copy.productCrossSurfaceAccountCta}
+              </Link>
+            </div>
           </div>
 
           {product.fullDescriptionHtml ? (
@@ -285,6 +405,18 @@ export function ProductDetailPage({
             </Link>
           </div>
 
+          {relatedProductsStatus && relatedProductsStatus !== "ok" ? (
+            <div className="mt-6">
+              <StatusBanner
+                tone="warning"
+                title={copy.relatedProductsDegradedTitle}
+                message={formatResource(copy.relatedProductsDegradedMessage, {
+                  status: relatedProductsStatus,
+                })}
+              />
+            </div>
+          ) : null}
+
           {relatedProducts.length > 0 ? (
             <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {relatedProducts.map((relatedProduct) => (
@@ -339,9 +471,25 @@ export function ProductDetailPage({
               ))}
             </div>
           ) : (
-            <p className="mt-6 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {copy.relatedProductsEmptyMessage}
-            </p>
+            <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
+              <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.relatedProductsEmptyMessage}
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <Link
+                  href={localizeHref("/catalog", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {copy.backToCatalog}
+                </Link>
+                <Link
+                  href={localizeHref("/cms", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {copy.productUnavailableCmsCta}
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       ) : null}

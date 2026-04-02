@@ -8,7 +8,7 @@ import {
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 
 type ParsedAddress = {
   fullName?: string;
@@ -30,8 +30,6 @@ type OrderConfirmationPageProps = {
   checkoutStatus?: string;
   paymentCompletionStatus?: string;
   paymentOutcome?: string;
-  paymentStatus?: string;
-  orderStatus?: string;
   paymentError?: string;
   cancelled?: boolean;
   hasMemberSession?: boolean;
@@ -84,6 +82,23 @@ function hasSuccessfulPayment(confirmation: PublicStorefrontOrderConfirmation) {
   });
 }
 
+function resolveDisplayedPaymentStatus(
+  confirmation: PublicStorefrontOrderConfirmation,
+  paymentCompletionStatus: string | undefined,
+  paymentOutcome: string | undefined,
+  fallback: string,
+) {
+  if (paymentCompletionStatus === "completed" && paymentOutcome) {
+    return paymentOutcome;
+  }
+
+  if (confirmation.payments.length === 1) {
+    return confirmation.payments[0].status;
+  }
+
+  return fallback;
+}
+
 export function OrderConfirmationPage({
   culture,
   confirmation,
@@ -92,8 +107,6 @@ export function OrderConfirmationPage({
   checkoutStatus,
   paymentCompletionStatus,
   paymentOutcome,
-  paymentStatus,
-  orderStatus,
   paymentError,
   cancelled,
   hasMemberSession = false,
@@ -130,13 +143,20 @@ export function OrderConfirmationPage({
   const shippingAddress = parseAddress(confirmation.shippingAddressJson);
   const paid = hasSuccessfulPayment(confirmation);
   const paymentNeedsAttention = !paid;
-  const orderTrackingHref = "/orders";
+  const memberOrderDetailHref = sanitizeAppPath(
+    `/orders/${confirmation.orderId}`,
+    "/orders",
+  );
+  const memberOrdersHref = sanitizeAppPath(
+    "/orders",
+    "/orders",
+  );
   const signInHref = localizeHref(
-    `/account/sign-in?returnPath=${encodeURIComponent(orderTrackingHref)}`,
+    `/account/sign-in?returnPath=${encodeURIComponent(memberOrderDetailHref)}`,
     culture,
   );
   const registerHref = localizeHref(
-    `/account/register?returnPath=${encodeURIComponent(orderTrackingHref)}`,
+    `/account/register?returnPath=${encodeURIComponent(memberOrderDetailHref)}`,
     culture,
   );
   const paymentStepTitle = resolvedPaymentError || cancelled || paymentCompletionStatus === "failed"
@@ -155,10 +175,41 @@ export function OrderConfirmationPage({
   const accountStepMessage = hasMemberSession
     ? copy.nextStepAccountSignedInMessage
     : copy.nextStepAccountGuestMessage;
+  const displayedPaymentStatus = resolveDisplayedPaymentStatus(
+    confirmation,
+    paymentCompletionStatus,
+    paymentOutcome,
+    copy.unavailable,
+  );
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
+        <nav
+          aria-label={copy.commerceBreadcrumbLabel}
+          className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)]"
+        >
+          <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbHome}
+          </Link>
+          <span>/</span>
+          <Link href={localizeHref("/catalog", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbCatalog}
+          </Link>
+          <span>/</span>
+          <Link href={localizeHref("/cart", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbCart}
+          </Link>
+          <span>/</span>
+          <Link href={localizeHref("/checkout", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbCheckout}
+          </Link>
+          <span>/</span>
+          <span className="font-medium text-[var(--color-text-primary)]">
+            {copy.commerceBreadcrumbConfirmation}
+          </span>
+        </nav>
+
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.orderConfirmationEyebrow}
@@ -188,8 +239,8 @@ export function OrderConfirmationPage({
                 : copy.paymentReconciledTitle
             }
             message={formatResource(copy.paymentReconciledMessage, {
-              orderStatus: orderStatus ?? confirmation.status,
-              paymentStatus: paymentStatus ?? copy.unavailable,
+              orderStatus: confirmation.status,
+              paymentStatus: displayedPaymentStatus,
             })}
           />
         )}
@@ -231,6 +282,19 @@ export function OrderConfirmationPage({
             })}
           />
         )}
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.confirmationRouteSummaryTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.confirmationRouteSummaryMessage, {
+              status,
+              paymentCompletionStatus: paymentCompletionStatus ?? "idle",
+              paymentStatus: displayedPaymentStatus,
+            })}
+          </p>
+        </div>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_360px]">
           <div className="flex flex-col gap-6">
@@ -352,7 +416,7 @@ export function OrderConfirmationPage({
 
                 {hasMemberSession ? (
                   <Link
-                    href={localizeHref(orderTrackingHref, culture)}
+                    href={localizeHref(memberOrdersHref, culture)}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.openOrdersCta}
@@ -464,6 +528,35 @@ export function OrderConfirmationPage({
                   />
                 </div>
               )}
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.confirmationCrossSurfaceTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.confirmationCrossSurfaceMessage}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href={localizeHref("/", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.confirmationCrossSurfaceHomeCta}
+                </Link>
+                <Link
+                  href={localizeHref("/catalog", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.continueShopping}
+                </Link>
+                <Link
+                  href={localizeHref("/account", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.confirmationCrossSurfaceAccountCta}
+                </Link>
+              </div>
             </aside>
           </div>
         </div>

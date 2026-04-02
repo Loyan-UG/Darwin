@@ -83,12 +83,18 @@ export function CheckoutPage({
             title={copy.checkoutUnavailableTitle}
             message={resolvedCartMessage ?? copy.checkoutUnavailableMessage}
           />
-          <div>
+          <div className="flex flex-wrap gap-3">
             <Link
               href={localizeHref("/catalog", culture)}
               className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
             >
               {copy.browseCatalog}
+            </Link>
+            <Link
+              href={localizeHref("/cart", culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.backToCart}
             </Link>
           </div>
         </div>
@@ -99,6 +105,27 @@ export function CheckoutPage({
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
+        <nav
+          aria-label={copy.commerceBreadcrumbLabel}
+          className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)]"
+        >
+          <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbHome}
+          </Link>
+          <span>/</span>
+          <Link href={localizeHref("/catalog", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbCatalog}
+          </Link>
+          <span>/</span>
+          <Link href={localizeHref("/cart", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbCart}
+          </Link>
+          <span>/</span>
+          <span className="font-medium text-[var(--color-text-primary)]">
+            {copy.commerceBreadcrumbCheckout}
+          </span>
+        </nav>
+
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.publicCheckoutEyebrow}
@@ -135,6 +162,20 @@ export function CheckoutPage({
             })}
           />
         )}
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.checkoutRouteSummaryTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.checkoutRouteSummaryMessage, {
+              cartStatus: model.status,
+              intentStatus,
+              lineCount: cart.items.length,
+              addressReady: addressComplete ? copy.readyYes : copy.readyNo,
+            })}
+          </p>
+        </div>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_360px]">
           <form
@@ -458,6 +499,35 @@ export function CheckoutPage({
                 {copy.placeOrderButton}
               </button>
             </form>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.checkoutCrossSurfaceTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.checkoutCrossSurfaceMessage}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href={localizeHref("/", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.checkoutCrossSurfaceHomeCta}
+                </Link>
+                <Link
+                  href={localizeHref("/catalog", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.checkoutCrossSurfaceCatalogCta}
+                </Link>
+                <Link
+                  href={localizeHref("/account", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.checkoutCrossSurfaceAccountCta}
+                </Link>
+              </div>
+            </aside>
           </div>
         </div>
       </div>

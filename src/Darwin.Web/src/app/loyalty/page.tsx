@@ -4,6 +4,12 @@ import {
 } from "@/features/businesses/api/public-businesses";
 import { LoyaltyOverviewPage } from "@/components/member/loyalty-overview-page";
 import {
+  readBoundedNumericSearchParam,
+  readPositiveIntegerSearchParam,
+  readSearchTextParam,
+  readUppercaseSearchTextParam,
+} from "@/features/checkout/helpers";
+import {
   getCurrentMemberLoyaltyBusinesses,
   getCurrentMemberLoyaltyOverview,
 } from "@/features/member-portal/api/member-portal";
@@ -28,48 +34,41 @@ type LoyaltyPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function readSearchParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function readNumericSearchParam(value: string | string[] | undefined) {
-  const raw = readSearchParam(value);
-  if (!raw) {
-    return undefined;
-  }
-
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
 export default async function LoyaltyPage({ searchParams }: LoyaltyPageProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const session = await getMemberSession();
-  const joinedPage = Number(readSearchParam(resolvedSearchParams?.joinedPage) ?? "1");
-  const safeJoinedPage = Number.isFinite(joinedPage) && joinedPage > 0 ? joinedPage : 1;
-  const discoverPage = Number(
-    readSearchParam(resolvedSearchParams?.discoverPage) ?? "1",
+  const safeJoinedPage = readPositiveIntegerSearchParam(
+    resolvedSearchParams?.joinedPage,
   );
-  const safeDiscoveryPage =
-    Number.isFinite(discoverPage) && discoverPage > 0 ? discoverPage : 1;
-  const query = readSearchParam(resolvedSearchParams?.query)?.trim() || undefined;
-  const city = readSearchParam(resolvedSearchParams?.city)?.trim() || undefined;
-  const countryCode =
-    readSearchParam(resolvedSearchParams?.countryCode)?.trim() || undefined;
-  const category =
-    readSearchParam(resolvedSearchParams?.category)?.trim() || undefined;
-  const latitude = readNumericSearchParam(resolvedSearchParams?.latitude);
-  const longitude = readNumericSearchParam(resolvedSearchParams?.longitude);
-  const radiusKm = readNumericSearchParam(resolvedSearchParams?.radiusKm);
-  const hasValidLatitude =
-    typeof latitude === "number" && latitude >= -90 && latitude <= 90;
-  const hasValidLongitude =
-    typeof longitude === "number" && longitude >= -180 && longitude <= 180;
-  const safeRadiusKm =
-    typeof radiusKm === "number" && radiusKm >= 1 && radiusKm <= 50
-      ? radiusKm
-      : undefined;
+  const safeDiscoveryPage = readPositiveIntegerSearchParam(
+    resolvedSearchParams?.discoverPage,
+  );
+  const query = readSearchTextParam(resolvedSearchParams?.query, 80);
+  const city = readSearchTextParam(resolvedSearchParams?.city, 80);
+  const countryCode = readUppercaseSearchTextParam(
+    resolvedSearchParams?.countryCode,
+    2,
+  );
+  const category = readSearchTextParam(resolvedSearchParams?.category, 80);
+  const latitude = readBoundedNumericSearchParam(resolvedSearchParams?.latitude, {
+    min: -90,
+    max: 90,
+  });
+  const longitude = readBoundedNumericSearchParam(
+    resolvedSearchParams?.longitude,
+    {
+      min: -180,
+      max: 180,
+    },
+  );
+  const safeRadiusKm = readBoundedNumericSearchParam(
+    resolvedSearchParams?.radiusKm,
+    {
+      min: 1,
+      max: 50,
+    },
+  );
 
   const [overviewResult, businessesResult, discoveryResult, categoryKindsResult] =
     await Promise.all([
@@ -90,10 +89,12 @@ export default async function LoyaltyPage({ searchParams }: LoyaltyPageProps) {
         countryCode,
         categoryKindKey: category,
         hasActiveLoyaltyProgram: true,
-        latitude: hasValidLatitude ? latitude : undefined,
-        longitude: hasValidLongitude ? longitude : undefined,
+        latitude,
+        longitude,
         radiusMeters:
-          hasValidLatitude && hasValidLongitude && safeRadiusKm
+          typeof latitude === "number" &&
+          typeof longitude === "number" &&
+          typeof safeRadiusKm === "number"
             ? safeRadiusKm * 1000
             : undefined,
       }),
@@ -129,8 +130,8 @@ export default async function LoyaltyPage({ searchParams }: LoyaltyPageProps) {
       discoveryCity={city}
       discoveryCountryCode={countryCode}
       discoveryCategory={category}
-      discoveryLatitude={hasValidLatitude ? latitude : undefined}
-      discoveryLongitude={hasValidLongitude ? longitude : undefined}
+      discoveryLatitude={latitude}
+      discoveryLongitude={longitude}
       discoveryRadiusKm={safeRadiusKm}
       discoveryCategories={categoryKindsResult.data?.items ?? []}
       hasMemberSession={Boolean(session)}

@@ -31,6 +31,23 @@ export function InvoicesPage({
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-8">
+        <nav
+          aria-label={copy.memberBreadcrumbLabel}
+          className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)]"
+        >
+          <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.memberBreadcrumbHome}
+          </Link>
+          <span>/</span>
+          <Link href={localizeHref("/account", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.memberBreadcrumbAccount}
+          </Link>
+          <span>/</span>
+          <span className="font-medium text-[var(--color-text-primary)]">
+            {copy.memberBreadcrumbInvoices}
+          </span>
+        </nav>
+
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.invoicesEyebrow}
@@ -47,6 +64,20 @@ export function InvoicesPage({
             message={formatResource(copy.invoicesWarningsMessage, { status })}
           />
         )}
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.invoicesWindowTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.invoicesWindowMessage, {
+              count: invoices.length,
+              currentPage,
+              totalPages,
+              status,
+            })}
+          </p>
+        </div>
 
         <div className="grid gap-5">
           {invoices.map((invoice) => (
@@ -90,8 +121,24 @@ export function InvoicesPage({
         </div>
 
         {invoices.length === 0 && (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
-            {copy.noInvoicesMessage}
+          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.noInvoicesMessage}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Link
+                href={localizeHref("/catalog", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.memberCrossSurfaceCatalogCta}
+              </Link>
+              <Link
+                href={localizeHref("/account", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.memberCrossSurfaceAccountCta}
+              </Link>
+            </div>
           </div>
         )}
 
@@ -129,6 +176,26 @@ export function InvoicesPage({
             <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.invoicesPortalNote}
             </p>
+          </aside>
+
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.memberCrossSurfaceTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.memberCrossSurfaceMessage}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]">
+                {copy.memberCrossSurfaceHomeCta}
+              </Link>
+              <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]">
+                {copy.memberCrossSurfaceCatalogCta}
+              </Link>
+              <Link href={localizeHref("/loyalty", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]">
+                {copy.memberCrossSurfaceLoyaltyCta}
+              </Link>
+            </div>
           </aside>
         </div>
       </div>

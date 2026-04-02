@@ -3,6 +3,11 @@ import {
   getPublicCategories,
   getPublicProducts,
 } from "@/features/catalog/api/public-catalog";
+import {
+  readAllowedSearchParam,
+  readPositiveIntegerSearchParam,
+  readSearchTextParam,
+} from "@/features/checkout/helpers";
 import type {
   CatalogVisibleSort,
   PublicProductSummary,
@@ -36,15 +41,15 @@ function buildCatalogPath(
 }
 
 function readVisibleSort(value?: string): CatalogVisibleSort {
-  switch (value) {
-    case "name-asc":
-    case "price-asc":
-    case "price-desc":
-    case "savings-desc":
-      return value;
-    default:
-      return "featured";
-  }
+  return (
+    readAllowedSearchParam(value, [
+      "featured",
+      "name-asc",
+      "price-asc",
+      "price-desc",
+      "savings-desc",
+    ] as const) ?? "featured"
+  );
 }
 
 function matchesVisibleQuery(product: PublicProductSummary, query: string) {
@@ -111,11 +116,10 @@ export async function generateMetadata({
   const culture = await getRequestCulture();
   const copy = getCatalogResource(culture);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const category = resolvedSearchParams?.category?.trim() || undefined;
-  const visibleQuery = resolvedSearchParams?.visibleQuery?.trim() || undefined;
+  const category = readSearchTextParam(resolvedSearchParams?.category, 80);
+  const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery, 80);
   const visibleSort = readVisibleSort(resolvedSearchParams?.visibleSort);
-  const page = Number(resolvedSearchParams?.page ?? "1");
-  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
 
   return buildSeoMetadata({
     culture,
@@ -147,10 +151,15 @@ type CatalogRouteProps = {
 export default async function CatalogRoute({ searchParams }: CatalogRouteProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const culture = await getRequestCulture();
-  const page = Number(resolvedSearchParams?.page ?? "1");
-  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
-  const activeCategorySlug = resolvedSearchParams?.category?.trim() || undefined;
-  const visibleQuery = resolvedSearchParams?.visibleQuery?.trim() || undefined;
+  const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
+  const activeCategorySlug = readSearchTextParam(
+    resolvedSearchParams?.category,
+    80,
+  );
+  const visibleQuery = readSearchTextParam(
+    resolvedSearchParams?.visibleQuery,
+    80,
+  );
   const visibleSort = readVisibleSort(resolvedSearchParams?.visibleSort);
 
   const [categoriesResult, productsResult] = await Promise.all([

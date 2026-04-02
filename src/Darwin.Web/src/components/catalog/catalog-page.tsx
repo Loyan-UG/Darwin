@@ -66,6 +66,11 @@ export function CatalogPage({
   const copy = getCatalogResource(culture);
   const hasProducts = products.length > 0;
   const totalPages = Math.max(1, Math.ceil(totalProducts / pageSize));
+  const pageStart = totalProducts === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const pageEnd =
+    totalProducts === 0
+      ? 0
+      : Math.min(totalProducts, pageStart + loadedProductsCount - 1);
   const activeCategory =
     categories.find((category) => category.slug === activeCategorySlug) ?? null;
   const offerProducts = products.filter(
@@ -172,6 +177,22 @@ export function CatalogPage({
           />
         )}
 
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.catalogRouteSummaryTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.catalogRouteSummaryMessage, {
+              categoriesStatus: dataStatus?.categories ?? "unknown",
+              productsStatus: dataStatus?.products ?? "unknown",
+              visibleCount: products.length,
+              totalProducts,
+              currentPage,
+              totalPages,
+            })}
+          </p>
+        </div>
+
         {hasVisibleLens && (
           <StatusBanner
             title={copy.visibleLensActiveTitle}
@@ -183,6 +204,67 @@ export function CatalogPage({
           />
         )}
 
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.resultSummaryTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {hasVisibleLens
+                ? formatResource(copy.resultSummaryFilteredMessage, {
+                    visibleCount: products.length,
+                    loadedCount: loadedProductsCount,
+                    totalProducts,
+                    currentPage,
+                  })
+                : formatResource(copy.resultSummaryMessage, {
+                    pageStart,
+                    pageEnd,
+                    totalProducts,
+                    currentPage,
+                    totalPages,
+                  })}
+            </p>
+          </div>
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.resultSetTitle}
+            </p>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.resultSetLoadedLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.resultSetLoadedValue, {
+                    count: loadedProductsCount,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.resultSetVisibleLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.resultSetVisibleValue, {
+                    count: products.length,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.resultSetTotalLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.resultSetTotalValue, {
+                    count: totalProducts,
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-5 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
@@ -190,7 +272,7 @@ export function CatalogPage({
             </p>
 
             <form
-              action="/catalog"
+              action={localizeHref("/catalog", culture)}
               method="get"
               className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
             >
@@ -311,6 +393,20 @@ export function CatalogPage({
                 <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
                   {copy.noResultsDescription}
                 </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Link
+                    href={localizeHref("/", culture)}
+                    className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+                  >
+                    {copy.noResultsHomeCta}
+                  </Link>
+                  <Link
+                    href={localizeHref("/cms", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.noResultsCmsCta}
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -383,6 +479,20 @@ export function CatalogPage({
                           {copy.viewDetails}
                         </Link>
                       </div>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Link
+                          href={localizeHref("/", culture)}
+                          className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          {copy.productCardHomeCta}
+                        </Link>
+                        <Link
+                          href={localizeHref("/account", culture)}
+                          className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          {copy.productCardAccountCta}
+                        </Link>
+                      </div>
                     </div>
                   </article>
                 ))}
@@ -390,40 +500,81 @@ export function CatalogPage({
             )}
 
             {totalPages > 1 && (
-              <div className="flex flex-wrap items-center gap-3">
-                <Link
-                  aria-disabled={currentPage <= 1}
-                  href={localizeHref(
-                    buildCatalogHref(
-                      activeCategorySlug,
-                      Math.max(1, currentPage - 1),
-                      visibleQuery,
-                      visibleSort,
-                    ),
-                    culture,
-                  )}
-                  className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
-                >
-                  {copy.previous}
-                </Link>
-                <p className="text-sm text-[var(--color-text-secondary)]">
-                  {formatResource(copy.pageLabel, { currentPage, totalPages })}
+              <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                  {copy.paginationTitle}
                 </p>
-                <Link
-                  aria-disabled={currentPage >= totalPages}
-                  href={localizeHref(
-                    buildCatalogHref(
-                      activeCategorySlug,
-                      Math.min(totalPages, currentPage + 1),
-                      visibleQuery,
-                      visibleSort,
-                    ),
-                    culture,
-                  )}
-                  className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
-                >
-                  {copy.next}
-                </Link>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.paginationMessage, {
+                    currentPage,
+                    totalPages,
+                  })}
+                </p>
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <Link
+                    aria-disabled={currentPage <= 1}
+                    href={localizeHref(
+                      buildCatalogHref(
+                        activeCategorySlug,
+                        1,
+                        visibleQuery,
+                        visibleSort,
+                      ),
+                      culture,
+                    )}
+                    className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
+                  >
+                    {copy.firstPageCta}
+                  </Link>
+                  <Link
+                    aria-disabled={currentPage <= 1}
+                    href={localizeHref(
+                      buildCatalogHref(
+                        activeCategorySlug,
+                        Math.max(1, currentPage - 1),
+                        visibleQuery,
+                        visibleSort,
+                      ),
+                      culture,
+                    )}
+                    className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
+                  >
+                    {copy.previous}
+                  </Link>
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {formatResource(copy.pageLabel, { currentPage, totalPages })}
+                  </p>
+                  <Link
+                    aria-disabled={currentPage >= totalPages}
+                    href={localizeHref(
+                      buildCatalogHref(
+                        activeCategorySlug,
+                        Math.min(totalPages, currentPage + 1),
+                        visibleQuery,
+                        visibleSort,
+                      ),
+                      culture,
+                    )}
+                    className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
+                  >
+                    {copy.next}
+                  </Link>
+                  <Link
+                    aria-disabled={currentPage >= totalPages}
+                    href={localizeHref(
+                      buildCatalogHref(
+                        activeCategorySlug,
+                        totalPages,
+                        visibleQuery,
+                        visibleSort,
+                      ),
+                      culture,
+                    )}
+                    className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
+                  >
+                    {copy.lastPageCta}
+                  </Link>
+                </div>
               </div>
             )}
           </div>

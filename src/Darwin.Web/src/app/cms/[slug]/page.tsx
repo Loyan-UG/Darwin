@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { CmsPageDetail } from "@/components/cms/cms-page-detail";
 import {
+  getPublishedPageSet,
   getPublicPageBySlug,
-  getPublishedPages,
 } from "@/features/cms/api/public-cms";
 import { getRequestCulture } from "@/lib/request-culture";
 import { getSharedResource } from "@/localization";
@@ -52,11 +52,7 @@ export default async function CmsPage({ params }: CmsPageProps) {
   const { slug } = await params;
   const [pageResult, relatedPagesSeed] = await Promise.all([
     getPublicPageBySlug(slug, culture),
-    getPublishedPages({
-      page: 1,
-      pageSize: 8,
-      culture,
-    }),
+    getPublishedPageSet(culture),
   ]);
   const page = pageResult.data;
 

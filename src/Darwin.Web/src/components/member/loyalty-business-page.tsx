@@ -132,6 +132,24 @@ export function LoyaltyBusinessPage({
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
+              <nav
+                aria-label={copy.memberBreadcrumbLabel}
+                className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
+              >
+                <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-text-primary)]">
+                  {copy.memberBreadcrumbHome}
+                </Link>
+                <span>/</span>
+                <Link href={localizeHref("/account", culture)} className="transition hover:text-[var(--color-text-primary)]">
+                  {copy.memberBreadcrumbAccount}
+                </Link>
+                <span>/</span>
+                <Link href={localizeHref("/loyalty", culture)} className="transition hover:text-[var(--color-text-primary)]">
+                  {copy.memberBreadcrumbLoyalty}
+                </Link>
+                <span>/</span>
+                <span className="text-[var(--color-text-primary)]">{name}</span>
+              </nav>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
                 {copy.loyaltyBusinessFallback}
               </p>
@@ -190,9 +208,39 @@ export function LoyaltyBusinessPage({
           />
         )}
 
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.loyaltyBusinessRouteSummaryTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.loyaltyBusinessRouteSummaryMessage, {
+              dashboardStatus,
+              rewardsStatus,
+              timelineStatus,
+              promotionsStatus,
+            })}
+          </p>
+        </div>
+
         {!dashboard ? (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
-            {copy.noBusinessDashboardMessage}
+          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.noBusinessDashboardMessage}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Link
+                href={localizeHref("/loyalty", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.backToLoyaltyCta}
+              </Link>
+              <Link
+                href={localizeHref("/account", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.memberCrossSurfaceAccountCta}
+              </Link>
+            </div>
           </div>
         ) : (
           <>
@@ -428,6 +476,25 @@ export function LoyaltyBusinessPage({
                   <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {copy.loyaltyPortalNote}
                   </p>
+                </aside>
+                <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                    {copy.memberCrossSurfaceTitle}
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {copy.memberCrossSurfaceMessage}
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                      {copy.memberCrossSurfaceHomeCta}
+                    </Link>
+                    <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                      {copy.memberCrossSurfaceCatalogCta}
+                    </Link>
+                    <Link href={localizeHref("/orders", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                      {copy.memberCrossSurfaceOrdersCta}
+                    </Link>
+                  </div>
                 </aside>
                 <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.recentTransactionsTitle}</p>

@@ -303,6 +303,19 @@ export function LoyaltyPublicBusinessPage({
           <div className="flex flex-col gap-5">
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.loyaltyPublicRouteSummaryTitle}
+              </p>
+              <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.loyaltyPublicRouteSummaryMessage, {
+                  detailStatus,
+                  rewardCount: rewardTiers.length,
+                  locationCount: locations.length,
+                })}
+              </p>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.branchesTitle}
               </p>
               {locations.length > 0 ? (
@@ -344,6 +357,26 @@ export function LoyaltyPublicBusinessPage({
                     : copy.joinReadinessAnonymous}
                 </p>
                 <p>{copy.joinReadinessContractNote}</p>
+              </div>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.memberCrossSurfaceTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.memberCrossSurfaceMessage}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {copy.memberCrossSurfaceHomeCta}
+                </Link>
+                <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {copy.memberCrossSurfaceCatalogCta}
+                </Link>
+                <Link href={localizeHref("/account", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {copy.memberCrossSurfaceAccountCta}
+                </Link>
               </div>
             </aside>
           </div>

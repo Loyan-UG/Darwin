@@ -237,6 +237,65 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
       },
     },
     {
+      id: "home-agenda-columns",
+      kind: "agenda-columns",
+      eyebrow: copy.agendaEyebrow,
+      title: copy.agendaTitle,
+      description: copy.agendaDescription,
+      columns: [
+        {
+          id: "agenda-content",
+          label: copy.agendaContentLabel,
+          title: copy.agendaContentTitle,
+          description: copy.agendaContentDescription,
+          href: "/cms",
+          ctaLabel: copy.openCmsCta,
+          bullets: [
+            copy.agendaContentBulletOne,
+            formatResource(copy.agendaContentBulletTwo, {
+              status: pagesResult.status,
+            }),
+          ],
+          meta: formatResource(copy.agendaContentMeta, {
+            count: pagesResult.data?.items.length ?? 0,
+          }),
+        },
+        {
+          id: "agenda-commerce",
+          label: copy.agendaCommerceLabel,
+          title: copy.agendaCommerceTitle,
+          description: copy.agendaCommerceDescription,
+          href: "/catalog",
+          ctaLabel: copy.browseCatalogCta,
+          bullets: [
+            copy.agendaCommerceBulletOne,
+            formatResource(copy.agendaCommerceBulletTwo, {
+              status: productsResult.status,
+            }),
+          ],
+          meta: formatResource(copy.agendaCommerceMeta, {
+            count: productsResult.data?.items.length ?? 0,
+          }),
+        },
+        {
+          id: "agenda-member",
+          label: copy.agendaMemberLabel,
+          title: copy.agendaMemberTitle,
+          description: copy.agendaMemberDescription,
+          href: "/account",
+          ctaLabel: copy.openAccountCta,
+          bullets: [
+            copy.agendaMemberBulletOne,
+            copy.agendaMemberBulletTwo,
+          ],
+          meta: formatResource(copy.agendaMemberMeta, {
+            count: supportedCultures.length,
+          }),
+        },
+      ],
+      emptyMessage: copy.agendaEmptyMessage,
+    },
+    {
       id: "home-shortcuts",
       kind: "card-grid",
       eyebrow: copy.shortcutsEyebrow,

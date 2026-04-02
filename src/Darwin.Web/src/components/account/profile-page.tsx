@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
@@ -12,6 +13,7 @@ import {
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { getCultureDisplayName } from "@/lib/culture";
+import { localizeHref } from "@/lib/locale-routing";
 
 type ProfilePageProps = {
   culture: string;
@@ -80,6 +82,20 @@ export function ProfilePage({
           action={updateMemberProfileAction}
           className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
         >
+          <nav
+            aria-label={copy.memberBreadcrumbLabel}
+            className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
+          >
+            <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-text-primary)]">
+              {copy.memberBreadcrumbHome}
+            </Link>
+            <span>/</span>
+            <Link href={localizeHref("/account", culture)} className="transition hover:text-[var(--color-text-primary)]">
+              {copy.memberBreadcrumbAccount}
+            </Link>
+            <span>/</span>
+            <span className="text-[var(--color-text-primary)]">{copy.profileRouteLabel}</span>
+          </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.profileEditEyebrow}
           </p>
@@ -210,6 +226,26 @@ export function ProfilePage({
             <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.boundaryProfileMessage}
             </p>
+          </aside>
+
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+              {copy.memberCrossSurfaceTitle}
+            </p>
+            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.memberCrossSurfaceMessage}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberCrossSurfaceHomeCta}
+              </Link>
+              <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberCrossSurfaceCatalogCta}
+              </Link>
+              <Link href={localizeHref("/orders", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberCrossSurfaceOrdersCta}
+              </Link>
+            </div>
           </aside>
 
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">

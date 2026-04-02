@@ -55,8 +55,6 @@ export default async function OrderConfirmationRoute({
     resolvedSearchParams?.paymentOutcome,
     ["Succeeded", "Cancelled", "Failed"],
   );
-  const paymentStatus = readSingleSearchParam(resolvedSearchParams?.paymentStatus);
-  const orderStatus = readSingleSearchParam(resolvedSearchParams?.orderStatus);
   const paymentError = readSingleSearchParam(resolvedSearchParams?.paymentError);
   const cancelled = readSingleSearchParam(resolvedSearchParams?.cancelled) === "true";
   const handoff = await readStorefrontPaymentHandoff();
@@ -96,8 +94,6 @@ export default async function OrderConfirmationRoute({
       checkoutStatus={checkoutStatus}
       paymentCompletionStatus={paymentCompletionStatus}
       paymentOutcome={paymentOutcome}
-      paymentStatus={paymentStatus}
-      orderStatus={orderStatus}
       paymentError={paymentError}
       cancelled={cancelled}
       hasMemberSession={Boolean(memberSession)}

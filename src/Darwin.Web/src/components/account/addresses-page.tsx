@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
@@ -12,6 +13,7 @@ import {
   getMemberResource,
   resolveLocalizedQueryMessage,
 } from "@/localization";
+import { localizeHref } from "@/lib/locale-routing";
 
 type AddressesPageProps = {
   culture: string;
@@ -54,6 +56,20 @@ export function AddressesPage({
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+          <nav
+            aria-label={copy.memberBreadcrumbLabel}
+            className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
+          >
+            <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-text-primary)]">
+              {copy.memberBreadcrumbHome}
+            </Link>
+            <span>/</span>
+            <Link href={localizeHref("/account", culture)} className="transition hover:text-[var(--color-text-primary)]">
+              {copy.memberBreadcrumbAccount}
+            </Link>
+            <span>/</span>
+            <span className="text-[var(--color-text-primary)]">{copy.addressesRouteLabel}</span>
+          </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.addressesEyebrow}
           </p>
@@ -104,6 +120,26 @@ export function AddressesPage({
 
         <div className="grid gap-5">
           <MemberPortalNav culture={culture} activePath="/account/addresses" />
+
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.memberCrossSurfaceTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.memberCrossSurfaceMessage}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberCrossSurfaceHomeCta}
+              </Link>
+              <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberCrossSurfaceCatalogCta}
+              </Link>
+              <Link href={localizeHref("/orders", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberCrossSurfaceOrdersCta}
+              </Link>
+            </div>
+          </aside>
 
           {addresses.map((address) => (
             <article key={address.id} className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]">
@@ -162,8 +198,18 @@ export function AddressesPage({
         </div>
 
         {addresses.length === 0 && (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
-            {copy.noSavedAddressesMessage}
+          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.noSavedAddressesMessage}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberCrossSurfaceCatalogCta}
+              </Link>
+              <Link href={localizeHref("/account/profile", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberRouteSummaryProfileCta}
+              </Link>
+            </div>
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { signOutMemberAction } from "@/features/member-session/actions";
@@ -9,6 +10,7 @@ import type {
 } from "@/features/member-portal/types";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
+import { localizeHref } from "@/lib/locale-routing";
 
 type MemberDashboardPageProps = {
   culture: string;
@@ -36,6 +38,19 @@ export function MemberDashboardPage({
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
+        <nav
+          aria-label={copy.memberBreadcrumbLabel}
+          className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)]"
+        >
+          <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.memberBreadcrumbHome}
+          </Link>
+          <span>/</span>
+          <span className="font-medium text-[var(--color-text-primary)]">
+            {copy.memberBreadcrumbAccount}
+          </span>
+        </nav>
+
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
@@ -120,6 +135,33 @@ export function MemberDashboardPage({
           <div className="flex flex-col gap-5">
             <MemberPortalNav culture={culture} activePath="/account" />
 
+            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.memberRouteSummaryTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.memberRouteSummaryMessage, {
+                  profileStatus,
+                  preferencesStatus,
+                  customerContextStatus,
+                })}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href={localizeHref("/account/profile", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {copy.memberRouteSummaryProfileCta}
+                </Link>
+                <Link
+                  href={localizeHref("/account/preferences", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {copy.memberRouteSummaryPreferencesCta}
+                </Link>
+              </div>
+            </div>
+
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.crmContextTitle}
@@ -142,6 +184,35 @@ export function MemberDashboardPage({
                   {copy.crmContextUnavailable}
                 </p>
               )}
+            </div>
+
+            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.memberCrossSurfaceTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.memberCrossSurfaceMessage}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href={localizeHref("/", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.memberCrossSurfaceHomeCta}
+                </Link>
+                <Link
+                  href={localizeHref("/catalog", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.memberCrossSurfaceCatalogCta}
+                </Link>
+                <Link
+                  href={localizeHref("/loyalty", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.memberCrossSurfaceLoyaltyCta}
+                </Link>
+              </div>
             </div>
           </div>
         </div>

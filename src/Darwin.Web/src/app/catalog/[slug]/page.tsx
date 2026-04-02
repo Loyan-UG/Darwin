@@ -81,6 +81,7 @@ export default async function ProductDetailRoute({
       primaryCategory={activeCategory}
       relatedProducts={relatedProducts}
       status={productResult.status}
+      relatedProductsStatus={relatedProductsResult?.status}
     />
   );
 }

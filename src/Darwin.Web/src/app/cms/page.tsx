@@ -68,6 +68,9 @@ export default async function CmsIndexRoute({
     <CmsPagesIndex
       culture={culture}
       pages={visiblePages}
+      loadedPageCount={pagesResult.data?.items.length ?? 0}
+      totalItems={pagesResult.data?.total ?? 0}
+      pageSize={pagesResult.data?.request.pageSize ?? 12}
       totalPages={Math.max(
         1,
         Math.ceil(

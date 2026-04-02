@@ -131,6 +131,20 @@ export function LoyaltyDiscoverySection({
         </p>
       </div>
 
+      <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+        <p className="font-semibold text-[var(--color-text-primary)]">
+          {copy.discoveryWindowTitle}
+        </p>
+        <p>
+          {formatResource(copy.discoveryWindowMessage, {
+            count: businesses.length,
+            currentPage,
+            totalPages,
+            status,
+          })}
+        </p>
+      </div>
+
       {status !== "ok" && (
         <div className="mt-5">
           <StatusBanner
@@ -142,7 +156,7 @@ export function LoyaltyDiscoverySection({
       )}
 
       <form
-        action="/loyalty"
+        action={localizeHref("/loyalty", culture)}
         className="mt-5 grid gap-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-4 lg:grid-cols-6"
       >
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
@@ -341,8 +355,24 @@ export function LoyaltyDiscoverySection({
           ))}
         </div>
       ) : (
-        <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-sm leading-7 text-[var(--color-text-secondary)]">
-          {copy.noDiscoveryMatchesMessage}
+        <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
+          <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+            {copy.noDiscoveryMatchesMessage}
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link
+              href={localizeHref("/catalog", culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+            >
+              {copy.memberCrossSurfaceCatalogCta}
+            </Link>
+            <Link
+              href={localizeHref("/", culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+            >
+              {copy.memberCrossSurfaceHomeCta}
+            </Link>
+          </div>
         </div>
       )}
 

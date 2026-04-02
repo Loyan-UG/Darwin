@@ -159,6 +159,42 @@ export function readAllowedSearchParam<T extends string>(
     : undefined;
 }
 
+export function readBoundedNumericSearchParam(
+  value: SearchParamValue,
+  options?: {
+    min?: number;
+    max?: number;
+  },
+) {
+  const raw = readSingleSearchParam(value);
+  if (!raw) {
+    return undefined;
+  }
+
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+
+  if (typeof options?.min === "number" && parsed < options.min) {
+    return undefined;
+  }
+
+  if (typeof options?.max === "number" && parsed > options.max) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+export function readUppercaseSearchTextParam(
+  value: SearchParamValue,
+  maxLength = 16,
+) {
+  const normalized = readSearchTextParam(value, maxLength);
+  return normalized ? normalized.toUpperCase() : undefined;
+}
+
 export function readQuantityFromFormData(
   formData: FormData,
   key: string,

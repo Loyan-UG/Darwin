@@ -59,6 +59,23 @@ export function CartPage({
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
+        <nav
+          aria-label={copy.commerceBreadcrumbLabel}
+          className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)]"
+        >
+          <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbHome}
+          </Link>
+          <span>/</span>
+          <Link href={localizeHref("/catalog", culture)} className="transition hover:text-[var(--color-brand)]">
+            {copy.commerceBreadcrumbCatalog}
+          </Link>
+          <span>/</span>
+          <span className="font-medium text-[var(--color-text-primary)]">
+            {copy.commerceBreadcrumbCart}
+          </span>
+        </nav>
+
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.cartHeroEyebrow}
@@ -96,6 +113,19 @@ export function CartPage({
           />
         )}
 
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.cartRouteSummaryTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.cartRouteSummaryMessage, {
+              status: model.status,
+              itemCount: cart?.items.length ?? 0,
+              followUpCount: followUpProducts.length,
+            })}
+          </p>
+        </div>
+
         {!cart || cart.items.length === 0 ? (
           <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
@@ -107,12 +137,18 @@ export function CartPage({
             <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
               {copy.emptyCartDescription}
             </p>
-            <div className="mt-8">
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
                 href={localizeHref("/catalog", culture)}
                 className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
               >
                 {copy.browseCatalog}
+              </Link>
+              <Link
+                href={localizeHref("/cms", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cartEmptyCmsCta}
               </Link>
             </div>
           </div>
@@ -351,7 +387,21 @@ export function CartPage({
                 </div>
               ) : (
                 <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {copy.followUpProductsUnavailableMessage}
+                  <p>{copy.followUpProductsUnavailableMessage}</p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      href={localizeHref("/catalog", culture)}
+                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                    >
+                      {copy.continueShopping}
+                    </Link>
+                    <Link
+                      href={localizeHref("/", culture)}
+                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                    >
+                      {copy.cartCrossSurfaceHomeCta}
+                    </Link>
+                  </div>
                 </div>
               )}
             </section>
@@ -386,6 +436,35 @@ export function CartPage({
                     {copy.cartNextStepCheckoutMessage}
                   </p>
                 </div>
+              </div>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.cartCrossSurfaceTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.cartCrossSurfaceMessage}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href={localizeHref("/", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.cartCrossSurfaceHomeCta}
+                </Link>
+                <Link
+                  href={localizeHref("/catalog", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.continueShopping}
+                </Link>
+                <Link
+                  href={localizeHref("/account", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.cartCrossSurfaceAccountCta}
+                </Link>
               </div>
             </aside>
           </div>
