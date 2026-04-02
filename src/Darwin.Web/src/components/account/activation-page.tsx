@@ -91,7 +91,7 @@ export function ActivationPage({
             </h2>
             <label className="mt-6 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
               {copy.emailLabel}
-              <input name="email" type="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+              <input name="email" type="email" required autoComplete="email" inputMode="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
             <button
               type="submit"
@@ -115,11 +115,11 @@ export function ActivationPage({
             <div className="mt-6 grid gap-4">
               <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                 {copy.emailLabel}
-                <input name="email" type="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+                <input name="email" type="email" required autoComplete="email" inputMode="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                 {copy.tokenLabel}
-                <input name="token" defaultValue={token} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+                <input name="token" required autoComplete="one-time-code" defaultValue={token} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
             </div>
             <button

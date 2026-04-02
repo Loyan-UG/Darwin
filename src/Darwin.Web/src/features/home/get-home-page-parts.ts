@@ -16,6 +16,7 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
     getPublishedPages({
       page: 1,
       pageSize: 3,
+      culture,
     }),
     getPublicProducts({
       page: 1,
@@ -24,6 +25,9 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
     }),
     getPublicCategories(culture),
   ]);
+  const cmsHealthy = pagesResult.status === "ok";
+  const catalogHealthy = productsResult.status === "ok";
+  const categoriesHealthy = categoriesResult.status === "ok";
 
   return [
     {
@@ -43,6 +47,9 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
           pagesStatus: pagesResult.status,
           productsStatus: productsResult.status,
         }),
+        formatResource(copy.heroHighlightCategoriesStatus, {
+          categoriesStatus: categoriesResult.status,
+        }),
       ],
       panelTitle: copy.heroPanelTitle,
     },
@@ -57,7 +64,11 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
           id: "metric-pages",
           label: copy.metricPagesLabel,
           value: String(pagesResult.data?.total ?? pagesResult.data?.items.length ?? 0),
-          note: copy.metricPagesNote,
+          note: cmsHealthy
+            ? copy.metricPagesNote
+            : formatResource(copy.metricPagesDegradedNote, {
+                status: pagesResult.status,
+              }),
         },
         {
           id: "metric-products",
@@ -65,7 +76,11 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
           value: String(
             productsResult.data?.total ?? productsResult.data?.items.length ?? 0,
           ),
-          note: copy.metricProductsNote,
+          note: catalogHealthy
+            ? copy.metricProductsNote
+            : formatResource(copy.metricProductsDegradedNote, {
+                status: productsResult.status,
+              }),
         },
         {
           id: "metric-categories",
@@ -75,7 +90,11 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
               categoriesResult.data?.items.length ??
               0,
           ),
-          note: copy.metricCategoriesNote,
+          note: categoriesHealthy
+            ? copy.metricCategoriesNote
+            : formatResource(copy.metricCategoriesDegradedNote, {
+                status: categoriesResult.status,
+              }),
         },
         {
           id: "metric-cultures",
@@ -84,6 +103,138 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
           note: copy.metricCulturesNote,
         },
       ],
+    },
+    {
+      id: "home-contract-rail",
+      kind: "status-list",
+      eyebrow: copy.contractRailEyebrow,
+      title: copy.contractRailTitle,
+      description: copy.contractRailDescription,
+      items: [
+        {
+          id: "contract-cms",
+          label: copy.contractCmsLabel,
+          title: copy.contractCmsTitle,
+          description: cmsHealthy
+            ? copy.contractCmsHealthyDescription
+            : formatResource(copy.contractCmsDegradedDescription, {
+                status: pagesResult.status,
+              }),
+          href: "/cms",
+          ctaLabel: copy.openCmsCta,
+          tone: cmsHealthy ? "ok" : "warning",
+          meta: formatResource(copy.contractCmsMeta, {
+            count: pagesResult.data?.items.length ?? 0,
+          }),
+        },
+        {
+          id: "contract-catalog",
+          label: copy.contractCatalogLabel,
+          title: copy.contractCatalogTitle,
+          description: catalogHealthy
+            ? copy.contractCatalogHealthyDescription
+            : formatResource(copy.contractCatalogDegradedDescription, {
+                status: productsResult.status,
+              }),
+          href: "/catalog",
+          ctaLabel: copy.browseCatalogCta,
+          tone: catalogHealthy ? "ok" : "warning",
+          meta: formatResource(copy.contractCatalogMeta, {
+            count: productsResult.data?.items.length ?? 0,
+          }),
+        },
+        {
+          id: "contract-account",
+          label: copy.contractAccountLabel,
+          title: copy.contractAccountTitle,
+          description: copy.contractAccountDescription,
+          href: "/account",
+          ctaLabel: copy.openAccountCta,
+          tone: "ok",
+          meta: formatResource(copy.contractAccountMeta, {
+            count: supportedCultures.length,
+          }),
+        },
+      ],
+      emptyMessage: copy.contractRailEmptyMessage,
+    },
+    {
+      id: "home-stage-flow",
+      kind: "stage-flow",
+      eyebrow: copy.stageFlowEyebrow,
+      title: copy.stageFlowTitle,
+      description: copy.stageFlowDescription,
+      items: [
+        {
+          id: "stage-content",
+          step: copy.stageContentStep,
+          title: copy.stageContentTitle,
+          description: copy.stageContentDescription,
+          href: "/cms",
+          ctaLabel: copy.openCmsCta,
+          meta: formatResource(copy.stageContentMeta, {
+            status: pagesResult.status,
+          }),
+        },
+        {
+          id: "stage-discovery",
+          step: copy.stageDiscoveryStep,
+          title: copy.stageDiscoveryTitle,
+          description: copy.stageDiscoveryDescription,
+          href: "/catalog",
+          ctaLabel: copy.browseCatalogCta,
+          meta: formatResource(copy.stageDiscoveryMeta, {
+            status: productsResult.status,
+          }),
+        },
+        {
+          id: "stage-follow-up",
+          step: copy.stageFollowUpStep,
+          title: copy.stageFollowUpTitle,
+          description: copy.stageFollowUpDescription,
+          href: "/account",
+          ctaLabel: copy.openAccountCta,
+          meta: copy.stageFollowUpMeta,
+        },
+      ],
+      emptyMessage: copy.stageFlowEmptyMessage,
+    },
+    {
+      id: "home-pair-panel",
+      kind: "pair-panel",
+      eyebrow: copy.pairPanelEyebrow,
+      title: copy.pairPanelTitle,
+      description: copy.pairPanelDescription,
+      leading: {
+        id: "pair-cms",
+        eyebrow: copy.pairCmsEyebrow,
+        title: copy.pairCmsTitle,
+        description: cmsHealthy
+          ? copy.pairCmsHealthyDescription
+          : formatResource(copy.pairCmsDegradedDescription, {
+              status: pagesResult.status,
+            }),
+        href: "/cms",
+        ctaLabel: copy.openCmsCta,
+        meta: formatResource(copy.pairCmsMeta, {
+          count: pagesResult.data?.items.length ?? 0,
+        }),
+      },
+      trailing: {
+        id: "pair-catalog",
+        eyebrow: copy.pairCatalogEyebrow,
+        title: copy.pairCatalogTitle,
+        description: catalogHealthy
+          ? copy.pairCatalogHealthyDescription
+          : formatResource(copy.pairCatalogDegradedDescription, {
+              status: productsResult.status,
+            }),
+        href: "/catalog",
+        ctaLabel: copy.browseCatalogCta,
+        meta: formatResource(copy.pairCatalogMeta, {
+          count: productsResult.data?.items.length ?? 0,
+        }),
+      },
     },
     {
       id: "home-shortcuts",
@@ -118,6 +269,44 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
         },
       ],
       emptyMessage: copy.shortcutsEmptyMessage,
+    },
+    {
+      id: "home-journeys",
+      kind: "link-list",
+      eyebrow: copy.journeysEyebrow,
+      title: copy.journeysTitle,
+      description: copy.journeysDescription,
+      items: [
+        {
+          id: "journey-cms",
+          title: copy.journeyCmsTitle,
+          description: copy.journeyCmsDescription,
+          href: "/cms",
+          ctaLabel: copy.readPageCta,
+          meta: formatResource(copy.journeyCmsMeta, {
+            status: pagesResult.status,
+          }),
+        },
+        {
+          id: "journey-catalog",
+          title: copy.journeyCatalogTitle,
+          description: copy.journeyCatalogDescription,
+          href: "/catalog",
+          ctaLabel: copy.browseCatalogCta,
+          meta: formatResource(copy.journeyCatalogMeta, {
+            status: productsResult.status,
+          }),
+        },
+        {
+          id: "journey-account",
+          title: copy.journeyAccountTitle,
+          description: copy.journeyAccountDescription,
+          href: "/account",
+          ctaLabel: copy.openAccountCta,
+          meta: copy.journeyAccountMeta,
+        },
+      ],
+      emptyMessage: copy.journeysEmptyMessage,
     },
     {
       id: "home-cms-spotlight",

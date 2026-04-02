@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { MemberInvoiceSummary } from "@/features/member-portal/types";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { localizeHref } from "@/lib/locale-routing";
 
 type InvoicesPageProps = {
   culture: string;
@@ -27,7 +29,8 @@ export function InvoicesPage({
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
-      <div className="flex w-full flex-col gap-8">
+      <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.invoicesEyebrow}
@@ -57,7 +60,7 @@ export function InvoicesPage({
                     {invoice.status}
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
-                    <Link href={`/invoices/${invoice.id}`} className="transition hover:text-[var(--color-brand)]">
+                    <Link href={localizeHref(`/invoices/${invoice.id}`, culture)} className="transition hover:text-[var(--color-brand)]">
                       {invoice.orderNumber ?? invoice.id}
                     </Link>
                   </h2>
@@ -75,7 +78,7 @@ export function InvoicesPage({
                     })}
                   </p>
                   <Link
-                    href={`/invoices/${invoice.id}`}
+                    href={localizeHref(`/invoices/${invoice.id}`, culture)}
                     className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.openInvoiceCta}
@@ -96,7 +99,7 @@ export function InvoicesPage({
           <div className="flex flex-wrap items-center gap-3">
             <Link
               aria-disabled={currentPage <= 1}
-              href={buildInvoicesHref(Math.max(1, currentPage - 1))}
+              href={localizeHref(buildInvoicesHref(Math.max(1, currentPage - 1)), culture)}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.previous}
@@ -106,13 +109,28 @@ export function InvoicesPage({
             </p>
             <Link
               aria-disabled={currentPage >= totalPages}
-              href={buildInvoicesHref(Math.min(totalPages, currentPage + 1))}
+              href={localizeHref(buildInvoicesHref(Math.min(totalPages, currentPage + 1)), culture)}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.next}
             </Link>
           </div>
         )}
+
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <MemberPortalNav culture={culture} activePath="/invoices" />
+
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+              {copy.invoicesRouteLabel}
+            </p>
+            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.invoicesPortalNote}
+            </p>
+          </aside>
+        </div>
       </div>
     </section>
   );

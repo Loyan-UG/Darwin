@@ -15,7 +15,7 @@
 [![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/maui/)
 [![Visual Studio 2026](https://img.shields.io/badge/Visual%20Studio-2026-5C2D91?logo=visual-studio&logoColor=white)](https://visualstudio.microsoft.com/)
 
-Darwin is a multi-tenant-ready commerce and operations platform for small and medium businesses. It combines CMS, catalog, CRM, loyalty, inventory, billing, mobile, and API delivery under one solution.
+### Darwin is a multi-tenant-ready commerce and operations platform for small and medium businesses. It combines CMS, catalog, CRM, loyalty, inventory, billing, mobile, and API delivery under one solution.
 
 The web layer is intentionally split into two separate applications:
 

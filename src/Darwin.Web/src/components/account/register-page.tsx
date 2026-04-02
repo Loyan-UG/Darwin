@@ -68,19 +68,19 @@ export function RegisterPage({
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
               {copy.firstNameLabel}
-              <input name="firstName" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+              <input name="firstName" required autoComplete="given-name" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
               {copy.lastNameLabel}
-              <input name="lastName" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+              <input name="lastName" required autoComplete="family-name" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
               {copy.emailLabel}
-              <input name="email" type="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+              <input name="email" type="email" required autoComplete="email" inputMode="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
               {copy.passwordLabel}
-              <input name="password" type="password" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+              <input name="password" type="password" required minLength={8} autoComplete="new-password" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
           </div>
 

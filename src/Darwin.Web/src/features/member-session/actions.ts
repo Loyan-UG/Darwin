@@ -23,8 +23,12 @@ function buildSearch(values: Record<string, string | undefined>) {
   return query ? `?${query}` : "";
 }
 
+function normalizeEmail(value: FormDataEntryValue | null) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
 export async function signInMemberAction(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "").trim();
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? "/account"),

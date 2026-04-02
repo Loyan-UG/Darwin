@@ -3,7 +3,10 @@ import { OrderConfirmationPage } from "@/components/checkout/order-confirmation-
 import { getPublicStorefrontOrderConfirmation } from "@/features/checkout/api/public-checkout";
 import { readStorefrontPaymentHandoff } from "@/features/checkout/cookies";
 import { getMemberSession } from "@/features/member-session/cookies";
-import { readSingleSearchParam } from "@/features/checkout/helpers";
+import {
+  readAllowedSearchParam,
+  readSingleSearchParam,
+} from "@/features/checkout/helpers";
 import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildNoIndexMetadata } from "@/lib/seo";
@@ -36,11 +39,22 @@ export default async function OrderConfirmationRoute({
   const resolvedParams = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const orderNumber = readSingleSearchParam(resolvedSearchParams?.orderNumber);
-  const checkoutStatus = readSingleSearchParam(resolvedSearchParams?.checkoutStatus);
-  const paymentCompletionStatus = readSingleSearchParam(
-    resolvedSearchParams?.paymentCompletionStatus,
+  const checkoutStatus = readAllowedSearchParam(
+    resolvedSearchParams?.checkoutStatus,
+    ["order-placed"],
   );
-  const paymentOutcome = readSingleSearchParam(resolvedSearchParams?.paymentOutcome);
+  const paymentCompletionStatus = readAllowedSearchParam(
+    resolvedSearchParams?.paymentCompletionStatus,
+    [
+      "completed",
+      "failed",
+      "missing-context",
+    ],
+  );
+  const paymentOutcome = readAllowedSearchParam(
+    resolvedSearchParams?.paymentOutcome,
+    ["Succeeded", "Cancelled", "Failed"],
+  );
   const paymentStatus = readSingleSearchParam(resolvedSearchParams?.paymentStatus);
   const orderStatus = readSingleSearchParam(resolvedSearchParams?.orderStatus);
   const paymentError = readSingleSearchParam(resolvedSearchParams?.paymentError);

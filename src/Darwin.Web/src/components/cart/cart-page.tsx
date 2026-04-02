@@ -5,6 +5,7 @@ import {
   removeCartItemAction,
   updateCartQuantityAction,
 } from "@/features/cart/actions";
+import type { PublicProductSummary } from "@/features/catalog/types";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
 import {
   formatResource,
@@ -19,6 +20,7 @@ type CartPageProps = {
   model: CartViewModel;
   cartStatus?: string;
   cartError?: string;
+  followUpProducts?: PublicProductSummary[];
 };
 
 function getStatusMessage(status?: string) {
@@ -43,6 +45,7 @@ export function CartPage({
   model,
   cartStatus,
   cartError,
+  followUpProducts = [],
 }: CartPageProps) {
   const copy = getCommerceResource(culture);
   const statusMessageKey = getStatusMessage(cartStatus);
@@ -182,7 +185,10 @@ export function CartPage({
                             type="number"
                             name="quantity"
                             min={0}
+                            step={1}
+                            inputMode="numeric"
                             defaultValue={item.quantity}
+                            aria-label={copy.cartQuantityAriaLabel}
                             className="w-20 rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)]"
                           />
                           <button
@@ -251,6 +257,9 @@ export function CartPage({
                     name="couponCode"
                     defaultValue={cart.couponCode ?? ""}
                     placeholder={copy.couponPlaceholder}
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                    maxLength={64}
                     className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none"
                   />
                 </label>
@@ -278,6 +287,104 @@ export function CartPage({
                 </Link>
                 <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   {copy.checkoutSummaryNote}
+                </div>
+              </div>
+            </aside>
+          </div>
+        )}
+
+        {cart && cart.items.length > 0 && (
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.followUpProductsTitle}
+              </p>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.followUpProductsDescription}
+              </p>
+
+              {followUpProducts.length > 0 ? (
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  {followUpProducts.map((product) => (
+                    <article
+                      key={product.id}
+                      className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4"
+                    >
+                      <div className="flex min-h-32 items-center justify-center rounded-[1.25rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-3">
+                        {product.primaryImageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={product.primaryImageUrl}
+                            alt={product.name}
+                            className="max-h-24 w-auto object-contain"
+                          />
+                        ) : (
+                          <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                            {copy.noImage}
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
+                        <Link
+                          href={localizeHref(`/catalog/${product.slug}`, culture)}
+                          className="transition hover:text-[var(--color-brand)]"
+                        >
+                          {product.name}
+                        </Link>
+                      </h2>
+                      <p className="mt-2 min-h-14 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {product.shortDescription || copy.followUpProductFallbackDescription}
+                      </p>
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {formatMoney(product.priceMinor, product.currency, culture)}
+                        </div>
+                        <Link
+                          href={localizeHref(`/catalog/${product.slug}`, culture)}
+                          className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                        >
+                          {copy.followUpProductCta}
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {copy.followUpProductsUnavailableMessage}
+                </div>
+              )}
+            </section>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.cartNextStepsTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.cartNextStepsDescription}
+              </p>
+              <div className="mt-5 grid gap-3">
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)]">
+                    {copy.cartNextStepReviewLabel}
+                  </p>
+                  <h2 className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {copy.cartNextStepReviewTitle}
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {copy.cartNextStepReviewMessage}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)]">
+                    {copy.cartNextStepCheckoutLabel}
+                  </p>
+                  <h2 className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {copy.cartNextStepCheckoutTitle}
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {copy.cartNextStepCheckoutMessage}
+                  </p>
                 </div>
               </div>
             </aside>

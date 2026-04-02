@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: CmsPageProps) {
   const culture = await getRequestCulture();
   const shared = getSharedResource(culture);
   const { slug } = await params;
-  const pageResult = await getPublicPageBySlug(slug);
+  const pageResult = await getPublicPageBySlug(slug, culture);
   const page = pageResult.data;
   const path = `/cms/${encodeURIComponent(slug)}`;
 
@@ -51,10 +51,11 @@ export default async function CmsPage({ params }: CmsPageProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
   const [pageResult, relatedPagesSeed] = await Promise.all([
-    getPublicPageBySlug(slug),
+    getPublicPageBySlug(slug, culture),
     getPublishedPages({
       page: 1,
       pageSize: 8,
+      culture,
     }),
   ]);
   const page = pageResult.data;

@@ -24,6 +24,10 @@ function encodeQuery(values: Record<string, string | undefined>) {
   return query ? `?${query}` : "";
 }
 
+function normalizeEmail(value: FormDataEntryValue | null) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
 function buildAccountFlowPath(
   pathname: string,
   values: Record<string, string | undefined>,
@@ -38,7 +42,7 @@ function buildAccountFlowPath(
 export async function registerMemberAction(formData: FormData) {
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "").trim();
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? "/account"),
@@ -80,7 +84,7 @@ export async function registerMemberAction(formData: FormData) {
 }
 
 export async function requestEmailConfirmationAction(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = normalizeEmail(formData.get("email"));
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? "/account"),
     "/account",
@@ -118,7 +122,7 @@ export async function requestEmailConfirmationAction(formData: FormData) {
 }
 
 export async function confirmEmailAction(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = normalizeEmail(formData.get("email"));
   const token = String(formData.get("token") ?? "").trim();
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? "/account"),
@@ -163,7 +167,7 @@ export async function confirmEmailAction(formData: FormData) {
 }
 
 export async function requestPasswordResetAction(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = normalizeEmail(formData.get("email"));
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? "/account"),
     "/account",
@@ -203,7 +207,7 @@ export async function requestPasswordResetAction(formData: FormData) {
 }
 
 export async function resetPasswordAction(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = normalizeEmail(formData.get("email"));
   const token = String(formData.get("token") ?? "").trim();
   const newPassword = String(formData.get("newPassword") ?? "").trim();
   const returnPath = sanitizeAppPath(

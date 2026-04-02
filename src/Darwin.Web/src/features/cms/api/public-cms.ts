@@ -7,6 +7,19 @@ import type {
   PublicPageSummary,
 } from "@/features/cms/types";
 
+function buildCmsQuery(query: Record<string, string | undefined>) {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value) {
+      searchParams.set(key, value);
+    }
+  }
+
+  const serialized = searchParams.toString();
+  return serialized ? `?${serialized}` : "";
+}
+
 export async function getPublicMenuByName(name: string) {
   return fetchPublicJson<PublicMenu>(
     `/api/v1/public/cms/menus/${encodeURIComponent(name)}`,
@@ -14,9 +27,11 @@ export async function getPublicMenuByName(name: string) {
   );
 }
 
-export async function getPublicPageBySlug(slug: string) {
+export async function getPublicPageBySlug(slug: string, culture?: string) {
   return fetchPublicJson<PublicPageDetail>(
-    `/api/v1/public/cms/pages/${encodeURIComponent(slug)}`,
+    `/api/v1/public/cms/pages/${encodeURIComponent(slug)}${buildCmsQuery({
+      culture,
+    })}`,
     "cms-page",
   );
 }
@@ -24,14 +39,14 @@ export async function getPublicPageBySlug(slug: string) {
 export async function getPublishedPages(input?: {
   page?: number;
   pageSize?: number;
+  culture?: string;
 }) {
-  const searchParams = new URLSearchParams({
-    page: String(input?.page ?? 1),
-    pageSize: String(input?.pageSize ?? 24),
-  });
-
   return fetchPublicJson<PagedResponse<PublicPageSummary>>(
-    `/api/v1/public/cms/pages?${searchParams.toString()}`,
+    `/api/v1/public/cms/pages${buildCmsQuery({
+      page: String(input?.page ?? 1),
+      pageSize: String(input?.pageSize ?? 24),
+      culture: input?.culture,
+    })}`,
     "cms-pages",
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { createMemberOrderPaymentIntentAction } from "@/features/member-portal/actions";
 import type { MemberOrderDetail } from "@/features/member-portal/types";
@@ -261,6 +262,8 @@ export function OrderDetailPage({
           </div>
 
           <div className="flex flex-col gap-5">
+            <MemberPortalNav culture={culture} activePath="/orders" />
+
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
@@ -307,6 +310,15 @@ export function OrderDetailPage({
                   {copy.backToOrdersCta}
                 </Link>
               </div>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.ordersRouteLabel}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.orderDetailPortalNote}
+              </p>
             </aside>
           </div>
         </div>

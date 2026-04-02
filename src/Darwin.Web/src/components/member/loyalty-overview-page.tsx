@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { LoyaltyDiscoverySection } from "@/components/member/loyalty-discovery-section";
 import type { BusinessCategoryKind, BusinessSummary } from "@/features/businesses/types";
@@ -89,6 +90,10 @@ export function LoyaltyOverviewPage({
               businessesStatus,
             })}
           />
+        )}
+
+        {hasMemberSession && (
+          <MemberPortalNav culture={culture} activePath="/loyalty" />
         )}
 
         {hasMemberSession && overview ? (

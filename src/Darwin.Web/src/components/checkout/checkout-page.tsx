@@ -157,39 +157,39 @@ export function CheckoutPage({
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                   {copy.fullNameLabel}
-                  <input name="fullName" defaultValue={draft.fullName} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
+                  <input name="fullName" defaultValue={draft.fullName} required autoComplete="name" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                   {copy.companyLabel}
-                  <input name="company" defaultValue={draft.company} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
+                  <input name="company" defaultValue={draft.company} autoComplete="organization" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
                   {copy.street1Label}
-                  <input name="street1" defaultValue={draft.street1} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
+                  <input name="street1" defaultValue={draft.street1} required autoComplete="address-line1" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
                   {copy.street2Label}
-                  <input name="street2" defaultValue={draft.street2} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
+                  <input name="street2" defaultValue={draft.street2} autoComplete="address-line2" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                   {copy.postalCodeLabel}
-                  <input name="postalCode" defaultValue={draft.postalCode} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
+                  <input name="postalCode" defaultValue={draft.postalCode} required autoComplete="postal-code" inputMode="text" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                   {copy.cityLabel}
-                  <input name="city" defaultValue={draft.city} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
+                  <input name="city" defaultValue={draft.city} required autoComplete="address-level2" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                   {copy.stateLabel}
-                  <input name="state" defaultValue={draft.state} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
+                  <input name="state" defaultValue={draft.state} autoComplete="address-level1" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                   {copy.countryCodeLabel}
-                  <input name="countryCode" defaultValue={draft.countryCode} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal uppercase text-[var(--color-text-primary)] outline-none" />
+                  <input name="countryCode" defaultValue={draft.countryCode} required autoComplete="country" autoCapitalize="characters" maxLength={2} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal uppercase text-[var(--color-text-primary)] outline-none" />
                 </label>
                 <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)] sm:col-span-2">
                   {copy.phoneLabel}
-                  <input name="phoneE164" defaultValue={draft.phoneE164} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
+                  <input name="phoneE164" defaultValue={draft.phoneE164} autoComplete="tel" inputMode="tel" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none" />
                 </label>
               </div>
 
@@ -217,6 +217,9 @@ export function CheckoutPage({
                           name="selectedShippingMethodId"
                           value={option.methodId}
                           defaultChecked={isChecked}
+                          aria-label={formatResource(copy.shippingOptionAriaLabel, {
+                            optionName: option.name,
+                          })}
                           className="mt-1"
                         />
                         <span className="flex-1">

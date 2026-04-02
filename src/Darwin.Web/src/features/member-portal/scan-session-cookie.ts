@@ -30,16 +30,19 @@ export async function readPreparedMemberLoyaltyScanSession(
       !parsed.scanSessionToken ||
       parsed.businessId !== businessId
     ) {
+      cookieStore.delete(MEMBER_LOYALTY_SCAN_COOKIE);
       return null;
     }
 
     const expiresAt = new Date(parsed.expiresAtUtc).getTime();
     if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+      cookieStore.delete(MEMBER_LOYALTY_SCAN_COOKIE);
       return null;
     }
 
     return parsed;
   } catch {
+    cookieStore.delete(MEMBER_LOYALTY_SCAN_COOKIE);
     return null;
   }
 }

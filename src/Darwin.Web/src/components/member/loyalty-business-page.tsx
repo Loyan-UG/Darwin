@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { BusinessLocation } from "@/features/businesses/types";
 import {
@@ -410,6 +411,8 @@ export function LoyaltyBusinessPage({
               </div>
 
               <div className="flex flex-col gap-5">
+                <MemberPortalNav culture={culture} activePath="/loyalty" />
+
                 <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.accountDetailsTitle}</p>
                   <div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
@@ -417,6 +420,14 @@ export function LoyaltyBusinessPage({
                     <div className="flex items-center justify-between gap-4"><span>{copy.loyaltyAccountLabel}</span><span className="truncate">{dashboard.account.loyaltyAccountId}</span></div>
                     <div className="flex items-center justify-between gap-4"><span>{copy.businessIdShortLabel}</span><span className="truncate">{dashboard.account.businessId}</span></div>
                   </div>
+                </aside>
+                <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                    {copy.loyaltyRouteLabel}
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {copy.loyaltyPortalNote}
+                  </p>
                 </aside>
                 <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.recentTransactionsTitle}</p>

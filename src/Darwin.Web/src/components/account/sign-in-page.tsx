@@ -59,11 +59,11 @@ export function SignInPage({
           <div className="mt-8 grid gap-4">
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
               {copy.emailLabel}
-              <input name="email" type="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+              <input name="email" type="email" required autoComplete="email" inputMode="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
               {copy.passwordLabel}
-              <input name="password" type="password" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
+              <input name="password" type="password" required autoComplete="current-password" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
           </div>
 

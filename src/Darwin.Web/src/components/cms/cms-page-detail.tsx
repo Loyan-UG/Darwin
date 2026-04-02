@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { summarizeCmsContent } from "@/features/cms/content-summary";
 import type { PublicPageDetail, PublicPageSummary } from "@/features/cms/types";
 import { localizeHref } from "@/lib/locale-routing";
 import {
@@ -27,6 +28,10 @@ export function CmsPageDetail({
 }: CmsPageDetailProps) {
   const copy = getSharedResource(culture);
   const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
+  const pageReference = page ? `/cms/${page.slug}` : null;
+  const contentSummary = page
+    ? summarizeCmsContent(page.contentHtml)
+    : null;
 
   if (!page) {
     return (
@@ -80,11 +85,77 @@ export function CmsPageDetail({
 
           <div
             className="cms-content mt-8 max-w-none"
-            dangerouslySetInnerHTML={{ __html: page.contentHtml }}
+            dangerouslySetInnerHTML={{ __html: contentSummary?.html ?? page.contentHtml }}
           />
         </article>
 
         <aside className="flex flex-col gap-5">
+          {contentSummary && contentSummary.headings.length > 0 && (
+            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.cmsOnThisPageTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.cmsOnThisPageDescription}
+              </p>
+              <div className="mt-5 flex flex-col gap-2">
+                {contentSummary.headings.map((heading) => (
+                  <a
+                    key={heading.id}
+                    href={`#${heading.id}`}
+                    className={
+                      heading.level === 3
+                        ? "ml-4 rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                        : "rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                    }
+                  >
+                    {heading.text}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {contentSummary && (
+            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.cmsReadingStatsTitle}
+              </p>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.cmsReadingMinutesLabel}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {formatResource(copy.cmsReadingMinutesValue, {
+                      minutes: contentSummary.readingMinutes,
+                    })}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.cmsWordCountLabel}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {formatResource(copy.cmsWordCountValue, {
+                      count: contentSummary.wordCount,
+                    })}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.cmsParagraphCountLabel}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {formatResource(copy.cmsParagraphCountValue, {
+                      count: contentSummary.paragraphCount,
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.cmsContentNavigationTitle}
@@ -99,19 +170,78 @@ export function CmsPageDetail({
               >
                 {copy.cmsAllPublishedPagesCta}
               </Link>
-              {relatedPages.map((relatedPage) => (
-                <Link
-                  key={relatedPage.id}
-                  href={localizeHref(`/cms/${relatedPage.slug}`, culture)}
-                  className={
-                    relatedPage.slug === page.slug
-                      ? "rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-[var(--color-brand-contrast)]"
-                      : "rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                  }
-                >
-                  {relatedPage.title}
-                </Link>
-              ))}
+              {relatedPages.length > 0 ? (
+                relatedPages.map((relatedPage) => (
+                  <Link
+                    key={relatedPage.id}
+                    href={localizeHref(`/cms/${relatedPage.slug}`, culture)}
+                    className={
+                      relatedPage.slug === page.slug
+                        ? "rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-[var(--color-brand-contrast)]"
+                        : "rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                    }
+                  >
+                    {relatedPage.title}
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {copy.cmsRelatedPagesEmptyMessage}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.cmsPageReferenceTitle}
+            </p>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.cmsReferenceSlugLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">{page.slug}</p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.cmsReferenceMetaTitleLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {page.metaTitle ?? copy.cmsReferenceMetaFallback}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.cmsReferencePathLabel}
+                </p>
+                <p className="mt-2 break-all font-semibold text-[var(--color-text-primary)]">
+                  {pageReference}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.cmsFollowUpTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.cmsFollowUpDescription}
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <Link
+                href={localizeHref("/", culture)}
+                className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsFollowUpHomeCta}
+              </Link>
+              <Link
+                href={localizeHref("/catalog", culture)}
+                className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsFollowUpCatalogCta}
+              </Link>
             </div>
           </div>
 

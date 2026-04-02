@@ -74,6 +74,11 @@ The first web slice is now in place:
 - primary navigation now attempts to load from the public CMS menu contract and falls back to app-defined links when the API or seed data is unavailable
 - the home page now uses reusable hero/card web parts and can surface live CMS/catalog spotlight data without coupling page structure to one theme
 - the home page now also includes a stat-grid web part plus part-owned hero aside copy, so home composition is richer without pushing home-specific wording down into the generic composer
+- the home page now also includes a dedicated journey/link-list web part, so CMS, catalog, and account entry flows remain visible as one composed front-office system instead of only a flat shortcut grid
+- home metrics/highlights now also expose CMS/catalog/category contract health directly inside the composer so degraded public content does not hide behind static counts
+- the home page now also includes a reusable status-list web part, so contract-backed CMS/catalog/account lanes remain actionable and theme-independent instead of collapsing into one-off home markup
+- the home page now also includes a reusable stage-flow web part, so Home communicates a staged storefront journey across CMS, catalog, and member follow-up instead of a loose collection of route teasers
+- the home page now also includes a reusable pair-panel web part, so CMS and catalog can be presented as coordinated storefront surfaces instead of only independent spotlight cards
 - route scaffolding now exists for catalog, account, loyalty, orders, and invoices so later slices can bind feature data without reworking the shell
 
 The next storefront slice is now also underway:
@@ -81,11 +86,17 @@ The next storefront slice is now also underway:
 - the catalog listing page now consumes public category and product contracts from `Darwin.WebApi`
 - product-detail routing now consumes the public product-by-slug contract
 - a public CMS index route now consumes the published CMS page list contract
+- public CMS list/detail delivery now also follows the active request culture instead of relying on backend default-language behavior
+- the CMS index now also offers a visible-result search lens over the already loaded page set, but keeps that state explicit and non-canonical until a real public CMS search contract exists
+- CMS index empty states now also keep Home/Catalog follow-up actions visible instead of leaving the public content surface at a dead end
 - CMS detail pages now expose route metadata, related-page navigation, and visible degraded-state handling instead of collapsing non-404 failures into a not-found route
+- CMS detail now also derives on-page section navigation and reading/structure metrics from the published HTML itself, so rich content remains navigable without needing a separate CMS-specific page-layout contract first
 - a public cart route now consumes the public cart contract and supports server-side add/update/remove flows for anonymous storefront usage
+- the cart route now also reuses the public catalog contract for a small continue-shopping follow-up rail plus explicit cart next-step guidance, instead of leaving the shopper only with totals and checkout CTA
 - a public checkout route now consumes checkout-intent and order-placement contracts with inline address capture and shipping selection
 - the checkout UI now also keeps readiness signals and live line-item review visible, so storefront conversion no longer depends only on totals plus the address form
 - a public confirmation route now consumes storefront confirmation data and exposes payment-handoff retry through the payment-intent contract
+- the confirmation route now also keeps post-checkout guidance explicit, including payment-next-step messaging, account/order-history follow-up, and stable order-reference handling instead of a passive receipt-only view
 - degraded-mode storefront data states are now visible in the UI instead of silently collapsing into placeholder-only behavior
 - catalog list/detail now pass the active request culture into the canonical public catalog endpoints, so storefront localization no longer depends on the backend default culture leaking through
 - catalog merchandising polish now stays within the real public contract set: selected-category context, compare-at savings badges, and category-linked navigation were added without pretending search/facets/sort already exist
@@ -98,6 +109,7 @@ The first account self-service foundation is now also in place:
 - public registration now runs through the member auth register endpoint
 - activation email request and token confirmation now run through the member auth activation endpoints
 - password reset request and completion now run through the member auth reset endpoints
+- public registration, activation, password reset, and sign-in now also normalize email input plus stronger required/autocomplete/password guardrails so avoidable auth-flow mismatches are reduced before the canonical API call
 - browser sign-in persistence, member profile editing, addresses, and the authenticated portal remain a distinct follow-up slice because the final browser auth/session transport is still an explicit platform decision
 
 The next member-portal slice is now also in place:
@@ -105,12 +117,16 @@ The next member-portal slice is now also in place:
 - `Darwin.Web` now has a provisional browser session layer that stores member session state in web-owned cookies rather than exposing raw tokens in the UI
 - the provisional browser session layer now refreshes member access tokens near expiry and retries protected member fetches once before forcing a new sign-in
 - the authenticated account route now renders profile, preference, and linked CRM context snapshots from the member API surface
+- the dashboard, profile, preferences, and address-book surfaces now also share explicit member-portal navigation, so the protected account area behaves like one front-office subsystem instead of separate editor pages
 - editable member profile and communication/account preferences now run through the canonical member profile endpoints
 - reusable member address-book create/update/delete/default flows now run through the canonical member address endpoints
+- profile phone-verification and address forms now also carry stronger client-side input/autocomplete guardrails so avoidable member-data mistakes are caught before the canonical API call
 - phone verification request/confirm now runs inside the profile surface through the canonical SMS/WhatsApp verification endpoints and shared profile confirmation flag
 - orders and invoices now render authenticated history pages plus detail routes with payment-retry handoff
 - loyalty now renders the authenticated overview instead of remaining a placeholder page
+- member orders/invoices/loyalty now also follow the same shared member-portal navigation model as profile/preferences/addresses, so the authenticated portal behaves more like one subsystem than a set of detached routes
 - loyalty business detail routes now render business-scoped dashboard, rewards, and cursor-paged timeline data from the member contracts
+- loyalty business detail now also follows the shared member-portal navigation model, and browser-prepared scan-token state now clears stale/mismatched cookie state instead of silently drifting
 - this remains an implementation boundary, not a permanent architecture verdict; deeper BFF/session hardening can still replace the current web-owned cookie wrapper later
 
 The next localization/config-driven slice is now also in place:
@@ -167,6 +183,7 @@ The next storefront-commerce hardening slice is now also in place:
 - cart line presentation now shows unit net, add-on delta, VAT rate, line net, VAT, and line gross from the canonical cart snapshot instead of only a single gross total
 - checkout summary now surfaces coupon state plus shipment-mass/shipping-country context from the live checkout intent so DHL-first and tax presentation are less opaque during storefront review
 - storefront confirmation now finalizes hosted-checkout return and cancellation through the canonical payment-completion endpoint instead of only showing a post-redirect snapshot
+- cart quantity/coupon handling plus checkout country-code and cart/confirmation status-query handling now also normalize and constrain browser-provided values instead of trusting raw redirect/form input
 - a short-lived web-owned payment handoff cookie now exists purely to bridge the PSP return into canonical completion; the order/payment status still comes from `Darwin.WebApi`
 
 ## 3. Position in the Architecture

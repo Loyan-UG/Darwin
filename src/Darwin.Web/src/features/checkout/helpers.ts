@@ -4,6 +4,7 @@ type SearchParamValue = string | string[] | undefined;
 type DraftValue = FormDataEntryValue | SearchParamValue | null;
 
 const DEFAULT_COUNTRY_CODE = "DE";
+const DEFAULT_COUPON_CODE_MAX_LENGTH = 64;
 
 function normalizeValue(value: DraftValue) {
   if (Array.isArray(value)) {
@@ -11,6 +12,22 @@ function normalizeValue(value: DraftValue) {
   }
 
   return String(value ?? "").trim();
+}
+
+function normalizeCountryCode(value: DraftValue) {
+  return normalizeValue(value).toUpperCase().slice(0, 2);
+}
+
+function normalizeQuantityValue(value: DraftValue, fallback = 1) {
+  const parsed = Number.parseInt(normalizeValue(value), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+export function normalizeCouponCode(
+  value: DraftValue,
+  maxLength = DEFAULT_COUPON_CODE_MAX_LENGTH,
+) {
+  return normalizeValue(value).toUpperCase().slice(0, maxLength);
 }
 
 function createEmptyDraft(): CheckoutDraft {
@@ -44,7 +61,7 @@ export function readCheckoutDraftFromSearchParams(
     postalCode: normalizeValue(searchParams.postalCode),
     city: normalizeValue(searchParams.city),
     state: normalizeValue(searchParams.state),
-    countryCode: normalizeValue(searchParams.countryCode) || DEFAULT_COUNTRY_CODE,
+    countryCode: normalizeCountryCode(searchParams.countryCode) || DEFAULT_COUNTRY_CODE,
     phoneE164: normalizeValue(searchParams.phoneE164),
     selectedShippingMethodId: normalizeValue(searchParams.selectedShippingMethodId),
   };
@@ -59,7 +76,7 @@ export function readCheckoutDraftFromFormData(formData: FormData): CheckoutDraft
     postalCode: normalizeValue(formData.get("postalCode")),
     city: normalizeValue(formData.get("city")),
     state: normalizeValue(formData.get("state")),
-    countryCode: normalizeValue(formData.get("countryCode")) || DEFAULT_COUNTRY_CODE,
+    countryCode: normalizeCountryCode(formData.get("countryCode")) || DEFAULT_COUNTRY_CODE,
     phoneE164: normalizeValue(formData.get("phoneE164")),
     selectedShippingMethodId: normalizeValue(formData.get("selectedShippingMethodId")),
   };
@@ -115,4 +132,37 @@ export function buildCheckoutDraftSearch(
 
 export function readSingleSearchParam(value: SearchParamValue) {
   return normalizeValue(value) || undefined;
+}
+
+export function readPositiveIntegerSearchParam(
+  value: SearchParamValue,
+  fallback = 1,
+) {
+  const parsed = Number.parseInt(normalizeValue(value), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+export function readSearchTextParam(
+  value: SearchParamValue,
+  maxLength = 80,
+) {
+  return normalizeValue(value).slice(0, maxLength) || undefined;
+}
+
+export function readAllowedSearchParam<T extends string>(
+  value: SearchParamValue,
+  allowedValues: readonly T[],
+) {
+  const normalized = readSingleSearchParam(value);
+  return normalized && allowedValues.includes(normalized as T)
+    ? (normalized as T)
+    : undefined;
+}
+
+export function readQuantityFromFormData(
+  formData: FormData,
+  key: string,
+  fallback = 1,
+) {
+  return normalizeQuantityValue(formData.get(key), fallback);
 }

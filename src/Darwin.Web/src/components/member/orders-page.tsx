@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { MemberOrderSummary } from "@/features/member-portal/types";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { localizeHref } from "@/lib/locale-routing";
 
 type OrdersPageProps = {
   culture: string;
@@ -27,7 +29,8 @@ export function OrdersPage({
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
-      <div className="flex w-full flex-col gap-8">
+      <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex flex-col gap-8">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.ordersEyebrow}
@@ -57,7 +60,7 @@ export function OrdersPage({
                     {order.status}
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
-                    <Link href={`/orders/${order.id}`} className="transition hover:text-[var(--color-brand)]">
+                    <Link href={localizeHref(`/orders/${order.id}`, culture)} className="transition hover:text-[var(--color-brand)]">
                       {order.orderNumber}
                     </Link>
                   </h2>
@@ -70,7 +73,7 @@ export function OrdersPage({
                     {formatMoney(order.grandTotalGrossMinor, order.currency, culture)}
                   </p>
                   <Link
-                    href={`/orders/${order.id}`}
+                    href={localizeHref(`/orders/${order.id}`, culture)}
                     className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.openOrderCta}
@@ -91,7 +94,7 @@ export function OrdersPage({
           <div className="flex flex-wrap items-center gap-3">
             <Link
               aria-disabled={currentPage <= 1}
-              href={buildOrdersHref(Math.max(1, currentPage - 1))}
+              href={localizeHref(buildOrdersHref(Math.max(1, currentPage - 1)), culture)}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.previous}
@@ -101,13 +104,28 @@ export function OrdersPage({
             </p>
             <Link
               aria-disabled={currentPage >= totalPages}
-              href={buildOrdersHref(Math.min(totalPages, currentPage + 1))}
+              href={localizeHref(buildOrdersHref(Math.min(totalPages, currentPage + 1)), culture)}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.next}
             </Link>
           </div>
         )}
+
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <MemberPortalNav culture={culture} activePath="/orders" />
+
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+              {copy.ordersRouteLabel}
+            </p>
+            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.ordersPortalNote}
+            </p>
+          </aside>
+        </div>
       </div>
     </section>
   );

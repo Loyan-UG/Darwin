@@ -10,10 +10,22 @@ type CmsPagesIndexProps = {
   totalPages: number;
   currentPage: number;
   status: string;
+  visibleQuery?: string;
 };
 
-function buildCmsHref(page = 1) {
-  return page > 1 ? `/cms?page=${page}` : "/cms";
+function buildCmsHref(page = 1, visibleQuery?: string) {
+  const searchParams = new URLSearchParams();
+
+  if (page > 1) {
+    searchParams.set("page", String(page));
+  }
+
+  if (visibleQuery) {
+    searchParams.set("visibleQuery", visibleQuery);
+  }
+
+  const serialized = searchParams.toString();
+  return serialized ? `/cms?${serialized}` : "/cms";
 }
 
 export function CmsPagesIndex({
@@ -22,6 +34,7 @@ export function CmsPagesIndex({
   totalPages,
   currentPage,
   status,
+  visibleQuery,
 }: CmsPagesIndexProps) {
   const copy = getSharedResource(culture);
 
@@ -47,6 +60,47 @@ export function CmsPagesIndex({
             message={formatResource(copy.cmsIndexDegradedMessage, { status })}
           />
         )}
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <form action={localizeHref("/cms", culture)} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
+            <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+              {copy.cmsVisibleSearchLabel}
+              <input
+                type="search"
+                name="visibleQuery"
+                defaultValue={visibleQuery ?? ""}
+                maxLength={80}
+                autoComplete="off"
+                placeholder={copy.cmsVisibleSearchPlaceholder}
+                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none"
+              />
+            </label>
+            <button
+              type="submit"
+              className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+            >
+              {copy.cmsVisibleSearchSubmitCta}
+            </button>
+            {visibleQuery ? (
+              <Link
+                href={localizeHref("/cms", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsVisibleSearchClearCta}
+              </Link>
+            ) : null}
+          </form>
+          <div className="mt-4">
+            <StatusBanner
+              title={copy.cmsVisibleSearchInfoTitle}
+              message={visibleQuery
+                ? formatResource(copy.cmsVisibleSearchFilteredMessage, {
+                    query: visibleQuery,
+                  })
+                : copy.cmsVisibleSearchInfoMessage}
+            />
+          </div>
+        </div>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {pages.map((page) => (
@@ -85,6 +139,20 @@ export function CmsPagesIndex({
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.cmsNoPagesMessage}
             </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link
+                href={localizeHref("/", culture)}
+                className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+              >
+                {copy.cmsNoPagesHomeCta}
+              </Link>
+              <Link
+                href={localizeHref("/catalog", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsNoPagesCatalogCta}
+              </Link>
+            </div>
           </div>
         )}
 
@@ -92,7 +160,10 @@ export function CmsPagesIndex({
           <div className="flex flex-wrap items-center gap-3">
             <Link
               aria-disabled={currentPage <= 1}
-              href={localizeHref(buildCmsHref(Math.max(1, currentPage - 1)), culture)}
+              href={localizeHref(
+                buildCmsHref(Math.max(1, currentPage - 1), visibleQuery),
+                culture,
+              )}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.previous}
@@ -102,7 +173,10 @@ export function CmsPagesIndex({
             </p>
             <Link
               aria-disabled={currentPage >= totalPages}
-              href={localizeHref(buildCmsHref(Math.min(totalPages, currentPage + 1)), culture)}
+              href={localizeHref(
+                buildCmsHref(Math.min(totalPages, currentPage + 1), visibleQuery),
+                culture,
+              )}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.next}

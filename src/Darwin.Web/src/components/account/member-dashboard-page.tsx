@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { signOutMemberAction } from "@/features/member-session/actions";
 import type { MemberSession } from "@/features/member-session/types";
@@ -7,7 +7,6 @@ import type {
   MemberCustomerProfile,
   MemberPreferences,
 } from "@/features/member-portal/types";
-import { localizeHref } from "@/lib/locale-routing";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
 
@@ -119,19 +118,7 @@ export function MemberDashboardPage({
           </div>
 
           <div className="flex flex-col gap-5">
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.portalRoutesTitle}
-              </p>
-              <div className="mt-5 flex flex-col gap-2">
-                <Link href={localizeHref("/account/profile", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.profileRouteLabel}</Link>
-                <Link href={localizeHref("/account/preferences", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.preferencesRouteLabel}</Link>
-                <Link href={localizeHref("/account/addresses", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.addressesRouteLabel}</Link>
-                <Link href={localizeHref("/orders", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.ordersRouteLabel}</Link>
-                <Link href={localizeHref("/invoices", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.invoicesRouteLabel}</Link>
-                <Link href={localizeHref("/loyalty", culture)} className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.loyaltyRouteLabel}</Link>
-              </div>
-            </div>
+            <MemberPortalNav culture={culture} activePath="/account" />
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">

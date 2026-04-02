@@ -28,6 +28,10 @@ function withFlash(path: string, key: string, value: string) {
   return `${path}${separator}${key}=${encodeURIComponent(value)}`;
 }
 
+function normalizeId(value: FormDataEntryValue | null) {
+  return String(value ?? "").trim();
+}
+
 async function createPaymentIntent(path: string) {
   const accessToken = await getFreshMemberAccessToken();
   if (!accessToken) {
@@ -377,10 +381,10 @@ export async function setMemberAddressDefaultAction(formData: FormData) {
 }
 
 export async function trackMemberPromotionInteractionAction(formData: FormData) {
-  const businessId = String(formData.get("businessId") ?? "").trim();
-  const businessName = String(formData.get("businessName") ?? "").trim();
-  const title = String(formData.get("title") ?? "").trim();
-  const ctaKind = String(formData.get("ctaKind") ?? "").trim();
+  const businessId = normalizeId(formData.get("businessId"));
+  const businessName = normalizeId(formData.get("businessName"));
+  const title = normalizeId(formData.get("title"));
+  const ctaKind = normalizeId(formData.get("ctaKind"));
   const eventType = String(formData.get("eventType") ?? "Open").trim();
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? "/loyalty"),
@@ -423,8 +427,8 @@ export async function trackMemberPromotionInteractionAction(formData: FormData) 
 }
 
 export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
-  const businessId = String(formData.get("businessId") ?? "").trim();
-  const businessLocationId = String(formData.get("businessLocationId") ?? "").trim();
+  const businessId = normalizeId(formData.get("businessId"));
+  const businessLocationId = normalizeId(formData.get("businessLocationId"));
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
     `/loyalty/${businessId}`,
@@ -457,8 +461,8 @@ export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
 }
 
 export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) {
-  const businessId = String(formData.get("businessId") ?? "").trim();
-  const businessLocationId = String(formData.get("businessLocationId") ?? "").trim();
+  const businessId = normalizeId(formData.get("businessId"));
+  const businessLocationId = normalizeId(formData.get("businessLocationId"));
   const mode = String(formData.get("mode") ?? "Accrual").trim();
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
@@ -466,8 +470,9 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
   );
   const selectedRewardTierIds = formData
     .getAll("selectedRewardTierIds")
-    .map((value) => String(value).trim())
-    .filter(Boolean);
+    .map((value) => normalizeId(value))
+    .filter(Boolean)
+    .filter((value, index, items) => items.indexOf(value) === index);
 
   if (!businessId) {
     redirect("/loyalty");
@@ -515,11 +520,15 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
 }
 
 export async function clearMemberLoyaltyScanSessionAction(formData: FormData) {
-  const businessId = String(formData.get("businessId") ?? "").trim();
+  const businessId = normalizeId(formData.get("businessId"));
   const returnPath = sanitizeAppPath(
     String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
     `/loyalty/${businessId}`,
   );
+
+  if (!businessId) {
+    redirect("/loyalty");
+  }
 
   await clearPreparedMemberLoyaltyScanSession();
   redirect(withFlash(returnPath, "scanStatus", "cleared"));

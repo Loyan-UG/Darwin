@@ -1,3 +1,4 @@
+import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { updateMemberPreferencesAction } from "@/features/member-portal/actions";
 import type { MemberPreferences } from "@/features/member-portal/types";
@@ -103,14 +104,18 @@ export function PreferencesPage({
           )}
         </form>
 
-        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
-            {copy.currentContractTitle}
-          </p>
-          <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-            {copy.currentContractPreferencesMessage}
-          </p>
-        </aside>
+        <div className="flex flex-col gap-6">
+          <MemberPortalNav culture={culture} activePath="/account/preferences" />
+
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+              {copy.currentContractTitle}
+            </p>
+            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.currentContractPreferencesMessage}
+            </p>
+          </aside>
+        </div>
       </div>
     </section>
   );

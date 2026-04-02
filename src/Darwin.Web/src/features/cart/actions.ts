@@ -13,6 +13,10 @@ import {
   removePublicCartItem,
   updatePublicCartItem,
 } from "@/features/cart/api/public-cart";
+import {
+  normalizeCouponCode,
+  readQuantityFromFormData,
+} from "@/features/checkout/helpers";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { toLocalizedQueryMessage } from "@/localization";
 
@@ -33,7 +37,7 @@ export async function addToCartAction(formData: FormData) {
     String(formData.get("returnPath") ?? "/catalog"),
     "/catalog",
   );
-  const quantity = Number(formData.get("quantity") ?? "1");
+  const quantity = readQuantityFromFormData(formData, "quantity");
   const productName = String(formData.get("productName") ?? "").trim();
   const productHref = sanitizeAppPath(
     String(formData.get("productHref") ?? ""),
@@ -87,7 +91,7 @@ export async function addToCartAction(formData: FormData) {
 export async function updateCartQuantityAction(formData: FormData) {
   const cartId = String(formData.get("cartId") ?? "").trim();
   const variantId = String(formData.get("variantId") ?? "").trim();
-  const quantity = Number(formData.get("quantity") ?? "1");
+  const quantity = readQuantityFromFormData(formData, "quantity");
   const selectedAddOnValueIdsJson = String(
     formData.get("selectedAddOnValueIdsJson") ?? "",
   ).trim();
@@ -164,7 +168,7 @@ export async function removeCartItemAction(formData: FormData) {
 
 export async function applyCartCouponAction(formData: FormData) {
   const cartId = String(formData.get("cartId") ?? "").trim();
-  const couponCode = String(formData.get("couponCode") ?? "").trim();
+  const couponCode = normalizeCouponCode(formData.get("couponCode"));
 
   if (!cartId) {
     redirect(
@@ -193,5 +197,11 @@ export async function applyCartCouponAction(formData: FormData) {
 
   await pruneCartDisplaySnapshots(result.data.items.map((item) => item.variantId));
   revalidateStorefrontPaths(["/cart", "/checkout"]);
-  redirect(withCartFlash("/cart", "cartStatus", couponCode ? "coupon-applied" : "coupon-cleared"));
+  redirect(
+    withCartFlash(
+      "/cart",
+      "cartStatus",
+      couponCode ? "coupon-applied" : "coupon-cleared",
+    ),
+  );
 }

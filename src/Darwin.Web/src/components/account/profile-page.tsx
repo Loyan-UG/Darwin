@@ -1,3 +1,4 @@
+import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
   confirmMemberPhoneVerificationAction,
@@ -70,6 +71,7 @@ export function ProfilePage({
     phoneStatus,
     Boolean(profile?.phoneNumberConfirmed),
   );
+  const hasPhoneNumber = Boolean(profile?.phoneE164?.trim());
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -127,6 +129,7 @@ export function ProfilePage({
                   <input
                     name="firstName"
                     defaultValue={profile.firstName ?? ""}
+                    autoComplete="given-name"
                     className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
                   />
                 </label>
@@ -135,6 +138,7 @@ export function ProfilePage({
                   <input
                     name="lastName"
                     defaultValue={profile.lastName ?? ""}
+                    autoComplete="family-name"
                     className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
                   />
                 </label>
@@ -143,6 +147,8 @@ export function ProfilePage({
                   <input
                     name="phoneE164"
                     defaultValue={profile.phoneE164 ?? ""}
+                    autoComplete="tel"
+                    inputMode="tel"
                     className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
                   />
                 </label>
@@ -165,6 +171,7 @@ export function ProfilePage({
                   <input
                     name="currency"
                     defaultValue={profile.currency ?? "EUR"}
+                    maxLength={3}
                     className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal uppercase outline-none"
                   />
                 </label>
@@ -173,6 +180,7 @@ export function ProfilePage({
                   <input
                     name="timezone"
                     defaultValue={profile.timezone ?? "Europe/Berlin"}
+                    autoComplete="off"
                     className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none"
                   />
                 </label>
@@ -193,6 +201,8 @@ export function ProfilePage({
         </form>
 
         <div className="flex flex-col gap-6">
+          <MemberPortalNav culture={culture} activePath="/account/profile" />
+
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.boundaryTitle}
@@ -257,10 +267,16 @@ export function ProfilePage({
                   </label>
                   <button
                     type="submit"
-                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                    disabled={!hasPhoneNumber}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {copy.requestVerificationCodeCta}
                   </button>
+                  {!hasPhoneNumber ? (
+                    <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {copy.phoneMissingForVerificationMessage}
+                    </p>
+                  ) : null}
                 </form>
 
                 <form action={confirmMemberPhoneVerificationAction} className="space-y-4">
