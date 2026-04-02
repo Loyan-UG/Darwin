@@ -241,6 +241,10 @@ export async function getHomePageParts(
         ]
       : []),
   ].slice(0, 4);
+  const strongestCategoryOpportunity =
+    categorySpotlights.find((entry) => entry.product && entry.status === "ok") ??
+    categorySpotlights[0] ??
+    null;
 
   return [
     {
@@ -325,6 +329,108 @@ export async function getHomePageParts(
       description: copy.priorityDescription,
       items: homePriorityItems,
       emptyMessage: copy.priorityEmptyMessage,
+    },
+    {
+      id: "home-commerce-opportunity",
+      kind: "status-list",
+      eyebrow: copy.commerceOpportunityEyebrow,
+      title: copy.commerceOpportunityTitle,
+      description: copy.commerceOpportunityDescription,
+      items: [
+        ...(cartResult.data && cartResult.data.items.length > 0
+          ? [
+              {
+                id: "commerce-opportunity-cart",
+                label: copy.commerceOpportunityCartLabel,
+                title: copy.commerceOpportunityCartTitle,
+                description: formatResource(
+                  copy.commerceOpportunityCartDescription,
+                  {
+                    itemCount: cartResult.data.items.length,
+                    total: formatMoney(
+                      cartResult.data.grandTotalGrossMinor,
+                      cartResult.data.currency,
+                      culture,
+                    ),
+                  },
+                ),
+                href: "/checkout",
+                ctaLabel: copy.commerceOpportunityCartCta,
+                tone: "ok" as const,
+                meta: formatResource(copy.commerceOpportunityCartMeta, {
+                  status: cartResult.status,
+                }),
+              },
+            ]
+          : []),
+        ...(spotlightProduct
+          ? [
+              {
+                id: `commerce-opportunity-product-${spotlightProduct.id}`,
+                label: copy.commerceOpportunityProductLabel,
+                title: formatResource(copy.commerceOpportunityProductTitle, {
+                  product: spotlightProduct.name,
+                }),
+                description: formatResource(
+                  copy.commerceOpportunityProductDescription,
+                  {
+                    price: formatMoney(
+                      spotlightProduct.priceMinor,
+                      spotlightProduct.currency,
+                      culture,
+                    ),
+                  },
+                ),
+                href: `/catalog/${spotlightProduct.slug}`,
+                ctaLabel: copy.commerceOpportunityProductCta,
+                tone: catalogHealthy ? ("ok" as const) : ("warning" as const),
+                meta: formatResource(copy.commerceOpportunityProductMeta, {
+                  status: productsResult.status,
+                }),
+              },
+            ]
+          : []),
+        ...(strongestCategoryOpportunity
+          ? [
+              {
+                id: `commerce-opportunity-category-${strongestCategoryOpportunity.category.id}`,
+                label: copy.commerceOpportunityCategoryLabel,
+                title: formatResource(copy.commerceOpportunityCategoryTitle, {
+                  category: strongestCategoryOpportunity.category.name,
+                }),
+                description:
+                  strongestCategoryOpportunity.product &&
+                  strongestCategoryOpportunity.status === "ok"
+                    ? formatResource(
+                        copy.commerceOpportunityCategoryDescription,
+                        {
+                          product:
+                            strongestCategoryOpportunity.product.name,
+                        },
+                      )
+                    : formatResource(
+                        copy.commerceOpportunityCategoryFallbackDescription,
+                        {
+                          status: strongestCategoryOpportunity.status,
+                        },
+                      ),
+                href: buildAppQueryPath("/catalog", {
+                  category: strongestCategoryOpportunity.category.slug,
+                }),
+                ctaLabel: copy.commerceOpportunityCategoryCta,
+                tone:
+                  strongestCategoryOpportunity.product &&
+                  strongestCategoryOpportunity.status === "ok"
+                    ? ("ok" as const)
+                    : ("warning" as const),
+                meta: formatResource(copy.commerceOpportunityCategoryMeta, {
+                  status: strongestCategoryOpportunity.status,
+                }),
+              },
+            ]
+          : []),
+      ],
+      emptyMessage: copy.commerceOpportunityEmptyMessage,
     },
     {
       id: "home-route-map",

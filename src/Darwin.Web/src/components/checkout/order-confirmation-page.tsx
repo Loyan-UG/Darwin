@@ -186,6 +186,7 @@ export function OrderConfirmationPage({
     memberInvoices.find((invoice) => invoice.balanceMinor > 0) ??
     memberInvoices[0] ??
     null;
+  const latestMemberOrder = memberOrders[0] ?? null;
   const loyaltyFocus =
     [...(memberLoyaltyOverview?.accounts ?? [])].sort((left, right) => {
       const leftRank = left.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
@@ -305,6 +306,100 @@ export function OrderConfirmationPage({
               paymentStatus: displayedPaymentStatus,
             })}
           </p>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.confirmationCareTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {paymentNeedsAttention
+                ? copy.confirmationCareAttentionMessage
+                : copy.confirmationCareStableMessage}
+            </p>
+            <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.confirmationCarePaymentLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {paymentNeedsAttention
+                    ? copy.confirmationCarePaymentPending
+                    : copy.confirmationCarePaymentDone}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.confirmationCareReferenceLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {confirmation.orderNumber}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.confirmationCareStatusLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {confirmation.status}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.confirmationNextWindowTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {hasMemberSession
+                ? copy.confirmationNextWindowMemberMessage
+                : copy.confirmationNextWindowGuestMessage}
+            </p>
+            <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.confirmationNextWindowOrdersLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {latestMemberOrder
+                    ? formatResource(copy.confirmationNextWindowOrdersValue, {
+                        orderNumber: latestMemberOrder.orderNumber,
+                      })
+                    : copy.confirmationNextWindowOrdersFallback}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.confirmationNextWindowBillingLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {outstandingInvoice
+                    ? formatResource(copy.confirmationNextWindowBillingValue, {
+                        balance: formatMoney(
+                          outstandingInvoice.balanceMinor,
+                          outstandingInvoice.currency,
+                          culture,
+                        ),
+                      })
+                    : copy.confirmationNextWindowBillingFallback}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.confirmationNextWindowLoyaltyLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {loyaltyFocus
+                    ? formatResource(copy.confirmationNextWindowLoyaltyValue, {
+                        business: loyaltyFocus.businessName,
+                      })
+                    : copy.confirmationNextWindowLoyaltyFallback}
+                </p>
+              </div>
+            </div>
+          </section>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_360px]">
