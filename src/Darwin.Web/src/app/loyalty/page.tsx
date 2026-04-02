@@ -2,6 +2,7 @@ import {
   getPublicBusinessCategoryKinds,
   getPublicBusinessesForDiscovery,
 } from "@/features/businesses/api/public-businesses";
+import { getPublicCategories } from "@/features/catalog/api/public-catalog";
 import { LoyaltyOverviewPage } from "@/components/member/loyalty-overview-page";
 import {
   readBoundedNumericSearchParam,
@@ -14,6 +15,7 @@ import {
   getCurrentMemberLoyaltyOverview,
 } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildNoIndexMetadata } from "@/lib/seo";
@@ -70,7 +72,7 @@ export default async function LoyaltyPage({ searchParams }: LoyaltyPageProps) {
     },
   );
 
-  const [overviewResult, businessesResult, discoveryResult, categoryKindsResult] =
+  const [overviewResult, businessesResult, discoveryResult, categoryKindsResult, cmsPagesResult, categoriesResult] =
     await Promise.all([
       session
         ? getCurrentMemberLoyaltyOverview()
@@ -99,6 +101,8 @@ export default async function LoyaltyPage({ searchParams }: LoyaltyPageProps) {
             : undefined,
       }),
       getPublicBusinessCategoryKinds(),
+      getPublishedPages({ page: 1, pageSize: 2, culture }),
+      getPublicCategories(culture),
     ]);
 
   return (
@@ -135,6 +139,10 @@ export default async function LoyaltyPage({ searchParams }: LoyaltyPageProps) {
       discoveryRadiusKm={safeRadiusKm}
       discoveryCategories={categoryKindsResult.data?.items ?? []}
       hasMemberSession={Boolean(session)}
+      cmsPages={cmsPagesResult.data?.items ?? []}
+      cmsPagesStatus={cmsPagesResult.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
     />
   );
 }

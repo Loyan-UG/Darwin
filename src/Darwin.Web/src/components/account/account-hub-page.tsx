@@ -1,21 +1,52 @@
 import Link from "next/link";
+import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
-import { localizeHref } from "@/lib/locale-routing";
-import { getMemberResource } from "@/localization";
+import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicCartSummary } from "@/features/cart/types";
+import type { PublicPageSummary } from "@/features/cms/types";
+import { formatMoney } from "@/lib/formatting";
+import {
+  buildAppQueryPath,
+  buildLocalizedAuthHref,
+  localizeHref,
+} from "@/lib/locale-routing";
+import { formatResource, getMemberResource } from "@/localization";
 
 type AccountHubPageProps = {
   culture: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
+  storefrontCart: PublicCartSummary | null;
+  storefrontCartStatus: string;
+  returnPath?: string;
 };
 
-export function AccountHubPage({ culture }: AccountHubPageProps) {
+export function AccountHubPage({
+  culture,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
+  storefrontCart,
+  storefrontCartStatus,
+  returnPath,
+}: AccountHubPageProps) {
   const copy = getMemberResource(culture);
+  const cartLineCount =
+    storefrontCart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const preferredReturnPath = returnPath || (cartLineCount > 0 ? "/checkout" : "/account");
+  const spotlightCmsPage = cmsPages[0];
+  const spotlightCategory = categories[0];
   const accountCards = [
     {
       id: "sign-in",
       eyebrow: copy.cardSignInEyebrow,
       title: copy.cardSignInTitle,
       description: copy.cardSignInDescription,
-      href: "/account/sign-in",
+      href: buildLocalizedAuthHref("/account/sign-in", preferredReturnPath, culture),
       ctaLabel: copy.cardSignInCta,
     },
     {
@@ -23,7 +54,7 @@ export function AccountHubPage({ culture }: AccountHubPageProps) {
       eyebrow: copy.cardRegisterEyebrow,
       title: copy.cardRegisterTitle,
       description: copy.cardRegisterDescription,
-      href: "/account/register",
+      href: buildLocalizedAuthHref("/account/register", preferredReturnPath, culture),
       ctaLabel: copy.cardRegisterCta,
     },
     {
@@ -31,7 +62,7 @@ export function AccountHubPage({ culture }: AccountHubPageProps) {
       eyebrow: copy.cardActivationEyebrow,
       title: copy.cardActivationTitle,
       description: copy.cardActivationDescription,
-      href: "/account/activation",
+      href: buildLocalizedAuthHref("/account/activation", preferredReturnPath, culture),
       ctaLabel: copy.cardActivationCta,
     },
     {
@@ -39,7 +70,7 @@ export function AccountHubPage({ culture }: AccountHubPageProps) {
       eyebrow: copy.cardPasswordEyebrow,
       title: copy.cardPasswordTitle,
       description: copy.cardPasswordDescription,
-      href: "/account/password",
+      href: buildLocalizedAuthHref("/account/password", preferredReturnPath, culture),
       ctaLabel: copy.cardPasswordCta,
     },
   ];
@@ -87,6 +118,180 @@ export function AccountHubPage({ culture }: AccountHubPageProps) {
         </div>
 
         <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+            {copy.accountHubReadinessTitle}
+          </p>
+          <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.accountHubReadinessMessage, {
+              cartStatus: storefrontCartStatus,
+              cartLineCount,
+              cmsStatus: cmsPagesStatus,
+              categoriesStatus,
+            })}
+          </p>
+          <dl className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)] sm:grid-cols-2">
+            <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
+              <dt className="font-semibold text-[var(--color-text-primary)]">
+                {copy.accountHubReadinessCartLabel}
+              </dt>
+              <dd>
+                {storefrontCart
+                  ? formatResource(copy.accountHubReadinessCartValue, {
+                      itemCount: cartLineCount,
+                      total: formatMoney(
+                        storefrontCart.grandTotalGrossMinor,
+                        storefrontCart.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.accountHubReadinessCartEmpty}
+              </dd>
+            </div>
+            <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
+              <dt className="font-semibold text-[var(--color-text-primary)]">
+                {copy.accountHubReadinessReturnLabel}
+              </dt>
+              <dd>{preferredReturnPath}</dd>
+            </div>
+            <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
+              <dt className="font-semibold text-[var(--color-text-primary)]">
+                {copy.accountHubReadinessCmsLabel}
+              </dt>
+              <dd>
+                {formatResource(copy.accountHubReadinessCmsValue, {
+                  count: cmsPages.length,
+                  status: cmsPagesStatus,
+                })}
+              </dd>
+            </div>
+            <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
+              <dt className="font-semibold text-[var(--color-text-primary)]">
+                {copy.accountHubReadinessCatalogLabel}
+              </dt>
+              <dd>
+                {formatResource(copy.accountHubReadinessCatalogValue, {
+                  count: categories.length,
+                  status: categoriesStatus,
+                })}
+              </dd>
+            </div>
+          </dl>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={buildLocalizedAuthHref("/account/sign-in", preferredReturnPath, culture)}
+              className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+            >
+              {copy.accountHubReadinessPrimaryCta}
+            </Link>
+            {cartLineCount > 0 && (
+              <Link
+                href={localizeHref("/cart", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {copy.accountHubReadinessCartCta}
+              </Link>
+            )}
+          </div>
+        </aside>
+
+        <PublicAuthReturnSummary
+          culture={culture}
+          returnPath={preferredReturnPath}
+          storefrontCart={storefrontCart}
+        />
+
+        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+            {copy.accountHubActionCenterTitle}
+          </p>
+          <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {copy.accountHubActionCenterMessage}
+          </p>
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            <article className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.accountHubActionCartLabel}
+              </p>
+              <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                {copy.accountHubActionCartTitle}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {storefrontCart
+                  ? formatResource(copy.accountHubActionCartDescription, {
+                      itemCount: cartLineCount,
+                      total: formatMoney(
+                        storefrontCart.grandTotalGrossMinor,
+                        storefrontCart.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.accountHubActionCartFallbackDescription}
+              </p>
+              <div className="mt-4">
+                <Link
+                  href={cartLineCount > 0 ? localizeHref("/cart", culture) : buildLocalizedAuthHref("/account/sign-in", preferredReturnPath, culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {cartLineCount > 0
+                    ? copy.accountHubActionCartCta
+                    : copy.accountHubActionCartFallbackCta}
+                </Link>
+              </div>
+            </article>
+
+            <article className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.accountHubActionCmsLabel}
+              </p>
+              <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                {spotlightCmsPage?.title ?? copy.accountHubActionCmsTitle}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {spotlightCmsPage?.metaDescription ??
+                  copy.accountHubActionCmsFallbackDescription}
+              </p>
+              <div className="mt-4">
+                <Link
+                  href={localizeHref(
+                    spotlightCmsPage ? `/cms/${spotlightCmsPage.slug}` : "/cms",
+                    culture,
+                  )}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {copy.accountHubActionCmsCta}
+                </Link>
+              </div>
+            </article>
+
+            <article className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.accountHubActionCatalogLabel}
+              </p>
+              <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                {spotlightCategory?.name ?? copy.accountHubActionCatalogTitle}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {spotlightCategory?.description ??
+                  copy.accountHubActionCatalogFallbackDescription}
+              </p>
+              <div className="mt-4">
+                <Link
+                  href={localizeHref(
+                    spotlightCategory
+                      ? buildAppQueryPath("/catalog", { category: spotlightCategory.slug })
+                      : "/catalog",
+                    culture,
+                  )}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {copy.accountHubActionCatalogCta}
+                </Link>
+              </div>
+            </article>
+          </div>
+        </aside>
+
+        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.sessionStrategyNoteTitle}
           </p>
@@ -95,7 +300,20 @@ export function AccountHubPage({ culture }: AccountHubPageProps) {
           </p>
         </aside>
 
-        <PublicAuthContinuation culture={culture} />
+        <ActivationRecoveryPanel
+          culture={culture}
+          returnPath={preferredReturnPath}
+        />
+
+        <PublicAuthContinuation
+          culture={culture}
+          cmsPages={cmsPages}
+          cmsPagesStatus={cmsPagesStatus}
+          categories={categories}
+          categoriesStatus={categoriesStatus}
+          storefrontCart={storefrontCart}
+          storefrontCartStatus={storefrontCartStatus}
+        />
       </div>
     </section>
   );

@@ -2,6 +2,11 @@ import { redirect } from "next/navigation";
 import { OrderConfirmationPage } from "@/components/checkout/order-confirmation-page";
 import { getPublicStorefrontOrderConfirmation } from "@/features/checkout/api/public-checkout";
 import { readStorefrontPaymentHandoff } from "@/features/checkout/cookies";
+import {
+  getCurrentMemberInvoices,
+  getCurrentMemberLoyaltyOverview,
+  getCurrentMemberOrders,
+} from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
 import {
   readAllowedSearchParam,
@@ -76,11 +81,27 @@ export default async function OrderConfirmationRoute({
     );
   }
 
-  const confirmationResult = await getPublicStorefrontOrderConfirmation(
-    resolvedParams.orderId,
-    orderNumber,
-  );
-  const memberSession = await getMemberSession();
+  const [confirmationResult, memberSession] = await Promise.all([
+    getPublicStorefrontOrderConfirmation(
+      resolvedParams.orderId,
+      orderNumber,
+    ),
+    getMemberSession(),
+  ]);
+  const [memberOrdersResult, memberInvoicesResult, memberLoyaltyOverviewResult] =
+    memberSession
+      ? await Promise.all([
+          getCurrentMemberOrders({
+            page: 1,
+            pageSize: 2,
+          }),
+          getCurrentMemberInvoices({
+            page: 1,
+            pageSize: 2,
+          }),
+          getCurrentMemberLoyaltyOverview(),
+        ])
+      : [null, null, null];
 
   return (
     <OrderConfirmationPage
@@ -94,6 +115,12 @@ export default async function OrderConfirmationRoute({
       paymentError={paymentError}
       cancelled={cancelled}
       hasMemberSession={Boolean(memberSession)}
+      memberOrders={memberOrdersResult?.data?.items ?? []}
+      memberOrdersStatus={memberOrdersResult?.status ?? "idle"}
+      memberInvoices={memberInvoicesResult?.data?.items ?? []}
+      memberInvoicesStatus={memberInvoicesResult?.status ?? "idle"}
+      memberLoyaltyOverview={memberLoyaltyOverviewResult?.data ?? null}
+      memberLoyaltyStatus={memberLoyaltyOverviewResult?.status ?? "idle"}
     />
   );
 }

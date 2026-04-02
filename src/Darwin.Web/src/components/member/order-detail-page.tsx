@@ -2,6 +2,8 @@ import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { createMemberOrderPaymentIntentAction } from "@/features/member-portal/actions";
 import type { MemberOrderDetail } from "@/features/member-portal/types";
 import {
@@ -11,7 +13,7 @@ import {
 } from "@/localization";
 import { parseAddressJson, type ParsedAddress } from "@/lib/address-json";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 
 type OrderDetailPageProps = {
@@ -19,6 +21,10 @@ type OrderDetailPageProps = {
   order: MemberOrderDetail | null;
   status: string;
   paymentError?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function renderAddress(address: ParsedAddress | null, culture: string) {
@@ -51,6 +57,10 @@ export function OrderDetailPage({
   order,
   status,
   paymentError,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: OrderDetailPageProps) {
   const copy = getMemberResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
@@ -97,6 +107,15 @@ export function OrderDetailPage({
   }
 
   const documentUrl = toWebApiUrl(order.actions.documentPath);
+  const shipmentsInFlight = order.shipments.filter(
+    (shipment) => !shipment.deliveredAtUtc,
+  ).length;
+  const retryNeeded =
+    order.actions.canRetryPayment ||
+    order.payments.some((payment) => payment.status.toLowerCase().includes("failed"));
+  const linkedInvoiceAttention = order.invoices.filter(
+    (invoice) => !invoice.paidAtUtc,
+  ).length;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -297,6 +316,60 @@ export function OrderDetailPage({
             <MemberPortalNav culture={culture} activePath="/orders" />
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.orderDetailReadinessTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.orderDetailReadinessMessage, {
+                  shipments: shipmentsInFlight,
+                  invoices: linkedInvoiceAttention,
+                })}
+              </p>
+              <div className="mt-5 grid gap-3">
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailReadinessPaymentLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {retryNeeded
+                      ? copy.orderDetailReadinessPaymentAttention
+                      : copy.orderDetailReadinessPaymentHealthy}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailReadinessShipmentLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {formatResource(copy.orderDetailReadinessShipmentValue, {
+                      count: shipmentsInFlight,
+                    })}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailReadinessInvoicesLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {formatResource(copy.orderDetailReadinessInvoicesValue, {
+                      count: linkedInvoiceAttention,
+                    })}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailReadinessDocumentLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {documentUrl
+                      ? copy.orderDetailReadinessDocumentReady
+                      : copy.orderDetailReadinessDocumentMissing}
+                  </p>
+                </article>
+              </div>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex items-center justify-between"><span>{copy.statusLabel}</span><span>{order.status}</span></div>
@@ -318,6 +391,101 @@ export function OrderDetailPage({
                   </p>
                 </div>
               )}
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.orderDetailStorefrontWindowTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.orderDetailStorefrontWindowMessage, {
+                  cmsStatus: cmsPagesStatus,
+                  categoriesStatus,
+                  pageCount: cmsPages.length,
+                  categoryCount: categories.length,
+                })}
+              </p>
+              <div className="mt-5 grid gap-3">
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.orderDetailStorefrontCmsTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/cms", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.orderDetailStorefrontCmsCta}
+                    </Link>
+                  </div>
+                  {cmsPages.length > 0 ? (
+                    <div className="mt-4 flex flex-col gap-3">
+                      {cmsPages.map((page) => (
+                        <Link
+                          key={page.id}
+                          href={localizeHref(`/cms/${page.slug}`, culture)}
+                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          <p className="font-semibold text-[var(--color-text-primary)]">
+                            {page.title}
+                          </p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            {page.metaDescription ?? copy.orderDetailStorefrontCmsFallbackDescription}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.orderDetailStorefrontCmsEmptyMessage, {
+                        status: cmsPagesStatus,
+                      })}
+                    </p>
+                  )}
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.orderDetailStorefrontCatalogTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/catalog", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.orderDetailStorefrontCatalogCta}
+                    </Link>
+                  </div>
+                  {categories.length > 0 ? (
+                    <div className="mt-4 flex flex-col gap-3">
+                      {categories.map((category) => (
+                        <Link
+                          key={category.id}
+                          href={localizeHref(
+                            buildAppQueryPath("/catalog", {
+                              category: category.slug,
+                            }),
+                            culture,
+                          )}
+                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          <p className="font-semibold text-[var(--color-text-primary)]">
+                            {category.name}
+                          </p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            {category.description ?? copy.orderDetailStorefrontCatalogFallbackDescription}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.orderDetailStorefrontCatalogEmptyMessage, {
+                        status: categoriesStatus,
+                      })}
+                    </p>
+                  )}
+                </article>
+              </div>
             </aside>
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">

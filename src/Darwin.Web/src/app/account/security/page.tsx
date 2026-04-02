@@ -1,9 +1,8 @@
-import { MemberAuthRequired } from "@/components/member/member-auth-required";
+import { SecurityPage } from "@/components/account/security-page";
 import { getPublicCategories } from "@/features/catalog/api/public-catalog";
-import { readPositiveIntegerSearchParam } from "@/features/checkout/helpers";
-import { OrdersPage } from "@/components/member/orders-page";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
-import { getCurrentMemberOrders } from "@/features/member-portal/api/member-portal";
+import { MemberAuthRequired } from "@/components/member/member-auth-required";
+import { getCurrentMemberProfile } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
@@ -13,47 +12,55 @@ export async function generateMetadata() {
   const culture = await getRequestCulture();
   const copy = getMemberResource(culture);
 
-  return buildNoIndexMetadata(culture, copy.ordersMetaTitle, undefined, "/orders");
+  return buildNoIndexMetadata(
+    culture,
+    copy.securityMetaTitle,
+    undefined,
+    "/account/security",
+  );
 }
 
-type OrdersRouteProps = {
+type SecurityRouteProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function OrdersRoute({ searchParams }: OrdersRouteProps) {
+function readSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function SecurityRoute({
+  searchParams,
+}: SecurityRouteProps) {
   const culture = await getRequestCulture();
   const copy = getMemberResource(culture);
   const session = await getMemberSession();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
 
   if (!session) {
     return (
       <MemberAuthRequired
         culture={culture}
-        title={copy.ordersAuthRequiredTitle}
-        message={copy.ordersAuthRequiredMessage}
-        returnPath="/orders"
+        title={copy.securityAuthRequiredTitle}
+        message={copy.securityAuthRequiredMessage}
+        returnPath="/account/security"
       />
     );
   }
 
-  const [ordersResult, cmsPagesResult, categoriesResult] = await Promise.all([
-    getCurrentMemberOrders({
-      page: safePage,
-      pageSize: 12,
-    }),
+  const [profileResult, cmsPagesResult, categoriesResult] = await Promise.all([
+    getCurrentMemberProfile(),
     getPublishedPages({ page: 1, pageSize: 2, culture }),
     getPublicCategories(culture),
   ]);
 
   return (
-    <OrdersPage
+    <SecurityPage
       culture={culture}
-      orders={ordersResult.data?.items ?? []}
-      status={ordersResult.status}
-      currentPage={safePage}
-      totalPages={Math.max(1, Math.ceil((ordersResult.data?.total ?? 0) / (ordersResult.data?.request.pageSize ?? 12)))}
+      session={session}
+      profile={profileResult.data}
+      profileStatus={profileResult.status}
+      securityStatus={readSearchParam(resolvedSearchParams?.securityStatus)}
+      securityError={readSearchParam(resolvedSearchParams?.securityError)}
       cmsPages={cmsPagesResult.data?.items ?? []}
       cmsPagesStatus={cmsPagesResult.status}
       categories={categoriesResult.data?.items.slice(0, 3) ?? []}

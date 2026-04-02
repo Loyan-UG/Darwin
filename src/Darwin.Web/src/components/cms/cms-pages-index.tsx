@@ -1,9 +1,12 @@
 import Link from "next/link";
+import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
+import { formatMoney } from "@/lib/formatting";
 import { formatResource, getSharedResource } from "@/localization";
+import { toWebApiUrl } from "@/lib/webapi-url";
 
 type CmsPagesIndexProps = {
   culture: string;
@@ -15,6 +18,10 @@ type CmsPagesIndexProps = {
   currentPage: number;
   status: string;
   visibleQuery?: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 function buildCmsHref(page = 1, visibleQuery?: string) {
@@ -34,6 +41,10 @@ export function CmsPagesIndex({
   currentPage,
   status,
   visibleQuery,
+  categories,
+  categoriesStatus,
+  products,
+  productsStatus,
 }: CmsPagesIndexProps) {
   const copy = getSharedResource(culture);
   const pageStart = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -328,6 +339,118 @@ export function CmsPagesIndex({
             </div>
           </div>
         )}
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                  {copy.cmsCatalogWindowTitle}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.cmsCatalogWindowMessage, {
+                    categoriesStatus,
+                    categoryCount: categories.length,
+                  })}
+                </p>
+              </div>
+              <Link
+                href={localizeHref("/catalog", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsCatalogWindowCta}
+              </Link>
+            </div>
+            {categories.length > 0 ? (
+              <div className="mt-5 grid gap-3">
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={localizeHref(buildAppQueryPath("/catalog", { category: category.slug }), culture)}
+                    className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
+                  >
+                    <p className="font-semibold text-[var(--color-text-primary)]">{category.name}</p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {category.description ?? copy.cmsCatalogWindowFallbackDescription}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.cmsCatalogWindowEmptyMessage, {
+                  status: categoriesStatus,
+                })}
+              </p>
+            )}
+          </section>
+
+          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                  {copy.cmsProductsWindowTitle}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.cmsProductsWindowMessage, {
+                    productsStatus,
+                    productCount: products.length,
+                  })}
+                </p>
+              </div>
+              <Link
+                href={localizeHref("/catalog", culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsProductsWindowCta}
+              </Link>
+            </div>
+            {products.length > 0 ? (
+              <div className="mt-5 grid gap-3">
+                {products.map((product) => {
+                  const productImageUrl = toWebApiUrl(product.primaryImageUrl ?? "");
+                  return (
+                    <Link
+                      key={product.id}
+                      href={localizeHref(`/catalog/${product.slug}`, culture)}
+                      className="grid gap-3 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)] md:grid-cols-[72px_minmax(0,1fr)]"
+                    >
+                      <div className="flex h-[72px] items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-2">
+                        {productImageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={productImageUrl}
+                            alt={product.name}
+                            className="max-h-14 w-auto object-contain"
+                          />
+                        ) : (
+                          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                            {copy.noImage}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[var(--color-text-primary)]">{product.name}</p>
+                        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                          {product.shortDescription ?? copy.cmsProductsWindowFallbackDescription}
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                          {formatMoney(product.priceMinor, product.currency, culture)}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.cmsProductsWindowEmptyMessage, {
+                  status: productsStatus,
+                })}
+              </p>
+            )}
+          </section>
+        </div>
 
         <CmsContinuationRail culture={culture} description={copy.cmsCrossSurfaceMessage} />
 

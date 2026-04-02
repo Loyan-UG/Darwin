@@ -3,6 +3,7 @@ import {
   getPublicCategories,
   getPublicProducts,
 } from "@/features/catalog/api/public-catalog";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import {
   readAllowedSearchParam,
   readPositiveIntegerSearchParam,
@@ -153,13 +154,18 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
   );
   const visibleSort = readVisibleSort(resolvedSearchParams?.visibleSort);
 
-  const [categoriesResult, productsResult] = await Promise.all([
+  const [categoriesResult, productsResult, cmsPagesResult] = await Promise.all([
     getPublicCategories(culture),
     getPublicProducts({
       page: safePage,
       pageSize: 12,
       culture,
       categorySlug: activeCategorySlug,
+    }),
+    getPublishedPages({
+      page: 1,
+      pageSize: 3,
+      culture,
     }),
   ]);
   const loadedProducts = productsResult.data?.items ?? [];
@@ -184,9 +190,11 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
       visibleQuery={visibleQuery}
       visibleSort={visibleSort}
       loadedProductsCount={loadedProducts.length}
+      cmsPages={cmsPagesResult.data?.items ?? []}
       dataStatus={{
         categories: categoriesResult.status,
         products: productsResult.status,
+        cmsPages: cmsPagesResult.status,
       }}
     />
   );

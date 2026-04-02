@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import {
+  changeCurrentMemberPassword,
   prepareCurrentMemberLoyaltyScanSession,
   confirmCurrentMemberPhoneVerification,
   createCurrentMemberAddress,
@@ -202,6 +203,49 @@ export async function updateMemberPreferencesAction(formData: FormData) {
   }
 
   redirect(withFlash("/account/preferences", "preferencesStatus", "saved"));
+}
+
+export async function changeMemberPasswordAction(formData: FormData) {
+  const currentPassword = readTrimmedFormText(formData, "currentPassword", 256);
+  const newPassword = readTrimmedFormText(formData, "newPassword", 256);
+  const confirmPassword = readTrimmedFormText(formData, "confirmPassword", 256);
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    redirect(
+      withFlash(
+        "/account/security",
+        "securityError",
+        toLocalizedQueryMessage("securityRequiredFieldsMessage"),
+      ),
+    );
+  }
+
+  if (newPassword !== confirmPassword) {
+    redirect(
+      withFlash(
+        "/account/security",
+        "securityError",
+        toLocalizedQueryMessage("securityConfirmMismatchMessage"),
+      ),
+    );
+  }
+
+  const result = await changeCurrentMemberPassword({
+    currentPassword,
+    newPassword,
+  });
+
+  if (result.status !== "ok") {
+    redirect(
+      withFlash(
+        "/account/security",
+        "securityError",
+        result.message ?? toLocalizedQueryMessage("securityUpdateFailedMessage"),
+      ),
+    );
+  }
+
+  redirect(withFlash("/account/security", "securityStatus", "saved"));
 }
 
 export async function requestMemberPhoneVerificationAction(formData: FormData) {

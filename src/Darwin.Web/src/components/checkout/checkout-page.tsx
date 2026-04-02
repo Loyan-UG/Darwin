@@ -1,16 +1,23 @@
 import Link from "next/link";
+import { CommerceAuthHandoff } from "@/components/checkout/commerce-auth-handoff";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { placeStorefrontOrderAction } from "@/features/checkout/actions";
 import { isCheckoutAddressComplete } from "@/features/checkout/helpers";
 import type { CheckoutDraft, PublicCheckoutIntent } from "@/features/checkout/types";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
+import type {
+  MemberAddress,
+  MemberCustomerProfile,
+  MemberInvoiceSummary,
+  MemberPreferences,
+} from "@/features/member-portal/types";
 import {
   formatResource,
   getCommerceResource,
   resolveLocalizedQueryMessage,
 } from "@/localization";
-import { formatMoney } from "@/lib/formatting";
+import { formatDateTime, formatMoney } from "@/lib/formatting";
 import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 
@@ -22,6 +29,17 @@ type CheckoutPageProps = {
   intentStatus: string;
   intentMessage?: string;
   checkoutError?: string;
+  memberAddresses: MemberAddress[];
+  memberAddressesStatus: string;
+  memberProfile: MemberCustomerProfile | null;
+  memberProfileStatus: string;
+  memberPreferences: MemberPreferences | null;
+  memberPreferencesStatus: string;
+  memberInvoices: MemberInvoiceSummary[];
+  memberInvoicesStatus: string;
+  profilePrefillActive: boolean;
+  selectedMemberAddressId?: string;
+  hasMemberSession: boolean;
 };
 
 function getFinalTotalMinor(
@@ -43,6 +61,17 @@ export function CheckoutPage({
   intentStatus,
   intentMessage,
   checkoutError,
+  memberAddresses,
+  memberAddressesStatus,
+  memberProfile,
+  memberProfileStatus,
+  memberPreferences,
+  memberPreferencesStatus,
+  memberInvoices,
+  memberInvoicesStatus,
+  profilePrefillActive,
+  selectedMemberAddressId,
+  hasMemberSession,
 }: CheckoutPageProps) {
   const copy = getCommerceResource(culture);
   const resolvedCheckoutError = resolveLocalizedQueryMessage(checkoutError, copy);
@@ -57,6 +86,21 @@ export function CheckoutPage({
     !intent.shippingOptions.length ||
     Boolean(intent.selectedShippingMethodId || draft.selectedShippingMethodId);
   const canPlaceOrder = Boolean(cart && intent && hasSelectedShipping);
+  const hasSavedAddresses = memberAddresses.length > 0;
+  const emailChannelReady = Boolean(
+    memberProfile?.email && memberPreferences?.allowEmailMarketing,
+  );
+  const smsChannelReady = Boolean(
+    memberProfile?.phoneE164 &&
+      memberProfile.phoneNumberConfirmed &&
+      memberPreferences?.allowSmsMarketing,
+  );
+  const whatsAppChannelReady = Boolean(
+    memberProfile?.phoneE164 &&
+      memberProfile.phoneNumberConfirmed &&
+      memberPreferences?.allowWhatsAppMarketing,
+  );
+  const outstandingInvoice = memberInvoices.find((invoice) => invoice.balanceMinor > 0) ?? null;
   const readinessItems = [
     {
       label: copy.addressReadyLabel,
@@ -75,6 +119,9 @@ export function CheckoutPage({
       value: cart?.couponCode ? copy.couponAppliedState : copy.couponMissingState,
     },
   ];
+  const invoiceAttentionCount = memberInvoices.filter(
+    (invoice) => invoice.balanceMinor > 0,
+  ).length;
 
   if (!cart) {
     return (
@@ -172,9 +219,402 @@ export function CheckoutPage({
           </p>
         </div>
 
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.checkoutConfidenceTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {canPlaceOrder
+                ? copy.checkoutConfidenceReadyMessage
+                : copy.checkoutConfidencePendingMessage}
+            </p>
+            <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.checkoutConfidenceLinesLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.checkoutConfidenceLinesValue, {
+                    count: cart.items.length,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.checkoutConfidenceAddressLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {addressComplete
+                    ? copy.checkoutConfidenceAddressReady
+                    : copy.checkoutConfidenceAddressPending}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.checkoutConfidenceShippingLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {hasSelectedShipping
+                    ? copy.checkoutConfidenceShippingReady
+                    : copy.checkoutConfidenceShippingPending}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.checkoutAttentionTitle}
+            </p>
+            <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.checkoutAttentionBillingLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.checkoutAttentionBillingValue, {
+                    count: invoiceAttentionCount,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.checkoutAttentionPhoneLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {memberProfile?.phoneNumberConfirmed
+                    ? copy.checkoutAttentionPhoneReady
+                    : copy.checkoutAttentionPhonePending}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.checkoutAttentionAddressBookLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {hasSavedAddresses
+                    ? formatResource(copy.checkoutAttentionAddressBookReady, {
+                        count: memberAddresses.length,
+                      })
+                    : copy.checkoutAttentionAddressBookMissing}
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_360px]">
+          <div className="grid gap-8">
+            <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                  {copy.savedAddressEyebrow}
+                </p>
+                <h2 className="mt-3 text-3xl font-[family-name:var(--font-display)] text-[var(--color-text-primary)]">
+                  {copy.savedAddressTitle}
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {copy.savedAddressDescription}
+                </p>
+              </div>
+
+              {memberAddressesStatus !== "idle" && memberAddressesStatus !== "ok" && (
+                <div className="mt-6">
+                  <StatusBanner
+                    tone="warning"
+                    title={copy.savedAddressWarningsTitle}
+                    message={formatResource(copy.savedAddressWarningsMessage, {
+                      status: memberAddressesStatus,
+                    })}
+                  />
+                </div>
+              )}
+
+              <div className="mt-6">
+                {hasSavedAddresses ? (
+                  <div className="grid gap-4">
+                    {memberAddresses.map((address) => {
+                      const isSelected = selectedMemberAddressId === address.id;
+
+                      return (
+                        <article
+                          key={address.id}
+                          className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                                {isSelected
+                                  ? copy.savedAddressSelectedLabel
+                                  : address.isDefaultShipping
+                                    ? copy.savedAddressDefaultShippingLabel
+                                    : address.isDefaultBilling
+                                      ? copy.savedAddressDefaultBillingLabel
+                                      : copy.savedAddressLabel}
+                              </p>
+                              <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+                                {address.fullName}
+                              </p>
+                              {address.company ? (
+                                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                                  {address.company}
+                                </p>
+                              ) : null}
+                              <div className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                                <p>{address.street1}</p>
+                                {address.street2 ? <p>{address.street2}</p> : null}
+                                <p>
+                                  {address.postalCode} {address.city}
+                                </p>
+                                {address.state ? <p>{address.state}</p> : null}
+                                <p>{address.countryCode}</p>
+                                {address.phoneE164 ? <p>{address.phoneE164}</p> : null}
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-start gap-3">
+                              <form action={localizeHref("/checkout", culture)}>
+                                <input type="hidden" name="memberAddressId" value={address.id} />
+                                <input type="hidden" name="fullName" value={address.fullName} />
+                                <input type="hidden" name="company" value={address.company ?? ""} />
+                                <input type="hidden" name="street1" value={address.street1} />
+                                <input type="hidden" name="street2" value={address.street2 ?? ""} />
+                                <input type="hidden" name="postalCode" value={address.postalCode} />
+                                <input type="hidden" name="city" value={address.city} />
+                                <input type="hidden" name="state" value={address.state ?? ""} />
+                                <input type="hidden" name="countryCode" value={address.countryCode} />
+                                <input type="hidden" name="phoneE164" value={address.phoneE164 ?? ""} />
+                                <button
+                                  type="submit"
+                                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                                >
+                                  {isSelected
+                                    ? copy.savedAddressSelectedCta
+                                    : copy.savedAddressUseCta}
+                                </button>
+                              </form>
+                              <Link
+                                href={localizeHref("/account/addresses", culture)}
+                                className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                              >
+                                {copy.savedAddressManageCta}
+                              </Link>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {copy.savedAddressEmptyMessage}
+                    </p>
+                    {memberProfile ? (
+                      <div className="mt-4 rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                          {copy.savedProfilePrefillTitle}
+                        </p>
+                        <p className="mt-3 font-semibold text-[var(--color-text-primary)]">
+                          {[memberProfile.firstName, memberProfile.lastName]
+                            .filter(Boolean)
+                            .join(" ") || copy.unavailable}
+                        </p>
+                        <p>{memberProfile.email ?? copy.unavailable}</p>
+                        <p>{memberProfile.phoneE164 ?? copy.unavailable}</p>
+                        <p className="mt-3">
+                          {formatResource(copy.savedProfilePrefillMessage, {
+                            status: memberProfileStatus,
+                          })}
+                        </p>
+                        {profilePrefillActive ? (
+                          <p className="mt-2 font-medium text-[var(--color-text-primary)]">
+                            {copy.savedProfilePrefillActiveMessage}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <div className="mt-4">
+                      <Link
+                        href={localizeHref("/account/addresses", culture)}
+                        className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                      >
+                        {copy.savedAddressManageCta}
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {(memberProfile || memberPreferences || memberAddressesStatus !== "idle") && (
+              <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                    {copy.memberCheckoutContextEyebrow}
+                  </p>
+                  <h2 className="mt-3 text-3xl font-[family-name:var(--font-display)] text-[var(--color-text-primary)]">
+                    {copy.memberCheckoutContextTitle}
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.memberCheckoutContextDescription, {
+                      profileStatus: memberProfileStatus,
+                      preferencesStatus: memberPreferencesStatus,
+                      addressesStatus: memberAddressesStatus,
+                    })}
+                  </p>
+                </div>
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.memberCheckoutIdentityLabel}
+                    </p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {[memberProfile?.firstName, memberProfile?.lastName]
+                        .filter(Boolean)
+                        .join(" ") || copy.unavailable}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {memberProfile?.email ?? copy.unavailable}
+                    </p>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.memberCheckoutPhoneLabel}
+                    </p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {memberProfile?.phoneE164 ?? copy.unavailable}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {memberProfile?.phoneNumberConfirmed
+                        ? copy.memberCheckoutPhoneVerified
+                        : copy.memberCheckoutPhonePending}
+                    </p>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.memberCheckoutChannelsLabel}
+                    </p>
+                    <div className="mt-3 space-y-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      <p>{formatResource(copy.memberCheckoutEmailChannel, { value: emailChannelReady ? copy.readyYes : copy.readyNo })}</p>
+                      <p>{formatResource(copy.memberCheckoutSmsChannel, { value: smsChannelReady ? copy.readyYes : copy.readyNo })}</p>
+                      <p>{formatResource(copy.memberCheckoutWhatsAppChannel, { value: whatsAppChannelReady ? copy.readyYes : copy.readyNo })}</p>
+                    </div>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.memberCheckoutAddressesLabel}
+                    </p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {formatResource(copy.memberCheckoutAddressesValue, {
+                        count: memberAddresses.length,
+                      })}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {selectedMemberAddressId
+                        ? copy.memberCheckoutSelectedAddressReady
+                        : copy.memberCheckoutNoSelectedAddress}
+                    </p>
+                  </article>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href={localizeHref("/account/profile", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.memberCheckoutProfileCta}
+                  </Link>
+                  <Link
+                    href={localizeHref("/account/preferences", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.memberCheckoutPreferencesCta}
+                  </Link>
+                  <Link
+                    href={localizeHref("/account/addresses", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.savedAddressManageCta}
+                  </Link>
+                </div>
+              </section>
+            )}
+
+            {(memberInvoices.length > 0 || memberInvoicesStatus !== "idle") && (
+              <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                    {copy.memberCheckoutFinanceEyebrow}
+                  </p>
+                  <h2 className="mt-3 text-3xl font-[family-name:var(--font-display)] text-[var(--color-text-primary)]">
+                    {copy.memberCheckoutFinanceTitle}
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.memberCheckoutFinanceDescription, {
+                      invoicesStatus: memberInvoicesStatus,
+                      count: memberInvoices.length,
+                    })}
+                  </p>
+                </div>
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.memberCheckoutFinanceOutstandingLabel}
+                    </p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {outstandingInvoice
+                        ? formatMoney(
+                            outstandingInvoice.balanceMinor,
+                            outstandingInvoice.currency,
+                            culture,
+                          )
+                        : copy.memberCheckoutFinanceOutstandingEmpty}
+                    </p>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.memberCheckoutFinanceInvoiceLabel}
+                    </p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {outstandingInvoice?.orderNumber ?? outstandingInvoice?.id ?? copy.memberCheckoutFinanceInvoiceEmpty}
+                    </p>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.memberCheckoutFinanceDueLabel}
+                    </p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {outstandingInvoice
+                        ? formatDateTime(outstandingInvoice.dueDateUtc, culture)
+                        : copy.memberCheckoutFinanceDueEmpty}
+                    </p>
+                  </article>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href={localizeHref("/invoices", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.memberCheckoutFinanceInvoicesCta}
+                  </Link>
+                  {outstandingInvoice ? (
+                    <Link
+                      href={localizeHref(`/invoices/${outstandingInvoice.id}`, culture)}
+                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                    >
+                      {copy.memberCheckoutFinancePrimaryCta}
+                    </Link>
+                  ) : null}
+                </div>
+              </section>
+            )}
+
           <form
-            action="/checkout"
+            action={localizeHref("/checkout", culture)}
             className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8"
           >
             <div className="grid gap-6">
@@ -282,6 +722,14 @@ export function CheckoutPage({
                 >
                   {copy.refreshCheckoutPreview}
                 </button>
+                {selectedMemberAddressId ? (
+                  <Link
+                    href={localizeHref("/account/addresses", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.savedAddressManageCta}
+                  </Link>
+                ) : null}
                 <Link
                   href={localizeHref("/cart", culture)}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
@@ -316,6 +764,15 @@ export function CheckoutPage({
                 ))}
               </div>
             </aside>
+
+            {!hasMemberSession && (
+              <CommerceAuthHandoff
+                culture={culture}
+                cart={cart}
+                returnPath="/checkout"
+                routeKey="checkout"
+              />
+            )}
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
@@ -508,6 +965,7 @@ export function CheckoutPage({
 
             <CommerceContinuationRail culture={culture} includeCart />
           </div>
+        </div>
         </div>
       </div>
     </section>

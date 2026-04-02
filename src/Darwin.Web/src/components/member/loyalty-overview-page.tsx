@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { LoyaltyDiscoverySection } from "@/components/member/loyalty-discovery-section";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import type { BusinessCategoryKind, BusinessSummary } from "@/features/businesses/types";
@@ -8,7 +10,7 @@ import type {
   MyLoyaltyBusinessSummary,
   MyLoyaltyOverview,
 } from "@/features/member-portal/types";
-import { buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
@@ -34,6 +36,10 @@ type LoyaltyOverviewPageProps = {
   discoveryRadiusKm?: number;
   discoveryCategories: BusinessCategoryKind[];
   hasMemberSession: boolean;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function buildLoyaltyHref(page = 1) {
@@ -61,8 +67,23 @@ export function LoyaltyOverviewPage({
   discoveryRadiusKm,
   discoveryCategories,
   hasMemberSession,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: LoyaltyOverviewPageProps) {
   const copy = getMemberResource(culture);
+  const rewardReadyAccounts = (overview?.accounts ?? []).filter(
+    (account) => typeof account.pointsToNextReward === "number",
+  );
+  const primaryRewardAccount = [...rewardReadyAccounts].sort((left, right) => {
+    const leftPoints = left.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
+    const rightPoints = right.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
+    return leftPoints - rightPoints;
+  })[0];
+  const activeBusinessCount = businesses.filter((business) =>
+    /active/i.test(business.status),
+  ).length;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -137,6 +158,60 @@ export function LoyaltyOverviewPage({
 
         {hasMemberSession && overview ? (
           <>
+            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.loyaltyReadinessTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.loyaltyReadinessMessage, {
+                  activeCount: activeBusinessCount,
+                  rewardCount: rewardReadyAccounts.length,
+                })}
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                    {copy.loyaltyReadinessJoinedLabel}
+                  </p>
+                  <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                    {businesses.length}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                    {copy.loyaltyReadinessActiveLabel}
+                  </p>
+                  <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                    {activeBusinessCount}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                    {copy.loyaltyReadinessRewardLabel}
+                  </p>
+                  <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                    {rewardReadyAccounts.length}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 flex flex-wrap gap-3">
+                {primaryRewardAccount ? (
+                  <Link
+                    href={localizeHref(`/loyalty/${primaryRewardAccount.businessId}`, culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.loyaltyReadinessPrimaryCta}
+                  </Link>
+                ) : null}
+                <Link
+                  href={localizeHref("/account", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.securityBackToDashboardCta}
+                </Link>
+              </div>
+            </div>
+
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {[
                 { label: copy.totalAccountsLabel, value: String(overview.totalAccounts) },
@@ -156,6 +231,102 @@ export function LoyaltyOverviewPage({
                   </p>
                 </article>
               ))}
+            </div>
+
+            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.loyaltyStorefrontWindowTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.loyaltyStorefrontWindowMessage, {
+                  cmsStatus: cmsPagesStatus,
+                  categoriesStatus,
+                  pageCount: cmsPages.length,
+                  categoryCount: categories.length,
+                })}
+              </p>
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.loyaltyStorefrontCmsTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/cms", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.loyaltyStorefrontCmsCta}
+                    </Link>
+                  </div>
+                  {cmsPages.length > 0 ? (
+                    <div className="mt-4 flex flex-col gap-3">
+                      {cmsPages.map((page) => (
+                        <Link
+                          key={page.id}
+                          href={localizeHref(`/cms/${page.slug}`, culture)}
+                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          <p className="font-semibold text-[var(--color-text-primary)]">
+                            {page.title}
+                          </p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            {page.metaDescription ?? copy.loyaltyStorefrontCmsFallbackDescription}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.loyaltyStorefrontCmsEmptyMessage, {
+                        status: cmsPagesStatus,
+                      })}
+                    </p>
+                  )}
+                </div>
+
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.loyaltyStorefrontCatalogTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/catalog", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.loyaltyStorefrontCatalogCta}
+                    </Link>
+                  </div>
+                  {categories.length > 0 ? (
+                    <div className="mt-4 flex flex-col gap-3">
+                      {categories.map((categoryItem) => (
+                        <Link
+                          key={categoryItem.id}
+                          href={localizeHref(
+                            buildAppQueryPath("/catalog", {
+                              category: categoryItem.slug,
+                            }),
+                            culture,
+                          )}
+                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          <p className="font-semibold text-[var(--color-text-primary)]">
+                            {categoryItem.name}
+                          </p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            {categoryItem.description ?? copy.loyaltyStorefrontCatalogFallbackDescription}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.loyaltyStorefrontCatalogEmptyMessage, {
+                        status: categoriesStatus,
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -365,6 +536,104 @@ export function LoyaltyOverviewPage({
             </div>
           </div>
         ) : null}
+
+        {!hasMemberSession && (
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.loyaltyPublicOverviewStorefrontWindowTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.loyaltyPublicOverviewStorefrontWindowMessage, {
+                cmsStatus: cmsPagesStatus,
+                categoriesStatus,
+                pageCount: cmsPages.length,
+                categoryCount: categories.length,
+              })}
+            </p>
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {copy.loyaltyPublicOverviewStorefrontCmsTitle}
+                  </p>
+                  <Link
+                    href={localizeHref("/cms", culture)}
+                    className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                  >
+                    {copy.loyaltyPublicOverviewStorefrontCmsCta}
+                  </Link>
+                </div>
+                {cmsPages.length > 0 ? (
+                  <div className="mt-4 flex flex-col gap-3">
+                    {cmsPages.map((page) => (
+                      <Link
+                        key={page.id}
+                        href={localizeHref(`/cms/${page.slug}`, culture)}
+                        className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                      >
+                        <p className="font-semibold text-[var(--color-text-primary)]">
+                          {page.title}
+                        </p>
+                        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                          {page.metaDescription ?? copy.loyaltyPublicOverviewStorefrontCmsFallbackDescription}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.loyaltyPublicOverviewStorefrontCmsEmptyMessage, {
+                      status: cmsPagesStatus,
+                    })}
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {copy.loyaltyPublicOverviewStorefrontCatalogTitle}
+                  </p>
+                  <Link
+                    href={localizeHref("/catalog", culture)}
+                    className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                  >
+                    {copy.loyaltyPublicOverviewStorefrontCatalogCta}
+                  </Link>
+                </div>
+                {categories.length > 0 ? (
+                  <div className="mt-4 flex flex-col gap-3">
+                    {categories.map((categoryItem) => (
+                      <Link
+                        key={categoryItem.id}
+                        href={localizeHref(
+                          buildAppQueryPath("/catalog", {
+                            category: categoryItem.slug,
+                          }),
+                          culture,
+                        )}
+                        className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                      >
+                        <p className="font-semibold text-[var(--color-text-primary)]">
+                          {categoryItem.name}
+                        </p>
+                        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                          {categoryItem.description ?? copy.loyaltyPublicOverviewStorefrontCatalogFallbackDescription}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.loyaltyPublicOverviewStorefrontCatalogEmptyMessage, {
+                      status: categoriesStatus,
+                    })}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <LoyaltyDiscoverySection
           culture={culture}

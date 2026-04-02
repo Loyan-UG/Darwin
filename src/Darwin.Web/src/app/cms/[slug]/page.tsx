@@ -1,4 +1,8 @@
 import { notFound } from "next/navigation";
+import {
+  getPublicCategories,
+  getPublicProducts,
+} from "@/features/catalog/api/public-catalog";
 import { CmsPageDetail } from "@/components/cms/cms-page-detail";
 import {
   getPublishedPageSet,
@@ -50,9 +54,15 @@ export async function generateMetadata({ params }: CmsPageProps) {
 export default async function CmsPage({ params }: CmsPageProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
-  const [pageResult, relatedPagesSeed] = await Promise.all([
+  const [pageResult, relatedPagesSeed, categoriesResult, productsResult] = await Promise.all([
     getPublicPageBySlug(slug, culture),
     getPublishedPageSet(culture),
+    getPublicCategories(culture),
+    getPublicProducts({
+      page: 1,
+      pageSize: 3,
+      culture,
+    }),
   ]);
   const page = pageResult.data;
 
@@ -68,6 +78,10 @@ export default async function CmsPage({ params }: CmsPageProps) {
       message={pageResult.message}
       relatedPages={relatedPagesSeed.data?.items ?? []}
       relatedStatus={relatedPagesSeed.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
+      products={productsResult.data?.items ?? []}
+      productsStatus={productsResult.status}
     />
   );
 }

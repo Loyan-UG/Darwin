@@ -7,6 +7,7 @@ import type {
   PublicProductDetail,
   PublicProductSummary,
 } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import {
   buildAppQueryPath,
   buildLocalizedQueryHref,
@@ -22,8 +23,10 @@ type ProductDetailPageProps = {
   product: PublicProductDetail | null;
   primaryCategory: PublicCategorySummary | null;
   relatedProducts: PublicProductSummary[];
+  cmsPages: PublicPageSummary[];
   status: string;
   relatedProductsStatus?: string;
+  cmsPagesStatus?: string;
 };
 
 export function ProductDetailPage({
@@ -31,8 +34,10 @@ export function ProductDetailPage({
   product,
   primaryCategory,
   relatedProducts,
+  cmsPages,
   status,
   relatedProductsStatus,
+  cmsPagesStatus,
 }: ProductDetailPageProps) {
   const copy = getCatalogResource(culture);
 
@@ -80,6 +85,22 @@ export function ProductDetailPage({
           100,
       )
     : null;
+  const relatedOfferProducts = relatedProducts.filter(
+    (relatedProduct) =>
+      typeof relatedProduct.compareAtPriceMinor === "number" &&
+      relatedProduct.compareAtPriceMinor > relatedProduct.priceMinor,
+  );
+  const strongestRelatedOffer =
+    relatedOfferProducts
+      .map((relatedProduct) => ({
+        product: relatedProduct,
+        savingsPercent: Math.round(
+          ((relatedProduct.compareAtPriceMinor! - relatedProduct.priceMinor) /
+            relatedProduct.compareAtPriceMinor!) *
+            100,
+        ),
+      }))
+      .sort((left, right) => right.savingsPercent - left.savingsPercent)[0] ?? null;
   const digitalVariantCount = product.variants.filter(
     (variant) => variant.isDigital,
   ).length;
@@ -134,6 +155,7 @@ export function ProductDetailPage({
           {formatResource(copy.productRouteSummaryMessage, {
             status,
             relatedProductsStatus: relatedProductsStatus ?? "ok",
+            cmsPagesStatus: cmsPagesStatus ?? "ok",
             relatedCount: relatedProducts.length,
           })}
         </p>
@@ -241,6 +263,14 @@ export function ProductDetailPage({
                   count: product.media.length,
                 })
                 : copy.noMediaGalleryMessage}
+            </p>
+            <p>
+              {strongestRelatedOffer
+                ? formatResource(copy.relatedOfferSnapshotMessage, {
+                    name: strongestRelatedOffer.product.name,
+                    savingsPercent: strongestRelatedOffer.savingsPercent,
+                  })
+                : copy.relatedOfferSnapshotFallback}
             </p>
           </div>
 
@@ -474,6 +504,124 @@ export function ProductDetailPage({
           )}
         </div>
       ) : null}
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+            {copy.productOfferWindowTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {hasOffer && savingsPercent
+              ? formatResource(copy.productOfferWindowMessage, {
+                  savingsPercent,
+                })
+              : copy.productOfferWindowFallback}
+          </p>
+          <div className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.productOfferWindowPriceLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(priceMinor, product.currency, culture)}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.productOfferWindowCompareAtLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {product.compareAtPriceMinor
+                  ? formatMoney(product.compareAtPriceMinor, product.currency, culture)
+                  : copy.productOfferWindowCompareAtFallback}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.productBuyingGuideTitle}
+          </p>
+          <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.productBuyingGuideCategoryLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {primaryCategory?.name ?? copy.productBuyingGuideCategoryFallback}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.productBuyingGuideRelatedOfferLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.productBuyingGuideRelatedOfferValue, {
+                  count: relatedOfferProducts.length,
+                })}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.productBuyingGuideVariantLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.productBuyingGuideVariantValue, {
+                  count: product.variants.length,
+                })}
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.productCmsWindowTitle}
+            </p>
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.productCmsWindowMessage, {
+                cmsPagesStatus: cmsPagesStatus ?? "unknown",
+                pageCount: cmsPages.length,
+              })}
+            </p>
+          </div>
+          <Link
+            href={localizeHref("/cms", culture)}
+            className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+          >
+            {copy.productCmsWindowCta}
+          </Link>
+        </div>
+
+        {cmsPages.length > 0 ? (
+          <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {cmsPages.map((page) => (
+              <Link
+                key={page.id}
+                href={localizeHref(`/cms/${page.slug}`, culture)}
+                className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4 transition hover:bg-[var(--color-surface-panel)]"
+              >
+                <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                  {page.title}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {page.metaDescription ?? copy.productCmsWindowFallbackDescription}
+                </p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-6 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.productCmsWindowEmptyMessage, {
+              status: cmsPagesStatus ?? "unknown",
+            })}
+          </p>
+        )}
+      </div>
       </div>
     </section>
   );

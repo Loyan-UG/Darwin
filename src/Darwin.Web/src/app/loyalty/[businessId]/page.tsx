@@ -1,6 +1,8 @@
 import { LoyaltyPublicBusinessPage } from "@/components/member/loyalty-public-business-page";
 import { LoyaltyBusinessPage } from "@/components/member/loyalty-business-page";
 import { getPublicBusinessDetail } from "@/features/businesses/api/public-businesses";
+import { getPublicCategories } from "@/features/catalog/api/public-catalog";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import {
   getCurrentMemberBusinessWithMyAccount,
   getCurrentMemberLoyaltyBusinessDashboard,
@@ -58,7 +60,11 @@ export default async function LoyaltyBusinessRoute({
   const session = await getMemberSession();
   const [{ businessId }, cursor] = await Promise.all([params, searchParams]);
   const hasValidCursor = Boolean(cursor.beforeAtUtc && cursor.beforeId);
-  const publicBusinessResult = await getPublicBusinessDetail(businessId);
+  const [publicBusinessResult, cmsPagesResult, categoriesResult] = await Promise.all([
+    getPublicBusinessDetail(businessId),
+    getPublishedPages({ page: 1, pageSize: 2, culture }),
+    getPublicCategories(culture),
+  ]);
 
   if (!session) {
     return (
@@ -70,6 +76,10 @@ export default async function LoyaltyBusinessRoute({
         isAuthenticated={false}
         joinStatus={cursor.joinStatus}
         joinError={cursor.joinError}
+        cmsPages={cmsPagesResult.data?.items ?? []}
+        cmsPagesStatus={cmsPagesResult.status}
+        categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+        categoriesStatus={categoriesResult.status}
       />
     );
   }
@@ -95,6 +105,10 @@ export default async function LoyaltyBusinessRoute({
         isAuthenticated={memberBusinessResult.status === "ok"}
         joinStatus={cursor.joinStatus}
         joinError={cursor.joinError}
+        cmsPages={cmsPagesResult.data?.items ?? []}
+        cmsPagesStatus={cmsPagesResult.status}
+        categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+        categoriesStatus={categoriesResult.status}
       />
     );
   }
@@ -137,6 +151,10 @@ export default async function LoyaltyBusinessRoute({
       scanError={cursor.scanError}
       promotionStatus={cursor.promotionStatus}
       promotionError={cursor.promotionError}
+      cmsPages={cmsPagesResult.data?.items ?? []}
+      cmsPagesStatus={cmsPagesResult.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
     />
   );
 }

@@ -1,5 +1,10 @@
 import Link from "next/link";
+import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
+import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicCartSummary } from "@/features/cart/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
   requestPasswordResetAction,
@@ -15,6 +20,12 @@ type PasswordPageProps = {
   passwordStatus?: string;
   passwordError?: string;
   returnPath?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
+  storefrontCart: PublicCartSummary | null;
+  storefrontCartStatus: string;
 };
 
 function getPasswordMessage(status: string | undefined, culture: string) {
@@ -36,6 +47,12 @@ export function PasswordPage({
   passwordStatus,
   passwordError,
   returnPath,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
+  storefrontCart,
+  storefrontCartStatus,
 }: PasswordPageProps) {
   const copy = getMemberResource(culture);
   const statusMessage = getPasswordMessage(passwordStatus, culture);
@@ -130,20 +147,41 @@ export function PasswordPage({
 
         <div className="flex flex-wrap gap-3">
           <Link
-              href={signInHref}
+            href={signInHref}
             className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
           >
             {copy.signIn}
           </Link>
           <Link
-              href={activationHref}
+            href={activationHref}
             className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
           >
             {copy.activationFlowCta}
           </Link>
         </div>
 
-        <PublicAuthContinuation culture={culture} />
+        <ActivationRecoveryPanel
+          culture={culture}
+          email={email}
+          returnPath={returnPath}
+          compact
+        />
+
+        <PublicAuthReturnSummary
+          culture={culture}
+          returnPath={returnPath}
+          storefrontCart={storefrontCart}
+        />
+
+        <PublicAuthContinuation
+          culture={culture}
+          cmsPages={cmsPages}
+          cmsPagesStatus={cmsPagesStatus}
+          categories={categories}
+          categoriesStatus={categoriesStatus}
+          storefrontCart={storefrontCart}
+          storefrontCartStatus={storefrontCartStatus}
+        />
       </div>
     </section>
   );

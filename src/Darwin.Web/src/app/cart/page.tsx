@@ -6,6 +6,12 @@ import {
   readAllowedSearchParam,
   readSingleSearchParam,
 } from "@/features/checkout/helpers";
+import {
+  getCurrentMemberAddresses,
+  getCurrentMemberPreferences,
+  getCurrentMemberProfile,
+} from "@/features/member-portal/api/member-portal";
+import { getMemberSession } from "@/features/member-session/cookies";
 import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildNoIndexMetadata } from "@/lib/seo";
@@ -29,7 +35,17 @@ type CartRouteProps = {
 export default async function CartRoute({ searchParams }: CartRouteProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const culture = await getRequestCulture();
-  const model = await getCartViewModel();
+  const [model, memberSession] = await Promise.all([
+    getCartViewModel(),
+    getMemberSession(),
+  ]);
+  const [memberAddressesResult, memberProfileResult, memberPreferencesResult] = memberSession
+    ? await Promise.all([
+        getCurrentMemberAddresses(),
+        getCurrentMemberProfile(),
+        getCurrentMemberPreferences(),
+      ])
+    : [null, null, null];
   let followUpProducts: PublicProductSummary[] = [];
 
   if (model.cart?.items.length) {
@@ -53,6 +69,13 @@ export default async function CartRoute({ searchParams }: CartRouteProps) {
     <CartPage
       culture={culture}
       model={model}
+      memberAddresses={memberAddressesResult?.data ?? []}
+      memberAddressesStatus={memberAddressesResult?.status ?? "unauthenticated"}
+      memberProfile={memberProfileResult?.data ?? null}
+      memberProfileStatus={memberProfileResult?.status ?? "unauthenticated"}
+      memberPreferences={memberPreferencesResult?.data ?? null}
+      memberPreferencesStatus={memberPreferencesResult?.status ?? "unauthenticated"}
+      hasMemberSession={Boolean(memberSession)}
       cartStatus={readAllowedSearchParam(resolvedSearchParams?.cartStatus, [
         "added",
         "updated",

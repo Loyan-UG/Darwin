@@ -2,6 +2,8 @@ import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { createMemberInvoicePaymentIntentAction } from "@/features/member-portal/actions";
 import type { MemberInvoiceDetail } from "@/features/member-portal/types";
 import {
@@ -10,7 +12,7 @@ import {
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 
 type InvoiceDetailPageProps = {
@@ -18,6 +20,10 @@ type InvoiceDetailPageProps = {
   invoice: MemberInvoiceDetail | null;
   status: string;
   paymentError?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 export function InvoiceDetailPage({
@@ -25,6 +31,10 @@ export function InvoiceDetailPage({
   invoice,
   status,
   paymentError,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: InvoiceDetailPageProps) {
   const copy = getMemberResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
@@ -71,6 +81,8 @@ export function InvoiceDetailPage({
   }
 
   const documentUrl = toWebApiUrl(invoice.actions.documentPath);
+  const paymentAttention =
+    invoice.actions.canRetryPayment || invoice.balanceMinor > 0;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -165,6 +177,55 @@ export function InvoiceDetailPage({
             <MemberPortalNav culture={culture} activePath="/invoices" />
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.invoiceDetailReadinessTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.invoiceDetailReadinessMessage, {
+                  balance: formatMoney(invoice.balanceMinor, invoice.currency, culture),
+                })}
+              </p>
+              <div className="mt-5 grid gap-3">
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.invoiceDetailReadinessPaymentLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {paymentAttention
+                      ? copy.invoiceDetailReadinessPaymentAttention
+                      : copy.invoiceDetailReadinessPaymentHealthy}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.invoiceDetailReadinessBalanceLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {formatMoney(invoice.balanceMinor, invoice.currency, culture)}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.invoiceDetailReadinessDueLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {formatDateTime(invoice.dueDateUtc, culture)}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.invoiceDetailReadinessDocumentLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {documentUrl
+                      ? copy.invoiceDetailReadinessDocumentReady
+                      : copy.invoiceDetailReadinessDocumentMissing}
+                  </p>
+                </article>
+              </div>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex items-center justify-between"><span>{copy.statusLabel}</span><span>{invoice.status}</span></div>
@@ -175,6 +236,101 @@ export function InvoiceDetailPage({
                 <div className="flex items-center justify-between"><span>{copy.settledLabel}</span><span>{formatMoney(invoice.settledAmountMinor, invoice.currency, culture)}</span></div>
                 <div className="flex items-center justify-between"><span>{copy.balanceOnlyLabel}</span><span>{formatMoney(invoice.balanceMinor, invoice.currency, culture)}</span></div>
                 <div className="flex items-center justify-between border-t border-[var(--color-border-soft)] pt-3 text-base font-semibold text-[var(--color-text-primary)]"><span>{copy.totalLabel}</span><span>{formatMoney(invoice.totalGrossMinor, invoice.currency, culture)}</span></div>
+              </div>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.invoiceDetailStorefrontWindowTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.invoiceDetailStorefrontWindowMessage, {
+                  cmsStatus: cmsPagesStatus,
+                  categoriesStatus,
+                  pageCount: cmsPages.length,
+                  categoryCount: categories.length,
+                })}
+              </p>
+              <div className="mt-5 grid gap-3">
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.invoiceDetailStorefrontCmsTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/cms", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.invoiceDetailStorefrontCmsCta}
+                    </Link>
+                  </div>
+                  {cmsPages.length > 0 ? (
+                    <div className="mt-4 flex flex-col gap-3">
+                      {cmsPages.map((page) => (
+                        <Link
+                          key={page.id}
+                          href={localizeHref(`/cms/${page.slug}`, culture)}
+                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          <p className="font-semibold text-[var(--color-text-primary)]">
+                            {page.title}
+                          </p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            {page.metaDescription ?? copy.invoiceDetailStorefrontCmsFallbackDescription}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.invoiceDetailStorefrontCmsEmptyMessage, {
+                        status: cmsPagesStatus,
+                      })}
+                    </p>
+                  )}
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.invoiceDetailStorefrontCatalogTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/catalog", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.invoiceDetailStorefrontCatalogCta}
+                    </Link>
+                  </div>
+                  {categories.length > 0 ? (
+                    <div className="mt-4 flex flex-col gap-3">
+                      {categories.map((category) => (
+                        <Link
+                          key={category.id}
+                          href={localizeHref(
+                            buildAppQueryPath("/catalog", {
+                              category: category.slug,
+                            }),
+                            culture,
+                          )}
+                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          <p className="font-semibold text-[var(--color-text-primary)]">
+                            {category.name}
+                          </p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            {category.description ?? copy.invoiceDetailStorefrontCatalogFallbackDescription}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.invoiceDetailStorefrontCatalogEmptyMessage, {
+                        status: categoriesStatus,
+                      })}
+                    </p>
+                  )}
+                </article>
               </div>
             </aside>
 

@@ -49,14 +49,33 @@ The repository has moved beyond the raw front-office starting line:
 - home composition now also includes a reusable agenda-columns web part so content, commerce, and member follow-up can stay visible as parallel storefront streams instead of one-dimensional section stacks
 - home composition now also includes a recovery/follow-up rail driven by live CMS/catalog health, so degraded public entry does not collapse into a passive shell and still points visitors toward CMS, catalog, and account paths
 - home composition now also includes a reusable route-map web part that links Home into real CMS page detail, real product detail, and account/loyalty follow-up routes, so public entry shows the next concrete route instead of only section teasers
+- home composition now also includes category-driven storefront lanes backed by public categories plus category-filtered product contracts, so top-level browse entry is data-backed instead of a generic catalog shortcut
+- home composition now also includes a live priority lane that ranks checkout, billing, loyalty, order, CMS, and catalog next steps from current public/member signals, so the storefront entry route behaves like an actionable action surface instead of only a map of routes
+- home composition is now also session-aware for signed-in members and can surface direct portal re-entry routes for account, orders, and loyalty instead of treating Home like a purely anonymous landing page
+- home composition is now also cart-aware and can surface direct cart/checkout recovery from browser-owned storefront snapshots, so Home can resume active shopping flows instead of only restarting browse
+- home composition is now also live-cart-aware and can surface current cart totals plus checkout continuity from the canonical public cart contract when a storefront cart already exists
+- home composition now also enriches signed-in member resume with recent orders and reward-focus data from the canonical member contracts, so storefront entry can resume real member context instead of only linking back to `/account`
+- home composition now also surfaces invoice follow-up inside the signed-in member resume, so storefront entry can hand off directly into outstanding billing context instead of forcing a second hop through the account dashboard
+- home composition now also surfaces member checkout readiness inside the signed-in member resume, so storefront entry can hand off directly into prepared checkout or address-book setup from the same protected context
 - public account self-service now includes register, activation, password-recovery, and sign-in entry points against the canonical member auth contracts
+- resend-activation recovery is now surfaced inline on account hub, sign-in, register, and password-recovery entry points instead of staying hidden behind the dedicated activation route
 - public account self-service links are now locale-aware and the account hub now also exposes the shared continuation-rail pattern back into Home, Catalog, and CMS, so public account entry stays aligned with the rest of the storefront routing model
 - sign-in, registration, activation, and password-recovery routes now also share the same continuation-rail pattern back into Home, Catalog, and CMS, and sign-in no longer uses raw anchor navigation for internal storefront routes
+- the public account hub plus sign-in/register/activation/password routes now also consume live published CMS pages plus live public categories through the shared public-auth continuation wrapper, so public self-service entry can hand off into real content and browse surfaces instead of falling back to static continuation cards
+- the public account hub plus sign-in/register/activation/password routes now also consume live storefront cart state through that same shared public-auth continuation wrapper, so public self-service entry can resume cart/checkout continuity instead of dropping active commerce context at the auth boundary
+- sign-in/register/activation/password now also surface a shared post-auth destination summary fed by sanitized `returnPath` plus live cart state, so public auth routes keep checkout/cart/member intent explicit instead of acting like context-free forms
+- that public auth post-auth destination summary now also exposes direct CTA handoff to the sanitized return route plus live cart continuation, so self-service routes can actively recover the current storefront/member journey instead of only describing it
+- the public account hub now also surfaces a dedicated storefront-readiness panel and carries the preferred post-auth destination into sign-in/register/activation/password recovery links, so public account entry preserves active cart/checkout intent instead of defaulting every auth jump back to `/account`
+- the public account hub now also surfaces a live storefront action center fed by current cart state plus published CMS/category spotlights, so anonymous account entry can still move through real content and commerce next steps instead of collapsing to auth-only choices
+- the public `/account` hub now also accepts and preserves a sanitized incoming `returnPath`, so auth walls can hand shoppers into the generic account entry route without losing the intended post-auth destination context
 - public account self-service and sign-in now also normalize email input plus stronger required/autocomplete/password guardrails so avoidable auth-flow mismatches are reduced before the canonical API call
 - CMS and catalog routes now also use feature-level continuation-rail wrappers on top of the shared public continuation component, so content/discovery continuity no longer depends on route-local item assembly
 - a provisional browser session layer now exists for the web portal, using web-owned cookies plus access-token refresh in front of the canonical member APIs
 - account, orders, invoices, and loyalty routes now render authenticated member data instead of staying as placeholders
 - profile, preferences, and reusable address-book editing now run against the member profile endpoints instead of remaining read-only account placeholders
+- the profile route now also surfaces explicit readiness for identity, phone verification, and locale/billing defaults, so member self-service can see commerce/communication completeness without inferring it only from the edit form
+- authenticated member password change now runs on a dedicated security route against the canonical authenticated password-change endpoint instead of redirecting active-session users back into public recovery
+- the authenticated security route now also surfaces current profile/session security context, including phone-verification state, session-expiry visibility, and direct handoff back into profile/dashboard follow-up instead of acting like a password-form-only leaf route
 - dashboard, profile, preferences, and address-book screens now also share explicit member-portal navigation so the protected account area behaves like one subsystem instead of separate editor pages
 - phone verification now runs through the canonical member profile verification endpoints and shared confirmation flag instead of a web-local flow
 - orders, invoices, and loyalty overview now also follow the same shared member-portal navigation model, so the full authenticated portal is converging on one navigation/chrome contract
@@ -92,27 +111,47 @@ The repository has moved beyond the raw front-office starting line:
 - loyalty overview now consumes the richer `my/businesses` contract and business detail pages now consume personalized promotions plus promotion-interaction tracking
 - loyalty discovery now also consumes public business list/category metadata, and business detail routes now keep a public pre-join experience plus direct member join instead of only showing joined-business dashboards
 - loyalty discovery now also supports query-driven proximity filters with a server-rendered coordinate preview while staying on the loyalty-filtered public discovery contract
-- loyalty business detail now also supports canonical browser-side scan preparation for accrual/redemption, keeping the short-lived scan token in a web-owned cookie instead of the URL
-- loyalty business detail now also renders a real QR image from the active prepared scan token so the browser-prepared scan flow is immediately usable
+- loyalty business detail currently also consumes the canonical scan-preparation contract and can render the active prepared token as a QR image, but this should be treated as a provisional contract-consumption slice rather than a commitment to browser camera/scanner or barcode workflows in `Darwin.Web`
+- the intended web-product direction remains that loyalty on the web may evolve differently from mobile and can later support direct point accrual/redemption flows for store-enabled businesses without requiring browser camera/scanner support
 - catalog list/detail now pass the active request culture to `Darwin.WebApi` and expose contract-safe merchandising context such as selected-category panels, compare-at savings, and category-linked navigation
 - `/catalog` now also exposes a visible-result search/sort lens for the products already loaded on the current server page, while keeping that lens explicit and non-canonical until true public search/facet/sort contracts exist
 - `/catalog` now also surfaces visible-vs-loaded-vs-total result summaries plus first/last page jumps, so catalog window navigation is more complete without pretending backend search/facets already exist
+- `/catalog` now also surfaces an offer-focus window plus a buying-guide summary from the live visible product set, so merchandising signals stay explicit even before true backend search/facets arrive
 - product detail now also surfaces category-aware related products by reusing the current public category/product contracts instead of inventing a separate recommendation endpoint
 - product detail now also exposes breadcrumb, product-reference snapshot, and cross-surface storefront handoff actions so the conversion route does not behave like an isolated leaf page
+- product detail now also surfaces offer-position and buying-context panels derived from the current product plus related-offer signals, so conversion/detail routes communicate active offer strength instead of behaving like static specification pages
 - product detail cross-surface handoff now also includes a CMS return path inside a shared continuation-rail component, so content and commerce stay visibly connected in both directions instead of diverging into route-specific button clusters
+- catalog index and product detail now also surface live published CMS follow-up windows, so public commerce browsing stays connected to storefront content without waiting for new backend contracts
 - product detail unavailable and related-products-empty states now also keep account follow-up visible, so degraded conversion/detail states remain connected to the wider front-office system
 - member order/invoice detail pages now consume canonical document links plus richer payment, shipment, and linked-invoice presentation instead of only showing totals
+- member order/invoice detail pages now also surface explicit readiness panels for payment, shipment, balance, and document follow-up, so protected commerce detail pages no longer rely only on dense summary blocks to communicate the next actionable state
+- member order/invoice detail pages now also surface storefront continuation windows fed by live public CMS pages plus public categories, so protected commerce detail routes stay connected to public content and catalog follow-up instead of ending inside portal-only branches
+- the authenticated orders route now also surfaces explicit fulfillment-readiness state for visible orders needing active follow-up, so order-history follow-up is visible from the history route instead of being inferred only from row-level statuses
+- the authenticated orders route now also surfaces a storefront continuation window fed by live public CMS pages plus public categories, so order history stays connected to public content and catalog follow-up instead of behaving like a portal-only archive
+- the authenticated invoices route now also surfaces explicit billing-readiness state for visible outstanding invoices and open balance, so finance follow-up is visible from the history route instead of being inferred only from row-level balances
+- the authenticated invoices route now also surfaces a storefront continuation window fed by live public CMS pages plus public categories, so invoice history stays connected to public content and catalog follow-up instead of behaving like a portal-only finance archive
 - member order/invoice detail unavailable states now also keep explicit follow-up actions to orders/invoices, account, and catalog instead of collapsing into warning-only dead ends
 - storefront cart now supports canonical coupon apply/clear plus richer line-level tax/pricing context, and checkout summary now surfaces shipment/country context from the live intent
 - storefront cart now also keeps a small continue-shopping follow-up rail plus explicit cart next-step guidance visible by reusing the public catalog contract instead of depending only on totals and one checkout CTA
+- storefront cart now also reuses saved member addresses when a browser member session exists, so shoppers can see address-book-backed checkout readiness before leaving the cart route
+- storefront cart now also surfaces member profile/preferences/address readiness together, so signed-in shoppers can verify identity, phone/channel readiness, and address coverage before moving into checkout
 - storefront cart/checkout/confirmation now also normalizes quantity, coupon, country-code, and controlled status-query inputs so public commerce flows do not trust raw browser values across redirects and form posts
+- storefront checkout now also reuses saved member addresses when a browser member session exists, keeps the canonical member address book visible inside the checkout route, and falls back to manual address entry when member address delivery is unavailable
+- storefront checkout now also reuses canonical member profile identity for name/phone prefill when a member session exists but no saved address is selected, so checkout can still start from member context before the address book is populated
+- storefront checkout now also surfaces recent member invoice attention inside the route, so signed-in shoppers can keep open billing follow-up visible before placing a new order
+- storefront checkout now also surfaces member profile, channel, and address-book readiness directly inside the route, so authenticated checkout keeps profile/preferences/address context visible instead of treating member prefill as hidden background state
+- cart now also surfaces explicit opportunity and readiness panels, so the shopper can see the strongest adjacent offer plus basket readiness before leaving the route for checkout
+- checkout now also surfaces explicit confidence and attention panels, so order-readiness, billing follow-up, phone verification, and address-book coverage stay visible at the final conversion step
 - storefront confirmation now also reconciles hosted-checkout return/cancel flows through the canonical payment-completion endpoint instead of acting as a passive snapshot screen
 - storefront confirmation now also keeps post-checkout guidance visible, including payment-next-step messaging, account/order-history follow-up, and stable order-reference handling
+- storefront confirmation now also surfaces signed-in member continuation across orders, invoices, and loyalty, so post-checkout handoff into the protected portal stays explicit instead of stopping at generic CTA buttons
+- storefront confirmation now also gives guest shoppers an explicit account-continuation panel with sign-in/register/activation/password recovery handoff bound to the protected order-follow-up return path instead of relying on two isolated CTA buttons
 - storefront confirmation and auth-required follow-up links now also sanitize app-local return targets centrally, and confirmation status messaging derives from the authoritative confirmation snapshot instead of trusting query-carried status text
 - protected member entry points now also render route-summary plus cross-surface follow-up panels instead of collapsing to a minimal sign-in block, so auth-required routes stay aligned with the wider portal/storefront orientation model
 - protected member entry points plus unavailable order/invoice/loyalty detail states now also reuse the shared member cross-surface rail, so protected failure/access walls keep the same continuation model as the healthy portal routes
 - cart, checkout, and confirmation now also share breadcrumb-style route orientation plus explicit cross-surface handoff cards, so the conversion chain behaves like one storefront subsystem instead of detached routes
 - cart, checkout, confirmation, and their empty/unavailable follow-up states now also reuse a shared commerce continuation rail, so public conversion continuity no longer drifts into route-local CTA clusters
+- cart and checkout now also surface a shared anonymous account-handoff panel carrying a sanitized `returnPath` into sign-in/register/activation/password help, so commerce routes keep account recovery one step away without dropping the current conversion intent
 
 ## Architectural Rules
 
@@ -205,6 +244,7 @@ The current web slice includes:
 - Home built through reusable hero/card web parts
 - Home now also uses a dedicated stat-grid web part with live CMS/catalog/runtime metrics instead of relying only on hero and card grids
 - Home now also uses a dedicated journey/link-list web part to keep CMS, catalog, and account entry flows visible as one system-level composition
+- Home now also exposes category-driven storefront lanes built from live public category plus category-filtered product contracts, so top-level browse paths are not just generic catalog entry cards
 - public CMS listing and CMS slug routes against live `Darwin.WebApi` content endpoints
 - CMS index now also exposes a visible-result search lens over the pages already loaded on the current page, while staying explicit that true CMS search still needs a backend contract
 - CMS index now also surfaces current-window result summaries for visible vs loaded vs total published pages, so public content browsing stays set-aware instead of behaving like a flat card dump
@@ -221,6 +261,7 @@ The current web slice includes:
 - CMS detail now also derives section navigation anchors plus reading/structure metrics from the published HTML itself, so long-form content is no longer rendered as a single opaque block
 - CMS detail anchor ids now also normalize diacritics before slugging section headings, so long-form German content keeps stable in-page navigation instead of collapsing into weak or duplicate fallback ids
 - CMS detail unavailable state now also keeps cross-surface follow-up visible, and CMS/catalog detail/index routes now surface explicit route-summary diagnostics so degraded public content/discovery states do not collapse into passive leaves
+- CMS index and CMS detail now also surface live catalog-category and live product follow-up windows, so public content routes can hand off directly into real commerce browse/detail paths instead of only pointing back to generic catalog entry
 - public catalog browsing against live `Darwin.WebApi` category/product endpoints
 - page-local visible-result search/sort controls on `/catalog` that preserve category/page context without pretending the current API already supports true cross-catalog search or facets
 - cart empty state, checkout unavailable state, follow-up-products unavailable state, and confirmation/cart/checkout route summaries now keep the commerce flow observable and actionable instead of collapsing into passive no-data states
@@ -232,9 +273,20 @@ The current web slice includes:
 - hosted-checkout return/cancel reconciliation through the storefront payment-completion endpoint plus a short-lived web-owned handoff cookie
 - post-checkout guidance on the confirmation route for payment attention, member-portal follow-up, and stable order-reference handling instead of a receipt-only end state
 - public account self-service foundation for member registration, activation email request/confirm, and password reset request/complete flows
+- inline resend-activation recovery on account hub, sign-in, register, and password-recovery surfaces, reusing the canonical activation request endpoint and preserving localized return-path context
 - stronger public auth-form guardrails plus email canonicalization in registration/activation/password/sign-in actions
 - account self-service return-path preservation across register, activation, password recovery, and sign-in so storefront/member entry points can carry the intended app-local destination through the public auth flows
 - provisional browser sign-in plus authenticated member dashboard, order history/detail, invoice history/detail, and loyalty overview
+- member dashboard and address-book routes now also hand off directly into checkout with saved-address prefills, so protected member data can feed the storefront conversion path instead of staying isolated inside the portal
+- the authenticated address-book route now also surfaces explicit checkout-readiness state for reusable/default shipping/default billing coverage, so storefront handoff readiness is visible from the address subsystem instead of being inferred only from individual address cards
+- member dashboard now also surfaces recent order and invoice snapshots from the canonical member commerce endpoints, so account overview acts as a real portal landing page instead of only a route map
+- member dashboard now also surfaces loyalty overview totals plus joined-business snapshots from the canonical member loyalty endpoints, so account overview acts as a real cross-domain landing page for profile, commerce, and loyalty follow-up
+- member dashboard now also surfaces next-reward focus cards derived from the canonical loyalty overview accounts, so members can jump from `/account` straight into the most relevant loyalty business follow-up instead of opening the full loyalty route blindly
+- member dashboard now also derives an action-center from profile, address-book, invoice-balance, and loyalty snapshots, so `/account` can send members straight into the most urgent next step instead of acting as a passive summary screen
+- member dashboard now also surfaces live storefront cart continuity from the canonical public cart contract, so signed-in members can resume cart/checkout directly from the member portal instead of treating commerce continuation as a separate public-only path
+- member dashboard now also surfaces a dedicated security window with phone-verification state, session-lifetime visibility, and direct handoff into the authenticated security/profile routes, so `/account` can expose security readiness from the main member landing route instead of hiding it behind `/account/security`
+- member dashboard now also surfaces a communication window derived from canonical profile plus preferences, so email/SMS/WhatsApp readiness is visible from `/account` instead of being hidden behind preferences/profile routes
+- member dashboard now also surfaces a storefront continuation window fed by live public CMS pages plus public categories, so the protected member landing route stays connected to public browse/content follow-up instead of acting like a portal-only island
 - resource-backed public account auth, profile/preferences/addresses, signed-in dashboard shell, member orders/invoices, and loyalty surfaces including overview/discovery/public detail/business detail through JSON bundles under `src/localization/resources`
 - shared member-portal navigation across dashboard/profile/preferences/addresses plus stronger profile/address form guardrails for the authenticated account area
 - shared member-portal navigation now also covers orders, invoices, loyalty overview, and commerce detail sidebars instead of stopping at account editors
@@ -242,6 +294,9 @@ The current web slice includes:
 - profile/preferences/addresses plus order/invoice/loyalty-business detail routes now also reuse the same member cross-surface rail as overview routes, so protected continuation and follow-up behavior stays on one shared component path instead of diverging per route
 - dashboard/preferences sidebars now also surface route-summary/follow-up context, and address/order/invoice empty states now keep the member inside actionable front-office paths instead of passive dead ends
 - editable profile, preferences, and member address-book flows against the canonical member profile endpoints
+- the authenticated preferences route now also reads canonical profile channel readiness, so email/SMS/WhatsApp preference toggles are shown alongside the actual profile-channel prerequisites instead of behaving like detached booleans
+- a dedicated authenticated security route for member password change against the canonical authenticated password-change endpoint
+- profile, preferences, security, and addresses now also surface a shared storefront-continuation window fed by live public CMS pages plus public categories, so authenticated account editor routes stay connected to published content and catalog browse follow-up instead of behaving like portal-only leaves
 - protected member fetches now refresh provisional browser sessions near expiry and retry once before falling back to sign-in again
 - phone verification request/confirm inside the profile surface via the canonical SMS/WhatsApp member verification endpoints
 - business-scoped loyalty detail routes with rewards, recent transactions, and cursor-based timeline paging
@@ -271,11 +326,16 @@ The current web slice includes:
 - bounded numeric query parsing is now also strict about decimal shape before conversion, so latitude/longitude/radius-style inputs no longer rely on permissive `Number(...)` coercion in route parsing
 - culture-aware route metadata plus key-based localized flash/error messaging for web-owned cart/checkout/member action flows
 - loyalty overview cards backed by `my/businesses` plus business-scoped promotions feed/tracking through the canonical member loyalty contracts
+- the authenticated loyalty overview route now also surfaces explicit engagement-readiness state for active joined places and reward-focus follow-up, so loyalty overview acts as a next-step surface instead of only a balances/list screen
+- the authenticated loyalty overview route now also surfaces a storefront-continuation window fed by live public CMS pages plus public categories, so loyalty follow-up can move back into public content and catalog discovery without detouring through the dashboard first
 - public loyalty discovery against the canonical business-discovery contracts plus pre-join business detail/join UX on `/loyalty` and `/loyalty/[businessId]`
+- public loyalty business detail now also surfaces a storefront-continuation window fed by live public CMS pages plus public categories, so pre-join loyalty routes stay connected to public content and catalog browse follow-up instead of ending as standalone detail leaves
+- public loyalty overview now also surfaces a storefront-continuation window fed by live public CMS pages plus public categories, so signed-out loyalty discovery stays connected to published content and catalog browse follow-up instead of behaving like a discovery-only leaf route
 - query-driven loyalty proximity browsing with a server-rendered coordinate preview derived from the same public discovery result set
-- browser-side loyalty scan preparation for accrual/redemption with branch selection, reward selection, and short-lived token visibility on `/loyalty/[businessId]`
-- QR rendering for the active prepared loyalty scan token on `/loyalty/[businessId]`
+- provisional loyalty scan-preparation contract consumption with branch selection, reward selection, and short-lived token visibility on `/loyalty/[businessId]`
+- QR rendering for the active prepared loyalty scan token on `/loyalty/[businessId]`, without treating browser camera/scanner handling as committed web scope
 - loyalty business detail now also stays on the shared member-portal navigation model and clears stale/mismatched prepared scan-token cookie state during readback
+- loyalty business detail now also surfaces a storefront-continuation window fed by live public CMS pages plus public categories, so protected loyalty follow-up stays connected to public CMS and catalog browse routes instead of terminating inside a portal-only detail branch
 - culture-aware catalog delivery plus contract-safe merchandising polish across `/catalog` and `/catalog/[slug]`
 - category-aware related-product follow-up on `/catalog/[slug]` using the current public catalog contracts
 - product detail now also surfaces degraded related-product follow-up state explicitly when the category-based follow-up fetch fails, instead of silently flattening adjacent catalog discovery
@@ -288,18 +348,6 @@ The current web slice includes:
 - locale-prefixed public routing for Home/CMS/catalog plus index-level language alternates where slug mapping is unambiguous
 
 For broader platform documentation, see:
-
-- member order/invoice document links now also validate absolute and proxied WebApi URL shape before rendering download anchors, so malformed document paths degrade into an explicit unavailable state instead of producing broken or over-permissive links
-- loyalty discovery map links and linked-invoice handoffs now also honor locale-prefixed routing, so those surfaces no longer fall back to root-language paths inside localized storefront/member flows
-- public loyalty business contact links now also validate `http/https` shape before rendering external website anchors, so malformed website URLs degrade into normal metadata absence instead of unsafe or broken links
-- loyalty public/discovery/member-overview media URLs now also resolve through the backend-safe URL helper, so malformed image paths fall back to existing placeholders instead of being trusted as raw `img` sources
-- catalog, cart, checkout, and product-detail media URLs now also resolve through the same backend-safe helper, so storefront commerce image rendering no longer trusts raw payload URLs when placeholders already exist
-- external website links and member document-download links that open new tabs now also use `noopener noreferrer`, so safe URL validation is paired with the usual new-tab isolation baseline
-- CMS page HTML and product full-description HTML now also pass through a lightweight fragment sanitizer before `dangerouslySetInnerHTML`, stripping obvious high-risk tags, inline event handlers, and `javascript:` URLs instead of trusting raw backend HTML wholesale
-- the lightweight fragment sanitizer now also strips unquoted inline event handlers and unquoted `javascript:` `href/src` attributes, so malformed-but-still-dangerous HTML fragments do not slip through the quoted-attribute-only path
-- CMS detail now also sanitizes its non-summary HTML fallback before injection, so heading-less pages cannot bypass the same HTML-fragment hardening path
-- cart-display snapshot product links are now sanitized again at cookie-read and render time, so browser-local cart snapshots cannot push cart/checkout product return links outside the intended app-local route tree
-
 - [`../../README.md`](../../README.md)
 - [`../../DarwinFrontEnd.md`](../../DarwinFrontEnd.md)
 - [`../../DarwinWebApi.md`](../../DarwinWebApi.md)

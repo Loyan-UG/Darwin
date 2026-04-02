@@ -2,10 +2,12 @@ import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberInvoiceSummary } from "@/features/member-portal/types";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 
 type InvoicesPageProps = {
   culture: string;
@@ -13,6 +15,10 @@ type InvoicesPageProps = {
   status: string;
   currentPage: number;
   totalPages: number;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function buildInvoicesHref(page = 1) {
@@ -25,8 +31,18 @@ export function InvoicesPage({
   status,
   currentPage,
   totalPages,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: InvoicesPageProps) {
   const copy = getMemberResource(culture);
+  const outstandingInvoices = invoices.filter((invoice) => invoice.balanceMinor > 0);
+  const outstandingBalanceMinor = outstandingInvoices.reduce(
+    (total, invoice) => total + invoice.balanceMinor,
+    0,
+  );
+  const primaryCurrency = invoices[0]?.currency ?? "EUR";
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -78,6 +94,156 @@ export function InvoicesPage({
               status,
             })}
           </p>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.invoicesReadinessTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.invoicesReadinessMessage, {
+              count: outstandingInvoices.length,
+              balance: formatMoney(outstandingBalanceMinor, primaryCurrency, culture),
+            })}
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                {copy.invoicesReadinessVisibleLabel}
+              </p>
+              <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                {invoices.length}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                {copy.invoicesReadinessOutstandingLabel}
+              </p>
+              <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                {outstandingInvoices.length}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                {copy.invoicesReadinessBalanceLabel}
+              </p>
+              <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(outstandingBalanceMinor, primaryCurrency, culture)}
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {outstandingInvoices[0] ? (
+              <Link
+                href={localizeHref(`/invoices/${outstandingInvoices[0].id}`, culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.invoicesReadinessPrimaryCta}
+              </Link>
+            ) : null}
+            <Link
+              href={localizeHref("/account", culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.securityBackToDashboardCta}
+            </Link>
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+            {copy.invoicesStorefrontWindowTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.invoicesStorefrontWindowMessage, {
+              cmsStatus: cmsPagesStatus,
+              categoriesStatus,
+              pageCount: cmsPages.length,
+              categoryCount: categories.length,
+            })}
+          </p>
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {copy.invoicesStorefrontCmsTitle}
+                </p>
+                <Link
+                  href={localizeHref("/cms", culture)}
+                  className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                >
+                  {copy.invoicesStorefrontCmsCta}
+                </Link>
+              </div>
+              {cmsPages.length > 0 ? (
+                <div className="mt-4 flex flex-col gap-3">
+                  {cmsPages.map((page) => (
+                    <Link
+                      key={page.id}
+                      href={localizeHref(`/cms/${page.slug}`, culture)}
+                      className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                    >
+                      <p className="font-semibold text-[var(--color-text-primary)]">
+                        {page.title}
+                      </p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {page.metaDescription ?? copy.invoicesStorefrontCmsFallbackDescription}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.invoicesStorefrontCmsEmptyMessage, {
+                    status: cmsPagesStatus,
+                  })}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {copy.invoicesStorefrontCatalogTitle}
+                </p>
+                <Link
+                  href={localizeHref("/catalog", culture)}
+                  className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                >
+                  {copy.invoicesStorefrontCatalogCta}
+                </Link>
+              </div>
+              {categories.length > 0 ? (
+                <div className="mt-4 flex flex-col gap-3">
+                  {categories.map((category) => (
+                    <Link
+                      key={category.id}
+                      href={localizeHref(
+                        buildAppQueryPath("/catalog", {
+                          category: category.slug,
+                        }),
+                        culture,
+                      )}
+                      className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                    >
+                      <p className="font-semibold text-[var(--color-text-primary)]">
+                        {category.name}
+                      </p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {category.description ?? copy.invoicesStorefrontCatalogFallbackDescription}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.invoicesStorefrontCatalogEmptyMessage, {
+                    status: categoriesStatus,
+                  })}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-5">

@@ -3,6 +3,11 @@ import { CommerceContinuationRail } from "@/components/checkout/commerce-continu
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
 import type { PublicStorefrontOrderConfirmation } from "@/features/checkout/types";
+import type {
+  MemberInvoiceSummary,
+  MemberOrderSummary,
+  MyLoyaltyOverview,
+} from "@/features/member-portal/types";
 import {
   formatResource,
   getCommerceResource,
@@ -23,6 +28,12 @@ type OrderConfirmationPageProps = {
   paymentError?: string;
   cancelled?: boolean;
   hasMemberSession?: boolean;
+  memberOrders: MemberOrderSummary[];
+  memberOrdersStatus: string;
+  memberInvoices: MemberInvoiceSummary[];
+  memberInvoicesStatus: string;
+  memberLoyaltyOverview: MyLoyaltyOverview | null;
+  memberLoyaltyStatus: string;
 };
 
 function renderAddress(address: ParsedAddress | null, culture: string) {
@@ -91,6 +102,12 @@ export function OrderConfirmationPage({
   paymentError,
   cancelled,
   hasMemberSession = false,
+  memberOrders,
+  memberOrdersStatus,
+  memberInvoices,
+  memberInvoicesStatus,
+  memberLoyaltyOverview,
+  memberLoyaltyStatus,
 }: OrderConfirmationPageProps) {
   const copy = getCommerceResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
@@ -165,6 +182,16 @@ export function OrderConfirmationPage({
     paymentOutcome,
     copy.unavailable,
   );
+  const outstandingInvoice =
+    memberInvoices.find((invoice) => invoice.balanceMinor > 0) ??
+    memberInvoices[0] ??
+    null;
+  const loyaltyFocus =
+    [...(memberLoyaltyOverview?.accounts ?? [])].sort((left, right) => {
+      const leftRank = left.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
+      const rightRank = right.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
+      return leftRank - rightRank;
+    })[0] ?? null;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -408,16 +435,10 @@ export function OrderConfirmationPage({
                 ) : (
                   <>
                     <Link
-                      href={signInHref}
+                      href={localizeHref("/account", culture)}
                       className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                     >
-                      {copy.signInForTrackingCta}
-                    </Link>
-                    <Link
-                      href={registerHref}
-                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                    >
-                      {copy.createAccountForTrackingCta}
+                      {copy.confirmationOpenAccountHubCta}
                     </Link>
                   </>
                 )}
@@ -430,6 +451,140 @@ export function OrderConfirmationPage({
                 </Link>
               </div>
             </aside>
+
+            {hasMemberSession ? (
+              <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                  {copy.confirmationMemberWindowTitle}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.confirmationMemberWindowMessage, {
+                    ordersStatus: memberOrdersStatus,
+                    invoicesStatus: memberInvoicesStatus,
+                    loyaltyStatus: memberLoyaltyStatus,
+                  })}
+                </p>
+                <div className="mt-5 grid gap-3">
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.confirmationMemberOrdersLabel}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                      {memberOrders[0]
+                        ? formatResource(copy.confirmationMemberOrdersValue, {
+                            orderNumber: memberOrders[0].orderNumber,
+                          })
+                        : copy.confirmationMemberOrdersEmpty}
+                    </p>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.confirmationMemberInvoicesLabel}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                      {outstandingInvoice
+                        ? formatResource(copy.confirmationMemberInvoicesValue, {
+                            balance: formatMoney(
+                              outstandingInvoice.balanceMinor,
+                              outstandingInvoice.currency,
+                              culture,
+                            ),
+                          })
+                        : copy.confirmationMemberInvoicesEmpty}
+                    </p>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.confirmationMemberLoyaltyLabel}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                      {loyaltyFocus
+                        ? formatResource(copy.confirmationMemberLoyaltyValue, {
+                            business: loyaltyFocus.businessName,
+                          })
+                        : copy.confirmationMemberLoyaltyEmpty}
+                    </p>
+                  </article>
+                </div>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href={localizeHref(memberOrdersHref, culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.openOrdersCta}
+                  </Link>
+                  <Link
+                    href={localizeHref("/invoices", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.confirmationOpenInvoicesCta}
+                  </Link>
+                  <Link
+                    href={localizeHref("/loyalty", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.confirmationOpenLoyaltyCta}
+                  </Link>
+                </div>
+              </aside>
+            ) : (
+              <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                  {copy.confirmationGuestWindowTitle}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.confirmationGuestWindowMessage, {
+                    returnPath: memberOrderDetailHref,
+                  })}
+                </p>
+                <div className="mt-5 grid gap-3">
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.confirmationGuestReferenceLabel}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                      {formatResource(copy.confirmationGuestReferenceValue, {
+                        orderNumber: confirmation.orderNumber,
+                      })}
+                    </p>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.confirmationGuestReturnLabel}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                      {memberOrderDetailHref}
+                    </p>
+                  </article>
+                </div>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href={signInHref}
+                    className="inline-flex rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+                  >
+                    {copy.signInForTrackingCta}
+                  </Link>
+                  <Link
+                    href={registerHref}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.createAccountForTrackingCta}
+                  </Link>
+                  <Link
+                    href={buildLocalizedAuthHref("/account/activation", memberOrderDetailHref, culture, "/orders")}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.commerceAuthActivationCta}
+                  </Link>
+                  <Link
+                    href={buildLocalizedAuthHref("/account/password", memberOrderDetailHref, culture, "/orders")}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.commerceAuthPasswordCta}
+                  </Link>
+                </div>
+              </aside>
+            )}
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">

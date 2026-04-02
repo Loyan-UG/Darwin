@@ -1,5 +1,9 @@
 import Link from "next/link";
+import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicCartSummary } from "@/features/cart/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
   confirmEmailAction,
@@ -15,6 +19,12 @@ type ActivationPageProps = {
   activationStatus?: string;
   activationError?: string;
   returnPath?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
+  storefrontCart: PublicCartSummary | null;
+  storefrontCartStatus: string;
 };
 
 function getActivationMessage(status: string | undefined, culture: string) {
@@ -37,6 +47,12 @@ export function ActivationPage({
   activationStatus,
   activationError,
   returnPath,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
+  storefrontCart,
+  storefrontCartStatus,
 }: ActivationPageProps) {
   const copy = getMemberResource(culture);
   const statusMessage = getActivationMessage(activationStatus, culture);
@@ -143,7 +159,21 @@ export function ActivationPage({
           </Link>
         </div>
 
-        <PublicAuthContinuation culture={culture} />
+        <PublicAuthReturnSummary
+          culture={culture}
+          returnPath={returnPath}
+          storefrontCart={storefrontCart}
+        />
+
+        <PublicAuthContinuation
+          culture={culture}
+          cmsPages={cmsPages}
+          cmsPagesStatus={cmsPagesStatus}
+          categories={categories}
+          categoriesStatus={categoriesStatus}
+          storefrontCart={storefrontCart}
+          storefrontCartStatus={storefrontCartStatus}
+        />
       </div>
     </section>
   );

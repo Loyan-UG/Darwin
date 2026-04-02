@@ -1,4 +1,5 @@
 import { SignInPage } from "@/components/account/sign-in-page";
+import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildNoIndexMetadata } from "@/lib/seo";
@@ -27,6 +28,7 @@ function readSearchParam(value: string | string[] | undefined) {
 export default async function SignInRoute({ searchParams }: SignInRouteProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const storefrontContext = await getPublicAuthStorefrontContext(culture);
 
   return (
     <SignInPage
@@ -34,6 +36,12 @@ export default async function SignInRoute({ searchParams }: SignInRouteProps) {
       email={readSearchParam(resolvedSearchParams?.email)}
       signInError={readSearchParam(resolvedSearchParams?.signInError)}
       returnPath={sanitizeAppPath(readSearchParam(resolvedSearchParams?.returnPath), "/account")}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      storefrontCart={storefrontContext.storefrontCart}
+      storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />
   );
 }

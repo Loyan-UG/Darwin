@@ -1,5 +1,10 @@
+import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
+import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import Link from "next/link";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicCartSummary } from "@/features/cart/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { registerMemberAction } from "@/features/account/actions";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
@@ -11,6 +16,12 @@ type RegisterPageProps = {
   registerStatus?: string;
   registerError?: string;
   returnPath?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
+  storefrontCart: PublicCartSummary | null;
+  storefrontCartStatus: string;
 };
 
 export function RegisterPage({
@@ -19,6 +30,12 @@ export function RegisterPage({
   registerStatus,
   registerError,
   returnPath,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
+  storefrontCart,
+  storefrontCartStatus,
 }: RegisterPageProps) {
   const copy = getMemberResource(culture);
   const resolvedRegisterError = resolveLocalizedQueryMessage(registerError, copy);
@@ -117,7 +134,28 @@ export function RegisterPage({
               </li>
             </ul>
           </aside>
-          <PublicAuthContinuation culture={culture} />
+          <PublicAuthReturnSummary
+            culture={culture}
+            returnPath={returnPath}
+            storefrontCart={storefrontCart}
+          />
+          {(registerStatus === "registered" || Boolean(email)) && (
+            <ActivationRecoveryPanel
+              culture={culture}
+              email={email}
+              returnPath={returnPath}
+              compact
+            />
+          )}
+          <PublicAuthContinuation
+            culture={culture}
+            cmsPages={cmsPages}
+            cmsPagesStatus={cmsPagesStatus}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
+            storefrontCart={storefrontCart}
+            storefrontCartStatus={storefrontCartStatus}
+          />
         </div>
       </div>
     </section>

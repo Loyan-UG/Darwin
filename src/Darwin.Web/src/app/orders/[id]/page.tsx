@@ -1,4 +1,6 @@
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
+import { getPublicCategories } from "@/features/catalog/api/public-catalog";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { OrderDetailPage } from "@/components/member/order-detail-page";
 import { getCurrentMemberOrder } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
@@ -51,7 +53,11 @@ export default async function OrderDetailRoute({
     );
   }
 
-  const orderResult = await getCurrentMemberOrder(id);
+  const [orderResult, cmsPagesResult, categoriesResult] = await Promise.all([
+    getCurrentMemberOrder(id),
+    getPublishedPages({ page: 1, pageSize: 2, culture }),
+    getPublicCategories(culture),
+  ]);
 
   return (
     <OrderDetailPage
@@ -59,6 +65,10 @@ export default async function OrderDetailRoute({
       order={orderResult.data}
       status={orderResult.status}
       paymentError={readSearchParam(resolvedSearchParams?.paymentError)}
+      cmsPages={cmsPagesResult.data?.items ?? []}
+      cmsPagesStatus={cmsPagesResult.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
     />
   );
 }

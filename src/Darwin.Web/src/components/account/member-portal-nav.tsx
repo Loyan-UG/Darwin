@@ -11,6 +11,7 @@ const ROUTES = [
   { href: "/account", key: "accountOverviewRouteLabel" },
   { href: "/account/profile", key: "profileRouteLabel" },
   { href: "/account/preferences", key: "preferencesRouteLabel" },
+  { href: "/account/security", key: "securityRouteLabel" },
   { href: "/account/addresses", key: "addressesRouteLabel" },
   { href: "/orders", key: "ordersRouteLabel" },
   { href: "/invoices", key: "invoicesRouteLabel" },

@@ -1,9 +1,15 @@
 import Link from "next/link";
+import { AccountStorefrontWindow } from "@/components/account/account-storefront-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import type { PublicCategorySummary } from "@/features/catalog/types";
 import { updateMemberPreferencesAction } from "@/features/member-portal/actions";
-import type { MemberPreferences } from "@/features/member-portal/types";
+import type { PublicPageSummary } from "@/features/cms/types";
+import type {
+  MemberCustomerProfile,
+  MemberPreferences,
+} from "@/features/member-portal/types";
 import {
   formatResource,
   getMemberResource,
@@ -15,8 +21,14 @@ type PreferencesPageProps = {
   culture: string;
   preferences: MemberPreferences | null;
   status: string;
+  profile: MemberCustomerProfile | null;
+  profileStatus: string;
   preferencesStatus?: string;
   preferencesError?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function ToggleField({
@@ -40,13 +52,28 @@ export function PreferencesPage({
   culture,
   preferences,
   status,
+  profile,
+  profileStatus,
   preferencesStatus,
   preferencesError,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: PreferencesPageProps) {
   const copy = getMemberResource(culture);
   const resolvedPreferencesError = resolveLocalizedQueryMessage(
     preferencesError,
     copy,
+  );
+  const hasPhoneNumber = Boolean(profile?.phoneE164?.trim());
+  const smsReady = Boolean(
+    preferences?.allowSmsMarketing && hasPhoneNumber && profile?.phoneNumberConfirmed,
+  );
+  const whatsAppReady = Boolean(
+    preferences?.allowWhatsAppMarketing &&
+      hasPhoneNumber &&
+      profile?.phoneNumberConfirmed,
   );
 
   return (
@@ -123,6 +150,9 @@ export function PreferencesPage({
                 <Link href={localizeHref("/account/profile", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                   {copy.memberRouteSummaryProfileCta}
                 </Link>
+                <Link href={localizeHref("/account/security", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {copy.memberRouteSummarySecurityCta}
+                </Link>
                 <Link href={localizeHref("/account/addresses", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                   {copy.preferencesRouteSummaryAddressesCta}
                 </Link>
@@ -146,9 +176,18 @@ export function PreferencesPage({
                 ? copy.preferencesRouteSummaryMessage
                 : copy.preferencesRouteSummaryUnavailableMessage}
             </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.preferencesRouteSummaryProfileMessage, {
+                preferencesStatus: status,
+                profileStatus,
+              })}
+            </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href={localizeHref("/account/profile", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                 {copy.memberRouteSummaryProfileCta}
+              </Link>
+              <Link href={localizeHref("/account/security", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberRouteSummarySecurityCta}
               </Link>
               <Link href={localizeHref("/account/addresses", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                 {copy.preferencesRouteSummaryAddressesCta}
@@ -165,10 +204,80 @@ export function PreferencesPage({
             </p>
           </aside>
 
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+              {copy.preferencesChannelReadinessTitle}
+            </p>
+            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.preferencesChannelReadinessMessage, {
+                profileStatus,
+                preferencesStatus: status,
+              })}
+            </p>
+            <div className="mt-6 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="font-semibold text-[var(--color-text-primary)]">
+                  {copy.preferencesEmailChannelTitle}
+                </p>
+                <p className="mt-2">
+                  {profile?.email
+                    ? formatResource(copy.preferencesEmailChannelReadyMessage, {
+                        email: profile.email,
+                      })
+                    : copy.preferencesEmailChannelUnavailableMessage}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="font-semibold text-[var(--color-text-primary)]">
+                  {copy.preferencesSmsChannelTitle}
+                </p>
+                <p className="mt-2">
+                  {smsReady
+                    ? formatResource(copy.preferencesSmsChannelReadyMessage, {
+                        phone: profile?.phoneE164 ?? copy.unavailable,
+                      })
+                    : hasPhoneNumber
+                      ? copy.preferencesSmsChannelVerificationMessage
+                      : copy.preferencesSmsChannelUnavailableMessage}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="font-semibold text-[var(--color-text-primary)]">
+                  {copy.preferencesWhatsAppChannelTitle}
+                </p>
+                <p className="mt-2">
+                  {whatsAppReady
+                    ? formatResource(copy.preferencesWhatsAppChannelReadyMessage, {
+                        phone: profile?.phoneE164 ?? copy.unavailable,
+                      })
+                    : hasPhoneNumber
+                      ? copy.preferencesWhatsAppChannelVerificationMessage
+                      : copy.preferencesWhatsAppChannelUnavailableMessage}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href={localizeHref("/account/profile", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.preferencesChannelReviewProfileCta}
+              </Link>
+              <Link href={localizeHref("/account/security", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberRouteSummarySecurityCta}
+              </Link>
+            </div>
+          </aside>
+
           <MemberCrossSurfaceRail
             culture={culture}
             includeAccount={false}
             includeInvoices
+          />
+
+          <AccountStorefrontWindow
+            culture={culture}
+            cmsPages={cmsPages}
+            cmsPagesStatus={cmsPagesStatus}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
           />
         </div>
       </div>

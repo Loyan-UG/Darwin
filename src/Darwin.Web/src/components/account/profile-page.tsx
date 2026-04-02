@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountStorefrontWindow } from "@/components/account/account-storefront-window";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
@@ -7,6 +8,8 @@ import {
   requestMemberPhoneVerificationAction,
   updateMemberProfileAction,
 } from "@/features/member-portal/actions";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberCustomerProfile } from "@/features/member-portal/types";
 import {
   formatResource,
@@ -25,6 +28,10 @@ type ProfilePageProps = {
   profileError?: string;
   phoneStatus?: string;
   phoneError?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function getPhoneStatusBanner(
@@ -65,6 +72,10 @@ export function ProfilePage({
   profileError,
   phoneStatus,
   phoneError,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: ProfilePageProps) {
   const copy = getMemberResource(culture);
   const resolvedProfileError = resolveLocalizedQueryMessage(profileError, copy);
@@ -75,6 +86,10 @@ export function ProfilePage({
     Boolean(profile?.phoneNumberConfirmed),
   );
   const hasPhoneNumber = Boolean(profile?.phoneE164?.trim());
+  const hasName = Boolean(profile?.firstName?.trim() || profile?.lastName?.trim());
+  const hasLocale = Boolean(profile?.locale?.trim());
+  const hasCurrency = Boolean(profile?.currency?.trim());
+  const hasTimezone = Boolean(profile?.timezone?.trim());
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -231,6 +246,60 @@ export function ProfilePage({
 
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+              {copy.profileReadinessTitle}
+            </p>
+            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.profileReadinessMessage, { status })}
+            </p>
+            <div className="mt-6 grid gap-3">
+              <article className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.profileReadinessIdentityLabel}
+                </p>
+                <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                  {hasName
+                    ? copy.profileReadinessReady
+                    : copy.profileReadinessNeedsAttention}
+                </p>
+              </article>
+              <article className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.profileReadinessPhoneLabel}
+                </p>
+                <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                  {profile?.phoneNumberConfirmed
+                    ? copy.profileReadinessReady
+                    : hasPhoneNumber
+                      ? copy.profileReadinessPending
+                      : copy.profileReadinessNeedsAttention}
+                </p>
+              </article>
+              <article className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.profileReadinessLocaleLabel}
+                </p>
+                <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                  {hasLocale && hasCurrency && hasTimezone
+                    ? copy.profileReadinessReady
+                    : copy.profileReadinessNeedsAttention}
+                </p>
+              </article>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href={localizeHref("/checkout", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.profileReadinessCheckoutCta}
+              </Link>
+              <Link href={localizeHref("/account/preferences", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.profileReadinessPreferencesCta}
+              </Link>
+              <Link href={localizeHref("/account/security", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.profileReadinessSecurityCta}
+              </Link>
+            </div>
+          </aside>
+
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.memberRouteSummaryTitle}
             </p>
             <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
@@ -241,6 +310,9 @@ export function ProfilePage({
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href={localizeHref("/account/preferences", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                 {copy.memberRouteSummaryPreferencesCta}
+              </Link>
+              <Link href={localizeHref("/account/security", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberRouteSummarySecurityCta}
               </Link>
               <Link href={localizeHref("/account/addresses", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                 {copy.preferencesRouteSummaryAddressesCta}
@@ -253,6 +325,14 @@ export function ProfilePage({
             includeAccount={false}
             includeOrders
             includeLoyalty={false}
+          />
+
+          <AccountStorefrontWindow
+            culture={culture}
+            cmsPages={cmsPages}
+            cmsPagesStatus={cmsPagesStatus}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
           />
 
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">

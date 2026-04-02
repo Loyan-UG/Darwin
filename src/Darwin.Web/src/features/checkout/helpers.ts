@@ -1,4 +1,8 @@
 import type { CheckoutDraft, PublicCheckoutAddress } from "@/features/checkout/types";
+import type {
+  MemberAddress,
+  MemberCustomerProfile,
+} from "@/features/member-portal/types";
 import { buildQuerySuffix } from "@/lib/query-params";
 
 type SearchParamValue = string | string[] | undefined;
@@ -100,6 +104,79 @@ export function readCheckoutDraftFromFormData(formData: FormData): CheckoutDraft
     countryCode: normalizeCountryCode(formData.get("countryCode")) || DEFAULT_COUNTRY_CODE,
     phoneE164: normalizeValue(formData.get("phoneE164")),
     selectedShippingMethodId: normalizeValue(formData.get("selectedShippingMethodId")),
+  };
+}
+
+export function hasCheckoutDraftValues(draft: CheckoutDraft) {
+  return Boolean(
+    draft.fullName ||
+      draft.company ||
+      draft.street1 ||
+      draft.street2 ||
+      draft.postalCode ||
+      draft.city ||
+      draft.state ||
+      draft.phoneE164 ||
+      draft.selectedShippingMethodId ||
+      (draft.countryCode && draft.countryCode !== DEFAULT_COUNTRY_CODE),
+  );
+}
+
+export function toCheckoutDraftFromMemberAddress(
+  address: MemberAddress,
+): CheckoutDraft {
+  return {
+    fullName: address.fullName,
+    company: address.company ?? "",
+    street1: address.street1,
+    street2: address.street2 ?? "",
+    postalCode: address.postalCode,
+    city: address.city,
+    state: address.state ?? "",
+    countryCode: address.countryCode || DEFAULT_COUNTRY_CODE,
+    phoneE164: address.phoneE164 ?? "",
+    selectedShippingMethodId: "",
+  };
+}
+
+export function toCheckoutDraftFromMemberProfile(
+  profile: MemberCustomerProfile,
+): CheckoutDraft {
+  const fullName = [profile.firstName, profile.lastName]
+    .map((value) => value?.trim() ?? "")
+    .filter(Boolean)
+    .join(" ");
+
+  return {
+    fullName,
+    company: "",
+    street1: "",
+    street2: "",
+    postalCode: "",
+    city: "",
+    state: "",
+    countryCode: DEFAULT_COUNTRY_CODE,
+    phoneE164: profile.phoneE164 ?? "",
+    selectedShippingMethodId: "",
+  };
+}
+
+export function mergeCheckoutDraft(
+  base: CheckoutDraft,
+  fallback: Partial<CheckoutDraft>,
+): CheckoutDraft {
+  return {
+    fullName: base.fullName || fallback.fullName || "",
+    company: base.company || fallback.company || "",
+    street1: base.street1 || fallback.street1 || "",
+    street2: base.street2 || fallback.street2 || "",
+    postalCode: base.postalCode || fallback.postalCode || "",
+    city: base.city || fallback.city || "",
+    state: base.state || fallback.state || "",
+    countryCode: base.countryCode || fallback.countryCode || DEFAULT_COUNTRY_CODE,
+    phoneE164: base.phoneE164 || fallback.phoneE164 || "",
+    selectedShippingMethodId:
+      base.selectedShippingMethodId || fallback.selectedShippingMethodId || "",
   };
 }
 

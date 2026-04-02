@@ -1,4 +1,8 @@
 import { CmsPagesIndex } from "@/components/cms/cms-pages-index";
+import {
+  getPublicCategories,
+  getPublicProducts,
+} from "@/features/catalog/api/public-catalog";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
 import {
   readPositiveIntegerSearchParam,
@@ -50,11 +54,19 @@ export default async function CmsIndexRoute({
   const culture = await getRequestCulture();
   const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
   const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
-  const pagesResult = await getPublishedPages({
-    page: safePage,
-    pageSize: 12,
-    culture,
-  });
+  const [pagesResult, categoriesResult, productsResult] = await Promise.all([
+    getPublishedPages({
+      page: safePage,
+      pageSize: 12,
+      culture,
+    }),
+    getPublicCategories(culture),
+    getPublicProducts({
+      page: 1,
+      pageSize: 3,
+      culture,
+    }),
+  ]);
   const visiblePages = visibleQuery
     ? (pagesResult.data?.items ?? []).filter((page) => {
         const haystack = `${page.title} ${page.slug} ${page.metaTitle ?? ""} ${page.metaDescription ?? ""}`.toLowerCase();
@@ -79,6 +91,10 @@ export default async function CmsIndexRoute({
       currentPage={safePage}
       status={pagesResult.status}
       visibleQuery={visibleQuery}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
+      products={productsResult.data?.items ?? []}
+      productsStatus={productsResult.status}
     />
   );
 }

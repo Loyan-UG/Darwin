@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CommerceAuthHandoff } from "@/components/checkout/commerce-auth-handoff";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
@@ -8,6 +9,15 @@ import {
 } from "@/features/cart/actions";
 import type { PublicProductSummary } from "@/features/catalog/types";
 import type { CartViewModel } from "@/features/cart/server/get-cart-view-model";
+import {
+  buildCheckoutDraftSearch,
+  toCheckoutDraftFromMemberAddress,
+} from "@/features/checkout/helpers";
+import type {
+  MemberAddress,
+  MemberCustomerProfile,
+  MemberPreferences,
+} from "@/features/member-portal/types";
 import {
   formatResource,
   getCommerceResource,
@@ -20,6 +30,13 @@ import { toWebApiUrl } from "@/lib/webapi-url";
 type CartPageProps = {
   culture: string;
   model: CartViewModel;
+  memberAddresses: MemberAddress[];
+  memberAddressesStatus: string;
+  memberProfile: MemberCustomerProfile | null;
+  memberProfileStatus: string;
+  memberPreferences: MemberPreferences | null;
+  memberPreferencesStatus: string;
+  hasMemberSession: boolean;
   cartStatus?: string;
   cartError?: string;
   followUpProducts?: PublicProductSummary[];
@@ -45,6 +62,13 @@ function getStatusMessage(status?: string) {
 export function CartPage({
   culture,
   model,
+  memberAddresses,
+  memberAddressesStatus,
+  memberProfile,
+  memberProfileStatus,
+  memberPreferences,
+  memberPreferencesStatus,
+  hasMemberSession,
   cartStatus,
   cartError,
   followUpProducts = [],
@@ -57,6 +81,33 @@ export function CartPage({
   const resolvedCartError = resolveLocalizedQueryMessage(cartError, copy);
   const resolvedModelMessage = resolveLocalizedQueryMessage(model.message, copy);
   const cart = model.cart;
+  const preferredCheckoutAddress =
+    memberAddresses.find((address) => address.isDefaultShipping) ??
+    memberAddresses.find((address) => address.isDefaultBilling) ??
+    memberAddresses[0] ??
+    null;
+  const emailChannelReady = Boolean(
+    memberProfile?.email && memberPreferences?.allowEmailMarketing,
+  );
+  const smsChannelReady = Boolean(
+    memberProfile?.phoneE164 &&
+      memberProfile.phoneNumberConfirmed &&
+      memberPreferences?.allowSmsMarketing,
+  );
+  const whatsAppChannelReady = Boolean(
+    memberProfile?.phoneE164 &&
+      memberProfile.phoneNumberConfirmed &&
+      memberPreferences?.allowWhatsAppMarketing,
+  );
+  const checkoutHref = preferredCheckoutAddress
+    ? localizeHref(
+        `/checkout${buildCheckoutDraftSearch(
+          toCheckoutDraftFromMemberAddress(preferredCheckoutAddress),
+          { memberAddressId: preferredCheckoutAddress.id },
+        )}`,
+        culture,
+      )
+    : localizeHref("/checkout", culture);
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -127,6 +178,118 @@ export function CartPage({
             })}
           </p>
         </div>
+
+        {cart && cart.items.length > 0 && (
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.cartOpportunityTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {followUpProducts.length > 0
+                  ? formatResource(copy.cartOpportunityMessage, {
+                      count: followUpProducts.length,
+                    })
+                  : copy.cartOpportunityFallback}
+              </p>
+              {followUpProducts.find(
+                (product) =>
+                  typeof product.compareAtPriceMinor === "number" &&
+                  product.compareAtPriceMinor > product.priceMinor,
+              ) ? (
+                (() => {
+                  const bestOffer =
+                    followUpProducts
+                      .filter(
+                        (product) =>
+                          typeof product.compareAtPriceMinor === "number" &&
+                          product.compareAtPriceMinor > product.priceMinor,
+                      )
+                      .map((product) => ({
+                        product,
+                        savingsPercent: Math.round(
+                          ((product.compareAtPriceMinor! - product.priceMinor) /
+                            product.compareAtPriceMinor!) *
+                            100,
+                        ),
+                      }))
+                      .sort((left, right) => right.savingsPercent - left.savingsPercent)[0] ?? null;
+
+                  if (!bestOffer) {
+                    return null;
+                  }
+
+                  return (
+                    <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {bestOffer.product.name}
+                      </p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {formatResource(copy.cartOpportunityOfferMessage, {
+                          savingsPercent: bestOffer.savingsPercent,
+                        })}
+                      </p>
+                      <div className="mt-4 flex flex-wrap items-end gap-3">
+                        <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                          {formatMoney(
+                            bestOffer.product.priceMinor,
+                            bestOffer.product.currency,
+                            culture,
+                          )}
+                        </p>
+                        <p className="text-sm text-[var(--color-text-muted)] line-through">
+                          {formatMoney(
+                            bestOffer.product.compareAtPriceMinor!,
+                            bestOffer.product.currency,
+                            culture,
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()
+              ) : null}
+            </section>
+
+            <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {copy.cartReadinessTitle}
+              </p>
+              <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.cartReadinessLinesLabel}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {formatResource(copy.cartReadinessLinesValue, {
+                      count: cart.items.length,
+                    })}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.cartReadinessCouponLabel}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {cart.couponCode
+                      ? copy.cartReadinessCouponApplied
+                      : copy.cartReadinessCouponNone}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.cartReadinessCheckoutLabel}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {hasMemberSession && preferredCheckoutAddress
+                      ? copy.cartReadinessCheckoutPrepared
+                      : copy.cartReadinessCheckoutOpen}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
 
         {!cart || cart.items.length === 0 ? (
           <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
@@ -314,9 +477,157 @@ export function CartPage({
                   </button>
                 </div>
               </form>
+              {hasMemberSession && (
+                <>
+                  <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                      {copy.cartMemberCheckoutTitle}
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.cartMemberCheckoutMessage, {
+                        status: memberAddressesStatus,
+                        count: memberAddresses.length,
+                      })}
+                    </p>
+                    {preferredCheckoutAddress ? (
+                      <div className="mt-4 rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        <p className="font-semibold text-[var(--color-text-primary)]">
+                          {preferredCheckoutAddress.fullName}
+                        </p>
+                        {preferredCheckoutAddress.company ? (
+                          <p>{preferredCheckoutAddress.company}</p>
+                        ) : null}
+                        <p>{preferredCheckoutAddress.street1}</p>
+                        {preferredCheckoutAddress.street2 ? (
+                          <p>{preferredCheckoutAddress.street2}</p>
+                        ) : null}
+                        <p>
+                          {preferredCheckoutAddress.postalCode} {preferredCheckoutAddress.city}
+                        </p>
+                        <p>{preferredCheckoutAddress.countryCode}</p>
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-primary)]">
+                          {preferredCheckoutAddress.isDefaultShipping ? (
+                            <span className="rounded-full bg-[var(--color-surface-panel-strong)] px-3 py-1">
+                              {copy.cartMemberCheckoutDefaultShippingLabel}
+                            </span>
+                          ) : null}
+                          {preferredCheckoutAddress.isDefaultBilling ? (
+                            <span className="rounded-full bg-[var(--color-surface-panel-strong)] px-3 py-1">
+                              {copy.cartMemberCheckoutDefaultBillingLabel}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {copy.cartMemberCheckoutEmptyMessage}
+                      </p>
+                    )}
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link
+                        href={checkoutHref}
+                        className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                      >
+                        {preferredCheckoutAddress
+                          ? copy.cartMemberCheckoutUseSavedAddressCta
+                          : copy.cartMemberCheckoutOpenCheckoutCta}
+                      </Link>
+                      <Link
+                        href={localizeHref("/account/addresses", culture)}
+                        className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                      >
+                        {copy.cartMemberCheckoutManageAddressesCta}
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                      {copy.cartMemberContextTitle}
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.cartMemberContextMessage, {
+                        profileStatus: memberProfileStatus,
+                        preferencesStatus: memberPreferencesStatus,
+                        addressesStatus: memberAddressesStatus,
+                      })}
+                    </p>
+                    <div className="mt-4 grid gap-3">
+                      <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        <p className="font-semibold text-[var(--color-text-primary)]">
+                          {copy.cartMemberContextIdentityLabel}
+                        </p>
+                        <p className="mt-2">
+                          {memberProfile?.firstName || memberProfile?.lastName
+                            ? `${memberProfile?.firstName ?? ""} ${memberProfile?.lastName ?? ""}`.trim()
+                            : copy.unavailable}
+                        </p>
+                        <p>{memberProfile?.email ?? copy.unavailable}</p>
+                      </div>
+                      <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        <p className="font-semibold text-[var(--color-text-primary)]">
+                          {copy.cartMemberContextPhoneLabel}
+                        </p>
+                        <p className="mt-2">
+                          {memberProfile?.phoneE164 ?? copy.unavailable}
+                        </p>
+                        <p>
+                          {memberProfile?.phoneNumberConfirmed
+                            ? copy.cartMemberContextPhoneVerified
+                            : copy.cartMemberContextPhonePending}
+                        </p>
+                      </div>
+                      <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        <p className="font-semibold text-[var(--color-text-primary)]">
+                          {copy.cartMemberContextChannelsLabel}
+                        </p>
+                        <p className="mt-2">
+                          {formatResource(copy.cartMemberContextEmailValue, {
+                            value: emailChannelReady ? copy.readyYes : copy.readyNo,
+                          })}
+                        </p>
+                        <p>
+                          {formatResource(copy.cartMemberContextSmsValue, {
+                            value: smsChannelReady ? copy.readyYes : copy.readyNo,
+                          })}
+                        </p>
+                        <p>
+                          {formatResource(copy.cartMemberContextWhatsAppValue, {
+                            value: whatsAppChannelReady ? copy.readyYes : copy.readyNo,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link
+                        href={localizeHref("/account/profile", culture)}
+                        className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                      >
+                        {copy.cartMemberContextProfileCta}
+                      </Link>
+                      <Link
+                        href={localizeHref("/account/preferences", culture)}
+                        className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                      >
+                        {copy.cartMemberContextPreferencesCta}
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
+              {!hasMemberSession && (
+                <div className="mt-6">
+                  <CommerceAuthHandoff
+                    culture={culture}
+                    cart={cart}
+                    returnPath="/checkout"
+                    routeKey="cart"
+                  />
+                </div>
+              )}
               <div className="mt-6 flex flex-col gap-3">
                 <Link
-                  href={localizeHref("/checkout", culture)}
+                  href={checkoutHref}
                   className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                 >
                   {copy.startCheckout}
@@ -440,6 +751,15 @@ export function CartPage({
                 </div>
               </div>
             </aside>
+
+            {!hasMemberSession && (
+              <CommerceAuthHandoff
+                culture={culture}
+                cart={cart}
+                returnPath="/checkout"
+                routeKey="cart"
+              />
+            )}
 
             <CommerceContinuationRail culture={culture} />
           </div>

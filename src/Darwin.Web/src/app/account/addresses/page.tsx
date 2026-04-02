@@ -1,4 +1,6 @@
 import { AddressesPage } from "@/components/account/addresses-page";
+import { getPublicCategories } from "@/features/catalog/api/public-catalog";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { getCurrentMemberAddresses } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
@@ -45,7 +47,11 @@ export default async function AddressesRoute({
     );
   }
 
-  const addressesResult = await getCurrentMemberAddresses();
+  const [addressesResult, cmsPagesResult, categoriesResult] = await Promise.all([
+    getCurrentMemberAddresses(),
+    getPublishedPages({ page: 1, pageSize: 2, culture }),
+    getPublicCategories(culture),
+  ]);
 
   return (
     <AddressesPage
@@ -54,6 +60,10 @@ export default async function AddressesRoute({
       status={addressesResult.status}
       addressesStatus={readSearchParam(resolvedSearchParams?.addressesStatus)}
       addressesError={readSearchParam(resolvedSearchParams?.addressesError)}
+      cmsPages={cmsPagesResult.data?.items ?? []}
+      cmsPagesStatus={cmsPagesResult.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
     />
   );
 }

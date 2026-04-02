@@ -1,4 +1,5 @@
 import { ActivationPage } from "@/components/account/activation-page";
+import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildNoIndexMetadata } from "@/lib/seo";
@@ -31,6 +32,7 @@ export default async function ActivationRoute({
 }: ActivationRouteProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const storefrontContext = await getPublicAuthStorefrontContext(culture);
 
   return (
     <ActivationPage
@@ -43,6 +45,12 @@ export default async function ActivationRoute({
         readSearchParam(resolvedSearchParams?.returnPath),
         "/account",
       )}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      storefrontCart={storefrontContext.storefrontCart}
+      storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />
   );
 }

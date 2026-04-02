@@ -1,4 +1,6 @@
 import { ProfilePage } from "@/components/account/profile-page";
+import { getPublicCategories } from "@/features/catalog/api/public-catalog";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { getCurrentMemberProfile } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
@@ -44,7 +46,11 @@ export default async function ProfileRoute({ searchParams }: ProfileRouteProps) 
     );
   }
 
-  const profileResult = await getCurrentMemberProfile();
+  const [profileResult, cmsPagesResult, categoriesResult] = await Promise.all([
+    getCurrentMemberProfile(),
+    getPublishedPages({ page: 1, pageSize: 2, culture }),
+    getPublicCategories(culture),
+  ]);
 
   return (
     <ProfilePage
@@ -56,6 +62,10 @@ export default async function ProfileRoute({ searchParams }: ProfileRouteProps) 
       profileError={readSearchParam(resolvedSearchParams?.profileError)}
       phoneStatus={readSearchParam(resolvedSearchParams?.phoneStatus)}
       phoneError={readSearchParam(resolvedSearchParams?.phoneError)}
+      cmsPages={cmsPagesResult.data?.items ?? []}
+      cmsPagesStatus={cmsPagesResult.status}
+      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
+      categoriesStatus={categoriesResult.status}
     />
   );
 }

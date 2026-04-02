@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { joinMemberLoyaltyBusinessAction } from "@/features/member-portal/actions";
 import type {
   BusinessDetail,
   BusinessLocation,
   LoyaltyRewardTierPublic,
 } from "@/features/businesses/types";
-import { buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import { toSafeHttpUrl, toWebApiUrl } from "@/lib/webapi-url";
 import {
   formatResource,
@@ -22,6 +24,10 @@ type LoyaltyPublicBusinessPageProps = {
   isAuthenticated: boolean;
   joinStatus?: string;
   joinError?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function formatLocation(location: BusinessLocation) {
@@ -53,6 +59,10 @@ export function LoyaltyPublicBusinessPage({
   isAuthenticated,
   joinStatus,
   joinError,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: LoyaltyPublicBusinessPageProps) {
   const copy = getMemberResource(culture);
   const resolvedJoinError = resolveLocalizedQueryMessage(joinError, copy);
@@ -362,6 +372,98 @@ export function LoyaltyPublicBusinessPage({
                     : copy.joinReadinessAnonymous}
                 </p>
                 <p>{copy.joinReadinessContractNote}</p>
+              </div>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.loyaltyPublicStorefrontWindowTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {formatResource(copy.loyaltyPublicStorefrontWindowMessage, {
+                  cmsStatus: cmsPagesStatus,
+                  categoriesStatus,
+                  pageCount: cmsPages.length,
+                  categoryCount: categories.length,
+                })}
+              </p>
+              <div className="mt-5 grid gap-4">
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.loyaltyPublicStorefrontCmsTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/cms", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.loyaltyPublicStorefrontCmsCta}
+                    </Link>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {copy.loyaltyPublicStorefrontCmsFallbackDescription}
+                  </p>
+                  {cmsPages.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {cmsPages.map((page) => (
+                        <Link
+                          key={page.id}
+                          href={localizeHref(`/cms/${page.slug}`, culture)}
+                          className="inline-flex rounded-full border border-[var(--color-border-soft)] px-3 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                        >
+                          {page.title}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.loyaltyPublicStorefrontCmsEmptyMessage, {
+                        status: cmsPagesStatus,
+                      })}
+                    </p>
+                  )}
+                </div>
+
+                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.loyaltyPublicStorefrontCatalogTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/catalog", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.loyaltyPublicStorefrontCatalogCta}
+                    </Link>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {copy.loyaltyPublicStorefrontCatalogFallbackDescription}
+                  </p>
+                  {categories.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {categories.map((category) => (
+                        <Link
+                          key={category.id}
+                          href={localizeHref(
+                            buildAppQueryPath("/catalog", {
+                              category: category.slug,
+                            }),
+                            culture,
+                          )}
+                          className="inline-flex rounded-full border border-[var(--color-border-soft)] px-3 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                        >
+                          {category.name}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.loyaltyPublicStorefrontCatalogEmptyMessage, {
+                        status: categoriesStatus,
+                      })}
+                    </p>
+                  )}
+                </div>
               </div>
             </aside>
 

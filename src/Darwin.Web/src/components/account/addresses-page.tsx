@@ -1,13 +1,17 @@
 import Link from "next/link";
+import { AccountStorefrontWindow } from "@/components/account/account-storefront-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import { buildCheckoutDraftSearch, toCheckoutDraftFromMemberAddress } from "@/features/checkout/helpers";
+import type { PublicCategorySummary } from "@/features/catalog/types";
 import {
   createMemberAddressAction,
   deleteMemberAddressAction,
   setMemberAddressDefaultAction,
   updateMemberAddressAction,
 } from "@/features/member-portal/actions";
+import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberAddress } from "@/features/member-portal/types";
 import {
   formatResource,
@@ -22,6 +26,10 @@ type AddressesPageProps = {
   status: string;
   addressesStatus?: string;
   addressesError?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function getAddressesStatusMessage(
@@ -48,10 +56,32 @@ export function AddressesPage({
   status,
   addressesStatus,
   addressesError,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: AddressesPageProps) {
   const copy = getMemberResource(culture);
   const resolvedAddressesError = resolveLocalizedQueryMessage(addressesError, copy);
   const statusMessage = getAddressesStatusMessage(addressesStatus, copy);
+  const defaultShippingAddress =
+    addresses.find((address) => address.isDefaultShipping) ?? null;
+  const defaultBillingAddress =
+    addresses.find((address) => address.isDefaultBilling) ?? null;
+  const preferredCheckoutAddress =
+    defaultShippingAddress ??
+    defaultBillingAddress ??
+    addresses[0] ??
+    null;
+  const checkoutHref = preferredCheckoutAddress
+    ? localizeHref(
+        `/checkout${buildCheckoutDraftSearch(
+          toCheckoutDraftFromMemberAddress(preferredCheckoutAddress),
+          { memberAddressId: preferredCheckoutAddress.id },
+        )}`,
+        culture,
+      )
+    : localizeHref("/checkout", culture);
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -139,6 +169,64 @@ export function AddressesPage({
               <Link href={localizeHref("/account/preferences", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                 {copy.memberRouteSummaryPreferencesCta}
               </Link>
+              <Link href={checkoutHref} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {preferredCheckoutAddress
+                  ? copy.addressesCheckoutUseSavedCta
+                  : copy.addressesCheckoutOpenCta}
+              </Link>
+            </div>
+          </aside>
+
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.addressesReadinessTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.addressesReadinessMessage, {
+                count: addresses.length,
+                shipping: defaultShippingAddress ? copy.yes : copy.no,
+                billing: defaultBillingAddress ? copy.yes : copy.no,
+              })}
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                  {copy.addressesReadinessCountLabel}
+                </p>
+                <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                  {addresses.length}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                  {copy.addressesReadinessShippingLabel}
+                </p>
+                <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                  {defaultShippingAddress
+                    ? copy.addressesReadinessReady
+                    : copy.addressesReadinessMissing}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                  {copy.addressesReadinessBillingLabel}
+                </p>
+                <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                  {defaultBillingAddress
+                    ? copy.addressesReadinessReady
+                    : copy.addressesReadinessMissing}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href={checkoutHref} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {preferredCheckoutAddress
+                  ? copy.addressesCheckoutUseSavedCta
+                  : copy.addressesCheckoutOpenCta}
+              </Link>
+              <Link href={localizeHref("/account", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.securityBackToDashboardCta}
+              </Link>
             </div>
           </aside>
 
@@ -147,6 +235,14 @@ export function AddressesPage({
             includeAccount={false}
             includeOrders
             includeLoyalty={false}
+          />
+
+          <AccountStorefrontWindow
+            culture={culture}
+            cmsPages={cmsPages}
+            cmsPagesStatus={cmsPagesStatus}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
           />
 
           {addresses.map((address) => (
@@ -158,6 +254,18 @@ export function AddressesPage({
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <Link
+                    href={localizeHref(
+                      `/checkout${buildCheckoutDraftSearch(
+                        toCheckoutDraftFromMemberAddress(address),
+                        { memberAddressId: address.id },
+                      )}`,
+                      culture,
+                    )}
+                    className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.addressesUseForCheckoutCta}
+                  </Link>
                   <form action={setMemberAddressDefaultAction}>
                     <input type="hidden" name="id" value={address.id} />
                     <input type="hidden" name="asBilling" value="true" />

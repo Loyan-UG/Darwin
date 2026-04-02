@@ -1,4 +1,5 @@
 import { PasswordPage } from "@/components/account/password-page";
+import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildNoIndexMetadata } from "@/lib/seo";
@@ -29,6 +30,7 @@ function readSearchParam(
 export default async function PasswordRoute({ searchParams }: PasswordRouteProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const storefrontContext = await getPublicAuthStorefrontContext(culture);
 
   return (
     <PasswordPage
@@ -41,6 +43,12 @@ export default async function PasswordRoute({ searchParams }: PasswordRouteProps
         readSearchParam(resolvedSearchParams?.returnPath),
         "/account",
       )}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      storefrontCart={storefrontContext.storefrontCart}
+      storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />
   );
 }

@@ -448,6 +448,16 @@ export async function updateCurrentMemberPreferences(input: {
   });
 }
 
+export async function changeCurrentMemberPassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}) {
+  return mutateMemberJson<never>("/api/v1/auth/password/change", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 export async function createCurrentMemberAddress(input: {
   fullName: string;
   company?: string | null;

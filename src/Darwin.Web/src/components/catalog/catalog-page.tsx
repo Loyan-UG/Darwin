@@ -6,6 +6,7 @@ import type {
   PublicCategorySummary,
   PublicProductSummary,
 } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
@@ -15,6 +16,7 @@ type CatalogPageProps = {
   culture: string;
   categories: PublicCategorySummary[];
   products: PublicProductSummary[];
+  cmsPages: PublicPageSummary[];
   activeCategorySlug?: string;
   totalProducts: number;
   currentPage: number;
@@ -25,6 +27,7 @@ type CatalogPageProps = {
   dataStatus?: {
     categories: string;
     products: string;
+    cmsPages: string;
   };
 };
 
@@ -46,6 +49,7 @@ export function CatalogPage({
   culture,
   categories,
   products,
+  cmsPages,
   activeCategorySlug,
   totalProducts,
   currentPage,
@@ -70,6 +74,12 @@ export function CatalogPage({
       typeof product.compareAtPriceMinor === "number" &&
       product.compareAtPriceMinor > product.priceMinor,
   );
+  const featuredOfferProduct = offerProducts
+    .map((product) => ({
+      product,
+      savingsPercent: getSavingsPercent(product) ?? 0,
+    }))
+    .sort((left, right) => right.savingsPercent - left.savingsPercent)[0] ?? null;
   const hasVisibleLens = Boolean(visibleQuery) || visibleSort !== "featured";
 
   function getSavingsPercent(product: PublicProductSummary) {
@@ -177,6 +187,7 @@ export function CatalogPage({
             {formatResource(copy.catalogRouteSummaryMessage, {
               categoriesStatus: dataStatus?.categories ?? "unknown",
               productsStatus: dataStatus?.products ?? "unknown",
+              cmsPagesStatus: dataStatus?.cmsPages ?? "unknown",
               visibleCount: products.length,
               totalProducts,
               currentPage,
@@ -254,6 +265,142 @@ export function CatalogPage({
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.offerWindowTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {featuredOfferProduct
+                ? formatResource(copy.offerWindowMessage, {
+                    name: featuredOfferProduct.product.name,
+                    savingsPercent: featuredOfferProduct.savingsPercent,
+                  })
+                : copy.offerWindowFallback}
+            </p>
+            {featuredOfferProduct ? (
+              <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {featuredOfferProduct.product.name}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {featuredOfferProduct.product.shortDescription ??
+                    copy.productDescriptionFallback}
+                </p>
+                <div className="mt-4 flex flex-wrap items-end gap-3">
+                  <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                    {formatMoney(
+                      featuredOfferProduct.product.priceMinor,
+                      featuredOfferProduct.product.currency,
+                      culture,
+                    )}
+                  </p>
+                  {featuredOfferProduct.product.compareAtPriceMinor ? (
+                    <p className="text-sm text-[var(--color-text-muted)] line-through">
+                      {formatMoney(
+                        featuredOfferProduct.product.compareAtPriceMinor,
+                        featuredOfferProduct.product.currency,
+                        culture,
+                      )}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="mt-4">
+                  <Link
+                    href={localizeHref(
+                      `/catalog/${featuredOfferProduct.product.slug}`,
+                      culture,
+                    )}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                  >
+                    {copy.offerWindowCta}
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.buyingGuideTitle}
+            </p>
+            <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.buyingGuideCategoryLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {activeCategory?.name ?? copy.buyingGuideCategoryFallback}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.buyingGuideOfferLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.buyingGuideOfferValue, {
+                    count: offerProducts.length,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.buyingGuideLensLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {hasVisibleLens
+                    ? copy.buyingGuideLensFiltered
+                    : copy.buyingGuideLensDefault}
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+            {copy.catalogCmsWindowTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.catalogCmsWindowMessage, {
+              cmsPagesStatus: dataStatus?.cmsPages ?? "unknown",
+              pageCount: cmsPages.length,
+            })}
+          </p>
+          {cmsPages.length > 0 ? (
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              {cmsPages.map((page) => (
+                <Link
+                  key={page.id}
+                  href={localizeHref(`/cms/${page.slug}`, culture)}
+                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {page.title}
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {page.metaDescription ?? copy.catalogCmsWindowFallbackDescription}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.catalogCmsWindowEmptyMessage, {
+                status: dataStatus?.cmsPages ?? "unknown",
+              })}
+            </p>
+          )}
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href={localizeHref("/cms", culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.catalogCmsWindowCta}
+            </Link>
           </div>
         </div>
 

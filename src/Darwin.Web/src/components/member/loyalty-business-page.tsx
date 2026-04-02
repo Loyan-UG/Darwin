@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type { PublicCategorySummary } from "@/features/catalog/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import type { BusinessLocation } from "@/features/businesses/types";
 import {
@@ -23,7 +25,7 @@ import {
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
-import { buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
 
 type LoyaltyBusinessPageProps = {
   culture: string;
@@ -43,6 +45,10 @@ type LoyaltyBusinessPageProps = {
   scanError?: string;
   promotionStatus?: string;
   promotionError?: string;
+  cmsPages: PublicPageSummary[];
+  cmsPagesStatus: string;
+  categories: PublicCategorySummary[];
+  categoriesStatus: string;
 };
 
 function getPromotionLabel(
@@ -117,6 +123,10 @@ export function LoyaltyBusinessPage({
   scanError,
   promotionStatus,
   promotionError,
+  cmsPages,
+  cmsPagesStatus,
+  categories,
+  categoriesStatus,
 }: LoyaltyBusinessPageProps) {
   const copy = getMemberResource(culture);
   const resolvedScanError = resolveLocalizedQueryMessage(scanError, copy);
@@ -504,6 +514,100 @@ export function LoyaltyBusinessPage({
                   <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {copy.loyaltyPortalNote}
                   </p>
+                </aside>
+                <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                    {copy.loyaltyBusinessStorefrontWindowTitle}
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.loyaltyBusinessStorefrontWindowMessage, {
+                      cmsStatus: cmsPagesStatus,
+                      categoriesStatus,
+                      pageCount: cmsPages.length,
+                      categoryCount: categories.length,
+                    })}
+                  </p>
+                  <div className="mt-5 grid gap-3">
+                    <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {copy.loyaltyBusinessStorefrontCmsTitle}
+                        </p>
+                        <Link
+                          href={localizeHref("/cms", culture)}
+                          className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                        >
+                          {copy.loyaltyBusinessStorefrontCmsCta}
+                        </Link>
+                      </div>
+                      {cmsPages.length > 0 ? (
+                        <div className="mt-4 flex flex-col gap-3">
+                          {cmsPages.map((page) => (
+                            <Link
+                              key={page.id}
+                              href={localizeHref(`/cms/${page.slug}`, culture)}
+                              className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                            >
+                              <p className="font-semibold text-[var(--color-text-primary)]">
+                                {page.title}
+                              </p>
+                              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                                {page.metaDescription ?? copy.loyaltyBusinessStorefrontCmsFallbackDescription}
+                              </p>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                          {formatResource(copy.loyaltyBusinessStorefrontCmsEmptyMessage, {
+                            status: cmsPagesStatus,
+                          })}
+                        </p>
+                      )}
+                    </article>
+                    <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {copy.loyaltyBusinessStorefrontCatalogTitle}
+                        </p>
+                        <Link
+                          href={localizeHref("/catalog", culture)}
+                          className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                        >
+                          {copy.loyaltyBusinessStorefrontCatalogCta}
+                        </Link>
+                      </div>
+                      {categories.length > 0 ? (
+                        <div className="mt-4 flex flex-col gap-3">
+                          {categories.map((category) => (
+                            <Link
+                              key={category.id}
+                              href={localizeHref(
+                                buildAppQueryPath("/catalog", {
+                                  category: category.slug,
+                                }),
+                                culture,
+                              )}
+                              className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                            >
+                              <p className="font-semibold text-[var(--color-text-primary)]">
+                                {category.name}
+                              </p>
+                              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                                {category.description ?? copy.loyaltyBusinessStorefrontCatalogFallbackDescription}
+                              </p>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                          {formatResource(copy.loyaltyBusinessStorefrontCatalogEmptyMessage, {
+                            status: categoriesStatus,
+                          })}
+                        </p>
+                      )}
+                    </article>
+                  </div>
                 </aside>
                 <MemberCrossSurfaceRail
                   culture={culture}

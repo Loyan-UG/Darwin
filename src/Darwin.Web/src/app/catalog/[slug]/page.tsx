@@ -4,6 +4,7 @@ import {
   getPublicProductBySlug,
   getPublicProducts,
 } from "@/features/catalog/api/public-catalog";
+import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { getCatalogResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildSeoMetadata, deriveSeoDescription } from "@/lib/seo";
@@ -52,9 +53,14 @@ export default async function ProductDetailRoute({
 }: ProductDetailRouteProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
-  const [productResult, categoriesResult] = await Promise.all([
+  const [productResult, categoriesResult, cmsPagesResult] = await Promise.all([
     getPublicProductBySlug(slug, culture),
     getPublicCategories(culture),
+    getPublishedPages({
+      page: 1,
+      pageSize: 3,
+      culture,
+    }),
   ]);
   const activeCategory =
     categoriesResult.data?.items.find(
@@ -80,8 +86,10 @@ export default async function ProductDetailRoute({
       product={productResult.data}
       primaryCategory={activeCategory}
       relatedProducts={relatedProducts}
+      cmsPages={cmsPagesResult.data?.items ?? []}
       status={productResult.status}
       relatedProductsStatus={relatedProductsResult?.status}
+      cmsPagesStatus={cmsPagesResult.status}
     />
   );
 }
