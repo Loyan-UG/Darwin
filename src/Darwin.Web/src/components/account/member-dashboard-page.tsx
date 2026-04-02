@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { signOutMemberAction } from "@/features/member-session/actions";
 import type { MemberSession } from "@/features/member-session/types";
 import type {
@@ -186,34 +187,12 @@ export function MemberDashboardPage({
               )}
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                {copy.memberCrossSurfaceTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.memberCrossSurfaceMessage}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={localizeHref("/", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.memberCrossSurfaceHomeCta}
-                </Link>
-                <Link
-                  href={localizeHref("/catalog", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.memberCrossSurfaceCatalogCta}
-                </Link>
-                <Link
-                  href={localizeHref("/loyalty", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.memberCrossSurfaceLoyaltyCta}
-                </Link>
-              </div>
-            </div>
+            <MemberCrossSurfaceRail
+              culture={culture}
+              includeOrders
+              includeInvoices
+              includeLoyalty
+            />
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import type { CheckoutDraft, PublicCheckoutAddress } from "@/features/checkout/types";
+import { buildQuerySuffix } from "@/lib/query-params";
 
 type SearchParamValue = string | string[] | undefined;
 type DraftValue = FormDataEntryValue | SearchParamValue | null;
@@ -18,9 +19,29 @@ function normalizeCountryCode(value: DraftValue) {
   return normalizeValue(value).toUpperCase().slice(0, 2);
 }
 
+function parseStrictInteger(value: DraftValue) {
+  const normalized = normalizeValue(value);
+  if (!/^-?\d+$/.test(normalized)) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(normalized, 10);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+function parseStrictFiniteNumber(value: DraftValue) {
+  const normalized = normalizeValue(value);
+  if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function normalizeQuantityValue(value: DraftValue, fallback = 1) {
-  const parsed = Number.parseInt(normalizeValue(value), 10);
-  return Number.isFinite(parsed) ? parsed : fallback;
+  const parsed = parseStrictInteger(value);
+  return parsed ?? fallback;
 }
 
 export function normalizeCouponCode(
@@ -110,24 +131,10 @@ export function buildCheckoutDraftSearch(
   draft: CheckoutDraft,
   extras?: Record<string, string | undefined>,
 ) {
-  const params = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(draft)) {
-    if (value) {
-      params.set(key, value);
-    }
-  }
-
-  if (extras) {
-    for (const [key, value] of Object.entries(extras)) {
-      if (value) {
-        params.set(key, value);
-      }
-    }
-  }
-
-  const serialized = params.toString();
-  return serialized ? `?${serialized}` : "";
+  return buildQuerySuffix({
+    ...draft,
+    ...extras,
+  });
 }
 
 export function readSingleSearchParam(value: SearchParamValue) {
@@ -138,8 +145,8 @@ export function readPositiveIntegerSearchParam(
   value: SearchParamValue,
   fallback = 1,
 ) {
-  const parsed = Number.parseInt(normalizeValue(value), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  const parsed = parseStrictInteger(value);
+  return typeof parsed === "number" && parsed > 0 ? parsed : fallback;
 }
 
 export function readSearchTextParam(
@@ -171,8 +178,8 @@ export function readBoundedNumericSearchParam(
     return undefined;
   }
 
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) {
+  const parsed = parseStrictFiniteNumber(raw);
+  if (parsed === null) {
     return undefined;
   }
 
@@ -201,4 +208,12 @@ export function readQuantityFromFormData(
   fallback = 1,
 ) {
   return normalizeQuantityValue(formData.get(key), fallback);
+}
+
+export function readNonNegativeIntegerFromFormData(
+  formData: FormData,
+  key: string,
+) {
+  const parsed = parseStrictInteger(formData.get(key));
+  return typeof parsed === "number" && parsed >= 0 ? parsed : null;
 }

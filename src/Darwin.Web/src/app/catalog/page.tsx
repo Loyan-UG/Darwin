@@ -12,6 +12,7 @@ import type {
   CatalogVisibleSort,
   PublicProductSummary,
 } from "@/features/catalog/types";
+import { buildAppQueryPath } from "@/lib/locale-routing";
 import { getCatalogResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildSeoMetadata } from "@/lib/seo";
@@ -22,22 +23,12 @@ function buildCatalogPath(
   visibleQuery?: string,
   visibleSort?: CatalogVisibleSort,
 ) {
-  const searchParams = new URLSearchParams();
-  if (category) {
-    searchParams.set("category", category);
-  }
-  if (page && page > 1) {
-    searchParams.set("page", String(page));
-  }
-  if (visibleQuery) {
-    searchParams.set("visibleQuery", visibleQuery);
-  }
-  if (visibleSort && visibleSort !== "featured") {
-    searchParams.set("visibleSort", visibleSort);
-  }
-
-  const query = searchParams.toString();
-  return query ? `/catalog?${query}` : "/catalog";
+  return buildAppQueryPath("/catalog", {
+    category,
+    page: page && page > 1 ? page : undefined,
+    visibleQuery,
+    visibleSort: visibleSort && visibleSort !== "featured" ? visibleSort : undefined,
+  });
 }
 
 function readVisibleSort(value?: string): CatalogVisibleSort {

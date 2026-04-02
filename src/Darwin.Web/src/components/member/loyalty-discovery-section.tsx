@@ -5,7 +5,8 @@ import type {
   BusinessCategoryKind,
   BusinessSummary,
 } from "@/features/businesses/types";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
+import { toWebApiUrl } from "@/lib/webapi-url";
 import { formatResource, getMemberResource } from "@/localization";
 
 type LoyaltyDiscoverySectionProps = {
@@ -36,42 +37,16 @@ function buildDiscoveryHref(input: {
   longitude?: number;
   radiusKm?: number;
 }) {
-  const params = new URLSearchParams();
-
-  if (input.page && input.page > 1) {
-    params.set("discoverPage", String(input.page));
-  }
-
-  if (input.query) {
-    params.set("query", input.query);
-  }
-
-  if (input.city) {
-    params.set("city", input.city);
-  }
-
-  if (input.countryCode) {
-    params.set("countryCode", input.countryCode);
-  }
-
-  if (input.category) {
-    params.set("category", input.category);
-  }
-
-  if (typeof input.latitude === "number") {
-    params.set("latitude", String(input.latitude));
-  }
-
-  if (typeof input.longitude === "number") {
-    params.set("longitude", String(input.longitude));
-  }
-
-  if (typeof input.radiusKm === "number") {
-    params.set("radiusKm", String(input.radiusKm));
-  }
-
-  const serialized = params.toString();
-  return serialized ? `/loyalty?${serialized}` : "/loyalty";
+  return buildAppQueryPath("/loyalty", {
+    discoverPage: input.page && input.page > 1 ? input.page : undefined,
+    query: input.query,
+    city: input.city,
+    countryCode: input.countryCode,
+    category: input.category,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    radiusKm: input.radiusKm,
+  });
 }
 
 function formatDistance(
@@ -277,15 +252,18 @@ export function LoyaltyDiscoverySection({
       {businesses.length > 0 ? (
         <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {businesses.map((business) => (
+            (() => {
+              const logoUrl = toWebApiUrl(business.logoUrl ?? "");
+              return (
             <article
               key={business.id}
               className="overflow-hidden rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)]"
             >
               <div className="flex min-h-44 items-center justify-center bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-5">
-                {business.logoUrl ? (
+                {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={business.logoUrl}
+                    src={logoUrl}
                     alt={business.name}
                     className="max-h-28 w-auto object-contain"
                   />
@@ -352,6 +330,8 @@ export function LoyaltyDiscoverySection({
                 </div>
               </div>
             </article>
+              );
+            })()
           ))}
         </div>
       ) : (

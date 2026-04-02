@@ -1,6 +1,7 @@
 import "server-only";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
+import { buildQuerySuffix } from "@/lib/query-params";
 import type {
   PublicCheckoutAddress,
   PublicCheckoutIntent,
@@ -144,13 +145,9 @@ export async function getPublicStorefrontOrderConfirmation(
   orderId: string,
   orderNumber?: string,
 ) {
-  const params = new URLSearchParams();
-  if (orderNumber) {
-    params.set("orderNumber", orderNumber);
-  }
-
-  const query = params.toString();
   return fetchCheckoutJson<PublicStorefrontOrderConfirmation>(
-    `/api/v1/public/checkout/orders/${orderId}/confirmation${query ? `?${query}` : ""}`,
+    `/api/v1/public/checkout/orders/${orderId}/confirmation${buildQuerySuffix({
+      orderNumber,
+    })}`,
   );
 }

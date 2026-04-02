@@ -12,6 +12,27 @@ export type StorefrontPaymentHandoffState = {
   expiresAtUtc?: string;
 };
 
+function isStorefrontPaymentHandoffState(
+  value: unknown,
+): value is StorefrontPaymentHandoffState {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const state = value as Record<string, unknown>;
+  return (
+    typeof state.orderId === "string" &&
+    state.orderId.trim().length > 0 &&
+    typeof state.paymentId === "string" &&
+    state.paymentId.trim().length > 0 &&
+    (state.orderNumber === undefined || typeof state.orderNumber === "string") &&
+    (state.provider === undefined || typeof state.provider === "string") &&
+    (state.providerReference === undefined ||
+      typeof state.providerReference === "string") &&
+    (state.expiresAtUtc === undefined || typeof state.expiresAtUtc === "string")
+  );
+}
+
 function getCookieBaseOptions() {
   return {
     httpOnly: true,
@@ -30,8 +51,8 @@ export async function readStorefrontPaymentHandoff() {
   }
 
   try {
-    const parsed = JSON.parse(raw) as StorefrontPaymentHandoffState;
-    if (!parsed.orderId || !parsed.paymentId) {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isStorefrontPaymentHandoffState(parsed)) {
       return null;
     }
 

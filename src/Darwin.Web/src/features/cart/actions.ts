@@ -17,12 +17,11 @@ import {
   normalizeCouponCode,
   readQuantityFromFormData,
 } from "@/features/checkout/helpers";
-import { sanitizeAppPath } from "@/lib/locale-routing";
+import { appendAppQueryParam, sanitizeAppPath } from "@/lib/locale-routing";
 import { toLocalizedQueryMessage } from "@/localization";
 
 function withCartFlash(path: string, key: string, value: string) {
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}${key}=${encodeURIComponent(value)}`;
+  return appendAppQueryParam(path, key, value);
 }
 
 function revalidateStorefrontPaths(paths: string[]) {

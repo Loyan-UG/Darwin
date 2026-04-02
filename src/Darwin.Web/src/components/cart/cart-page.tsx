@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
   applyCartCouponAction,
@@ -13,7 +14,8 @@ import {
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
+import { toWebApiUrl } from "@/lib/webapi-url";
 
 type CartPageProps = {
   culture: string;
@@ -137,35 +139,37 @@ export function CartPage({
             <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
               {copy.emptyCartDescription}
             </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-              >
-                {copy.browseCatalog}
-              </Link>
-              <Link
-                href={localizeHref("/cms", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cartEmptyCmsCta}
-              </Link>
+            <div className="mt-8 text-left">
+              <CommerceContinuationRail
+                culture={culture}
+                includeCms
+                includeAccount={false}
+              />
             </div>
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="flex flex-col gap-5">
               {cart.items.map((item) => (
+                (() => {
+                  const itemImageUrl = toWebApiUrl(item.display?.imageUrl ?? "");
+                  const itemImageAlt =
+                    item.display?.imageAlt || item.display?.name || copy.storefrontVariantFallback;
+                  const itemProductHref = sanitizeAppPath(
+                    item.display?.href,
+                    "/catalog",
+                  );
+                  return (
                 <article
                   key={`${item.variantId}:${item.selectedAddOnValueIdsJson}`}
                   className="grid gap-5 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-5 shadow-[var(--shadow-panel)] md:grid-cols-[160px_minmax(0,1fr)]"
                 >
                   <div className="flex min-h-40 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-4">
-                    {item.display?.imageUrl ? (
+                    {itemImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={item.display.imageUrl}
-                        alt={item.display.imageAlt || item.display.name}
+                        src={itemImageUrl}
+                        alt={itemImageAlt}
                         className="max-h-28 w-auto object-contain"
                       />
                     ) : (
@@ -181,7 +185,7 @@ export function CartPage({
                       </p>
                       <h2 className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
                         {item.display?.href ? (
-                          <Link href={item.display.href} className="transition hover:text-[var(--color-brand)]">
+                          <Link href={localizeHref(itemProductHref, culture)} className="transition hover:text-[var(--color-brand)]">
                             {item.display.name}
                           </Link>
                         ) : (
@@ -254,6 +258,8 @@ export function CartPage({
                     </div>
                   </div>
                 </article>
+                  );
+                })()
               ))}
             </div>
 
@@ -341,16 +347,18 @@ export function CartPage({
 
               {followUpProducts.length > 0 ? (
                 <div className="mt-5 grid gap-4 md:grid-cols-3">
-                  {followUpProducts.map((product) => (
+                  {followUpProducts.map((product) => {
+                    const productImageUrl = toWebApiUrl(product.primaryImageUrl ?? "");
+                    return (
                     <article
                       key={product.id}
                       className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4"
                     >
                       <div className="flex min-h-32 items-center justify-center rounded-[1.25rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-3">
-                        {product.primaryImageUrl ? (
+                        {productImageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={product.primaryImageUrl}
+                            src={productImageUrl}
                             alt={product.name}
                             className="max-h-24 w-auto object-contain"
                           />
@@ -383,24 +391,18 @@ export function CartPage({
                         </Link>
                       </div>
                     </article>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-5 text-sm leading-7 text-[var(--color-text-secondary)]">
                   <p>{copy.followUpProductsUnavailableMessage}</p>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Link
-                      href={localizeHref("/catalog", culture)}
-                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                    >
-                      {copy.continueShopping}
-                    </Link>
-                    <Link
-                      href={localizeHref("/", culture)}
-                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                    >
-                      {copy.cartCrossSurfaceHomeCta}
-                    </Link>
+                  <div className="mt-6 text-left">
+                    <CommerceContinuationRail
+                      culture={culture}
+                      includeCms={false}
+                      includeCart={false}
+                    />
                   </div>
                 </div>
               )}
@@ -439,34 +441,7 @@ export function CartPage({
               </div>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.cartCrossSurfaceTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.cartCrossSurfaceMessage}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={localizeHref("/", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.cartCrossSurfaceHomeCta}
-                </Link>
-                <Link
-                  href={localizeHref("/catalog", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.continueShopping}
-                </Link>
-                <Link
-                  href={localizeHref("/account", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.cartCrossSurfaceAccountCta}
-                </Link>
-              </div>
-            </aside>
+            <CommerceContinuationRail culture={culture} />
           </div>
         )}
       </div>

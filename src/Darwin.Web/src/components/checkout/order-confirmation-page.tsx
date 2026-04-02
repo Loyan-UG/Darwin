@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
 import type { PublicStorefrontOrderConfirmation } from "@/features/checkout/types";
@@ -7,20 +8,9 @@ import {
   getCommerceResource,
   resolveLocalizedQueryMessage,
 } from "@/localization";
+import { parseAddressJson, type ParsedAddress } from "@/lib/address-json";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
-
-type ParsedAddress = {
-  fullName?: string;
-  company?: string | null;
-  street1?: string;
-  street2?: string | null;
-  postalCode?: string;
-  city?: string;
-  state?: string | null;
-  countryCode?: string;
-  phoneE164?: string | null;
-};
+import { buildLocalizedAuthHref, localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 
 type OrderConfirmationPageProps = {
   culture: string;
@@ -34,15 +24,6 @@ type OrderConfirmationPageProps = {
   cancelled?: boolean;
   hasMemberSession?: boolean;
 };
-
-function parseAddress(rawJson: string): ParsedAddress | null {
-  try {
-    const parsed = JSON.parse(rawJson) as ParsedAddress;
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch {
-    return null;
-  }
-}
 
 function renderAddress(address: ParsedAddress | null, culture: string) {
   const copy = getCommerceResource(culture);
@@ -127,20 +108,19 @@ export function OrderConfirmationPage({
             })}
           />
           <div className="mt-8">
-            <Link
-              href={localizeHref("/catalog", culture)}
-              className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-            >
-              {copy.backToCatalog}
-            </Link>
+            <CommerceContinuationRail
+              culture={culture}
+              includeCms={false}
+              includeCart={false}
+            />
           </div>
         </div>
       </section>
     );
   }
 
-  const billingAddress = parseAddress(confirmation.billingAddressJson);
-  const shippingAddress = parseAddress(confirmation.shippingAddressJson);
+  const billingAddress = parseAddressJson(confirmation.billingAddressJson);
+  const shippingAddress = parseAddressJson(confirmation.shippingAddressJson);
   const paid = hasSuccessfulPayment(confirmation);
   const paymentNeedsAttention = !paid;
   const memberOrderDetailHref = sanitizeAppPath(
@@ -151,13 +131,17 @@ export function OrderConfirmationPage({
     "/orders",
     "/orders",
   );
-  const signInHref = localizeHref(
-    `/account/sign-in?returnPath=${encodeURIComponent(memberOrderDetailHref)}`,
+  const signInHref = buildLocalizedAuthHref(
+    "/account/sign-in",
+    memberOrderDetailHref,
     culture,
+    "/orders",
   );
-  const registerHref = localizeHref(
-    `/account/register?returnPath=${encodeURIComponent(memberOrderDetailHref)}`,
+  const registerHref = buildLocalizedAuthHref(
+    "/account/register",
+    memberOrderDetailHref,
     culture,
+    "/orders",
   );
   const paymentStepTitle = resolvedPaymentError || cancelled || paymentCompletionStatus === "failed"
     ? copy.nextStepPaymentRetryTitle
@@ -530,34 +514,10 @@ export function OrderConfirmationPage({
               )}
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.confirmationCrossSurfaceTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.confirmationCrossSurfaceMessage}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={localizeHref("/", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.confirmationCrossSurfaceHomeCta}
-                </Link>
-                <Link
-                  href={localizeHref("/catalog", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.continueShopping}
-                </Link>
-                <Link
-                  href={localizeHref("/account", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.confirmationCrossSurfaceAccountCta}
-                </Link>
-              </div>
-            </aside>
+            <CommerceContinuationRail
+              culture={culture}
+              includeCart={false}
+            />
           </div>
         </div>
       </div>

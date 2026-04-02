@@ -1,9 +1,26 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { CartDisplaySnapshot } from "@/features/cart/types";
+import { sanitizeAppPath } from "@/lib/locale-routing";
 
 const ANONYMOUS_CART_COOKIE = "darwin-storefront-anonymous-id";
 const CART_DISPLAY_COOKIE = "darwin-storefront-cart-display";
+
+function isCartDisplaySnapshot(value: unknown): value is CartDisplaySnapshot {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const snapshot = value as Record<string, unknown>;
+  return (
+    typeof snapshot.variantId === "string" &&
+    snapshot.variantId.trim().length > 0 &&
+    typeof snapshot.name === "string" &&
+    snapshot.name.trim().length > 0 &&
+    typeof snapshot.href === "string" &&
+    sanitizeAppPath(snapshot.href, "/catalog").startsWith("/")
+  );
+}
 
 function getCookieBaseOptions() {
   return {
@@ -40,8 +57,8 @@ export async function readCartDisplaySnapshots() {
   }
 
   try {
-    const parsed = JSON.parse(raw) as CartDisplaySnapshot[];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter(isCartDisplaySnapshot) : [];
   } catch {
     return [];
   }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { placeStorefrontOrderAction } from "@/features/checkout/actions";
 import { isCheckoutAddressComplete } from "@/features/checkout/helpers";
@@ -10,7 +11,8 @@ import {
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
+import { toWebApiUrl } from "@/lib/webapi-url";
 
 type CheckoutPageProps = {
   culture: string;
@@ -83,19 +85,12 @@ export function CheckoutPage({
             title={copy.checkoutUnavailableTitle}
             message={resolvedCartMessage ?? copy.checkoutUnavailableMessage}
           />
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href={localizeHref("/catalog", culture)}
-              className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-            >
-              {copy.browseCatalog}
-            </Link>
-            <Link
-              href={localizeHref("/cart", culture)}
-              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-            >
-              {copy.backToCart}
-            </Link>
+          <div className="mt-2">
+            <CommerceContinuationRail
+              culture={culture}
+              includeCms={false}
+              includeCart
+            />
           </div>
         </div>
       </section>
@@ -405,17 +400,26 @@ export function CheckoutPage({
               </p>
               <div className="mt-5 flex flex-col gap-4">
                 {cart.items.map((item) => (
+                  (() => {
+                    const itemImageUrl = toWebApiUrl(item.display?.imageUrl ?? "");
+                    const itemImageAlt =
+                      item.display?.imageAlt || item.display?.name || copy.storefrontVariantFallback;
+                    const itemProductHref = sanitizeAppPath(
+                      item.display?.href,
+                      "/catalog",
+                    );
+                    return (
                   <article
                     key={`${item.variantId}:${item.selectedAddOnValueIdsJson}`}
                     className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-3">
-                        {item.display?.imageUrl ? (
+                        {itemImageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={item.display.imageUrl}
-                            alt={item.display.imageAlt || item.display.name}
+                            src={itemImageUrl}
+                            alt={itemImageAlt}
                             className="max-h-10 w-auto object-contain"
                           />
                         ) : (
@@ -447,7 +451,7 @@ export function CheckoutPage({
                           </span>
                           {item.display?.href ? (
                             <Link
-                              href={item.display.href}
+                              href={localizeHref(itemProductHref, culture)}
                               className="font-semibold text-[var(--color-text-primary)] transition hover:text-[var(--color-brand)]"
                             >
                               {copy.returnToProductCta}
@@ -457,6 +461,8 @@ export function CheckoutPage({
                       </div>
                     </div>
                   </article>
+                    );
+                  })()
                 ))}
               </div>
             </aside>
@@ -500,34 +506,7 @@ export function CheckoutPage({
               </button>
             </form>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.checkoutCrossSurfaceTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.checkoutCrossSurfaceMessage}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={localizeHref("/", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.checkoutCrossSurfaceHomeCta}
-                </Link>
-                <Link
-                  href={localizeHref("/catalog", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.checkoutCrossSurfaceCatalogCta}
-                </Link>
-                <Link
-                  href={localizeHref("/account", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.checkoutCrossSurfaceAccountCta}
-                </Link>
-              </div>
-            </aside>
+            <CommerceContinuationRail culture={culture} includeCart />
           </div>
         </div>
       </div>

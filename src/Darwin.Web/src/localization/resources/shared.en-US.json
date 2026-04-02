@@ -108,6 +108,7 @@
   "cmsCardDescriptionFallback": "Published CMS page available through the public storefront content contract.",
   "cmsOpenPageCta": "Open page",
   "cmsNoPagesMessage": "No published CMS pages were returned for this page of the public content surface.",
+  "cmsNoPagesRailTitle": "Take the next storefront route",
   "cmsNoPagesHomeCta": "Open home",
   "cmsNoPagesCatalogCta": "Browse catalog",
   "cmsPaginationTitle": "Navigate CMS windows",

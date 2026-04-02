@@ -1,6 +1,7 @@
 import "server-only";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
+import { serializeQueryParams } from "@/lib/query-params";
 import type { PublicCartSummary } from "@/features/cart/types";
 import { toLocalizedQueryMessage } from "@/localization";
 
@@ -59,12 +60,8 @@ async function fetchCartJson<T>(
 }
 
 export async function getPublicCart(anonymousId: string) {
-  const params = new URLSearchParams({
-    anonymousId,
-  });
-
   return fetchCartJson<PublicCartSummary>(
-    `/api/v1/public/cart?${params.toString()}`,
+    `/api/v1/public/cart?${serializeQueryParams({ anonymousId })}`,
   );
 }
 

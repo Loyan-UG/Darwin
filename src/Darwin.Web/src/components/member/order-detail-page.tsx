@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { createMemberOrderPaymentIntentAction } from "@/features/member-portal/actions";
 import type { MemberOrderDetail } from "@/features/member-portal/types";
 import {
@@ -8,21 +9,10 @@ import {
   getMemberResource,
   resolveLocalizedQueryMessage,
 } from "@/localization";
+import { parseAddressJson, type ParsedAddress } from "@/lib/address-json";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
-
-type ParsedAddress = {
-  fullName?: string;
-  company?: string | null;
-  street1?: string;
-  street2?: string | null;
-  postalCode?: string;
-  city?: string;
-  state?: string | null;
-  countryCode?: string;
-  phoneE164?: string | null;
-};
 
 type OrderDetailPageProps = {
   culture: string;
@@ -30,15 +20,6 @@ type OrderDetailPageProps = {
   status: string;
   paymentError?: string;
 };
-
-function parseAddress(rawJson: string): ParsedAddress | null {
-  try {
-    const parsed = JSON.parse(rawJson) as ParsedAddress;
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch {
-    return null;
-  }
-}
 
 function renderAddress(address: ParsedAddress | null, culture: string) {
   const copy = getMemberResource(culture);
@@ -103,6 +84,13 @@ export function OrderDetailPage({
               {copy.memberCrossSurfaceCatalogCta}
             </Link>
           </div>
+          <div className="mt-8">
+            <MemberCrossSurfaceRail
+              culture={culture}
+              includeAccount={false}
+              includeInvoices
+            />
+          </div>
         </div>
       </section>
     );
@@ -152,11 +140,11 @@ export function OrderDetailPage({
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.billingTitle}</p>
-                  <div className="mt-3">{renderAddress(parseAddress(order.billingAddressJson), culture)}</div>
+              <div className="mt-3">{renderAddress(parseAddressJson(order.billingAddressJson), culture)}</div>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.shippingTitle}</p>
-                  <div className="mt-3">{renderAddress(parseAddress(order.shippingAddressJson), culture)}</div>
+              <div className="mt-3">{renderAddress(parseAddressJson(order.shippingAddressJson), culture)}</div>
                 </div>
               </div>
             </div>
@@ -250,14 +238,20 @@ export function OrderDetailPage({
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.linkedInvoicesTitle}</p>
                   <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.linkedInvoicesDescription}</p>
                 </div>
-                <a
-                  href={documentUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.downloadDocumentCta}
-                </a>
+                {documentUrl ? (
+                  <a
+                    href={documentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.downloadDocumentCta}
+                  </a>
+                ) : (
+                  <span className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-secondary)]">
+                    {copy.documentUnavailableLabel}
+                  </span>
+                )}
               </div>
 
               {order.invoices.length > 0 ? (
@@ -281,7 +275,7 @@ export function OrderDetailPage({
                             {formatMoney(invoice.totalGrossMinor, invoice.currency, culture)}
                           </p>
                           <Link
-                            href={`/invoices/${invoice.id}`}
+                            href={localizeHref(`/invoices/${invoice.id}`, culture)}
                             className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                           >
                             {copy.openInvoiceCta}
@@ -338,12 +332,18 @@ export function OrderDetailPage({
                     </button>
                   </form>
                 )}
-                <Link href={localizeHref(`/checkout/orders/${order.id}/confirmation?orderNumber=${encodeURIComponent(order.orderNumber)}`, culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                <Link href={buildLocalizedQueryHref(`/checkout/orders/${order.id}/confirmation`, { orderNumber: order.orderNumber }, culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                   {copy.openConfirmationCta}
                 </Link>
-                <a href={documentUrl} target="_blank" rel="noreferrer" className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.downloadDocumentCta}
-                </a>
+                {documentUrl ? (
+                  <a href={documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                    {copy.downloadDocumentCta}
+                  </a>
+                ) : (
+                  <span className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-secondary)]">
+                    {copy.documentUnavailableLabel}
+                  </span>
+                )}
                 <Link href={localizeHref("/orders", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                   {copy.backToOrdersCta}
                 </Link>
@@ -359,25 +359,11 @@ export function OrderDetailPage({
               </p>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                {copy.memberCrossSurfaceTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.memberCrossSurfaceMessage}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceHomeCta}
-                </Link>
-                <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceCatalogCta}
-                </Link>
-                <Link href={localizeHref("/invoices", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceInvoicesCta}
-                </Link>
-              </div>
-            </aside>
+            <MemberCrossSurfaceRail
+              culture={culture}
+              includeAccount={false}
+              includeInvoices
+            />
           </div>
         </div>
       </div>

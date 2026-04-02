@@ -1,5 +1,6 @@
 import "server-only";
 import { fetchPublicJson } from "@/lib/api/fetch-public-json";
+import { buildQuerySuffix } from "@/lib/query-params";
 import type {
   PagedResponse,
   PublicCategorySummary,
@@ -7,22 +8,9 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 
-function buildCatalogQuery(query: Record<string, string | undefined>) {
-  const searchParams = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(query)) {
-    if (value) {
-      searchParams.set(key, value);
-    }
-  }
-
-  const serialized = searchParams.toString();
-  return serialized ? `?${serialized}` : "";
-}
-
 export async function getPublicCategories(culture?: string) {
   return fetchPublicJson<PagedResponse<PublicCategorySummary>>(
-    `/api/v1/public/catalog/categories${buildCatalogQuery({
+    `/api/v1/public/catalog/categories${buildQuerySuffix({
       page: "1",
       pageSize: "100",
       culture,
@@ -38,7 +26,7 @@ export async function getPublicProducts(input: {
   categorySlug?: string;
 }) {
   return fetchPublicJson<PagedResponse<PublicProductSummary>>(
-    `/api/v1/public/catalog/products${buildCatalogQuery({
+    `/api/v1/public/catalog/products${buildQuerySuffix({
       page: String(input.page ?? 1),
       pageSize: String(input.pageSize ?? 12),
       culture: input.culture,
@@ -50,7 +38,7 @@ export async function getPublicProducts(input: {
 
 export async function getPublicProductBySlug(slug: string, culture?: string) {
   return fetchPublicJson<PublicProductDetail>(
-    `/api/v1/public/catalog/products/${encodeURIComponent(slug)}${buildCatalogQuery({
+    `/api/v1/public/catalog/products/${encodeURIComponent(slug)}${buildQuerySuffix({
       culture,
     })}`,
     "catalog-product-detail",

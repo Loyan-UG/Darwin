@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { summarizeCmsContent } from "@/features/cms/content-summary";
 import type { PublicPageDetail, PublicPageSummary } from "@/features/cms/types";
+import { sanitizeHtmlFragment } from "@/lib/html-fragment";
 import { localizeHref } from "@/lib/locale-routing";
 import {
   formatResource,
@@ -32,6 +34,9 @@ export function CmsPageDetail({
   const contentSummary = page
     ? summarizeCmsContent(page.contentHtml)
     : null;
+  const sanitizedContentHtml = page
+    ? contentSummary?.html ?? sanitizeHtmlFragment(page.contentHtml)
+    : "";
   const currentPageIndex = page
     ? relatedPages.findIndex((entry) => entry.slug === page.slug)
     : -1;
@@ -42,7 +47,6 @@ export function CmsPageDetail({
     currentPageIndex >= 0 && currentPageIndex < relatedPages.length - 1
       ? relatedPages[currentPageIndex + 1]
       : null;
-
   if (!page) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -53,20 +57,11 @@ export function CmsPageDetail({
             message={resolvedMessage ?? formatResource(copy.cmsDetailWarningsMessage, { status })}
           />
           <div className="mt-8">
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href={localizeHref("/cms", culture)}
-                className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-              >
-                {copy.cmsOpenIndexCta}
-              </Link>
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsUnavailableCatalogCta}
-              </Link>
-            </div>
+            <CmsContinuationRail
+              culture={culture}
+              title={copy.cmsPageUnavailableTitle}
+              description={copy.cmsFollowUpDescription}
+            />
           </div>
         </div>
       </section>
@@ -126,7 +121,7 @@ export function CmsPageDetail({
 
           <div
             className="cms-content mt-8 max-w-none"
-            dangerouslySetInnerHTML={{ __html: contentSummary?.html ?? page.contentHtml }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContentHtml }}
           />
 
           {(previousPage || nextPage) && (
@@ -322,34 +317,7 @@ export function CmsPageDetail({
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-              {copy.cmsFollowUpTitle}
-            </p>
-            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {copy.cmsFollowUpDescription}
-            </p>
-            <div className="mt-5 flex flex-col gap-2">
-              <Link
-                href={localizeHref("/", culture)}
-                className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsFollowUpHomeCta}
-              </Link>
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsFollowUpCatalogCta}
-              </Link>
-              <Link
-                href={localizeHref("/account", culture)}
-                className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsFollowUpAccountCta}
-              </Link>
-            </div>
-          </div>
+          <CmsContinuationRail culture={culture} description={copy.cmsFollowUpDescription} />
 
           {relatedStatus !== "ok" && (
             <StatusBanner

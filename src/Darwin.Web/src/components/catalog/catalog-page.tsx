@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
   CatalogVisibleSort,
@@ -6,7 +7,8 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import { formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
+import { toWebApiUrl } from "@/lib/webapi-url";
 import { formatResource, getCatalogResource } from "@/localization";
 
 type CatalogPageProps = {
@@ -32,22 +34,12 @@ function buildCatalogHref(
   visibleQuery?: string,
   visibleSort?: CatalogVisibleSort,
 ) {
-  const params = new URLSearchParams();
-  if (categorySlug) {
-    params.set("category", categorySlug);
-  }
-  if (page > 1) {
-    params.set("page", String(page));
-  }
-  if (visibleQuery) {
-    params.set("visibleQuery", visibleQuery);
-  }
-  if (visibleSort && visibleSort !== "featured") {
-    params.set("visibleSort", visibleSort);
-  }
-
-  const query = params.toString();
-  return query ? `/catalog?${query}` : "/catalog";
+  return buildAppQueryPath("/catalog", {
+    category: categorySlug,
+    page: page > 1 ? page : undefined,
+    visibleQuery,
+    visibleSort: visibleSort && visibleSort !== "featured" ? visibleSort : undefined,
+  });
 }
 
 export function CatalogPage({
@@ -393,33 +385,29 @@ export function CatalogPage({
                 <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
                   {copy.noResultsDescription}
                 </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-3">
-                  <Link
-                    href={localizeHref("/", culture)}
-                    className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-                  >
-                    {copy.noResultsHomeCta}
-                  </Link>
-                  <Link
-                    href={localizeHref("/cms", culture)}
-                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                  >
-                    {copy.noResultsCmsCta}
-                  </Link>
+                <div className="mt-8 text-left">
+                  <CatalogContinuationRail
+                    culture={culture}
+                    title={copy.catalogNoResultsRailTitle}
+                    description={copy.productCrossSurfaceMessage}
+                  />
                 </div>
               </div>
             ) : (
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {products.map((product) => (
+                  (() => {
+                    const productImageUrl = toWebApiUrl(product.primaryImageUrl ?? "");
+                    return (
                   <article
                     key={product.id}
                     className="flex h-full flex-col rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-5 shadow-[var(--shadow-panel)]"
                   >
                     <div className="flex min-h-48 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-6">
-                      {product.primaryImageUrl ? (
+                      {productImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={product.primaryImageUrl}
+                          src={productImageUrl}
                           alt={product.name}
                           className="max-h-36 w-auto object-contain"
                         />
@@ -495,6 +483,8 @@ export function CatalogPage({
                       </div>
                     </div>
                   </article>
+                    );
+                  })()
                 ))}
               </div>
             )}

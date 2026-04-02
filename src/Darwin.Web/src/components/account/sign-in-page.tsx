@@ -1,6 +1,8 @@
+import Link from "next/link";
+import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { signInMemberAction } from "@/features/member-session/actions";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type SignInPageProps = {
@@ -18,15 +20,9 @@ export function SignInPage({
 }: SignInPageProps) {
   const copy = getMemberResource(culture);
   const resolvedSignInError = resolveLocalizedQueryMessage(signInError, copy);
-  const registerHref = `/account/register?returnPath=${encodeURIComponent(
-    returnPath || "/account",
-  )}`;
-  const activationHref = `/account/activation?returnPath=${encodeURIComponent(
-    returnPath || "/account",
-  )}`;
-  const passwordHref = `/account/password?returnPath=${encodeURIComponent(
-    returnPath || "/account",
-  )}`;
+  const registerHref = buildLocalizedAuthHref("/account/register", returnPath, culture);
+  const activationHref = buildLocalizedAuthHref("/account/activation", returnPath, culture);
+  const passwordHref = buildLocalizedAuthHref("/account/password", returnPath, culture);
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -75,40 +71,43 @@ export function SignInPage({
           </button>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              href={localizeHref(registerHref, culture)}
+            <Link
+              href={registerHref}
               className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
             >
               {copy.createAccount}
-            </a>
-            <a
-              href={localizeHref(activationHref, culture)}
+            </Link>
+            <Link
+              href={activationHref}
               className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
             >
               {copy.activationFlowCta}
-            </a>
-            <a
-              href={localizeHref(passwordHref, culture)}
+            </Link>
+            <Link
+              href={passwordHref}
               className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
             >
               {copy.cardPasswordCta}
-            </a>
+            </Link>
           </div>
         </form>
 
-        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
-            {copy.sessionNoteTitle}
-          </p>
-          <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-            <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
-              {copy.sessionNoteArchitecture}
-            </li>
-            <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
-              {copy.sessionNoteApi}
-            </li>
-          </ul>
-        </aside>
+        <div className="flex flex-col gap-6">
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+              {copy.sessionNoteTitle}
+            </p>
+            <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
+                {copy.sessionNoteArchitecture}
+              </li>
+              <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
+                {copy.sessionNoteApi}
+              </li>
+            </ul>
+          </aside>
+          <PublicAuthContinuation culture={culture} />
+        </div>
       </div>
     </section>
   );

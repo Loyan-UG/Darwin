@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import type { BusinessLocation } from "@/features/businesses/types";
 import {
   clearMemberLoyaltyScanSessionAction,
@@ -22,7 +23,7 @@ import {
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
 
 type LoyaltyBusinessPageProps = {
   culture: string;
@@ -85,6 +86,19 @@ function getTimelineValue(
   return copy.activityFallback;
 }
 
+function normalizeProgressPercent(value: number | string | null | undefined) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+  }
+
+  if (typeof value === "string" && /^-?\d+(?:\.\d+)?$/.test(value.trim())) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0;
+  }
+
+  return 0;
+}
+
 export function LoyaltyBusinessPage({
   culture,
   businessId,
@@ -115,8 +129,12 @@ export function LoyaltyBusinessPage({
     rewards?.filter((reward) => reward.isActive && reward.isSelectable) ?? [];
   const loadMoreHref =
     timeline?.nextBeforeAtUtc && timeline?.nextBeforeId
-      ? localizeHref(
-          `/loyalty/${businessId}?beforeAtUtc=${encodeURIComponent(timeline.nextBeforeAtUtc)}&beforeId=${encodeURIComponent(timeline.nextBeforeId)}`,
+      ? buildLocalizedQueryHref(
+          `/loyalty/${businessId}`,
+          {
+            beforeAtUtc: timeline.nextBeforeAtUtc,
+            beforeId: timeline.nextBeforeId,
+          },
           culture,
         )
       : null;
@@ -125,6 +143,9 @@ export function LoyaltyBusinessPage({
         value: formatDateTime(dashboard.nextPointsExpiryAtUtc, culture),
       })
     : ".";
+  const nextRewardProgressPercent = normalizeProgressPercent(
+    dashboard?.nextRewardProgressPercent,
+  );
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -237,10 +258,17 @@ export function LoyaltyBusinessPage({
               <Link
                 href={localizeHref("/account", culture)}
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.memberCrossSurfaceAccountCta}
-              </Link>
-            </div>
+                >
+                  {copy.memberCrossSurfaceAccountCta}
+                </Link>
+              </div>
+              <div className="mt-8 text-left">
+                <MemberCrossSurfaceRail
+                  culture={culture}
+                  includeAccount={false}
+                  includeOrders
+                />
+              </div>
           </div>
         ) : (
           <>
@@ -280,7 +308,7 @@ export function LoyaltyBusinessPage({
                     </p>
                   </div>
                   <div className="mt-6 h-3 overflow-hidden rounded-full bg-[var(--color-surface-panel-strong)]">
-                    <div className="h-full rounded-full bg-[var(--color-brand)]" style={{ width: `${Math.max(0, Math.min(100, Number(dashboard.nextRewardProgressPercent ?? 0)))}%` }} />
+                    <div className="h-full rounded-full bg-[var(--color-brand)]" style={{ width: `${nextRewardProgressPercent}%` }} />
                   </div>
                 </article>
 
@@ -477,25 +505,11 @@ export function LoyaltyBusinessPage({
                     {copy.loyaltyPortalNote}
                   </p>
                 </aside>
-                <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                    {copy.memberCrossSurfaceTitle}
-                  </p>
-                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                    {copy.memberCrossSurfaceMessage}
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                      {copy.memberCrossSurfaceHomeCta}
-                    </Link>
-                    <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                      {copy.memberCrossSurfaceCatalogCta}
-                    </Link>
-                    <Link href={localizeHref("/orders", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                      {copy.memberCrossSurfaceOrdersCta}
-                    </Link>
-                  </div>
-                </aside>
+                <MemberCrossSurfaceRail
+                  culture={culture}
+                  includeAccount={false}
+                  includeOrders
+                />
                 <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.recentTransactionsTitle}</p>
                   {dashboard.recentTransactions.length ? <div className="mt-5 flex flex-col gap-4">{dashboard.recentTransactions.map((transaction) => <article key={`${transaction.occurredAtUtc}-${transaction.type}-${transaction.delta}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{transaction.type}</p><p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{formatDateTime(transaction.occurredAtUtc, culture)}</p>{transaction.notes ? <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{transaction.notes}</p> : null}</div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{transaction.delta >= 0 ? "+" : ""}{transaction.delta} pts</p></div></article>)}</div> : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noRecentTransactionsMessage}</p>}

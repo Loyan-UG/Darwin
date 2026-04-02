@@ -1,10 +1,11 @@
 import "server-only";
 import { clearMemberSession, getMemberAccessToken, getMemberRefreshToken, getMemberSession, writeMemberSession } from "@/features/member-session/cookies";
 import { refreshMember } from "@/features/member-session/api/member-auth";
+import { parseUtcTimestamp } from "@/lib/time";
 
 function expiresSoon(expiresAtUtc: string) {
-  const value = new Date(expiresAtUtc).getTime();
-  if (!Number.isFinite(value)) {
+  const value = parseUtcTimestamp(expiresAtUtc);
+  if (value === null) {
     return true;
   }
 

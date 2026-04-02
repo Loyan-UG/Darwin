@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import {
   createMemberAddressAction,
   deleteMemberAddressAction,
@@ -123,23 +124,30 @@ export function AddressesPage({
 
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-              {copy.memberCrossSurfaceTitle}
+              {copy.addressesRouteSummaryTitle}
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {copy.memberCrossSurfaceMessage}
+              {formatResource(copy.addressesRouteSummaryMessage, {
+                status,
+                count: addresses.length,
+              })}
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                {copy.memberCrossSurfaceHomeCta}
+              <Link href={localizeHref("/account/profile", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberRouteSummaryProfileCta}
               </Link>
-              <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                {copy.memberCrossSurfaceCatalogCta}
-              </Link>
-              <Link href={localizeHref("/orders", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                {copy.memberCrossSurfaceOrdersCta}
+              <Link href={localizeHref("/account/preferences", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                {copy.memberRouteSummaryPreferencesCta}
               </Link>
             </div>
           </aside>
+
+          <MemberCrossSurfaceRail
+            culture={culture}
+            includeAccount={false}
+            includeOrders
+            includeLoyalty={false}
+          />
 
           {addresses.map((address) => (
             <article key={address.id} className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]">
@@ -202,13 +210,13 @@ export function AddressesPage({
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.noSavedAddressesMessage}
             </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-3">
-              <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                {copy.memberCrossSurfaceCatalogCta}
-              </Link>
-              <Link href={localizeHref("/account/profile", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                {copy.memberRouteSummaryProfileCta}
-              </Link>
+            <div className="mt-8 text-left">
+              <MemberCrossSurfaceRail
+                culture={culture}
+                includeAccount={false}
+                includeOrders
+                includeLoyalty={false}
+              />
             </div>
           </div>
         )}

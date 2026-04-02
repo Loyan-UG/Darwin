@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { updateMemberPreferencesAction } from "@/features/member-portal/actions";
 import type { MemberPreferences } from "@/features/member-portal/types";
 import {
@@ -114,9 +115,22 @@ export function PreferencesPage({
               </button>
             </>
           ) : (
-            <p className="mt-6 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {copy.noPreferencesEditMessage}
-            </p>
+            <div className="mt-6 space-y-4">
+              <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.noPreferencesEditMessage}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link href={localizeHref("/account/profile", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {copy.memberRouteSummaryProfileCta}
+                </Link>
+                <Link href={localizeHref("/account/addresses", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {copy.preferencesRouteSummaryAddressesCta}
+                </Link>
+                <Link href={localizeHref("/account", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {copy.memberCrossSurfaceAccountCta}
+                </Link>
+              </div>
+            </div>
           )}
         </form>
 
@@ -151,25 +165,11 @@ export function PreferencesPage({
             </p>
           </aside>
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
-              {copy.memberCrossSurfaceTitle}
-            </p>
-            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {copy.memberCrossSurfaceMessage}
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                {copy.memberCrossSurfaceHomeCta}
-              </Link>
-              <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                {copy.memberCrossSurfaceCatalogCta}
-              </Link>
-              <Link href={localizeHref("/invoices", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                {copy.memberCrossSurfaceInvoicesCta}
-              </Link>
-            </div>
-          </aside>
+          <MemberCrossSurfaceRail
+            culture={culture}
+            includeAccount={false}
+            includeInvoices
+          />
         </div>
       </div>
     </section>

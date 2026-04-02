@@ -4,6 +4,7 @@ import {
   readPositiveIntegerSearchParam,
   readSearchTextParam,
 } from "@/features/checkout/helpers";
+import { buildAppQueryPath } from "@/lib/locale-routing";
 import { getSharedResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildSeoMetadata } from "@/lib/seo";
@@ -26,13 +27,10 @@ export async function generateMetadata({
     culture,
     title: shared.cmsIndexMetaTitle,
     description: shared.cmsIndexMetaDescription,
-    path:
-      safePage > 1 || visibleQuery
-        ? `/cms?${new URLSearchParams({
-            ...(safePage > 1 ? { page: String(safePage) } : {}),
-            ...(visibleQuery ? { visibleQuery } : {}),
-          }).toString()}`
-        : "/cms",
+    path: buildAppQueryPath("/cms", {
+      page: safePage > 1 ? safePage : undefined,
+      visibleQuery,
+    }),
     noIndex: safePage > 1 || Boolean(visibleQuery),
     allowLanguageAlternates: safePage === 1 && !visibleQuery,
   });

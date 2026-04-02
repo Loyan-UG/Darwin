@@ -7,6 +7,7 @@ import {
   readAllowedSearchParam,
   readSingleSearchParam,
 } from "@/features/checkout/helpers";
+import { buildAppQueryPath } from "@/lib/locale-routing";
 import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { buildNoIndexMetadata } from "@/lib/seo";
@@ -64,18 +65,14 @@ export default async function OrderConfirmationRoute({
     !paymentError &&
     handoff?.orderId === resolvedParams.orderId
   ) {
-    const params = new URLSearchParams();
-    if (orderNumber) {
-      params.set("orderNumber", orderNumber);
-    }
-    if (cancelled) {
-      params.set("cancelled", "true");
-    }
-
     redirect(
-      `/checkout/orders/${resolvedParams.orderId}/confirmation/finalize${
-        params.size > 0 ? `?${params.toString()}` : ""
-      }`,
+      buildAppQueryPath(
+        `/checkout/orders/${resolvedParams.orderId}/confirmation/finalize`,
+        {
+          orderNumber,
+          cancelled: cancelled ? "true" : undefined,
+        },
+      ),
     );
   }
 

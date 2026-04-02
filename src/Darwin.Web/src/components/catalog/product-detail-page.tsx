@@ -1,12 +1,19 @@
 import Link from "next/link";
 import { AddToCartForm } from "@/components/cart/add-to-cart-form";
+import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
   PublicCategorySummary,
   PublicProductDetail,
   PublicProductSummary,
 } from "@/features/catalog/types";
-import { localizeHref } from "@/lib/locale-routing";
+import {
+  buildAppQueryPath,
+  buildLocalizedQueryHref,
+  localizeHref,
+} from "@/lib/locale-routing";
+import { sanitizeHtmlFragment } from "@/lib/html-fragment";
+import { toWebApiUrl } from "@/lib/webapi-url";
 import { formatResource, getCatalogResource } from "@/localization";
 import { formatMoney } from "@/lib/formatting";
 
@@ -39,20 +46,7 @@ export function ProductDetailPage({
             message={formatResource(copy.productUnavailableMessage, { status })}
           />
           <div className="mt-8">
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-              >
-                {copy.backToCatalog}
-              </Link>
-              <Link
-                href={localizeHref("/cms", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.productUnavailableCmsCta}
-              </Link>
-            </div>
+            <CatalogContinuationRail culture={culture} />
           </div>
         </div>
       </section>
@@ -60,6 +54,20 @@ export function ProductDetailPage({
   }
 
   const gallery = product.media.length > 0 ? product.media : [];
+  const resolvedGallery = gallery
+    .map((media) => ({
+      ...media,
+      url: toWebApiUrl(media.url),
+    }))
+    .filter((media) => Boolean(media.url));
+  const primaryProductImageUrl =
+    resolvedGallery[0]?.url ?? toWebApiUrl(product.primaryImageUrl ?? "") ?? null;
+  const categoryHref = primaryCategory
+    ? buildLocalizedQueryHref("/catalog", { category: primaryCategory.slug }, culture)
+    : null;
+  const categoryCatalogPath = primaryCategory
+    ? buildAppQueryPath("/catalog", { category: primaryCategory.slug })
+    : "/catalog";
   const primaryVariant = product.variants[0] ?? null;
   const priceMinor = primaryVariant?.basePriceNetMinor ?? product.priceMinor;
   const hasOffer =
@@ -78,7 +86,9 @@ export function ProductDetailPage({
   const backorderVariantCount = product.variants.filter(
     (variant) => variant.backorderAllowed,
   ).length;
-
+  const sanitizedDescriptionHtml = sanitizeHtmlFragment(
+    product.fullDescriptionHtml ?? "",
+  );
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
@@ -103,10 +113,7 @@ export function ProductDetailPage({
           <>
             <span>/</span>
             <Link
-              href={localizeHref(
-                `/catalog?category=${encodeURIComponent(primaryCategory.slug)}`,
-                culture,
-              )}
+              href={categoryHref!}
               className="transition hover:text-[var(--color-brand)]"
             >
               {primaryCategory.name}
@@ -135,8 +142,8 @@ export function ProductDetailPage({
       <div className="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)] sm:p-8">
           <div className="grid gap-4 sm:grid-cols-2">
-            {gallery.length > 0 ? (
-              gallery.map((media) => (
+            {resolvedGallery.length > 0 ? (
+              resolvedGallery.map((media) => (
                 <div
                   key={media.id}
                   className="flex min-h-52 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-5"
@@ -175,10 +182,7 @@ export function ProductDetailPage({
           <div className="mt-4 flex flex-wrap gap-3">
             {primaryCategory ? (
               <Link
-                href={localizeHref(
-                  `/catalog?category=${encodeURIComponent(primaryCategory.slug)}`,
-                  culture,
-                )}
+                href={categoryHref!}
                 className="rounded-full bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
               >
                 {primaryCategory.name}
@@ -303,7 +307,7 @@ export function ProductDetailPage({
                   variantId={primaryVariant.id}
                   productName={product.name}
                   productHref={localizeHref(`/catalog/${product.slug}`, culture)}
-                  productImageUrl={gallery[0]?.url ?? product.primaryImageUrl ?? null}
+                  productImageUrl={primaryProductImageUrl}
                   productImageAlt={gallery[0]?.alt ?? product.name}
                   productSku={primaryVariant.sku}
                   returnPath={localizeHref(`/catalog/${product.slug}`, culture)}
@@ -323,39 +327,24 @@ export function ProductDetailPage({
             </Link>
           </div>
 
-          <div className="mt-8 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-              {copy.productCrossSurfaceTitle}
-            </p>
-            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {copy.productCrossSurfaceMessage}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                href={localizeHref("/", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-              >
-                {copy.productCrossSurfaceHomeCta}
-              </Link>
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-              >
-                {copy.backToCatalog}
-              </Link>
-              <Link
-                href={localizeHref("/account", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-              >
-                {copy.productCrossSurfaceAccountCta}
-              </Link>
-            </div>
+          <div className="mt-8">
+            <CatalogContinuationRail
+              culture={culture}
+              title={copy.productCrossSurfaceGridTitle}
+              description={copy.productCrossSurfaceMessage}
+              catalogHref={categoryCatalogPath}
+              catalogCtaLabel={
+                primaryCategory
+                  ? `${copy.moreFromPrefix} ${primaryCategory.name}`
+                  : copy.backToCatalog
+              }
+            />
           </div>
 
-          {product.fullDescriptionHtml ? (
+          {sanitizedDescriptionHtml ? (
             <div
               className="cms-content mt-8 max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.fullDescriptionHtml }}
+              dangerouslySetInnerHTML={{ __html: sanitizedDescriptionHtml }}
             />
           ) : null}
 
@@ -369,10 +358,7 @@ export function ProductDetailPage({
               </Link>
               {primaryCategory ? (
                 <Link
-                  href={localizeHref(
-                    `/catalog?category=${encodeURIComponent(primaryCategory.slug)}`,
-                    culture,
-                  )}
+                  href={categoryHref!}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
                   {copy.moreFromPrefix} {primaryCategory.name}
@@ -395,10 +381,7 @@ export function ProductDetailPage({
               </p>
             </div>
             <Link
-              href={localizeHref(
-                `/catalog?category=${encodeURIComponent(primaryCategory.slug)}`,
-                culture,
-              )}
+              href={categoryHref!}
               className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
             >
               {copy.moreFromPrefix} {primaryCategory.name}
@@ -419,16 +402,20 @@ export function ProductDetailPage({
 
           {relatedProducts.length > 0 ? (
             <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {relatedProducts.map((relatedProduct) => (
+              {relatedProducts.map((relatedProduct) => {
+                const relatedProductImageUrl = toWebApiUrl(
+                  relatedProduct.primaryImageUrl ?? "",
+                );
+                return (
                 <article
                   key={relatedProduct.id}
                   className="flex h-full flex-col rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4"
                 >
                   <div className="flex min-h-40 items-center justify-center rounded-[1.25rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-4">
-                    {relatedProduct.primaryImageUrl ? (
+                    {relatedProductImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={relatedProduct.primaryImageUrl}
+                        src={relatedProductImageUrl}
                         alt={relatedProduct.name}
                         className="max-h-28 w-auto object-contain"
                       />
@@ -468,26 +455,20 @@ export function ProductDetailPage({
                     </div>
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
               <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
                 {copy.relatedProductsEmptyMessage}
               </p>
-              <div className="mt-5 flex flex-wrap justify-center gap-3">
-                <Link
-                  href={localizeHref("/catalog", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                >
-                  {copy.backToCatalog}
-                </Link>
-                <Link
-                  href={localizeHref("/cms", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                >
-                  {copy.productUnavailableCmsCta}
-                </Link>
+              <div className="mt-6 text-left">
+                <CatalogContinuationRail
+                  culture={culture}
+                  title={copy.relatedProductsTitle}
+                  description={copy.productCrossSurfaceMessage}
+                />
               </div>
             </div>
           )}

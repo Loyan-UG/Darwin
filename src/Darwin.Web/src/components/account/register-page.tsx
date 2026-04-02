@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { registerMemberAction } from "@/features/account/actions";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type RegisterPageProps = {
@@ -21,12 +22,8 @@ export function RegisterPage({
 }: RegisterPageProps) {
   const copy = getMemberResource(culture);
   const resolvedRegisterError = resolveLocalizedQueryMessage(registerError, copy);
-  const activationHref = `/account/activation?returnPath=${encodeURIComponent(
-    returnPath || "/account",
-  )}`;
-  const signInHref = `/account/sign-in?returnPath=${encodeURIComponent(
-    returnPath || "/account",
-  )}`;
+  const activationHref = buildLocalizedAuthHref("/account/activation", returnPath, culture);
+  const signInHref = buildLocalizedAuthHref("/account/sign-in", returnPath, culture);
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -92,13 +89,13 @@ export function RegisterPage({
               {copy.createAccountCta}
             </button>
             <Link
-              href={localizeHref(activationHref, culture)}
+              href={activationHref}
               className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
             >
               {copy.activationFlowCta}
             </Link>
             <Link
-              href={localizeHref(signInHref, culture)}
+              href={signInHref}
               className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
             >
               {copy.signIn}
@@ -106,19 +103,22 @@ export function RegisterPage({
           </div>
         </form>
 
-        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
-            {copy.currentBoundaryTitle}
-          </p>
-          <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-            <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
-              {copy.currentBoundaryRegistration}
-            </li>
-            <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
-              {copy.currentBoundaryCommunication}
-            </li>
-          </ul>
-        </aside>
+        <div className="flex flex-col gap-6">
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+              {copy.currentBoundaryTitle}
+            </p>
+            <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
+                {copy.currentBoundaryRegistration}
+              </li>
+              <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
+                {copy.currentBoundaryCommunication}
+              </li>
+            </ul>
+          </aside>
+          <PublicAuthContinuation culture={culture} />
+        </div>
       </div>
     </section>
   );

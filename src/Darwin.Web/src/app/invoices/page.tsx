@@ -1,4 +1,5 @@
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
+import { readPositiveIntegerSearchParam } from "@/features/checkout/helpers";
 import { InvoicesPage } from "@/components/member/invoices-page";
 import { getCurrentMemberInvoices } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
@@ -29,8 +30,7 @@ export default async function InvoicesRoute({
   const copy = getMemberResource(culture);
   const session = await getMemberSession();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const page = Number((Array.isArray(resolvedSearchParams?.page) ? resolvedSearchParams?.page[0] : resolvedSearchParams?.page) ?? "1");
-  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
 
   if (!session) {
     return (

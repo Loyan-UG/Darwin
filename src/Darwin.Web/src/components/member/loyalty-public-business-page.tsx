@@ -6,7 +6,8 @@ import type {
   BusinessLocation,
   LoyaltyRewardTierPublic,
 } from "@/features/businesses/types";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
+import { toSafeHttpUrl, toWebApiUrl } from "@/lib/webapi-url";
 import {
   formatResource,
   getMemberResource,
@@ -57,8 +58,10 @@ export function LoyaltyPublicBusinessPage({
   const resolvedJoinError = resolveLocalizedQueryMessage(joinError, copy);
   const locations = detail?.locations ?? [];
   const rewardTiers = detail?.loyaltyProgramPublic?.rewardTiers ?? [];
-  const heroImage =
-    detail?.primaryImageUrl ?? detail?.galleryImageUrls?.[0] ?? detail?.imageUrls?.[0];
+  const heroImage = toWebApiUrl(
+    detail?.primaryImageUrl ?? detail?.galleryImageUrls?.[0] ?? detail?.imageUrls?.[0] ?? "",
+  );
+  const websiteUrl = toSafeHttpUrl(detail?.websiteUrl ?? "");
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -130,8 +133,9 @@ export function LoyaltyPublicBusinessPage({
                 ) : (
                   <div className="flex flex-wrap gap-3">
                     <Link
-                      href={localizeHref(
-                        `/account/sign-in?returnPath=${encodeURIComponent(localizeHref(`/loyalty/${businessId}`, culture))}`,
+                      href={buildLocalizedAuthHref(
+                        "/account/sign-in",
+                        `/loyalty/${businessId}`,
                         culture,
                       )}
                       className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
@@ -139,8 +143,9 @@ export function LoyaltyPublicBusinessPage({
                       {copy.signInToJoinCta}
                     </Link>
                     <Link
-                      href={localizeHref(
-                        `/account/register?returnPath=${encodeURIComponent(localizeHref(`/loyalty/${businessId}`, culture))}`,
+                      href={buildLocalizedAuthHref(
+                        "/account/register",
+                        `/loyalty/${businessId}`,
                         culture,
                       )}
                       className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
@@ -267,16 +272,16 @@ export function LoyaltyPublicBusinessPage({
               </p>
               <div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {detail?.description ? <p>{detail.description}</p> : null}
-                {detail?.websiteUrl ? (
+                {websiteUrl ? (
                   <p>
                     {copy.websiteLabel}{" "}
                     <a
-                      href={detail.websiteUrl}
+                      href={websiteUrl}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       className="font-semibold text-[var(--color-text-primary)] underline-offset-4 hover:underline"
                     >
-                      {detail.websiteUrl}
+                      {websiteUrl}
                     </a>
                   </p>
                 ) : null}
@@ -291,7 +296,7 @@ export function LoyaltyPublicBusinessPage({
                   </p>
                 ) : null}
                 {!detail?.description &&
-                !detail?.websiteUrl &&
+                !websiteUrl &&
                 !detail?.contactEmail &&
                 !detail?.contactPhoneE164 ? (
                   <p>{copy.noPublicContactMetadataMessage}</p>

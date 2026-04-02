@@ -1,4 +1,5 @@
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+import { buildQuerySuffix, serializeQueryParams } from "@/lib/query-params";
 
 export const REQUEST_CULTURE_HEADER = "x-darwin-request-culture";
 
@@ -116,4 +117,45 @@ export function localizeHref(href: string, culture: string) {
   const { pathname, search, hash } = splitHref(href);
   const localizedPath = buildLocalizedPath(pathname || "/", culture);
   return `${localizedPath}${search}${hash}`;
+}
+
+export function buildLocalizedAuthHref(
+  authPath: string,
+  returnPath: string | undefined | null,
+  culture: string,
+  fallback = "/account",
+) {
+  const safeReturnPath = sanitizeAppPath(returnPath, fallback);
+  return localizeHref(
+    `${authPath}?returnPath=${encodeURIComponent(safeReturnPath)}`,
+    culture,
+  );
+}
+
+export function buildLocalizedQueryHref(
+  pathname: string,
+  params: Record<string, string | number | undefined | null>,
+  culture: string,
+) {
+  return localizeHref(`${pathname}${buildQuerySuffix(params)}`, culture);
+}
+
+export function buildAppQueryPath(
+  pathname: string,
+  params: Record<string, string | number | undefined | null>,
+) {
+  return `${pathname}${buildQuerySuffix(params)}`;
+}
+
+export function appendAppQueryParam(
+  path: string,
+  key: string,
+  value: string | number | undefined | null,
+) {
+  if (value === undefined || value === null || value === "") {
+    return path;
+  }
+
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}${serializeQueryParams({ [key]: value })}`;
 }

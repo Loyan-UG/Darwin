@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import type { MemberOrderSummary } from "@/features/member-portal/types";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
@@ -120,19 +121,13 @@ export function OrdersPage({
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.noOrdersMessage}
             </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-3">
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.memberCrossSurfaceCatalogCta}
-              </Link>
-              <Link
-                href={localizeHref("/account", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.memberCrossSurfaceAccountCta}
-              </Link>
+            <div className="mt-8 text-left">
+              <MemberCrossSurfaceRail
+                culture={culture}
+                includeOrders={false}
+                includeInvoices
+                includeLoyalty
+              />
             </div>
           </div>
         )}
@@ -173,25 +168,12 @@ export function OrdersPage({
             </p>
           </aside>
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-              {copy.memberCrossSurfaceTitle}
-            </p>
-            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {copy.memberCrossSurfaceMessage}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]">
-                {copy.memberCrossSurfaceHomeCta}
-              </Link>
-              <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]">
-                {copy.memberCrossSurfaceCatalogCta}
-              </Link>
-              <Link href={localizeHref("/loyalty", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]">
-                {copy.memberCrossSurfaceLoyaltyCta}
-              </Link>
-            </div>
-          </aside>
+          <MemberCrossSurfaceRail
+            culture={culture}
+            includeOrders={false}
+            includeInvoices
+            includeLoyalty
+          />
         </div>
       </div>
     </section>

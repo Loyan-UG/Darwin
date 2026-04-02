@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
+import { localizeHref } from "@/lib/locale-routing";
 import { getMemberResource } from "@/localization";
 
 type AccountHubPageProps = {
@@ -74,7 +76,7 @@ export function AccountHubPage({ culture }: AccountHubPageProps) {
               </p>
               <div className="mt-6">
                 <Link
-                  href={card.href}
+                  href={localizeHref(card.href, culture)}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
                   {card.ctaLabel}
@@ -92,6 +94,8 @@ export function AccountHubPage({ culture }: AccountHubPageProps) {
             {copy.sessionStrategyNoteDescription}
           </p>
         </aside>
+
+        <PublicAuthContinuation culture={culture} />
       </div>
     </section>
   );

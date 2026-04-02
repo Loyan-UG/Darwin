@@ -65,6 +65,18 @@ export type WebPageAgendaColumn = {
   meta?: string;
 };
 
+export type WebPageRouteMapItem = {
+  id: string;
+  label: string;
+  title: string;
+  description: string;
+  primaryHref: string;
+  primaryCtaLabel: string;
+  secondaryHref?: string;
+  secondaryCtaLabel?: string;
+  meta?: string;
+};
+
 export type WebPageMetric = {
   id: string;
   label: string;
@@ -152,6 +164,16 @@ export type AgendaColumnsPagePart = {
   emptyMessage: string;
 };
 
+export type RouteMapPagePart = {
+  id: string;
+  kind: "route-map";
+  eyebrow: string;
+  title: string;
+  description: string;
+  items: WebPageRouteMapItem[];
+  emptyMessage: string;
+};
+
 export type BlankStatePagePart = {
   id: string;
   kind: "blank-state";
@@ -170,4 +192,5 @@ export type WebPagePart =
   | StageFlowPagePart
   | PairPanelPagePart
   | AgendaColumnsPagePart
+  | RouteMapPagePart
   | BlankStatePagePart;

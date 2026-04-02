@@ -19,13 +19,17 @@ import {
   writePreparedMemberLoyaltyScanSession,
 } from "@/features/member-portal/scan-session-cookie";
 import { getFreshMemberAccessToken } from "@/features/member-session/server";
-import { sanitizeAppPath } from "@/lib/locale-routing";
+import { readNormalizedEmail, readTrimmedFormText } from "@/lib/form-data";
+import {
+  appendAppQueryParam,
+  buildAppQueryPath,
+  sanitizeAppPath,
+} from "@/lib/locale-routing";
 import { toLocalizedQueryMessage } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
 function withFlash(path: string, key: string, value: string) {
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}${key}=${encodeURIComponent(value)}`;
+  return appendAppQueryParam(path, key, value);
 }
 
 function normalizeId(value: FormDataEntryValue | null) {
@@ -104,11 +108,12 @@ export async function createMemberOrderPaymentIntentAction(formData: FormData) {
   );
 
   if (!result.ok || !result.checkoutUrl) {
-    const separator = failurePath.includes("?") ? "&" : "?";
     redirect(
-      `${failurePath}${separator}paymentError=${encodeURIComponent(
+      appendAppQueryParam(
+        failurePath,
+        "paymentError",
         result.message ?? toLocalizedQueryMessage("memberPaymentHandoffFailedMessage"),
-      )}`,
+      ),
     );
   }
 
@@ -116,15 +121,15 @@ export async function createMemberOrderPaymentIntentAction(formData: FormData) {
 }
 
 export async function updateMemberProfileAction(formData: FormData) {
-  const id = String(formData.get("id") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
-  const firstName = String(formData.get("firstName") ?? "").trim();
-  const lastName = String(formData.get("lastName") ?? "").trim();
-  const phoneE164 = String(formData.get("phoneE164") ?? "").trim();
-  const locale = String(formData.get("locale") ?? "").trim();
-  const timezone = String(formData.get("timezone") ?? "").trim();
-  const currency = String(formData.get("currency") ?? "").trim();
-  const rowVersion = String(formData.get("rowVersion") ?? "").trim();
+  const id = readTrimmedFormText(formData, "id", 128);
+  const email = readNormalizedEmail(formData);
+  const firstName = readTrimmedFormText(formData, "firstName", 80);
+  const lastName = readTrimmedFormText(formData, "lastName", 80);
+  const phoneE164 = readTrimmedFormText(formData, "phoneE164", 32);
+  const locale = readTrimmedFormText(formData, "locale", 32);
+  const timezone = readTrimmedFormText(formData, "timezone", 80);
+  const currency = readTrimmedFormText(formData, "currency", 8);
+  const rowVersion = readTrimmedFormText(formData, "rowVersion", 256);
 
   if (!id || !rowVersion || !locale || !timezone || !currency) {
     redirect(
@@ -200,7 +205,7 @@ export async function updateMemberPreferencesAction(formData: FormData) {
 }
 
 export async function requestMemberPhoneVerificationAction(formData: FormData) {
-  const channel = String(formData.get("channel") ?? "").trim();
+  const channel = readTrimmedFormText(formData, "channel", 32);
   const result = await requestCurrentMemberPhoneVerification({
     channel: channel || null,
   });
@@ -220,7 +225,7 @@ export async function requestMemberPhoneVerificationAction(formData: FormData) {
 }
 
 export async function confirmMemberPhoneVerificationAction(formData: FormData) {
-  const code = String(formData.get("code") ?? "").trim();
+  const code = readTrimmedFormText(formData, "code", 32);
   if (!code) {
     redirect(
       withFlash(
@@ -444,7 +449,7 @@ export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
   });
 
   if (result.status === "unauthenticated" || result.status === "unauthorized") {
-    redirect(`/account/sign-in?returnPath=${encodeURIComponent(returnPath)}`);
+    redirect(buildAppQueryPath("/account/sign-in", { returnPath }));
   }
 
   if (result.status !== "ok") {
@@ -498,7 +503,7 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
   });
 
   if (result.status === "unauthenticated" || result.status === "unauthorized") {
-    redirect(`/account/sign-in?returnPath=${encodeURIComponent(returnPath)}`);
+    redirect(buildAppQueryPath("/account/sign-in", { returnPath }));
   }
 
   if (result.status !== "ok" || !result.data) {
@@ -550,11 +555,12 @@ export async function createMemberInvoicePaymentIntentAction(formData: FormData)
   );
 
   if (!result.ok || !result.checkoutUrl) {
-    const separator = failurePath.includes("?") ? "&" : "?";
     redirect(
-      `${failurePath}${separator}paymentError=${encodeURIComponent(
+      appendAppQueryParam(
+        failurePath,
+        "paymentError",
         result.message ?? toLocalizedQueryMessage("memberPaymentHandoffFailedMessage"),
-      )}`,
+      ),
     );
   }
 

@@ -5,7 +5,10 @@ import {
   clearStorefrontPaymentHandoff,
   readStorefrontPaymentHandoff,
 } from "@/features/checkout/cookies";
+import { readSearchTextParam } from "@/features/checkout/helpers";
+import { buildAppQueryPath, buildLocalizedPath } from "@/lib/locale-routing";
 import { toLocalizedQueryMessage } from "@/localization";
+import { getRequestCulture } from "@/lib/request-culture";
 
 type FinalizeRouteContext = {
   params: Promise<{
@@ -13,8 +16,26 @@ type FinalizeRouteContext = {
   }>;
 };
 
-function buildRedirectUrl(request: NextRequest, orderId: string) {
-  return new URL(`/checkout/orders/${orderId}/confirmation`, request.url);
+type FinalizeOutcome = "Succeeded" | "Cancelled" | "Failed";
+
+async function buildRedirectUrl(request: NextRequest, orderId: string) {
+  const culture = await getRequestCulture();
+  const confirmationPath = buildLocalizedPath(
+    `/checkout/orders/${orderId}/confirmation`,
+    culture,
+  );
+
+  return new URL(confirmationPath, request.url);
+}
+
+function applyRedirectParams(
+  redirectUrl: URL,
+  params: Record<string, string | undefined>,
+) {
+  const pathWithQuery = buildAppQueryPath(redirectUrl.pathname, params);
+  const [pathname, search = ""] = pathWithQuery.split("?");
+  redirectUrl.pathname = pathname;
+  redirectUrl.search = search ? `?${search}` : "";
 }
 
 function resolveOutcome(searchParams: URLSearchParams) {
@@ -34,68 +55,85 @@ function resolveOutcome(searchParams: URLSearchParams) {
   return "Succeeded";
 }
 
+function readCallbackOrderNumber(searchParams: URLSearchParams) {
+  return readSearchTextParam(searchParams.get("orderNumber") ?? undefined, 64);
+}
+
+function readProviderReference(searchParams: URLSearchParams) {
+  return readSearchTextParam(
+    searchParams.get("providerReference") ?? undefined,
+    128,
+  );
+}
+
+function readFailureReason(
+  searchParams: URLSearchParams,
+  outcome: FinalizeOutcome,
+) {
+  return (
+    readSearchTextParam(searchParams.get("failureReason") ?? undefined, 240) ||
+    (outcome === "Cancelled"
+      ? "Shopper cancelled hosted checkout."
+      : undefined)
+  );
+}
+
 export async function GET(request: NextRequest, context: FinalizeRouteContext) {
   const { orderId } = await context.params;
-  const redirectUrl = buildRedirectUrl(request, orderId);
+  const redirectUrl = await buildRedirectUrl(request, orderId);
   const searchParams = request.nextUrl.searchParams;
-  const orderNumber = searchParams.get("orderNumber")?.trim() || undefined;
+  const orderNumber = readCallbackOrderNumber(searchParams);
   const handoff = await readStorefrontPaymentHandoff();
 
   if (!handoff || handoff.orderId !== orderId || !handoff.paymentId) {
-    redirectUrl.searchParams.set("paymentCompletionStatus", "missing-context");
-    if (orderNumber) {
-      redirectUrl.searchParams.set("orderNumber", orderNumber);
+    if (handoff && handoff.orderId !== orderId) {
+      await clearStorefrontPaymentHandoff();
     }
-    if (searchParams.get("cancelled") === "true") {
-      redirectUrl.searchParams.set("cancelled", "true");
-    }
+
+    applyRedirectParams(redirectUrl, {
+      paymentCompletionStatus: "missing-context",
+      orderNumber,
+      cancelled: searchParams.get("cancelled") === "true" ? "true" : undefined,
+    });
     return NextResponse.redirect(redirectUrl);
   }
 
   const outcome = resolveOutcome(searchParams);
-  const failureReason =
-    searchParams.get("failureReason")?.trim() ||
-    (outcome === "Cancelled"
-      ? "Shopper cancelled hosted checkout."
-      : undefined);
+  const failureReason = readFailureReason(searchParams, outcome);
   const result = await completePublicStorefrontPayment({
     orderId,
     paymentId: handoff.paymentId,
     orderNumber: orderNumber ?? handoff.orderNumber,
-    providerReference:
-      searchParams.get("providerReference")?.trim() ||
-      handoff.providerReference,
+    providerReference: readProviderReference(searchParams) || handoff.providerReference,
     outcome,
     failureReason,
   });
 
   await clearStorefrontPaymentHandoff();
 
-  if (orderNumber ?? handoff.orderNumber) {
-    redirectUrl.searchParams.set(
-      "orderNumber",
-      orderNumber ?? handoff.orderNumber ?? "",
-    );
-  }
-
-  if (outcome === "Cancelled") {
-    redirectUrl.searchParams.set("cancelled", "true");
-  }
+  const redirectBaseParams = {
+    orderNumber: orderNumber ?? handoff.orderNumber,
+    cancelled: outcome === "Cancelled" ? "true" : undefined,
+  };
 
   if (result.status !== "ok" || !result.data) {
-    redirectUrl.searchParams.set("paymentCompletionStatus", "failed");
-    redirectUrl.searchParams.set(
-      "paymentError",
-      result.message ??
+    applyRedirectParams(redirectUrl, {
+      ...redirectBaseParams,
+      paymentCompletionStatus: "failed",
+      paymentError:
+        result.message ??
         toLocalizedQueryMessage("checkoutPaymentCompletionFailedMessage"),
-    );
+    });
     return NextResponse.redirect(redirectUrl);
   }
 
-  redirectUrl.searchParams.set("paymentCompletionStatus", "completed");
-  redirectUrl.searchParams.set("paymentOutcome", outcome);
-  redirectUrl.searchParams.set("paymentStatus", result.data.paymentStatus);
-  redirectUrl.searchParams.set("orderStatus", result.data.orderStatus);
+  applyRedirectParams(redirectUrl, {
+    ...redirectBaseParams,
+    paymentCompletionStatus: "completed",
+    paymentOutcome: outcome,
+    paymentStatus: result.data.paymentStatus,
+    orderStatus: result.data.orderStatus,
+  });
 
   return NextResponse.redirect(redirectUrl);
 }

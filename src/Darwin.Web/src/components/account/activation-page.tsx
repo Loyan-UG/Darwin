@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import {
   confirmEmailAction,
   requestEmailConfirmationAction,
 } from "@/features/account/actions";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type ActivationPageProps = {
@@ -43,12 +44,8 @@ export function ActivationPage({
     activationError,
     copy,
   );
-  const signInHref = `/account/sign-in?returnPath=${encodeURIComponent(
-    returnPath || "/account",
-  )}`;
-  const passwordHref = `/account/password?returnPath=${encodeURIComponent(
-    returnPath || "/account",
-  )}`;
+  const signInHref = buildLocalizedAuthHref("/account/sign-in", returnPath, culture);
+  const passwordHref = buildLocalizedAuthHref("/account/password", returnPath, culture);
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -133,18 +130,20 @@ export function ActivationPage({
 
         <div className="flex flex-wrap gap-3">
           <Link
-            href={localizeHref(signInHref, culture)}
+              href={signInHref}
             className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
           >
             {copy.signIn}
           </Link>
           <Link
-            href={localizeHref(passwordHref, culture)}
+              href={passwordHref}
             className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
           >
             {copy.cardPasswordCta}
           </Link>
         </div>
+
+        <PublicAuthContinuation culture={culture} />
       </div>
     </section>
   );

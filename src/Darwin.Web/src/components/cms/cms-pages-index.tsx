@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { PublicPageSummary } from "@/features/cms/types";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getSharedResource } from "@/localization";
 
 type CmsPagesIndexProps = {
@@ -17,18 +18,10 @@ type CmsPagesIndexProps = {
 };
 
 function buildCmsHref(page = 1, visibleQuery?: string) {
-  const searchParams = new URLSearchParams();
-
-  if (page > 1) {
-    searchParams.set("page", String(page));
-  }
-
-  if (visibleQuery) {
-    searchParams.set("visibleQuery", visibleQuery);
-  }
-
-  const serialized = searchParams.toString();
-  return serialized ? `/cms?${serialized}` : "/cms";
+  return buildAppQueryPath("/cms", {
+    page: page > 1 ? page : undefined,
+    visibleQuery,
+  });
 }
 
 export function CmsPagesIndex({
@@ -336,58 +329,7 @@ export function CmsPagesIndex({
           </div>
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-7 shadow-[var(--shadow-panel)] sm:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-            {copy.cmsCrossSurfaceTitle}
-          </p>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--color-text-secondary)]">
-            {copy.cmsCrossSurfaceMessage}
-          </p>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <Link
-              href={localizeHref("/", culture)}
-              className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                {copy.cmsCrossSurfaceHomeLabel}
-              </p>
-              <p className="mt-3 text-lg font-semibold text-[var(--color-text-primary)]">
-                {copy.cmsCrossSurfaceHomeTitle}
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.cmsCrossSurfaceHomeDescription}
-              </p>
-            </Link>
-            <Link
-              href={localizeHref("/catalog", culture)}
-              className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                {copy.cmsCrossSurfaceCatalogLabel}
-              </p>
-              <p className="mt-3 text-lg font-semibold text-[var(--color-text-primary)]">
-                {copy.cmsCrossSurfaceCatalogTitle}
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.cmsCrossSurfaceCatalogDescription}
-              </p>
-            </Link>
-            <Link
-              href={localizeHref("/account", culture)}
-              className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                {copy.cmsCrossSurfaceAccountLabel}
-              </p>
-              <p className="mt-3 text-lg font-semibold text-[var(--color-text-primary)]">
-                {copy.cmsCrossSurfaceAccountTitle}
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.cmsCrossSurfaceAccountDescription}
-              </p>
-            </Link>
-          </div>
-        </div>
+        <CmsContinuationRail culture={culture} description={copy.cmsCrossSurfaceMessage} />
 
         <div className="flex flex-col gap-6">
           {groupedPages.map((group) => (
@@ -450,19 +392,12 @@ export function CmsPagesIndex({
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.cmsNoPagesMessage}
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Link
-                href={localizeHref("/", culture)}
-                className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-              >
-                {copy.cmsNoPagesHomeCta}
-              </Link>
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsNoPagesCatalogCta}
-              </Link>
+            <div className="mt-8 text-left">
+              <CmsContinuationRail
+                culture={culture}
+                title={copy.cmsNoPagesRailTitle}
+                description={copy.cmsCrossSurfaceMessage}
+              />
             </div>
           </div>
         )}

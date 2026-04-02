@@ -1,4 +1,5 @@
 import "server-only";
+import { sanitizeHtmlFragment } from "@/lib/html-fragment";
 
 type CmsHeading = {
   id: string;
@@ -51,7 +52,9 @@ export function summarizeCmsContent(contentHtml: string): CmsContentSummary {
   const headings: CmsHeading[] = [];
   const slugCounts = new Map<string, number>();
 
-  const html = contentHtml.replace(
+  const sanitizedHtml = sanitizeHtmlFragment(contentHtml);
+
+  const html = sanitizedHtml.replace(
     /<(h[23])([^>]*)>([\s\S]*?)<\/\1>/gi,
     (fullMatch, tagName: string, rawAttributes: string, innerHtml: string) => {
       const level = Number.parseInt(tagName.slice(1), 10) as 2 | 3;

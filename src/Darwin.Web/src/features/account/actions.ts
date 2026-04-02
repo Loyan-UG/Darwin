@@ -8,44 +8,28 @@ import {
   requestMemberPasswordReset,
   resetMemberPassword,
 } from "@/features/account/api/member-auth";
-import { sanitizeAppPath } from "@/lib/locale-routing";
+import { readNormalizedEmail, readTrimmedFormText } from "@/lib/form-data";
+import { buildAppQueryPath, sanitizeAppPath } from "@/lib/locale-routing";
 import { toLocalizedQueryMessage } from "@/localization";
-
-function encodeQuery(values: Record<string, string | undefined>) {
-  const params = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(values)) {
-    if (value) {
-      params.set(key, value);
-    }
-  }
-
-  const query = params.toString();
-  return query ? `?${query}` : "";
-}
-
-function normalizeEmail(value: FormDataEntryValue | null) {
-  return String(value ?? "").trim().toLowerCase();
-}
 
 function buildAccountFlowPath(
   pathname: string,
   values: Record<string, string | undefined>,
   returnPath: string,
 ) {
-  return `${pathname}${encodeQuery({
+  return buildAppQueryPath(pathname, {
     ...values,
     returnPath,
-  })}`;
+  });
 }
 
 export async function registerMemberAction(formData: FormData) {
-  const firstName = String(formData.get("firstName") ?? "").trim();
-  const lastName = String(formData.get("lastName") ?? "").trim();
-  const email = normalizeEmail(formData.get("email"));
-  const password = String(formData.get("password") ?? "").trim();
+  const firstName = readTrimmedFormText(formData, "firstName", 80);
+  const lastName = readTrimmedFormText(formData, "lastName", 80);
+  const email = readNormalizedEmail(formData);
+  const password = readTrimmedFormText(formData, "password", 256);
   const returnPath = sanitizeAppPath(
-    String(formData.get("returnPath") ?? "/account"),
+    readTrimmedFormText(formData, "returnPath", 512) || "/account",
     "/account",
   );
 
@@ -84,9 +68,9 @@ export async function registerMemberAction(formData: FormData) {
 }
 
 export async function requestEmailConfirmationAction(formData: FormData) {
-  const email = normalizeEmail(formData.get("email"));
+  const email = readNormalizedEmail(formData);
   const returnPath = sanitizeAppPath(
-    String(formData.get("returnPath") ?? "/account"),
+    readTrimmedFormText(formData, "returnPath", 512) || "/account",
     "/account",
   );
 
@@ -122,10 +106,10 @@ export async function requestEmailConfirmationAction(formData: FormData) {
 }
 
 export async function confirmEmailAction(formData: FormData) {
-  const email = normalizeEmail(formData.get("email"));
-  const token = String(formData.get("token") ?? "").trim();
+  const email = readNormalizedEmail(formData);
+  const token = readTrimmedFormText(formData, "token", 256);
   const returnPath = sanitizeAppPath(
-    String(formData.get("returnPath") ?? "/account"),
+    readTrimmedFormText(formData, "returnPath", 512) || "/account",
     "/account",
   );
 
@@ -167,9 +151,9 @@ export async function confirmEmailAction(formData: FormData) {
 }
 
 export async function requestPasswordResetAction(formData: FormData) {
-  const email = normalizeEmail(formData.get("email"));
+  const email = readNormalizedEmail(formData);
   const returnPath = sanitizeAppPath(
-    String(formData.get("returnPath") ?? "/account"),
+    readTrimmedFormText(formData, "returnPath", 512) || "/account",
     "/account",
   );
 
@@ -207,11 +191,11 @@ export async function requestPasswordResetAction(formData: FormData) {
 }
 
 export async function resetPasswordAction(formData: FormData) {
-  const email = normalizeEmail(formData.get("email"));
-  const token = String(formData.get("token") ?? "").trim();
-  const newPassword = String(formData.get("newPassword") ?? "").trim();
+  const email = readNormalizedEmail(formData);
+  const token = readTrimmedFormText(formData, "token", 256);
+  const newPassword = readTrimmedFormText(formData, "newPassword", 256);
   const returnPath = sanitizeAppPath(
-    String(formData.get("returnPath") ?? "/account"),
+    readTrimmedFormText(formData, "returnPath", 512) || "/account",
     "/account",
   );
 

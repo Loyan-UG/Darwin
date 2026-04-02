@@ -108,6 +108,7 @@
   "cmsCardDescriptionFallback": "Veroeffentlichte CMS-Seite, die ueber den oeffentlichen Storefront-Content-Contract verfuegbar ist.",
   "cmsOpenPageCta": "Seite oeffnen",
   "cmsNoPagesMessage": "Fuer diese Seite der oeffentlichen Inhaltsoberflaeche wurden keine veroeffentlichten CMS-Seiten geliefert.",
+  "cmsNoPagesRailTitle": "Naechste Storefront-Route nehmen",
   "cmsNoPagesHomeCta": "Startseite oeffnen",
   "cmsNoPagesCatalogCta": "Katalog browsen",
   "cmsPaginationTitle": "CMS-Fenster navigieren",

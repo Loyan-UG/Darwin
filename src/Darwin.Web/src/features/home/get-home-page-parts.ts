@@ -28,6 +28,8 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
   const cmsHealthy = pagesResult.status === "ok";
   const catalogHealthy = productsResult.status === "ok";
   const categoriesHealthy = categoriesResult.status === "ok";
+  const spotlightPage = pagesResult.data?.items[0];
+  const spotlightProduct = productsResult.data?.items[0];
 
   return [
     {
@@ -103,6 +105,73 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
           note: copy.metricCulturesNote,
         },
       ],
+    },
+    {
+      id: "home-route-map",
+      kind: "route-map",
+      eyebrow: copy.routeMapEyebrow,
+      title: copy.routeMapTitle,
+      description: copy.routeMapDescription,
+      items: [
+        {
+          id: "route-map-cms",
+          label: copy.routeMapCmsLabel,
+          title: copy.routeMapCmsTitle,
+          description: cmsHealthy
+            ? copy.routeMapCmsHealthyDescription
+            : formatResource(copy.routeMapCmsDegradedDescription, {
+                status: pagesResult.status,
+              }),
+          primaryHref: "/cms",
+          primaryCtaLabel: copy.openCmsCta,
+          secondaryHref: spotlightPage ? `/cms/${spotlightPage.slug}` : "/account",
+          secondaryCtaLabel: spotlightPage
+            ? copy.routeMapCmsSecondaryCta
+            : copy.openAccountCta,
+          meta: spotlightPage
+            ? formatResource(copy.routeMapCmsMeta, {
+                slug: spotlightPage.slug,
+              })
+            : copy.routeMapCmsFallbackMeta,
+        },
+        {
+          id: "route-map-catalog",
+          label: copy.routeMapCatalogLabel,
+          title: copy.routeMapCatalogTitle,
+          description:
+            catalogHealthy && categoriesHealthy
+              ? copy.routeMapCatalogHealthyDescription
+              : formatResource(copy.routeMapCatalogDegradedDescription, {
+                  productsStatus: productsResult.status,
+                  categoriesStatus: categoriesResult.status,
+                }),
+          primaryHref: "/catalog",
+          primaryCtaLabel: copy.browseCatalogCta,
+          secondaryHref: spotlightProduct
+            ? `/catalog/${spotlightProduct.slug}`
+            : "/checkout",
+          secondaryCtaLabel: spotlightProduct
+            ? copy.routeMapCatalogSecondaryCta
+            : copy.openCheckoutCta,
+          meta: spotlightProduct
+            ? formatResource(copy.routeMapCatalogMeta, {
+                slug: spotlightProduct.slug,
+              })
+            : copy.routeMapCatalogFallbackMeta,
+        },
+        {
+          id: "route-map-account",
+          label: copy.routeMapAccountLabel,
+          title: copy.routeMapAccountTitle,
+          description: copy.routeMapAccountDescription,
+          primaryHref: "/account",
+          primaryCtaLabel: copy.openAccountCta,
+          secondaryHref: "/loyalty",
+          secondaryCtaLabel: copy.routeMapAccountSecondaryCta,
+          meta: copy.routeMapAccountMeta,
+        },
+      ],
+      emptyMessage: copy.routeMapEmptyMessage,
     },
     {
       id: "home-contract-rail",
@@ -366,6 +435,53 @@ export async function getHomePageParts(culture: string): Promise<WebPagePart[]> 
         },
       ],
       emptyMessage: copy.journeysEmptyMessage,
+    },
+    {
+      id: "home-recovery-rail",
+      kind: "link-list",
+      eyebrow: copy.recoveryRailEyebrow,
+      title: copy.recoveryRailTitle,
+      description: copy.recoveryRailDescription,
+      items: [
+        {
+          id: "recovery-cms",
+          title: copy.recoveryCmsTitle,
+          description: cmsHealthy
+            ? copy.recoveryCmsHealthyDescription
+            : formatResource(copy.recoveryCmsDegradedDescription, {
+                status: pagesResult.status,
+              }),
+          href: "/cms",
+          ctaLabel: copy.openCmsCta,
+          meta: formatResource(copy.recoveryCmsMeta, {
+            count: pagesResult.data?.items.length ?? 0,
+          }),
+        },
+        {
+          id: "recovery-catalog",
+          title: copy.recoveryCatalogTitle,
+          description: catalogHealthy && categoriesHealthy
+            ? copy.recoveryCatalogHealthyDescription
+            : formatResource(copy.recoveryCatalogDegradedDescription, {
+                productsStatus: productsResult.status,
+                categoriesStatus: categoriesResult.status,
+              }),
+          href: "/catalog",
+          ctaLabel: copy.browseCatalogCta,
+          meta: formatResource(copy.recoveryCatalogMeta, {
+            count: productsResult.data?.items.length ?? 0,
+          }),
+        },
+        {
+          id: "recovery-account",
+          title: copy.recoveryAccountTitle,
+          description: copy.recoveryAccountDescription,
+          href: "/account",
+          ctaLabel: copy.openAccountCta,
+          meta: copy.recoveryAccountMeta,
+        },
+      ],
+      emptyMessage: copy.recoveryRailEmptyMessage,
     },
     {
       id: "home-cms-spotlight",

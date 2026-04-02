@@ -1,6 +1,7 @@
 import "server-only";
 import type { BusinessDetailWithMyAccount } from "@/features/businesses/types";
 import { getFreshMemberAccessToken } from "@/features/member-session/server";
+import { buildQuerySuffix, serializeQueryParams } from "@/lib/query-params";
 import type {
   LinkedCustomerContext,
   MemberAddress,
@@ -126,12 +127,10 @@ async function fetchMemberJson<T>(
 }
 
 function buildPagedQuery(page?: number, pageSize?: number) {
-  const params = new URLSearchParams({
+  return buildQuerySuffix({
     page: String(page ?? 1),
     pageSize: String(pageSize ?? 20),
   });
-
-  return `?${params.toString()}`;
 }
 
 async function mutateMemberJson<T>(
@@ -282,14 +281,12 @@ export async function getCurrentMemberLoyaltyBusinesses(input?: {
   pageSize?: number;
   includeInactiveBusinesses?: boolean;
 }) {
-  const params = new URLSearchParams({
-    page: String(input?.page ?? 1),
-    pageSize: String(input?.pageSize ?? 12),
-    includeInactiveBusinesses: String(input?.includeInactiveBusinesses ?? false),
-  });
-
   return fetchMemberJson<PagedResponse<MyLoyaltyBusinessSummary>>(
-    `/api/v1/member/loyalty/my/businesses?${params.toString()}`,
+    `/api/v1/member/loyalty/my/businesses?${serializeQueryParams({
+      page: String(input?.page ?? 1),
+      pageSize: String(input?.pageSize ?? 12),
+      includeInactiveBusinesses: String(input?.includeInactiveBusinesses ?? false),
+    })}`,
   );
 }
 

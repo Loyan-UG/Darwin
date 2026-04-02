@@ -2,12 +2,14 @@ import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { LoyaltyDiscoverySection } from "@/components/member/loyalty-discovery-section";
+import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import type { BusinessCategoryKind, BusinessSummary } from "@/features/businesses/types";
 import type {
   MyLoyaltyBusinessSummary,
   MyLoyaltyOverview,
 } from "@/features/member-portal/types";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
+import { toWebApiUrl } from "@/lib/webapi-url";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
 
@@ -174,15 +176,18 @@ export function LoyaltyOverviewPage({
               {businesses.length > 0 ? (
                 <div className="mt-5 grid gap-5 md:grid-cols-2">
                   {businesses.map((business) => (
+                    (() => {
+                      const primaryImageUrl = toWebApiUrl(business.primaryImageUrl ?? "");
+                      return (
                     <article
                       key={business.businessId}
                       className="overflow-hidden rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)]"
                     >
                       <div className="flex min-h-44 items-center justify-center bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-5">
-                        {business.primaryImageUrl ? (
+                        {primaryImageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={business.primaryImageUrl}
+                            src={primaryImageUrl}
                             alt={business.businessName}
                             className="max-h-32 w-auto object-contain"
                           />
@@ -237,6 +242,8 @@ export function LoyaltyOverviewPage({
                         </div>
                       </div>
                     </article>
+                      );
+                    })()
                   ))}
                 </div>
               ) : (
@@ -398,16 +405,13 @@ export function LoyaltyOverviewPage({
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link
-                  href={localizeHref(
-                    `/account/register?returnPath=${encodeURIComponent(localizeHref("/loyalty", culture))}`,
-                    culture,
-                  )}
+                  href={buildLocalizedAuthHref("/account/register", "/loyalty", culture)}
                   className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                 >
                   {copy.loyaltyCreateAccountCta}
                 </Link>
                 <Link
-                  href={localizeHref("/account/sign-in?returnPath=%2Floyalty", culture)}
+                  href={buildLocalizedAuthHref("/account/sign-in", "/loyalty", culture)}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
                   {copy.signIn}
@@ -417,25 +421,13 @@ export function LoyaltyOverviewPage({
           </div>
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-            {copy.memberCrossSurfaceTitle}
-          </p>
-          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-            {copy.memberCrossSurfaceMessage}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-              {copy.memberCrossSurfaceHomeCta}
-            </Link>
-            <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-              {copy.memberCrossSurfaceCatalogCta}
-            </Link>
-            <Link href={localizeHref("/account", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-              {copy.memberCrossSurfaceAccountCta}
-            </Link>
-          </div>
-        </div>
+        <MemberCrossSurfaceRail
+          culture={culture}
+          includeAccount
+          includeOrders={hasMemberSession}
+          includeInvoices={hasMemberSession}
+          includeLoyalty={false}
+        />
       </div>
     </section>
   );

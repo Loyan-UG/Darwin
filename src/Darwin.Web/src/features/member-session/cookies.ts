@@ -1,10 +1,27 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { MemberSession } from "@/features/member-session/types";
+import { isValidUtcTimestamp } from "@/lib/time";
 
 const ACCESS_TOKEN_COOKIE = "darwin-member-access-token";
 const REFRESH_TOKEN_COOKIE = "darwin-member-refresh-token";
 const SESSION_COOKIE = "darwin-member-session";
+
+function isMemberSession(value: unknown): value is MemberSession {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const session = value as Record<string, unknown>;
+  return (
+    typeof session.userId === "string" &&
+    session.userId.trim().length > 0 &&
+    typeof session.email === "string" &&
+    session.email.includes("@") &&
+    typeof session.accessTokenExpiresAtUtc === "string" &&
+    isValidUtcTimestamp(session.accessTokenExpiresAtUtc)
+  );
+}
 
 function getCookieBaseOptions() {
   return {
@@ -24,7 +41,8 @@ export async function getMemberSession() {
   }
 
   try {
-    return JSON.parse(raw) as MemberSession;
+    const parsed = JSON.parse(raw) as unknown;
+    return isMemberSession(parsed) ? parsed : null;
   } catch {
     return null;
   }

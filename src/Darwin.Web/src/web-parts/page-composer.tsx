@@ -487,6 +487,73 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
           );
         }
 
+        if (part.kind === "route-map") {
+          return (
+            <section
+              key={part.id}
+              className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+            >
+              <div className="max-w-3xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+                  {part.eyebrow}
+                </p>
+                <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl leading-tight text-[var(--color-text-primary)] sm:text-4xl">
+                  {part.title}
+                </h2>
+                <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
+                  {part.description}
+                </p>
+              </div>
+
+              {part.items.length > 0 ? (
+                <div className="mt-8 grid gap-5 xl:grid-cols-3">
+                  {part.items.map((item) => (
+                    <article
+                      key={item.id}
+                      className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                        {item.label}
+                      </p>
+                      <h3 className="mt-4 text-2xl font-semibold text-[var(--color-text-primary)]">
+                        {item.title}
+                      </h3>
+                      <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {item.description}
+                      </p>
+                      {item.meta ? (
+                        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                          {item.meta}
+                        </p>
+                      ) : null}
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <Link
+                          href={localizeHref(item.primaryHref, culture)}
+                          className="inline-flex rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+                        >
+                          {item.primaryCtaLabel}
+                        </Link>
+                        {item.secondaryHref && item.secondaryCtaLabel ? (
+                          <Link
+                            href={localizeHref(item.secondaryHref, culture)}
+                            className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                          >
+                            {item.secondaryCtaLabel}
+                          </Link>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-8 rounded-[1.75rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {part.emptyMessage}
+                </div>
+              )}
+            </section>
+          );
+        }
+
         return (
           <section
             key={part.id}

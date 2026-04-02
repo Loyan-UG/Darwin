@@ -1,24 +1,12 @@
 import "server-only";
 import { fetchPublicJson } from "@/lib/api/fetch-public-json";
+import { buildQuerySuffix } from "@/lib/query-params";
 import type {
   PagedResponse,
   PublicMenu,
   PublicPageDetail,
   PublicPageSummary,
 } from "@/features/cms/types";
-
-function buildCmsQuery(query: Record<string, string | undefined>) {
-  const searchParams = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(query)) {
-    if (value) {
-      searchParams.set(key, value);
-    }
-  }
-
-  const serialized = searchParams.toString();
-  return serialized ? `?${serialized}` : "";
-}
 
 export async function getPublicMenuByName(name: string) {
   return fetchPublicJson<PublicMenu>(
@@ -29,7 +17,7 @@ export async function getPublicMenuByName(name: string) {
 
 export async function getPublicPageBySlug(slug: string, culture?: string) {
   return fetchPublicJson<PublicPageDetail>(
-    `/api/v1/public/cms/pages/${encodeURIComponent(slug)}${buildCmsQuery({
+    `/api/v1/public/cms/pages/${encodeURIComponent(slug)}${buildQuerySuffix({
       culture,
     })}`,
     "cms-page",
@@ -42,7 +30,7 @@ export async function getPublishedPages(input?: {
   culture?: string;
 }) {
   return fetchPublicJson<PagedResponse<PublicPageSummary>>(
-    `/api/v1/public/cms/pages${buildCmsQuery({
+    `/api/v1/public/cms/pages${buildQuerySuffix({
       page: String(input?.page ?? 1),
       pageSize: String(input?.pageSize ?? 24),
       culture: input?.culture,

@@ -8,9 +8,10 @@ import {
 } from "@/features/shell/navigation";
 import type { ShellLink, ShellModel } from "@/features/shell/types";
 import { formatResource, getSharedResource } from "@/localization";
-import { localizeHref } from "@/lib/locale-routing";
+import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+import { toSafeHttpUrl } from "@/lib/webapi-url";
 import { activeTheme } from "@/themes/registry";
 
 function sortMenuItems(items: PublicMenuItem[]) {
@@ -20,10 +21,29 @@ function sortMenuItems(items: PublicMenuItem[]) {
 function mapMenuItemsToLinks(items: PublicMenuItem[]): ShellLink[] {
   return sortMenuItems(items)
     .filter((item) => !item.parentId && item.url)
-    .map((item) => ({
-      label: item.label,
-      href: item.url,
-    }));
+    .flatMap((item) => {
+      const href = normalizeShellHref(item.url);
+      return href
+        ? [{
+            label: item.label,
+            href,
+          }]
+        : [];
+    });
+}
+
+function normalizeShellHref(rawHref: string) {
+  const trimmed = rawHref.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.startsWith("/")) {
+    const sanitized = sanitizeAppPath(trimmed, "/");
+    return sanitized === "/" && trimmed !== "/" ? null : sanitized;
+  }
+
+  return toSafeHttpUrl(trimmed);
 }
 
 function localizeShellLinks(links: ShellLink[], culture: string) {

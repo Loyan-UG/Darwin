@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { createMemberInvoicePaymentIntentAction } from "@/features/member-portal/actions";
 import type { MemberInvoiceDetail } from "@/features/member-portal/types";
 import {
@@ -56,6 +57,13 @@ export function InvoiceDetailPage({
             >
               {copy.memberCrossSurfaceCatalogCta}
             </Link>
+          </div>
+          <div className="mt-8">
+            <MemberCrossSurfaceRail
+              culture={culture}
+              includeAccount={false}
+              includeOrders
+            />
           </div>
         </div>
       </section>
@@ -132,14 +140,20 @@ export function InvoiceDetailPage({
                     {copy.paymentSummaryDescription}
                   </p>
                 </div>
-                <a
-                  href={documentUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {copy.downloadDocumentCta}
-                </a>
+                {documentUrl ? (
+                  <a
+                    href={documentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.downloadDocumentCta}
+                  </a>
+                ) : (
+                  <span className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-secondary)]">
+                    {copy.documentUnavailableLabel}
+                  </span>
+                )}
               </div>
               <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {invoice.paymentSummary}
@@ -181,9 +195,15 @@ export function InvoiceDetailPage({
                     {copy.openLinkedOrderCta}
                   </Link>
                 ) : null}
-                <a href={documentUrl} target="_blank" rel="noreferrer" className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.downloadDocumentCta}
-                </a>
+                {documentUrl ? (
+                  <a href={documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                    {copy.downloadDocumentCta}
+                  </a>
+                ) : (
+                  <span className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-secondary)]">
+                    {copy.documentUnavailableLabel}
+                  </span>
+                )}
                 <Link href={localizeHref("/invoices", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                   {copy.backToInvoicesCta}
                 </Link>
@@ -199,25 +219,11 @@ export function InvoiceDetailPage({
               </p>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                {copy.memberCrossSurfaceTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.memberCrossSurfaceMessage}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceHomeCta}
-                </Link>
-                <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceCatalogCta}
-                </Link>
-                <Link href={localizeHref("/orders", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceOrdersCta}
-                </Link>
-              </div>
-            </aside>
+            <MemberCrossSurfaceRail
+              culture={culture}
+              includeAccount={false}
+              includeOrders
+            />
           </div>
         </div>
       </div>
