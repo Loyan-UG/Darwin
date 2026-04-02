@@ -348,6 +348,8 @@ The current web slice includes:
 - checkout now also exposes readiness signals and a live order-review panel so the shopper can validate address/shipping/line items before order placement
 - cart and checkout now also surface a live storefront-discovery window backed by published CMS pages, public categories, and visible product opportunities, so active purchase routes can hand shoppers back into content, browse, and upsell paths without dropping the current conversion flow
 - order confirmation now also surfaces that same live storefront-discovery window, so after-purchase shoppers can move directly into content, browse, and product follow-up instead of ending on a receipt-only route
+- order confirmation now also biases its product follow-up away from items already present in the just-finished order, so the after-purchase opportunity is closer to a real next-buy suggestion than a generic catalog echo
+- the authenticated member dashboard now also surfaces live product highlights alongside CMS and category continuation, so signed-in shoppers can see the next buying opportunity directly from `/account`
 - public commerce hardening now also normalizes quantity/coupon/country-code input and constrains cart/confirmation status-query handling so storefront redirect/form glue stays explicit and controlled
 - centralized SEO metadata shaping with canonical/Open Graph/Twitter support for public routes and explicit `noindex` policy for private/mixed portal routes
 - public `robots.txt` and `sitemap.xml` generation backed by the live CMS/catalog contracts and limited to truly public/indexable storefront paths

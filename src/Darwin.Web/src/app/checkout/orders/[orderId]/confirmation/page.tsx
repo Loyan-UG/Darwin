@@ -115,6 +115,12 @@ export default async function OrderConfirmationRoute({
           getCurrentMemberLoyaltyOverview(),
         ])
       : [null, null, null];
+  const purchasedNames = new Set(
+    (confirmationResult.data?.lines ?? []).map((line) => line.name.trim().toLowerCase()),
+  );
+  const followUpProducts = (productsResult.data?.items ?? []).filter(
+    (product) => !purchasedNames.has(product.name.trim().toLowerCase()),
+  );
 
   return (
     <OrderConfirmationPage
@@ -138,7 +144,7 @@ export default async function OrderConfirmationRoute({
       cmsPagesStatus={cmsPagesResult.status}
       categories={categoriesResult.data?.items.slice(0, 3) ?? []}
       categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
+      products={followUpProducts.length > 0 ? followUpProducts : productsResult.data?.items ?? []}
       productsStatus={productsResult.status}
     />
   );

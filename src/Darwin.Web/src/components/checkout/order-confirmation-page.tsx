@@ -790,6 +790,8 @@ export function OrderConfirmationPage({
               categoriesStatus={categoriesStatus}
               products={products}
               productsStatus={productsStatus}
+              title={copy.confirmationStorefrontWindowTitle}
+              description={copy.confirmationStorefrontWindowMessage}
             />
 
             <CommerceContinuationRail

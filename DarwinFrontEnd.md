@@ -803,6 +803,8 @@ When the separate mobile-review chat starts, it should explicitly revisit these 
 
 - cart and checkout now also surface a live storefront-discovery window backed by published CMS pages, public categories, and visible product opportunities, so active purchase routes can hand shoppers back into content, browse, and upsell paths without dropping the current conversion flow
 - order confirmation now also surfaces that same live storefront-discovery window, so after-purchase shoppers can move directly into content, browse, and product follow-up instead of ending on a receipt-only route
+- order confirmation now also biases its product follow-up away from items already present in the just-finished order, so the after-purchase opportunity behaves more like a true next-buy suggestion than a generic catalog echo
+- the authenticated member dashboard now also surfaces live product highlights alongside CMS and category continuation, so signed-in shoppers can see the next buying opportunity directly from `/account`
 - document download links in member order and invoice detail now validate absolute and proxied WebApi URL shape before rendering anchors
 - if the backend contract returns a malformed document path, the web route now keeps the surface usable and shows an explicit unavailable state instead of rendering a broken or over-permissive download link
 - remaining loyalty discovery map links and linked-invoice detail handoffs now also honor locale-prefixed routing, closing another localized-route drift inside public/member continuity flows

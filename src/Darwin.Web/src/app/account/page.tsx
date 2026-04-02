@@ -1,6 +1,6 @@
 import { AccountHubPage } from "@/components/account/account-hub-page";
 import { MemberDashboardPage } from "@/components/account/member-dashboard-page";
-import { getPublicCategories } from "@/features/catalog/api/public-catalog";
+import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
 import { getPublicCart } from "@/features/cart/api/public-cart";
 import { getAnonymousCartId } from "@/features/cart/cookies";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
@@ -73,6 +73,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     storefrontCartResult,
     cmsPagesResult,
     categoriesResult,
+    productsResult,
   ] = await Promise.all([
     getCurrentMemberProfile(),
     getCurrentMemberPreferences(),
@@ -87,6 +88,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       : Promise.resolve({ data: null, status: "not-found" as const }),
     getPublishedPages({ page: 1, pageSize: 2, culture }),
     getPublicCategories(culture),
+    getPublicProducts({ page: 1, pageSize: 3, culture }),
   ]);
 
   return (
@@ -115,6 +117,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       cmsPagesStatus={cmsPagesResult.status}
       categories={categoriesResult.data?.items.slice(0, 3) ?? []}
       categoriesStatus={categoriesResult.status}
+      products={productsResult.data?.items ?? []}
+      productsStatus={productsResult.status}
     />
   );
 }
