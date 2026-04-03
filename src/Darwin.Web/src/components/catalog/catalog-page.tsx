@@ -9,6 +9,7 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import { getCatalogReviewTargets } from "@/features/catalog/discovery";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
@@ -103,6 +104,14 @@ export function CatalogPage({
       typeof product.compareAtPriceMinor !== "number" ||
       product.compareAtPriceMinor <= product.priceMinor,
   );
+  const missingImageCount = products.filter(
+    (product) => !product.primaryImageUrl?.trim(),
+  ).length;
+  const compareAtMissingCount = products.filter(
+    (product) =>
+      typeof product.compareAtPriceMinor !== "number" ||
+      product.compareAtPriceMinor <= product.priceMinor,
+  ).length;
   const readinessSignals = [
     hasActiveCategory,
     hasCmsFollowUp,
@@ -115,6 +124,30 @@ export function CatalogPage({
       : readinessSignals >= 2
         ? copy.catalogReadinessStatePartial
         : copy.catalogReadinessStateAttention;
+  const reviewTargets = getCatalogReviewTargets(products)
+    .map((target) => ({
+      product: target.product,
+      reason: target.missingImage
+        ? copy.catalogReviewTargetImageMessage
+        : target.savingsAmount > 0
+          ? formatResource(copy.catalogReviewTargetOfferMessage, {
+              savingsPercent: getSavingsPercent(target.product) ?? 0,
+            })
+          : copy.catalogReviewTargetBaseMessage,
+    }))
+    .slice(0, 3);
+  const visibleBaseCount = Math.max(products.length - offerProducts.length, 0);
+  const catalogReviewPrimaryHref = buildCatalogHref(
+    activeCategorySlug,
+    1,
+    visibleQuery,
+    offerProducts.length >= visibleBaseCount ? "offers" : "base",
+    offerProducts.length >= visibleBaseCount ? "offers-first" : "base-first",
+  );
+  const catalogReviewPrimaryLabel =
+    offerProducts.length >= visibleBaseCount
+      ? copy.catalogReviewOffersCta
+      : copy.catalogReviewBaseCta;
 
   function getSavingsPercent(product: PublicProductSummary) {
     if (
@@ -430,12 +463,12 @@ export function CatalogPage({
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogReadinessBaseLabel}
               </p>
-              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                {formatResource(copy.catalogReadinessBaseValue, {
-                  count: Math.max(products.length - offerProducts.length, 0),
-                })}
-              </p>
-            </div>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.catalogReadinessBaseValue, {
+                    count: visibleBaseCount,
+                  })}
+                </p>
+              </div>
             <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogReadinessSupportLabel}
@@ -447,11 +480,98 @@ export function CatalogPage({
                 })}
               </p>
             </div>
+            </div>
           </div>
-        </div>
 
-        <CatalogCampaignWindow
-          culture={culture}
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.catalogReviewTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.catalogReviewMessage, {
+                offerCount: offerProducts.length,
+                baseCount: visibleBaseCount,
+              })}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href={localizeHref(catalogReviewPrimaryHref, culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {catalogReviewPrimaryLabel}
+              </Link>
+              <Link
+                href={localizeHref(
+                  buildCatalogHref(activeCategorySlug, 1, visibleQuery, "all", "featured"),
+                  culture,
+                )}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.catalogReviewAllCta}
+              </Link>
+              <Link
+                href={localizeHref(
+                  buildCatalogHref(activeCategorySlug, 1, undefined, "all", "featured"),
+                  culture,
+                )}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.catalogReviewResetCta}
+              </Link>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.catalogReviewImageCoverageLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.catalogReviewImageCoverageValue, {
+                    count: missingImageCount,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.catalogReviewOfferCoverageLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.catalogReviewOfferCoverageValue, {
+                    count: compareAtMissingCount,
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.catalogReviewTargetsTitle}
+              </p>
+              <div className="mt-3 grid gap-3">
+                {reviewTargets.length > 0 ? (
+                  reviewTargets.map(({ product, reason }) => (
+                    <Link
+                      key={product.id}
+                      href={localizeHref(`/catalog/${product.slug}`, culture)}
+                      className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
+                    >
+                      <p className="font-semibold text-[var(--color-text-primary)]">
+                        {product.name}
+                      </p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {reason}
+                      </p>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {copy.catalogReviewTargetsFallback}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+  
+          <CatalogCampaignWindow
+            culture={culture}
           categories={categories}
           products={products}
         />
@@ -702,6 +822,7 @@ export function CatalogPage({
                 {products.map((product) => (
                   (() => {
                     const productImageUrl = toWebApiUrl(product.primaryImageUrl ?? "");
+                    const savingsPercent = getSavingsPercent(product);
                     return (
                   <article
                     key={product.id}
@@ -726,9 +847,9 @@ export function CatalogPage({
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
                           {copy.productEyebrow}
                         </p>
-                        {getSavingsPercent(product) ? (
+                        {savingsPercent ? (
                           <span className="rounded-full bg-[var(--color-brand)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-contrast)]">
-                            {copy.savePrefix} {getSavingsPercent(product)}%
+                            {copy.savePrefix} {savingsPercent}%
                           </span>
                         ) : null}
                       </div>
@@ -740,6 +861,25 @@ export function CatalogPage({
                           {product.name}
                         </Link>
                       </h2>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-[var(--color-surface-panel-strong)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-primary)]">
+                          {savingsPercent !== null
+                            ? copy.catalogCardOfferLabel
+                            : copy.catalogCardBaseLabel}
+                        </span>
+                        {!product.primaryImageUrl?.trim() ? (
+                          <span className="rounded-full bg-[rgba(217,111,50,0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent)]">
+                            {copy.catalogCardMissingImageLabel}
+                          </span>
+                        ) : null}
+                        {savingsPercent !== null ? (
+                          <span className="rounded-full bg-[rgba(89,130,70,0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand)]">
+                            {formatResource(copy.catalogCardSavingsLabel, {
+                              savingsPercent,
+                            })}
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="mt-3 flex-1 text-sm leading-7 text-[var(--color-text-secondary)]">
                         {product.shortDescription ??
                           copy.productDescriptionFallback}

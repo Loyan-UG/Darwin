@@ -81,6 +81,7 @@ The repository has moved beyond the raw front-office starting line:
 - that home offer board now also shifts away from products already linked to the active cart when browser storefront-shopping state exists, so the storefront entry can suggest the next buying move beyond the current basket instead of echoing the same cart
 - home composition now also includes a live commerce-opportunity window driven by cart, spotlight-product, and category-lane signals, so the storefront entry route can push the shopper toward the strongest immediate buying move instead of only showing generic browse links
 - home composition now also includes an explicit browse-readiness window for CMS and catalog, so storefront entry can expose public discovery debt before the visitor has to infer it from deeper browse routes
+- home composition now also includes a review cockpit for CMS and catalog, so storefront entry can reopen the strongest visible review windows and jump directly to the next concrete page/product targets without rebuilding browse state first
 - home composition is now also session-aware for signed-in members and can surface direct portal re-entry routes for account, orders, and loyalty instead of treating Home like a purely anonymous landing page
 - home composition is now also cart-aware and can surface direct cart/checkout recovery from browser-owned storefront snapshots, so Home can resume active shopping flows instead of only restarting browse
 - home composition is now also live-cart-aware and can surface current cart totals plus checkout continuity from the canonical public cart contract when a storefront cart already exists
@@ -433,6 +434,15 @@ The current web slice includes:
 - member identity and member commerce summary snapshots now also flow through shared cached server contexts, so account, cart, checkout, confirmation, and Home can reuse the same protected summary data with less repeated fetch work
 - account and commerce continuation windows now also surface browse-campaign boards built from live categories plus strongest visible offers, so recovery, portal, and conversion routes can propose stronger next-browse lanes instead of only raw follow-up links
 - the web backlog is now also split between core flow delivery and a later dedicated quality pass, so UX/security/performance refinements can be completed deeply at the end without displacing the remaining main process work
+- CMS detail now also exposes a direct review handoff back into the strongest CMS index window for discovery-ready versus attention-needed pages, so content review can continue from the right published set instead of restarting from the default list
+- product detail now also exposes a direct review handoff back into the strongest catalog window for offer versus base-assortment review, so assortment review can continue from the right browse set instead of restarting from the default catalog
+- CMS and catalog index now also surface explicit review action centers for the current window, so the strongest next review set can be reopened directly instead of manually rebuilding lens state
+- CMS and catalog review windows now also break visible debt into concrete review reasons such as missing metadata, missing primary imagery, and base-assortment fallback, so teams can see what needs attention without inferring it from counts alone
+- CMS and catalog review windows now also surface the next concrete review targets inside the current visible window, so teams can jump straight to the right page or product instead of hunting through the result set manually
+- CMS page detail and product detail now also surface the next concrete review target from their current review sets, so teams can continue content or assortment review directly from the detail route instead of bouncing back to index lists first
+- CMS and catalog cards now also show row-level review signals directly inside browse windows, so teams can spot metadata debt, image debt, and offer/base state without opening every detail route first
+- CMS and catalog review now also run on shared priority helpers with focused tests, so Home, browse windows, and detail routes all point at the same next review targets instead of drifting into route-local heuristics
+- CMS detail and product detail now also surface visible review queues, so item-by-item content and assortment review can continue directly from the drilled-in route instead of bouncing back to list windows after every target
 
 ## Feature Logging Rule
 

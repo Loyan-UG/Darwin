@@ -3,6 +3,8 @@ import { AddToCartForm } from "@/components/cart/add-to-cart-form";
 import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-window";
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { getCatalogReviewTargets } from "@/features/catalog/discovery";
+import { getProductSavingsPercent } from "@/features/catalog/merchandising";
 import type {
   PublicCategorySummary,
   PublicProductDetail,
@@ -138,6 +140,14 @@ export function ProductDetailPage({
       : readinessSignals >= 3
         ? copy.productReadinessStatePartial
         : copy.productReadinessStateAttention;
+  const reviewCatalogPath = buildAppQueryPath("/catalog", {
+    category: primaryCategory?.slug,
+    visibleState: hasOffer ? "offers" : "base",
+    visibleSort: hasOffer ? "offers-first" : "base-first",
+  });
+  const reviewQueue = getCatalogReviewTargets(relatedProducts);
+  const nextReviewProduct = reviewQueue[0] ?? null;
+  const reviewQueuePreview = reviewQueue.slice(0, 3);
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
@@ -353,6 +363,114 @@ export function ProductDetailPage({
                   })}
                 </p>
               </div>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <p className="font-semibold text-[var(--color-text-primary)]">
+              {copy.productReviewWindowTitle}
+            </p>
+            <p className="mt-2">
+              {formatResource(copy.productReviewWindowMessage, {
+                status: readinessState,
+              })}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href={localizeHref(reviewCatalogPath, culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {hasOffer
+                  ? copy.productReviewWindowOffersCta
+                  : copy.productReviewWindowBaseCta}
+              </Link>
+              <Link
+                href={localizeHref(
+                  buildAppQueryPath("/catalog", {
+                    category: primaryCategory?.slug,
+                  }),
+                  culture,
+                )}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {copy.productReviewWindowBrowseAllCta}
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <p className="font-semibold text-[var(--color-text-primary)]">
+              {copy.productNextReviewTargetTitle}
+            </p>
+            <p className="mt-2">
+              {nextReviewProduct
+                ? nextReviewProduct.missingImage
+                  ? copy.productNextReviewTargetImageMessage
+                  : nextReviewProduct.savingsAmount > 0
+                    ? formatResource(copy.productNextReviewTargetOfferMessage, {
+                        savingsPercent:
+                          getProductSavingsPercent(nextReviewProduct.product) ?? 0,
+                      })
+                    : copy.productNextReviewTargetBaseMessage
+                : copy.productNextReviewTargetFallback}
+            </p>
+            {nextReviewProduct ? (
+              <div className="mt-4 rounded-2xl bg-[var(--color-surface-panel)] px-4 py-4">
+                <p className="font-semibold text-[var(--color-text-primary)]">
+                  {nextReviewProduct.product.name}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {nextReviewProduct.product.shortDescription ?? copy.productDescriptionFallback}
+                </p>
+                <div className="mt-4">
+                  <Link
+                    href={localizeHref(`/catalog/${nextReviewProduct.product.slug}`, culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    {copy.productNextReviewTargetCta}
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <p className="font-semibold text-[var(--color-text-primary)]">
+              {copy.productReviewQueueTitle}
+            </p>
+            <p className="mt-2">
+              {formatResource(copy.productReviewQueueMessage, {
+                remainingCount: reviewQueue.length,
+              })}
+            </p>
+            <div className="mt-4 grid gap-3">
+              {reviewQueuePreview.length > 0 ? (
+                reviewQueuePreview.map((target) => (
+                  <Link
+                    key={target.product.id}
+                    href={localizeHref(`/catalog/${target.product.slug}`, culture)}
+                    className="rounded-2xl bg-[var(--color-surface-panel)] px-4 py-4 transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    <p className="font-semibold text-[var(--color-text-primary)]">
+                      {target.product.name}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {target.missingImage
+                        ? copy.productReviewQueueImageMessage
+                        : target.savingsAmount > 0
+                          ? formatResource(copy.productReviewQueueOfferMessage, {
+                              savingsPercent:
+                                getProductSavingsPercent(target.product) ?? 0,
+                            })
+                          : copy.productReviewQueueBaseMessage}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {copy.productReviewQueueFallback}
+                </div>
+              )}
             </div>
           </div>
 

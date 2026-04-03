@@ -3,6 +3,7 @@ import {
   getPublicCategories,
   getPublicProducts,
 } from "@/features/catalog/api/public-catalog";
+import { getCatalogReviewTargets } from "@/features/catalog/discovery";
 import {
   getProductSavingsPercent,
   getStrongestProductOpportunity,
@@ -14,7 +15,7 @@ import {
   readCartDisplaySnapshots,
 } from "@/features/cart/cookies";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
-import { isDiscoveryReadyPage } from "@/features/cms/discovery";
+import { getPendingCmsReviewTargets, isDiscoveryReadyPage } from "@/features/cms/discovery";
 import type { MemberSession } from "@/features/member-session/types";
 import {
   getMemberCommerceSummaryContext,
@@ -85,6 +86,26 @@ export async function getHomePageParts(
     (product) => getProductSavingsPercent(product) !== null,
   ).length;
   const visibleBaseCount = Math.max(rankedProducts.length - visibleOfferCount, 0);
+  const cmsReviewReadyHref = buildAppQueryPath("/cms", {
+    visibleState: "ready",
+    visibleSort: "ready-first",
+  });
+  const cmsReviewAttentionHref = buildAppQueryPath("/cms", {
+    visibleState: "needs-attention",
+    visibleSort: "attention-first",
+  });
+  const catalogReviewOffersHref = buildAppQueryPath("/catalog", {
+    visibleState: "offers",
+    visibleSort: "offers-first",
+  });
+  const catalogReviewBaseHref = buildAppQueryPath("/catalog", {
+    visibleState: "base",
+    visibleSort: "base-first",
+  });
+  const cmsReviewTargets = getPendingCmsReviewTargets(
+    pagesResult.data?.items ?? [],
+  ).slice(0, 2);
+  const catalogReviewTargets = getCatalogReviewTargets(rankedProducts).slice(0, 2);
   const offerBoardProducts =
     (cartLinkedSlugs.size > 0
       ? rankedProducts.filter((product) => !cartLinkedSlugs.has(product.slug))
@@ -437,6 +458,79 @@ export async function getHomePageParts(
         },
       ],
       emptyMessage: copy.discoveryReadinessEmptyMessage,
+    },
+    {
+      id: "home-review-targets",
+      kind: "link-list",
+      eyebrow: copy.reviewTargetsEyebrow,
+      title: copy.reviewTargetsTitle,
+      description: copy.reviewTargetsDescription,
+      items: [
+        {
+          id: "home-review-cms-window",
+          title: copy.reviewTargetsCmsWindowTitle,
+          description: formatResource(copy.reviewTargetsCmsWindowDescription, {
+            readyCount: readyCmsPagesCount,
+            attentionCount: cmsAttentionCount,
+          }),
+          href: cmsAttentionCount > 0 ? cmsReviewAttentionHref : cmsReviewReadyHref,
+          ctaLabel:
+            cmsAttentionCount > 0
+              ? copy.reviewTargetsCmsAttentionCta
+              : copy.reviewTargetsCmsReadyCta,
+          meta: formatResource(copy.reviewTargetsCmsWindowMeta, {
+            status: pagesResult.status,
+          }),
+        },
+        ...cmsReviewTargets.map(({ page, missingMetaTitle, missingMetaDescription }) => ({
+          id: `home-review-cms-target-${page.id}`,
+          title: formatResource(copy.reviewTargetsCmsTargetTitle, {
+            title: page.title,
+          }),
+          description:
+            missingMetaTitle && missingMetaDescription
+              ? copy.reviewTargetsCmsTargetBothDescription
+              : missingMetaTitle
+                ? copy.reviewTargetsCmsTargetMetaTitleDescription
+                : copy.reviewTargetsCmsTargetMetaDescriptionDescription,
+          href: `/cms/${page.slug}`,
+          ctaLabel: copy.reviewTargetsCmsTargetCta,
+          meta: page.slug,
+        })),
+        {
+          id: "home-review-catalog-window",
+          title: copy.reviewTargetsCatalogWindowTitle,
+          description: formatResource(copy.reviewTargetsCatalogWindowDescription, {
+            offerCount: visibleOfferCount,
+            baseCount: visibleBaseCount,
+          }),
+          href: visibleOfferCount > 0 ? catalogReviewOffersHref : catalogReviewBaseHref,
+          ctaLabel:
+            visibleOfferCount > 0
+              ? copy.reviewTargetsCatalogOffersCta
+              : copy.reviewTargetsCatalogBaseCta,
+          meta: formatResource(copy.reviewTargetsCatalogWindowMeta, {
+            status: productsResult.status,
+          }),
+        },
+        ...catalogReviewTargets.map(({ product, missingImage, savingsAmount }) => ({
+          id: `home-review-catalog-target-${product.id}`,
+          title: formatResource(copy.reviewTargetsCatalogTargetTitle, {
+            product: product.name,
+          }),
+          description: missingImage
+            ? copy.reviewTargetsCatalogTargetImageDescription
+            : savingsAmount > 0
+              ? formatResource(copy.reviewTargetsCatalogTargetOfferDescription, {
+                  savings: getProductSavingsPercent(product) ?? 0,
+                })
+              : copy.reviewTargetsCatalogTargetBaseDescription,
+          href: `/catalog/${product.slug}`,
+          ctaLabel: copy.reviewTargetsCatalogTargetCta,
+          meta: formatMoney(product.priceMinor, product.currency, culture),
+        })),
+      ],
+      emptyMessage: copy.reviewTargetsEmptyMessage,
     },
     {
       id: "home-priority-lane",

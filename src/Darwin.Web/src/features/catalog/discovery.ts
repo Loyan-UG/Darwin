@@ -11,6 +11,12 @@ export function readCatalogVisibleState(value?: string): CatalogVisibleState {
   );
 }
 
+export type CatalogReviewTarget = {
+  product: PublicProductSummary;
+  missingImage: boolean;
+  savingsAmount: number;
+};
+
 export function getCatalogSavingsAmount(product: PublicProductSummary) {
   if (
     typeof product.compareAtPriceMinor !== "number" ||
@@ -24,6 +30,34 @@ export function getCatalogSavingsAmount(product: PublicProductSummary) {
 
 export function isOfferProduct(product: PublicProductSummary) {
   return getCatalogSavingsAmount(product) > 0;
+}
+
+export function getCatalogReviewTarget(
+  product: PublicProductSummary,
+): CatalogReviewTarget {
+  return {
+    product,
+    missingImage: !product.primaryImageUrl?.trim(),
+    savingsAmount: getCatalogSavingsAmount(product),
+  };
+}
+
+export function sortCatalogReviewTargets(targets: CatalogReviewTarget[]) {
+  return [...targets].sort((left, right) => {
+    if (left.missingImage !== right.missingImage) {
+      return left.missingImage ? -1 : 1;
+    }
+
+    if (right.savingsAmount !== left.savingsAmount) {
+      return right.savingsAmount - left.savingsAmount;
+    }
+
+    return left.product.name.localeCompare(right.product.name);
+  });
+}
+
+export function getCatalogReviewTargets(products: PublicProductSummary[]) {
+  return sortCatalogReviewTargets(products.map(getCatalogReviewTarget));
 }
 
 export function filterCatalogVisibleProducts(

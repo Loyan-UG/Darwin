@@ -108,6 +108,7 @@ The first web slice is now in place:
 - that home offer board now also shifts away from products already linked to the active cart when browser storefront-shopping state exists, so storefront entry can suggest the next buying move beyond the current basket instead of echoing the same cart
 - the home page now also includes a live commerce-opportunity window driven by cart, spotlight-product, and category-lane signals, so storefront entry can emphasize the strongest immediate buying move instead of only generic browse entry points
 - the home page now also includes an explicit browse-readiness window for CMS and catalog, so storefront entry can expose public discovery debt before the visitor has to infer it from deeper browse routes
+- the home page now also includes a review cockpit for CMS and catalog, so storefront entry can reopen the strongest visible review windows and jump directly to the next concrete page/product targets without rebuilding browse state first
 - the home page is now also session-aware for signed-in members and can surface direct re-entry routes for account, orders, and loyalty instead of behaving like a purely anonymous storefront entry
 - the home page is now also cart-aware and can surface direct cart/checkout recovery from browser-owned storefront snapshots, so storefront entry can resume active shopping flows instead of only restarting browse
 - the home page is now also live-cart-aware and can surface current cart totals plus checkout continuity from the canonical public cart contract when a storefront cart already exists
@@ -140,6 +141,12 @@ The next storefront slice is now also underway:
 - CMS detail now also derives on-page section navigation and reading/structure metrics from the published HTML itself, so rich content remains navigable without needing a separate CMS-specific page-layout contract first
 - CMS detail anchor ids now also normalize diacritics before slugging section headings, so German and other accented headings keep stable in-page navigation ids instead of collapsing into weak fallback slugs
 - CMS detail now also surfaces explicit published-content readiness for metadata, structure, and navigation coverage, so public content review can inspect discovery debt from the detail route itself instead of only from list-level lenses
+- CMS detail now also exposes a direct review handoff back into the strongest CMS index window for discovery-ready versus attention-needed pages, so content review can continue from the right published set instead of restarting from the default list
+- CMS index now also surfaces an explicit review action center for the current visible window, so discovery-ready, attention-needed, and title-ordered review sets can be reopened directly instead of being rebuilt by hand
+- CMS and catalog review windows now also break visible debt into concrete review reasons such as missing metadata, missing primary imagery, and base-assortment fallback, so browse/content review can see what needs attention without inferring it from counts alone
+- CMS and catalog review windows now also surface the next concrete review targets inside the current visible window, so teams can jump straight to the right page or product instead of hunting through the result set manually
+- CMS detail and product detail now also surface the next concrete review target from their current review sets, so content and assortment review can continue directly from the detail route instead of bouncing back to index lists first
+- CMS and catalog cards now also surface row-level review signals inside the browse windows, so metadata debt, image debt, and offer/base state are visible without opening every detail route first
 - CMS index and CMS detail now also surface live catalog-category and live product follow-up windows, so public content routes can hand off directly into real commerce browse/detail paths instead of only pointing back to the generic catalog route
 - CMS index and CMS detail now also surface a shared commerce-campaign window built from visible category lanes and strongest product opportunities, so public content routes can sell through stronger browse and buying stories instead of only exposing utility follow-up lists
 - those CMS product follow-up windows now also rank by the strongest visible savings signal first, so content routes hand off into a clearer best-offer buying opportunity instead of arbitrary catalog order
@@ -183,6 +190,8 @@ The next storefront slice is now also underway:
 - product detail now also exposes breadcrumb, product-reference snapshot, and explicit storefront handoff actions so the conversion route stays oriented inside the broader front-office system
 - product detail now also surfaces offer-position and buying-context panels derived from the current product plus related-offer signals, so conversion/detail routes communicate active offer strength instead of behaving like static specification pages
 - product detail now also surfaces explicit buying-readiness coverage for metadata, merchandising, and adjacent follow-up, so public commerce review can inspect route debt from the detail page itself instead of only from route-summary status
+- product detail now also exposes a direct review handoff back into the strongest catalog window for offer versus base-assortment review, so assortment review can continue from the right browse set instead of restarting from the default catalog
+- catalog index now also surfaces an explicit review action center for the current assortment window, so offer-first, base-first, and full-assortment review sets can be reopened directly instead of being rebuilt by hand
 - product detail cross-surface handoff now also includes a CMS return path inside the shared continuation-rail pattern, so content and commerce remain visibly connected in both directions instead of diverging into route-local button clusters
 - catalog index and product detail now also surface live published CMS follow-up windows, so public commerce browsing stays connected to storefront content without waiting for new backend contracts
 - product detail unavailable and related-products-empty states now also keep account follow-up visible, so degraded conversion/detail states remain connected to the wider front-office system
@@ -853,6 +862,8 @@ When the separate mobile-review chat starts, it should explicitly revisit these 
 
 ## 17. Recent Darwin.Web Hardening Notes
 
+- CMS and catalog review now also run on shared priority helpers with focused tests, so Home, browse windows, and detail routes all point at the same next review targets instead of drifting into route-local heuristics
+- CMS detail and product detail now also surface visible review queues, so item-by-item content and assortment review can continue directly from the drilled-in route instead of bouncing back to list windows after every target
 - cart and checkout now also surface a live storefront-discovery window backed by published CMS pages, public categories, and visible product opportunities, so active purchase routes can hand shoppers back into content, browse, and upsell paths without dropping the current conversion flow
 - the shared commerce storefront window now also picks the strongest visible product offer instead of the first catalog card, so cart, checkout, and confirmation show a clearer next-buy signal
 - cart and checkout now also surface live product highlights inside their guest account/auth handoff, so anonymous shoppers can keep a next-buy opportunity visible while deciding whether to sign in or create an account

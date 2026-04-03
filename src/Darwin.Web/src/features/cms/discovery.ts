@@ -8,6 +8,12 @@ export type CmsVisibleSort =
   | "ready-first"
   | "attention-first";
 
+export type CmsReviewTarget = {
+  page: PublicPageSummary;
+  missingMetaTitle: boolean;
+  missingMetaDescription: boolean;
+};
+
 export function readCmsVisibleState(value?: string): CmsVisibleState {
   return (
     readAllowedSearchParam(value, ["all", "ready", "needs-attention"] as const) ??
@@ -29,6 +35,39 @@ export function isDiscoveryReadyPage(page: {
   metaDescription?: string | null;
 }) {
   return Boolean(page.metaTitle?.trim() && page.metaDescription?.trim());
+}
+
+export function getCmsReviewTarget(page: PublicPageSummary): CmsReviewTarget {
+  return {
+    page,
+    missingMetaTitle: !page.metaTitle?.trim(),
+    missingMetaDescription: !page.metaDescription?.trim(),
+  };
+}
+
+export function isCmsReviewTargetPending(target: CmsReviewTarget) {
+  return target.missingMetaTitle || target.missingMetaDescription;
+}
+
+export function sortCmsReviewTargets(targets: CmsReviewTarget[]) {
+  return [...targets].sort((left, right) => {
+    const leftRank =
+      Number(left.missingMetaTitle) + Number(left.missingMetaDescription);
+    const rightRank =
+      Number(right.missingMetaTitle) + Number(right.missingMetaDescription);
+
+    if (rightRank !== leftRank) {
+      return rightRank - leftRank;
+    }
+
+    return left.page.title.localeCompare(right.page.title);
+  });
+}
+
+export function getPendingCmsReviewTargets(pages: PublicPageSummary[]) {
+  return sortCmsReviewTargets(
+    pages.map(getCmsReviewTarget).filter(isCmsReviewTargetPending),
+  );
 }
 
 export function filterVisiblePages(

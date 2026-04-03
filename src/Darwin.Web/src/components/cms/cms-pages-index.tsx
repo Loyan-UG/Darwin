@@ -7,7 +7,7 @@ import {
 import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
-import { isDiscoveryReadyPage } from "@/features/cms/discovery";
+import { getPendingCmsReviewTargets, isDiscoveryReadyPage } from "@/features/cms/discovery";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatMoney } from "@/lib/formatting";
@@ -110,6 +110,23 @@ export function CmsPagesIndex({
   const followUpPages = pages.slice(1, 4);
   const readyPagesCount = pages.filter((page) => isDiscoveryReadyPage(page)).length;
   const attentionPagesCount = Math.max(pages.length - readyPagesCount, 0);
+  const attentionQueue = getPendingCmsReviewTargets(pages)
+    .map((target) => ({
+      page: target.page,
+      reason:
+        target.missingMetaTitle && target.missingMetaDescription
+          ? copy.cmsIndexReviewTargetBothMessage
+          : target.missingMetaTitle
+            ? copy.cmsIndexReviewTargetMetaTitleMessage
+            : copy.cmsIndexReviewTargetMetaDescriptionMessage,
+    }))
+    .slice(0, 3);
+  const missingMetaTitleCount = pages.filter(
+    (page) => !page.metaTitle?.trim(),
+  ).length;
+  const missingMetaDescriptionCount = pages.filter(
+    (page) => !page.metaDescription?.trim(),
+  ).length;
   const readinessSignals = [
     readyPagesCount > 0,
     attentionPagesCount > 0,
@@ -122,6 +139,14 @@ export function CmsPagesIndex({
       : readinessSignals >= 2
         ? copy.cmsIndexReadinessStatePartial
         : copy.cmsIndexReadinessStateAttention;
+  const cmsReviewPrimaryHref =
+    readyPagesCount >= attentionPagesCount
+      ? buildCmsHref(1, visibleQuery, "ready", "ready-first")
+      : buildCmsHref(1, visibleQuery, "needs-attention", "attention-first");
+  const cmsReviewPrimaryLabel =
+    readyPagesCount >= attentionPagesCount
+      ? copy.cmsIndexReviewReadyCta
+      : copy.cmsIndexReviewAttentionCta;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -347,6 +372,90 @@ export function CmsPagesIndex({
                   followUpCount: followUpPages.length,
                 })}
               </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            {copy.cmsIndexReviewTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.cmsIndexReviewMessage, {
+              readyCount: readyPagesCount,
+              attentionCount: attentionPagesCount,
+            })}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href={localizeHref(cmsReviewPrimaryHref, culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {cmsReviewPrimaryLabel}
+            </Link>
+            <Link
+              href={localizeHref(
+                buildCmsHref(1, visibleQuery, "all", "title-asc"),
+                culture,
+              )}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.cmsIndexReviewTitleSortCta}
+            </Link>
+            <Link
+              href={localizeHref(buildCmsHref(1, undefined, "all", "featured"), culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.cmsIndexReviewResetCta}
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.cmsIndexReviewMetaTitleLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.cmsIndexReviewMetaTitleValue, {
+                  count: missingMetaTitleCount,
+                })}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.cmsIndexReviewMetaDescriptionLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.cmsIndexReviewMetaDescriptionValue, {
+                  count: missingMetaDescriptionCount,
+                })}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+              {copy.cmsIndexReviewTargetsTitle}
+            </p>
+            <div className="mt-3 grid gap-3">
+              {attentionQueue.length > 0 ? (
+                attentionQueue.map(({ page, reason }) => (
+                  <Link
+                    key={page.id}
+                    href={localizeHref(`/cms/${page.slug}`, culture)}
+                    className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
+                  >
+                    <p className="font-semibold text-[var(--color-text-primary)]">
+                      {page.title}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {reason}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {copy.cmsIndexReviewTargetsFallback}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -649,6 +758,11 @@ export function CmsPagesIndex({
 
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {group.items.map((page) => (
+                  (() => {
+                    const missingMetaTitle = !page.metaTitle?.trim();
+                    const missingMetaDescription = !page.metaDescription?.trim();
+
+                    return (
                   <article
                     key={page.id}
                     className="flex h-full flex-col rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
@@ -660,10 +774,27 @@ export function CmsPagesIndex({
                       <Link
                         href={localizeHref(`/cms/${page.slug}`, culture)}
                         className="transition hover:text-[var(--color-brand)]"
-                      >
-                        {page.title}
-                      </Link>
-                    </h3>
+                        >
+                          {page.title}
+                        </Link>
+                      </h3>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-[var(--color-surface-panel-strong)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-primary)]">
+                          {isDiscoveryReadyPage(page)
+                            ? copy.cmsCardReadyLabel
+                            : copy.cmsCardAttentionLabel}
+                        </span>
+                        {missingMetaTitle ? (
+                          <span className="rounded-full bg-[rgba(217,111,50,0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent)]">
+                            {copy.cmsCardMissingMetaTitleLabel}
+                          </span>
+                        ) : null}
+                        {missingMetaDescription ? (
+                          <span className="rounded-full bg-[rgba(217,111,50,0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent)]">
+                            {copy.cmsCardMissingMetaDescriptionLabel}
+                          </span>
+                        ) : null}
+                      </div>
                     <p className="mt-4 flex-1 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {page.metaDescription ?? copy.cmsCardDescriptionFallback}
                     </p>
@@ -676,6 +807,8 @@ export function CmsPagesIndex({
                       </Link>
                     </div>
                   </article>
+                    );
+                  })()
                 ))}
               </div>
             </section>

@@ -8,6 +8,11 @@ import {
   sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
 import { summarizeCmsContent } from "@/features/cms/content-summary";
+import {
+  getCmsReviewTarget,
+  getPendingCmsReviewTargets,
+  isCmsReviewTargetPending,
+} from "@/features/cms/discovery";
 import type { PublicPageDetail, PublicPageSummary } from "@/features/cms/types";
 import { formatMoney } from "@/lib/formatting";
 import { sanitizeHtmlFragment } from "@/lib/html-fragment";
@@ -91,6 +96,20 @@ export function CmsPageDetail({
     relatedPages.length > 0
       ? copy.cmsReadinessStateReady
       : copy.cmsReadinessStateAttention;
+  const cmsReviewPrimaryHref =
+    discoveryReadySignals >= 4
+      ? buildAppQueryPath("/cms", {
+          visibleState: "ready",
+          visibleSort: "ready-first",
+        })
+      : buildAppQueryPath("/cms", {
+          visibleState: "needs-attention",
+          visibleSort: "attention-first",
+        });
+  const cmsReviewPrimaryLabel =
+    discoveryReadySignals >= 4
+      ? copy.cmsReviewWindowReadyCta
+      : copy.cmsReviewWindowAttentionCta;
   if (!page) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -111,6 +130,14 @@ export function CmsPageDetail({
       </section>
     );
   }
+
+  const currentReviewTarget = getCmsReviewTarget(page);
+  const currentNeedsReview = isCmsReviewTargetPending(currentReviewTarget);
+  const reviewQueue = getPendingCmsReviewTargets(
+    relatedPages.filter((entry) => entry.slug !== page.slug),
+  );
+  const nextReviewPage = reviewQueue[0] ?? null;
+  const reviewQueuePreview = reviewQueue.slice(0, 3);
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -330,6 +357,109 @@ export function CmsPageDetail({
                   {navigationCoverageKey}
                 </p>
               </div>
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.cmsReviewWindowTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.cmsReviewWindowMessage, {
+                status: discoveryReadinessKey,
+              })}
+            </p>
+            <div className="mt-5 flex flex-col gap-3">
+              <Link
+                href={localizeHref(cmsReviewPrimaryHref, culture)}
+                className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {cmsReviewPrimaryLabel}
+              </Link>
+              <Link
+                href={localizeHref(
+                  buildAppQueryPath("/cms", {
+                    visibleSort: "title-asc",
+                  }),
+                  culture,
+                )}
+                className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.cmsReviewWindowBrowseAllCta}
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.cmsNextReviewTargetTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {nextReviewPage
+                ? nextReviewPage.missingMetaTitle && nextReviewPage.missingMetaDescription
+                  ? copy.cmsNextReviewTargetBothMessage
+                  : nextReviewPage.missingMetaTitle
+                    ? copy.cmsNextReviewTargetMetaTitleMessage
+                    : copy.cmsNextReviewTargetMetaDescriptionMessage
+                : copy.cmsNextReviewTargetFallback}
+            </p>
+            {nextReviewPage ? (
+              <div className="mt-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="font-semibold text-[var(--color-text-primary)]">
+                  {nextReviewPage.page.title}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {nextReviewPage.page.metaDescription ?? copy.cmsAdjacentPageFallback}
+                </p>
+                <div className="mt-4">
+                  <Link
+                    href={localizeHref(`/cms/${nextReviewPage.page.slug}`, culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                  >
+                    {copy.cmsNextReviewTargetCta}
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.cmsReviewQueueTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.cmsReviewQueueMessage, {
+                currentStatus: currentNeedsReview
+                  ? copy.cmsReviewQueueCurrentPending
+                  : copy.cmsReviewQueueCurrentReady,
+                remainingCount: reviewQueue.length,
+              })}
+            </p>
+            <div className="mt-4 grid gap-3">
+              {reviewQueuePreview.length > 0 ? (
+                reviewQueuePreview.map((target) => (
+                  <Link
+                    key={target.page.id}
+                    href={localizeHref(`/cms/${target.page.slug}`, culture)}
+                    className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-panel)]"
+                  >
+                    <p className="font-semibold text-[var(--color-text-primary)]">
+                      {target.page.title}
+                    </p>
+                    <p className="mt-2">
+                      {target.missingMetaTitle && target.missingMetaDescription
+                        ? copy.cmsReviewQueueBothMessage
+                        : target.missingMetaTitle
+                          ? copy.cmsReviewQueueMetaTitleMessage
+                          : copy.cmsReviewQueueMetaDescriptionMessage}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {copy.cmsReviewQueueFallback}
+                </div>
+              )}
             </div>
           </div>
 

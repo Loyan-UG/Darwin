@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import type { PublicPageSummary } from "@/features/cms/types";
 import {
   filterVisiblePages,
+  getPendingCmsReviewTargets,
   isDiscoveryReadyPage,
   readCmsVisibleSort,
   readCmsVisibleState,
@@ -112,4 +113,36 @@ test("sortVisiblePages prioritizes ready or attention pages inside the visible w
     sortVisiblePages(pages, "attention-first").map((page) => page.id),
     ["a-attention", "b-ready", "c-ready"],
   );
+});
+
+test("getPendingCmsReviewTargets prioritizes the strongest metadata debt first", () => {
+  const pages = [
+    createPage({
+      id: "both",
+      title: "Both Missing",
+      slug: "both-missing",
+      metaTitle: null,
+      metaDescription: null,
+    }),
+    createPage({
+      id: "title",
+      title: "Title Missing",
+      slug: "title-missing",
+      metaTitle: null,
+      metaDescription: "Description",
+    }),
+    createPage({
+      id: "ready",
+      title: "Ready",
+      slug: "ready",
+      metaTitle: "Meta",
+      metaDescription: "Description",
+    }),
+  ];
+
+  const targets = getPendingCmsReviewTargets(pages);
+
+  assert.deepEqual(targets.map((target) => target.page.id), ["both", "title"]);
+  assert.equal(targets[0]?.missingMetaTitle, true);
+  assert.equal(targets[0]?.missingMetaDescription, true);
 });

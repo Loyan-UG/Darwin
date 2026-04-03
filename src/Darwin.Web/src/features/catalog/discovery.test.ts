@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import type { PublicProductSummary } from "@/features/catalog/types";
 import {
   filterCatalogVisibleProducts,
+  getCatalogReviewTargets,
   getCatalogSavingsAmount,
   readCatalogVisibleState,
   sortCatalogVisibleProducts,
@@ -111,4 +112,38 @@ test("sortCatalogVisibleProducts prioritizes offer-first or base-first review wi
     ),
     ["base-a", "offer-b", "offer-c"],
   );
+});
+
+test("getCatalogReviewTargets prioritizes missing images before savings-led review targets", () => {
+  const products = [
+    createProduct({
+      id: "missing-image",
+      name: "Missing Image",
+      primaryImageUrl: null,
+      compareAtPriceMinor: null,
+    }),
+    createProduct({
+      id: "strong-offer",
+      name: "Strong Offer",
+      primaryImageUrl: "/media/offer.png",
+      priceMinor: 700,
+      compareAtPriceMinor: 1000,
+    }),
+    createProduct({
+      id: "base",
+      name: "Base Product",
+      primaryImageUrl: "/media/base.png",
+      compareAtPriceMinor: null,
+    }),
+  ];
+
+  const targets = getCatalogReviewTargets(products);
+
+  assert.deepEqual(targets.map((target) => target.product.id), [
+    "missing-image",
+    "strong-offer",
+    "base",
+  ]);
+  assert.equal(targets[0]?.missingImage, true);
+  assert.equal(targets[1]?.savingsAmount, 300);
 });
