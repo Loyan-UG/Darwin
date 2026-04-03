@@ -1,36 +1,20 @@
 import "server-only";
-import { getPublicMenuByName } from "@/features/cms/api/public-cms";
-import type { PublicMenuItem } from "@/features/cms/types";
 import {
   getFallbackFooterGroups,
   getFallbackPrimaryNavigation,
   getUtilityLinks,
 } from "@/features/shell/navigation";
+import { getShellContext } from "@/features/shell/server/get-shell-context";
+import { resolveShellMenu } from "@/features/shell/shell-menu";
 import type { ShellLink, ShellModel } from "@/features/shell/types";
 import { formatResource, getSharedResource } from "@/localization";
+import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
-import { getRequestCulture } from "@/lib/request-culture";
+import { summarizeShellModelHealth } from "@/lib/route-health";
+import { shellObservationContext } from "@/lib/route-observation-context";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { toSafeHttpUrl } from "@/lib/webapi-url";
 import { resolveTheme } from "@/themes/registry";
-
-function sortMenuItems(items: PublicMenuItem[]) {
-  return [...items].sort((left, right) => left.sortOrder - right.sortOrder);
-}
-
-function mapMenuItemsToLinks(items: PublicMenuItem[]): ShellLink[] {
-  return sortMenuItems(items)
-    .filter((item) => !item.parentId && item.url)
-    .flatMap((item) => {
-      const href = normalizeShellHref(item.url);
-      return href
-        ? [{
-            label: item.label,
-            href,
-          }]
-        : [];
-    });
-}
 
 function normalizeShellHref(rawHref: string) {
   const trimmed = rawHref.trim();
@@ -53,62 +37,56 @@ function localizeShellLinks(links: ShellLink[], culture: string) {
   }));
 }
 
-function getMenuMessage(
-  culture: string,
-  menuName: string,
-  menuStatus: string,
-  menuResultMessage?: string,
-) {
+function getEmptyMenuMessage(culture: string, menuName: string) {
   const shared = getSharedResource(culture);
-
-  if (menuStatus === "ok") {
-    return formatResource(shared.menuMessages.emptyMenu, { menuName });
-  }
-
-  if (menuStatus === "not-found") {
-    return formatResource(shared.menuMessages.notFound, { menuName });
-  }
-
-  return menuResultMessage;
+  return formatResource(shared.menuMessages.emptyMenu, { menuName });
 }
 
-export async function getShellModel(): Promise<ShellModel> {
-  const runtimeConfig = getSiteRuntimeConfig();
-  const activeTheme = resolveTheme(runtimeConfig.theme);
-  const culture = await getRequestCulture();
-  const menuResult = await getPublicMenuByName(runtimeConfig.mainMenuName);
-  const cmsLinks = menuResult.data
-    ? localizeShellLinks(mapMenuItemsToLinks(menuResult.data.items), culture)
-    : [];
-  const primaryNavigation = cmsLinks.length > 0
-    ? cmsLinks
-    : localizeShellLinks(getFallbackPrimaryNavigation(culture), culture);
-  const menuStatus = cmsLinks.length > 0
-    ? "ok"
-    : menuResult.status === "ok"
-      ? "empty-menu"
-      : menuResult.status;
-  const menuMessage = cmsLinks.length > 0
-    ? undefined
-    : getMenuMessage(
-        culture,
-        runtimeConfig.mainMenuName,
-        menuResult.status,
-        menuResult.message,
-      );
+function getNotFoundMenuMessage(culture: string, menuName: string) {
+  const shared = getSharedResource(culture);
+  return formatResource(shared.menuMessages.notFound, { menuName });
+}
 
-  return {
-    activeThemeName: activeTheme.displayName,
+export const getShellModel = createCachedObservedLoader({
+  area: "shell-model",
+  operation: "load-shell-model",
+  thresholdMs: 250,
+  getContext: (culture: string) => ({
+    ...shellObservationContext(getSiteRuntimeConfig().mainMenuName),
     culture,
-    supportedCultures: runtimeConfig.supportedCultures,
-    menuSource: cmsLinks.length > 0 ? "cms" : "fallback",
-    menuStatus,
-    menuMessage,
-    primaryNavigation,
-    utilityLinks: localizeShellLinks(getUtilityLinks(culture), culture),
-    footerGroups: getFallbackFooterGroups(culture).map((group) => ({
-      ...group,
-      links: localizeShellLinks(group.links, culture),
-    })),
-  };
-}
+  }),
+  getSuccessContext: summarizeShellModelHealth,
+  load: async (culture: string): Promise<ShellModel> => {
+    const runtimeConfig = getSiteRuntimeConfig();
+    const activeTheme = resolveTheme(runtimeConfig.theme);
+    const menuResult = await getShellContext(runtimeConfig.mainMenuName);
+    const menu = resolveShellMenu({
+      culture,
+      menuName: runtimeConfig.mainMenuName,
+      menuResultStatus: menuResult.status,
+      menuResultMessage: menuResult.message,
+      menuItems: menuResult.data?.items,
+      fallbackLinks: getFallbackPrimaryNavigation(culture),
+      localizeLink: localizeHref,
+      normalizeHref: normalizeShellHref,
+      formatEmptyMenuMessage: (menuName) => getEmptyMenuMessage(culture, menuName),
+      formatNotFoundMenuMessage: (menuName) =>
+        getNotFoundMenuMessage(culture, menuName),
+    });
+
+    return {
+      activeThemeName: activeTheme.displayName,
+      culture,
+      supportedCultures: runtimeConfig.supportedCultures,
+      menuSource: menu.menuSource,
+      menuStatus: menu.menuStatus,
+      menuMessage: menu.menuMessage,
+      primaryNavigation: menu.primaryNavigation,
+      utilityLinks: localizeShellLinks(getUtilityLinks(culture), culture),
+      footerGroups: getFallbackFooterGroups(culture).map((group) => ({
+        ...group,
+        links: localizeShellLinks(group.links, culture),
+      })),
+    };
+  },
+});

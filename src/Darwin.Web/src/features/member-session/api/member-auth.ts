@@ -5,6 +5,7 @@ import {
   createDiagnostics,
   getResponseDiagnostics,
   logApiFailure,
+  withFailureDiagnostics,
 } from "@/lib/api-diagnostics";
 import { toLocalizedQueryMessage } from "@/localization";
 
@@ -47,12 +48,16 @@ async function postAuthJson<T>(
         // Keep status detail.
       }
 
-      logApiFailure(diagnostics, detail);
+      const failureDiagnostics =
+        response.status === 404
+          ? withFailureDiagnostics(diagnostics, "not-found")
+          : withFailureDiagnostics(diagnostics, "http-error");
+      logApiFailure(failureDiagnostics, detail);
       return {
         data: null,
         status: response.status === 404 ? "not-found" : "http-error",
         message: detail,
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
@@ -63,15 +68,22 @@ async function postAuthJson<T>(
         diagnostics,
       };
     } catch (error) {
-      logApiFailure(diagnostics, error);
+      const failureDiagnostics = withFailureDiagnostics(
+        diagnostics,
+        "invalid-payload",
+      );
+      logApiFailure(failureDiagnostics, error);
       return {
         data: null,
         status: "ok",
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
   } catch (error) {
-    const diagnostics = createDiagnostics("member-auth", path);
+    const diagnostics = withFailureDiagnostics(
+      createDiagnostics("member-auth", path),
+      "network-error",
+    );
     logApiFailure(diagnostics, error);
     return {
       data: null,

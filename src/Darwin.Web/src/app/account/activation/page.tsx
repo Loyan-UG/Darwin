@@ -1,20 +1,13 @@
 import { ActivationPage } from "@/components/account/activation-page";
-import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
+import { getPublicActivationPageContext } from "@/features/account/server/get-public-auth-page-context";
+import { getPublicActivationSeoMetadata } from "@/features/account/server/get-public-auth-seo-metadata";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
-import { buildNoIndexMetadata } from "@/lib/seo";
-import { getMemberResource } from "@/localization";
 
 export async function generateMetadata() {
   const culture = await getRequestCulture();
-  const copy = getMemberResource(culture);
-
-  return buildNoIndexMetadata(
-    culture,
-    copy.activationMetaTitle,
-    undefined,
-    "/account/activation",
-  );
+  const { metadata } = await getPublicActivationSeoMetadata(culture);
+  return metadata;
 }
 
 type ActivationRouteProps = {
@@ -32,7 +25,7 @@ export default async function ActivationRoute({
 }: ActivationRouteProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const storefrontContext = await getPublicAuthStorefrontContext(culture);
+  const { storefrontProps } = await getPublicActivationPageContext(culture);
 
   return (
     <ActivationPage
@@ -45,14 +38,7 @@ export default async function ActivationRoute({
         readSearchParam(resolvedSearchParams?.returnPath),
         "/account",
       )}
-      cmsPages={storefrontContext.cmsPages}
-      cmsPagesStatus={storefrontContext.cmsPagesStatus}
-      categories={storefrontContext.categories}
-      categoriesStatus={storefrontContext.categoriesStatus}
-      products={storefrontContext.products}
-      productsStatus={storefrontContext.productsStatus}
-      storefrontCart={storefrontContext.storefrontCart}
-      storefrontCartStatus={storefrontContext.storefrontCartStatus}
+      {...storefrontProps}
     />
   );
 }

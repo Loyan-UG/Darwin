@@ -1,5 +1,5 @@
 export const cartzillaGroceryTheme = {
-  id: "cartzilla-grocery",
+  id: "grocer",
   displayName: "Cartzilla Grocery-inspired",
   metadata: {
     title: "Darwin Storefront",

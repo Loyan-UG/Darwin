@@ -5,6 +5,8 @@ import { availableThemes, resolveTheme } from "@/themes/registry";
 test("resolveTheme returns the configured runtime theme when available", () => {
   assert.equal(resolveTheme("atelier").id, "atelier");
   assert.equal(resolveTheme("harbor").id, "harbor");
+  assert.equal(resolveTheme("noir").id, "noir");
+  assert.equal(resolveTheme("solstice").id, "solstice");
 });
 
 test("resolveTheme falls back to the default theme for unknown ids", () => {

@@ -1,8 +1,10 @@
+import { availableThemes, type ThemeId } from "@/themes/registry";
+
 type SiteRuntimeConfig = {
   webApiBaseUrl: string;
   siteUrl: string;
   mainMenuName: string;
-  theme: "grocer" | "atelier" | "harbor";
+  theme: ThemeId;
   defaultCulture: string;
   supportedCultures: string[];
   cultureCookieName: string;
@@ -21,12 +23,14 @@ function parseSupportedCultures(value?: string) {
   return items.length > 0 ? Array.from(new Set(items)) : ["de-DE", "en-US"];
 }
 
-function parseTheme(value?: string): "grocer" | "atelier" | "harbor" {
-  if (value === "atelier" || value === "harbor") {
-    return value;
+const availableThemeIds = new Set<string>(availableThemes.map((theme) => theme.id));
+
+function parseTheme(value?: string): ThemeId {
+  if (value && availableThemeIds.has(value)) {
+    return value as ThemeId;
   }
 
-  return "grocer";
+  return availableThemes[0].id;
 }
 
 export function getSiteRuntimeConfig(): SiteRuntimeConfig {

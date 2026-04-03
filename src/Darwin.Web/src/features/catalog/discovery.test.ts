@@ -5,6 +5,7 @@ import {
   filterCatalogVisibleProducts,
   getCatalogReviewTargets,
   getCatalogSavingsAmount,
+  readCatalogVisibleSort,
   readCatalogVisibleState,
   sortCatalogVisibleProducts,
 } from "@/features/catalog/discovery";
@@ -28,6 +29,13 @@ test("readCatalogVisibleState keeps only supported catalog lens values", () => {
   assert.equal(readCatalogVisibleState("offers"), "offers");
   assert.equal(readCatalogVisibleState("base"), "base");
   assert.equal(readCatalogVisibleState("unknown"), "all");
+});
+
+test("readCatalogVisibleSort keeps only supported catalog review sort values", () => {
+  assert.equal(readCatalogVisibleSort("offers-first"), "offers-first");
+  assert.equal(readCatalogVisibleSort("base-first"), "base-first");
+  assert.equal(readCatalogVisibleSort("price-desc"), "price-desc");
+  assert.equal(readCatalogVisibleSort("unknown"), "featured");
 });
 
 test("getCatalogSavingsAmount returns only positive compare-at savings", () => {

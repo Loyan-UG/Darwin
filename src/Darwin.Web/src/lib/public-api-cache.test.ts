@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getPublicApiCachePolicy } from "@/lib/public-api-cache";
+import {
+  getPublicApiCachePolicy,
+  normalizePublicApiCachePath,
+} from "@/lib/public-api-cache";
 
 test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS and category feeds", () => {
   assert.deepEqual(
@@ -34,5 +37,22 @@ test("getPublicApiCachePolicy keeps catalog browse and unknown feeds on shorter 
   assert.equal(
     getPublicApiCachePolicy("unknown-feed", "/api/v1/public/unknown").revalidate,
     60,
+  );
+});
+
+test("normalizePublicApiCachePath keeps equivalent query strings on one canonical tag", () => {
+  assert.equal(
+    normalizePublicApiCachePath(
+      "/api/v1/public/catalog/products?pageSize=12&page=1&culture=de-DE",
+    ),
+    "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
+      "/api/v1/public/catalog/products?pageSize=12&page=1&culture=de-DE",
+    ).tags[1],
+    "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
   );
 });

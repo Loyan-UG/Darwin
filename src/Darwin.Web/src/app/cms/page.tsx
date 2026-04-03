@@ -1,23 +1,17 @@
 import { CmsPagesIndex } from "@/components/cms/cms-pages-index";
-import { getPublicCart } from "@/features/cart/api/public-cart";
-import { getAnonymousCartId } from "@/features/cart/cookies";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import {
   filterVisiblePages,
   readCmsVisibleSort,
   readCmsVisibleState,
   sortVisiblePages,
 } from "@/features/cms/discovery";
+import { getCmsIndexPageContext } from "@/features/cms/server/get-cms-page-context";
+import { getCmsIndexSeoMetadata } from "@/features/cms/server/get-cms-index-seo-metadata";
 import {
   readPositiveIntegerSearchParam,
   readSearchTextParam,
 } from "@/features/checkout/helpers";
-import { buildAppQueryPath } from "@/lib/locale-routing";
-import { getSharedResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
-import { observeAsyncOperation } from "@/lib/route-observability";
-import { buildSeoMetadata } from "@/lib/seo";
-import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 
 export async function generateMetadata({
   searchParams,
@@ -30,34 +24,9 @@ export async function generateMetadata({
   }>;
 }) {
   const culture = await getRequestCulture();
-  const shared = getSharedResource(culture);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
-  const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
-  const visibleState = readCmsVisibleState(resolvedSearchParams?.visibleState);
-  const visibleSort = readCmsVisibleSort(resolvedSearchParams?.visibleSort);
-
-  return buildSeoMetadata({
-    culture,
-    title: shared.cmsIndexMetaTitle,
-    description: shared.cmsIndexMetaDescription,
-    path: buildAppQueryPath("/cms", {
-      page: safePage > 1 ? safePage : undefined,
-      visibleQuery,
-      visibleState: visibleState !== "all" ? visibleState : undefined,
-      visibleSort: visibleSort !== "featured" ? visibleSort : undefined,
-    }),
-    noIndex:
-      safePage > 1 ||
-      Boolean(visibleQuery) ||
-      visibleState !== "all" ||
-      visibleSort !== "featured",
-    allowLanguageAlternates:
-      safePage === 1 &&
-      !visibleQuery &&
-      visibleState === "all" &&
-      visibleSort === "featured",
-  });
+  const { metadata } = await getCmsIndexSeoMetadata(culture, resolvedSearchParams);
+  return metadata;
 }
 
 type CmsIndexRouteProps = {
@@ -78,27 +47,11 @@ export default async function CmsIndexRoute({
   const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
   const visibleState = readCmsVisibleState(resolvedSearchParams?.visibleState);
   const visibleSort = readCmsVisibleSort(resolvedSearchParams?.visibleSort);
-  const anonymousCartId = await getAnonymousCartId();
-  const [pagesResult, storefrontContext, cartResult] =
-    await observeAsyncOperation(
-      {
-        area: "cms-index",
-        operation: "load-route",
-        thresholdMs: 325,
-      },
-      () =>
-        Promise.all([
-          getPublishedPages({
-            page: safePage,
-            pageSize: 12,
-            culture,
-          }),
-          getStorefrontContinuationContext(culture),
-          anonymousCartId
-            ? getPublicCart(anonymousCartId)
-            : Promise.resolve({ data: null, status: "not-found" as const }),
-        ]),
-    );
+  const { browseContext, continuationSlice } = await getCmsIndexPageContext(
+    culture,
+    safePage,
+  );
+  const { pagesResult } = browseContext;
   const visiblePages = sortVisiblePages(
     filterVisiblePages(pagesResult.data?.items ?? [], visibleState, visibleQuery),
     visibleSort,
@@ -123,20 +76,11 @@ export default async function CmsIndexRoute({
       visibleQuery={visibleQuery}
       visibleState={visibleState}
       visibleSort={visibleSort}
-      categories={storefrontContext.categories}
-      categoriesStatus={storefrontContext.categoriesStatus}
-      products={storefrontContext.products}
-      productsStatus={storefrontContext.productsStatus}
-      cartSummary={
-        cartResult.data
-          ? {
-              status: cartResult.status,
-              itemCount: cartResult.data.items.length,
-              currency: cartResult.data.currency,
-              grandTotalGrossMinor: cartResult.data.grandTotalGrossMinor,
-            }
-          : null
-      }
+      categories={continuationSlice.categories}
+      categoriesStatus={continuationSlice.categoriesStatus}
+      products={continuationSlice.products}
+      productsStatus={continuationSlice.productsStatus}
+      cartSummary={continuationSlice.cartSummary}
     />
   );
 }

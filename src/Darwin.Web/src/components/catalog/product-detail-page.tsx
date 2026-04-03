@@ -3,8 +3,14 @@ import { AddToCartForm } from "@/components/cart/add-to-cart-form";
 import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-window";
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
-import { getCatalogReviewTargets } from "@/features/catalog/discovery";
 import { getProductSavingsPercent } from "@/features/catalog/merchandising";
+import {
+  buildCatalogReviewTargetHref,
+} from "@/features/review/review-window";
+import {
+  buildPreferredCatalogReviewWindowHref,
+  getPendingCatalogReviewQueueState,
+} from "@/features/review/review-workflow";
 import type {
   PublicCategorySummary,
   PublicProductDetail,
@@ -26,6 +32,12 @@ type ProductDetailPageProps = {
   product: PublicProductDetail | null;
   categories: PublicCategorySummary[];
   primaryCategory: PublicCategorySummary | null;
+  reviewWindow?: {
+    category?: string;
+    visibleQuery?: string;
+    visibleState?: "all" | "offers" | "base";
+    visibleSort?: "featured" | "name-asc" | "price-asc" | "price-desc" | "savings-desc" | "offers-first" | "base-first";
+  };
   relatedProducts: PublicProductSummary[];
   cmsPages: PublicPageSummary[];
   cartSummary: {
@@ -44,6 +56,7 @@ export function ProductDetailPage({
   product,
   categories,
   primaryCategory,
+  reviewWindow,
   relatedProducts,
   cmsPages,
   cartSummary,
@@ -140,14 +153,19 @@ export function ProductDetailPage({
       : readinessSignals >= 3
         ? copy.productReadinessStatePartial
         : copy.productReadinessStateAttention;
-  const reviewCatalogPath = buildAppQueryPath("/catalog", {
-    category: primaryCategory?.slug,
-    visibleState: hasOffer ? "offers" : "base",
-    visibleSort: hasOffer ? "offers-first" : "base-first",
-  });
-  const reviewQueue = getCatalogReviewTargets(relatedProducts);
-  const nextReviewProduct = reviewQueue[0] ?? null;
-  const reviewQueuePreview = reviewQueue.slice(0, 3);
+  const reviewCatalogPath = buildPreferredCatalogReviewWindowHref(
+    hasOffer ? "offers" : "base",
+    {
+      category: reviewWindow?.category ?? primaryCategory?.slug,
+      visibleQuery: reviewWindow?.visibleQuery,
+      visibleState: reviewWindow?.visibleState,
+      visibleSort: reviewWindow?.visibleSort,
+    },
+  );
+  const reviewQueueState = getPendingCatalogReviewQueueState(relatedProducts);
+  const reviewQueue = reviewQueueState.queue;
+  const nextReviewProduct = reviewQueueState.nextTarget;
+  const reviewQueuePreview = reviewQueueState.previewTargets;
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
@@ -424,7 +442,13 @@ export function ProductDetailPage({
                 </p>
                 <div className="mt-4">
                   <Link
-                    href={localizeHref(`/catalog/${nextReviewProduct.product.slug}`, culture)}
+                    href={localizeHref(
+                      buildCatalogReviewTargetHref(
+                        nextReviewProduct.product.slug,
+                        reviewWindow,
+                      ),
+                      culture,
+                    )}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.productNextReviewTargetCta}
@@ -448,7 +472,10 @@ export function ProductDetailPage({
                 reviewQueuePreview.map((target) => (
                   <Link
                     key={target.product.id}
-                    href={localizeHref(`/catalog/${target.product.slug}`, culture)}
+                    href={localizeHref(
+                      buildCatalogReviewTargetHref(target.product.slug, reviewWindow),
+                      culture,
+                    )}
                     className="rounded-2xl bg-[var(--color-surface-panel)] px-4 py-4 transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     <p className="font-semibold text-[var(--color-text-primary)]">

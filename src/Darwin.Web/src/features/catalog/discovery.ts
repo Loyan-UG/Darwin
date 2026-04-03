@@ -11,6 +11,20 @@ export function readCatalogVisibleState(value?: string): CatalogVisibleState {
   );
 }
 
+export function readCatalogVisibleSort(value?: string): CatalogVisibleSort {
+  return (
+    readAllowedSearchParam(value, [
+      "featured",
+      "name-asc",
+      "price-asc",
+      "price-desc",
+      "savings-desc",
+      "offers-first",
+      "base-first",
+    ] as const) ?? "featured"
+  );
+}
+
 export type CatalogReviewTarget = {
   product: PublicProductSummary;
   missingImage: boolean;

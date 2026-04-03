@@ -1,20 +1,13 @@
 import { RegisterPage } from "@/components/account/register-page";
-import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
+import { getPublicRegisterPageContext } from "@/features/account/server/get-public-auth-page-context";
+import { getPublicRegisterSeoMetadata } from "@/features/account/server/get-public-auth-seo-metadata";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
-import { buildNoIndexMetadata } from "@/lib/seo";
-import { getMemberResource } from "@/localization";
 
 export async function generateMetadata() {
   const culture = await getRequestCulture();
-  const copy = getMemberResource(culture);
-
-  return buildNoIndexMetadata(
-    culture,
-    copy.registerMetaTitle,
-    undefined,
-    "/account/register",
-  );
+  const { metadata } = await getPublicRegisterSeoMetadata(culture);
+  return metadata;
 }
 
 type RegisterRouteProps = {
@@ -30,7 +23,7 @@ function readSearchParam(
 export default async function RegisterRoute({ searchParams }: RegisterRouteProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const storefrontContext = await getPublicAuthStorefrontContext(culture);
+  const { storefrontProps } = await getPublicRegisterPageContext(culture);
 
   return (
     <RegisterPage
@@ -42,14 +35,7 @@ export default async function RegisterRoute({ searchParams }: RegisterRouteProps
         readSearchParam(resolvedSearchParams?.returnPath),
         "/account",
       )}
-      cmsPages={storefrontContext.cmsPages}
-      cmsPagesStatus={storefrontContext.cmsPagesStatus}
-      categories={storefrontContext.categories}
-      categoriesStatus={storefrontContext.categoriesStatus}
-      products={storefrontContext.products}
-      productsStatus={storefrontContext.productsStatus}
-      storefrontCart={storefrontContext.storefrontCart}
-      storefrontCartStatus={storefrontContext.storefrontCartStatus}
+      {...storefrontProps}
     />
   );
 }

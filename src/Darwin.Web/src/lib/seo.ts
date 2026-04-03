@@ -13,6 +13,7 @@ type SeoMetadataInput = {
   noIndex?: boolean;
   type?: "website" | "article";
   allowLanguageAlternates?: boolean;
+  languageAlternates?: Record<string, string>;
 };
 
 function collapseWhitespace(value: string) {
@@ -45,6 +46,7 @@ export function buildSeoMetadata({
   noIndex = false,
   type = "website",
   allowLanguageAlternates = false,
+  languageAlternates,
 }: SeoMetadataInput): Metadata {
   const shared = getSharedResource(culture);
   const runtimeConfig = getSiteRuntimeConfig();
@@ -53,8 +55,21 @@ export function buildSeoMetadata({
     ? buildLocalizedPath(normalizedPath, culture)
     : normalizedPath;
   const resolvedImageUrl = imageUrl ? toWebApiUrl(imageUrl) : undefined;
-  const languageAlternates =
-    allowLanguageAlternates && isPublicLocalizedPath(normalizedPath)
+  const normalizedExplicitAlternates = languageAlternates
+    ? {
+        ...languageAlternates,
+        ...(languageAlternates["x-default"]
+          ? {}
+          : {
+              "x-default":
+                languageAlternates[runtimeConfig.defaultCulture] ??
+                localizedCanonicalPath,
+            }),
+      }
+    : undefined;
+  const derivedLanguageAlternates =
+    normalizedExplicitAlternates ??
+    (allowLanguageAlternates && isPublicLocalizedPath(normalizedPath)
       ? {
           "x-default": buildLocalizedPath(
             normalizedPath,
@@ -67,14 +82,16 @@ export function buildSeoMetadata({
             ]),
           ),
         }
-      : undefined;
+      : undefined);
 
   return {
     title,
     description,
     alternates: {
       canonical: localizedCanonicalPath,
-      ...(languageAlternates ? { languages: languageAlternates } : {}),
+      ...(derivedLanguageAlternates
+        ? { languages: derivedLanguageAlternates }
+        : {}),
     },
     openGraph: {
       type,

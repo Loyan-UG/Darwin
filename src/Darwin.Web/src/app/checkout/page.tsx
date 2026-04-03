@@ -1,6 +1,7 @@
 import { CheckoutPage } from "@/components/checkout/checkout-page";
-import { getCartViewModel } from "@/features/cart/server/get-cart-view-model";
 import { createPublicCheckoutIntent } from "@/features/checkout/api/public-checkout";
+import { getCheckoutPageContext } from "@/features/checkout/server/get-commerce-page-context";
+import { getCheckoutSeoMetadata } from "@/features/checkout/server/get-commerce-seo-metadata";
 import {
   hasCheckoutDraftValues,
   isCheckoutAddressComplete,
@@ -11,27 +12,12 @@ import {
   toCheckoutDraftFromMemberProfile,
   toCheckoutAddress,
 } from "@/features/checkout/helpers";
-import { getMemberSession } from "@/features/member-session/cookies";
-import {
-  getMemberCommerceSummaryContext,
-  getMemberIdentityContext,
-} from "@/features/member-portal/server/get-member-summary-context";
-import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
-import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
-import { observeAsyncOperation } from "@/lib/route-observability";
-import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
   const culture = await getRequestCulture();
-  const copy = getCommerceResource(culture);
-
-  return buildNoIndexMetadata(
-    culture,
-    copy.checkoutMetaTitle,
-    copy.checkoutMetaDescription,
-    "/checkout",
-  );
+  const { metadata } = await getCheckoutSeoMetadata(culture);
+  return metadata;
 }
 
 type CheckoutRouteProps = {
@@ -41,30 +27,19 @@ type CheckoutRouteProps = {
 export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const culture = await getRequestCulture();
-  const [model, memberSession, storefrontContext] = await observeAsyncOperation(
-    {
-      area: "checkout",
-      operation: "load-route",
-      thresholdMs: 350,
-    },
-    () =>
-      Promise.all([
-        getCartViewModel(),
-        getMemberSession(),
-        getStorefrontContinuationContext(culture),
-      ]),
-  );
+  const { routeContext } = await getCheckoutPageContext(culture);
+  const {
+    model,
+    memberSession,
+    identityContext,
+    commerceSummaryContext,
+    storefrontContext,
+  } = routeContext;
   const requestedDraft = readCheckoutDraftFromSearchParams(resolvedSearchParams);
   const checkoutError = readSingleSearchParam(resolvedSearchParams?.checkoutError);
   const selectedMemberAddressId = readSingleSearchParam(
     resolvedSearchParams?.memberAddressId,
   );
-  const [identityContext, commerceSummaryContext] = memberSession
-    ? await Promise.all([
-        getMemberIdentityContext(),
-        getMemberCommerceSummaryContext(),
-      ])
-    : [null, null];
   const memberAddresses = identityContext?.addressesResult.data ?? [];
   const memberProfile = identityContext?.profileResult.data ?? null;
   const memberPreferences = identityContext?.preferencesResult.data ?? null;

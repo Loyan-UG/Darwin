@@ -26,7 +26,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const shellModel = await getShellModel();
+  const culture = await getRequestCulture();
+  const shellModel = await getShellModel(culture);
   const runtimeConfig = getSiteRuntimeConfig();
 
   return (
@@ -34,6 +35,7 @@ export default async function RootLayout({
       lang={shellModel.culture}
       data-theme={runtimeConfig.theme}
       className="h-full antialiased"
+      suppressHydrationWarning
     >
       <body className="min-h-full bg-[var(--color-surface-canvas)] text-[var(--color-text-primary)]">
         <SiteShell model={shellModel}>{children}</SiteShell>

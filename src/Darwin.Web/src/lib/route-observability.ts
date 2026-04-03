@@ -1,14 +1,30 @@
-type ObserveAsyncOperationInput = {
+type ObserveAsyncOperationInput<T> = {
   area: string;
   operation: string;
+  context?: Record<string, unknown>;
+  getSuccessDetail?: (result: T) => Record<string, unknown> | undefined;
   thresholdMs?: number;
   now?: () => number;
   warn?: (message: string, detail: Record<string, unknown>) => void;
   error?: (message: string, detail: Record<string, unknown>) => void;
 };
 
+function getDegradedStatusEntries(detail?: Record<string, unknown>) {
+  if (!detail) {
+    return [];
+  }
+
+  return Object.entries(detail).filter(([key, value]) => {
+    if (!key.endsWith("Status")) {
+      return false;
+    }
+
+    return typeof value === "string" && value !== "ok";
+  });
+}
+
 export async function observeAsyncOperation<T>(
-  input: ObserveAsyncOperationInput,
+  input: ObserveAsyncOperationInput<T>,
   work: () => Promise<T>,
 ) {
   const now = input.now ?? Date.now;
@@ -21,12 +37,26 @@ export async function observeAsyncOperation<T>(
   try {
     const result = await work();
     const durationMs = now() - startedAt;
+    const successDetail = input.getSuccessDetail?.(result);
+    const degradedStatuses = getDegradedStatusEntries(successDetail);
 
     if (durationMs >= thresholdMs) {
       warn("Darwin.Web slow operation", {
         area: input.area,
         operation: input.operation,
         durationMs,
+        ...(input.context ?? {}),
+        ...(successDetail ?? {}),
+      });
+    } else if (degradedStatuses.length > 0) {
+      warn("Darwin.Web degraded operation", {
+        area: input.area,
+        operation: input.operation,
+        durationMs,
+        ...(input.context ?? {}),
+        ...(successDetail ?? {}),
+        degradedStatusCount: degradedStatuses.length,
+        degradedStatuses: Object.fromEntries(degradedStatuses),
       });
     }
 
@@ -37,6 +67,7 @@ export async function observeAsyncOperation<T>(
       area: input.area,
       operation: input.operation,
       durationMs,
+      ...(input.context ?? {}),
       cause,
     });
     throw cause;

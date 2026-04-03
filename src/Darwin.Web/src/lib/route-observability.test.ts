@@ -10,6 +10,8 @@ test("observeAsyncOperation reports slow operations above the threshold", async 
     {
       area: "home",
       operation: "compose",
+      context: { culture: "de-DE", route: "/" },
+      getSuccessDetail: (result) => ({ resultStatus: result }),
       thresholdMs: 50,
       now: () => {
         tick += 60;
@@ -24,6 +26,9 @@ test("observeAsyncOperation reports slow operations above the threshold", async 
   assert.equal(warnings.length, 1);
   assert.equal(warnings[0]?.area, "home");
   assert.equal(warnings[0]?.operation, "compose");
+  assert.equal(warnings[0]?.culture, "de-DE");
+  assert.equal(warnings[0]?.route, "/");
+  assert.equal(warnings[0]?.resultStatus, "ok");
 });
 
 test("observeAsyncOperation reports failures with timing metadata", async () => {
@@ -35,6 +40,7 @@ test("observeAsyncOperation reports failures with timing metadata", async () => 
       {
         area: "checkout",
         operation: "load",
+        context: { culture: "de-DE", route: "/checkout" },
         now: () => {
           tick += 25;
           return tick;
@@ -51,4 +57,38 @@ test("observeAsyncOperation reports failures with timing metadata", async () => 
   assert.equal(failures.length, 1);
   assert.equal(failures[0]?.area, "checkout");
   assert.equal(failures[0]?.operation, "load");
+  assert.equal(failures[0]?.culture, "de-DE");
+  assert.equal(failures[0]?.route, "/checkout");
+});
+
+test("observeAsyncOperation reports degraded successful operations even when they are not slow", async () => {
+  const warnings: Array<Record<string, unknown>> = [];
+  let tick = 200;
+
+  const result = await observeAsyncOperation(
+    {
+      area: "shell",
+      operation: "menu",
+      context: { culture: "de-DE", route: "/" },
+      getSuccessDetail: () => ({
+        menuStatus: "fallback",
+        menuItemCount: 3,
+      }),
+      thresholdMs: 500,
+      now: () => {
+        tick += 20;
+        return tick;
+      },
+      warn: (_message, detail) => warnings.push(detail),
+    },
+    async () => "ok",
+  );
+
+  assert.equal(result, "ok");
+  assert.equal(warnings.length, 1);
+  assert.equal(warnings[0]?.area, "shell");
+  assert.equal(warnings[0]?.operation, "menu");
+  assert.equal(warnings[0]?.menuStatus, "fallback");
+  assert.equal(warnings[0]?.degradedStatusCount, 1);
+  assert.deepEqual(warnings[0]?.degradedStatuses, { menuStatus: "fallback" });
 });

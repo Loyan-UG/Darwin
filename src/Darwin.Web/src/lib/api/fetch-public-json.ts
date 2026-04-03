@@ -1,11 +1,16 @@
 import "server-only";
+import { cache } from "react";
 import {
   createDiagnostics,
   getResponseDiagnostics,
   logApiFailure,
   type ApiDiagnostics,
+  withFailureDiagnostics,
 } from "@/lib/api-diagnostics";
-import { getPublicApiCachePolicy } from "@/lib/public-api-cache";
+import {
+  getPublicApiCachePolicy,
+  normalizePublicApiCachePath,
+} from "@/lib/public-api-cache";
 import { toLocalizedQueryMessage } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
@@ -29,10 +34,11 @@ async function sendPublicJson<T>(
   init?: RequestInit,
 ): Promise<PublicApiFetchResult<T>> {
   const { webApiBaseUrl } = getSiteRuntimeConfig();
-  const cachePolicy = getPublicApiCachePolicy(key, path);
+  const normalizedPath = normalizePublicApiCachePath(path);
+  const cachePolicy = getPublicApiCachePolicy(key, normalizedPath);
 
   try {
-    const response = await fetch(`${webApiBaseUrl}${path}`, {
+    const response = await fetch(`${webApiBaseUrl}${normalizedPath}`, {
       ...(init ?? {}),
       ...(init?.method && init.method !== "GET"
         ? {
@@ -52,24 +58,26 @@ async function sendPublicJson<T>(
       },
     });
 
-    const diagnostics = getResponseDiagnostics(key, path, response);
+    const diagnostics = getResponseDiagnostics(key, normalizedPath, response);
 
     if (response.status === 404) {
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "not-found");
       return {
         data: null,
         status: "not-found",
         message: toLocalizedQueryMessage("publicApiNotFoundMessage"),
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
     if (!response.ok) {
-      logApiFailure(diagnostics, "http-error");
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "http-error");
+      logApiFailure(failureDiagnostics, "http-error");
       return {
         data: null,
         status: "http-error",
         message: toLocalizedQueryMessage("publicApiHttpErrorMessage"),
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
@@ -80,16 +88,23 @@ async function sendPublicJson<T>(
         diagnostics,
       };
     } catch (error) {
-      logApiFailure(diagnostics, error);
+      const failureDiagnostics = withFailureDiagnostics(
+        diagnostics,
+        "invalid-payload",
+      );
+      logApiFailure(failureDiagnostics, error);
       return {
         data: null,
         status: "invalid-payload",
         message: toLocalizedQueryMessage("publicApiInvalidPayloadMessage"),
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
   } catch (error) {
-    const diagnostics = createDiagnostics(key, path);
+    const diagnostics = withFailureDiagnostics(
+      createDiagnostics(key, normalizedPath),
+      "network-error",
+    );
     logApiFailure(diagnostics, error);
     return {
       data: null,
@@ -100,11 +115,18 @@ async function sendPublicJson<T>(
   }
 }
 
+const getCachedPublicJson = cache((path: string, key: string) =>
+  sendPublicJson<unknown>(path, key),
+);
+
 export async function fetchPublicJson<T>(
   path: string,
   key: string,
 ): Promise<PublicApiFetchResult<T>> {
-  return sendPublicJson<T>(path, key);
+  return getCachedPublicJson(
+    normalizePublicApiCachePath(path),
+    key,
+  ) as Promise<PublicApiFetchResult<T>>;
 }
 
 export async function postPublicJson<T>(

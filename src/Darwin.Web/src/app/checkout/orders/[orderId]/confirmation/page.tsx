@@ -1,31 +1,20 @@
 import { redirect } from "next/navigation";
 import { OrderConfirmationPage } from "@/components/checkout/order-confirmation-page";
-import { getPublicStorefrontOrderConfirmation } from "@/features/checkout/api/public-checkout";
+import { getConfirmationPageContext } from "@/features/checkout/server/get-commerce-page-context";
+import { getConfirmationSeoMetadata } from "@/features/checkout/server/get-commerce-seo-metadata";
 import { readStorefrontPaymentHandoff } from "@/features/checkout/cookies";
-import { getMemberSession } from "@/features/member-session/cookies";
-import { getMemberCommerceSummaryContext } from "@/features/member-portal/server/get-member-summary-context";
-import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import {
   readAllowedSearchParam,
   readSingleSearchParam,
 } from "@/features/checkout/helpers";
 import { buildAppQueryPath } from "@/lib/locale-routing";
-import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
-import { observeAsyncOperation } from "@/lib/route-observability";
-import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata({ params }: ConfirmationRouteProps) {
   const culture = await getRequestCulture();
-  const copy = getCommerceResource(culture);
   const { orderId } = await params;
-
-  return buildNoIndexMetadata(
-    culture,
-    copy.confirmationMetaTitle,
-    copy.confirmationMetaDescription,
-    `/checkout/orders/${orderId}/confirmation`,
-  );
+  const { metadata } = await getConfirmationSeoMetadata(culture, orderId);
+  return metadata;
 }
 
 type ConfirmationRouteProps = {
@@ -79,32 +68,17 @@ export default async function OrderConfirmationRoute({
     );
   }
 
-  const [confirmationResult, memberSession, storefrontContext] =
-    await observeAsyncOperation(
-      {
-        area: "confirmation",
-        operation: "load-route",
-        thresholdMs: 350,
-      },
-      () =>
-        Promise.all([
-          getPublicStorefrontOrderConfirmation(
-            resolvedParams.orderId,
-            orderNumber,
-          ),
-          getMemberSession(),
-          getStorefrontContinuationContext(culture),
-        ]),
-    );
-  const commerceSummaryContext = memberSession
-    ? await getMemberCommerceSummaryContext()
-    : null;
-  const purchasedNames = new Set(
-    (confirmationResult.data?.lines ?? []).map((line) => line.name.trim().toLowerCase()),
+  const { routeContext, followUpProducts } = await getConfirmationPageContext(
+    culture,
+    resolvedParams.orderId,
+    orderNumber,
   );
-  const followUpProducts = storefrontContext.products.filter(
-    (product) => !purchasedNames.has(product.name.trim().toLowerCase()),
-  );
+  const {
+    confirmationResult,
+    memberSession,
+    commerceSummaryContext,
+    storefrontContext,
+  } = routeContext;
 
   return (
     <OrderConfirmationPage

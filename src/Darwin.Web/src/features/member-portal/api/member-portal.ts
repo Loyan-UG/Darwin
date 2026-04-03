@@ -7,6 +7,7 @@ import {
   getResponseDiagnostics,
   logApiFailure,
   type ApiDiagnostics,
+  withFailureDiagnostics,
 } from "@/lib/api-diagnostics";
 import type {
   LinkedCustomerContext,
@@ -82,22 +83,27 @@ async function fetchMemberJson<T>(
 
     if (response.status === 401 || response.status === 403) {
       const diagnostics = getResponseDiagnostics("member-api", path, response);
-      logApiFailure(diagnostics, "unauthorized");
+      const failureDiagnostics = withFailureDiagnostics(
+        diagnostics,
+        "unauthorized",
+      );
+      logApiFailure(failureDiagnostics, "unauthorized");
       return {
         data: null,
         status: "unauthorized",
         message: toLocalizedQueryMessage("memberSessionUnauthorizedMessage"),
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
     if (response.status === 404) {
       const diagnostics = getResponseDiagnostics("member-api", path, response);
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "not-found");
       return {
         data: null,
         status: "not-found",
         message: toLocalizedQueryMessage("memberResourceNotFoundMessage"),
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
@@ -112,12 +118,13 @@ async function fetchMemberJson<T>(
         // Keep status-based detail.
       }
 
-      logApiFailure(diagnostics, detail);
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "http-error");
+      logApiFailure(failureDiagnostics, detail);
       return {
         data: null,
         status: "http-error",
         message: detail,
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
@@ -128,16 +135,23 @@ async function fetchMemberJson<T>(
         diagnostics,
       };
     } catch (error) {
-      logApiFailure(diagnostics, error);
+      const failureDiagnostics = withFailureDiagnostics(
+        diagnostics,
+        "invalid-payload",
+      );
+      logApiFailure(failureDiagnostics, error);
       return {
         data: null,
         status: "invalid-payload",
         message: toLocalizedQueryMessage("memberApiInvalidPayloadMessage"),
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
   } catch (error) {
-    const diagnostics = createDiagnostics("member-api", path);
+    const diagnostics = withFailureDiagnostics(
+      createDiagnostics("member-api", path),
+      "network-error",
+    );
     logApiFailure(diagnostics, error);
     return {
       data: null,
@@ -193,22 +207,27 @@ async function mutateMemberJson<T>(
 
     if (response.status === 401 || response.status === 403) {
       const diagnostics = getResponseDiagnostics("member-api", path, response);
-      logApiFailure(diagnostics, "unauthorized");
+      const failureDiagnostics = withFailureDiagnostics(
+        diagnostics,
+        "unauthorized",
+      );
+      logApiFailure(failureDiagnostics, "unauthorized");
       return {
         data: null,
         status: "unauthorized",
         message: toLocalizedQueryMessage("memberSessionUnauthorizedMessage"),
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
     if (response.status === 404) {
       const diagnostics = getResponseDiagnostics("member-api", path, response);
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "not-found");
       return {
         data: null,
         status: "not-found",
         message: toLocalizedQueryMessage("memberResourceNotFoundMessage"),
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
@@ -223,12 +242,13 @@ async function mutateMemberJson<T>(
         // Keep status-based detail.
       }
 
-      logApiFailure(diagnostics, detail);
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "http-error");
+      logApiFailure(failureDiagnostics, detail);
       return {
         data: null,
         status: "http-error",
         message: detail,
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
@@ -247,15 +267,22 @@ async function mutateMemberJson<T>(
         diagnostics,
       };
     } catch (error) {
-      logApiFailure(diagnostics, error);
+      const failureDiagnostics = withFailureDiagnostics(
+        diagnostics,
+        "invalid-payload",
+      );
+      logApiFailure(failureDiagnostics, error);
       return {
         data: null,
         status: "ok",
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
   } catch (error) {
-    const diagnostics = createDiagnostics("member-api", path);
+    const diagnostics = withFailureDiagnostics(
+      createDiagnostics("member-api", path),
+      "network-error",
+    );
     logApiFailure(diagnostics, error);
     return {
       data: null,

@@ -12,14 +12,38 @@ const PUBLIC_API_REVALIDATE_BY_KEY: Record<string, number> = {
   "catalog-product-detail": 180,
 };
 
+export function normalizePublicApiCachePath(path: string) {
+  const [pathname, rawQuery] = path.split("?", 2);
+  if (!rawQuery) {
+    return pathname;
+  }
+
+  const params = new URLSearchParams(rawQuery);
+  const orderedEntries = Array.from(params.entries()).sort(
+    ([leftKey, leftValue], [rightKey, rightValue]) =>
+      leftKey === rightKey
+        ? leftValue.localeCompare(rightValue)
+        : leftKey.localeCompare(rightKey),
+  );
+  const normalizedParams = new URLSearchParams();
+
+  orderedEntries.forEach(([key, value]) =>
+    normalizedParams.append(key, value),
+  );
+
+  const normalizedQuery = normalizedParams.toString();
+  return normalizedQuery ? `${pathname}?${normalizedQuery}` : pathname;
+}
+
 export function getPublicApiCachePolicy(
   key: string,
   path: string,
 ): PublicApiCachePolicy {
   const revalidate = PUBLIC_API_REVALIDATE_BY_KEY[key] ?? 60;
+  const normalizedPath = normalizePublicApiCachePath(path);
 
   return {
     revalidate,
-    tags: [`public:${key}`, `path:${path}`],
+    tags: [`public:${key}`, `path:${normalizedPath}`],
   };
 }

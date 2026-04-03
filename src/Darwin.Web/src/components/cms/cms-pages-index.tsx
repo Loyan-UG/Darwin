@@ -7,7 +7,13 @@ import {
 import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
-import { getPendingCmsReviewTargets, isDiscoveryReadyPage } from "@/features/cms/discovery";
+import { isDiscoveryReadyPage } from "@/features/cms/discovery";
+import { buildCmsReviewTargetHref } from "@/features/review/review-window";
+import {
+  buildPreferredCmsReviewWindowHref,
+  getPendingCmsReviewQueueState,
+  getPreferredCmsReviewState,
+} from "@/features/review/review-workflow";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatMoney } from "@/lib/formatting";
@@ -51,7 +57,6 @@ function buildCmsHref(
     visibleSort: visibleSort && visibleSort !== "featured" ? visibleSort : undefined,
   });
 }
-
 export function CmsPagesIndex({
   culture,
   pages,
@@ -110,8 +115,8 @@ export function CmsPagesIndex({
   const followUpPages = pages.slice(1, 4);
   const readyPagesCount = pages.filter((page) => isDiscoveryReadyPage(page)).length;
   const attentionPagesCount = Math.max(pages.length - readyPagesCount, 0);
-  const attentionQueue = getPendingCmsReviewTargets(pages)
-    .map((target) => ({
+  const attentionQueue = getPendingCmsReviewQueueState(pages).previewTargets.map(
+    (target) => ({
       page: target.page,
       reason:
         target.missingMetaTitle && target.missingMetaDescription
@@ -119,8 +124,8 @@ export function CmsPagesIndex({
           : target.missingMetaTitle
             ? copy.cmsIndexReviewTargetMetaTitleMessage
             : copy.cmsIndexReviewTargetMetaDescriptionMessage,
-    }))
-    .slice(0, 3);
+    }),
+  );
   const missingMetaTitleCount = pages.filter(
     (page) => !page.metaTitle?.trim(),
   ).length;
@@ -139,12 +144,20 @@ export function CmsPagesIndex({
       : readinessSignals >= 2
         ? copy.cmsIndexReadinessStatePartial
         : copy.cmsIndexReadinessStateAttention;
-  const cmsReviewPrimaryHref =
-    readyPagesCount >= attentionPagesCount
-      ? buildCmsHref(1, visibleQuery, "ready", "ready-first")
-      : buildCmsHref(1, visibleQuery, "needs-attention", "attention-first");
+  const preferredCmsReviewState = getPreferredCmsReviewState(
+    readyPagesCount,
+    attentionPagesCount,
+  );
+  const cmsReviewPrimaryHref = buildPreferredCmsReviewWindowHref(
+    preferredCmsReviewState,
+    {
+      visibleQuery,
+      visibleState,
+      visibleSort,
+    },
+  );
   const cmsReviewPrimaryLabel =
-    readyPagesCount >= attentionPagesCount
+    preferredCmsReviewState === "ready"
       ? copy.cmsIndexReviewReadyCta
       : copy.cmsIndexReviewAttentionCta;
 
@@ -440,7 +453,14 @@ export function CmsPagesIndex({
                 attentionQueue.map(({ page, reason }) => (
                   <Link
                     key={page.id}
-                    href={localizeHref(`/cms/${page.slug}`, culture)}
+                    href={localizeHref(
+                      buildCmsReviewTargetHref(page.slug, {
+                        visibleQuery,
+                        visibleState,
+                        visibleSort,
+                      }),
+                      culture,
+                    )}
                     className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
                   >
                     <p className="font-semibold text-[var(--color-text-primary)]">
@@ -549,7 +569,14 @@ export function CmsPagesIndex({
                   followUpPages.map((page, index) => (
                     <Link
                       key={page.id}
-                      href={localizeHref(`/cms/${page.slug}`, culture)}
+                      href={localizeHref(
+                        buildCmsReviewTargetHref(page.slug, {
+                          visibleQuery,
+                          visibleState,
+                          visibleSort,
+                        }),
+                        culture,
+                      )}
                       className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
                     >
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
@@ -772,7 +799,14 @@ export function CmsPagesIndex({
                     </p>
                     <h3 className="mt-4 text-2xl font-semibold text-[var(--color-text-primary)]">
                       <Link
-                        href={localizeHref(`/cms/${page.slug}`, culture)}
+                        href={localizeHref(
+                          buildCmsReviewTargetHref(page.slug, {
+                            visibleQuery,
+                            visibleState,
+                            visibleSort,
+                          }),
+                          culture,
+                        )}
                         className="transition hover:text-[var(--color-brand)]"
                         >
                           {page.title}
@@ -800,7 +834,14 @@ export function CmsPagesIndex({
                     </p>
                     <div className="mt-6">
                       <Link
-                        href={localizeHref(`/cms/${page.slug}`, culture)}
+                        href={localizeHref(
+                          buildCmsReviewTargetHref(page.slug, {
+                            visibleQuery,
+                            visibleState,
+                            visibleSort,
+                          }),
+                          culture,
+                        )}
                         className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                       >
                         {copy.cmsOpenPageCta}

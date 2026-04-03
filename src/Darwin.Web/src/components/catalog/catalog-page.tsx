@@ -10,6 +10,12 @@ import type {
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { getCatalogReviewTargets } from "@/features/catalog/discovery";
+import { buildCatalogReviewTargetHref } from "@/features/review/review-window";
+import {
+  buildPreferredCatalogReviewWindowHref,
+  getCatalogReviewQueueState,
+  getPreferredCatalogReviewState,
+} from "@/features/review/review-workflow";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
@@ -56,7 +62,6 @@ function buildCatalogHref(
     visibleSort: visibleSort && visibleSort !== "featured" ? visibleSort : undefined,
   });
 }
-
 export function CatalogPage({
   culture,
   categories,
@@ -124,28 +129,34 @@ export function CatalogPage({
       : readinessSignals >= 2
         ? copy.catalogReadinessStatePartial
         : copy.catalogReadinessStateAttention;
-  const reviewTargets = getCatalogReviewTargets(products)
-    .map((target) => ({
-      product: target.product,
-      reason: target.missingImage
-        ? copy.catalogReviewTargetImageMessage
-        : target.savingsAmount > 0
-          ? formatResource(copy.catalogReviewTargetOfferMessage, {
-              savingsPercent: getSavingsPercent(target.product) ?? 0,
-            })
-          : copy.catalogReviewTargetBaseMessage,
-    }))
-    .slice(0, 3);
+  const reviewTargets = getCatalogReviewQueueState(
+    getCatalogReviewTargets(products),
+  ).previewTargets.map((target) => ({
+    product: target.product,
+    reason: target.missingImage
+      ? copy.catalogReviewTargetImageMessage
+      : target.savingsAmount > 0
+        ? formatResource(copy.catalogReviewTargetOfferMessage, {
+            savingsPercent: getSavingsPercent(target.product) ?? 0,
+          })
+        : copy.catalogReviewTargetBaseMessage,
+  }));
   const visibleBaseCount = Math.max(products.length - offerProducts.length, 0);
-  const catalogReviewPrimaryHref = buildCatalogHref(
-    activeCategorySlug,
-    1,
-    visibleQuery,
-    offerProducts.length >= visibleBaseCount ? "offers" : "base",
-    offerProducts.length >= visibleBaseCount ? "offers-first" : "base-first",
+  const preferredCatalogReviewState = getPreferredCatalogReviewState(
+    offerProducts.length,
+    visibleBaseCount,
+  );
+  const catalogReviewPrimaryHref = buildPreferredCatalogReviewWindowHref(
+    preferredCatalogReviewState,
+    {
+      category: activeCategorySlug,
+      visibleQuery,
+      visibleState,
+      visibleSort,
+    },
   );
   const catalogReviewPrimaryLabel =
-    offerProducts.length >= visibleBaseCount
+    preferredCatalogReviewState === "offers"
       ? copy.catalogReviewOffersCta
       : copy.catalogReviewBaseCta;
 
@@ -550,7 +561,15 @@ export function CatalogPage({
                   reviewTargets.map(({ product, reason }) => (
                     <Link
                       key={product.id}
-                      href={localizeHref(`/catalog/${product.slug}`, culture)}
+                      href={localizeHref(
+                        buildCatalogReviewTargetHref(product.slug, {
+                          category: activeCategorySlug,
+                          visibleQuery,
+                          visibleState,
+                          visibleSort,
+                        }),
+                        culture,
+                      )}
                       className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
                     >
                       <p className="font-semibold text-[var(--color-text-primary)]">
@@ -855,7 +874,15 @@ export function CatalogPage({
                       </div>
                       <h2 className="mt-3 text-xl font-semibold text-[var(--color-text-primary)]">
                         <Link
-                          href={localizeHref(`/catalog/${product.slug}`, culture)}
+                          href={localizeHref(
+                            buildCatalogReviewTargetHref(product.slug, {
+                              category: activeCategorySlug,
+                              visibleQuery,
+                              visibleState,
+                              visibleSort,
+                            }),
+                            culture,
+                          )}
                           className="transition hover:text-[var(--color-brand)]"
                         >
                           {product.name}
@@ -905,7 +932,15 @@ export function CatalogPage({
                           ) : null}
                         </div>
                         <Link
-                          href={localizeHref(`/catalog/${product.slug}`, culture)}
+                          href={localizeHref(
+                            buildCatalogReviewTargetHref(product.slug, {
+                              category: activeCategorySlug,
+                              visibleQuery,
+                              visibleState,
+                              visibleSort,
+                            }),
+                            culture,
+                          )}
                           className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                         >
                           {copy.viewDetails}

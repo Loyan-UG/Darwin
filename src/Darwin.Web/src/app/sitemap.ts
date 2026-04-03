@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
-import { buildPublicSitemapEntries } from "@/lib/sitemap";
+import { getPublicSitemapContext } from "@/features/storefront/server/get-public-sitemap-context";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  return buildPublicSitemapEntries();
+  const { entries } = await getPublicSitemapContext();
+  return entries;
 }

@@ -10,9 +10,15 @@ import {
 import { summarizeCmsContent } from "@/features/cms/content-summary";
 import {
   getCmsReviewTarget,
-  getPendingCmsReviewTargets,
   isCmsReviewTargetPending,
 } from "@/features/cms/discovery";
+import {
+  buildCmsReviewTargetHref,
+} from "@/features/review/review-window";
+import {
+  buildPreferredCmsReviewWindowHref,
+  getPendingCmsReviewQueueState,
+} from "@/features/review/review-workflow";
 import type { PublicPageDetail, PublicPageSummary } from "@/features/cms/types";
 import { formatMoney } from "@/lib/formatting";
 import { sanitizeHtmlFragment } from "@/lib/html-fragment";
@@ -29,6 +35,11 @@ type CmsPageDetailProps = {
   page: PublicPageDetail | null;
   status: string;
   message?: string;
+  reviewWindow?: {
+    visibleQuery?: string;
+    visibleState?: "all" | "ready" | "needs-attention";
+    visibleSort?: "featured" | "title-asc" | "ready-first" | "attention-first";
+  };
   relatedPages: PublicPageSummary[];
   relatedStatus: string;
   categories: PublicCategorySummary[];
@@ -48,6 +59,7 @@ export function CmsPageDetail({
   page,
   status,
   message,
+  reviewWindow,
   relatedPages,
   relatedStatus,
   categories,
@@ -96,16 +108,10 @@ export function CmsPageDetail({
     relatedPages.length > 0
       ? copy.cmsReadinessStateReady
       : copy.cmsReadinessStateAttention;
-  const cmsReviewPrimaryHref =
-    discoveryReadySignals >= 4
-      ? buildAppQueryPath("/cms", {
-          visibleState: "ready",
-          visibleSort: "ready-first",
-        })
-      : buildAppQueryPath("/cms", {
-          visibleState: "needs-attention",
-          visibleSort: "attention-first",
-        });
+  const cmsReviewPrimaryHref = buildPreferredCmsReviewWindowHref(
+    discoveryReadySignals >= 4 ? "ready" : "needs-attention",
+    reviewWindow,
+  );
   const cmsReviewPrimaryLabel =
     discoveryReadySignals >= 4
       ? copy.cmsReviewWindowReadyCta
@@ -133,11 +139,12 @@ export function CmsPageDetail({
 
   const currentReviewTarget = getCmsReviewTarget(page);
   const currentNeedsReview = isCmsReviewTargetPending(currentReviewTarget);
-  const reviewQueue = getPendingCmsReviewTargets(
-    relatedPages.filter((entry) => entry.slug !== page.slug),
-  );
-  const nextReviewPage = reviewQueue[0] ?? null;
-  const reviewQueuePreview = reviewQueue.slice(0, 3);
+  const reviewQueueState = getPendingCmsReviewQueueState(relatedPages, {
+    currentSlug: page.slug,
+  });
+  const reviewQueue = reviewQueueState.queue;
+  const nextReviewPage = reviewQueueState.nextTarget;
+  const reviewQueuePreview = reviewQueueState.previewTargets;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -413,7 +420,10 @@ export function CmsPageDetail({
                 </p>
                 <div className="mt-4">
                   <Link
-                    href={localizeHref(`/cms/${nextReviewPage.page.slug}`, culture)}
+                    href={localizeHref(
+                      buildCmsReviewTargetHref(nextReviewPage.page.slug, reviewWindow),
+                      culture,
+                    )}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                   >
                     {copy.cmsNextReviewTargetCta}
@@ -440,7 +450,10 @@ export function CmsPageDetail({
                 reviewQueuePreview.map((target) => (
                   <Link
                     key={target.page.id}
-                    href={localizeHref(`/cms/${target.page.slug}`, culture)}
+                    href={localizeHref(
+                      buildCmsReviewTargetHref(target.page.slug, reviewWindow),
+                      culture,
+                    )}
                     className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-panel)]"
                   >
                     <p className="font-semibold text-[var(--color-text-primary)]">
@@ -736,3 +749,4 @@ export function CmsPageDetail({
     </section>
   );
 }
+

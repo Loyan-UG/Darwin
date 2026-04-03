@@ -1,85 +1,41 @@
 import { notFound } from "next/navigation";
-import { getPublicCart } from "@/features/cart/api/public-cart";
-import { getAnonymousCartId } from "@/features/cart/cookies";
-import {
-  getPublicCategories,
-  getPublicProducts,
-} from "@/features/catalog/api/public-catalog";
 import { CmsPageDetail } from "@/components/cms/cms-page-detail";
 import {
-  getPublishedPageSet,
-  getPublicPageBySlug,
-} from "@/features/cms/api/public-cms";
+  readCmsVisibleSort,
+  readCmsVisibleState,
+} from "@/features/cms/discovery";
+import { getCmsDetailPageContext } from "@/features/cms/server/get-cms-page-context";
+import { getCmsSeoMetadata } from "@/features/cms/server/get-cms-seo-metadata";
+import { readSearchTextParam } from "@/features/checkout/helpers";
 import { getRequestCulture } from "@/lib/request-culture";
-import { observeAsyncOperation } from "@/lib/route-observability";
-import { getSharedResource } from "@/localization";
-import { buildSeoMetadata, deriveSeoDescription } from "@/lib/seo";
 
 type CmsPageProps = {
   params: Promise<{
     slug: string;
   }>;
+  searchParams?: Promise<{
+    visibleQuery?: string;
+    visibleState?: string;
+    visibleSort?: string;
+  }>;
 };
 
 export async function generateMetadata({ params }: CmsPageProps) {
   const culture = await getRequestCulture();
-  const shared = getSharedResource(culture);
   const { slug } = await params;
-  const pageResult = await getPublicPageBySlug(slug, culture);
-  const page = pageResult.data;
-  const path = `/cms/${encodeURIComponent(slug)}`;
-
-  if (!page) {
-    return buildSeoMetadata({
-      culture,
-      title:
-        pageResult.status === "not-found"
-          ? shared.cmsPageNotFoundTitle
-          : shared.cmsPageUnavailableTitle,
-      description: shared.cmsFallbackMetaDescription,
-      path,
-      noIndex: true,
-    });
-  }
-
-  return buildSeoMetadata({
-    culture,
-    title: page.metaTitle ?? page.title,
-    description:
-      deriveSeoDescription(page.metaDescription, page.contentHtml) ??
-      shared.cmsFallbackMetaDescription,
-    path,
-    noIndex: pageResult.status !== "ok",
-    type: "article",
-  });
+  const { metadata } = await getCmsSeoMetadata(culture, slug);
+  return metadata;
 }
 
-export default async function CmsPage({ params }: CmsPageProps) {
+export default async function CmsPage({ params, searchParams }: CmsPageProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
-  const anonymousCartId = await getAnonymousCartId();
-  const [pageResult, relatedPagesSeed, categoriesResult, productsResult, cartResult] =
-    await observeAsyncOperation(
-      {
-        area: "cms-detail",
-        operation: "load-route",
-        thresholdMs: 325,
-      },
-      () =>
-        Promise.all([
-          getPublicPageBySlug(slug, culture),
-          getPublishedPageSet(culture),
-          getPublicCategories(culture),
-          getPublicProducts({
-            page: 1,
-            pageSize: 3,
-            culture,
-          }),
-          anonymousCartId
-            ? getPublicCart(anonymousCartId)
-            : Promise.resolve({ data: null, status: "not-found" as const }),
-        ]),
-    );
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const { detailContext, continuationSlice } = await getCmsDetailPageContext(
+    culture,
+    slug,
+  );
+  const { pageResult, relatedPagesSeed } = detailContext;
   const page = pageResult.data;
 
   if (!page && pageResult.status === "not-found") {
@@ -92,22 +48,19 @@ export default async function CmsPage({ params }: CmsPageProps) {
       page={page}
       status={pageResult.status}
       message={pageResult.message}
+      reviewWindow={{
+        visibleQuery: readSearchTextParam(resolvedSearchParams?.visibleQuery),
+        visibleState: readCmsVisibleState(resolvedSearchParams?.visibleState),
+        visibleSort: readCmsVisibleSort(resolvedSearchParams?.visibleSort),
+      }}
       relatedPages={relatedPagesSeed.data?.items ?? []}
       relatedStatus={relatedPagesSeed.status}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
-      productsStatus={productsResult.status}
-      cartSummary={
-        cartResult.data
-          ? {
-              status: cartResult.status,
-              itemCount: cartResult.data.items.length,
-              currency: cartResult.data.currency,
-              grandTotalGrossMinor: cartResult.data.grandTotalGrossMinor,
-            }
-          : null
-      }
+      categories={continuationSlice.categories}
+      categoriesStatus={continuationSlice.categoriesStatus}
+      products={continuationSlice.products}
+      productsStatus={continuationSlice.productsStatus}
+      cartSummary={continuationSlice.cartSummary}
     />
   );
 }
+

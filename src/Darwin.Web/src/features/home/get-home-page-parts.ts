@@ -1,20 +1,10 @@
 import "server-only";
-import {
-  getPublicCategories,
-  getPublicProducts,
-} from "@/features/catalog/api/public-catalog";
 import { getCatalogReviewTargets } from "@/features/catalog/discovery";
 import {
   getProductSavingsPercent,
   getStrongestProductOpportunity,
   sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
-import { getPublicCart } from "@/features/cart/api/public-cart";
-import {
-  getAnonymousCartId,
-  readCartDisplaySnapshots,
-} from "@/features/cart/cookies";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { getPendingCmsReviewTargets, isDiscoveryReadyPage } from "@/features/cms/discovery";
 import type { MemberSession } from "@/features/member-session/types";
 import {
@@ -25,6 +15,19 @@ import {
   buildCheckoutDraftSearch,
   toCheckoutDraftFromMemberAddress,
 } from "@/features/checkout/helpers";
+import { getHomeDiscoveryContext } from "@/features/home/server/get-home-discovery-context";
+import {
+  buildCatalogReviewTargetHref,
+  buildCmsReviewTargetHref,
+} from "@/features/review/review-window";
+import {
+  buildPreferredCatalogReviewWindowHref,
+  buildPreferredCmsReviewWindowHref,
+  getCatalogReviewQueueState,
+  getCmsReviewQueueState,
+  getPreferredCatalogReviewState,
+  getPreferredCmsReviewState,
+} from "@/features/review/review-workflow";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { getSupportedCultures } from "@/lib/request-culture";
@@ -37,36 +40,21 @@ export async function getHomePageParts(
 ): Promise<WebPagePart[]> {
   const copy = getHomeResource(culture);
   const supportedCultures = getSupportedCultures();
-  const [pagesResult, productsResult, categoriesResult, memberCommerceContext, memberIdentityContext] = await Promise.all([
-    getPublishedPages({
-      page: 1,
-      pageSize: 3,
-      culture,
-    }),
-    getPublicProducts({
-      page: 1,
-      pageSize: 3,
-      culture,
-    }),
-    getPublicCategories(culture),
+  const [homeDiscoveryContext, memberCommerceContext, memberIdentityContext] = await Promise.all([
+    getHomeDiscoveryContext(culture),
     session
       ? getMemberCommerceSummaryContext()
       : Promise.resolve(null),
     session ? getMemberIdentityContext() : Promise.resolve(null),
   ]);
-  const anonymousCartId = await getAnonymousCartId();
-  const cartSnapshots = (await readCartDisplaySnapshots()).slice(0, 3);
-  const cartResult = anonymousCartId
-    ? await getPublicCart(anonymousCartId)
-    : { data: null, status: "not-found" as const };
-  const cartLinkedSlugs = new Set(
-    cartSnapshots
-      .map((snapshot) => {
-        const match = snapshot.href.match(/\/catalog\/([^/?#]+)/i);
-        return match?.[1] ?? null;
-      })
-      .filter((slug): slug is string => Boolean(slug)),
-  );
+  const { pagesResult, productsResult, categoriesResult, categorySpotlights, storefrontContext } =
+    homeDiscoveryContext;
+  const cartSnapshots = storefrontContext.cartSnapshots.slice(0, 3);
+  const cartResult = {
+    data: storefrontContext.storefrontCart,
+    status: storefrontContext.storefrontCartStatus,
+  };
+  const cartLinkedSlugs = new Set(storefrontContext.cartLinkedProductSlugs);
   const cmsHealthy = pagesResult.status === "ok";
   const catalogHealthy = productsResult.status === "ok";
   const categoriesHealthy = categoriesResult.status === "ok";
@@ -86,32 +74,33 @@ export async function getHomePageParts(
     (product) => getProductSavingsPercent(product) !== null,
   ).length;
   const visibleBaseCount = Math.max(rankedProducts.length - visibleOfferCount, 0);
-  const cmsReviewReadyHref = buildAppQueryPath("/cms", {
-    visibleState: "ready",
-    visibleSort: "ready-first",
-  });
-  const cmsReviewAttentionHref = buildAppQueryPath("/cms", {
-    visibleState: "needs-attention",
-    visibleSort: "attention-first",
-  });
-  const catalogReviewOffersHref = buildAppQueryPath("/catalog", {
-    visibleState: "offers",
-    visibleSort: "offers-first",
-  });
-  const catalogReviewBaseHref = buildAppQueryPath("/catalog", {
-    visibleState: "base",
-    visibleSort: "base-first",
-  });
-  const cmsReviewTargets = getPendingCmsReviewTargets(
-    pagesResult.data?.items ?? [],
-  ).slice(0, 2);
-  const catalogReviewTargets = getCatalogReviewTargets(rankedProducts).slice(0, 2);
+  const preferredCmsReviewState = getPreferredCmsReviewState(
+    readyCmsPagesCount,
+    cmsAttentionCount,
+  );
+  const cmsReviewWindowHref = buildPreferredCmsReviewWindowHref(
+    preferredCmsReviewState,
+  );
+  const preferredCatalogReviewState = getPreferredCatalogReviewState(
+    visibleOfferCount,
+    visibleBaseCount,
+  );
+  const catalogReviewWindowHref = buildPreferredCatalogReviewWindowHref(
+    preferredCatalogReviewState,
+  );
+  const cmsReviewTargets = getCmsReviewQueueState(
+    getPendingCmsReviewTargets(pagesResult.data?.items ?? []),
+    { previewCount: 2 },
+  ).previewTargets;
+  const catalogReviewTargets = getCatalogReviewQueueState(
+    getCatalogReviewTargets(rankedProducts),
+    { previewCount: 2 },
+  ).previewTargets;
   const offerBoardProducts =
     (cartLinkedSlugs.size > 0
       ? rankedProducts.filter((product) => !cartLinkedSlugs.has(product.slug))
       : rankedProducts
     ).slice(0, 3);
-  const featuredCategories = (categoriesResult.data?.items ?? []).slice(0, 3);
   const recentOrders = memberCommerceContext?.ordersResult.data?.items.slice(0, 2) ?? [];
   const recentInvoices = memberCommerceContext?.invoicesResult.data?.items.slice(0, 2) ?? [];
   const memberAddresses = memberIdentityContext?.addressesResult.data ?? [];
@@ -136,22 +125,6 @@ export async function getHomePageParts(
       const rightRank = right.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
       return leftRank - rightRank;
     })[0] ?? null;
-  const categorySpotlights = await Promise.all(
-    featuredCategories.map(async (category) => {
-      const categoryProductsResult = await getPublicProducts({
-        page: 1,
-        pageSize: 1,
-        culture,
-        categorySlug: category.slug,
-      });
-
-      return {
-        category,
-        status: categoryProductsResult.status,
-        product: categoryProductsResult.data?.items[0] ?? null,
-      };
-    }),
-  );
   const homePriorityItems = [
     ...(cartResult.data && cartResult.data.items.length > 0
       ? [
@@ -473,9 +446,9 @@ export async function getHomePageParts(
             readyCount: readyCmsPagesCount,
             attentionCount: cmsAttentionCount,
           }),
-          href: cmsAttentionCount > 0 ? cmsReviewAttentionHref : cmsReviewReadyHref,
+          href: cmsReviewWindowHref,
           ctaLabel:
-            cmsAttentionCount > 0
+            preferredCmsReviewState === "needs-attention"
               ? copy.reviewTargetsCmsAttentionCta
               : copy.reviewTargetsCmsReadyCta,
           meta: formatResource(copy.reviewTargetsCmsWindowMeta, {
@@ -493,7 +466,16 @@ export async function getHomePageParts(
               : missingMetaTitle
                 ? copy.reviewTargetsCmsTargetMetaTitleDescription
                 : copy.reviewTargetsCmsTargetMetaDescriptionDescription,
-          href: `/cms/${page.slug}`,
+          href: buildCmsReviewTargetHref(page.slug, {
+            visibleState:
+              missingMetaTitle || missingMetaDescription
+                ? "needs-attention"
+                : "ready",
+            visibleSort:
+              missingMetaTitle || missingMetaDescription
+                ? "attention-first"
+                : "ready-first",
+          }),
           ctaLabel: copy.reviewTargetsCmsTargetCta,
           meta: page.slug,
         })),
@@ -504,9 +486,9 @@ export async function getHomePageParts(
             offerCount: visibleOfferCount,
             baseCount: visibleBaseCount,
           }),
-          href: visibleOfferCount > 0 ? catalogReviewOffersHref : catalogReviewBaseHref,
+          href: catalogReviewWindowHref,
           ctaLabel:
-            visibleOfferCount > 0
+            preferredCatalogReviewState === "offers"
               ? copy.reviewTargetsCatalogOffersCta
               : copy.reviewTargetsCatalogBaseCta,
           meta: formatResource(copy.reviewTargetsCatalogWindowMeta, {
@@ -525,7 +507,11 @@ export async function getHomePageParts(
                   savings: getProductSavingsPercent(product) ?? 0,
                 })
               : copy.reviewTargetsCatalogTargetBaseDescription,
-          href: `/catalog/${product.slug}`,
+          href: buildCatalogReviewTargetHref(product.slug, {
+            visibleState: missingImage || savingsAmount > 0 ? "offers" : "base",
+            visibleSort:
+              missingImage || savingsAmount > 0 ? "offers-first" : "base-first",
+          }),
           ctaLabel: copy.reviewTargetsCatalogTargetCta,
           meta: formatMoney(product.priceMinor, product.currency, culture),
         })),

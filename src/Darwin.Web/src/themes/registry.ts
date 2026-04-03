@@ -1,5 +1,7 @@
 import { cartzillaGroceryTheme } from "@/themes/cartzilla-grocery/theme";
 import { harborEditorialTheme } from "@/themes/harbor-editorial/theme";
+import { noirBazaarTheme } from "@/themes/noir-bazaar/theme";
+import { solsticeMarketTheme } from "@/themes/solstice-market/theme";
 
 export const availableThemes = [
   cartzillaGroceryTheme,
@@ -13,6 +15,8 @@ export const availableThemes = [
     },
   },
   harborEditorialTheme,
+  noirBazaarTheme,
+  solsticeMarketTheme,
 ] as const;
 
 export type ThemeId = (typeof availableThemes)[number]["id"];

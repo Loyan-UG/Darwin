@@ -36,6 +36,35 @@ export async function getPublicProducts(input: {
   );
 }
 
+export async function getPublicProductSet(culture?: string) {
+  const initialResult = await getPublicProducts({
+    page: 1,
+    pageSize: 100,
+    culture,
+  });
+
+  const total = initialResult.data?.total ?? 0;
+  const loadedCount = initialResult.data?.items.length ?? 0;
+
+  if (
+    initialResult.status !== "ok" ||
+    !initialResult.data ||
+    total <= loadedCount
+  ) {
+    return initialResult;
+  }
+
+  const expandedResult = await getPublicProducts({
+    page: 1,
+    pageSize: total,
+    culture,
+  });
+
+  return expandedResult.status === "ok" && expandedResult.data
+    ? expandedResult
+    : initialResult;
+}
+
 export async function getPublicProductBySlug(slug: string, culture?: string) {
   return fetchPublicJson<PublicProductDetail>(
     `/api/v1/public/catalog/products/${encodeURIComponent(slug)}${buildQuerySuffix({

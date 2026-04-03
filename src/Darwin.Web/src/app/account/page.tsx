@@ -1,122 +1,30 @@
 import { AccountHubPage } from "@/components/account/account-hub-page";
 import { MemberDashboardPage } from "@/components/account/member-dashboard-page";
-import { getPublicCart } from "@/features/cart/api/public-cart";
-import { getAnonymousCartId, readCartDisplaySnapshots } from "@/features/cart/cookies";
-import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
-import { getCurrentMemberLoyaltyBusinesses } from "@/features/member-portal/api/member-portal";
-import {
-  getMemberCommerceSummaryContext,
-  getMemberIdentityContext,
-} from "@/features/member-portal/server/get-member-summary-context";
-import { getMemberSession } from "@/features/member-session/cookies";
-import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
-import { sanitizeAppPath } from "@/lib/locale-routing";
+import { getAccountPageView } from "@/features/account/server/get-account-page-view";
+import { getPublicAccountSeoMetadata } from "@/features/account/server/get-public-auth-seo-metadata";
 import { getRequestCulture } from "@/lib/request-culture";
-import { observeAsyncOperation } from "@/lib/route-observability";
-import { buildNoIndexMetadata } from "@/lib/seo";
-import { getMemberResource } from "@/localization";
 
 export async function generateMetadata() {
   const culture = await getRequestCulture();
-  const copy = getMemberResource(culture);
-
-  return buildNoIndexMetadata(culture, copy.accountMetaTitle, undefined, "/account");
+  const { metadata } = await getPublicAccountSeoMetadata(culture);
+  return metadata;
 }
 
 type AccountPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function readSearchParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
 export default async function AccountPage({ searchParams }: AccountPageProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const session = await getMemberSession();
-  if (!session) {
-    const storefrontContext = await getPublicAuthStorefrontContext(culture);
+  const returnPath = Array.isArray(resolvedSearchParams?.returnPath)
+    ? resolvedSearchParams?.returnPath[0]
+    : resolvedSearchParams?.returnPath;
+  const view = await getAccountPageView(culture, returnPath);
 
-    return (
-      <AccountHubPage
-        culture={culture}
-        cmsPages={storefrontContext.cmsPages}
-        cmsPagesStatus={storefrontContext.cmsPagesStatus}
-        categories={storefrontContext.categories}
-        categoriesStatus={storefrontContext.categoriesStatus}
-        products={storefrontContext.products}
-        productsStatus={storefrontContext.productsStatus}
-        storefrontCart={storefrontContext.storefrontCart}
-        storefrontCartStatus={storefrontContext.storefrontCartStatus}
-        returnPath={sanitizeAppPath(
-          readSearchParam(resolvedSearchParams?.returnPath),
-          "/account",
-        )}
-      />
-    );
-  }
-  const anonymousCartId = await getAnonymousCartId();
-  const cartLinkedProductSlugs = (await readCartDisplaySnapshots())
-    .map((snapshot) => {
-      const match = snapshot.href.match(/\/catalog\/([^/?#]+)/i);
-      return match?.[1] ?? null;
-    })
-    .filter((slug): slug is string => Boolean(slug));
-
-  const [
-    identityContext,
-    commerceSummaryContext,
-    loyaltyBusinessesResult,
-    storefrontCartResult,
-    storefrontContext,
-  ] = await observeAsyncOperation(
-    {
-      area: "account",
-      operation: "load-dashboard",
-      thresholdMs: 350,
-    },
-    () =>
-      Promise.all([
-        getMemberIdentityContext(),
-        getMemberCommerceSummaryContext(),
-        getCurrentMemberLoyaltyBusinesses({ page: 1, pageSize: 3 }),
-        anonymousCartId
-          ? getPublicCart(anonymousCartId)
-          : Promise.resolve({ data: null, status: "not-found" as const }),
-        getStorefrontContinuationContext(culture),
-      ]),
-  );
-
-  return (
-    <MemberDashboardPage
-      culture={culture}
-      session={session}
-      profile={identityContext.profileResult.data}
-      profileStatus={identityContext.profileResult.status}
-      preferences={identityContext.preferencesResult.data}
-      preferencesStatus={identityContext.preferencesResult.status}
-      customerContext={identityContext.customerContextResult.data}
-      customerContextStatus={identityContext.customerContextResult.status}
-      addresses={identityContext.addressesResult.data ?? []}
-      addressesStatus={identityContext.addressesResult.status}
-      recentOrders={commerceSummaryContext.ordersResult.data?.items ?? []}
-      recentOrdersStatus={commerceSummaryContext.ordersResult.status}
-      recentInvoices={commerceSummaryContext.invoicesResult.data?.items ?? []}
-      recentInvoicesStatus={commerceSummaryContext.invoicesResult.status}
-      loyaltyOverview={commerceSummaryContext.loyaltyOverviewResult.data}
-      loyaltyOverviewStatus={commerceSummaryContext.loyaltyOverviewResult.status}
-      loyaltyBusinesses={loyaltyBusinessesResult.data?.items ?? []}
-      loyaltyBusinessesStatus={loyaltyBusinessesResult.status}
-      storefrontCart={storefrontCartResult.data}
-      storefrontCartStatus={storefrontCartResult.status}
-      cmsPages={storefrontContext.cmsPages}
-      cmsPagesStatus={storefrontContext.cmsPagesStatus}
-      categories={storefrontContext.categories}
-      categoriesStatus={storefrontContext.categoriesStatus}
-      products={storefrontContext.products}
-      productsStatus={storefrontContext.productsStatus}
-      cartLinkedProductSlugs={cartLinkedProductSlugs}
-    />
+  return view.kind === "public" ? (
+    <AccountHubPage {...view.props} />
+  ) : (
+    <MemberDashboardPage {...view.props} />
   );
 }

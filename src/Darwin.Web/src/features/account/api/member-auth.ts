@@ -4,6 +4,7 @@ import {
   createDiagnostics,
   getResponseDiagnostics,
   logApiFailure,
+  withFailureDiagnostics,
 } from "@/lib/api-diagnostics";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import type { MemberRegisterResponse } from "@/features/account/types";
@@ -37,12 +38,13 @@ async function postMemberAuthJson<T>(
         // Keep the status-based detail.
       }
 
-      logApiFailure(diagnostics, detail);
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "http-error");
+      logApiFailure(failureDiagnostics, detail);
       return {
         data: null,
         status: "http-error",
         message: detail,
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
 
@@ -62,15 +64,22 @@ async function postMemberAuthJson<T>(
         diagnostics,
       };
     } catch (error) {
-      logApiFailure(diagnostics, error);
+      const failureDiagnostics = withFailureDiagnostics(
+        diagnostics,
+        "invalid-payload",
+      );
+      logApiFailure(failureDiagnostics, error);
       return {
         data: null,
         status: "ok",
-        diagnostics,
+        diagnostics: failureDiagnostics,
       };
     }
   } catch (error) {
-    const diagnostics = createDiagnostics("member-auth", path);
+    const diagnostics = withFailureDiagnostics(
+      createDiagnostics("member-auth", path),
+      "network-error",
+    );
     logApiFailure(diagnostics, error);
     return {
       data: null,

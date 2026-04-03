@@ -1,20 +1,13 @@
 import { SignInPage } from "@/components/account/sign-in-page";
-import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
+import { getPublicSignInPageContext } from "@/features/account/server/get-public-auth-page-context";
+import { getPublicSignInSeoMetadata } from "@/features/account/server/get-public-auth-seo-metadata";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
-import { buildNoIndexMetadata } from "@/lib/seo";
-import { getMemberResource } from "@/localization";
 
 export async function generateMetadata() {
   const culture = await getRequestCulture();
-  const copy = getMemberResource(culture);
-
-  return buildNoIndexMetadata(
-    culture,
-    copy.signInMetaTitle,
-    undefined,
-    "/account/sign-in",
-  );
+  const { metadata } = await getPublicSignInSeoMetadata(culture);
+  return metadata;
 }
 
 type SignInRouteProps = {
@@ -28,7 +21,7 @@ function readSearchParam(value: string | string[] | undefined) {
 export default async function SignInRoute({ searchParams }: SignInRouteProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const storefrontContext = await getPublicAuthStorefrontContext(culture);
+  const { storefrontProps } = await getPublicSignInPageContext(culture);
 
   return (
     <SignInPage
@@ -36,14 +29,7 @@ export default async function SignInRoute({ searchParams }: SignInRouteProps) {
       email={readSearchParam(resolvedSearchParams?.email)}
       signInError={readSearchParam(resolvedSearchParams?.signInError)}
       returnPath={sanitizeAppPath(readSearchParam(resolvedSearchParams?.returnPath), "/account")}
-      cmsPages={storefrontContext.cmsPages}
-      cmsPagesStatus={storefrontContext.cmsPagesStatus}
-      categories={storefrontContext.categories}
-      categoriesStatus={storefrontContext.categoriesStatus}
-      products={storefrontContext.products}
-      productsStatus={storefrontContext.productsStatus}
-      storefrontCart={storefrontContext.storefrontCart}
-      storefrontCartStatus={storefrontContext.storefrontCartStatus}
+      {...storefrontProps}
     />
   );
 }
