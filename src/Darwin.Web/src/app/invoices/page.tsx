@@ -1,7 +1,11 @@
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
 import { readCartDisplaySnapshots } from "@/features/cart/cookies";
-import { readPositiveIntegerSearchParam } from "@/features/checkout/helpers";
+import {
+  readAllowedSearchParam,
+  readPositiveIntegerSearchParam,
+  readSearchTextParam,
+} from "@/features/checkout/helpers";
 import { InvoicesPage } from "@/components/member/invoices-page";
 import { getCurrentMemberInvoices } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
@@ -35,6 +39,11 @@ export default async function InvoicesRoute({
   const session = await getMemberSession();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
+  const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
+  const visibleState = readAllowedSearchParam(
+    resolvedSearchParams?.visibleState,
+    ["all", "outstanding", "settled"] as const,
+  );
 
   if (!session) {
     const storefrontContext = await getPublicAuthStorefrontContext(culture);
@@ -85,6 +94,8 @@ export default async function InvoicesRoute({
       status={invoicesResult.status}
       currentPage={safePage}
       totalPages={Math.max(1, Math.ceil((invoicesResult.data?.total ?? 0) / (invoicesResult.data?.request.pageSize ?? 12)))}
+      visibleQuery={visibleQuery}
+      visibleState={visibleState ?? "all"}
       cmsPages={storefrontContext.cmsPages}
       cmsPagesStatus={storefrontContext.cmsPagesStatus}
       categories={storefrontContext.categories}

@@ -120,6 +120,24 @@ export function ProductDetailPage({
   const sanitizedDescriptionHtml = sanitizeHtmlFragment(
     product.fullDescriptionHtml ?? "",
   );
+  const hasMetaTitle = Boolean(product.metaTitle?.trim());
+  const hasMetaDescription = Boolean(product.metaDescription?.trim());
+  const hasPrimaryCategory = Boolean(primaryCategory);
+  const hasMediaCoverage = product.media.length > 0;
+  const hasRelatedCoverage = relatedProducts.length > 0;
+  const readinessSignals = [
+    hasMetaTitle,
+    hasMetaDescription,
+    hasPrimaryCategory,
+    hasMediaCoverage,
+    hasRelatedCoverage,
+  ].filter(Boolean).length;
+  const readinessState =
+    readinessSignals >= 5
+      ? copy.productReadinessStateReady
+      : readinessSignals >= 3
+        ? copy.productReadinessStatePartial
+        : copy.productReadinessStateAttention;
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
@@ -282,6 +300,60 @@ export function ProductDetailPage({
                   })
                 : copy.relatedOfferSnapshotFallback}
             </p>
+          </div>
+
+          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <p className="font-semibold text-[var(--color-text-primary)]">
+              {copy.productReadinessTitle}
+            </p>
+            <p className="mt-2">
+              {formatResource(copy.productReadinessMessage, {
+                status: readinessState,
+              })}
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl bg-[var(--color-surface-panel)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.productReadinessDiscoveryLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {readinessState}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-[var(--color-surface-panel)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.productReadinessMetadataLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.productReadinessMetadataValue, {
+                    current: Number(hasMetaTitle) + Number(hasMetaDescription),
+                    total: 2,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-[var(--color-surface-panel)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.productReadinessMerchandisingLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.productReadinessMerchandisingValue, {
+                    mediaCount: product.media.length,
+                    variantCount: product.variants.length,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-[var(--color-surface-panel)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.productReadinessFollowUpLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.productReadinessFollowUpValue, {
+                    primaryCategory: hasPrimaryCategory ? copy.yes : copy.no,
+                    relatedCount: relatedProducts.length,
+                  })}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">

@@ -11,13 +11,11 @@ import {
   toCheckoutDraftFromMemberProfile,
   toCheckoutAddress,
 } from "@/features/checkout/helpers";
-import {
-  getCurrentMemberAddresses,
-  getCurrentMemberInvoices,
-  getCurrentMemberPreferences,
-  getCurrentMemberProfile,
-} from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import {
+  getMemberCommerceSummaryContext,
+  getMemberIdentityContext,
+} from "@/features/member-portal/server/get-member-summary-context";
 import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
@@ -61,25 +59,15 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
   const selectedMemberAddressId = readSingleSearchParam(
     resolvedSearchParams?.memberAddressId,
   );
-  const [
-    memberAddressesResult,
-    memberProfileResult,
-    memberPreferencesResult,
-    memberInvoicesResult,
-  ] = memberSession
+  const [identityContext, commerceSummaryContext] = memberSession
     ? await Promise.all([
-        getCurrentMemberAddresses(),
-        getCurrentMemberProfile(),
-        getCurrentMemberPreferences(),
-        getCurrentMemberInvoices({
-          page: 1,
-          pageSize: 3,
-        }),
+        getMemberIdentityContext(),
+        getMemberCommerceSummaryContext(),
       ])
-    : [null, null, null, null];
-  const memberAddresses = memberAddressesResult?.data ?? [];
-  const memberProfile = memberProfileResult?.data ?? null;
-  const memberPreferences = memberPreferencesResult?.data ?? null;
+    : [null, null];
+  const memberAddresses = identityContext?.addressesResult.data ?? [];
+  const memberProfile = identityContext?.profileResult.data ?? null;
+  const memberPreferences = identityContext?.preferencesResult.data ?? null;
   const preferredMemberAddress =
     memberAddresses.find((address) => address.id === selectedMemberAddressId) ??
     memberAddresses.find((address) => address.isDefaultShipping) ??
@@ -127,13 +115,13 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
       intentMessage={intentMessage}
       checkoutError={checkoutError}
       memberAddresses={memberAddresses}
-      memberAddressesStatus={memberAddressesResult?.status ?? "idle"}
+      memberAddressesStatus={identityContext?.addressesResult.status ?? "idle"}
       memberProfile={memberProfile}
-      memberProfileStatus={memberProfileResult?.status ?? "idle"}
+      memberProfileStatus={identityContext?.profileResult.status ?? "idle"}
       memberPreferences={memberPreferences}
-      memberPreferencesStatus={memberPreferencesResult?.status ?? "idle"}
-      memberInvoices={memberInvoicesResult?.data?.items ?? []}
-      memberInvoicesStatus={memberInvoicesResult?.status ?? "idle"}
+      memberPreferencesStatus={identityContext?.preferencesResult.status ?? "idle"}
+      memberInvoices={commerceSummaryContext?.invoicesResult.data?.items ?? []}
+      memberInvoicesStatus={commerceSummaryContext?.invoicesResult.status ?? "idle"}
       profilePrefillActive={!preferredMemberAddress && Boolean(memberProfile)}
       selectedMemberAddressId={effectiveSelectedMemberAddressId}
       hasMemberSession={Boolean(memberSession)}

@@ -63,4 +63,8 @@ export type CatalogVisibleSort =
   | "name-asc"
   | "price-asc"
   | "price-desc"
-  | "savings-desc";
+  | "savings-desc"
+  | "offers-first"
+  | "base-first";
+
+export type CatalogVisibleState = "all" | "offers" | "base";

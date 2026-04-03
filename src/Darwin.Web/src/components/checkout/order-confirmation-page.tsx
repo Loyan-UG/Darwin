@@ -7,6 +7,8 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import {
+  getProductOpportunityCampaign,
+  getProductOpportunityCampaignLabel,
   getProductSavingsPercent,
   sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
@@ -90,6 +92,20 @@ function hasSuccessfulPayment(confirmation: PublicStorefrontOrderConfirmation) {
   });
 }
 
+function getRecordedPaymentAmountMinor(
+  confirmation: PublicStorefrontOrderConfirmation,
+) {
+  return confirmation.payments.reduce((total, payment) => {
+    const currentStatus = payment.status.toLowerCase();
+    const isRecorded =
+      currentStatus === "paid" ||
+      currentStatus === "succeeded" ||
+      currentStatus === "completed";
+
+    return isRecorded ? total + payment.amountMinor : total;
+  }, 0);
+}
+
 function resolveDisplayedPaymentStatus(
   confirmation: PublicStorefrontOrderConfirmation,
   paymentCompletionStatus: string | undefined,
@@ -162,6 +178,12 @@ export function OrderConfirmationPage({
   const shippingAddress = parseAddressJson(confirmation.shippingAddressJson);
   const paid = hasSuccessfulPayment(confirmation);
   const paymentNeedsAttention = !paid;
+  const recordedPaymentAmountMinor = getRecordedPaymentAmountMinor(confirmation);
+  const remainingPaymentAmountMinor = Math.max(
+    confirmation.grandTotalGrossMinor - recordedPaymentAmountMinor,
+    0,
+  );
+  const paymentCoverageComplete = remainingPaymentAmountMinor === 0;
   const memberOrderDetailHref = sanitizeAppPath(
     `/orders/${confirmation.orderId}`,
     "/orders",
@@ -491,6 +513,40 @@ export function OrderConfirmationPage({
                 )}
               </p>
             </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.confirmationPaymentWindowRecordedLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(
+                  recordedPaymentAmountMinor,
+                  confirmation.currency,
+                  culture,
+                )}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.confirmationPaymentWindowRemainingLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(
+                  remainingPaymentAmountMinor,
+                  confirmation.currency,
+                  culture,
+                )}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.confirmationPaymentWindowCoverageLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {paymentCoverageComplete
+                  ? copy.confirmationPaymentWindowCoverageComplete
+                  : copy.confirmationPaymentWindowCoverageOpen}
+              </p>
+            </article>
           </div>
         </section>
 
@@ -764,6 +820,15 @@ export function OrderConfirmationPage({
                       <div className="mt-3 grid gap-3">
                         {guestOfferBoard.map((product) => {
                           const savingsPercent = getProductSavingsPercent(product);
+                          const campaignLabel = getProductOpportunityCampaignLabel(
+                            getProductOpportunityCampaign(product),
+                            {
+                              heroOffer: copy.offerCampaignHeroLabel,
+                              valueOffer: copy.offerCampaignValueLabel,
+                              priceDrop: copy.offerCampaignPriceDropLabel,
+                              steadyPick: copy.offerCampaignSteadyLabel,
+                            },
+                          );
 
                           return (
                             <div
@@ -776,9 +841,13 @@ export function OrderConfirmationPage({
                               >
                                 {product.name}
                               </Link>
+                              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                                {campaignLabel}
+                              </p>
                               <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
                                 {savingsPercent !== null
                                   ? formatResource(copy.confirmationGuestOfferBoardOfferDescription, {
+                                      campaignLabel,
                                       savingsPercent,
                                       price: formatMoney(
                                         product.priceMinor,

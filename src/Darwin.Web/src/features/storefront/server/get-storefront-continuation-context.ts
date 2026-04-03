@@ -17,7 +17,7 @@ const getCachedStorefrontContinuationContext = cache(async (culture: string) => 
       },
       () =>
         Promise.all([
-          getPublishedPages({ page: 1, pageSize: 2, culture }),
+          getPublishedPages({ page: 1, pageSize: 3, culture }),
           getPublicCategories(culture),
           getPublicProducts({ page: 1, pageSize: 3, culture }),
         ]),

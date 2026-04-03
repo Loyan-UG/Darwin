@@ -4,6 +4,8 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import {
+  getProductOpportunityCampaign,
+  getProductOpportunityCampaignLabel,
   getProductSavingsPercent,
   sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
@@ -39,6 +41,37 @@ export function CommerceStorefrontWindow({
   const spotlightPage = cmsPages[0] ?? null;
   const spotlightCategory = categories[0] ?? null;
   const offerBoard = sortProductsByOpportunity(products).slice(0, 3);
+  const campaignBoard = [
+    ...categories.slice(0, 2).map((category) => ({
+      id: `commerce-campaign-category-${category.id}`,
+      label: copy.storefrontWindowCampaignCategoryLabel,
+      title: category.name,
+      description:
+        category.description ?? copy.storefrontWindowCampaignCategoryFallbackDescription,
+      href: buildAppQueryPath("/catalog", { category: category.slug }),
+      ctaLabel: copy.storefrontWindowCampaignCategoryCta,
+    })),
+    ...offerBoard.slice(0, 2).map((product) => {
+      const savingsPercent = getProductSavingsPercent(product);
+
+      return {
+        id: `commerce-campaign-product-${product.id}`,
+        label: copy.storefrontWindowCampaignProductLabel,
+        title: product.name,
+        description:
+          savingsPercent !== null
+            ? formatResource(copy.storefrontWindowCampaignProductDescription, {
+                savingsPercent,
+                price: formatMoney(product.priceMinor, product.currency, culture),
+              })
+            : formatResource(copy.storefrontWindowCampaignProductFallbackDescription, {
+                price: formatMoney(product.priceMinor, product.currency, culture),
+              }),
+        href: `/catalog/${product.slug}`,
+        ctaLabel: copy.storefrontWindowCampaignProductCta,
+      };
+    }),
+  ];
 
   return (
     <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -141,6 +174,15 @@ export function CommerceStorefrontWindow({
             <div className="mt-4 flex flex-col gap-3">
               {offerBoard.map((product) => {
                 const savingsPercent = getProductSavingsPercent(product);
+                const campaignLabel = getProductOpportunityCampaignLabel(
+                  getProductOpportunityCampaign(product),
+                  {
+                    heroOffer: copy.offerCampaignHeroLabel,
+                    valueOffer: copy.offerCampaignValueLabel,
+                    priceDrop: copy.offerCampaignPriceDropLabel,
+                    steadyPick: copy.offerCampaignSteadyLabel,
+                  },
+                );
 
                 return (
                   <Link
@@ -150,6 +192,9 @@ export function CommerceStorefrontWindow({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                          {campaignLabel}
+                        </p>
                         <p className="truncate font-semibold text-[var(--color-text-primary)]">
                           {product.name}
                         </p>
@@ -158,6 +203,7 @@ export function CommerceStorefrontWindow({
                             ? formatResource(
                                 copy.storefrontWindowProductOfferBoardDescription,
                                 {
+                                  campaignLabel,
                                   savingsPercent,
                                   price: formatMoney(
                                     product.priceMinor,
@@ -202,6 +248,54 @@ export function CommerceStorefrontWindow({
             </p>
           )}
         </article>
+      </div>
+
+      <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {copy.storefrontWindowCampaignTitle}
+          </p>
+          <Link
+            href={localizeHref("/catalog", culture)}
+            className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+          >
+            {copy.storefrontWindowCampaignCta}
+          </Link>
+        </div>
+        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+          {formatResource(copy.storefrontWindowCampaignMessage, {
+            categoryCount: categories.length,
+            productCount: products.length,
+          })}
+        </p>
+        {campaignBoard.length > 0 ? (
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {campaignBoard.map((item) => (
+              <Link
+                key={item.id}
+                href={localizeHref(item.href, culture)}
+                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {item.label}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {item.title}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {item.description}
+                </p>
+                <p className="mt-3 text-sm font-semibold text-[var(--color-brand)]">
+                  {item.ctaLabel}
+                </p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {copy.storefrontWindowCampaignEmptyMessage}
+          </p>
+        )}
       </div>
     </section>
   );

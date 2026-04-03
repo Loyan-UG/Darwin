@@ -22,6 +22,8 @@ type InvoicesPageProps = {
   status: string;
   currentPage: number;
   totalPages: number;
+  visibleQuery?: string;
+  visibleState: "all" | "outstanding" | "settled";
   cmsPages: PublicPageSummary[];
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
@@ -31,8 +33,27 @@ type InvoicesPageProps = {
   cartLinkedProductSlugs: string[];
 };
 
-function buildInvoicesHref(page = 1) {
-  return page > 1 ? `/invoices?page=${page}` : "/invoices";
+function isOutstandingInvoice(invoice: MemberInvoiceSummary) {
+  return invoice.balanceMinor > 0;
+}
+
+function buildInvoicesHref(
+  page = 1,
+  options?: {
+    visibleQuery?: string;
+    visibleState?: "all" | "outstanding" | "settled";
+  },
+) {
+  const query: Record<string, string | number | undefined> = {
+    page: page > 1 ? page : undefined,
+    visibleQuery: options?.visibleQuery,
+    visibleState:
+      options?.visibleState && options.visibleState !== "all"
+        ? options.visibleState
+        : undefined,
+  };
+
+  return buildAppQueryPath("/invoices", query);
 }
 
 export function InvoicesPage({
@@ -41,6 +62,8 @@ export function InvoicesPage({
   status,
   currentPage,
   totalPages,
+  visibleQuery,
+  visibleState,
   cmsPages,
   cmsPagesStatus,
   categories,
@@ -50,12 +73,29 @@ export function InvoicesPage({
   cartLinkedProductSlugs,
 }: InvoicesPageProps) {
   const copy = getMemberResource(culture);
-  const outstandingInvoices = invoices.filter((invoice) => invoice.balanceMinor > 0);
+  const outstandingInvoices = invoices.filter(isOutstandingInvoice);
   const outstandingBalanceMinor = outstandingInvoices.reduce(
     (total, invoice) => total + invoice.balanceMinor,
     0,
   );
   const primaryCurrency = invoices[0]?.currency ?? "EUR";
+  const normalizedVisibleQuery = visibleQuery?.trim().toLowerCase() ?? "";
+  const filteredInvoices = invoices.filter((invoice) => {
+    const matchesQuery =
+      normalizedVisibleQuery.length === 0 ||
+      [
+        invoice.orderNumber ?? "",
+        invoice.status,
+        invoice.id,
+      ].some((value) => value.toLowerCase().includes(normalizedVisibleQuery));
+
+    const matchesState =
+      visibleState === "all" ||
+      (visibleState === "outstanding" && isOutstandingInvoice(invoice)) ||
+      (visibleState === "settled" && !isOutstandingInvoice(invoice));
+
+    return matchesQuery && matchesState;
+  });
   const cartLinkedSlugSet = new Set(cartLinkedProductSlugs);
   const rankedProducts =
     (cartLinkedSlugSet.size > 0
@@ -109,12 +149,67 @@ export function InvoicesPage({
           </p>
           <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.invoicesWindowMessage, {
-              count: invoices.length,
+              count: filteredInvoices.length,
+              loadedCount: invoices.length,
               currentPage,
               totalPages,
               status,
             })}
           </p>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.invoicesFilterTitle}
+            </p>
+            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.invoicesFilterMessage, {
+                count: filteredInvoices.length,
+                loadedCount: invoices.length,
+              })}
+            </p>
+          </div>
+          <form action={localizeHref("/invoices", culture)} method="get" className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_auto]">
+            <label className="flex flex-col gap-2 text-sm text-[var(--color-text-secondary)]">
+              <span>{copy.invoicesFilterSearchPlaceholder}</span>
+              <input
+                type="search"
+                name="visibleQuery"
+                defaultValue={visibleQuery ?? ""}
+                placeholder={copy.invoicesFilterSearchPlaceholder}
+                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-base)] px-4 py-3 text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm text-[var(--color-text-secondary)]">
+              <span>{copy.invoicesFilterStateLabel}</span>
+              <select
+                name="visibleState"
+                defaultValue={visibleState}
+                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-base)] px-4 py-3 text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
+              >
+                <option value="all">{copy.invoicesFilterStateAll}</option>
+                <option value="outstanding">{copy.invoicesFilterStateOutstanding}</option>
+                <option value="settled">{copy.invoicesFilterStateSettled}</option>
+              </select>
+            </label>
+            <div className="flex items-end gap-3">
+              <button
+                type="submit"
+                className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-brand-strong)]"
+              >
+                {copy.invoicesFilterApplyCta}
+              </button>
+              {(visibleQuery || visibleState !== "all") && (
+                <Link
+                  href={localizeHref("/invoices", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.clearFilterCta}
+                </Link>
+              )}
+            </div>
+          </form>
         </div>
 
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -350,7 +445,7 @@ export function InvoicesPage({
         </div>
 
         <div className="grid gap-5">
-          {invoices.map((invoice) => (
+          {filteredInvoices.map((invoice) => (
             <article
               key={invoice.id}
               className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
@@ -406,11 +501,25 @@ export function InvoicesPage({
           </div>
         )}
 
+        {invoices.length > 0 && filteredInvoices.length === 0 && (
+          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.invoicesFilterEmptyMessage}
+            </p>
+          </div>
+        )}
+
         {totalPages > 1 && (
           <div className="flex flex-wrap items-center gap-3">
             <Link
               aria-disabled={currentPage <= 1}
-              href={localizeHref(buildInvoicesHref(Math.max(1, currentPage - 1)), culture)}
+              href={localizeHref(
+                buildInvoicesHref(Math.max(1, currentPage - 1), {
+                  visibleQuery,
+                  visibleState,
+                }),
+                culture,
+              )}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.previous}
@@ -420,7 +529,13 @@ export function InvoicesPage({
             </p>
             <Link
               aria-disabled={currentPage >= totalPages}
-              href={localizeHref(buildInvoicesHref(Math.min(totalPages, currentPage + 1)), culture)}
+              href={localizeHref(
+                buildInvoicesHref(Math.min(totalPages, currentPage + 1), {
+                  visibleQuery,
+                  visibleState,
+                }),
+                culture,
+              )}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.next}

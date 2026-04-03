@@ -1,5 +1,18 @@
 import type { PublicProductSummary } from "@/features/catalog/types";
 
+export type ProductOpportunityCampaign =
+  | "hero-offer"
+  | "value-offer"
+  | "price-drop"
+  | "steady-pick";
+
+type ProductOpportunityCampaignLabels = {
+  heroOffer: string;
+  valueOffer: string;
+  priceDrop: string;
+  steadyPick: string;
+};
+
 export function getProductSavingsPercent(
   product: PublicProductSummary,
 ): number | null {
@@ -15,6 +28,42 @@ export function getProductSavingsPercent(
       product.compareAtPriceMinor) *
       100,
   );
+}
+
+export function getProductOpportunityCampaign(
+  product: PublicProductSummary,
+): ProductOpportunityCampaign {
+  const savingsPercent = getProductSavingsPercent(product);
+
+  if (savingsPercent === null) {
+    return "steady-pick";
+  }
+
+  if (savingsPercent >= 30) {
+    return "hero-offer";
+  }
+
+  if (savingsPercent >= 15) {
+    return "value-offer";
+  }
+
+  return "price-drop";
+}
+
+export function getProductOpportunityCampaignLabel(
+  campaign: ProductOpportunityCampaign,
+  labels: ProductOpportunityCampaignLabels,
+): string {
+  switch (campaign) {
+    case "hero-offer":
+      return labels.heroOffer;
+    case "value-offer":
+      return labels.valueOffer;
+    case "price-drop":
+      return labels.priceDrop;
+    default:
+      return labels.steadyPick;
+  }
 }
 
 export function sortProductsByOpportunity(

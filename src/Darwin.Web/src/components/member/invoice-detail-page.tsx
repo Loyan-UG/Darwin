@@ -96,6 +96,7 @@ export function InvoiceDetailPage({
   const documentUrl = toWebApiUrl(invoice.actions.documentPath);
   const paymentAttention =
     invoice.actions.canRetryPayment || invoice.balanceMinor > 0;
+  const settledAtUtc = invoice.paidAtUtc ?? null;
   const cartLinkedSlugSet = new Set(
     cartLinkedProductSlugs.map((slug) => slug.toLowerCase()),
   );
@@ -255,6 +256,43 @@ export function InvoiceDetailPage({
                 <div className="flex items-center justify-between"><span>{copy.settledLabel}</span><span>{formatMoney(invoice.settledAmountMinor, invoice.currency, culture)}</span></div>
                 <div className="flex items-center justify-between"><span>{copy.balanceOnlyLabel}</span><span>{formatMoney(invoice.balanceMinor, invoice.currency, culture)}</span></div>
                 <div className="flex items-center justify-between border-t border-[var(--color-border-soft)] pt-3 text-base font-semibold text-[var(--color-text-primary)]"><span>{copy.totalLabel}</span><span>{formatMoney(invoice.totalGrossMinor, invoice.currency, culture)}</span></div>
+              </div>
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.invoiceDetailTimelineTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.invoiceDetailTimelineMessage}
+              </p>
+              <div className="mt-5 flex flex-col gap-3">
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.invoiceDetailTimelineCreatedLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {formatDateTime(invoice.createdAtUtc, culture)}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.invoiceDetailTimelineDueLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {formatDateTime(invoice.dueDateUtc, culture)}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.invoiceDetailTimelineSettledLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {settledAtUtc
+                      ? formatDateTime(settledAtUtc, culture)
+                      : copy.timelineUnavailable}
+                  </p>
+                </article>
               </div>
             </aside>
 

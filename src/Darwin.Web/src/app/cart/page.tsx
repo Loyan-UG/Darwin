@@ -6,12 +6,8 @@ import {
   readAllowedSearchParam,
   readSingleSearchParam,
 } from "@/features/checkout/helpers";
-import {
-  getCurrentMemberAddresses,
-  getCurrentMemberPreferences,
-  getCurrentMemberProfile,
-} from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getMemberIdentityContext } from "@/features/member-portal/server/get-member-summary-context";
 import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
@@ -50,13 +46,7 @@ export default async function CartRoute({ searchParams }: CartRouteProps) {
         getStorefrontContinuationContext(culture),
       ]),
   );
-  const [memberAddressesResult, memberProfileResult, memberPreferencesResult] = memberSession
-    ? await Promise.all([
-        getCurrentMemberAddresses(),
-        getCurrentMemberProfile(),
-        getCurrentMemberPreferences(),
-      ])
-    : [null, null, null];
+  const identityContext = memberSession ? await getMemberIdentityContext() : null;
   let followUpProducts: PublicProductSummary[] = [];
 
   if (model.cart?.items.length) {
@@ -80,12 +70,12 @@ export default async function CartRoute({ searchParams }: CartRouteProps) {
     <CartPage
       culture={culture}
       model={model}
-      memberAddresses={memberAddressesResult?.data ?? []}
-      memberAddressesStatus={memberAddressesResult?.status ?? "unauthenticated"}
-      memberProfile={memberProfileResult?.data ?? null}
-      memberProfileStatus={memberProfileResult?.status ?? "unauthenticated"}
-      memberPreferences={memberPreferencesResult?.data ?? null}
-      memberPreferencesStatus={memberPreferencesResult?.status ?? "unauthenticated"}
+      memberAddresses={identityContext?.addressesResult.data ?? []}
+      memberAddressesStatus={identityContext?.addressesResult.status ?? "unauthenticated"}
+      memberProfile={identityContext?.profileResult.data ?? null}
+      memberProfileStatus={identityContext?.profileResult.status ?? "unauthenticated"}
+      memberPreferences={identityContext?.preferencesResult.data ?? null}
+      memberPreferencesStatus={identityContext?.preferencesResult.status ?? "unauthenticated"}
       hasMemberSession={Boolean(memberSession)}
       cartStatus={readAllowedSearchParam(resolvedSearchParams?.cartStatus, [
         "added",

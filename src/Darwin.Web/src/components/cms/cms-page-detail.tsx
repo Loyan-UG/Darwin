@@ -71,6 +71,26 @@ export function CmsPageDetail({
     currentPageIndex >= 0 && currentPageIndex < relatedPages.length - 1
       ? relatedPages[currentPageIndex + 1]
       : null;
+  const hasMetaTitle = Boolean(page?.metaTitle?.trim());
+  const hasMetaDescription = Boolean(page?.metaDescription?.trim());
+  const hasStructuredSections = Boolean(contentSummary && contentSummary.headings.length > 0);
+  const hasReadingDepth = Boolean(contentSummary && contentSummary.wordCount >= 120);
+  const discoveryReadySignals = [
+    hasMetaTitle,
+    hasMetaDescription,
+    hasStructuredSections,
+    hasReadingDepth,
+  ].filter(Boolean).length;
+  const discoveryReadinessKey =
+    discoveryReadySignals >= 4
+      ? copy.cmsReadinessStateReady
+      : discoveryReadySignals >= 2
+        ? copy.cmsReadinessStatePartial
+        : copy.cmsReadinessStateAttention;
+  const navigationCoverageKey =
+    relatedPages.length > 0
+      ? copy.cmsReadinessStateReady
+      : copy.cmsReadinessStateAttention;
   if (!page) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -261,6 +281,57 @@ export function CmsPageDetail({
               </div>
             </div>
           )}
+
+          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.cmsReadinessTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.cmsReadinessDescription, {
+                status: discoveryReadinessKey,
+              })}
+            </p>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.cmsReadinessDiscoveryLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {discoveryReadinessKey}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.cmsReadinessMetadataLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.cmsReadinessMetadataValue, {
+                    current: Number(hasMetaTitle) + Number(hasMetaDescription),
+                    total: 2,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.cmsReadinessStructureLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {formatResource(copy.cmsReadinessStructureValue, {
+                    headings: contentSummary?.headings.length ?? 0,
+                    paragraphs: contentSummary?.paragraphCount ?? 0,
+                  })}
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.cmsReadinessNavigationLabel}
+                </p>
+                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                  {navigationCoverageKey}
+                </p>
+              </div>
+            </div>
+          </div>
 
           <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">

@@ -12,7 +12,7 @@ import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { toSafeHttpUrl } from "@/lib/webapi-url";
-import { activeTheme } from "@/themes/registry";
+import { resolveTheme } from "@/themes/registry";
 
 function sortMenuItems(items: PublicMenuItem[]) {
   return [...items].sort((left, right) => left.sortOrder - right.sortOrder);
@@ -74,6 +74,7 @@ function getMenuMessage(
 
 export async function getShellModel(): Promise<ShellModel> {
   const runtimeConfig = getSiteRuntimeConfig();
+  const activeTheme = resolveTheme(runtimeConfig.theme);
   const culture = await getRequestCulture();
   const menuResult = await getPublicMenuByName(runtimeConfig.mainMenuName);
   const cmsLinks = menuResult.data

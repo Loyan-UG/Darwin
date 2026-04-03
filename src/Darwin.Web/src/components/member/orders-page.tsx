@@ -22,6 +22,8 @@ type OrdersPageProps = {
   status: string;
   currentPage: number;
   totalPages: number;
+  visibleQuery?: string;
+  visibleState: "all" | "attention" | "settled";
   cmsPages: PublicPageSummary[];
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
@@ -31,8 +33,27 @@ type OrdersPageProps = {
   cartLinkedProductSlugs: string[];
 };
 
-function buildOrdersHref(page = 1) {
-  return page > 1 ? `/orders?page=${page}` : "/orders";
+function isAttentionOrder(order: MemberOrderSummary) {
+  return /(pending|processing|payment|review|hold|open)/i.test(order.status);
+}
+
+function buildOrdersHref(
+  page = 1,
+  options?: {
+    visibleQuery?: string;
+    visibleState?: "all" | "attention" | "settled";
+  },
+) {
+  const query: Record<string, string | number | undefined> = {
+    page: page > 1 ? page : undefined,
+    visibleQuery: options?.visibleQuery,
+    visibleState:
+      options?.visibleState && options.visibleState !== "all"
+        ? options.visibleState
+        : undefined,
+  };
+
+  return buildAppQueryPath("/orders", query);
 }
 
 export function OrdersPage({
@@ -41,6 +62,8 @@ export function OrdersPage({
   status,
   currentPage,
   totalPages,
+  visibleQuery,
+  visibleState,
   cmsPages,
   cmsPagesStatus,
   categories,
@@ -50,14 +73,33 @@ export function OrdersPage({
   cartLinkedProductSlugs,
 }: OrdersPageProps) {
   const copy = getMemberResource(culture);
-  const attentionOrders = orders.filter((order) =>
-    /(pending|processing|payment|review|hold|open)/i.test(order.status),
-  );
+  const attentionOrders = orders.filter(isAttentionOrder);
   const primaryCurrency = orders[0]?.currency ?? "EUR";
   const attentionGrossMinor = attentionOrders.reduce(
     (total, order) => total + order.grandTotalGrossMinor,
     0,
   );
+  const normalizedVisibleQuery = visibleQuery?.trim().toLowerCase() ?? "";
+  const filteredOrders = orders.filter((order) => {
+    const matchesQuery =
+      normalizedVisibleQuery.length === 0 ||
+      [
+        order.orderNumber,
+        order.status,
+        order.id,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          value.toLowerCase().includes(normalizedVisibleQuery),
+        );
+
+    const matchesState =
+      visibleState === "all" ||
+      (visibleState === "attention" && isAttentionOrder(order)) ||
+      (visibleState === "settled" && !isAttentionOrder(order));
+
+    return matchesQuery && matchesState;
+  });
   const cartLinkedSlugSet = new Set(cartLinkedProductSlugs);
   const rankedProducts =
     (cartLinkedSlugSet.size > 0
@@ -111,12 +153,67 @@ export function OrdersPage({
           </p>
           <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.ordersWindowMessage, {
-              count: orders.length,
+              count: filteredOrders.length,
+              loadedCount: orders.length,
               currentPage,
               totalPages,
               status,
             })}
           </p>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+              {copy.ordersFilterTitle}
+            </p>
+            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.ordersFilterMessage, {
+                count: filteredOrders.length,
+                loadedCount: orders.length,
+              })}
+            </p>
+          </div>
+          <form action={localizeHref("/orders", culture)} method="get" className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_auto]">
+            <label className="flex flex-col gap-2 text-sm text-[var(--color-text-secondary)]">
+              <span>{copy.ordersFilterSearchPlaceholder}</span>
+              <input
+                type="search"
+                name="visibleQuery"
+                defaultValue={visibleQuery ?? ""}
+                placeholder={copy.ordersFilterSearchPlaceholder}
+                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-base)] px-4 py-3 text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm text-[var(--color-text-secondary)]">
+              <span>{copy.ordersFilterStateLabel}</span>
+              <select
+                name="visibleState"
+                defaultValue={visibleState}
+                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-base)] px-4 py-3 text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)]"
+              >
+                <option value="all">{copy.ordersFilterStateAll}</option>
+                <option value="attention">{copy.ordersFilterStateAttention}</option>
+                <option value="settled">{copy.ordersFilterStateSettled}</option>
+              </select>
+            </label>
+            <div className="flex items-end gap-3">
+              <button
+                type="submit"
+                className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-brand-strong)]"
+              >
+                {copy.ordersFilterApplyCta}
+              </button>
+              {(visibleQuery || visibleState !== "all") && (
+                <Link
+                  href={localizeHref("/orders", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {copy.clearFilterCta}
+                </Link>
+              )}
+            </div>
+          </form>
         </div>
 
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -352,7 +449,7 @@ export function OrdersPage({
         </div>
 
         <div className="grid gap-5">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <article
               key={order.id}
               className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
@@ -403,11 +500,25 @@ export function OrdersPage({
           </div>
         )}
 
+        {orders.length > 0 && filteredOrders.length === 0 && (
+          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.ordersFilterEmptyMessage}
+            </p>
+          </div>
+        )}
+
         {totalPages > 1 && (
           <div className="flex flex-wrap items-center gap-3">
             <Link
               aria-disabled={currentPage <= 1}
-              href={localizeHref(buildOrdersHref(Math.max(1, currentPage - 1)), culture)}
+              href={localizeHref(
+                buildOrdersHref(Math.max(1, currentPage - 1), {
+                  visibleQuery,
+                  visibleState,
+                }),
+                culture,
+              )}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.previous}
@@ -417,7 +528,13 @@ export function OrdersPage({
             </p>
             <Link
               aria-disabled={currentPage >= totalPages}
-              href={localizeHref(buildOrdersHref(Math.min(totalPages, currentPage + 1)), culture)}
+              href={localizeHref(
+                buildOrdersHref(Math.min(totalPages, currentPage + 1), {
+                  visibleQuery,
+                  visibleState,
+                }),
+                culture,
+              )}
               className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
             >
               {copy.next}

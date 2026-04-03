@@ -61,19 +61,26 @@ The repository has moved beyond the raw front-office starting line:
 - home composition now also surfaces a live offer board that ranks multiple visible catalog opportunities by savings strength, so the storefront entry can show several concrete next-buy options instead of one product spotlight alone
 - home composition now also surfaces a live category-campaign board built from visible category lanes plus category-anchoring products, so the storefront entry can sell through stronger browse narratives instead of only isolated offer cards
 - storefront runtime config now also supports app-configured theme selection between a grocer-style default and an atelier-style variant through `DARWIN_WEB_THEME`, so the same front-office system can ship more than one real visual direction without changing feature code
+- storefront runtime config now also supports a third `harbor` visual direction through `DARWIN_WEB_THEME`, so the same front-office system can ship grocery, editorial, and cooler hospitality-style brand expressions without changing feature code
 - Darwin.Web now also includes a lightweight unit-test runner plus focused coverage for query serialization, checkout draft/input normalization, HTML fragment sanitization, safe WebApi URL resolution, and locale-routing guardrails, so critical storefront handoff and trust-boundary logic is no longer validated only through manual browsing and full builds
+- Darwin.Web now also covers the page-local catalog/CMS browse lenses with focused unit tests, so visible assortment/discovery-state behavior is regression-safe instead of staying embedded only inside route composition
 - Darwin.Web now also emits shared API diagnostics for public, member, and auth fetch failures, including response-level request identifiers where available, so staging/production troubleshooting is less dependent on route-local guesswork
 - public CMS/navigation and catalog discovery now also run through differentiated cache windows plus cache tags instead of one generic revalidation setting, so storefront performance tuning can follow content volatility more closely
 - account entry, public auth continuation, and member history routes now also reuse a shared cached storefront-continuation context for CMS/category/product follow-up data, so repeated cross-surface discovery windows assemble with less duplicate server work
 - member commerce detail routes plus account editor routes now also reuse that shared cached storefront-continuation context, so protected continuation windows stay consistent while doing less duplicate server work across the portal
 - cart, checkout, and confirmation now also reuse that shared cached storefront-continuation context for CMS/category/product continuity data, so the conversion path does less duplicate server work while keeping the same discovery windows alive
+- CMS and catalog browse routes now also reuse that shared cached storefront-continuation context for their secondary content/commerce windows, so public discovery surfaces do less duplicate server work while keeping live follow-up windows intact
 - Home, account, cart, checkout, confirmation, and shared storefront-continuation loading now also emit slow-operation timing diagnostics, so real route-composition bottlenecks are easier to spot in staging and production
 - CMS, catalog, orders, and invoices now also emit slow-operation timing diagnostics, so browse and portal bottlenecks are visible across the wider front-office instead of only the main entry and conversion routes
 - CMS detail, product detail, and the main browse/history routes now also emit route-level timing diagnostics for heavier follow-up fetches, so content, discovery, and portal slowdowns are easier to pinpoint before they become customer-facing regressions
 - order/invoice detail plus account editor routes now also emit route-level timing diagnostics, so protected member follow-up and self-service slowdowns are visible across the portal instead of hiding behind server-side composition
+- member order and invoice history now also expose an explicit visible-result review lens over the currently loaded page window, so members can quickly isolate attention or settled history without pretending backend-global search already exists
+- member order and invoice detail routes now also surface explicit operational timelines, so payment, shipment, delivery, due-date, and settlement milestones stay visible on the detail surfaces themselves
+- the member dashboard now also surfaces an explicit commerce-readiness layer, so order attention and open billing exposure are visible from `/account` before the member drills into history routes
 - catalog index and product detail now also surface a shared browse-campaign window built from visible category lanes plus strongest product offers, so catalog routes can drive stronger browse and buying decisions instead of only listing products
 - that home offer board now also shifts away from products already linked to the active cart when browser storefront-shopping state exists, so the storefront entry can suggest the next buying move beyond the current basket instead of echoing the same cart
 - home composition now also includes a live commerce-opportunity window driven by cart, spotlight-product, and category-lane signals, so the storefront entry route can push the shopper toward the strongest immediate buying move instead of only showing generic browse links
+- home composition now also includes an explicit browse-readiness window for CMS and catalog, so storefront entry can expose public discovery debt before the visitor has to infer it from deeper browse routes
 - home composition is now also session-aware for signed-in members and can surface direct portal re-entry routes for account, orders, and loyalty instead of treating Home like a purely anonymous landing page
 - home composition is now also cart-aware and can surface direct cart/checkout recovery from browser-owned storefront snapshots, so Home can resume active shopping flows instead of only restarting browse
 - home composition is now also live-cart-aware and can surface current cart totals plus checkout continuity from the canonical public cart contract when a storefront cart already exists
@@ -88,10 +95,12 @@ The repository has moved beyond the raw front-office starting line:
 - the public account hub plus sign-in/register/activation/password routes now also consume live storefront cart state through that same shared public-auth continuation wrapper, so public self-service entry can resume cart/checkout continuity instead of dropping active commerce context at the auth boundary
 - sign-in/register/activation/password now also surface a shared post-auth destination summary fed by sanitized `returnPath` plus live cart state, so public auth routes keep checkout/cart/member intent explicit instead of acting like context-free forms
 - that public auth post-auth destination summary now also exposes direct CTA handoff to the sanitized return route plus live cart continuation, so self-service routes can actively recover the current storefront/member journey instead of only describing it
+- that shared public-auth continuation flow now also surfaces a browse-campaign board built from live category lanes plus strongest visible offers, so account hub, sign-in, registration, activation, password recovery, and protected auth walls can keep stronger browse-and-buy narratives alive instead of only listing continuation links
 - the public account hub now also surfaces a dedicated storefront-readiness panel and carries the preferred post-auth destination into sign-in/register/activation/password recovery links, so public account entry preserves active cart/checkout intent instead of defaulting every auth jump back to `/account`
 - the public account hub now also surfaces a live storefront action center fed by current cart state plus published CMS/category spotlights, so anonymous account entry can still move through real content and commerce next steps instead of collapsing to auth-only choices
 - the public account hub action center now also surfaces a strongest visible product offer, so anonymous account entry can still create a real next-buy decision instead of only handing off into cart, CMS, or category browse
 - the public account hub now also surfaces a live offer board with multiple strongest visible product opportunities, so anonymous account entry can pitch several next-buy options instead of stopping at one spotlight
+- those public account, public auth, protected auth-wall, commerce handoff, and guest-confirmation offer boards now also classify visible offers into explicit merchandising tiers such as hero offer, value offer, price drop, and steady pick, so high-intent entry points communicate why an opportunity matters instead of only listing ranked products
 - the public `/account` hub now also accepts and preserves a sanitized incoming `returnPath`, so auth walls can hand shoppers into the generic account entry route without losing the intended post-auth destination context
 - public account self-service and sign-in now also normalize email input plus stronger required/autocomplete/password guardrails so avoidable auth-flow mismatches are reduced before the canonical API call
 - CMS and catalog routes now also use feature-level continuation-rail wrappers on top of the shared public continuation component, so content/discovery continuity no longer depends on route-local item assembly
@@ -140,8 +149,11 @@ The repository has moved beyond the raw front-office starting line:
 - the intended web-product direction remains that loyalty on the web may evolve differently from mobile and can later support direct point accrual/redemption flows for store-enabled businesses without requiring browser camera/scanner support
 - catalog list/detail now pass the active request culture to `Darwin.WebApi` and expose contract-safe merchandising context such as selected-category panels, compare-at savings, and category-linked navigation
 - `/catalog` now also exposes a visible-result search/sort lens for the products already loaded on the current server page, while keeping that lens explicit and non-canonical until true public search/facet/sort contracts exist
+- `/catalog` now also exposes a page-local visible assortment lens for `all`, `offers`, and `base assortment`, so shoppers can separate current-page offer windows from base assortment without pretending backend facets already exist
+- `/catalog` now also exposes a page-local review-priority lens for `offers-first` and `base-first`, so shoppers can inspect the currently loaded assortment from a clearer commercial review order without pretending backend facets already exist
 - `/catalog` now also surfaces visible-vs-loaded-vs-total result summaries plus first/last page jumps, so catalog window navigation is more complete without pretending backend search/facets already exist
 - `/catalog` now also surfaces an offer-focus window plus a buying-guide summary from the live visible product set, so merchandising signals stay explicit even before true backend search/facets arrive
+- `/catalog` now also surfaces explicit assortment-readiness coverage for visible offers, base assortment, and support context, so browse review can inspect route debt from the catalog window itself instead of only from counts and lenses
 - `/catalog` and `/catalog/[slug]` now also surface live cart/checkout continuity from the canonical public cart contract, so browse and product evaluation can hand off directly into an already active purchase flow instead of behaving like isolated discovery routes
 - product detail now also surfaces category-aware related products by reusing the current public category/product contracts instead of inventing a separate recommendation endpoint
 - product detail now also exposes breadcrumb, product-reference snapshot, and cross-surface storefront handoff actions so the conversion route does not behave like an isolated leaf page
@@ -282,7 +294,10 @@ The current web slice includes:
 - Home now also exposes category-driven storefront lanes built from live public category plus category-filtered product contracts, so top-level browse paths are not just generic catalog entry cards
 - public CMS listing and CMS slug routes against live `Darwin.WebApi` content endpoints
 - CMS index now also exposes a visible-result search lens over the pages already loaded on the current page, while staying explicit that true CMS search still needs a backend contract
+- CMS index now also exposes a page-local discovery-state lens for pages that are discovery-ready versus pages that still need metadata attention, so public content review is more actionable without pretending backend CMS search already exists
+- CMS index now also exposes a page-local review-priority lens for featured order, title order, ready-first, and attention-first windows, so public content review can move between stronger discovery candidates and metadata debt without pretending backend CMS search already exists
 - CMS index now also surfaces current-window result summaries for visible vs loaded vs total published pages, so public content browsing stays set-aware instead of behaving like a flat card dump
+- CMS index now also surfaces explicit visible discovery-readiness coverage for ready pages, attention pages, and review support, so public content review can inspect window-level discovery debt instead of relying only on lenses and result counts
 - CMS index now also groups the visible page set by title initials with quick-jump anchors, so public content browsing reads like an oriented set instead of one undifferentiated card wall
 - CMS index now also derives a spotlight-plus-follow-up reading rail from the current visible result window, so the public content surface offers a guided reading path without inventing a richer CMS contract
 - CMS index now also exposes explicit cross-surface handoff cards into Home, Catalog, and Account, so public content consumption stays connected to the broader storefront system
@@ -295,6 +310,7 @@ The current web slice includes:
 - CMS index empty-state handling now also keeps Home/Catalog follow-up actions visible instead of ending in a dead-end empty panel
 - CMS detail now also derives section navigation anchors plus reading/structure metrics from the published HTML itself, so long-form content is no longer rendered as a single opaque block
 - CMS detail anchor ids now also normalize diacritics before slugging section headings, so long-form German content keeps stable in-page navigation instead of collapsing into weak or duplicate fallback ids
+- CMS detail now also surfaces an explicit published-content readiness panel for metadata, structure, and navigation coverage, so public content review can see discovery debt from the detail route itself instead of inferring it only from raw page HTML
 - CMS detail unavailable state now also keeps cross-surface follow-up visible, and CMS/catalog detail/index routes now surface explicit route-summary diagnostics so degraded public content/discovery states do not collapse into passive leaves
 - CMS index and CMS detail now also surface live catalog-category and live product follow-up windows, so public content routes can hand off directly into real commerce browse/detail paths instead of only pointing back to generic catalog entry
 - CMS index and CMS detail now also surface a shared commerce-campaign window built from visible category lanes and strongest product opportunities, so public content routes can sell through stronger browse and buying stories instead of only exposing utility follow-up lists
@@ -338,6 +354,7 @@ The current web slice includes:
 - profile, preferences, security, and addresses now also surface a shared storefront-continuation window fed by live public CMS pages plus public categories, so authenticated account editor routes stay connected to published content and catalog browse follow-up instead of behaving like portal-only leaves
 - profile, preferences, security, and addresses now also surface live product highlights inside that shared storefront-continuation window, so authenticated account editor routes can create a next-buy moment instead of only offering content and category follow-up
 - that shared account-editor storefront window now also ranks product opportunities by strongest visible savings and surfaces compare-at context, so self-service routes present sharper buying highlights instead of raw product order
+- that shared account-editor storefront window now also classifies both product highlights and browse-campaign lanes into explicit merchandising tiers, so authenticated account routes can frame clearer buying stories instead of only showing ranked products and generic offer lanes
 - account hub plus sign-in/register/activation/password routes now also surface live product highlights inside their shared public-auth continuation flow, so anonymous account recovery can preserve a next-buy opportunity instead of only keeping cart/content/category context alive
 - those public-auth and account-entry product highlights now also rank by the strongest visible savings signal first, so self-service routes surface a clearer best-offer moment instead of echoing arbitrary catalog order
 - protected member-route auth walls now also surface the same live storefront continuation context, so signed-out visits to orders, invoices, and account editor routes keep cart/content/product opportunity visible instead of collapsing into a minimal access block
@@ -384,12 +401,14 @@ The current web slice includes:
 - culture-aware catalog delivery plus contract-safe merchandising polish across `/catalog` and `/catalog/[slug]`
 - category-aware related-product follow-up on `/catalog/[slug]` using the current public catalog contracts
 - product detail now also surfaces degraded related-product follow-up state explicitly when the category-based follow-up fetch fails, instead of silently flattening adjacent catalog discovery
+- product detail now also surfaces explicit buying-readiness coverage for metadata, merchandising, and adjacent follow-up, so public commerce review can inspect route debt from the detail page itself instead of only from route-summary status
 - member commerce detail hardening for order/invoice documents, shipment/payment snapshots, and linked invoice/order follow-up
 - public cart coupon apply/clear plus richer tax/shipping/billing presentation across cart and checkout summary surfaces
 - checkout now also exposes readiness signals and a live order-review panel so the shopper can validate address/shipping/line items before order placement
 - cart and checkout now also surface a live storefront-discovery window backed by published CMS pages, public categories, and visible product opportunities, so active purchase routes can hand shoppers back into content, browse, and upsell paths without dropping the current conversion flow
 - the shared commerce storefront window now also picks the strongest visible product offer instead of the first catalog card, so cart, checkout, and confirmation show a clearer next-buy signal
 - that shared commerce storefront window now also surfaces a live offer board with multiple strongest visible product opportunities, so cart, checkout, and confirmation can show several next-buy options instead of a single buying spotlight
+- those commerce and protected-entry offer boards now also carry explicit merchandising-tier labels, so cart, checkout, confirmation, auth-wall, and account-handoff routes frame visible buying opportunities as concrete commercial stories instead of generic product lists
 - cart and checkout now also surface live product highlights inside their guest account/auth handoff, so anonymous shoppers can keep a next-buy opportunity visible while deciding whether to sign in or create an account
 - guest commerce auth handoff now also ranks product highlights by the strongest visible savings signal first, so cart and checkout keep a clearer best-offer pitch alongside account recovery
 - the guest commerce auth handoff now also surfaces a live offer board with multiple strongest visible product opportunities, so cart and checkout can keep several next-buy options visible during the account decision
@@ -398,6 +417,9 @@ The current web slice includes:
 - guest order confirmation now also surfaces a next-buy highlight inside the account-tracking handoff, so anonymous after-purchase shoppers keep a real commercial next step visible while deciding whether to sign in or create an account
 - guest order confirmation now also surfaces a live next-buy offer board inside the account-tracking handoff, so anonymous after-purchase shoppers can see several post-purchase opportunities instead of one spotlight
 - that guest confirmation next-buy highlight now also selects the strongest visible offer outside the just-purchased items first, so after-purchase account tracking keeps a cleaner upsell signal instead of echoing the first catalog card
+- checkout now also surfaces combined commercial exposure from the projected new order plus any visible open invoice balance, so payment and billing attention stay explicit before order placement
+- order confirmation now also separates recorded payment from remaining payable exposure, so post-purchase payment follow-up can be read directly from confirmation instead of being inferred from raw attempt rows
+- checkout and confirmation now also break payment exposure into order total, billing carry-over, combined exposure, and coverage state, so financial follow-up is easier to read before and after order placement
 - the authenticated member dashboard now also surfaces live product highlights alongside CMS and category continuation, so signed-in shoppers can see the next buying opportunity directly from `/account`
 - that member-dashboard storefront offer board now also shifts away from products already linked to the active cart when browser storefront-shopping state exists, so signed-in account entry can pitch the next buying move beyond the current basket instead of echoing it
 - orders and invoices now also surface live product highlights alongside their storefront continuation windows, so member history routes can still create a next-buy moment instead of acting like passive archives
@@ -407,6 +429,32 @@ The current web slice includes:
 - centralized SEO metadata shaping with canonical/Open Graph/Twitter support for public routes and explicit `noindex` policy for private/mixed portal routes
 - public `robots.txt` and `sitemap.xml` generation backed by the live CMS/catalog contracts and limited to truly public/indexable storefront paths
 - locale-prefixed public routing for Home/CMS/catalog plus index-level language alternates where slug mapping is unambiguous
+- catalog and CMS campaign windows now also classify visible product opportunities into hero-offer, value-offer, price-drop, and steady-pick tiers, so merchandising framing can tell a clearer commercial story than a raw savings percentage alone
+- member identity and member commerce summary snapshots now also flow through shared cached server contexts, so account, cart, checkout, confirmation, and Home can reuse the same protected summary data with less repeated fetch work
+- account and commerce continuation windows now also surface browse-campaign boards built from live categories plus strongest visible offers, so recovery, portal, and conversion routes can propose stronger next-browse lanes instead of only raw follow-up links
+- the web backlog is now also split between core flow delivery and a later dedicated quality pass, so UX/security/performance refinements can be completed deeply at the end without displacing the remaining main process work
+
+## Feature Logging Rule
+
+For `Darwin.Web`, every newly delivered capability, whether large or small, should also be summarized in this README so later operator/help-guide writing can reconstruct:
+
+- what capability was added
+- on which route or surface it appears
+- when the shopper/member/operator should encounter it
+- what kind of system feedback, readiness signal, warning, or follow-up action it shows
+
+The preferred style for these additions is:
+
+- one short behavior-oriented bullet
+- business-facing wording instead of implementation-only wording
+- explicit mention of the route/surface when that matters
+- explicit mention of the visible feedback or follow-up when the slice changes customer/member guidance
+
+This rule is additive:
+
+- do not delete older implementation bullets only because newer slices exist
+- update stale wording when it is no longer accurate
+- keep the README usable as the living behavioral inventory for `Darwin.Web`
 
 For broader platform documentation, see:
 - [`../../README.md`](../../README.md)

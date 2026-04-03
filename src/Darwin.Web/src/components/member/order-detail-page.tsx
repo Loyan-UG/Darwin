@@ -62,6 +62,12 @@ function renderAddress(address: ParsedAddress | null, culture: string) {
   );
 }
 
+function getLatestUtc(values: Array<string | null | undefined>) {
+  return values
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
+}
+
 export function OrderDetailPage({
   culture,
   order,
@@ -129,6 +135,19 @@ export function OrderDetailPage({
   const linkedInvoiceAttention = order.invoices.filter(
     (invoice) => !invoice.paidAtUtc,
   ).length;
+  const latestPaidAtUtc = getLatestUtc(order.payments.map((payment) => payment.paidAtUtc));
+  const latestShippedAtUtc = getLatestUtc(
+    order.shipments.map((shipment) => shipment.shippedAtUtc),
+  );
+  const latestDeliveredAtUtc = getLatestUtc(
+    order.shipments.map((shipment) => shipment.deliveredAtUtc),
+  );
+  const latestInvoiceDueAtUtc = getLatestUtc(
+    order.invoices.map((invoice) => invoice.dueDateUtc),
+  );
+  const latestInvoicePaidAtUtc = getLatestUtc(
+    order.invoices.map((invoice) => invoice.paidAtUtc),
+  );
   const cartLinkedSlugSet = new Set(
     cartLinkedProductSlugs.map((slug) => slug.toLowerCase()),
   );
@@ -410,6 +429,75 @@ export function OrderDetailPage({
                   </p>
                 </div>
               )}
+            </aside>
+
+            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.orderDetailTimelineTitle}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {copy.orderDetailTimelineMessage}
+              </p>
+              <div className="mt-5 flex flex-col gap-3">
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailTimelineCreatedLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {formatDateTime(order.createdAtUtc, culture)}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailTimelinePaidLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {latestPaidAtUtc
+                      ? formatDateTime(latestPaidAtUtc, culture)
+                      : copy.timelineUnavailable}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailTimelineShippedLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {latestShippedAtUtc
+                      ? formatDateTime(latestShippedAtUtc, culture)
+                      : copy.timelineUnavailable}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailTimelineDeliveredLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {latestDeliveredAtUtc
+                      ? formatDateTime(latestDeliveredAtUtc, culture)
+                      : copy.timelineUnavailable}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailTimelineInvoiceDueLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {latestInvoiceDueAtUtc
+                      ? formatDateTime(latestInvoiceDueAtUtc, culture)
+                      : copy.timelineUnavailable}
+                  </p>
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.orderDetailTimelineInvoicePaidLabel}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {latestInvoicePaidAtUtc
+                      ? formatDateTime(latestInvoicePaidAtUtc, culture)
+                      : copy.timelineUnavailable}
+                  </p>
+                </article>
+              </div>
             </aside>
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">

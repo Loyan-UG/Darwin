@@ -3,16 +3,11 @@ import { MemberDashboardPage } from "@/components/account/member-dashboard-page"
 import { getPublicCart } from "@/features/cart/api/public-cart";
 import { getAnonymousCartId, readCartDisplaySnapshots } from "@/features/cart/cookies";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
+import { getCurrentMemberLoyaltyBusinesses } from "@/features/member-portal/api/member-portal";
 import {
-  getCurrentMemberAddresses,
-  getCurrentMemberCustomerContext,
-  getCurrentMemberInvoices,
-  getCurrentMemberLoyaltyBusinesses,
-  getCurrentMemberLoyaltyOverview,
-  getCurrentMemberOrders,
-  getCurrentMemberPreferences,
-  getCurrentMemberProfile,
-} from "@/features/member-portal/api/member-portal";
+  getMemberCommerceSummaryContext,
+  getMemberIdentityContext,
+} from "@/features/member-portal/server/get-member-summary-context";
 import { getMemberSession } from "@/features/member-session/cookies";
 import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { sanitizeAppPath } from "@/lib/locale-routing";
@@ -70,13 +65,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     .filter((slug): slug is string => Boolean(slug));
 
   const [
-    profileResult,
-    preferencesResult,
-    customerContextResult,
-    addressesResult,
-    ordersResult,
-    invoicesResult,
-    loyaltyOverviewResult,
+    identityContext,
+    commerceSummaryContext,
     loyaltyBusinessesResult,
     storefrontCartResult,
     storefrontContext,
@@ -88,13 +78,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     },
     () =>
       Promise.all([
-        getCurrentMemberProfile(),
-        getCurrentMemberPreferences(),
-        getCurrentMemberCustomerContext(),
-        getCurrentMemberAddresses(),
-        getCurrentMemberOrders({ page: 1, pageSize: 3 }),
-        getCurrentMemberInvoices({ page: 1, pageSize: 3 }),
-        getCurrentMemberLoyaltyOverview(),
+        getMemberIdentityContext(),
+        getMemberCommerceSummaryContext(),
         getCurrentMemberLoyaltyBusinesses({ page: 1, pageSize: 3 }),
         anonymousCartId
           ? getPublicCart(anonymousCartId)
@@ -107,20 +92,20 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     <MemberDashboardPage
       culture={culture}
       session={session}
-      profile={profileResult.data}
-      profileStatus={profileResult.status}
-      preferences={preferencesResult.data}
-      preferencesStatus={preferencesResult.status}
-      customerContext={customerContextResult.data}
-      customerContextStatus={customerContextResult.status}
-      addresses={addressesResult.data ?? []}
-      addressesStatus={addressesResult.status}
-      recentOrders={ordersResult.data?.items ?? []}
-      recentOrdersStatus={ordersResult.status}
-      recentInvoices={invoicesResult.data?.items ?? []}
-      recentInvoicesStatus={invoicesResult.status}
-      loyaltyOverview={loyaltyOverviewResult.data}
-      loyaltyOverviewStatus={loyaltyOverviewResult.status}
+      profile={identityContext.profileResult.data}
+      profileStatus={identityContext.profileResult.status}
+      preferences={identityContext.preferencesResult.data}
+      preferencesStatus={identityContext.preferencesResult.status}
+      customerContext={identityContext.customerContextResult.data}
+      customerContextStatus={identityContext.customerContextResult.status}
+      addresses={identityContext.addressesResult.data ?? []}
+      addressesStatus={identityContext.addressesResult.status}
+      recentOrders={commerceSummaryContext.ordersResult.data?.items ?? []}
+      recentOrdersStatus={commerceSummaryContext.ordersResult.status}
+      recentInvoices={commerceSummaryContext.invoicesResult.data?.items ?? []}
+      recentInvoicesStatus={commerceSummaryContext.invoicesResult.status}
+      loyaltyOverview={commerceSummaryContext.loyaltyOverviewResult.data}
+      loyaltyOverviewStatus={commerceSummaryContext.loyaltyOverviewResult.status}
       loyaltyBusinesses={loyaltyBusinessesResult.data?.items ?? []}
       loyaltyBusinessesStatus={loyaltyBusinessesResult.status}
       storefrontCart={storefrontCartResult.data}

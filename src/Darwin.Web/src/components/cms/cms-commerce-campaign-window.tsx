@@ -4,6 +4,7 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import {
+  getProductOpportunityCampaign,
   getProductSavingsPercent,
   sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
@@ -50,20 +51,31 @@ export function CmsCommerceCampaignWindow({
     })),
     ...rankedProducts.slice(0, 2).map((product) => {
       const savingsPercent = getProductSavingsPercent(product);
+      const campaign = getProductOpportunityCampaign(product);
+      const campaignLabel =
+        campaign === "hero-offer"
+          ? copy.cmsCampaignProductHeroLabel
+          : campaign === "value-offer"
+            ? copy.cmsCampaignProductValueLabel
+            : campaign === "price-drop"
+              ? copy.cmsCampaignProductPriceDropLabel
+              : copy.cmsCampaignProductSteadyLabel;
 
       return {
         id: `cms-campaign-product-${product.id}`,
-        label: copy.cmsCampaignProductLabel,
+        label: campaignLabel,
         title: formatResource(copy.cmsCampaignProductTitle, {
           product: product.name,
         }),
         description:
           savingsPercent !== null
             ? formatResource(copy.cmsCampaignProductDescription, {
+                campaignLabel,
                 savingsPercent,
                 price: formatMoney(product.priceMinor, product.currency, culture),
               })
             : formatResource(copy.cmsCampaignProductFallbackDescription, {
+                campaignLabel,
                 price: formatMoney(product.priceMinor, product.currency, culture),
               }),
         href: localizeHref(`/catalog/${product.slug}`, culture),

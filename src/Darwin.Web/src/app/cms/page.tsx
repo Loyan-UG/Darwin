@@ -1,11 +1,13 @@
 import { CmsPagesIndex } from "@/components/cms/cms-pages-index";
 import { getPublicCart } from "@/features/cart/api/public-cart";
 import { getAnonymousCartId } from "@/features/cart/cookies";
-import {
-  getPublicCategories,
-  getPublicProducts,
-} from "@/features/catalog/api/public-catalog";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
+import {
+  filterVisiblePages,
+  readCmsVisibleSort,
+  readCmsVisibleState,
+  sortVisiblePages,
+} from "@/features/cms/discovery";
 import {
   readPositiveIntegerSearchParam,
   readSearchTextParam,
@@ -15,6 +17,7 @@ import { getSharedResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildSeoMetadata } from "@/lib/seo";
+import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 
 export async function generateMetadata({
   searchParams,
@@ -22,6 +25,8 @@ export async function generateMetadata({
   searchParams?: Promise<{
     page?: string;
     visibleQuery?: string;
+    visibleState?: string;
+    visibleSort?: string;
   }>;
 }) {
   const culture = await getRequestCulture();
@@ -29,6 +34,8 @@ export async function generateMetadata({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
   const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
+  const visibleState = readCmsVisibleState(resolvedSearchParams?.visibleState);
+  const visibleSort = readCmsVisibleSort(resolvedSearchParams?.visibleSort);
 
   return buildSeoMetadata({
     culture,
@@ -37,9 +44,19 @@ export async function generateMetadata({
     path: buildAppQueryPath("/cms", {
       page: safePage > 1 ? safePage : undefined,
       visibleQuery,
+      visibleState: visibleState !== "all" ? visibleState : undefined,
+      visibleSort: visibleSort !== "featured" ? visibleSort : undefined,
     }),
-    noIndex: safePage > 1 || Boolean(visibleQuery),
-    allowLanguageAlternates: safePage === 1 && !visibleQuery,
+    noIndex:
+      safePage > 1 ||
+      Boolean(visibleQuery) ||
+      visibleState !== "all" ||
+      visibleSort !== "featured",
+    allowLanguageAlternates:
+      safePage === 1 &&
+      !visibleQuery &&
+      visibleState === "all" &&
+      visibleSort === "featured",
   });
 }
 
@@ -47,6 +64,8 @@ type CmsIndexRouteProps = {
   searchParams?: Promise<{
     page?: string;
     visibleQuery?: string;
+    visibleState?: string;
+    visibleSort?: string;
   }>;
 };
 
@@ -57,8 +76,10 @@ export default async function CmsIndexRoute({
   const culture = await getRequestCulture();
   const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
   const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
+  const visibleState = readCmsVisibleState(resolvedSearchParams?.visibleState);
+  const visibleSort = readCmsVisibleSort(resolvedSearchParams?.visibleSort);
   const anonymousCartId = await getAnonymousCartId();
-  const [pagesResult, categoriesResult, productsResult, cartResult] =
+  const [pagesResult, storefrontContext, cartResult] =
     await observeAsyncOperation(
       {
         area: "cms-index",
@@ -72,23 +93,16 @@ export default async function CmsIndexRoute({
             pageSize: 12,
             culture,
           }),
-          getPublicCategories(culture),
-          getPublicProducts({
-            page: 1,
-            pageSize: 3,
-            culture,
-          }),
+          getStorefrontContinuationContext(culture),
           anonymousCartId
             ? getPublicCart(anonymousCartId)
             : Promise.resolve({ data: null, status: "not-found" as const }),
         ]),
     );
-  const visiblePages = visibleQuery
-    ? (pagesResult.data?.items ?? []).filter((page) => {
-        const haystack = `${page.title} ${page.slug} ${page.metaTitle ?? ""} ${page.metaDescription ?? ""}`.toLowerCase();
-        return haystack.includes(visibleQuery.toLowerCase());
-      })
-    : (pagesResult.data?.items ?? []);
+  const visiblePages = sortVisiblePages(
+    filterVisiblePages(pagesResult.data?.items ?? [], visibleState, visibleQuery),
+    visibleSort,
+  );
 
   return (
     <CmsPagesIndex
@@ -107,10 +121,12 @@ export default async function CmsIndexRoute({
       currentPage={safePage}
       status={pagesResult.status}
       visibleQuery={visibleQuery}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
-      productsStatus={productsResult.status}
+      visibleState={visibleState}
+      visibleSort={visibleSort}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
       cartSummary={
         cartResult.data
           ? {

@@ -2,7 +2,7 @@ type SiteRuntimeConfig = {
   webApiBaseUrl: string;
   siteUrl: string;
   mainMenuName: string;
-  theme: "grocer" | "atelier";
+  theme: "grocer" | "atelier" | "harbor";
   defaultCulture: string;
   supportedCultures: string[];
   cultureCookieName: string;
@@ -21,8 +21,12 @@ function parseSupportedCultures(value?: string) {
   return items.length > 0 ? Array.from(new Set(items)) : ["de-DE", "en-US"];
 }
 
-function parseTheme(value?: string): "grocer" | "atelier" {
-  return value === "atelier" ? "atelier" : "grocer";
+function parseTheme(value?: string): "grocer" | "atelier" | "harbor" {
+  if (value === "atelier" || value === "harbor") {
+    return value;
+  }
+
+  return "grocer";
 }
 
 export function getSiteRuntimeConfig(): SiteRuntimeConfig {

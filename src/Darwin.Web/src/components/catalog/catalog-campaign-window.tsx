@@ -4,6 +4,7 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import {
+  getProductOpportunityCampaign,
   getProductSavingsPercent,
   sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
@@ -41,20 +42,32 @@ export function CatalogCampaignWindow({
     })),
     ...rankedProducts.slice(0, 2).map((product) => {
       const savingsPercent = getProductSavingsPercent(product);
+      const campaign = getProductOpportunityCampaign(product);
+
+      const campaignLabel =
+        campaign === "hero-offer"
+          ? copy.campaignWindowProductHeroLabel
+          : campaign === "value-offer"
+            ? copy.campaignWindowProductValueLabel
+            : campaign === "price-drop"
+              ? copy.campaignWindowProductPriceDropLabel
+              : copy.campaignWindowProductSteadyLabel;
 
       return {
         id: `catalog-campaign-product-${product.id}`,
-        label: copy.campaignWindowProductLabel,
+        label: campaignLabel,
         title: formatResource(copy.campaignWindowProductTitle, {
           product: product.name,
         }),
         description:
           savingsPercent !== null
             ? formatResource(copy.campaignWindowProductDescription, {
+                campaignLabel,
                 savingsPercent,
                 price: formatMoney(product.priceMinor, product.currency, culture),
               })
             : formatResource(copy.campaignWindowProductFallbackDescription, {
+                campaignLabel,
                 price: formatMoney(product.priceMinor, product.currency, culture),
               }),
         href: localizeHref(`/catalog/${product.slug}`, culture),

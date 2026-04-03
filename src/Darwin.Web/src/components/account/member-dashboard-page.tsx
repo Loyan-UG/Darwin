@@ -70,6 +70,10 @@ type DashboardActionItem = {
   cta: string;
 };
 
+function isAttentionOrder(order: MemberOrderSummary) {
+  return /(pending|processing|payment|review|hold|open)/i.test(order.status);
+}
+
 export function MemberDashboardPage({
   culture,
   session,
@@ -146,6 +150,28 @@ export function MemberDashboardPage({
     })
     .slice(0, 3);
   const invoiceAttention = recentInvoices.find((invoice) => invoice.balanceMinor > 0);
+  const attentionOrders = recentOrders.filter(isAttentionOrder);
+  const outstandingInvoices = recentInvoices.filter(
+    (invoice) => invoice.balanceMinor > 0,
+  );
+  const attentionOrderValueMinor = attentionOrders.reduce(
+    (total, order) => total + order.grandTotalGrossMinor,
+    0,
+  );
+  const outstandingInvoiceBalanceMinor = outstandingInvoices.reduce(
+    (total, invoice) => total + invoice.balanceMinor,
+    0,
+  );
+  const commercePrimaryHref = attentionOrders[0]
+    ? localizeHref(`/orders/${attentionOrders[0].id}`, culture)
+    : outstandingInvoices[0]
+      ? localizeHref(`/invoices/${outstandingInvoices[0].id}`, culture)
+      : localizeHref("/orders", culture);
+  const commercePrimaryCta = attentionOrders[0]
+    ? copy.dashboardCommerceReadinessOrdersCta
+    : outstandingInvoices[0]
+      ? copy.dashboardCommerceReadinessInvoicesCta
+      : copy.dashboardOpenOrdersCta;
   const hasStorefrontCart = Boolean(storefrontCart && storefrontCart.items.length > 0);
   const cartLinkedSlugSet = new Set(cartLinkedProductSlugs);
   const rankedStorefrontProducts =
@@ -855,6 +881,74 @@ export function MemberDashboardPage({
                   invoiceCount: recentInvoices.length,
                 })}
               </p>
+
+              <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                  {copy.dashboardCommerceReadinessTitle}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.dashboardCommerceReadinessMessage, {
+                    orderCount: attentionOrders.length,
+                    orderValue: formatMoney(
+                      attentionOrderValueMinor,
+                      recentOrders[0]?.currency ?? "EUR",
+                      culture,
+                    ),
+                    invoiceCount: outstandingInvoices.length,
+                    invoiceBalance: formatMoney(
+                      outstandingInvoiceBalanceMinor,
+                      recentInvoices[0]?.currency ?? "EUR",
+                      culture,
+                    ),
+                  })}
+                </p>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                      {copy.dashboardCommerceReadinessOrdersLabel}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                      {formatResource(copy.dashboardCommerceReadinessOrdersValue, {
+                        count: attentionOrders.length,
+                        total: formatMoney(
+                          attentionOrderValueMinor,
+                          recentOrders[0]?.currency ?? "EUR",
+                          culture,
+                        ),
+                      })}
+                    </p>
+                  </div>
+                  <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                      {copy.dashboardCommerceReadinessInvoicesLabel}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                      {formatResource(copy.dashboardCommerceReadinessInvoicesValue, {
+                        count: outstandingInvoices.length,
+                        total: formatMoney(
+                          outstandingInvoiceBalanceMinor,
+                          recentInvoices[0]?.currency ?? "EUR",
+                          culture,
+                        ),
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={commercePrimaryHref}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                  >
+                    {commercePrimaryCta}
+                  </Link>
+                  <Link
+                    href={localizeHref("/invoices", culture)}
+                    className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                  >
+                    {copy.dashboardOpenInvoicesCta}
+                  </Link>
+                </div>
+              </div>
 
               <div className="mt-5 grid gap-4">
                 <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">

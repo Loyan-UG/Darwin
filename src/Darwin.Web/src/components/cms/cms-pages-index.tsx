@@ -7,6 +7,7 @@ import {
 import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { isDiscoveryReadyPage } from "@/features/cms/discovery";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatMoney } from "@/lib/formatting";
@@ -23,6 +24,8 @@ type CmsPagesIndexProps = {
   currentPage: number;
   status: string;
   visibleQuery?: string;
+  visibleState?: "all" | "ready" | "needs-attention";
+  visibleSort?: "featured" | "title-asc" | "ready-first" | "attention-first";
   categories: PublicCategorySummary[];
   categoriesStatus: string;
   products: PublicProductSummary[];
@@ -35,10 +38,17 @@ type CmsPagesIndexProps = {
   } | null;
 };
 
-function buildCmsHref(page = 1, visibleQuery?: string) {
+function buildCmsHref(
+  page = 1,
+  visibleQuery?: string,
+  visibleState?: "all" | "ready" | "needs-attention",
+  visibleSort?: "featured" | "title-asc" | "ready-first" | "attention-first",
+) {
   return buildAppQueryPath("/cms", {
     page: page > 1 ? page : undefined,
     visibleQuery,
+    visibleState: visibleState && visibleState !== "all" ? visibleState : undefined,
+    visibleSort: visibleSort && visibleSort !== "featured" ? visibleSort : undefined,
   });
 }
 
@@ -52,6 +62,8 @@ export function CmsPagesIndex({
   currentPage,
   status,
   visibleQuery,
+  visibleState = "all",
+  visibleSort = "featured",
   categories,
   categoriesStatus,
   products,
@@ -96,6 +108,20 @@ export function CmsPagesIndex({
       : null;
   const spotlightPage = pages[0] ?? null;
   const followUpPages = pages.slice(1, 4);
+  const readyPagesCount = pages.filter((page) => isDiscoveryReadyPage(page)).length;
+  const attentionPagesCount = Math.max(pages.length - readyPagesCount, 0);
+  const readinessSignals = [
+    readyPagesCount > 0,
+    attentionPagesCount > 0,
+    groupedPages.length > 0,
+    followUpPages.length > 0,
+  ].filter(Boolean).length;
+  const readinessState =
+    readinessSignals >= 4
+      ? copy.cmsIndexReadinessStateReady
+      : readinessSignals >= 2
+        ? copy.cmsIndexReadinessStatePartial
+        : copy.cmsIndexReadinessStateAttention;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -137,7 +163,7 @@ export function CmsPagesIndex({
         )}
 
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-          <form action={localizeHref("/cms", culture)} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
+          <form action={localizeHref("/cms", culture)} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_auto_auto] lg:items-end">
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
               {copy.cmsVisibleSearchLabel}
               <input
@@ -150,6 +176,31 @@ export function CmsPagesIndex({
                 className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none"
               />
             </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+              {copy.cmsVisibleStateLabel}
+              <select
+                name="visibleState"
+                defaultValue={visibleState}
+                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none"
+              >
+                <option value="all">{copy.cmsVisibleStateAllOption}</option>
+                <option value="ready">{copy.cmsVisibleStateReadyOption}</option>
+                <option value="needs-attention">{copy.cmsVisibleStateNeedsAttentionOption}</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+              {copy.cmsVisibleSortLabel}
+              <select
+                name="visibleSort"
+                defaultValue={visibleSort}
+                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none"
+              >
+                <option value="featured">{copy.cmsVisibleSortFeaturedOption}</option>
+                <option value="title-asc">{copy.cmsVisibleSortTitleAscendingOption}</option>
+                <option value="ready-first">{copy.cmsVisibleSortReadyFirstOption}</option>
+                <option value="attention-first">{copy.cmsVisibleSortAttentionFirstOption}</option>
+              </select>
+            </label>
             <button
               type="submit"
               className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
@@ -158,7 +209,7 @@ export function CmsPagesIndex({
             </button>
             {visibleQuery ? (
               <Link
-                href={localizeHref("/cms", culture)}
+                href={localizeHref(buildCmsHref(), culture)}
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
               >
                 {copy.cmsVisibleSearchClearCta}
@@ -172,7 +223,17 @@ export function CmsPagesIndex({
                 ? formatResource(copy.cmsVisibleSearchFilteredMessage, {
                     query: visibleQuery,
                   })
-                : copy.cmsVisibleSearchInfoMessage}
+                : visibleSort === "ready-first"
+                  ? copy.cmsVisibleSortReadyFirstMessage
+                  : visibleSort === "attention-first"
+                    ? copy.cmsVisibleSortAttentionFirstMessage
+                    : visibleSort === "title-asc"
+                      ? copy.cmsVisibleSortTitleAscendingMessage
+                : visibleState === "ready"
+                  ? copy.cmsVisibleStateReadyMessage
+                  : visibleState === "needs-attention"
+                    ? copy.cmsVisibleStateNeedsAttentionMessage
+                    : copy.cmsVisibleSearchInfoMessage}
             />
           </div>
         </div>
@@ -234,6 +295,58 @@ export function CmsPagesIndex({
                   })}
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+            {copy.cmsIndexReadinessTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.cmsIndexReadinessMessage, {
+              status: readinessState,
+            })}
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.cmsIndexReadinessDiscoveryLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {readinessState}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.cmsIndexReadinessReadyLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.cmsIndexReadinessReadyValue, {
+                  count: readyPagesCount,
+                })}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.cmsIndexReadinessAttentionLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.cmsIndexReadinessAttentionValue, {
+                  count: attentionPagesCount,
+                })}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.cmsIndexReadinessSupportLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.cmsIndexReadinessSupportValue, {
+                  groupCount: groupedPages.length,
+                  followUpCount: followUpPages.length,
+                })}
+              </p>
             </div>
           </div>
         </div>
@@ -598,7 +711,10 @@ export function CmsPagesIndex({
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link
                 aria-disabled={currentPage <= 1}
-                href={localizeHref(buildCmsHref(1, visibleQuery), culture)}
+                href={localizeHref(
+                  buildCmsHref(1, visibleQuery, visibleState, visibleSort),
+                  culture,
+                )}
                 className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
               >
                 {copy.cmsFirstPageCta}
@@ -606,7 +722,12 @@ export function CmsPagesIndex({
               <Link
                 aria-disabled={currentPage <= 1}
                 href={localizeHref(
-                  buildCmsHref(Math.max(1, currentPage - 1), visibleQuery),
+                  buildCmsHref(
+                    Math.max(1, currentPage - 1),
+                    visibleQuery,
+                    visibleState,
+                    visibleSort,
+                  ),
                   culture,
                 )}
                 className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
@@ -619,7 +740,12 @@ export function CmsPagesIndex({
               <Link
                 aria-disabled={currentPage >= totalPages}
                 href={localizeHref(
-                  buildCmsHref(Math.min(totalPages, currentPage + 1), visibleQuery),
+                  buildCmsHref(
+                    Math.min(totalPages, currentPage + 1),
+                    visibleQuery,
+                    visibleState,
+                    visibleSort,
+                  ),
                   culture,
                 )}
                 className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
@@ -628,7 +754,10 @@ export function CmsPagesIndex({
               </Link>
               <Link
                 aria-disabled={currentPage >= totalPages}
-                href={localizeHref(buildCmsHref(totalPages, visibleQuery), culture)}
+                href={localizeHref(
+                  buildCmsHref(totalPages, visibleQuery, visibleState, visibleSort),
+                  culture,
+                )}
                 className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
               >
                 {copy.cmsLastPageCta}

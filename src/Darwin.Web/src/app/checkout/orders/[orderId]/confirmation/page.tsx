@@ -2,12 +2,8 @@ import { redirect } from "next/navigation";
 import { OrderConfirmationPage } from "@/components/checkout/order-confirmation-page";
 import { getPublicStorefrontOrderConfirmation } from "@/features/checkout/api/public-checkout";
 import { readStorefrontPaymentHandoff } from "@/features/checkout/cookies";
-import {
-  getCurrentMemberInvoices,
-  getCurrentMemberLoyaltyOverview,
-  getCurrentMemberOrders,
-} from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getMemberCommerceSummaryContext } from "@/features/member-portal/server/get-member-summary-context";
 import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import {
   readAllowedSearchParam,
@@ -100,20 +96,9 @@ export default async function OrderConfirmationRoute({
           getStorefrontContinuationContext(culture),
         ]),
     );
-  const [memberOrdersResult, memberInvoicesResult, memberLoyaltyOverviewResult] =
-    memberSession
-      ? await Promise.all([
-          getCurrentMemberOrders({
-            page: 1,
-            pageSize: 2,
-          }),
-          getCurrentMemberInvoices({
-            page: 1,
-            pageSize: 2,
-          }),
-          getCurrentMemberLoyaltyOverview(),
-        ])
-      : [null, null, null];
+  const commerceSummaryContext = memberSession
+    ? await getMemberCommerceSummaryContext()
+    : null;
   const purchasedNames = new Set(
     (confirmationResult.data?.lines ?? []).map((line) => line.name.trim().toLowerCase()),
   );
@@ -133,12 +118,12 @@ export default async function OrderConfirmationRoute({
       paymentError={paymentError}
       cancelled={cancelled}
       hasMemberSession={Boolean(memberSession)}
-      memberOrders={memberOrdersResult?.data?.items ?? []}
-      memberOrdersStatus={memberOrdersResult?.status ?? "idle"}
-      memberInvoices={memberInvoicesResult?.data?.items ?? []}
-      memberInvoicesStatus={memberInvoicesResult?.status ?? "idle"}
-      memberLoyaltyOverview={memberLoyaltyOverviewResult?.data ?? null}
-      memberLoyaltyStatus={memberLoyaltyOverviewResult?.status ?? "idle"}
+      memberOrders={commerceSummaryContext?.ordersResult.data?.items.slice(0, 2) ?? []}
+      memberOrdersStatus={commerceSummaryContext?.ordersResult.status ?? "idle"}
+      memberInvoices={commerceSummaryContext?.invoicesResult.data?.items.slice(0, 2) ?? []}
+      memberInvoicesStatus={commerceSummaryContext?.invoicesResult.status ?? "idle"}
+      memberLoyaltyOverview={commerceSummaryContext?.loyaltyOverviewResult.data ?? null}
+      memberLoyaltyStatus={commerceSummaryContext?.loyaltyOverviewResult.status ?? "idle"}
       cmsPages={storefrontContext.cmsPages}
       cmsPagesStatus={storefrontContext.cmsPagesStatus}
       categories={storefrontContext.categories}

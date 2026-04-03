@@ -3,6 +3,7 @@ import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-win
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
+  CatalogVisibleState,
   CatalogVisibleSort,
   PublicCategorySummary,
   PublicProductSummary,
@@ -29,6 +30,7 @@ type CatalogPageProps = {
   currentPage: number;
   pageSize: number;
   visibleQuery?: string;
+  visibleState?: CatalogVisibleState;
   visibleSort?: CatalogVisibleSort;
   loadedProductsCount: number;
   dataStatus?: {
@@ -42,12 +44,14 @@ function buildCatalogHref(
   categorySlug?: string,
   page = 1,
   visibleQuery?: string,
+  visibleState?: CatalogVisibleState,
   visibleSort?: CatalogVisibleSort,
 ) {
   return buildAppQueryPath("/catalog", {
     category: categorySlug,
     page: page > 1 ? page : undefined,
     visibleQuery,
+    visibleState: visibleState && visibleState !== "all" ? visibleState : undefined,
     visibleSort: visibleSort && visibleSort !== "featured" ? visibleSort : undefined,
   });
 }
@@ -63,6 +67,7 @@ export function CatalogPage({
   currentPage,
   pageSize,
   visibleQuery,
+  visibleState = "all",
   visibleSort = "featured",
   loadedProductsCount,
   dataStatus,
@@ -88,7 +93,28 @@ export function CatalogPage({
       savingsPercent: getSavingsPercent(product) ?? 0,
     }))
     .sort((left, right) => right.savingsPercent - left.savingsPercent)[0] ?? null;
-  const hasVisibleLens = Boolean(visibleQuery) || visibleSort !== "featured";
+  const hasVisibleLens =
+    Boolean(visibleQuery) || visibleState !== "all" || visibleSort !== "featured";
+  const hasActiveCategory = Boolean(activeCategory);
+  const hasCmsFollowUp = cmsPages.length > 0;
+  const hasOfferCoverage = offerProducts.length > 0;
+  const hasBaseCoverage = products.some(
+    (product) =>
+      typeof product.compareAtPriceMinor !== "number" ||
+      product.compareAtPriceMinor <= product.priceMinor,
+  );
+  const readinessSignals = [
+    hasActiveCategory,
+    hasCmsFollowUp,
+    hasOfferCoverage,
+    hasBaseCoverage,
+  ].filter(Boolean).length;
+  const assortmentReadiness =
+    readinessSignals >= 4
+      ? copy.catalogReadinessStateReady
+      : readinessSignals >= 2
+        ? copy.catalogReadinessStatePartial
+        : copy.catalogReadinessStateAttention;
 
   function getSavingsPercent(product: PublicProductSummary) {
     if (
@@ -360,12 +386,68 @@ export function CatalogPage({
                 </p>
                 <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
                   {hasVisibleLens
-                    ? copy.buyingGuideLensFiltered
+                    ? visibleState === "offers"
+                      ? copy.buyingGuideLensOffers
+                      : visibleState === "base"
+                        ? copy.buyingGuideLensBase
+                        : copy.buyingGuideLensFiltered
                     : copy.buyingGuideLensDefault}
                 </p>
               </div>
             </div>
           </section>
+        </div>
+
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+            {copy.catalogReadinessTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.catalogReadinessMessage, {
+              status: assortmentReadiness,
+            })}
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.catalogReadinessDiscoveryLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {assortmentReadiness}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.catalogReadinessOfferLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.catalogReadinessOfferValue, {
+                  count: offerProducts.length,
+                })}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.catalogReadinessBaseLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.catalogReadinessBaseValue, {
+                  count: Math.max(products.length - offerProducts.length, 0),
+                })}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.catalogReadinessSupportLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.catalogReadinessSupportValue, {
+                  categoryCount: hasActiveCategory ? 1 : categories.length,
+                  cmsCount: cmsPages.length,
+                })}
+              </p>
+            </div>
+          </div>
         </div>
 
         <CatalogCampaignWindow
@@ -480,6 +562,18 @@ export function CatalogPage({
                 />
               </label>
               <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                {copy.visibleStateLabel}
+                <select
+                  name="visibleState"
+                  defaultValue={visibleState}
+                  className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 text-sm font-normal outline-none"
+                >
+                  <option value="all">{copy.visibleStateAllOption}</option>
+                  <option value="offers">{copy.visibleStateOffersOption}</option>
+                  <option value="base">{copy.visibleStateBaseOption}</option>
+                </select>
+              </label>
+              <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                 {copy.sortLabel}
                 <select
                   name="visibleSort"
@@ -491,6 +585,8 @@ export function CatalogPage({
                   <option value="price-asc">{copy.sortPriceAscendingOption}</option>
                   <option value="price-desc">{copy.sortPriceDescendingOption}</option>
                   <option value="savings-desc">{copy.sortSavingsDescendingOption}</option>
+                  <option value="offers-first">{copy.sortOffersFirstOption}</option>
+                  <option value="base-first">{copy.sortBaseFirstOption}</option>
                 </select>
               </label>
               <div className="mt-4 flex flex-wrap gap-3">
@@ -501,7 +597,10 @@ export function CatalogPage({
                   {copy.applyVisibleToolsCta}
                 </button>
                 <Link
-                  href={localizeHref(buildCatalogHref(activeCategorySlug), culture)}
+                  href={localizeHref(
+                    buildCatalogHref(activeCategorySlug),
+                    culture,
+                  )}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-white/70"
                 >
                   {copy.resetVisibleToolsCta}
@@ -529,7 +628,13 @@ export function CatalogPage({
             <div className="mt-5 flex flex-col gap-2">
               <Link
                 href={localizeHref(
-                  buildCatalogHref(undefined, 1, visibleQuery, visibleSort),
+                  buildCatalogHref(
+                    undefined,
+                    1,
+                    visibleQuery,
+                    visibleState,
+                    visibleSort,
+                  ),
                   culture,
                 )}
                 className={
@@ -544,7 +649,13 @@ export function CatalogPage({
                 <Link
                   key={category.id}
                   href={localizeHref(
-                    buildCatalogHref(category.slug, 1, visibleQuery, visibleSort),
+                    buildCatalogHref(
+                      category.slug,
+                      1,
+                      visibleQuery,
+                      visibleState,
+                      visibleSort,
+                    ),
                     culture,
                   )}
                   className={
@@ -701,6 +812,7 @@ export function CatalogPage({
                         activeCategorySlug,
                         1,
                         visibleQuery,
+                        visibleState,
                         visibleSort,
                       ),
                       culture,
@@ -716,6 +828,7 @@ export function CatalogPage({
                         activeCategorySlug,
                         Math.max(1, currentPage - 1),
                         visibleQuery,
+                        visibleState,
                         visibleSort,
                       ),
                       culture,
@@ -734,6 +847,7 @@ export function CatalogPage({
                         activeCategorySlug,
                         Math.min(totalPages, currentPage + 1),
                         visibleQuery,
+                        visibleState,
                         visibleSort,
                       ),
                       culture,
@@ -749,6 +863,7 @@ export function CatalogPage({
                         activeCategorySlug,
                         totalPages,
                         visibleQuery,
+                        visibleState,
                         visibleSort,
                       ),
                       culture,

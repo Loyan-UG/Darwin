@@ -14,13 +14,12 @@ import {
   readCartDisplaySnapshots,
 } from "@/features/cart/cookies";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
-import {
-  getCurrentMemberAddresses,
-  getCurrentMemberInvoices,
-  getCurrentMemberLoyaltyOverview,
-  getCurrentMemberOrders,
-} from "@/features/member-portal/api/member-portal";
+import { isDiscoveryReadyPage } from "@/features/cms/discovery";
 import type { MemberSession } from "@/features/member-session/types";
+import {
+  getMemberCommerceSummaryContext,
+  getMemberIdentityContext,
+} from "@/features/member-portal/server/get-member-summary-context";
 import {
   buildCheckoutDraftSearch,
   toCheckoutDraftFromMemberAddress,
@@ -37,7 +36,7 @@ export async function getHomePageParts(
 ): Promise<WebPagePart[]> {
   const copy = getHomeResource(culture);
   const supportedCultures = getSupportedCultures();
-  const [pagesResult, productsResult, categoriesResult, recentOrdersResult, recentInvoicesResult, loyaltyOverviewResult, memberAddressesResult] = await Promise.all([
+  const [pagesResult, productsResult, categoriesResult, memberCommerceContext, memberIdentityContext] = await Promise.all([
     getPublishedPages({
       page: 1,
       pageSize: 3,
@@ -50,19 +49,9 @@ export async function getHomePageParts(
     }),
     getPublicCategories(culture),
     session
-      ? getCurrentMemberOrders({
-          page: 1,
-          pageSize: 2,
-        })
+      ? getMemberCommerceSummaryContext()
       : Promise.resolve(null),
-    session
-      ? getCurrentMemberInvoices({
-          page: 1,
-          pageSize: 2,
-        })
-      : Promise.resolve(null),
-    session ? getCurrentMemberLoyaltyOverview() : Promise.resolve(null),
-    session ? getCurrentMemberAddresses() : Promise.resolve(null),
+    session ? getMemberIdentityContext() : Promise.resolve(null),
   ]);
   const anonymousCartId = await getAnonymousCartId();
   const cartSnapshots = (await readCartDisplaySnapshots()).slice(0, 3);
@@ -80,20 +69,31 @@ export async function getHomePageParts(
   const cmsHealthy = pagesResult.status === "ok";
   const catalogHealthy = productsResult.status === "ok";
   const categoriesHealthy = categoriesResult.status === "ok";
+  const readyCmsPagesCount = (pagesResult.data?.items ?? []).filter((page) =>
+    isDiscoveryReadyPage(page),
+  ).length;
+  const cmsAttentionCount = Math.max(
+    (pagesResult.data?.items.length ?? 0) - readyCmsPagesCount,
+    0,
+  );
   const spotlightPage = pagesResult.data?.items[0];
   const rankedProducts = sortProductsByOpportunity(
     productsResult.data?.items ?? [],
   );
   const spotlightProduct = getStrongestProductOpportunity(rankedProducts);
+  const visibleOfferCount = rankedProducts.filter(
+    (product) => getProductSavingsPercent(product) !== null,
+  ).length;
+  const visibleBaseCount = Math.max(rankedProducts.length - visibleOfferCount, 0);
   const offerBoardProducts =
     (cartLinkedSlugs.size > 0
       ? rankedProducts.filter((product) => !cartLinkedSlugs.has(product.slug))
       : rankedProducts
     ).slice(0, 3);
   const featuredCategories = (categoriesResult.data?.items ?? []).slice(0, 3);
-  const recentOrders = recentOrdersResult?.data?.items ?? [];
-  const recentInvoices = recentInvoicesResult?.data?.items ?? [];
-  const memberAddresses = memberAddressesResult?.data ?? [];
+  const recentOrders = memberCommerceContext?.ordersResult.data?.items.slice(0, 2) ?? [];
+  const recentInvoices = memberCommerceContext?.invoicesResult.data?.items.slice(0, 2) ?? [];
+  const memberAddresses = memberIdentityContext?.addressesResult.data ?? [];
   const preferredMemberAddress =
     memberAddresses.find((address) => address.isDefaultShipping) ??
     memberAddresses.find((address) => address.isDefaultBilling) ??
@@ -110,7 +110,7 @@ export async function getHomePageParts(
     recentInvoices[0] ??
     null;
   const loyaltyFocusAccount =
-    [...(loyaltyOverviewResult?.data?.accounts ?? [])].sort((left, right) => {
+    [...(memberCommerceContext?.loyaltyOverviewResult.data?.accounts ?? [])].sort((left, right) => {
       const leftRank = left.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
       const rightRank = right.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
       return leftRank - rightRank;
@@ -171,7 +171,7 @@ export async function getHomePageParts(
             href: `/invoices/${invoiceAttention.id}`,
             ctaLabel: copy.priorityInvoiceCta,
             meta: formatResource(copy.priorityInvoiceMeta, {
-              status: recentInvoicesResult?.status ?? "ok",
+              status: memberCommerceContext?.invoicesResult.status ?? "ok",
             }),
           },
         ]
@@ -194,7 +194,7 @@ export async function getHomePageParts(
             href: `/loyalty/${loyaltyFocusAccount.businessId}`,
             ctaLabel: copy.priorityLoyaltyCta,
             meta: formatResource(copy.priorityLoyaltyMeta, {
-              status: loyaltyOverviewResult?.status ?? "ok",
+              status: memberCommerceContext?.loyaltyOverviewResult.status ?? "ok",
             }),
           },
         ]
@@ -217,7 +217,7 @@ export async function getHomePageParts(
             href: `/orders/${recentOrders[0]!.id}`,
             ctaLabel: copy.priorityOrderCta,
             meta: formatResource(copy.priorityOrderMeta, {
-              status: recentOrdersResult?.status ?? "ok",
+              status: memberCommerceContext?.ordersResult.status ?? "ok",
             }),
           },
         ]
@@ -395,6 +395,48 @@ export async function getHomePageParts(
           note: copy.metricCulturesNote,
         },
       ],
+    },
+    {
+      id: "home-browse-readiness",
+      kind: "status-list",
+      eyebrow: copy.discoveryReadinessEyebrow,
+      title: copy.discoveryReadinessTitle,
+      description: copy.discoveryReadinessDescription,
+      items: [
+        {
+          id: "home-browse-readiness-cms",
+          label: copy.discoveryReadinessCmsLabel,
+          title: copy.discoveryReadinessCmsTitle,
+          description: formatResource(copy.discoveryReadinessCmsDescription, {
+            readyCount: readyCmsPagesCount,
+            attentionCount: cmsAttentionCount,
+          }),
+          href: "/cms",
+          ctaLabel: copy.discoveryReadinessCmsCta,
+          tone: cmsHealthy ? "ok" : "warning",
+          meta: formatResource(copy.discoveryReadinessCmsMeta, {
+            status: pagesResult.status,
+          }),
+        },
+        {
+          id: "home-browse-readiness-catalog",
+          label: copy.discoveryReadinessCatalogLabel,
+          title: copy.discoveryReadinessCatalogTitle,
+          description: formatResource(copy.discoveryReadinessCatalogDescription, {
+            offerCount: visibleOfferCount,
+            baseCount: visibleBaseCount,
+            categoryCount: categoriesResult.data?.items.length ?? 0,
+          }),
+          href: "/catalog",
+          ctaLabel: copy.discoveryReadinessCatalogCta,
+          tone: catalogHealthy && categoriesHealthy ? "ok" : "warning",
+          meta: formatResource(copy.discoveryReadinessCatalogMeta, {
+            productsStatus: productsResult.status,
+            categoriesStatus: categoriesResult.status,
+          }),
+        },
+      ],
+      emptyMessage: copy.discoveryReadinessEmptyMessage,
     },
     {
       id: "home-priority-lane",
@@ -670,7 +712,7 @@ export async function getHomePageParts(
                     href: `/orders/${order.id}`,
                     ctaLabel: copy.memberResumeRecentOrderCta,
                     meta: formatResource(copy.memberResumeRecentOrderMeta, {
-                      status: recentOrdersResult?.status ?? "ok",
+                      status: memberCommerceContext?.ordersResult.status ?? "ok",
                     }),
                   }))
                 : []),
@@ -696,7 +738,7 @@ export async function getHomePageParts(
                       href: `/invoices/${invoiceAttention.id}`,
                       ctaLabel: copy.memberResumeInvoiceCta,
                       meta: formatResource(copy.memberResumeInvoiceMeta, {
-                        status: recentInvoicesResult?.status ?? "ok",
+                        status: memberCommerceContext?.invoicesResult.status ?? "ok",
                       }),
                     },
                   ]
@@ -712,7 +754,7 @@ export async function getHomePageParts(
                       countryCode: preferredMemberAddress.countryCode,
                     })
                   : formatResource(copy.memberResumeCheckoutAddressDescription, {
-                      status: memberAddressesResult?.status ?? "unauthenticated",
+                      status: memberIdentityContext?.addressesResult.status ?? "unauthenticated",
                     }),
                 href: memberCheckoutHref,
                 ctaLabel: preferredMemberAddress
@@ -747,7 +789,7 @@ export async function getHomePageParts(
                       href: `/loyalty/${loyaltyFocusAccount.businessId}`,
                       ctaLabel: copy.memberResumeLoyaltyFocusCta,
                       meta: formatResource(copy.memberResumeLoyaltyFocusMeta, {
-                        status: loyaltyOverviewResult?.status ?? "ok",
+                        status: memberCommerceContext?.loyaltyOverviewResult.status ?? "ok",
                       }),
                     },
                   ]
@@ -778,9 +820,9 @@ export async function getHomePageParts(
               },
             ],
             emptyMessage:
-              recentOrdersResult?.message ??
-              recentInvoicesResult?.message ??
-              loyaltyOverviewResult?.message ??
+              memberCommerceContext?.ordersResult.message ??
+              memberCommerceContext?.invoicesResult.message ??
+              memberCommerceContext?.loyaltyOverviewResult.message ??
               copy.memberResumeEmptyMessage,
           } satisfies WebPagePart,
         ]

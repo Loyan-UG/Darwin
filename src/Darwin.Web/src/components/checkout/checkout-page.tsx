@@ -123,6 +123,9 @@ export function CheckoutPage({
       memberPreferences?.allowWhatsAppMarketing,
   );
   const outstandingInvoice = memberInvoices.find((invoice) => invoice.balanceMinor > 0) ?? null;
+  const openBillingExposureMinor = outstandingInvoice?.balanceMinor ?? 0;
+  const combinedExposureMinor =
+    projectedCheckoutTotalMinor + openBillingExposureMinor;
   const readinessItems = [
     {
       label: copy.addressReadyLabel,
@@ -354,6 +357,14 @@ export function CheckoutPage({
             </article>
             <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.checkoutPaymentWindowCarryOverLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(openBillingExposureMinor, cart.currency, culture)}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowAccountLabel}
               </p>
               <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
@@ -376,6 +387,24 @@ export function CheckoutPage({
                       ),
                     })
                   : copy.checkoutPaymentWindowBillingEmpty}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.checkoutPaymentWindowExposureLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(combinedExposureMinor, cart.currency, culture)}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.checkoutPaymentWindowBalanceStateLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {openBillingExposureMinor > 0
+                  ? copy.checkoutPaymentWindowBalanceStateAttention
+                  : copy.checkoutPaymentWindowBalanceStateClear}
               </p>
             </article>
           </div>

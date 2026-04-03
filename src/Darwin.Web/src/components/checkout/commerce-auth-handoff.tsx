@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { PublicProductSummary } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
 import {
+  getProductOpportunityCampaign,
+  getProductOpportunityCampaignLabel,
   getProductSavingsPercent,
   sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
@@ -118,6 +120,15 @@ export function CommerceAuthHandoff({
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
             {productOpportunities.map((product) => {
               const savingsPercent = getProductSavingsPercent(product);
+              const campaignLabel = getProductOpportunityCampaignLabel(
+                getProductOpportunityCampaign(product),
+                {
+                  heroOffer: copy.offerCampaignHeroLabel,
+                  valueOffer: copy.offerCampaignValueLabel,
+                  priceDrop: copy.offerCampaignPriceDropLabel,
+                  steadyPick: copy.offerCampaignSteadyLabel,
+                },
+              );
 
               return (
                 <Link
@@ -125,12 +136,16 @@ export function CommerceAuthHandoff({
                   href={`/catalog/${product.slug}`}
                   className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {campaignLabel}
+                  </p>
                   <p className="font-semibold text-[var(--color-text-primary)]">
                     {product.name}
                   </p>
                   <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {savingsPercent !== null
                       ? formatResource(copy.commerceAuthOfferBoardOfferDescription, {
+                          campaignLabel,
                           savingsPercent,
                           price: formatMoney(
                             product.priceMinor,
