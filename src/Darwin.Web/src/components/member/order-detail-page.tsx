@@ -7,6 +7,10 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import {
+  getProductSavingsPercent,
+  sortProductsByOpportunity,
+} from "@/features/catalog/merchandising";
 import { createMemberOrderPaymentIntentAction } from "@/features/member-portal/actions";
 import type { MemberOrderDetail } from "@/features/member-portal/types";
 import {
@@ -30,6 +34,7 @@ type OrderDetailPageProps = {
   categoriesStatus: string;
   products: PublicProductSummary[];
   productsStatus: string;
+  cartLinkedProductSlugs: string[];
 };
 
 function renderAddress(address: ParsedAddress | null, culture: string) {
@@ -68,6 +73,7 @@ export function OrderDetailPage({
   categoriesStatus,
   products,
   productsStatus,
+  cartLinkedProductSlugs,
 }: OrderDetailPageProps) {
   const copy = getMemberResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
@@ -123,6 +129,12 @@ export function OrderDetailPage({
   const linkedInvoiceAttention = order.invoices.filter(
     (invoice) => !invoice.paidAtUtc,
   ).length;
+  const cartLinkedSlugSet = new Set(
+    cartLinkedProductSlugs.map((slug) => slug.toLowerCase()),
+  );
+  const rankedProducts = sortProductsByOpportunity(products)
+    .filter((product) => !cartLinkedSlugSet.has(product.slug.toLowerCase()))
+    .slice(0, 3);
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -506,25 +518,62 @@ export function OrderDetailPage({
                       {copy.orderDetailStorefrontProductCta}
                     </Link>
                   </div>
-                  {products.length > 0 ? (
+                  {rankedProducts.length > 0 ? (
                     <div className="mt-4 flex flex-col gap-3">
-                      {products.map((product) => (
-                        <Link
-                          key={product.id}
-                          href={localizeHref(`/catalog/${product.slug}`, culture)}
-                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                        >
-                          <p className="font-semibold text-[var(--color-text-primary)]">
-                            {product.name}
-                          </p>
-                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                            {product.shortDescription ?? copy.orderDetailStorefrontProductFallbackDescription}
-                          </p>
-                          <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                            {formatMoney(product.priceMinor, product.currency, culture)}
-                          </p>
-                        </Link>
-                      ))}
+                      <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {cartLinkedSlugSet.size > 0
+                          ? copy.orderDetailStorefrontProductCartAwareMessage
+                          : copy.orderDetailStorefrontProductMessage}
+                      </p>
+                      {rankedProducts.map((product) => {
+                        const savingsPercent = getProductSavingsPercent(product);
+
+                        return (
+                          <Link
+                            key={product.id}
+                            href={localizeHref(`/catalog/${product.slug}`, culture)}
+                            className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                          >
+                            <p className="font-semibold text-[var(--color-text-primary)]">
+                              {product.name}
+                            </p>
+                            <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                              {savingsPercent !== null
+                                ? formatResource(
+                                    copy.orderDetailStorefrontProductOfferDescription,
+                                    {
+                                      savingsPercent,
+                                      price: formatMoney(
+                                        product.priceMinor,
+                                        product.currency,
+                                        culture,
+                                      ),
+                                    },
+                                  )
+                                : product.shortDescription ??
+                                  copy.orderDetailStorefrontProductFallbackDescription}
+                            </p>
+                            <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                              {formatMoney(product.priceMinor, product.currency, culture)}
+                            </p>
+                            {savingsPercent !== null ? (
+                              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                                {formatResource(
+                                  copy.orderDetailStorefrontProductOfferMeta,
+                                  {
+                                    compareAt: formatMoney(
+                                      product.compareAtPriceMinor ??
+                                        product.priceMinor,
+                                      product.currency,
+                                      culture,
+                                    ),
+                                  },
+                                )}
+                              </p>
+                            ) : null}
+                          </Link>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">

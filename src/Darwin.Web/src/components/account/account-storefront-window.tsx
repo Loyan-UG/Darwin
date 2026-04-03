@@ -32,7 +32,7 @@ export function AccountStorefrontWindow({
   productsStatus,
 }: AccountStorefrontWindowProps) {
   const copy = getMemberResource(culture);
-  const productOpportunities = sortProductsByOpportunity(products);
+  const productOpportunities = sortProductsByOpportunity(products).slice(0, 3);
 
   return (
     <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
@@ -147,6 +147,14 @@ export function AccountStorefrontWindow({
             <div className="mt-4 flex flex-col gap-3">
               {productOpportunities.map((product) => {
                 const savingsPercent = getProductSavingsPercent(product);
+                const compareAtPrice =
+                  typeof product.compareAtPriceMinor === "number"
+                    ? formatMoney(
+                        product.compareAtPriceMinor,
+                        product.currency,
+                        culture,
+                      )
+                    : null;
 
                 return (
                   <Link
@@ -170,6 +178,13 @@ export function AccountStorefrontWindow({
                         : product.shortDescription ??
                           copy.accountStorefrontProductFallbackDescription}
                     </p>
+                    {compareAtPrice ? (
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                        {formatResource(copy.accountStorefrontProductOfferMeta, {
+                          compareAt: compareAtPrice,
+                        })}
+                      </p>
+                    ) : null}
                     <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
                       {formatMoney(product.priceMinor, product.currency, culture)}
                     </p>

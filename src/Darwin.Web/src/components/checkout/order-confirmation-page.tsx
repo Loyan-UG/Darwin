@@ -8,7 +8,7 @@ import type {
 } from "@/features/catalog/types";
 import {
   getProductSavingsPercent,
-  getStrongestProductOpportunity,
+  sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
@@ -218,13 +218,9 @@ export function OrderConfirmationPage({
   const purchasedNames = new Set(
     confirmation.lines.map((line) => line.name.trim().toLowerCase()),
   );
-  const guestProductOpportunity =
-    getStrongestProductOpportunity(
-      products.filter((product) => !purchasedNames.has(product.name.trim().toLowerCase())),
-    ) ?? getStrongestProductOpportunity(products);
-  const guestProductSavingsPercent = guestProductOpportunity
-    ? getProductSavingsPercent(guestProductOpportunity)
-    : null;
+  const guestOfferBoard = sortProductsByOpportunity(
+    products.filter((product) => !purchasedNames.has(product.name.trim().toLowerCase())),
+  ).slice(0, 3);
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -686,47 +682,56 @@ export function OrderConfirmationPage({
                   <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                        {copy.confirmationGuestProductTitle}
+                        {copy.confirmationGuestOfferBoardTitle}
                       </p>
                       <Link
                         href={localizeHref("/catalog", culture)}
                         className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
                       >
-                        {copy.confirmationGuestProductCta}
+                        {copy.confirmationGuestOfferBoardCta}
                       </Link>
                     </div>
-                    {guestProductOpportunity ? (
-                      <div className="mt-2">
-                        <Link
-                          href={localizeHref(`/catalog/${guestProductOpportunity.slug}`, culture)}
-                          className="font-semibold text-[var(--color-text-primary)] transition hover:text-[var(--color-brand)]"
-                        >
-                          {guestProductOpportunity.name}
-                        </Link>
-                        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                          {guestProductSavingsPercent !== null
-                            ? formatResource(copy.confirmationGuestProductOfferDescription, {
-                                savingsPercent: guestProductSavingsPercent,
-                                price: formatMoney(
-                                  guestProductOpportunity.priceMinor,
-                                  guestProductOpportunity.currency,
-                                  culture,
-                                ),
-                              })
-                            : guestProductOpportunity.shortDescription ??
-                              copy.confirmationGuestProductFallbackDescription}
-                        </p>
-                        <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
-                          {formatMoney(
-                            guestProductOpportunity.priceMinor,
-                            guestProductOpportunity.currency,
-                            culture,
-                          )}
-                        </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.confirmationGuestOfferBoardMessage, {
+                        productCount: guestOfferBoard.length,
+                      })}
+                    </p>
+                    {guestOfferBoard.length > 0 ? (
+                      <div className="mt-3 grid gap-3">
+                        {guestOfferBoard.map((product) => {
+                          const savingsPercent = getProductSavingsPercent(product);
+
+                          return (
+                            <div
+                              key={product.id}
+                              className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3"
+                            >
+                              <Link
+                                href={localizeHref(`/catalog/${product.slug}`, culture)}
+                                className="font-semibold text-[var(--color-text-primary)] transition hover:text-[var(--color-brand)]"
+                              >
+                                {product.name}
+                              </Link>
+                              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                                {savingsPercent !== null
+                                  ? formatResource(copy.confirmationGuestOfferBoardOfferDescription, {
+                                      savingsPercent,
+                                      price: formatMoney(
+                                        product.priceMinor,
+                                        product.currency,
+                                        culture,
+                                      ),
+                                    })
+                                  : product.shortDescription ??
+                                    copy.confirmationGuestOfferBoardFallbackDescription}
+                              </p>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                        {copy.confirmationGuestProductEmptyMessage}
+                        {copy.confirmationGuestOfferBoardEmptyMessage}
                       </p>
                     )}
                   </article>

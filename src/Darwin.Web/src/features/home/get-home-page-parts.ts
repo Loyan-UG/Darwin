@@ -3,7 +3,11 @@ import {
   getPublicCategories,
   getPublicProducts,
 } from "@/features/catalog/api/public-catalog";
-import { getStrongestProductOpportunity } from "@/features/catalog/merchandising";
+import {
+  getProductSavingsPercent,
+  getStrongestProductOpportunity,
+  sortProductsByOpportunity,
+} from "@/features/catalog/merchandising";
 import { getPublicCart } from "@/features/cart/api/public-cart";
 import {
   getAnonymousCartId,
@@ -65,13 +69,27 @@ export async function getHomePageParts(
   const cartResult = anonymousCartId
     ? await getPublicCart(anonymousCartId)
     : { data: null, status: "not-found" as const };
+  const cartLinkedSlugs = new Set(
+    cartSnapshots
+      .map((snapshot) => {
+        const match = snapshot.href.match(/\/catalog\/([^/?#]+)/i);
+        return match?.[1] ?? null;
+      })
+      .filter((slug): slug is string => Boolean(slug)),
+  );
   const cmsHealthy = pagesResult.status === "ok";
   const catalogHealthy = productsResult.status === "ok";
   const categoriesHealthy = categoriesResult.status === "ok";
   const spotlightPage = pagesResult.data?.items[0];
-  const spotlightProduct = getStrongestProductOpportunity(
+  const rankedProducts = sortProductsByOpportunity(
     productsResult.data?.items ?? [],
   );
+  const spotlightProduct = getStrongestProductOpportunity(rankedProducts);
+  const offerBoardProducts =
+    (cartLinkedSlugs.size > 0
+      ? rankedProducts.filter((product) => !cartLinkedSlugs.has(product.slug))
+      : rankedProducts
+    ).slice(0, 3);
   const featuredCategories = (categoriesResult.data?.items ?? []).slice(0, 3);
   const recentOrders = recentOrdersResult?.data?.items ?? [];
   const recentInvoices = recentInvoicesResult?.data?.items ?? [];
@@ -434,6 +452,57 @@ export async function getHomePageParts(
           : []),
       ],
       emptyMessage: copy.commerceOpportunityEmptyMessage,
+    },
+    {
+      id: "home-offer-board",
+      kind: "card-grid",
+      eyebrow: copy.offerBoardEyebrow,
+      title: copy.offerBoardTitle,
+      description:
+        cartLinkedSlugs.size > 0
+          ? formatResource(copy.offerBoardCartAwareDescription, {
+              count: cartLinkedSlugs.size,
+            })
+          : copy.offerBoardDescription,
+      cards: offerBoardProducts.map((product) => {
+        const savingsPercent = getProductSavingsPercent(product);
+
+        return {
+          id: `offer-board-${product.id}`,
+          eyebrow: copy.offerBoardOfferEyebrow,
+          title: product.name,
+          description:
+            savingsPercent !== null
+              ? formatResource(copy.offerBoardOfferDescription, {
+                  savings: savingsPercent,
+                  price: formatMoney(
+                    product.priceMinor,
+                    product.currency,
+                    culture,
+                  ),
+                })
+              : formatResource(copy.offerBoardOfferFallbackDescription, {
+                  price: formatMoney(
+                    product.priceMinor,
+                    product.currency,
+                    culture,
+                  ),
+                }),
+          href: `/catalog/${product.slug}`,
+          ctaLabel: copy.offerBoardCta,
+          meta:
+            savingsPercent !== null
+              ? formatResource(copy.offerBoardOfferMeta, {
+                  compareAt: formatMoney(
+                    product.compareAtPriceMinor ?? product.priceMinor,
+                    product.currency,
+                    culture,
+                  ),
+                })
+              : copy.offerBoardOfferFallbackMeta,
+        };
+      }),
+      emptyMessage: productsResult.message ?? copy.offerBoardEmptyMessage,
     },
     {
       id: "home-route-map",
@@ -1120,7 +1189,7 @@ export async function getHomePageParts(
       title: copy.productSpotlightTitle,
       description: copy.productSpotlightDescription,
       cards:
-        productsResult.data?.items.map((product) => ({
+        rankedProducts.map((product) => ({
           id: product.id,
           eyebrow: copy.productEyebrow,
           title: product.name,

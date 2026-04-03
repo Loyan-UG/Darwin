@@ -8,7 +8,11 @@ import type {
 } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
-import { getStrongestProductOpportunity } from "@/features/catalog/merchandising";
+import {
+  getStrongestProductOpportunity,
+  getProductSavingsPercent,
+  sortProductsByOpportunity,
+} from "@/features/catalog/merchandising";
 import { formatMoney } from "@/lib/formatting";
 import {
   buildAppQueryPath,
@@ -49,6 +53,7 @@ export function AccountHubPage({
   const spotlightCmsPage = cmsPages[0];
   const spotlightCategory = categories[0];
   const spotlightProduct = getStrongestProductOpportunity(products);
+  const rankedOffers = sortProductsByOpportunity(products).slice(0, 3);
   const accountCards = [
     {
       id: "sign-in",
@@ -329,6 +334,66 @@ export function AccountHubPage({
               </div>
             </article>
           </div>
+        </aside>
+
+        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
+            {copy.accountHubOfferBoardTitle}
+          </p>
+          <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.accountHubOfferBoardMessage, {
+              productCount: products.length,
+              status: productsStatus,
+            })}
+          </p>
+          {rankedOffers.length > 0 ? (
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              {rankedOffers.map((product) => {
+                const savingsPercent = getProductSavingsPercent(product);
+
+                return (
+                  <article
+                    key={product.id}
+                    className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                      {copy.accountHubOfferBoardLabel}
+                    </p>
+                    <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                      {product.name}
+                    </h2>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {savingsPercent !== null
+                        ? formatResource(copy.accountHubOfferBoardDescription, {
+                            savingsPercent,
+                            price: formatMoney(
+                              product.priceMinor,
+                              product.currency,
+                              culture,
+                            ),
+                          })
+                        : product.shortDescription ??
+                          copy.accountHubOfferBoardFallbackDescription}
+                    </p>
+                    <div className="mt-4">
+                      <Link
+                        href={localizeHref(`/catalog/${product.slug}`, culture)}
+                        className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                      >
+                        {copy.accountHubOfferBoardCta}
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.accountHubOfferBoardEmptyMessage, {
+                status: productsStatus,
+              })}
+            </p>
+          )}
         </aside>
 
         <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">

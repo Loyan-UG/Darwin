@@ -113,6 +113,7 @@
   "cmsProductsWindowTitle": "Produkt-Follow-up",
   "cmsProductsWindowMessage": "Die Storefront kann auch von CMS in {productCount} live Produktrouten uebergeben. Status des Produkt-Feeds: {productsStatus}.",
   "cmsProductsWindowCta": "Produkte browsen",
+  "cmsProductsWindowOfferDescription": "Dies ist aktuell das staerkste sichtbare Angebot mit {savingsPercent}% Ersparnis und einem Preis von {price}.",
   "cmsProductsWindowFallbackDescription": "Veroeffentlichtes Produkt aus den live oeffentlichen Katalog-Contracts.",
   "cmsProductsWindowEmptyMessage": "Aktuell stehen keine live Produkte fuer diesen CMS-Handoff bereit. Status des Produkt-Feeds: {status}.",
   "cmsCartWindowTitle": "Kaufkontinuitaet",

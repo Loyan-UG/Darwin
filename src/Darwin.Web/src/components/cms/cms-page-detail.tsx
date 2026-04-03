@@ -2,6 +2,10 @@ import Link from "next/link";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
+import {
+  getProductSavingsPercent,
+  sortProductsByOpportunity,
+} from "@/features/catalog/merchandising";
 import { summarizeCmsContent } from "@/features/cms/content-summary";
 import type { PublicPageDetail, PublicPageSummary } from "@/features/cms/types";
 import { formatMoney } from "@/lib/formatting";
@@ -47,6 +51,7 @@ export function CmsPageDetail({
   cartSummary,
 }: CmsPageDetailProps) {
   const copy = getSharedResource(culture);
+  const productOpportunities = sortProductsByOpportunity(products);
   const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
   const pageReference = page ? localizeHref(`/cms/${page.slug}`, culture) : null;
   const contentSummary = page
@@ -405,10 +410,11 @@ export function CmsPageDetail({
                 {copy.cmsProductsWindowCta}
               </Link>
             </div>
-            {products.length > 0 ? (
+            {productOpportunities.length > 0 ? (
               <div className="mt-5 grid gap-3">
-                {products.map((product) => {
+                {productOpportunities.map((product) => {
                   const productImageUrl = toWebApiUrl(product.primaryImageUrl ?? "");
+                  const savingsPercent = getProductSavingsPercent(product);
                   return (
                     <Link
                       key={product.id}
@@ -434,8 +440,13 @@ export function CmsPageDetail({
                           {product.name}
                         </p>
                         <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                          {product.shortDescription ??
-                            copy.cmsProductsWindowFallbackDescription}
+                          {savingsPercent !== null
+                            ? formatResource(copy.cmsProductsWindowOfferDescription, {
+                                savingsPercent,
+                                price: formatMoney(product.priceMinor, product.currency, culture),
+                              })
+                            : product.shortDescription ??
+                              copy.cmsProductsWindowFallbackDescription}
                         </p>
                         <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
                           {formatMoney(product.priceMinor, product.currency, culture)}

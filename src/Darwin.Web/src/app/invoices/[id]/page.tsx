@@ -4,6 +4,7 @@ import {
   getPublicCategories,
   getPublicProducts,
 } from "@/features/catalog/api/public-catalog";
+import { readCartDisplaySnapshots } from "@/features/cart/cookies";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { InvoiceDetailPage } from "@/components/member/invoice-detail-page";
 import { getCurrentMemberInvoice } from "@/features/member-portal/api/member-portal";
@@ -72,6 +73,12 @@ export default async function InvoiceDetailRoute({
     getPublicCategories(culture),
     getPublicProducts({ page: 1, pageSize: 3, culture }),
   ]);
+  const cartLinkedProductSlugs = (await readCartDisplaySnapshots())
+    .map((snapshot) => {
+      const match = snapshot.href.match(/\/catalog\/([^/?#]+)/i);
+      return match?.[1] ?? null;
+    })
+    .filter((slug): slug is string => Boolean(slug));
 
   return (
     <InvoiceDetailPage
@@ -85,6 +92,7 @@ export default async function InvoiceDetailRoute({
       categoriesStatus={categoriesResult.status}
       products={productsResult.data?.items ?? []}
       productsStatus={productsResult.status}
+      cartLinkedProductSlugs={cartLinkedProductSlugs}
     />
   );
 }

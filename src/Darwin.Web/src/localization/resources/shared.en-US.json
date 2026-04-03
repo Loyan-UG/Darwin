@@ -113,6 +113,7 @@
   "cmsProductsWindowTitle": "Product follow-up",
   "cmsProductsWindowMessage": "The storefront can also move from CMS into {productCount} live product routes. Product feed status: {productsStatus}.",
   "cmsProductsWindowCta": "Browse products",
+  "cmsProductsWindowOfferDescription": "This is the strongest visible offer right now at {savingsPercent}% savings, currently available for {price}.",
   "cmsProductsWindowFallbackDescription": "Published product available through the live public catalog contracts.",
   "cmsProductsWindowEmptyMessage": "No live products are available for this CMS handoff right now. Product feed status: {status}.",
   "cmsCartWindowTitle": "Purchase continuity",

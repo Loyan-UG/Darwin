@@ -2,7 +2,7 @@ import { AccountHubPage } from "@/components/account/account-hub-page";
 import { MemberDashboardPage } from "@/components/account/member-dashboard-page";
 import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
 import { getPublicCart } from "@/features/cart/api/public-cart";
-import { getAnonymousCartId } from "@/features/cart/cookies";
+import { getAnonymousCartId, readCartDisplaySnapshots } from "@/features/cart/cookies";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
 import {
@@ -62,6 +62,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     );
   }
   const anonymousCartId = await getAnonymousCartId();
+  const cartLinkedProductSlugs = (await readCartDisplaySnapshots())
+    .map((snapshot) => {
+      const match = snapshot.href.match(/\/catalog\/([^/?#]+)/i);
+      return match?.[1] ?? null;
+    })
+    .filter((slug): slug is string => Boolean(slug));
 
   const [
     profileResult,
@@ -121,6 +127,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       categoriesStatus={categoriesResult.status}
       products={productsResult.data?.items ?? []}
       productsStatus={productsResult.status}
+      cartLinkedProductSlugs={cartLinkedProductSlugs}
     />
   );
 }

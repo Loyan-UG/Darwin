@@ -8,6 +8,10 @@ import type {
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import {
+  getProductSavingsPercent,
+  sortProductsByOpportunity,
+} from "@/features/catalog/merchandising";
 import { buildCheckoutDraftSearch, toCheckoutDraftFromMemberAddress } from "@/features/checkout/helpers";
 import { signOutMemberAction } from "@/features/member-session/actions";
 import type { MemberSession } from "@/features/member-session/types";
@@ -54,6 +58,7 @@ type MemberDashboardPageProps = {
   categoriesStatus: string;
   products: PublicProductSummary[];
   productsStatus: string;
+  cartLinkedProductSlugs: string[];
 };
 
 type DashboardActionItem = {
@@ -92,6 +97,7 @@ export function MemberDashboardPage({
   categoriesStatus,
   products,
   productsStatus,
+  cartLinkedProductSlugs,
 }: MemberDashboardPageProps) {
   const copy = getMemberResource(culture);
   const hasValidSessionExpiry = parseUtcTimestamp(session.accessTokenExpiresAtUtc) !== null;
@@ -141,6 +147,14 @@ export function MemberDashboardPage({
     .slice(0, 3);
   const invoiceAttention = recentInvoices.find((invoice) => invoice.balanceMinor > 0);
   const hasStorefrontCart = Boolean(storefrontCart && storefrontCart.items.length > 0);
+  const cartLinkedSlugSet = new Set(cartLinkedProductSlugs);
+  const rankedStorefrontProducts =
+    (cartLinkedSlugSet.size > 0
+      ? sortProductsByOpportunity(
+          products.filter((product) => !cartLinkedSlugSet.has(product.slug)),
+        )
+      : sortProductsByOpportunity(products)
+    ).slice(0, 3);
   const actionItems: DashboardActionItem[] = [
     hasStorefrontCart
       ? {
@@ -500,25 +514,64 @@ export function MemberDashboardPage({
                       {copy.dashboardStorefrontProductCta}
                     </Link>
                   </div>
-                  {products.length > 0 ? (
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {cartLinkedSlugSet.size > 0
+                      ? formatResource(copy.dashboardStorefrontProductCartAwareMessage, {
+                          count: cartLinkedSlugSet.size,
+                        })
+                      : copy.dashboardStorefrontProductMessage}
+                  </p>
+                  {rankedStorefrontProducts.length > 0 ? (
                     <div className="mt-4 flex flex-col gap-3 text-sm text-[var(--color-text-secondary)]">
-                      {products.map((product) => (
-                        <Link
-                          key={product.id}
-                          href={localizeHref(`/catalog/${product.slug}`, culture)}
-                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                        >
-                          <p className="font-semibold text-[var(--color-text-primary)]">
-                            {product.name}
-                          </p>
-                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                            {product.shortDescription ?? copy.dashboardStorefrontProductFallbackDescription}
-                          </p>
-                          <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                            {formatMoney(product.priceMinor, product.currency, culture)}
-                          </p>
-                        </Link>
-                      ))}
+                      {rankedStorefrontProducts.map((product) => {
+                        const savingsPercent = getProductSavingsPercent(product);
+
+                        return (
+                          <Link
+                            key={product.id}
+                            href={localizeHref(`/catalog/${product.slug}`, culture)}
+                            className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                          >
+                            <p className="font-semibold text-[var(--color-text-primary)]">
+                              {product.name}
+                            </p>
+                            <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                              {savingsPercent !== null
+                                ? formatResource(
+                                    copy.dashboardStorefrontProductOfferDescription,
+                                    {
+                                      savingsPercent,
+                                      price: formatMoney(
+                                        product.priceMinor,
+                                        product.currency,
+                                        culture,
+                                      ),
+                                    },
+                                  )
+                                : product.shortDescription ??
+                                  copy.dashboardStorefrontProductFallbackDescription}
+                            </p>
+                            <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                              {formatMoney(product.priceMinor, product.currency, culture)}
+                            </p>
+                            {savingsPercent !== null ? (
+                              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                                {formatResource(
+                                  copy.dashboardStorefrontProductOfferMeta,
+                                  {
+                                    compareAt: formatMoney(
+                                      product.compareAtPriceMinor ??
+                                        product.priceMinor,
+                                      product.currency,
+                                      culture,
+                                    ),
+                                  },
+                                )}
+                              </p>
+                            ) : null}
+                          </Link>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
