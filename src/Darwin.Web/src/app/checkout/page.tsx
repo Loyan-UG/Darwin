@@ -1,7 +1,5 @@
 import { CheckoutPage } from "@/components/checkout/checkout-page";
 import { getCartViewModel } from "@/features/cart/server/get-cart-view-model";
-import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { createPublicCheckoutIntent } from "@/features/checkout/api/public-checkout";
 import {
   hasCheckoutDraftValues,
@@ -20,8 +18,10 @@ import {
   getCurrentMemberProfile,
 } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
@@ -43,23 +43,19 @@ type CheckoutRouteProps = {
 export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const culture = await getRequestCulture();
-  const [model, memberSession] = await Promise.all([
-    getCartViewModel(),
-    getMemberSession(),
-  ]);
-  const [cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
-    getPublishedPages({
-      page: 1,
-      pageSize: 3,
-      culture,
-    }),
-    getPublicCategories(culture),
-    getPublicProducts({
-      page: 1,
-      pageSize: 3,
-      culture,
-    }),
-  ]);
+  const [model, memberSession, storefrontContext] = await observeAsyncOperation(
+    {
+      area: "checkout",
+      operation: "load-route",
+      thresholdMs: 350,
+    },
+    () =>
+      Promise.all([
+        getCartViewModel(),
+        getMemberSession(),
+        getStorefrontContinuationContext(culture),
+      ]),
+  );
   const requestedDraft = readCheckoutDraftFromSearchParams(resolvedSearchParams);
   const checkoutError = readSingleSearchParam(resolvedSearchParams?.checkoutError);
   const selectedMemberAddressId = readSingleSearchParam(
@@ -141,12 +137,12 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
       profilePrefillActive={!preferredMemberAddress && Boolean(memberProfile)}
       selectedMemberAddressId={effectiveSelectedMemberAddressId}
       hasMemberSession={Boolean(memberSession)}
-      cmsPages={cmsPagesResult.data?.items ?? []}
-      cmsPagesStatus={cmsPagesResult.status}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
-      productsStatus={productsResult.status}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
     />
   );
 }

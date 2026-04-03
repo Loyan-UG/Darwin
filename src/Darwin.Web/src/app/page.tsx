@@ -3,6 +3,7 @@ import { getHomePageParts } from "@/features/home/get-home-page-parts";
 import { getMemberSession } from "@/features/member-session/cookies";
 import { getSharedResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildSeoMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
@@ -20,7 +21,17 @@ export async function generateMetadata() {
 
 export default async function Home() {
   const culture = await getRequestCulture();
-  const session = await getMemberSession();
-  const homeParts = await getHomePageParts(culture, session);
+  const homeParts = await observeAsyncOperation(
+    {
+      area: "home",
+      operation: "load-route",
+      thresholdMs: 350,
+    },
+    async () => {
+      const memberSession = await getMemberSession();
+      return getHomePageParts(culture, memberSession);
+    },
+  );
+
   return <PageComposer parts={homeParts} culture={culture} />;
 }

@@ -11,6 +11,7 @@ import {
   getPublicPageBySlug,
 } from "@/features/cms/api/public-cms";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { getSharedResource } from "@/localization";
 import { buildSeoMetadata, deriveSeoDescription } from "@/lib/seo";
 
@@ -57,19 +58,28 @@ export default async function CmsPage({ params }: CmsPageProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
   const anonymousCartId = await getAnonymousCartId();
-  const [pageResult, relatedPagesSeed, categoriesResult, productsResult, cartResult] = await Promise.all([
-    getPublicPageBySlug(slug, culture),
-    getPublishedPageSet(culture),
-    getPublicCategories(culture),
-    getPublicProducts({
-      page: 1,
-      pageSize: 3,
-      culture,
-    }),
-    anonymousCartId
-      ? getPublicCart(anonymousCartId)
-      : Promise.resolve({ data: null, status: "not-found" as const }),
-  ]);
+  const [pageResult, relatedPagesSeed, categoriesResult, productsResult, cartResult] =
+    await observeAsyncOperation(
+      {
+        area: "cms-detail",
+        operation: "load-route",
+        thresholdMs: 325,
+      },
+      () =>
+        Promise.all([
+          getPublicPageBySlug(slug, culture),
+          getPublishedPageSet(culture),
+          getPublicCategories(culture),
+          getPublicProducts({
+            page: 1,
+            pageSize: 3,
+            culture,
+          }),
+          anonymousCartId
+            ? getPublicCart(anonymousCartId)
+            : Promise.resolve({ data: null, status: "not-found" as const }),
+        ]),
+    );
   const page = pageResult.data;
 
   if (!page && pageResult.status === "not-found") {

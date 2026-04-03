@@ -1,5 +1,3 @@
-import "server-only";
-
 function stripDangerousBlocks(value: string) {
   return value.replace(
     /<(script|iframe|object|embed|link|meta|base|form)\b[\s\S]*?<\/\1>/gi,

@@ -20,6 +20,25 @@
   --content-max-width: 1200px;
 }
 
+:root[data-theme="atelier"] {
+  --font-body-ui: "Aptos", "Segoe UI", sans-serif;
+  --font-display-ui: "Georgia", "Times New Roman", serif;
+  --color-surface-canvas: #f5efe8;
+  --color-surface-panel: #fffaf4;
+  --color-surface-panel-strong: #f3e5d8;
+  --color-surface-accent-soft: #efe0f3;
+  --color-border-soft: rgba(89, 52, 73, 0.14);
+  --color-border-strong: rgba(89, 52, 73, 0.28);
+  --color-text-primary: #342127;
+  --color-text-secondary: #72545f;
+  --color-text-muted: #8f707a;
+  --color-brand: #8c4258;
+  --color-brand-strong: #6e2f43;
+  --color-brand-contrast: #fff7f2;
+  --color-accent: #c9822b;
+  --shadow-panel: 0 18px 50px rgba(81, 42, 56, 0.09);
+}
+
 @theme inline {
   --font-sans: var(--font-body-ui);
   --font-display: var(--font-display-ui);
@@ -43,6 +62,13 @@ body {
     linear-gradient(180deg, #f8f4e7 0%, var(--color-surface-canvas) 28%, #f3efe5 100%);
   color: var(--color-text-primary);
   font-family: var(--font-body-ui);
+}
+
+:root[data-theme="atelier"] body {
+  background:
+    radial-gradient(circle at top left, rgba(140, 66, 88, 0.12), transparent 22rem),
+    radial-gradient(circle at bottom right, rgba(201, 130, 43, 0.12), transparent 20rem),
+    linear-gradient(180deg, #fbf3eb 0%, var(--color-surface-canvas) 35%, #f4ece6 100%);
 }
 
 a {

@@ -28,6 +28,12 @@ npm run build
 npm run start
 ```
 
+Run the focused unit tests:
+
+```bash
+npm run test
+```
+
 Open [http://localhost:3000](http://localhost:3000).
 
 ## Current Project State
@@ -53,6 +59,19 @@ The repository has moved beyond the raw front-office starting line:
 - home composition now also includes a live priority lane that ranks checkout, billing, loyalty, order, CMS, and catalog next steps from current public/member signals, so the storefront entry route behaves like an actionable action surface instead of only a map of routes
 - home entry now also picks the strongest visible product opportunity instead of the first catalog card, so the storefront surfaces a clearer best-offer moment from live browse data
 - home composition now also surfaces a live offer board that ranks multiple visible catalog opportunities by savings strength, so the storefront entry can show several concrete next-buy options instead of one product spotlight alone
+- home composition now also surfaces a live category-campaign board built from visible category lanes plus category-anchoring products, so the storefront entry can sell through stronger browse narratives instead of only isolated offer cards
+- storefront runtime config now also supports app-configured theme selection between a grocer-style default and an atelier-style variant through `DARWIN_WEB_THEME`, so the same front-office system can ship more than one real visual direction without changing feature code
+- Darwin.Web now also includes a lightweight unit-test runner plus focused coverage for query serialization, checkout draft/input normalization, HTML fragment sanitization, safe WebApi URL resolution, and locale-routing guardrails, so critical storefront handoff and trust-boundary logic is no longer validated only through manual browsing and full builds
+- Darwin.Web now also emits shared API diagnostics for public, member, and auth fetch failures, including response-level request identifiers where available, so staging/production troubleshooting is less dependent on route-local guesswork
+- public CMS/navigation and catalog discovery now also run through differentiated cache windows plus cache tags instead of one generic revalidation setting, so storefront performance tuning can follow content volatility more closely
+- account entry, public auth continuation, and member history routes now also reuse a shared cached storefront-continuation context for CMS/category/product follow-up data, so repeated cross-surface discovery windows assemble with less duplicate server work
+- member commerce detail routes plus account editor routes now also reuse that shared cached storefront-continuation context, so protected continuation windows stay consistent while doing less duplicate server work across the portal
+- cart, checkout, and confirmation now also reuse that shared cached storefront-continuation context for CMS/category/product continuity data, so the conversion path does less duplicate server work while keeping the same discovery windows alive
+- Home, account, cart, checkout, confirmation, and shared storefront-continuation loading now also emit slow-operation timing diagnostics, so real route-composition bottlenecks are easier to spot in staging and production
+- CMS, catalog, orders, and invoices now also emit slow-operation timing diagnostics, so browse and portal bottlenecks are visible across the wider front-office instead of only the main entry and conversion routes
+- CMS detail, product detail, and the main browse/history routes now also emit route-level timing diagnostics for heavier follow-up fetches, so content, discovery, and portal slowdowns are easier to pinpoint before they become customer-facing regressions
+- order/invoice detail plus account editor routes now also emit route-level timing diagnostics, so protected member follow-up and self-service slowdowns are visible across the portal instead of hiding behind server-side composition
+- catalog index and product detail now also surface a shared browse-campaign window built from visible category lanes plus strongest product offers, so catalog routes can drive stronger browse and buying decisions instead of only listing products
 - that home offer board now also shifts away from products already linked to the active cart when browser storefront-shopping state exists, so the storefront entry can suggest the next buying move beyond the current basket instead of echoing the same cart
 - home composition now also includes a live commerce-opportunity window driven by cart, spotlight-product, and category-lane signals, so the storefront entry route can push the shopper toward the strongest immediate buying move instead of only showing generic browse links
 - home composition is now also session-aware for signed-in members and can surface direct portal re-entry routes for account, orders, and loyalty instead of treating Home like a purely anonymous landing page
@@ -151,11 +170,13 @@ The repository has moved beyond the raw front-office starting line:
 - storefront checkout now also reuses canonical member profile identity for name/phone prefill when a member session exists but no saved address is selected, so checkout can still start from member context before the address book is populated
 - storefront checkout now also surfaces recent member invoice attention inside the route, so signed-in shoppers can keep open billing follow-up visible before placing a new order
 - storefront checkout now also surfaces member profile, channel, and address-book readiness directly inside the route, so authenticated checkout keeps profile/preferences/address context visible instead of treating member prefill as hidden background state
+- storefront checkout now also surfaces a dedicated payment-continuity window before order placement, so projected payable total, billing attention, and account handoff stay explicit instead of hiding behind the final submit action
 - cart now also surfaces explicit opportunity and readiness panels, so the shopper can see the strongest adjacent offer plus basket readiness before leaving the route for checkout
 - checkout now also surfaces explicit confidence and attention panels, so order-readiness, billing follow-up, phone verification, and address-book coverage stay visible at the final conversion step
 - storefront confirmation now also reconciles hosted-checkout return/cancel flows through the canonical payment-completion endpoint instead of acting as a passive snapshot screen
 - storefront confirmation now also keeps post-checkout guidance visible, including payment-next-step messaging, account/order-history follow-up, and stable order-reference handling
 - storefront confirmation now also surfaces signed-in member continuation across orders, invoices, and loyalty, so post-checkout handoff into the protected portal stays explicit instead of stopping at generic CTA buttons
+- storefront confirmation now also surfaces a dedicated payment-continuity window, so visible attempts, provider footprint, and commercial exposure are summarized before the shopper drops into lower-level payment detail rows
 - storefront confirmation now also gives guest shoppers an explicit account-continuation panel with sign-in/register/activation/password recovery handoff bound to the protected order-follow-up return path instead of relying on two isolated CTA buttons
 - storefront confirmation now also surfaces explicit post-purchase care and next-customer-window panels, so payment attention, order reference handling, and repeat-engagement follow-up stay visible after checkout instead of the route behaving like a passive receipt
 - storefront confirmation and auth-required follow-up links now also sanitize app-local return targets centrally, and confirmation status messaging derives from the authoritative confirmation snapshot instead of trusting query-carried status text
@@ -192,6 +213,8 @@ The repository has moved beyond the raw front-office starting line:
   - default: `http://localhost:5134`
 - `DARWIN_WEB_MAIN_MENU_NAME`
   - default: `main-navigation`
+- `DARWIN_WEB_THEME`
+  - default: `grocer`
 - `DARWIN_WEB_SITE_URL`
   - default: `http://localhost:3000`
 - `DARWIN_WEB_CULTURE`
@@ -274,6 +297,7 @@ The current web slice includes:
 - CMS detail anchor ids now also normalize diacritics before slugging section headings, so long-form German content keeps stable in-page navigation instead of collapsing into weak or duplicate fallback ids
 - CMS detail unavailable state now also keeps cross-surface follow-up visible, and CMS/catalog detail/index routes now surface explicit route-summary diagnostics so degraded public content/discovery states do not collapse into passive leaves
 - CMS index and CMS detail now also surface live catalog-category and live product follow-up windows, so public content routes can hand off directly into real commerce browse/detail paths instead of only pointing back to generic catalog entry
+- CMS index and CMS detail now also surface a shared commerce-campaign window built from visible category lanes and strongest product opportunities, so public content routes can sell through stronger browse and buying stories instead of only exposing utility follow-up lists
 - those CMS product follow-up windows now also rank by the strongest visible savings signal first, so content routes hand off into a clearer best-offer buying opportunity instead of arbitrary catalog order
 - CMS index and CMS detail now also surface live cart/checkout continuity from the canonical public cart contract, so published content can hand off directly into an already active purchase flow instead of only into browse routes
 - public catalog browsing against live `Darwin.WebApi` category/product endpoints

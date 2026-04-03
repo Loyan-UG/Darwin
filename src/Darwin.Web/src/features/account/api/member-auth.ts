@@ -1,5 +1,10 @@
 import "server-only";
 import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
+import {
+  createDiagnostics,
+  getResponseDiagnostics,
+  logApiFailure,
+} from "@/lib/api-diagnostics";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import type { MemberRegisterResponse } from "@/features/account/types";
 import { toLocalizedQueryMessage } from "@/localization";
@@ -21,6 +26,8 @@ async function postMemberAuthJson<T>(
       body: JSON.stringify(body),
     });
 
+    const diagnostics = getResponseDiagnostics("member-auth", path, response);
+
     if (!response.ok) {
       let detail = toLocalizedQueryMessage("memberAuthHttpErrorMessage");
       try {
@@ -30,10 +37,12 @@ async function postMemberAuthJson<T>(
         // Keep the status-based detail.
       }
 
+      logApiFailure(diagnostics, detail);
       return {
         data: null,
         status: "http-error",
         message: detail,
+        diagnostics,
       };
     }
 
@@ -42,6 +51,7 @@ async function postMemberAuthJson<T>(
       return {
         data: null,
         status: "ok",
+        diagnostics,
       };
     }
 
@@ -49,18 +59,24 @@ async function postMemberAuthJson<T>(
       return {
         data: (await response.json()) as T,
         status: "ok",
+        diagnostics,
       };
-    } catch {
+    } catch (error) {
+      logApiFailure(diagnostics, error);
       return {
         data: null,
         status: "ok",
+        diagnostics,
       };
     }
-  } catch {
+  } catch (error) {
+    const diagnostics = createDiagnostics("member-auth", path);
+    logApiFailure(diagnostics, error);
     return {
       data: null,
       status: "network-error",
       message: toLocalizedQueryMessage("memberAuthNetworkErrorMessage"),
+      diagnostics,
     };
   }
 }

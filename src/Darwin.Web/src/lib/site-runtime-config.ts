@@ -2,6 +2,7 @@ type SiteRuntimeConfig = {
   webApiBaseUrl: string;
   siteUrl: string;
   mainMenuName: string;
+  theme: "grocer" | "atelier";
   defaultCulture: string;
   supportedCultures: string[];
   cultureCookieName: string;
@@ -20,6 +21,10 @@ function parseSupportedCultures(value?: string) {
   return items.length > 0 ? Array.from(new Set(items)) : ["de-DE", "en-US"];
 }
 
+function parseTheme(value?: string): "grocer" | "atelier" {
+  return value === "atelier" ? "atelier" : "grocer";
+}
+
 export function getSiteRuntimeConfig(): SiteRuntimeConfig {
   const defaultCulture = process.env.DARWIN_WEB_CULTURE ?? "de-DE";
   const supportedCultures = parseSupportedCultures(
@@ -34,6 +39,7 @@ export function getSiteRuntimeConfig(): SiteRuntimeConfig {
       process.env.DARWIN_WEB_SITE_URL ?? "http://localhost:3000",
     ),
     mainMenuName: process.env.DARWIN_WEB_MAIN_MENU_NAME ?? "main-navigation",
+    theme: parseTheme(process.env.DARWIN_WEB_THEME),
     defaultCulture: supportedCultures.includes(defaultCulture)
       ? defaultCulture
       : supportedCultures[0],

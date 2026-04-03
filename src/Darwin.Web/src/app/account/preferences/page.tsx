@@ -1,15 +1,15 @@
 import { PreferencesPage } from "@/components/account/preferences-page";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
-import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import {
   getCurrentMemberPreferences,
   getCurrentMemberProfile,
 } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
@@ -60,13 +60,20 @@ export default async function PreferencesRoute({
     );
   }
 
-  const [preferencesResult, profileResult, cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
-    getCurrentMemberPreferences(),
-    getCurrentMemberProfile(),
-    getPublishedPages({ page: 1, pageSize: 2, culture }),
-    getPublicCategories(culture),
-    getPublicProducts({ page: 1, pageSize: 3, culture }),
-  ]);
+  const [preferencesResult, profileResult, storefrontContext] =
+    await observeAsyncOperation(
+      {
+        area: "preferences",
+        operation: "load-route",
+        thresholdMs: 300,
+      },
+      () =>
+        Promise.all([
+          getCurrentMemberPreferences(),
+          getCurrentMemberProfile(),
+          getStorefrontContinuationContext(culture),
+        ]),
+    );
 
   return (
     <PreferencesPage
@@ -77,12 +84,12 @@ export default async function PreferencesRoute({
       profileStatus={profileResult.status}
       preferencesStatus={readSearchParam(resolvedSearchParams?.preferencesStatus)}
       preferencesError={readSearchParam(resolvedSearchParams?.preferencesError)}
-      cmsPages={cmsPagesResult.data?.items ?? []}
-      cmsPagesStatus={cmsPagesResult.status}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
-      productsStatus={productsResult.status}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
     />
   );
 }

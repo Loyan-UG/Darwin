@@ -105,6 +105,10 @@ export function CheckoutPage({
     Boolean(intent.selectedShippingMethodId || draft.selectedShippingMethodId);
   const canPlaceOrder = Boolean(cart && intent && hasSelectedShipping);
   const hasSavedAddresses = memberAddresses.length > 0;
+  const projectedCheckoutTotalMinor = getFinalTotalMinor(
+    intent,
+    cart?.grandTotalGrossMinor ?? 0,
+  );
   const emailChannelReady = Boolean(
     memberProfile?.email && memberPreferences?.allowEmailMarketing,
   );
@@ -321,6 +325,77 @@ export function CheckoutPage({
             </div>
           </section>
         </div>
+
+        <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+            {copy.checkoutPaymentWindowTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {copy.checkoutPaymentWindowMessage}
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.checkoutPaymentWindowRouteLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {canPlaceOrder
+                  ? copy.checkoutPaymentWindowRouteReady
+                  : copy.checkoutPaymentWindowRoutePending}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.checkoutPaymentWindowTotalLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(projectedCheckoutTotalMinor, cart.currency, culture)}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.checkoutPaymentWindowAccountLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {hasMemberSession
+                  ? copy.checkoutPaymentWindowAccountMember
+                  : copy.checkoutPaymentWindowAccountGuest}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.checkoutPaymentWindowBillingLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {outstandingInvoice
+                  ? formatResource(copy.checkoutPaymentWindowBillingValue, {
+                      balance: formatMoney(
+                        outstandingInvoice.balanceMinor,
+                        outstandingInvoice.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.checkoutPaymentWindowBillingEmpty}
+              </p>
+            </article>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            {outstandingInvoice ? (
+              <Link
+                href={localizeHref(`/invoices/${outstandingInvoice.id}`, culture)}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {copy.checkoutPaymentWindowInvoicesCta}
+              </Link>
+            ) : null}
+            <Link
+              href={localizeHref(hasMemberSession ? "/account" : "/account/sign-in", culture)}
+              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+            >
+              {copy.checkoutPaymentWindowAccountCta}
+            </Link>
+          </div>
+        </section>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_360px]">
           <div className="grid gap-8">

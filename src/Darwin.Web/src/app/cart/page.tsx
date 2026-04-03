@@ -1,7 +1,6 @@
 import { CartPage } from "@/components/cart/cart-page";
-import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
+import { getPublicProducts } from "@/features/catalog/api/public-catalog";
 import type { PublicProductSummary } from "@/features/catalog/types";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { getCartViewModel } from "@/features/cart/server/get-cart-view-model";
 import {
   readAllowedSearchParam,
@@ -13,8 +12,10 @@ import {
   getCurrentMemberProfile,
 } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
@@ -36,18 +37,19 @@ type CartRouteProps = {
 export default async function CartRoute({ searchParams }: CartRouteProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const culture = await getRequestCulture();
-  const [model, memberSession] = await Promise.all([
-    getCartViewModel(),
-    getMemberSession(),
-  ]);
-  const [cmsPagesResult, categoriesResult] = await Promise.all([
-    getPublishedPages({
-      page: 1,
-      pageSize: 3,
-      culture,
-    }),
-    getPublicCategories(culture),
-  ]);
+  const [model, memberSession, storefrontContext] = await observeAsyncOperation(
+    {
+      area: "cart",
+      operation: "load-route",
+      thresholdMs: 300,
+    },
+    () =>
+      Promise.all([
+        getCartViewModel(),
+        getMemberSession(),
+        getStorefrontContinuationContext(culture),
+      ]),
+  );
   const [memberAddressesResult, memberProfileResult, memberPreferencesResult] = memberSession
     ? await Promise.all([
         getCurrentMemberAddresses(),
@@ -94,10 +96,10 @@ export default async function CartRoute({ searchParams }: CartRouteProps) {
       ])}
       cartError={readSingleSearchParam(resolvedSearchParams?.cartError)}
       followUpProducts={followUpProducts}
-      cmsPages={cmsPagesResult.data?.items ?? []}
-      cmsPagesStatus={cmsPagesResult.status}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
     />
   );
 }

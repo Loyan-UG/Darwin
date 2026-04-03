@@ -1,14 +1,14 @@
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
-import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
 import { readCartDisplaySnapshots } from "@/features/cart/cookies";
 import { readPositiveIntegerSearchParam } from "@/features/checkout/helpers";
 import { InvoicesPage } from "@/components/member/invoices-page";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { getCurrentMemberInvoices } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
@@ -56,15 +56,21 @@ export default async function InvoicesRoute({
     );
   }
 
-  const [invoicesResult, cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
-    getCurrentMemberInvoices({
-      page: safePage,
-      pageSize: 12,
-    }),
-    getPublishedPages({ page: 1, pageSize: 2, culture }),
-    getPublicCategories(culture),
-    getPublicProducts({ page: 1, pageSize: 3, culture }),
-  ]);
+  const [invoicesResult, storefrontContext] = await observeAsyncOperation(
+    {
+      area: "invoices",
+      operation: "load-route",
+      thresholdMs: 325,
+    },
+    () =>
+      Promise.all([
+        getCurrentMemberInvoices({
+          page: safePage,
+          pageSize: 12,
+        }),
+        getStorefrontContinuationContext(culture),
+      ]),
+  );
   const cartLinkedProductSlugs = (await readCartDisplaySnapshots())
     .map((snapshot) => {
       const match = snapshot.href.match(/\/catalog\/([^/?#]+)/i);
@@ -79,12 +85,12 @@ export default async function InvoicesRoute({
       status={invoicesResult.status}
       currentPage={safePage}
       totalPages={Math.max(1, Math.ceil((invoicesResult.data?.total ?? 0) / (invoicesResult.data?.request.pageSize ?? 12)))}
-      cmsPages={cmsPagesResult.data?.items ?? []}
-      cmsPagesStatus={cmsPagesResult.status}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
-      productsStatus={productsResult.status}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
       cartLinkedProductSlugs={cartLinkedProductSlugs}
     />
   );

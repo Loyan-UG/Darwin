@@ -2,6 +2,12 @@ import "server-only";
 import type { BusinessDetailWithMyAccount } from "@/features/businesses/types";
 import { getFreshMemberAccessToken } from "@/features/member-session/server";
 import { buildQuerySuffix, serializeQueryParams } from "@/lib/query-params";
+import {
+  createDiagnostics,
+  getResponseDiagnostics,
+  logApiFailure,
+  type ApiDiagnostics,
+} from "@/lib/api-diagnostics";
 import type {
   LinkedCustomerContext,
   MemberAddress,
@@ -38,6 +44,7 @@ export type MemberApiFetchResult<T> = {
   data: T | null;
   status: MemberApiFetchStatus;
   message?: string;
+  diagnostics?: ApiDiagnostics;
 };
 
 async function fetchMemberJson<T>(
@@ -74,20 +81,27 @@ async function fetchMemberJson<T>(
     }
 
     if (response.status === 401 || response.status === 403) {
+      const diagnostics = getResponseDiagnostics("member-api", path, response);
+      logApiFailure(diagnostics, "unauthorized");
       return {
         data: null,
         status: "unauthorized",
         message: toLocalizedQueryMessage("memberSessionUnauthorizedMessage"),
+        diagnostics,
       };
     }
 
     if (response.status === 404) {
+      const diagnostics = getResponseDiagnostics("member-api", path, response);
       return {
         data: null,
         status: "not-found",
         message: toLocalizedQueryMessage("memberResourceNotFoundMessage"),
+        diagnostics,
       };
     }
+
+    const diagnostics = getResponseDiagnostics("member-api", path, response);
 
     if (!response.ok) {
       let detail = toLocalizedQueryMessage("memberApiHttpErrorMessage");
@@ -98,10 +112,12 @@ async function fetchMemberJson<T>(
         // Keep status-based detail.
       }
 
+      logApiFailure(diagnostics, detail);
       return {
         data: null,
         status: "http-error",
         message: detail,
+        diagnostics,
       };
     }
 
@@ -109,19 +125,25 @@ async function fetchMemberJson<T>(
       return {
         data: (await response.json()) as T,
         status: "ok",
+        diagnostics,
       };
-    } catch {
+    } catch (error) {
+      logApiFailure(diagnostics, error);
       return {
         data: null,
         status: "invalid-payload",
         message: toLocalizedQueryMessage("memberApiInvalidPayloadMessage"),
+        diagnostics,
       };
     }
-  } catch {
+  } catch (error) {
+    const diagnostics = createDiagnostics("member-api", path);
+    logApiFailure(diagnostics, error);
     return {
       data: null,
       status: "network-error",
       message: toLocalizedQueryMessage("memberApiNetworkErrorMessage"),
+      diagnostics,
     };
   }
 }
@@ -170,20 +192,27 @@ async function mutateMemberJson<T>(
     }
 
     if (response.status === 401 || response.status === 403) {
+      const diagnostics = getResponseDiagnostics("member-api", path, response);
+      logApiFailure(diagnostics, "unauthorized");
       return {
         data: null,
         status: "unauthorized",
         message: toLocalizedQueryMessage("memberSessionUnauthorizedMessage"),
+        diagnostics,
       };
     }
 
     if (response.status === 404) {
+      const diagnostics = getResponseDiagnostics("member-api", path, response);
       return {
         data: null,
         status: "not-found",
         message: toLocalizedQueryMessage("memberResourceNotFoundMessage"),
+        diagnostics,
       };
     }
+
+    const diagnostics = getResponseDiagnostics("member-api", path, response);
 
     if (!response.ok) {
       let detail = toLocalizedQueryMessage("memberApiHttpErrorMessage");
@@ -194,10 +223,12 @@ async function mutateMemberJson<T>(
         // Keep status-based detail.
       }
 
+      logApiFailure(diagnostics, detail);
       return {
         data: null,
         status: "http-error",
         message: detail,
+        diagnostics,
       };
     }
 
@@ -205,6 +236,7 @@ async function mutateMemberJson<T>(
       return {
         data: null,
         status: "ok",
+        diagnostics,
       };
     }
 
@@ -212,18 +244,24 @@ async function mutateMemberJson<T>(
       return {
         data: (await response.json()) as T,
         status: "ok",
+        diagnostics,
       };
-    } catch {
+    } catch (error) {
+      logApiFailure(diagnostics, error);
       return {
         data: null,
         status: "ok",
+        diagnostics,
       };
     }
-  } catch {
+  } catch (error) {
+    const diagnostics = createDiagnostics("member-api", path);
+    logApiFailure(diagnostics, error);
     return {
       data: null,
       status: "network-error",
       message: toLocalizedQueryMessage("memberApiNetworkErrorMessage"),
+      diagnostics,
     };
   }
 }

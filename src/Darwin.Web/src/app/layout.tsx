@@ -4,6 +4,7 @@ import { getShellModel } from "@/features/shell/get-shell-model";
 import { getSharedResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { getSiteMetadataBase } from "@/lib/seo";
+import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,10 +27,12 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const shellModel = await getShellModel();
+  const runtimeConfig = getSiteRuntimeConfig();
 
   return (
     <html
       lang={shellModel.culture}
+      data-theme={runtimeConfig.theme}
       className="h-full antialiased"
     >
       <body className="min-h-full bg-[var(--color-surface-canvas)] text-[var(--color-text-primary)]">

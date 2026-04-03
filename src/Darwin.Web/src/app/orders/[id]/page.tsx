@@ -1,13 +1,13 @@
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
-import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
 import { readCartDisplaySnapshots } from "@/features/cart/cookies";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { OrderDetailPage } from "@/components/member/order-detail-page";
 import { getCurrentMemberOrder } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata({ params }: OrderDetailRouteProps) {
@@ -64,12 +64,18 @@ export default async function OrderDetailRoute({
     );
   }
 
-  const [orderResult, cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
-    getCurrentMemberOrder(id),
-    getPublishedPages({ page: 1, pageSize: 2, culture }),
-    getPublicCategories(culture),
-    getPublicProducts({ page: 1, pageSize: 3, culture }),
-  ]);
+  const [orderResult, storefrontContext] = await observeAsyncOperation(
+    {
+      area: "order-detail",
+      operation: "load-route",
+      thresholdMs: 325,
+    },
+    () =>
+      Promise.all([
+        getCurrentMemberOrder(id),
+        getStorefrontContinuationContext(culture),
+      ]),
+  );
   const cartLinkedProductSlugs = (await readCartDisplaySnapshots())
     .map((snapshot) => {
       const match = snapshot.href.match(/\/catalog\/([^/?#]+)/i);
@@ -83,12 +89,12 @@ export default async function OrderDetailRoute({
       order={orderResult.data}
       status={orderResult.status}
       paymentError={readSearchParam(resolvedSearchParams?.paymentError)}
-      cmsPages={cmsPagesResult.data?.items ?? []}
-      cmsPagesStatus={cmsPagesResult.status}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
-      productsStatus={productsResult.status}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
       cartLinkedProductSlugs={cartLinkedProductSlugs}
     />
   );

@@ -215,6 +215,13 @@ export function OrderConfirmationPage({
       const rightRank = right.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
       return leftRank - rightRank;
     })[0] ?? null;
+  const visiblePaymentProviders = [
+    ...new Set(
+      confirmation.payments
+        .map((payment) => payment.provider.trim())
+        .filter((provider) => provider.length > 0),
+    ),
+  ];
   const purchasedNames = new Set(
     confirmation.lines.map((line) => line.name.trim().toLowerCase()),
   );
@@ -429,6 +436,63 @@ export function OrderConfirmationPage({
             </div>
           </section>
         </div>
+
+        <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+            {copy.confirmationPaymentWindowTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {copy.confirmationPaymentWindowMessage}
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.confirmationPaymentWindowAttemptsLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.confirmationPaymentWindowAttemptsValue, {
+                  count: confirmation.payments.length,
+                })}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.confirmationPaymentWindowProviderLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {visiblePaymentProviders.length === 0
+                  ? copy.confirmationPaymentWindowProviderEmpty
+                  : visiblePaymentProviders.length === 1
+                    ? visiblePaymentProviders[0]
+                    : formatResource(copy.confirmationPaymentWindowProviderValue, {
+                        count: visiblePaymentProviders.length,
+                      })}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.confirmationPaymentWindowRouteLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {paymentNeedsAttention
+                  ? copy.confirmationPaymentWindowRoutePending
+                  : copy.confirmationPaymentWindowRouteDone}
+              </p>
+            </article>
+            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.confirmationPaymentWindowAmountLabel}
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(
+                  confirmation.grandTotalGrossMinor,
+                  confirmation.currency,
+                  culture,
+                )}
+              </p>
+            </article>
+          </div>
+        </section>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_360px]">
           <div className="flex flex-col gap-6">

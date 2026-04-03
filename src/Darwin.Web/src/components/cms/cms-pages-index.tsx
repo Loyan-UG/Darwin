@@ -4,6 +4,7 @@ import {
   getProductSavingsPercent,
   sortProductsByOpportunity,
 } from "@/features/catalog/merchandising";
+import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { PublicPageSummary } from "@/features/cms/types";
@@ -501,6 +502,14 @@ export function CmsPagesIndex({
             </Link>
           </div>
         </div>
+
+        <CmsCommerceCampaignWindow
+          culture={culture}
+          categories={categories}
+          categoriesStatus={categoriesStatus}
+          products={products}
+          productsStatus={productsStatus}
+        />
 
         <CmsContinuationRail culture={culture} description={copy.cmsCrossSurfaceMessage} />
 

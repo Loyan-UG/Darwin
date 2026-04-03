@@ -1,12 +1,12 @@
 import { SecurityPage } from "@/components/account/security-page";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
-import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { getCurrentMemberProfile } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
@@ -57,12 +57,18 @@ export default async function SecurityRoute({
     );
   }
 
-  const [profileResult, cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
-    getCurrentMemberProfile(),
-    getPublishedPages({ page: 1, pageSize: 2, culture }),
-    getPublicCategories(culture),
-    getPublicProducts({ page: 1, pageSize: 3, culture }),
-  ]);
+  const [profileResult, storefrontContext] = await observeAsyncOperation(
+    {
+      area: "security",
+      operation: "load-route",
+      thresholdMs: 300,
+    },
+    () =>
+      Promise.all([
+        getCurrentMemberProfile(),
+        getStorefrontContinuationContext(culture),
+      ]),
+  );
 
   return (
     <SecurityPage
@@ -72,12 +78,12 @@ export default async function SecurityRoute({
       profileStatus={profileResult.status}
       securityStatus={readSearchParam(resolvedSearchParams?.securityStatus)}
       securityError={readSearchParam(resolvedSearchParams?.securityError)}
-      cmsPages={cmsPagesResult.data?.items ?? []}
-      cmsPagesStatus={cmsPagesResult.status}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
-      productsStatus={productsResult.status}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
     />
   );
 }

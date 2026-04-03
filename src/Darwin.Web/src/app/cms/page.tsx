@@ -13,6 +13,7 @@ import {
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { getSharedResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildSeoMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -57,22 +58,31 @@ export default async function CmsIndexRoute({
   const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
   const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
   const anonymousCartId = await getAnonymousCartId();
-  const [pagesResult, categoriesResult, productsResult, cartResult] = await Promise.all([
-    getPublishedPages({
-      page: safePage,
-      pageSize: 12,
-      culture,
-    }),
-    getPublicCategories(culture),
-    getPublicProducts({
-      page: 1,
-      pageSize: 3,
-      culture,
-    }),
-    anonymousCartId
-      ? getPublicCart(anonymousCartId)
-      : Promise.resolve({ data: null, status: "not-found" as const }),
-  ]);
+  const [pagesResult, categoriesResult, productsResult, cartResult] =
+    await observeAsyncOperation(
+      {
+        area: "cms-index",
+        operation: "load-route",
+        thresholdMs: 325,
+      },
+      () =>
+        Promise.all([
+          getPublishedPages({
+            page: safePage,
+            pageSize: 12,
+            culture,
+          }),
+          getPublicCategories(culture),
+          getPublicProducts({
+            page: 1,
+            pageSize: 3,
+            culture,
+          }),
+          anonymousCartId
+            ? getPublicCart(anonymousCartId)
+            : Promise.resolve({ data: null, status: "not-found" as const }),
+        ]),
+    );
   const visiblePages = visibleQuery
     ? (pagesResult.data?.items ?? []).filter((page) => {
         const haystack = `${page.title} ${page.slug} ${page.metaTitle ?? ""} ${page.metaDescription ?? ""}`.toLowerCase();

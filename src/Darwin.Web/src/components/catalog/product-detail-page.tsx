@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AddToCartForm } from "@/components/cart/add-to-cart-form";
+import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-window";
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
@@ -21,6 +22,7 @@ import { formatMoney } from "@/lib/formatting";
 type ProductDetailPageProps = {
   culture: string;
   product: PublicProductDetail | null;
+  categories: PublicCategorySummary[];
   primaryCategory: PublicCategorySummary | null;
   relatedProducts: PublicProductSummary[];
   cmsPages: PublicPageSummary[];
@@ -38,6 +40,7 @@ type ProductDetailPageProps = {
 export function ProductDetailPage({
   culture,
   product,
+  categories,
   primaryCategory,
   relatedProducts,
   cmsPages,
@@ -405,6 +408,12 @@ export function ProductDetailPage({
           </div>
         </div>
       </div>
+
+      <CatalogCampaignWindow
+        culture={culture}
+        categories={categories}
+        products={[product, ...relatedProducts]}
+      />
 
       {primaryCategory ? (
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-window";
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
@@ -366,6 +367,12 @@ export function CatalogPage({
             </div>
           </section>
         </div>
+
+        <CatalogCampaignWindow
+          culture={culture}
+          categories={categories}
+          products={products}
+        />
 
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">

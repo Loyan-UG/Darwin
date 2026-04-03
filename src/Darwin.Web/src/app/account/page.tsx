@@ -1,9 +1,7 @@
 import { AccountHubPage } from "@/components/account/account-hub-page";
 import { MemberDashboardPage } from "@/components/account/member-dashboard-page";
-import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
 import { getPublicCart } from "@/features/cart/api/public-cart";
 import { getAnonymousCartId, readCartDisplaySnapshots } from "@/features/cart/cookies";
-import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
 import {
   getCurrentMemberAddresses,
@@ -16,8 +14,10 @@ import {
   getCurrentMemberProfile,
 } from "@/features/member-portal/api/member-portal";
 import { getMemberSession } from "@/features/member-session/cookies";
+import { getStorefrontContinuationContext } from "@/features/storefront/server/get-storefront-continuation-context";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import { getMemberResource } from "@/localization";
 
@@ -79,25 +79,29 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     loyaltyOverviewResult,
     loyaltyBusinessesResult,
     storefrontCartResult,
-    cmsPagesResult,
-    categoriesResult,
-    productsResult,
-  ] = await Promise.all([
-    getCurrentMemberProfile(),
-    getCurrentMemberPreferences(),
-    getCurrentMemberCustomerContext(),
-    getCurrentMemberAddresses(),
-    getCurrentMemberOrders({ page: 1, pageSize: 3 }),
-    getCurrentMemberInvoices({ page: 1, pageSize: 3 }),
-    getCurrentMemberLoyaltyOverview(),
-    getCurrentMemberLoyaltyBusinesses({ page: 1, pageSize: 3 }),
-    anonymousCartId
-      ? getPublicCart(anonymousCartId)
-      : Promise.resolve({ data: null, status: "not-found" as const }),
-    getPublishedPages({ page: 1, pageSize: 2, culture }),
-    getPublicCategories(culture),
-    getPublicProducts({ page: 1, pageSize: 3, culture }),
-  ]);
+    storefrontContext,
+  ] = await observeAsyncOperation(
+    {
+      area: "account",
+      operation: "load-dashboard",
+      thresholdMs: 350,
+    },
+    () =>
+      Promise.all([
+        getCurrentMemberProfile(),
+        getCurrentMemberPreferences(),
+        getCurrentMemberCustomerContext(),
+        getCurrentMemberAddresses(),
+        getCurrentMemberOrders({ page: 1, pageSize: 3 }),
+        getCurrentMemberInvoices({ page: 1, pageSize: 3 }),
+        getCurrentMemberLoyaltyOverview(),
+        getCurrentMemberLoyaltyBusinesses({ page: 1, pageSize: 3 }),
+        anonymousCartId
+          ? getPublicCart(anonymousCartId)
+          : Promise.resolve({ data: null, status: "not-found" as const }),
+        getStorefrontContinuationContext(culture),
+      ]),
+  );
 
   return (
     <MemberDashboardPage
@@ -121,12 +125,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       loyaltyBusinessesStatus={loyaltyBusinessesResult.status}
       storefrontCart={storefrontCartResult.data}
       storefrontCartStatus={storefrontCartResult.status}
-      cmsPages={cmsPagesResult.data?.items ?? []}
-      cmsPagesStatus={cmsPagesResult.status}
-      categories={categoriesResult.data?.items.slice(0, 3) ?? []}
-      categoriesStatus={categoriesResult.status}
-      products={productsResult.data?.items ?? []}
-      productsStatus={productsResult.status}
+      cmsPages={storefrontContext.cmsPages}
+      cmsPagesStatus={storefrontContext.cmsPagesStatus}
+      categories={storefrontContext.categories}
+      categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
       cartLinkedProductSlugs={cartLinkedProductSlugs}
     />
   );

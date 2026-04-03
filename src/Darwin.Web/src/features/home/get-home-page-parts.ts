@@ -266,6 +266,60 @@ export async function getHomePageParts(
     categorySpotlights.find((entry) => entry.product && entry.status === "ok") ??
     categorySpotlights[0] ??
     null;
+  const categoryCampaignCards = categorySpotlights.map((entry) => {
+    const product = entry.product;
+    const savingsPercent = product ? getProductSavingsPercent(product) : null;
+
+    return {
+      id: `campaign-board-${entry.category.id}`,
+      eyebrow: copy.campaignBoardCardEyebrow,
+      title: entry.category.name,
+      description:
+        product && entry.status === "ok"
+          ? savingsPercent !== null
+            ? formatResource(copy.campaignBoardProductDescription, {
+                product: product.name,
+                savings: savingsPercent,
+                price: formatMoney(
+                  product.priceMinor,
+                  product.currency,
+                  culture,
+                ),
+              })
+            : formatResource(copy.campaignBoardFallbackProductDescription, {
+                product: product.name,
+                price: formatMoney(
+                  product.priceMinor,
+                  product.currency,
+                  culture,
+                ),
+              })
+          : formatResource(copy.campaignBoardCategoryFallbackDescription, {
+              status: entry.status,
+            }),
+      href: buildAppQueryPath("/catalog", {
+        category: entry.category.slug,
+      }),
+      ctaLabel: copy.campaignBoardCta,
+        meta:
+          product && entry.status === "ok"
+            ? formatResource(copy.campaignBoardProductMeta, {
+              compareAt:
+                savingsPercent !== null &&
+                product.compareAtPriceMinor !== null &&
+                product.compareAtPriceMinor !== undefined
+                  ? formatMoney(
+                      product.compareAtPriceMinor,
+                      product.currency,
+                      culture,
+                    )
+                  : copy.campaignBoardProductMetaFallback,
+            })
+          : formatResource(copy.campaignBoardCategoryMeta, {
+              status: entry.status,
+            }),
+    };
+  });
 
   return [
     {
@@ -503,6 +557,18 @@ export async function getHomePageParts(
         };
       }),
       emptyMessage: productsResult.message ?? copy.offerBoardEmptyMessage,
+    },
+    {
+      id: "home-campaign-board",
+      kind: "card-grid",
+      eyebrow: copy.campaignBoardEyebrow,
+      title: copy.campaignBoardTitle,
+      description: copy.campaignBoardDescription,
+      cards: categoryCampaignCards,
+      emptyMessage:
+        categoriesResult.message ??
+        productsResult.message ??
+        copy.campaignBoardEmptyMessage,
     },
     {
       id: "home-route-map",

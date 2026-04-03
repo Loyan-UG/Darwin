@@ -18,6 +18,7 @@ import type {
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { getCatalogResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { observeAsyncOperation } from "@/lib/route-observability";
 import { buildSeoMetadata } from "@/lib/seo";
 
 function buildCatalogPath(
@@ -157,23 +158,32 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
   const visibleSort = readVisibleSort(resolvedSearchParams?.visibleSort);
 
   const anonymousCartId = await getAnonymousCartId();
-  const [categoriesResult, productsResult, cmsPagesResult, cartResult] = await Promise.all([
-    getPublicCategories(culture),
-    getPublicProducts({
-      page: safePage,
-      pageSize: 12,
-      culture,
-      categorySlug: activeCategorySlug,
-    }),
-    getPublishedPages({
-      page: 1,
-      pageSize: 3,
-      culture,
-    }),
-    anonymousCartId
-      ? getPublicCart(anonymousCartId)
-      : Promise.resolve({ data: null, status: "not-found" as const }),
-  ]);
+  const [categoriesResult, productsResult, cmsPagesResult, cartResult] =
+    await observeAsyncOperation(
+      {
+        area: "catalog",
+        operation: "load-route",
+        thresholdMs: 325,
+      },
+      () =>
+        Promise.all([
+          getPublicCategories(culture),
+          getPublicProducts({
+            page: safePage,
+            pageSize: 12,
+            culture,
+            categorySlug: activeCategorySlug,
+          }),
+          getPublishedPages({
+            page: 1,
+            pageSize: 3,
+            culture,
+          }),
+          anonymousCartId
+            ? getPublicCart(anonymousCartId)
+            : Promise.resolve({ data: null, status: "not-found" as const }),
+        ]),
+    );
   const loadedProducts = productsResult.data?.items ?? [];
   const visibleProducts = applyVisibleSort(
     visibleQuery

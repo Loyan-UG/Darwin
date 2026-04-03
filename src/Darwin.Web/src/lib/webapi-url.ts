@@ -22,7 +22,7 @@ export function toWebApiUrl(path: string) {
     return toSafeHttpUrl(path);
   }
 
-  if (!path.startsWith("/")) {
+  if (!path.startsWith("/") || path.startsWith("//")) {
     return "";
   }
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
@@ -496,6 +497,14 @@ export function CmsPageDetail({
               </Link>
             </div>
           </div>
+
+          <CmsCommerceCampaignWindow
+            culture={culture}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
+            products={products}
+            productsStatus={productsStatus}
+          />
 
           <CmsContinuationRail culture={culture} description={copy.cmsFollowUpDescription} />
 
