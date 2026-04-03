@@ -40,6 +40,8 @@ export default async function SignInRoute({ searchParams }: SignInRouteProps) {
       cmsPagesStatus={storefrontContext.cmsPagesStatus}
       categories={storefrontContext.categories}
       categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
       storefrontCart={storefrontContext.storefrontCart}
       storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />

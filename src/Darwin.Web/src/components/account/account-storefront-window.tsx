@@ -1,7 +1,15 @@
 import Link from "next/link";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import {
+  getProductSavingsPercent,
+  sortProductsByOpportunity,
+} from "@/features/catalog/merchandising";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
+import { formatMoney } from "@/lib/formatting";
 import { formatResource, getMemberResource } from "@/localization";
 
 type AccountStorefrontWindowProps = {
@@ -10,6 +18,8 @@ type AccountStorefrontWindowProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 export function AccountStorefrontWindow({
@@ -18,8 +28,11 @@ export function AccountStorefrontWindow({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
 }: AccountStorefrontWindowProps) {
   const copy = getMemberResource(culture);
+  const productOpportunities = sortProductsByOpportunity(products);
 
   return (
     <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
@@ -30,8 +43,10 @@ export function AccountStorefrontWindow({
         {formatResource(copy.accountStorefrontWindowMessage, {
           cmsStatus: cmsPagesStatus,
           categoriesStatus,
+          productsStatus,
           pageCount: cmsPages.length,
           categoryCount: categories.length,
+          productCount: products.length,
         })}
       </p>
       <div className="mt-6 grid gap-4">
@@ -111,6 +126,61 @@ export function AccountStorefrontWindow({
             <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.accountStorefrontCatalogEmptyMessage, {
                 status: categoriesStatus,
+              })}
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+              {copy.accountStorefrontProductTitle}
+            </p>
+            <Link
+              href={localizeHref("/catalog", culture)}
+              className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+            >
+              {copy.accountStorefrontProductCta}
+            </Link>
+          </div>
+          {productOpportunities.length > 0 ? (
+            <div className="mt-4 flex flex-col gap-3">
+              {productOpportunities.map((product) => {
+                const savingsPercent = getProductSavingsPercent(product);
+
+                return (
+                  <Link
+                    key={product.id}
+                    href={localizeHref(`/catalog/${product.slug}`, culture)}
+                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                  >
+                    <p className="font-semibold text-[var(--color-text-primary)]">
+                      {product.name}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {savingsPercent !== null
+                        ? formatResource(copy.accountStorefrontProductOfferDescription, {
+                            savingsPercent,
+                            price: formatMoney(
+                              product.priceMinor,
+                              product.currency,
+                              culture,
+                            ),
+                          })
+                        : product.shortDescription ??
+                          copy.accountStorefrontProductFallbackDescription}
+                    </p>
+                    <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                      {formatMoney(product.priceMinor, product.currency, culture)}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.accountStorefrontProductEmptyMessage, {
+                status: productsStatus,
               })}
             </p>
           )}

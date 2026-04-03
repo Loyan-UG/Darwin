@@ -6,6 +6,10 @@ import type {
   PublicCategorySummary,
   PublicProductSummary,
 } from "@/features/catalog/types";
+import {
+  getProductSavingsPercent,
+  getStrongestProductOpportunity,
+} from "@/features/catalog/merchandising";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
 import type { PublicStorefrontOrderConfirmation } from "@/features/checkout/types";
@@ -211,6 +215,16 @@ export function OrderConfirmationPage({
       const rightRank = right.pointsToNextReward ?? Number.MAX_SAFE_INTEGER;
       return leftRank - rightRank;
     })[0] ?? null;
+  const purchasedNames = new Set(
+    confirmation.lines.map((line) => line.name.trim().toLowerCase()),
+  );
+  const guestProductOpportunity =
+    getStrongestProductOpportunity(
+      products.filter((product) => !purchasedNames.has(product.name.trim().toLowerCase())),
+    ) ?? getStrongestProductOpportunity(products);
+  const guestProductSavingsPercent = guestProductOpportunity
+    ? getProductSavingsPercent(guestProductOpportunity)
+    : null;
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -668,6 +682,53 @@ export function OrderConfirmationPage({
                     <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
                       {memberOrderDetailHref}
                     </p>
+                  </article>
+                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                        {copy.confirmationGuestProductTitle}
+                      </p>
+                      <Link
+                        href={localizeHref("/catalog", culture)}
+                        className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                      >
+                        {copy.confirmationGuestProductCta}
+                      </Link>
+                    </div>
+                    {guestProductOpportunity ? (
+                      <div className="mt-2">
+                        <Link
+                          href={localizeHref(`/catalog/${guestProductOpportunity.slug}`, culture)}
+                          className="font-semibold text-[var(--color-text-primary)] transition hover:text-[var(--color-brand)]"
+                        >
+                          {guestProductOpportunity.name}
+                        </Link>
+                        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                          {guestProductSavingsPercent !== null
+                            ? formatResource(copy.confirmationGuestProductOfferDescription, {
+                                savingsPercent: guestProductSavingsPercent,
+                                price: formatMoney(
+                                  guestProductOpportunity.priceMinor,
+                                  guestProductOpportunity.currency,
+                                  culture,
+                                ),
+                              })
+                            : guestProductOpportunity.shortDescription ??
+                              copy.confirmationGuestProductFallbackDescription}
+                        </p>
+                        <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                          {formatMoney(
+                            guestProductOpportunity.priceMinor,
+                            guestProductOpportunity.currency,
+                            culture,
+                          )}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {copy.confirmationGuestProductEmptyMessage}
+                      </p>
+                    )}
                   </article>
                 </div>
                 <div className="mt-6 flex flex-wrap gap-3">

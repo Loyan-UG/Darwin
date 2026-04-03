@@ -2,7 +2,10 @@ import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { createMemberInvoicePaymentIntentAction } from "@/features/member-portal/actions";
 import type { MemberInvoiceDetail } from "@/features/member-portal/types";
@@ -24,6 +27,8 @@ type InvoiceDetailPageProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 export function InvoiceDetailPage({
@@ -35,6 +40,8 @@ export function InvoiceDetailPage({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
 }: InvoiceDetailPageProps) {
   const copy = getMemberResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
@@ -247,8 +254,10 @@ export function InvoiceDetailPage({
                 {formatResource(copy.invoiceDetailStorefrontWindowMessage, {
                   cmsStatus: cmsPagesStatus,
                   categoriesStatus,
+                  productsStatus,
                   pageCount: cmsPages.length,
                   categoryCount: categories.length,
+                  productCount: products.length,
                 })}
               </p>
               <div className="mt-5 grid gap-3">
@@ -327,6 +336,46 @@ export function InvoiceDetailPage({
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.invoiceDetailStorefrontCatalogEmptyMessage, {
                         status: categoriesStatus,
+                      })}
+                    </p>
+                  )}
+                </article>
+                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {copy.invoiceDetailStorefrontProductTitle}
+                    </p>
+                    <Link
+                      href={localizeHref("/catalog", culture)}
+                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                    >
+                      {copy.invoiceDetailStorefrontProductCta}
+                    </Link>
+                  </div>
+                  {products.length > 0 ? (
+                    <div className="mt-4 flex flex-col gap-3">
+                      {products.map((product) => (
+                        <Link
+                          key={product.id}
+                          href={localizeHref(`/catalog/${product.slug}`, culture)}
+                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          <p className="font-semibold text-[var(--color-text-primary)]">
+                            {product.name}
+                          </p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            {product.shortDescription ?? copy.invoiceDetailStorefrontProductFallbackDescription}
+                          </p>
+                          <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                            {formatMoney(product.priceMinor, product.currency, culture)}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {formatResource(copy.invoiceDetailStorefrontProductEmptyMessage, {
+                        status: productsStatus,
                       })}
                     </p>
                   )}

@@ -2,9 +2,13 @@ import Link from "next/link";
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import { getStrongestProductOpportunity } from "@/features/catalog/merchandising";
 import { formatMoney } from "@/lib/formatting";
 import {
   buildAppQueryPath,
@@ -19,6 +23,8 @@ type AccountHubPageProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
   storefrontCart: PublicCartSummary | null;
   storefrontCartStatus: string;
   returnPath?: string;
@@ -30,6 +36,8 @@ export function AccountHubPage({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
   storefrontCart,
   storefrontCartStatus,
   returnPath,
@@ -40,6 +48,7 @@ export function AccountHubPage({
   const preferredReturnPath = returnPath || (cartLineCount > 0 ? "/checkout" : "/account");
   const spotlightCmsPage = cmsPages[0];
   const spotlightCategory = categories[0];
+  const spotlightProduct = getStrongestProductOpportunity(products);
   const accountCards = [
     {
       id: "sign-in",
@@ -207,7 +216,7 @@ export function AccountHubPage({
           <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
             {copy.accountHubActionCenterMessage}
           </p>
-          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
             <article className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.accountHubActionCartLabel}
@@ -288,6 +297,37 @@ export function AccountHubPage({
                 </Link>
               </div>
             </article>
+
+            <article className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.accountHubActionProductLabel}
+              </p>
+              <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
+                {spotlightProduct?.name ?? copy.accountHubActionProductTitle}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                {spotlightProduct
+                  ? formatResource(copy.accountHubActionProductDescription, {
+                      price: formatMoney(
+                        spotlightProduct.priceMinor,
+                        spotlightProduct.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.accountHubActionProductFallbackDescription}
+              </p>
+              <div className="mt-4">
+                <Link
+                  href={localizeHref(
+                    spotlightProduct ? `/catalog/${spotlightProduct.slug}` : "/catalog",
+                    culture,
+                  )}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {copy.accountHubActionProductCta}
+                </Link>
+              </div>
+            </article>
           </div>
         </aside>
 
@@ -311,6 +351,8 @@ export function AccountHubPage({
           cmsPagesStatus={cmsPagesStatus}
           categories={categories}
           categoriesStatus={categoriesStatus}
+          products={products}
+          productsStatus={productsStatus}
           storefrontCart={storefrontCart}
           storefrontCartStatus={storefrontCartStatus}
         />

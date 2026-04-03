@@ -789,6 +789,8 @@ export function CheckoutPage({
                 cart={cart}
                 returnPath="/checkout"
                 routeKey="checkout"
+                products={products}
+                productsStatus={productsStatus}
               />
             )}
 

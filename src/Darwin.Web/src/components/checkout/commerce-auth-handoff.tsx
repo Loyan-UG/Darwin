@@ -1,5 +1,10 @@
 import Link from "next/link";
+import type { PublicProductSummary } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
+import {
+  getProductSavingsPercent,
+  sortProductsByOpportunity,
+} from "@/features/catalog/merchandising";
 import { formatMoney } from "@/lib/formatting";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 import { formatResource, getCommerceResource } from "@/localization";
@@ -9,6 +14,8 @@ type CommerceAuthHandoffProps = {
   cart: PublicCartSummary;
   returnPath: string;
   routeKey: "cart" | "checkout";
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 export function CommerceAuthHandoff({
@@ -16,9 +23,12 @@ export function CommerceAuthHandoff({
   cart,
   returnPath,
   routeKey,
+  products,
+  productsStatus,
 }: CommerceAuthHandoffProps) {
   const copy = getCommerceResource(culture);
   const cartLineCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  const productOpportunities = sortProductsByOpportunity(products);
   const routeTitle =
     routeKey === "checkout"
       ? copy.commerceAuthCheckoutTitle
@@ -85,6 +95,60 @@ export function CommerceAuthHandoff({
         >
           {copy.commerceAuthPasswordCta}
         </Link>
+      </div>
+      <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {copy.commerceAuthProductTitle}
+          </p>
+          <Link
+            href="/catalog"
+            className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+          >
+            {copy.commerceAuthProductCta}
+          </Link>
+        </div>
+        {productOpportunities.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-3">
+            {productOpportunities.map((product) => {
+              const savingsPercent = getProductSavingsPercent(product);
+
+              return (
+                <Link
+                  key={product.id}
+                  href={`/catalog/${product.slug}`}
+                  className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  <p className="font-semibold text-[var(--color-text-primary)]">
+                    {product.name}
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {savingsPercent !== null
+                      ? formatResource(copy.commerceAuthProductOfferDescription, {
+                          savingsPercent,
+                          price: formatMoney(
+                            product.priceMinor,
+                            product.currency,
+                            culture,
+                          ),
+                        })
+                      : product.shortDescription ??
+                        copy.commerceAuthProductFallbackDescription}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {formatMoney(product.priceMinor, product.currency, culture)}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {formatResource(copy.commerceAuthProductEmptyMessage, {
+              status: productsStatus,
+            })}
+          </p>
+        )}
       </div>
     </aside>
   );

@@ -50,6 +50,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         cmsPagesStatus={storefrontContext.cmsPagesStatus}
         categories={storefrontContext.categories}
         categoriesStatus={storefrontContext.categoriesStatus}
+        products={storefrontContext.products}
+        productsStatus={storefrontContext.productsStatus}
         storefrontCart={storefrontContext.storefrontCart}
         storefrontCartStatus={storefrontContext.storefrontCartStatus}
         returnPath={sanitizeAppPath(

@@ -2,9 +2,16 @@ import {
   PublicContinuationRail,
   type PublicContinuationItem,
 } from "@/components/shell/public-continuation-rail";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import {
+  getProductSavingsPercent,
+  sortProductsByOpportunity,
+} from "@/features/catalog/merchandising";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { formatResource, getMemberResource } from "@/localization";
@@ -15,6 +22,8 @@ type PublicAuthContinuationProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
   storefrontCart: PublicCartSummary | null;
   storefrontCartStatus: string;
 };
@@ -25,12 +34,15 @@ export function PublicAuthContinuation({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
   storefrontCart,
   storefrontCartStatus,
 }: PublicAuthContinuationProps) {
   const copy = getMemberResource(culture);
   const cartLineCount =
     storefrontCart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const productOpportunities = sortProductsByOpportunity(products);
 
   const items: PublicContinuationItem[] = [
     ...(storefrontCart && cartLineCount > 0
@@ -125,6 +137,45 @@ export function PublicAuthContinuation({
             ctaLabel: copy.memberCrossSurfaceCatalogCta,
           },
         ]),
+    ...(productOpportunities.length > 0
+      ? productOpportunities.map((product) => {
+          const savingsPercent = getProductSavingsPercent(product);
+
+          return {
+            id: `auth-product-${product.id}`,
+            label: copy.publicAuthProductLabel,
+            title: product.name,
+            description:
+              savingsPercent !== null
+                ? formatResource(copy.publicAuthProductOfferDescription, {
+                    savingsPercent,
+                    price: formatMoney(
+                      product.priceMinor,
+                      product.currency,
+                      culture,
+                    ),
+                  })
+                : product.shortDescription ??
+                  copy.publicAuthProductFallbackDescription,
+            href: `/catalog/${product.slug}`,
+            ctaLabel: copy.publicAuthProductCta,
+          };
+        })
+      : [
+          {
+            id: "auth-product",
+            label: copy.publicAuthProductLabel,
+            title: copy.publicAuthProductTitle,
+            description:
+              productsStatus === "ok"
+                ? copy.publicAuthProductFallbackDescription
+                : formatResource(copy.publicAuthProductEmptyMessage, {
+                    status: productsStatus,
+                  }),
+            href: "/catalog",
+            ctaLabel: copy.publicAuthProductCta,
+          },
+        ]),
   ];
 
   return (
@@ -137,8 +188,10 @@ export function PublicAuthContinuation({
         cartLineCount,
         cmsStatus: cmsPagesStatus,
         categoriesStatus,
+        productsStatus,
         pageCount: cmsPages.length,
         categoryCount: categories.length,
+        productCount: products.length,
       })}
       items={items}
     />

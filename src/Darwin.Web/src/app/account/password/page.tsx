@@ -47,6 +47,8 @@ export default async function PasswordRoute({ searchParams }: PasswordRouteProps
       cmsPagesStatus={storefrontContext.cmsPagesStatus}
       categories={storefrontContext.categories}
       categoriesStatus={storefrontContext.categoriesStatus}
+      products={storefrontContext.products}
+      productsStatus={storefrontContext.productsStatus}
       storefrontCart={storefrontContext.storefrontCart}
       storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />

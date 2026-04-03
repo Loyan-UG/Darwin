@@ -3,6 +3,10 @@ import type {
   PublicCategorySummary,
   PublicProductSummary,
 } from "@/features/catalog/types";
+import {
+  getProductSavingsPercent,
+  getStrongestProductOpportunity,
+} from "@/features/catalog/merchandising";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { formatMoney } from "@/lib/formatting";
 import { formatResource, getCommerceResource } from "@/localization";
@@ -34,7 +38,10 @@ export function CommerceStorefrontWindow({
   const copy = getCommerceResource(culture);
   const spotlightPage = cmsPages[0] ?? null;
   const spotlightCategory = categories[0] ?? null;
-  const spotlightProduct = products[0] ?? null;
+  const spotlightProduct = getStrongestProductOpportunity(products);
+  const spotlightProductSavings = spotlightProduct
+    ? getProductSavingsPercent(spotlightProduct)
+    : null;
 
   return (
     <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -123,7 +130,19 @@ export function CommerceStorefrontWindow({
             {spotlightProduct?.name ?? copy.storefrontWindowProductFallbackTitle}
           </p>
           <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-            {spotlightProduct?.shortDescription ?? copy.storefrontWindowProductFallbackMessage}
+            {spotlightProduct
+              ? spotlightProductSavings !== null
+                ? formatResource(copy.storefrontWindowProductOfferMessage, {
+                    savingsPercent: spotlightProductSavings,
+                    price: formatMoney(
+                      spotlightProduct.priceMinor,
+                      spotlightProduct.currency,
+                      culture,
+                    ),
+                  })
+                : spotlightProduct.shortDescription ??
+                  copy.storefrontWindowProductFallbackMessage
+              : copy.storefrontWindowProductFallbackMessage}
           </p>
           {spotlightProduct ? (
             <p className="mt-4 text-sm font-semibold text-[var(--color-text-primary)]">

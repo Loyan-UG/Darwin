@@ -4,7 +4,10 @@ import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { buildCheckoutDraftSearch, toCheckoutDraftFromMemberAddress } from "@/features/checkout/helpers";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import {
   createMemberAddressAction,
   deleteMemberAddressAction,
@@ -30,6 +33,8 @@ type AddressesPageProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 function getAddressesStatusMessage(
@@ -60,6 +65,8 @@ export function AddressesPage({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
 }: AddressesPageProps) {
   const copy = getMemberResource(culture);
   const resolvedAddressesError = resolveLocalizedQueryMessage(addressesError, copy);
@@ -243,6 +250,8 @@ export function AddressesPage({
             cmsPagesStatus={cmsPagesStatus}
             categories={categories}
             categoriesStatus={categoriesStatus}
+            products={products}
+            productsStatus={productsStatus}
           />
 
           {addresses.map((address) => (

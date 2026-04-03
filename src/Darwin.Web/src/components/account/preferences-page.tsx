@@ -3,7 +3,10 @@ import { AccountStorefrontWindow } from "@/components/account/account-storefront
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import { updateMemberPreferencesAction } from "@/features/member-portal/actions";
 import type { PublicPageSummary } from "@/features/cms/types";
 import type {
@@ -29,6 +32,8 @@ type PreferencesPageProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 function ToggleField({
@@ -60,6 +65,8 @@ export function PreferencesPage({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
 }: PreferencesPageProps) {
   const copy = getMemberResource(culture);
   const resolvedPreferencesError = resolveLocalizedQueryMessage(
@@ -278,6 +285,8 @@ export function PreferencesPage({
             cmsPagesStatus={cmsPagesStatus}
             categories={categories}
             categoriesStatus={categoriesStatus}
+            products={products}
+            productsStatus={productsStatus}
           />
         </div>
       </div>

@@ -4,7 +4,10 @@ import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { changeMemberPasswordAction } from "@/features/member-portal/actions";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberCustomerProfile } from "@/features/member-portal/types";
 import type { MemberSession } from "@/features/member-session/types";
@@ -24,6 +27,8 @@ type SecurityPageProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 export function SecurityPage({
@@ -37,6 +42,8 @@ export function SecurityPage({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
 }: SecurityPageProps) {
   const copy = getMemberResource(culture);
   const resolvedSecurityError = resolveLocalizedQueryMessage(securityError, copy);
@@ -263,6 +270,8 @@ export function SecurityPage({
             cmsPagesStatus={cmsPagesStatus}
             categories={categories}
             categoriesStatus={categoriesStatus}
+            products={products}
+            productsStatus={productsStatus}
           />
         </div>
       </div>

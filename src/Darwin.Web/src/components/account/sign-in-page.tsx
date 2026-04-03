@@ -2,7 +2,10 @@ import { ActivationRecoveryPanel } from "@/components/account/activation-recover
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import Link from "next/link";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
@@ -19,6 +22,8 @@ type SignInPageProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
   storefrontCart: PublicCartSummary | null;
   storefrontCartStatus: string;
 };
@@ -32,6 +37,8 @@ export function SignInPage({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
   storefrontCart,
   storefrontCartStatus,
 }: SignInPageProps) {
@@ -136,13 +143,15 @@ export function SignInPage({
           />
           <PublicAuthContinuation
             culture={culture}
-            cmsPages={cmsPages}
-            cmsPagesStatus={cmsPagesStatus}
-            categories={categories}
-            categoriesStatus={categoriesStatus}
-            storefrontCart={storefrontCart}
-            storefrontCartStatus={storefrontCartStatus}
-          />
+          cmsPages={cmsPages}
+          cmsPagesStatus={cmsPagesStatus}
+          categories={categories}
+          categoriesStatus={categoriesStatus}
+          products={products}
+          productsStatus={productsStatus}
+          storefrontCart={storefrontCart}
+          storefrontCartStatus={storefrontCartStatus}
+        />
         </div>
       </div>
     </section>

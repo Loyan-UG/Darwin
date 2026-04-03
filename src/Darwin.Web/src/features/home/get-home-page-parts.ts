@@ -3,6 +3,7 @@ import {
   getPublicCategories,
   getPublicProducts,
 } from "@/features/catalog/api/public-catalog";
+import { getStrongestProductOpportunity } from "@/features/catalog/merchandising";
 import { getPublicCart } from "@/features/cart/api/public-cart";
 import {
   getAnonymousCartId,
@@ -68,7 +69,9 @@ export async function getHomePageParts(
   const catalogHealthy = productsResult.status === "ok";
   const categoriesHealthy = categoriesResult.status === "ok";
   const spotlightPage = pagesResult.data?.items[0];
-  const spotlightProduct = productsResult.data?.items[0];
+  const spotlightProduct = getStrongestProductOpportunity(
+    productsResult.data?.items ?? [],
+  );
   const featuredCategories = (categoriesResult.data?.items ?? []).slice(0, 3);
   const recentOrders = recentOrdersResult?.data?.items ?? [];
   const recentInvoices = recentInvoicesResult?.data?.items ?? [];

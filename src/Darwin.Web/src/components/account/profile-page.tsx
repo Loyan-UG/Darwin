@@ -8,7 +8,10 @@ import {
   requestMemberPhoneVerificationAction,
   updateMemberProfileAction,
 } from "@/features/member-portal/actions";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberCustomerProfile } from "@/features/member-portal/types";
 import {
@@ -32,6 +35,8 @@ type ProfilePageProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 function getPhoneStatusBanner(
@@ -76,6 +81,8 @@ export function ProfilePage({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
 }: ProfilePageProps) {
   const copy = getMemberResource(culture);
   const resolvedProfileError = resolveLocalizedQueryMessage(profileError, copy);
@@ -333,6 +340,8 @@ export function ProfilePage({
             cmsPagesStatus={cmsPagesStatus}
             categories={categories}
             categoriesStatus={categoriesStatus}
+            products={products}
+            productsStatus={productsStatus}
           />
 
           <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">

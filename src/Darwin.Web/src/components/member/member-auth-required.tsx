@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
+import type { PublicCartSummary } from "@/features/cart/types";
+import type { PublicPageSummary } from "@/features/cms/types";
 import { buildLocalizedAuthHref, sanitizeAppPath } from "@/lib/locale-routing";
 import { getMemberResource } from "@/localization";
 
@@ -9,6 +13,14 @@ type MemberAuthRequiredProps = {
   title: string;
   message: string;
   returnPath: string;
+  cmsPages?: PublicPageSummary[];
+  cmsPagesStatus?: string;
+  categories?: PublicCategorySummary[];
+  categoriesStatus?: string;
+  products?: PublicProductSummary[];
+  productsStatus?: string;
+  storefrontCart?: PublicCartSummary | null;
+  storefrontCartStatus?: string;
 };
 
 export function MemberAuthRequired({
@@ -16,6 +28,14 @@ export function MemberAuthRequired({
   title,
   message,
   returnPath,
+  cmsPages = [],
+  cmsPagesStatus = "idle",
+  categories = [],
+  categoriesStatus = "idle",
+  products = [],
+  productsStatus = "idle",
+  storefrontCart = null,
+  storefrontCartStatus = "idle",
 }: MemberAuthRequiredProps) {
   const copy = getMemberResource(culture);
   const safeReturnPath = sanitizeAppPath(returnPath, "/account");
@@ -59,6 +79,19 @@ export function MemberAuthRequired({
             includeOrders={false}
             includeInvoices={false}
             includeLoyalty={false}
+          />
+        </div>
+        <div className="mt-8">
+          <PublicAuthContinuation
+            culture={culture}
+            cmsPages={cmsPages}
+            cmsPagesStatus={cmsPagesStatus}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
+            products={products}
+            productsStatus={productsStatus}
+            storefrontCart={storefrontCart}
+            storefrontCartStatus={storefrontCartStatus}
           />
         </div>
       </div>

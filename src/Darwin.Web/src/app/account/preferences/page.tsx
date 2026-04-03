@@ -1,5 +1,6 @@
 import { PreferencesPage } from "@/components/account/preferences-page";
-import { getPublicCategories } from "@/features/catalog/api/public-catalog";
+import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
+import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import {
@@ -40,21 +41,31 @@ export default async function PreferencesRoute({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
 
   if (!session) {
+    const storefrontContext = await getPublicAuthStorefrontContext(culture);
     return (
       <MemberAuthRequired
         culture={culture}
         title={copy.preferencesAuthRequiredTitle}
         message={copy.preferencesAuthRequiredMessage}
         returnPath="/account/preferences"
+        cmsPages={storefrontContext.cmsPages}
+        cmsPagesStatus={storefrontContext.cmsPagesStatus}
+        categories={storefrontContext.categories}
+        categoriesStatus={storefrontContext.categoriesStatus}
+        products={storefrontContext.products}
+        productsStatus={storefrontContext.productsStatus}
+        storefrontCart={storefrontContext.storefrontCart}
+        storefrontCartStatus={storefrontContext.storefrontCartStatus}
       />
     );
   }
 
-  const [preferencesResult, profileResult, cmsPagesResult, categoriesResult] = await Promise.all([
+  const [preferencesResult, profileResult, cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
     getCurrentMemberPreferences(),
     getCurrentMemberProfile(),
     getPublishedPages({ page: 1, pageSize: 2, culture }),
     getPublicCategories(culture),
+    getPublicProducts({ page: 1, pageSize: 3, culture }),
   ]);
 
   return (
@@ -70,6 +81,8 @@ export default async function PreferencesRoute({
       cmsPagesStatus={cmsPagesResult.status}
       categories={categoriesResult.data?.items.slice(0, 3) ?? []}
       categoriesStatus={categoriesResult.status}
+      products={productsResult.data?.items ?? []}
+      productsStatus={productsResult.status}
     />
   );
 }

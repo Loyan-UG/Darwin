@@ -1,5 +1,6 @@
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
-import { getPublicCategories } from "@/features/catalog/api/public-catalog";
+import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
+import { getPublicCategories, getPublicProducts } from "@/features/catalog/api/public-catalog";
 import { readPositiveIntegerSearchParam } from "@/features/checkout/helpers";
 import { OrdersPage } from "@/components/member/orders-page";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
@@ -28,23 +29,33 @@ export default async function OrdersRoute({ searchParams }: OrdersRouteProps) {
   const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
 
   if (!session) {
+    const storefrontContext = await getPublicAuthStorefrontContext(culture);
     return (
       <MemberAuthRequired
         culture={culture}
         title={copy.ordersAuthRequiredTitle}
         message={copy.ordersAuthRequiredMessage}
         returnPath="/orders"
+        cmsPages={storefrontContext.cmsPages}
+        cmsPagesStatus={storefrontContext.cmsPagesStatus}
+        categories={storefrontContext.categories}
+        categoriesStatus={storefrontContext.categoriesStatus}
+        products={storefrontContext.products}
+        productsStatus={storefrontContext.productsStatus}
+        storefrontCart={storefrontContext.storefrontCart}
+        storefrontCartStatus={storefrontContext.storefrontCartStatus}
       />
     );
   }
 
-  const [ordersResult, cmsPagesResult, categoriesResult] = await Promise.all([
+  const [ordersResult, cmsPagesResult, categoriesResult, productsResult] = await Promise.all([
     getCurrentMemberOrders({
       page: safePage,
       pageSize: 12,
     }),
     getPublishedPages({ page: 1, pageSize: 2, culture }),
     getPublicCategories(culture),
+    getPublicProducts({ page: 1, pageSize: 3, culture }),
   ]);
 
   return (
@@ -58,6 +69,8 @@ export default async function OrdersRoute({ searchParams }: OrdersRouteProps) {
       cmsPagesStatus={cmsPagesResult.status}
       categories={categoriesResult.data?.items.slice(0, 3) ?? []}
       categoriesStatus={categoriesResult.status}
+      products={productsResult.data?.items ?? []}
+      productsStatus={productsResult.status}
     />
   );
 }

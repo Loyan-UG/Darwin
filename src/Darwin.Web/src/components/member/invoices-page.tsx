@@ -2,7 +2,10 @@ import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
-import type { PublicCategorySummary } from "@/features/catalog/types";
+import type {
+  PublicCategorySummary,
+  PublicProductSummary,
+} from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberInvoiceSummary } from "@/features/member-portal/types";
 import { formatResource, getMemberResource } from "@/localization";
@@ -19,6 +22,8 @@ type InvoicesPageProps = {
   cmsPagesStatus: string;
   categories: PublicCategorySummary[];
   categoriesStatus: string;
+  products: PublicProductSummary[];
+  productsStatus: string;
 };
 
 function buildInvoicesHref(page = 1) {
@@ -35,6 +40,8 @@ export function InvoicesPage({
   cmsPagesStatus,
   categories,
   categoriesStatus,
+  products,
+  productsStatus,
 }: InvoicesPageProps) {
   const copy = getMemberResource(culture);
   const outstandingInvoices = invoices.filter((invoice) => invoice.balanceMinor > 0);
@@ -158,11 +165,13 @@ export function InvoicesPage({
             {formatResource(copy.invoicesStorefrontWindowMessage, {
               cmsStatus: cmsPagesStatus,
               categoriesStatus,
+              productsStatus,
               pageCount: cmsPages.length,
               categoryCount: categories.length,
+              productCount: products.length,
             })}
           </p>
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="mt-5 grid gap-4 xl:grid-cols-3">
             <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -239,6 +248,47 @@ export function InvoicesPage({
                 <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   {formatResource(copy.invoicesStorefrontCatalogEmptyMessage, {
                     status: categoriesStatus,
+                  })}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {copy.invoicesStorefrontProductTitle}
+                </p>
+                <Link
+                  href={localizeHref("/catalog", culture)}
+                  className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
+                >
+                  {copy.invoicesStorefrontProductCta}
+                </Link>
+              </div>
+              {products.length > 0 ? (
+                <div className="mt-4 flex flex-col gap-3">
+                  {products.map((product) => (
+                    <Link
+                      key={product.id}
+                      href={localizeHref(`/catalog/${product.slug}`, culture)}
+                      className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
+                    >
+                      <p className="font-semibold text-[var(--color-text-primary)]">
+                        {product.name}
+                      </p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {product.shortDescription ?? copy.invoicesStorefrontProductFallbackDescription}
+                      </p>
+                      <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                        {formatMoney(product.priceMinor, product.currency, culture)}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {formatResource(copy.invoicesStorefrontProductEmptyMessage, {
+                    status: productsStatus,
                   })}
                 </p>
               )}

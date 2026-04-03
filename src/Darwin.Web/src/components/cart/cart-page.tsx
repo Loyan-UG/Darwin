@@ -635,6 +635,8 @@ export function CartPage({
                     cart={cart}
                     returnPath="/checkout"
                     routeKey="cart"
+                    products={followUpProducts}
+                    productsStatus={followUpProducts.length > 0 ? "ok" : "empty"}
                   />
                 </div>
               )}
@@ -771,6 +773,8 @@ export function CartPage({
                 cart={cart}
                 returnPath="/checkout"
                 routeKey="cart"
+                products={followUpProducts}
+                productsStatus={followUpProducts.length > 0 ? "ok" : "empty"}
               />
             )}
 
