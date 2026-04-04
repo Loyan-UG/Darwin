@@ -8,11 +8,14 @@ const getCachedShellContext = createCachedObservedLoader({
   area: "shell",
   operation: "load-main-navigation",
   thresholdMs: 250,
-  getContext: (menuName: string) => shellObservationContext(menuName),
+  getContext: (culture: string, menuName: string) => ({
+    ...shellObservationContext(menuName),
+    culture,
+  }),
   getSuccessContext: summarizeShellHealth,
-  load: (menuName: string) => getPublicMenuByName(menuName),
+  load: (culture: string, menuName: string) => getPublicMenuByName(menuName, culture),
 });
 
-export async function getShellContext(menuName: string) {
-  return getCachedShellContext(menuName);
+export async function getShellContext(culture: string, menuName: string) {
+  return getCachedShellContext(culture, menuName);
 }

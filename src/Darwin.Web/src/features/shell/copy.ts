@@ -3,12 +3,10 @@ import { getShellResource } from "@/localization";
 
 type ShellCopy = {
   shellTagline: string;
-  shellBadge: string;
-  menuSourceLabel: string;
-  cmsFallbackTitle: string;
   footerEyebrow: string;
   footerTitle: string;
   footerDescription: string;
+  footerNavigationTitle: string;
   fallbackPrimaryNavigation: ShellLink[];
   utilityLinks: ShellLink[];
   footerGroups: ShellLinkGroup[];

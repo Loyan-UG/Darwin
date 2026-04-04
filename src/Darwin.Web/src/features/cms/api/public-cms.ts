@@ -8,9 +8,11 @@ import type {
   PublicPageSummary,
 } from "@/features/cms/types";
 
-export async function getPublicMenuByName(name: string) {
+export async function getPublicMenuByName(name: string, culture?: string) {
   return fetchPublicJson<PublicMenu>(
-    `/api/v1/public/cms/menus/${encodeURIComponent(name)}`,
+    `/api/v1/public/cms/menus/${encodeURIComponent(name)}${buildQuerySuffix({
+      culture,
+    })}`,
     "cms-menu",
   );
 }

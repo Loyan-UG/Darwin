@@ -973,6 +973,13 @@ When the separate mobile-review chat starts, it should explicitly revisit these 
 
 - the profile route now also surfaces explicit readiness for identity, phone verification, and locale/billing defaults, so member self-service can see commerce/communication completeness without inferring it only from the edit form
 - the root HTML shell now also suppresses hydration warnings for browser-extension mutations on `<html>`, so storefront startup stays stable when client-side tooling injects classes before React hydrates
+- shell navigation now also passes the active culture into CMS menu loading and can project the seeded `Footer` menu into the rendered footer, so seed-driven navigation labels and links stay aligned with the current storefront language instead of defaulting silently
+- when a CMS `Footer` menu exists it now acts as the authoritative runtime footer, while the fallback footer keeps only storefront/legal links instead of platform/debug placeholders
+- the shell header no longer renders debug-style fallback/source copy, utility actions are now icon-first, and the language switcher now uses compact two-letter codes, so storefront chrome stays cleaner and less noisy
+- localized query-message resolution now also falls back across the shared resource bundle, so degraded API states show real shopper-facing copy instead of leaking `i18n:*` keys into the UI
+- Home spotlight empty states now also resolve localized degraded API messages before rendering, so CMS/product spotlight sections no longer leak raw `i18n:*` keys
+- the seeded footer-linked legal CMS pages (`impressum`, `datenschutz`, `agb`, `widerruf`) now ship with fuller bilingual Germany-oriented starter content instead of one-line placeholders
+- degraded-success diagnostics are now quiet by default during local development, so partial-health tracing no longer floods the browser console while the route still renders successfully
 
 
 

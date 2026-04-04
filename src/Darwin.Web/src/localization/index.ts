@@ -43,6 +43,15 @@ const homeBundles = {
   "en-US": homeEn,
 } as const;
 
+const bundleRegistries = [
+  sharedBundles,
+  shellBundles,
+  catalogBundles,
+  commerceBundles,
+  memberBundles,
+  homeBundles,
+] as const;
+
 function resolveBundleCulture<T extends Record<string, unknown>>(
   culture: string,
   bundles: T,
@@ -96,6 +105,18 @@ export function toLocalizedQueryMessage(key: string) {
   return `${QUERY_LOCALIZATION_PREFIX}${key}`;
 }
 
+function resolveResourceCulture(bundle: Record<string, unknown>) {
+  for (const registry of bundleRegistries) {
+    for (const [culture, resource] of Object.entries(registry)) {
+      if (resource === bundle) {
+        return culture;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function resolveLocalizedQueryMessage<T extends Record<string, unknown>>(
   value: string | undefined,
   bundle: T,
@@ -106,5 +127,24 @@ export function resolveLocalizedQueryMessage<T extends Record<string, unknown>>(
 
   const key = value.slice(QUERY_LOCALIZATION_PREFIX.length) as keyof T;
   const localizedValue = bundle[key];
-  return typeof localizedValue === "string" ? localizedValue : value;
+  if (typeof localizedValue === "string") {
+    return localizedValue;
+  }
+
+  const culture = resolveResourceCulture(bundle);
+  if (!culture) {
+    return value;
+  }
+
+  for (const registry of bundleRegistries) {
+    const localizedFallback = (registry as Record<string, Record<string, unknown>>)[culture]?.[
+      key as string
+    ];
+
+    if (typeof localizedFallback === "string") {
+      return localizedFallback;
+    }
+  }
+
+  return value;
 }

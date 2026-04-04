@@ -4,6 +4,7 @@ type SiteRuntimeConfig = {
   webApiBaseUrl: string;
   siteUrl: string;
   mainMenuName: string;
+  footerMenuName: string;
   theme: ThemeId;
   defaultCulture: string;
   supportedCultures: string[];
@@ -47,6 +48,7 @@ export function getSiteRuntimeConfig(): SiteRuntimeConfig {
       process.env.DARWIN_WEB_SITE_URL ?? "http://localhost:3000",
     ),
     mainMenuName: process.env.DARWIN_WEB_MAIN_MENU_NAME ?? "main-navigation",
+    footerMenuName: process.env.DARWIN_WEB_FOOTER_MENU_NAME ?? "Footer",
     theme: parseTheme(process.env.DARWIN_WEB_THEME),
     defaultCulture: supportedCultures.includes(defaultCulture)
       ? defaultCulture

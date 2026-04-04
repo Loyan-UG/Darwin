@@ -9,6 +9,11 @@ type ObserveAsyncOperationInput<T> = {
   error?: (message: string, detail: Record<string, unknown>) => void;
 };
 
+function shouldLogDegradedOperations() {
+  return process.env.NODE_ENV === "production" ||
+    process.env.DARWIN_WEB_LOG_DEGRADED === "true";
+}
+
 function getDegradedStatusEntries(detail?: Record<string, unknown>) {
   if (!detail) {
     return [];
@@ -48,7 +53,7 @@ export async function observeAsyncOperation<T>(
         ...(input.context ?? {}),
         ...(successDetail ?? {}),
       });
-    } else if (degradedStatuses.length > 0) {
+    } else if (degradedStatuses.length > 0 && shouldLogDegradedOperations()) {
       warn("Darwin.Web degraded operation", {
         area: input.area,
         operation: input.operation,

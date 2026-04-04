@@ -1,6 +1,6 @@
 export const harborEditorialTheme = {
   id: "harbor",
-  displayName: "Harbor Editorial",
+  displayName: "Harbor",
   metadata: {
     title: "Darwin Storefront",
     description:

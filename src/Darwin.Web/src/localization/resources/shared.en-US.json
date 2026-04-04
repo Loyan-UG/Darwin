@@ -233,8 +233,8 @@
   "next": "Next",
   "pageLabel": "Page {currentPage} of {totalPages}",
   "cultureDisplayNames": {
-    "de-DE": "Deutsch",
-    "en-US": "English"
+    "de-DE": "DE",
+    "en-US": "EN"
   },
   "menuSourceValues": {
     "cms": "CMS",

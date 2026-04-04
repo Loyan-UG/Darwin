@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { getCultureDisplayName } from "@/lib/culture";
+import { getCultureDisplayName, getCultureShortCode } from "@/lib/culture";
 import { buildLocalizedPath, isPublicLocalizedPath, stripCulturePrefix } from "@/lib/locale-routing";
 import { cloneSearchParams } from "@/lib/query-params";
 
@@ -47,13 +47,15 @@ export function CultureSwitcher({
           <Link
             key={culture}
             href={buildCultureHref(pathname, searchParams, culture)}
+            aria-label={getCultureDisplayName(culture)}
+            title={getCultureDisplayName(culture)}
             className={
               isActive
-                ? "rounded-full bg-[var(--color-brand)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-contrast)]"
-                : "rounded-full border border-[var(--color-border-soft)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                ? "inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-[var(--color-brand)] px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-contrast)]"
+                : "inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[var(--color-border-soft)] px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
             }
           >
-            {getCultureDisplayName(culture)}
+            {getCultureShortCode(culture)}
           </Link>
         );
       })}

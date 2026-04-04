@@ -31,7 +31,11 @@ import {
 import { formatDateTime, formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { getSupportedCultures } from "@/lib/request-culture";
-import { formatResource, getHomeResource } from "@/localization";
+import {
+  formatResource,
+  getHomeResource,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 import type { WebPagePart } from "@/web-parts/types";
 
 export async function getHomePageParts(
@@ -58,6 +62,21 @@ export async function getHomePageParts(
   const cmsHealthy = pagesResult.status === "ok";
   const catalogHealthy = productsResult.status === "ok";
   const categoriesHealthy = categoriesResult.status === "ok";
+  const resolvedPagesMessage = resolveLocalizedQueryMessage(pagesResult.message, copy);
+  const resolvedProductsMessage = resolveLocalizedQueryMessage(productsResult.message, copy);
+  const resolvedCategoriesMessage = resolveLocalizedQueryMessage(categoriesResult.message, copy);
+  const resolvedOrdersMessage = resolveLocalizedQueryMessage(
+    memberCommerceContext?.ordersResult.message,
+    copy,
+  );
+  const resolvedInvoicesMessage = resolveLocalizedQueryMessage(
+    memberCommerceContext?.invoicesResult.message,
+    copy,
+  );
+  const resolvedLoyaltyMessage = resolveLocalizedQueryMessage(
+    memberCommerceContext?.loyaltyOverviewResult.message,
+    copy,
+  );
   const readyCmsPagesCount = (pagesResult.data?.items ?? []).filter((page) =>
     isDiscoveryReadyPage(page),
   ).length;
@@ -678,7 +697,7 @@ export async function getHomePageParts(
               : copy.offerBoardOfferFallbackMeta,
         };
       }),
-      emptyMessage: productsResult.message ?? copy.offerBoardEmptyMessage,
+      emptyMessage: resolvedProductsMessage ?? copy.offerBoardEmptyMessage,
     },
     {
       id: "home-campaign-board",
@@ -688,8 +707,8 @@ export async function getHomePageParts(
       description: copy.campaignBoardDescription,
       cards: categoryCampaignCards,
       emptyMessage:
-        categoriesResult.message ??
-        productsResult.message ??
+        resolvedCategoriesMessage ??
+        resolvedProductsMessage ??
         copy.campaignBoardEmptyMessage,
     },
     {
@@ -899,11 +918,11 @@ export async function getHomePageParts(
                 meta: copy.memberResumeLoyaltyMeta,
               },
             ],
-            emptyMessage:
-              memberCommerceContext?.ordersResult.message ??
-              memberCommerceContext?.invoicesResult.message ??
-              memberCommerceContext?.loyaltyOverviewResult.message ??
-              copy.memberResumeEmptyMessage,
+      emptyMessage:
+        resolvedOrdersMessage ??
+        resolvedInvoicesMessage ??
+        resolvedLoyaltyMessage ??
+        copy.memberResumeEmptyMessage,
           } satisfies WebPagePart,
         ]
       : []),
@@ -1231,7 +1250,7 @@ export async function getHomePageParts(
               }),
       })),
       emptyMessage:
-        categoriesResult.message ?? copy.categorySpotlightEmptyMessage,
+        resolvedCategoriesMessage ?? copy.categorySpotlightEmptyMessage,
     },
     {
       id: "home-shortcuts",
@@ -1368,7 +1387,7 @@ export async function getHomePageParts(
           ctaLabel: copy.readPageCta,
           meta: page.slug,
         })) ?? [],
-      emptyMessage: pagesResult.message ?? copy.cmsSpotlightEmptyMessage,
+      emptyMessage: resolvedPagesMessage ?? copy.cmsSpotlightEmptyMessage,
     },
     {
       id: "home-product-spotlight",
@@ -1387,7 +1406,7 @@ export async function getHomePageParts(
           meta: formatMoney(product.priceMinor, product.currency, culture),
         })) ?? [],
       emptyMessage:
-        productsResult.message ?? copy.productSpotlightEmptyMessage,
+        resolvedProductsMessage ?? copy.productSpotlightEmptyMessage,
     },
   ];
 }

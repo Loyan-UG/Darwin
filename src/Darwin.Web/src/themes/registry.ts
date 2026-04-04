@@ -7,16 +7,16 @@ export const availableThemes = [
   cartzillaGroceryTheme,
   {
     id: "atelier",
-    displayName: "Atelier Journal",
+    displayName: "Atelier",
     metadata: {
       title: "Darwin Storefront",
       description:
         "Darwin.Web public storefront and member portal foundation with a theme-isolated, CMS-aware shell.",
     },
   },
-  harborEditorialTheme,
-  noirBazaarTheme,
-  solsticeMarketTheme,
+  { ...harborEditorialTheme, displayName: "Harbor" },
+  { ...noirBazaarTheme, displayName: "Noir" },
+  { ...solsticeMarketTheme, displayName: "Solstice" },
 ] as const;
 
 export type ThemeId = (typeof availableThemes)[number]["id"];

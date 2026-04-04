@@ -183,6 +183,7 @@ Active entries:
 - `Completed`: business-app token refresh now preserves preferred business context during onboarding-safe refresh cycles
 - `In Progress`: ensure broader business-user status directly affects access in mobile and admin-backed support workflows beyond lockout/confirmation alone
 - `Completed`: Darwin.Web now surfaces equivalent self-service resend-activation UX inline on account hub, sign-in, register, and password-recovery routes, all reusing the canonical activation-request endpoint instead of hiding recovery behind the dedicated activation page
+- `Completed`: Darwin.Web now treats the seeded CMS `Footer` menu as the authoritative runtime footer when available, keeps only storefront/legal links in fallback footer mode, resolves Home spotlight degraded messages before rendering them, and seeds fuller bilingual Germany-oriented starter content for `impressum`, `datenschutz`, `agb`, and `widerruf`
 
 ### Communication Core (email-first MVP)
 
@@ -1017,6 +1018,10 @@ Active entries:
 - `Completed foundation`: order confirmation now also separates recorded payment from remaining payable exposure, so post-purchase payment follow-up can be read directly from confirmation instead of being inferred from raw attempt rows
 - `Completed foundation`: checkout and confirmation now also break payment exposure into order total, billing carry-over, combined exposure, and coverage state, so financial follow-up is easier to read before and after order placement
 - `Completed foundation`: the root HTML shell now also suppresses hydration warnings for browser-extension mutations on `<html>`, so storefront startup stays stable when client-side tooling injects classes before React hydrates
+- `Completed foundation`: shell navigation now also passes the active culture into CMS menu loading and can project the seeded `Footer` menu into the rendered footer, so seed-driven navigation labels and links stay aligned with the current storefront language instead of defaulting silently
+- `Completed foundation`: the shell header no longer renders debug-style fallback/source copy, utility actions are now icon-first, and the language switcher now uses compact two-letter codes, so storefront chrome stays cleaner and less noisy
+- `Completed foundation`: localized query-message resolution now also falls back across the shared resource bundle, so degraded API states show real shopper-facing copy instead of leaking `i18n:*` keys into the UI
+- `Completed foundation`: degraded-success diagnostics are now quiet by default during local development, so partial-health tracing no longer floods the browser console while the route still renders successfully
 - `Future / Later phase`: consider replacing the current savings-first merchandising heuristic on auth/account/commerce continuation surfaces with campaign- or margin-aware ranking once WebApi exposes stronger commercial ranking signals
 
 #### Darwin.Web later quality pass

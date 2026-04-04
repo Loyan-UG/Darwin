@@ -1,6 +1,6 @@
 export const solsticeMarketTheme = {
   id: "solstice",
-  displayName: "Solstice Market",
+  displayName: "Solstice",
   metadata: {
     title: "Darwin Storefront",
     description:

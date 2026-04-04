@@ -64,31 +64,41 @@ test("observeAsyncOperation reports failures with timing metadata", async () => 
 test("observeAsyncOperation reports degraded successful operations even when they are not slow", async () => {
   const warnings: Array<Record<string, unknown>> = [];
   let tick = 200;
+  const previous = process.env.DARWIN_WEB_LOG_DEGRADED;
+  process.env.DARWIN_WEB_LOG_DEGRADED = "true";
 
-  const result = await observeAsyncOperation(
-    {
-      area: "shell",
-      operation: "menu",
-      context: { culture: "de-DE", route: "/" },
-      getSuccessDetail: () => ({
-        menuStatus: "fallback",
-        menuItemCount: 3,
-      }),
-      thresholdMs: 500,
-      now: () => {
-        tick += 20;
-        return tick;
+  try {
+    const result = await observeAsyncOperation(
+      {
+        area: "shell",
+        operation: "menu",
+        context: { culture: "de-DE", route: "/" },
+        getSuccessDetail: () => ({
+          menuStatus: "fallback",
+          menuItemCount: 3,
+        }),
+        thresholdMs: 500,
+        now: () => {
+          tick += 20;
+          return tick;
+        },
+        warn: (_message, detail) => warnings.push(detail),
       },
-      warn: (_message, detail) => warnings.push(detail),
-    },
-    async () => "ok",
-  );
+      async () => "ok",
+    );
 
-  assert.equal(result, "ok");
-  assert.equal(warnings.length, 1);
-  assert.equal(warnings[0]?.area, "shell");
-  assert.equal(warnings[0]?.operation, "menu");
-  assert.equal(warnings[0]?.menuStatus, "fallback");
-  assert.equal(warnings[0]?.degradedStatusCount, 1);
-  assert.deepEqual(warnings[0]?.degradedStatuses, { menuStatus: "fallback" });
+    assert.equal(result, "ok");
+    assert.equal(warnings.length, 1);
+    assert.equal(warnings[0]?.area, "shell");
+    assert.equal(warnings[0]?.operation, "menu");
+    assert.equal(warnings[0]?.menuStatus, "fallback");
+    assert.equal(warnings[0]?.degradedStatusCount, 1);
+    assert.deepEqual(warnings[0]?.degradedStatuses, { menuStatus: "fallback" });
+  } finally {
+    if (previous === undefined) {
+      delete process.env.DARWIN_WEB_LOG_DEGRADED;
+    } else {
+      process.env.DARWIN_WEB_LOG_DEGRADED = previous;
+    }
+  }
 });

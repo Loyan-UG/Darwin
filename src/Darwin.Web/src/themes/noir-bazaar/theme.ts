@@ -1,6 +1,6 @@
 export const noirBazaarTheme = {
   id: "noir",
-  displayName: "Noir Bazaar",
+  displayName: "Noir",
   metadata: {
     title: "Darwin Storefront",
     description:
