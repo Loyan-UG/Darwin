@@ -7,6 +7,11 @@ export type CmsVisibleSort =
   | "title-asc"
   | "ready-first"
   | "attention-first";
+export type CmsMetadataFocus =
+  | "all"
+  | "missing-title"
+  | "missing-description"
+  | "missing-both";
 
 export type CmsReviewTarget = {
   page: PublicPageSummary;
@@ -30,11 +35,37 @@ export function readCmsVisibleSort(value?: string): CmsVisibleSort {
   );
 }
 
+export function readCmsMetadataFocus(value?: string): CmsMetadataFocus {
+  return (
+    readAllowedSearchParam(
+      value,
+      [
+        "all",
+        "missing-title",
+        "missing-description",
+        "missing-both",
+      ] as const,
+    ) ?? "all"
+  );
+}
+
 export function isDiscoveryReadyPage(page: {
   metaTitle?: string | null;
   metaDescription?: string | null;
 }) {
   return Boolean(page.metaTitle?.trim() && page.metaDescription?.trim());
+}
+
+export function hasMetaTitle(page: {
+  metaTitle?: string | null;
+}) {
+  return Boolean(page.metaTitle?.trim());
+}
+
+export function hasMetaDescription(page: {
+  metaDescription?: string | null;
+}) {
+  return Boolean(page.metaDescription?.trim());
 }
 
 export function getCmsReviewTarget(page: PublicPageSummary): CmsReviewTarget {
@@ -74,6 +105,7 @@ export function filterVisiblePages(
   pages: PublicPageSummary[],
   visibleState: CmsVisibleState,
   visibleQuery?: string,
+  metadataFocus: CmsMetadataFocus = "all",
 ) {
   const normalizedQuery = visibleQuery?.trim().toLowerCase();
 
@@ -93,6 +125,21 @@ export function filterVisiblePages(
 
     if (visibleState === "needs-attention") {
       return !isDiscoveryReadyPage(page);
+    }
+
+    if (metadataFocus === "missing-title" && hasMetaTitle(page)) {
+      return false;
+    }
+
+    if (metadataFocus === "missing-description" && hasMetaDescription(page)) {
+      return false;
+    }
+
+    if (
+      metadataFocus === "missing-both" &&
+      (hasMetaTitle(page) || hasMetaDescription(page))
+    ) {
+      return false;
     }
 
     return true;
@@ -137,4 +184,50 @@ export function sortVisiblePages(
   }
 
   return rankedPages;
+}
+
+export function buildCmsVisibleWindow(
+  pages: PublicPageSummary[],
+  input: {
+    page: number;
+    pageSize: number;
+    visibleState: CmsVisibleState;
+    visibleSort: CmsVisibleSort;
+    metadataFocus?: CmsMetadataFocus;
+  },
+) {
+  const filteredPages = sortVisiblePages(
+    filterVisiblePages(pages, input.visibleState, undefined, input.metadataFocus),
+    input.visibleSort,
+  );
+  const total = filteredPages.length;
+  const totalPages = Math.max(1, Math.ceil(total / input.pageSize));
+  const currentPage = Math.min(Math.max(input.page, 1), totalPages);
+  const start = (currentPage - 1) * input.pageSize;
+
+  return {
+    items: filteredPages.slice(start, start + input.pageSize),
+    total,
+    totalPages,
+    currentPage,
+  };
+}
+
+export function summarizeCmsMetadataDebt(pages: PublicPageSummary[]) {
+  const missingMetaTitleCount = pages.filter((page) => !hasMetaTitle(page)).length;
+  const missingMetaDescriptionCount = pages.filter(
+    (page) => !hasMetaDescription(page),
+  ).length;
+  const missingBothCount = pages.filter(
+    (page) => !hasMetaTitle(page) && !hasMetaDescription(page),
+  ).length;
+
+  return {
+    totalCount: pages.length,
+    readyCount: pages.filter(isDiscoveryReadyPage).length,
+    attentionCount: pages.filter((page) => !isDiscoveryReadyPage(page)).length,
+    missingMetaTitleCount,
+    missingMetaDescriptionCount,
+    missingBothCount,
+  };
 }

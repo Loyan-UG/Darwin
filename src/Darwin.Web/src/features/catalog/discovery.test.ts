@@ -2,11 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { PublicProductSummary } from "@/features/catalog/types";
 import {
+  buildCatalogVisibleWindow,
   filterCatalogVisibleProducts,
+  getCatalogSavingsPercent,
   getCatalogReviewTargets,
   getCatalogSavingsAmount,
+  hasPrimaryImage,
+  readCatalogMediaState,
+  readCatalogSavingsBand,
   readCatalogVisibleSort,
   readCatalogVisibleState,
+  summarizeCatalogFacets,
   sortCatalogVisibleProducts,
 } from "@/features/catalog/discovery";
 
@@ -38,6 +44,13 @@ test("readCatalogVisibleSort keeps only supported catalog review sort values", (
   assert.equal(readCatalogVisibleSort("unknown"), "featured");
 });
 
+test("catalog facet readers keep only supported facet values", () => {
+  assert.equal(readCatalogMediaState("with-image"), "with-image");
+  assert.equal(readCatalogMediaState("invalid"), "all");
+  assert.equal(readCatalogSavingsBand("hero"), "hero");
+  assert.equal(readCatalogSavingsBand("invalid"), "all");
+});
+
 test("getCatalogSavingsAmount returns only positive compare-at savings", () => {
   assert.equal(
     getCatalogSavingsAmount(
@@ -51,6 +64,17 @@ test("getCatalogSavingsAmount returns only positive compare-at savings", () => {
     ),
     0,
   );
+});
+
+test("catalog merchandising helpers expose image presence and savings percent", () => {
+  const product = createProduct({
+    primaryImageUrl: "/media/product.png",
+    priceMinor: 700,
+    compareAtPriceMinor: 1000,
+  });
+
+  assert.equal(hasPrimaryImage(product), true);
+  assert.equal(getCatalogSavingsPercent(product), 30);
 });
 
 test("filterCatalogVisibleProducts applies query and visible-state lens together", () => {
@@ -84,6 +108,16 @@ test("filterCatalogVisibleProducts applies query and visible-state lens together
       (product) => product.id,
     ),
     ["base"],
+  );
+  assert.deepEqual(
+    filterCatalogVisibleProducts(
+      products,
+      "all",
+      undefined,
+      "missing-image",
+      "all",
+    ).map((product) => product.id),
+    ["offer", "base"],
   );
 });
 
@@ -120,6 +154,72 @@ test("sortCatalogVisibleProducts prioritizes offer-first or base-first review wi
     ),
     ["base-a", "offer-b", "offer-c"],
   );
+});
+
+test("buildCatalogVisibleWindow paginates the full matching assortment after filters and sort", () => {
+  const products = [
+    createProduct({
+      id: "offer-b",
+      name: "Bravo Offer",
+      priceMinor: 700,
+      compareAtPriceMinor: 1000,
+    }),
+    createProduct({
+      id: "base-a",
+      name: "Alpha Base",
+      compareAtPriceMinor: null,
+    }),
+    createProduct({
+      id: "offer-c",
+      name: "Charlie Offer",
+      priceMinor: 800,
+      compareAtPriceMinor: 1000,
+    }),
+  ];
+
+  const window = buildCatalogVisibleWindow(products, {
+    page: 2,
+    pageSize: 1,
+    visibleState: "offers",
+    visibleSort: "price-desc",
+  });
+
+  assert.equal(window.total, 2);
+  assert.equal(window.totalPages, 2);
+  assert.equal(window.currentPage, 2);
+  assert.deepEqual(window.items.map((product) => product.id), ["offer-b"]);
+});
+
+test("summarizeCatalogFacets counts filterable browse states from the matching set", () => {
+  const products = [
+    createProduct({
+      id: "hero",
+      priceMinor: 700,
+      compareAtPriceMinor: 1000,
+      primaryImageUrl: "/media/hero.png",
+    }),
+    createProduct({
+      id: "value",
+      priceMinor: 900,
+      compareAtPriceMinor: 1000,
+      primaryImageUrl: null,
+    }),
+    createProduct({
+      id: "base",
+      compareAtPriceMinor: null,
+      primaryImageUrl: "/media/base.png",
+    }),
+  ];
+
+  assert.deepEqual(summarizeCatalogFacets(products), {
+    totalCount: 3,
+    offerCount: 2,
+    baseCount: 1,
+    withImageCount: 2,
+    missingImageCount: 1,
+    valueOfferCount: 2,
+    heroOfferCount: 1,
+  });
 });
 
 test("getCatalogReviewTargets prioritizes missing images before savings-led review targets", () => {

@@ -7,6 +7,6 @@ test("resolveLocalizedQueryMessage falls back to shared resources for bundle-ext
 
   assert.equal(
     resolveLocalizedQueryMessage("i18n:publicApiNetworkErrorMessage", commerce),
-    "Die oeffentliche API konnte nicht erreicht werden.",
+    "Ein Teil der Storefront-Inhalte ist momentan nicht verfuegbar.",
   );
 });

@@ -8,6 +8,7 @@ import {
   withFailureDiagnostics,
 } from "@/lib/api-diagnostics";
 import { toLocalizedQueryMessage } from "@/localization";
+import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 type TokenResponse = {
   accessToken: string;
@@ -26,7 +27,8 @@ async function postAuthJson<T>(
   const { webApiBaseUrl } = getSiteRuntimeConfig();
 
   try {
-    const response = await fetch(`${webApiBaseUrl}${path}`, {
+    const requestUrl = `${webApiBaseUrl}${path}`;
+    const response = await fetch(requestUrl, buildWebApiFetchInit(requestUrl, {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -35,7 +37,7 @@ async function postAuthJson<T>(
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
       body: JSON.stringify(body),
-    });
+    }));
 
     const diagnostics = getResponseDiagnostics("member-auth", path, response);
 

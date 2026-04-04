@@ -11,6 +11,7 @@ import type {
   PlaceOrderFromCartResponse,
 } from "@/features/checkout/types";
 import { toLocalizedQueryMessage } from "@/localization";
+import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 async function fetchCheckoutJson<T>(
   path: string,
@@ -19,7 +20,8 @@ async function fetchCheckoutJson<T>(
   const { webApiBaseUrl } = getSiteRuntimeConfig();
 
   try {
-    const response = await fetch(`${webApiBaseUrl}${path}`, {
+    const requestUrl = `${webApiBaseUrl}${path}`;
+    const response = await fetch(requestUrl, buildWebApiFetchInit(requestUrl, {
       ...init,
       cache: "no-store",
       headers: {
@@ -27,7 +29,7 @@ async function fetchCheckoutJson<T>(
         "Content-Type": "application/json",
         ...(init?.headers ?? {}),
       },
-    });
+    }));
 
     if (response.status === 404) {
       return {

@@ -39,6 +39,7 @@ type CmsPageDetailProps = {
     visibleQuery?: string;
     visibleState?: "all" | "ready" | "needs-attention";
     visibleSort?: "featured" | "title-asc" | "ready-first" | "attention-first";
+    metadataFocus?: "all" | "missing-title" | "missing-description" | "missing-both";
   };
   relatedPages: PublicPageSummary[];
   relatedStatus: string;
@@ -206,7 +207,10 @@ export function CmsPageDetail({
             <div className="mt-10 grid gap-4 border-t border-[var(--color-border-soft)] pt-8 md:grid-cols-2">
               {previousPage ? (
                 <Link
-                  href={localizeHref(`/cms/${previousPage.slug}`, culture)}
+                  href={localizeHref(
+                    buildCmsReviewTargetHref(previousPage.slug, reviewWindow),
+                    culture,
+                  )}
                   className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
@@ -227,7 +231,10 @@ export function CmsPageDetail({
 
               {nextPage ? (
                 <Link
-                  href={localizeHref(`/cms/${nextPage.slug}`, culture)}
+                  href={localizeHref(
+                    buildCmsReviewTargetHref(nextPage.slug, reviewWindow),
+                    culture,
+                  )}
                   className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
@@ -387,6 +394,16 @@ export function CmsPageDetail({
                 href={localizeHref(
                   buildAppQueryPath("/cms", {
                     visibleSort: "title-asc",
+                    visibleQuery: reviewWindow?.visibleQuery,
+                    visibleState:
+                      reviewWindow?.visibleState !== "all"
+                        ? reviewWindow?.visibleState
+                        : undefined,
+                    metadataFocus:
+                      reviewWindow?.metadataFocus &&
+                      reviewWindow.metadataFocus !== "all"
+                        ? reviewWindow.metadataFocus
+                        : undefined,
                   }),
                   culture,
                 )}
@@ -485,7 +502,26 @@ export function CmsPageDetail({
             </p>
             <div className="mt-5 flex flex-col gap-2">
               <Link
-                href={localizeHref("/cms", culture)}
+                href={localizeHref(
+                  buildAppQueryPath("/cms", {
+                    visibleQuery: reviewWindow?.visibleQuery,
+                    visibleState:
+                      reviewWindow?.visibleState !== "all"
+                        ? reviewWindow?.visibleState
+                        : undefined,
+                    visibleSort:
+                      reviewWindow?.visibleSort &&
+                      reviewWindow.visibleSort !== "featured"
+                        ? reviewWindow.visibleSort
+                        : undefined,
+                    metadataFocus:
+                      reviewWindow?.metadataFocus &&
+                      reviewWindow.metadataFocus !== "all"
+                        ? reviewWindow.metadataFocus
+                        : undefined,
+                  }),
+                  culture,
+                )}
                 className="rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
               >
                 {copy.cmsAllPublishedPagesCta}
@@ -494,7 +530,10 @@ export function CmsPageDetail({
                 relatedPages.map((relatedPage) => (
                   <Link
                     key={relatedPage.id}
-                    href={localizeHref(`/cms/${relatedPage.slug}`, culture)}
+                    href={localizeHref(
+                      buildCmsReviewTargetHref(relatedPage.slug, reviewWindow),
+                      culture,
+                    )}
                     className={
                       relatedPage.slug === page.slug
                         ? "rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-[var(--color-brand-contrast)]"

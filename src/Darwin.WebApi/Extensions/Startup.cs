@@ -43,7 +43,10 @@ namespace Darwin.WebApi.Extensions
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            if (!env.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
 
             app.UseRouting();
 

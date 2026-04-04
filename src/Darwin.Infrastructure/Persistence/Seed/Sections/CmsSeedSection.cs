@@ -255,7 +255,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 new { Url = "/cms/impressum", Label = "Legal notice", DeLabel = "Impressum", SortOrder = 0 },
                 new { Url = "/cms/datenschutz", Label = "Privacy", DeLabel = "Datenschutz", SortOrder = 1 },
                 new { Url = "/cms/agb", Label = "Terms", DeLabel = "AGB", SortOrder = 2 },
-                new { Url = "/cms/widerruf", Label = "Cancellation", DeLabel = "Widerruf", SortOrder = 3 }
+                new { Url = "/cms/widerruf", Label = "Cancellation", DeLabel = "Widerruf", SortOrder = 3 },
+                new { Url = "/cms/kontakt", Label = "Contact", DeLabel = "Kontakt", SortOrder = 4 }
             };
 
             if (menu == null)
@@ -309,6 +310,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             const string oldImpressumHtml = "<h1>Impressum</h1><p>Angaben gemäß §5 TMG.</p>";
             const string oldDatenschutzHtml = "<h1>Datenschutz</h1><p>Informationen gemäß DSGVO.</p>";
             const string oldAgbHtml = "<h1>Allgemeine Geschäftsbedingungen</h1><p>Bitte lesen Sie unsere Bedingungen.</p>";
+            const string oldKontaktHtml = "<h1>Kontakt</h1><p>Wir sind für Sie da.</p>";
             const string oldWiderrufHtml = "<h1>Widerruf</h1><p>Formular & Informationen.</p>";
 
             const string impressumHtml = @"<h1>Impressum</h1>
@@ -451,12 +453,34 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 <h2>Sample cancellation form</h2>
 <p>To Sample Company GmbH, Beispielstrasse 12, 10115 Berlin, widerruf@example.de:<br>I hereby cancel the contract concluded by me for the purchase of the following goods / the provision of the following service ...</p>";
 
+            const string kontaktHtml = @"<h1>Kontakt</h1>
+<p>Diese Musterseite zeigt eine sinnvolle Startstruktur fuer die Kontakt- und Serviceinformationen eines in Deutschland betriebenen Storefronts.</p>
+<h2>Kundenservice</h2>
+<p>Telefon: +49 30 123456-0<br>E-Mail: service@example.de<br>Servicezeiten: Montag bis Freitag, 09:00 bis 18:00 Uhr</p>
+<h2>Rueckfragen zu Bestellungen</h2>
+<p>Bitte halten Sie Ihre Bestellnummer bereit, wenn Sie Fragen zu Versand, Rechnung oder Rueckgabe haben.</p>
+<h2>Geschaeftsanschrift</h2>
+<p>Musterfirma GmbH<br>Beispielstraße 12<br>10115 Berlin<br>Deutschland</p>
+<h2>Hinweis</h2>
+<p>Ersetzen Sie diese Angaben vor dem Go-live durch die echten Servicekanaele, Reaktionszeiten und Eskalationswege Ihres Unternehmens.</p>";
+
+            const string kontaktEnHtml = @"<h1>Contact</h1>
+<p>This sample page shows a sensible starting structure for contact and service information on a Germany-oriented storefront.</p>
+<h2>Customer service</h2>
+<p>Phone: +49 30 123456-0<br>Email: service@example.de<br>Service hours: Monday to Friday, 09:00 to 18:00</p>
+<h2>Order-related questions</h2>
+<p>Please have your order number ready when contacting us about shipping, invoices or returns.</p>
+<h2>Business address</h2>
+<p>Sample Company GmbH<br>Beispielstrasse 12<br>10115 Berlin<br>Germany</p>
+<h2>Note</h2>
+<p>Replace this starter text before go-live with your real support channels, response times and escalation paths.</p>";
+
             // Common e-commerce pages for electronics
             var pages = new (string Slug, string Title, string Html, string? EnTitle, string? EnHtml)[]
             {
                 ("startseite","Startseite","<h1>Willkommen</h1><p>Elektronik & Computer – Top-Angebote.</p>", null, null),
                 ("ueber-uns","Über uns","<h1>Über uns</h1><p>Kompetenz für Technik seit 2010.</p>", null, null),
-                ("kontakt","Kontakt","<h1>Kontakt</h1><p>Wir sind für Sie da.</p>", null, null),
+                ("kontakt","Kontakt", kontaktHtml, "Contact", kontaktEnHtml),
                 ("impressum","Impressum", impressumHtml, "Legal notice", impressumEnHtml),
                 ("datenschutz","Datenschutz", datenschutzHtml, "Privacy policy", datenschutzEnHtml),
                 ("agb","AGB", agbHtml, "Terms and conditions", agbEnHtml),
@@ -499,6 +523,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     || (p.Slug == "impressum" && page.ContentHtml == oldImpressumHtml)
                     || (p.Slug == "datenschutz" && page.ContentHtml == oldDatenschutzHtml)
                     || (p.Slug == "agb" && page.ContentHtml == oldAgbHtml)
+                    || (p.Slug == "kontakt" && page.ContentHtml == oldKontaktHtml)
                     || (p.Slug == "widerruf" && page.ContentHtml == oldWiderrufHtml))
                 {
                     page.ContentHtml = p.Html;
@@ -525,6 +550,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     || (p.Slug == "impressum" && translation.ContentHtml == oldImpressumHtml)
                     || (p.Slug == "datenschutz" && translation.ContentHtml == oldDatenschutzHtml)
                     || (p.Slug == "agb" && translation.ContentHtml == oldAgbHtml)
+                    || (p.Slug == "kontakt" && translation.ContentHtml == oldKontaktHtml)
                     || (p.Slug == "widerruf" && translation.ContentHtml == oldWiderrufHtml))
                 {
                     translation.ContentHtml = p.Html;

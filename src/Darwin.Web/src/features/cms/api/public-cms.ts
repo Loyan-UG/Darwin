@@ -30,22 +30,28 @@ export async function getPublishedPages(input?: {
   page?: number;
   pageSize?: number;
   culture?: string;
+  search?: string;
 }) {
   return fetchPublicJson<PagedResponse<PublicPageSummary>>(
     `/api/v1/public/cms/pages${buildQuerySuffix({
       page: String(input?.page ?? 1),
       pageSize: String(input?.pageSize ?? 24),
       culture: input?.culture,
+      search: input?.search,
     })}`,
     "cms-pages",
   );
 }
 
-export async function getPublishedPageSet(culture?: string) {
+export async function getPublishedPageSet(input?: {
+  culture?: string;
+  search?: string;
+}) {
   const initialResult = await getPublishedPages({
     page: 1,
     pageSize: 48,
-    culture,
+    culture: input?.culture,
+    search: input?.search,
   });
 
   const total = initialResult.data?.total ?? 0;
@@ -62,7 +68,8 @@ export async function getPublishedPageSet(culture?: string) {
   const expandedResult = await getPublishedPages({
     page: 1,
     pageSize: total,
-    culture,
+    culture: input?.culture,
+    search: input?.search,
   });
 
   return expandedResult.status === "ok" && expandedResult.data

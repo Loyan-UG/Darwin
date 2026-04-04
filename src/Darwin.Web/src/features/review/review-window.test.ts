@@ -10,10 +10,15 @@ import {
 test("CMS review helpers preserve explicit visible review context", () => {
   assert.equal(
     buildCmsReviewWindowHref(
-      { visibleQuery: "faq", visibleState: "needs-attention", visibleSort: "attention-first" },
+      {
+        visibleQuery: "faq",
+        visibleState: "needs-attention",
+        visibleSort: "attention-first",
+        metadataFocus: "missing-both",
+      },
       undefined,
     ),
-    "/cms?visibleQuery=faq&visibleState=needs-attention&visibleSort=attention-first",
+    "/cms?visibleQuery=faq&visibleState=needs-attention&visibleSort=attention-first&metadataFocus=missing-both",
   );
 
   assert.equal(
@@ -21,8 +26,9 @@ test("CMS review helpers preserve explicit visible review context", () => {
       visibleQuery: "faq",
       visibleState: "needs-attention",
       visibleSort: "attention-first",
+      metadataFocus: "missing-both",
     }),
-    "/cms/faq?visibleQuery=faq&visibleState=needs-attention&visibleSort=attention-first",
+    "/cms/faq?visibleQuery=faq&visibleState=needs-attention&visibleSort=attention-first&metadataFocus=missing-both",
   );
 });
 
@@ -33,8 +39,10 @@ test("catalog review helpers preserve category and review lens context", () => {
       visibleQuery: "chips",
       visibleState: "offers",
       visibleSort: "offers-first",
+      mediaState: "missing-image",
+      savingsBand: "hero",
     }),
-    "/catalog?category=snacks&visibleQuery=chips&visibleState=offers&visibleSort=offers-first",
+    "/catalog?category=snacks&visibleQuery=chips&visibleState=offers&visibleSort=offers-first&mediaState=missing-image&savingsBand=hero",
   );
 
   assert.equal(
@@ -43,8 +51,10 @@ test("catalog review helpers preserve category and review lens context", () => {
       visibleQuery: "chips",
       visibleState: "offers",
       visibleSort: "offers-first",
+      mediaState: "missing-image",
+      savingsBand: "hero",
     }),
-    "/catalog/sea-salt-chips?category=snacks&visibleQuery=chips&visibleState=offers&visibleSort=offers-first",
+    "/catalog/sea-salt-chips?category=snacks&visibleQuery=chips&visibleState=offers&visibleSort=offers-first&mediaState=missing-image&savingsBand=hero",
   );
 });
 

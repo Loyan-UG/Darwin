@@ -17,6 +17,7 @@ test("catalog browse observation context normalizes missing category to null", (
     culture: "de-DE",
     page: 2,
     categorySlug: null,
+    search: null,
   });
 });
 
@@ -27,6 +28,7 @@ test("catalog route observation context carries route and category context toget
       culture: "en-US",
       page: 1,
       categorySlug: "snacks",
+      search: null,
       route: "/catalog",
     },
   );

@@ -29,6 +29,9 @@ test("observeAsyncOperation reports slow operations above the threshold", async 
   assert.equal(warnings[0]?.culture, "de-DE");
   assert.equal(warnings[0]?.route, "/");
   assert.equal(warnings[0]?.resultStatus, "ok");
+  assert.equal(warnings[0]?.outcomeKind, "slow-success");
+  assert.equal(warnings[0]?.healthState, "healthy");
+  assert.equal(warnings[0]?.durationBand, "slow");
 });
 
 test("observeAsyncOperation reports failures with timing metadata", async () => {
@@ -59,6 +62,8 @@ test("observeAsyncOperation reports failures with timing metadata", async () => 
   assert.equal(failures[0]?.operation, "load");
   assert.equal(failures[0]?.culture, "de-DE");
   assert.equal(failures[0]?.route, "/checkout");
+  assert.equal(failures[0]?.outcomeKind, "failure");
+  assert.equal(failures[0]?.healthState, "failed");
 });
 
 test("observeAsyncOperation reports degraded successful operations even when they are not slow", async () => {
@@ -92,6 +97,9 @@ test("observeAsyncOperation reports degraded successful operations even when the
     assert.equal(warnings[0]?.area, "shell");
     assert.equal(warnings[0]?.operation, "menu");
     assert.equal(warnings[0]?.menuStatus, "fallback");
+    assert.equal(warnings[0]?.outcomeKind, "degraded-success");
+    assert.equal(warnings[0]?.healthState, "degraded");
+    assert.equal(warnings[0]?.durationBand, "within-threshold");
     assert.equal(warnings[0]?.degradedStatusCount, 1);
     assert.deepEqual(warnings[0]?.degradedStatuses, { menuStatus: "fallback" });
   } finally {
@@ -101,4 +109,39 @@ test("observeAsyncOperation reports degraded successful operations even when the
       process.env.DARWIN_WEB_LOG_DEGRADED = previous;
     }
   }
+});
+
+test("observeAsyncOperation distinguishes very slow degraded successes", async () => {
+  const warnings: Array<Record<string, unknown>> = [];
+  let tick = 300;
+
+  const result = await observeAsyncOperation(
+    {
+      area: "catalog",
+      operation: "route-context",
+      context: { culture: "de-DE", route: "/catalog" },
+      getSuccessDetail: () => ({
+        productsStatus: "fallback",
+        cmsPagesStatus: "fallback",
+      }),
+      thresholdMs: 50,
+      now: () => {
+        tick += 180;
+        return tick;
+      },
+      warn: (_message, detail) => warnings.push(detail),
+    },
+    async () => "ok",
+  );
+
+  assert.equal(result, "ok");
+  assert.equal(warnings.length, 1);
+  assert.equal(warnings[0]?.outcomeKind, "slow-degraded-success");
+  assert.equal(warnings[0]?.healthState, "multi-degraded");
+  assert.equal(warnings[0]?.durationBand, "very-slow");
+  assert.equal(warnings[0]?.degradedStatusCount, 2);
+  assert.deepEqual(warnings[0]?.degradedStatuses, {
+    productsStatus: "fallback",
+    cmsPagesStatus: "fallback",
+  });
 });

@@ -11,10 +11,19 @@ const getCachedCatalogBrowseContext = createCachedObservedLoader({
   area: "catalog-browse",
   operation: "load-core-context",
   thresholdMs: 250,
-  getContext: (culture: string, page: number, categorySlug?: string) =>
-    catalogBrowseObservationContext(culture, page, categorySlug),
+  getContext: (
+    culture: string,
+    page: number,
+    categorySlug?: string,
+    search?: string,
+  ) => catalogBrowseObservationContext(culture, page, categorySlug, search),
   getSuccessContext: summarizeCatalogBrowseCoreHealth,
-  load: async (culture: string, page: number, categorySlug?: string) => {
+  load: async (
+    culture: string,
+    page: number,
+    categorySlug?: string,
+    search?: string,
+  ) => {
     const [categoriesResult, productsResult] = await Promise.all([
       getPublicCategories(culture),
       getPublicProducts({
@@ -22,6 +31,7 @@ const getCachedCatalogBrowseContext = createCachedObservedLoader({
         pageSize: 12,
         culture,
         categorySlug,
+        search,
       }),
     ]);
 
@@ -36,6 +46,7 @@ export async function getCatalogBrowseContext(
   culture: string,
   page: number,
   categorySlug?: string,
+  search?: string,
 ) {
-  return getCachedCatalogBrowseContext(culture, page, categorySlug);
+  return getCachedCatalogBrowseContext(culture, page, categorySlug, search);
 }

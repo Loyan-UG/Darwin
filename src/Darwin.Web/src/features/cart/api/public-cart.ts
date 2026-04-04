@@ -4,6 +4,7 @@ import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
 import { serializeQueryParams } from "@/lib/query-params";
 import type { PublicCartSummary } from "@/features/cart/types";
 import { toLocalizedQueryMessage } from "@/localization";
+import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 async function fetchCartJson<T>(
   path: string,
@@ -12,7 +13,8 @@ async function fetchCartJson<T>(
   const { webApiBaseUrl } = getSiteRuntimeConfig();
 
   try {
-    const response = await fetch(`${webApiBaseUrl}${path}`, {
+    const requestUrl = `${webApiBaseUrl}${path}`;
+    const response = await fetch(requestUrl, buildWebApiFetchInit(requestUrl, {
       ...init,
       cache: "no-store",
       headers: {
@@ -20,7 +22,7 @@ async function fetchCartJson<T>(
         "Content-Type": "application/json",
         ...(init?.headers ?? {}),
       },
-    });
+    }));
 
     if (response.status === 404) {
       return {

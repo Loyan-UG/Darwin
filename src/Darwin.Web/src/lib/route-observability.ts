@@ -28,6 +28,50 @@ function getDegradedStatusEntries(detail?: Record<string, unknown>) {
   });
 }
 
+function getDurationBand(durationMs: number, thresholdMs: number) {
+  if (durationMs < thresholdMs) {
+    return "within-threshold";
+  }
+
+  if (durationMs >= thresholdMs * 3) {
+    return "very-slow";
+  }
+
+  return "slow";
+}
+
+function buildObservedOutcomeDetail(
+  durationMs: number,
+  thresholdMs: number,
+  degradedStatuses: Array<[string, unknown]>,
+) {
+  const durationBand = getDurationBand(durationMs, thresholdMs);
+  const degradedStatusCount = degradedStatuses.length;
+  const degradedStatusMap =
+    degradedStatusCount > 0 ? Object.fromEntries(degradedStatuses) : undefined;
+  const isSlow = durationMs >= thresholdMs;
+
+  return {
+    durationBand,
+    healthState:
+      degradedStatusCount > 1
+        ? "multi-degraded"
+        : degradedStatusCount === 1
+          ? "degraded"
+          : "healthy",
+    outcomeKind:
+      degradedStatusCount > 0
+        ? isSlow
+          ? "slow-degraded-success"
+          : "degraded-success"
+        : isSlow
+          ? "slow-success"
+          : "success",
+    degradedStatusCount,
+    degradedStatuses: degradedStatusMap,
+  };
+}
+
 export async function observeAsyncOperation<T>(
   input: ObserveAsyncOperationInput<T>,
   work: () => Promise<T>,
@@ -44,12 +88,18 @@ export async function observeAsyncOperation<T>(
     const durationMs = now() - startedAt;
     const successDetail = input.getSuccessDetail?.(result);
     const degradedStatuses = getDegradedStatusEntries(successDetail);
+    const outcomeDetail = buildObservedOutcomeDetail(
+      durationMs,
+      thresholdMs,
+      degradedStatuses,
+    );
 
     if (durationMs >= thresholdMs) {
       warn("Darwin.Web slow operation", {
         area: input.area,
         operation: input.operation,
         durationMs,
+        ...outcomeDetail,
         ...(input.context ?? {}),
         ...(successDetail ?? {}),
       });
@@ -58,10 +108,9 @@ export async function observeAsyncOperation<T>(
         area: input.area,
         operation: input.operation,
         durationMs,
+        ...outcomeDetail,
         ...(input.context ?? {}),
         ...(successDetail ?? {}),
-        degradedStatusCount: degradedStatuses.length,
-        degradedStatuses: Object.fromEntries(degradedStatuses),
       });
     }
 
@@ -72,6 +121,9 @@ export async function observeAsyncOperation<T>(
       area: input.area,
       operation: input.operation,
       durationMs,
+      durationBand: getDurationBand(durationMs, thresholdMs),
+      healthState: "failed",
+      outcomeKind: "failure",
       ...(input.context ?? {}),
       cause,
     });

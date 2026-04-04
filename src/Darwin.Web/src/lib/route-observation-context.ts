@@ -28,8 +28,12 @@ export function homeCategorySpotlightsObservationContext(
   return { culture, categoryCount };
 }
 
-export function cmsBrowseObservationContext(culture: string, page: number) {
-  return { culture, page };
+export function cmsBrowseObservationContext(
+  culture: string,
+  page: number,
+  search?: string,
+) {
+  return { culture, page, search: search ?? null };
 }
 
 export function cmsLocalizedInventoryObservationContext(cultures: string[]) {
@@ -39,8 +43,12 @@ export function cmsLocalizedInventoryObservationContext(cultures: string[]) {
   };
 }
 
-export function cmsIndexRouteObservationContext(culture: string, page: number) {
-  return { culture, page, route: "/cms" };
+export function cmsIndexRouteObservationContext(
+  culture: string,
+  page: number,
+  search?: string,
+) {
+  return { culture, page, search: search ?? null, route: "/cms" };
 }
 
 export function cmsDetailObservationContext(culture: string, slug: string) {
@@ -55,11 +63,13 @@ export function catalogBrowseObservationContext(
   culture: string,
   page: number,
   categorySlug?: string,
+  search?: string,
 ) {
   return {
     culture,
     page,
     categorySlug: categorySlug ?? null,
+    search: search ?? null,
   };
 }
 
@@ -83,9 +93,10 @@ export function catalogIndexRouteObservationContext(
   culture: string,
   page: number,
   categorySlug?: string,
+  search?: string,
 ) {
   return {
-    ...catalogBrowseObservationContext(culture, page, categorySlug),
+    ...catalogBrowseObservationContext(culture, page, categorySlug, search),
     route: "/catalog",
   };
 }

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { CmsPageDetail } from "@/components/cms/cms-page-detail";
 import {
+  readCmsMetadataFocus,
   readCmsVisibleSort,
   readCmsVisibleState,
 } from "@/features/cms/discovery";
@@ -17,6 +18,7 @@ type CmsPageProps = {
     visibleQuery?: string;
     visibleState?: string;
     visibleSort?: string;
+    metadataFocus?: string;
   }>;
 };
 
@@ -31,11 +33,19 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
+  const visibleState = readCmsVisibleState(resolvedSearchParams?.visibleState);
+  const visibleSort = readCmsVisibleSort(resolvedSearchParams?.visibleSort);
+  const metadataFocus = readCmsMetadataFocus(resolvedSearchParams?.metadataFocus);
   const { detailContext, continuationSlice } = await getCmsDetailPageContext(
     culture,
     slug,
+    visibleQuery,
+    visibleState,
+    visibleSort,
+    metadataFocus,
   );
-  const { pageResult, relatedPagesSeed } = detailContext;
+  const { pageResult, relatedPagesResult, relatedPages } = detailContext;
   const page = pageResult.data;
 
   if (!page && pageResult.status === "not-found") {
@@ -49,12 +59,13 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
       status={pageResult.status}
       message={pageResult.message}
       reviewWindow={{
-        visibleQuery: readSearchTextParam(resolvedSearchParams?.visibleQuery),
-        visibleState: readCmsVisibleState(resolvedSearchParams?.visibleState),
-        visibleSort: readCmsVisibleSort(resolvedSearchParams?.visibleSort),
+        visibleQuery,
+        visibleState,
+        visibleSort,
+        metadataFocus,
       }}
-      relatedPages={relatedPagesSeed.data?.items ?? []}
-      relatedStatus={relatedPagesSeed.status}
+      relatedPages={relatedPages}
+      relatedStatus={relatedPagesResult.status}
       categories={continuationSlice.categories}
       categoriesStatus={continuationSlice.categoriesStatus}
       products={continuationSlice.products}

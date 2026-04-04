@@ -1,8 +1,11 @@
 import type {
+  CatalogMediaState,
+  CatalogSavingsBand,
   CatalogVisibleSort,
   CatalogVisibleState,
 } from "@/features/catalog/types";
 import type {
+  CmsMetadataFocus,
   CmsVisibleSort,
   CmsVisibleState,
 } from "@/features/cms/discovery";
@@ -12,6 +15,7 @@ export type CmsReviewWindow = {
   visibleQuery?: string;
   visibleState?: CmsVisibleState;
   visibleSort?: CmsVisibleSort;
+  metadataFocus?: CmsMetadataFocus;
 };
 
 export type CatalogReviewWindow = {
@@ -19,6 +23,8 @@ export type CatalogReviewWindow = {
   visibleQuery?: string;
   visibleState?: CatalogVisibleState;
   visibleSort?: CatalogVisibleSort;
+  mediaState?: CatalogMediaState;
+  savingsBand?: CatalogSavingsBand;
 };
 
 export function buildCmsReviewWindowHref(
@@ -29,6 +35,7 @@ export function buildCmsReviewWindowHref(
     visibleQuery: overrides?.visibleQuery ?? reviewWindow?.visibleQuery,
     visibleState: overrides?.visibleState ?? reviewWindow?.visibleState,
     visibleSort: overrides?.visibleSort ?? reviewWindow?.visibleSort,
+    metadataFocus: overrides?.metadataFocus ?? reviewWindow?.metadataFocus,
   };
 
   return buildAppQueryPath("/cms", {
@@ -40,6 +47,10 @@ export function buildCmsReviewWindowHref(
     visibleSort:
       next.visibleSort && next.visibleSort !== "featured"
         ? next.visibleSort
+        : undefined,
+    metadataFocus:
+      next.metadataFocus && next.metadataFocus !== "all"
+        ? next.metadataFocus
         : undefined,
   });
 }
@@ -53,6 +64,7 @@ export function buildCmsReviewTargetHref(
     visibleQuery: overrides?.visibleQuery ?? reviewWindow?.visibleQuery,
     visibleState: overrides?.visibleState ?? reviewWindow?.visibleState,
     visibleSort: overrides?.visibleSort ?? reviewWindow?.visibleSort,
+    metadataFocus: overrides?.metadataFocus ?? reviewWindow?.metadataFocus,
   };
 
   return buildAppQueryPath(`/cms/${slug}`, {
@@ -64,6 +76,10 @@ export function buildCmsReviewTargetHref(
     visibleSort:
       next.visibleSort && next.visibleSort !== "featured"
         ? next.visibleSort
+        : undefined,
+    metadataFocus:
+      next.metadataFocus && next.metadataFocus !== "all"
+        ? next.metadataFocus
         : undefined,
   });
 }
@@ -77,6 +93,8 @@ export function buildCatalogReviewWindowHref(
     visibleQuery: overrides?.visibleQuery ?? reviewWindow?.visibleQuery,
     visibleState: overrides?.visibleState ?? reviewWindow?.visibleState,
     visibleSort: overrides?.visibleSort ?? reviewWindow?.visibleSort,
+    mediaState: overrides?.mediaState ?? reviewWindow?.mediaState,
+    savingsBand: overrides?.savingsBand ?? reviewWindow?.savingsBand,
   };
 
   return buildAppQueryPath("/catalog", {
@@ -89,6 +107,14 @@ export function buildCatalogReviewWindowHref(
     visibleSort:
       next.visibleSort && next.visibleSort !== "featured"
         ? next.visibleSort
+        : undefined,
+    mediaState:
+      next.mediaState && next.mediaState !== "all"
+        ? next.mediaState
+        : undefined,
+    savingsBand:
+      next.savingsBand && next.savingsBand !== "all"
+        ? next.savingsBand
         : undefined,
   });
 }
@@ -103,6 +129,8 @@ export function buildCatalogReviewTargetHref(
     visibleQuery: overrides?.visibleQuery ?? reviewWindow?.visibleQuery,
     visibleState: overrides?.visibleState ?? reviewWindow?.visibleState,
     visibleSort: overrides?.visibleSort ?? reviewWindow?.visibleSort,
+    mediaState: overrides?.mediaState ?? reviewWindow?.mediaState,
+    savingsBand: overrides?.savingsBand ?? reviewWindow?.savingsBand,
   };
 
   return buildAppQueryPath(`/catalog/${slug}`, {
@@ -115,6 +143,14 @@ export function buildCatalogReviewTargetHref(
     visibleSort:
       next.visibleSort && next.visibleSort !== "featured"
         ? next.visibleSort
+        : undefined,
+    mediaState:
+      next.mediaState && next.mediaState !== "all"
+        ? next.mediaState
+        : undefined,
+    savingsBand:
+      next.savingsBand && next.savingsBand !== "all"
+        ? next.savingsBand
         : undefined,
   });
 }

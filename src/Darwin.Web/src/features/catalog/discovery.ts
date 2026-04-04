@@ -1,4 +1,6 @@
 import type {
+  CatalogMediaState,
+  CatalogSavingsBand,
   CatalogVisibleSort,
   CatalogVisibleState,
   PublicProductSummary,
@@ -25,6 +27,21 @@ export function readCatalogVisibleSort(value?: string): CatalogVisibleSort {
   );
 }
 
+export function readCatalogMediaState(value?: string): CatalogMediaState {
+  return (
+    readAllowedSearchParam(
+      value,
+      ["all", "with-image", "missing-image"] as const,
+    ) ?? "all"
+  );
+}
+
+export function readCatalogSavingsBand(value?: string): CatalogSavingsBand {
+  return (
+    readAllowedSearchParam(value, ["all", "value", "hero"] as const) ?? "all"
+  );
+}
+
 export type CatalogReviewTarget = {
   product: PublicProductSummary;
   missingImage: boolean;
@@ -44,6 +61,25 @@ export function getCatalogSavingsAmount(product: PublicProductSummary) {
 
 export function isOfferProduct(product: PublicProductSummary) {
   return getCatalogSavingsAmount(product) > 0;
+}
+
+export function hasPrimaryImage(product: PublicProductSummary) {
+  return Boolean(product.primaryImageUrl?.trim());
+}
+
+export function getCatalogSavingsPercent(product: PublicProductSummary) {
+  if (
+    typeof product.compareAtPriceMinor !== "number" ||
+    product.compareAtPriceMinor <= product.priceMinor
+  ) {
+    return 0;
+  }
+
+  return Math.round(
+    ((product.compareAtPriceMinor - product.priceMinor) /
+      product.compareAtPriceMinor) *
+      100,
+  );
 }
 
 export function getCatalogReviewTarget(
@@ -78,6 +114,8 @@ export function filterCatalogVisibleProducts(
   products: PublicProductSummary[],
   visibleState: CatalogVisibleState,
   visibleQuery?: string,
+  mediaState: CatalogMediaState = "all",
+  savingsBand: CatalogSavingsBand = "all",
 ) {
   const normalizedQuery = visibleQuery?.trim().toLowerCase();
 
@@ -99,6 +137,24 @@ export function filterCatalogVisibleProducts(
 
     if (visibleState === "base") {
       return !isOfferProduct(product);
+    }
+
+    if (mediaState === "with-image" && !hasPrimaryImage(product)) {
+      return false;
+    }
+
+    if (mediaState === "missing-image" && hasPrimaryImage(product)) {
+      return false;
+    }
+
+    const savingsPercent = getCatalogSavingsPercent(product);
+
+    if (savingsBand === "value" && savingsPercent < 10) {
+      return false;
+    }
+
+    if (savingsBand === "hero" && savingsPercent < 25) {
+      return false;
     }
 
     return true;
@@ -153,4 +209,61 @@ export function sortCatalogVisibleProducts(
   }
 
   return rankedProducts;
+}
+
+export function buildCatalogVisibleWindow(
+  products: PublicProductSummary[],
+  input: {
+    page: number;
+    pageSize: number;
+    visibleState: CatalogVisibleState;
+    visibleSort: CatalogVisibleSort;
+    mediaState?: CatalogMediaState;
+    savingsBand?: CatalogSavingsBand;
+  },
+) {
+  const filteredProducts = sortCatalogVisibleProducts(
+    filterCatalogVisibleProducts(
+      products,
+      input.visibleState,
+      undefined,
+      input.mediaState,
+      input.savingsBand,
+    ),
+    input.visibleSort,
+  );
+  const total = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(total / input.pageSize));
+  const currentPage = Math.min(Math.max(input.page, 1), totalPages);
+  const start = (currentPage - 1) * input.pageSize;
+
+  return {
+    items: filteredProducts.slice(start, start + input.pageSize),
+    total,
+    totalPages,
+    currentPage,
+  };
+}
+
+export function summarizeCatalogFacets(products: PublicProductSummary[]) {
+  const withImageCount = products.filter(hasPrimaryImage).length;
+  const missingImageCount = products.length - withImageCount;
+  const offerCount = products.filter(isOfferProduct).length;
+  const baseCount = products.length - offerCount;
+  const valueOfferCount = products.filter(
+    (product) => getCatalogSavingsPercent(product) >= 10,
+  ).length;
+  const heroOfferCount = products.filter(
+    (product) => getCatalogSavingsPercent(product) >= 25,
+  ).length;
+
+  return {
+    totalCount: products.length,
+    offerCount,
+    baseCount,
+    withImageCount,
+    missingImageCount,
+    valueOfferCount,
+    heroOfferCount,
+  };
 }

@@ -1,9 +1,8 @@
 import { CmsPagesIndex } from "@/components/cms/cms-pages-index";
 import {
-  filterVisiblePages,
+  readCmsMetadataFocus,
   readCmsVisibleSort,
   readCmsVisibleState,
-  sortVisiblePages,
 } from "@/features/cms/discovery";
 import { getCmsIndexPageContext } from "@/features/cms/server/get-cms-page-context";
 import { getCmsIndexSeoMetadata } from "@/features/cms/server/get-cms-index-seo-metadata";
@@ -18,9 +17,11 @@ export async function generateMetadata({
 }: {
   searchParams?: Promise<{
     page?: string;
-    visibleQuery?: string;
-    visibleState?: string;
-    visibleSort?: string;
+    search?: string;
+      visibleQuery?: string;
+      visibleState?: string;
+      visibleSort?: string;
+      metadataFocus?: string;
   }>;
 }) {
   const culture = await getRequestCulture();
@@ -32,9 +33,11 @@ export async function generateMetadata({
 type CmsIndexRouteProps = {
   searchParams?: Promise<{
     page?: string;
+    search?: string;
     visibleQuery?: string;
     visibleState?: string;
     visibleSort?: string;
+    metadataFocus?: string;
   }>;
 };
 
@@ -44,38 +47,48 @@ export default async function CmsIndexRoute({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const culture = await getRequestCulture();
   const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
-  const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
+  const searchQuery = readSearchTextParam(
+    resolvedSearchParams?.search ?? resolvedSearchParams?.visibleQuery,
+  );
   const visibleState = readCmsVisibleState(resolvedSearchParams?.visibleState);
   const visibleSort = readCmsVisibleSort(resolvedSearchParams?.visibleSort);
-  const { browseContext, continuationSlice } = await getCmsIndexPageContext(
+  const metadataFocus = readCmsMetadataFocus(
+    resolvedSearchParams?.metadataFocus,
+  );
+  const {
+    browseContext,
+    continuationSlice,
+    visibleWindow,
+    metadataSummary,
+    matchingItemsTotal,
+    pageSize,
+    matchingSetResult,
+  } = await getCmsIndexPageContext(
     culture,
     safePage,
+    searchQuery,
+    visibleState,
+    visibleSort,
+    metadataFocus,
   );
   const { pagesResult } = browseContext;
-  const visiblePages = sortVisiblePages(
-    filterVisiblePages(pagesResult.data?.items ?? [], visibleState, visibleQuery),
-    visibleSort,
-  );
 
   return (
     <CmsPagesIndex
       culture={culture}
-      pages={visiblePages}
-      loadedPageCount={pagesResult.data?.items.length ?? 0}
-      totalItems={pagesResult.data?.total ?? 0}
-      pageSize={pagesResult.data?.request.pageSize ?? 12}
-      totalPages={Math.max(
-        1,
-        Math.ceil(
-          (pagesResult.data?.total ?? 0) /
-            (pagesResult.data?.request.pageSize ?? 12),
-        ),
-      )}
-      currentPage={safePage}
-      status={pagesResult.status}
-      visibleQuery={visibleQuery}
+      pages={visibleWindow.items}
+      loadedPageCount={visibleWindow.items.length}
+      totalItems={visibleWindow.total}
+      matchingItemsTotal={matchingItemsTotal}
+      pageSize={pageSize}
+      totalPages={visibleWindow.totalPages}
+      currentPage={visibleWindow.currentPage}
+      status={matchingSetResult?.status ?? pagesResult.status}
+      searchQuery={searchQuery}
       visibleState={visibleState}
       visibleSort={visibleSort}
+      metadataFocus={metadataFocus}
+      metadataSummary={metadataSummary}
       categories={continuationSlice.categories}
       categoriesStatus={continuationSlice.categoriesStatus}
       products={continuationSlice.products}

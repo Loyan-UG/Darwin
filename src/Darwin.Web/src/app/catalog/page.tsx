@@ -4,10 +4,10 @@ import {
   readSearchTextParam,
 } from "@/features/checkout/helpers";
 import {
-  filterCatalogVisibleProducts,
+  readCatalogMediaState,
+  readCatalogSavingsBand,
   readCatalogVisibleSort,
   readCatalogVisibleState,
-  sortCatalogVisibleProducts,
 } from "@/features/catalog/discovery";
 import { getCatalogIndexPageContext } from "@/features/catalog/server/get-catalog-page-context";
 import { getCatalogIndexSeoMetadata } from "@/features/catalog/server/get-catalog-index-seo-metadata";
@@ -16,12 +16,15 @@ import { getRequestCulture } from "@/lib/request-culture";
 export async function generateMetadata({
   searchParams,
 }: {
-    searchParams?: Promise<{
+  searchParams?: Promise<{
       category?: string;
       page?: string;
+      search?: string;
       visibleQuery?: string;
       visibleState?: string;
       visibleSort?: string;
+      mediaState?: string;
+      savingsBand?: string;
     }>;
 }) {
   const culture = await getRequestCulture();
@@ -37,9 +40,12 @@ type CatalogRouteProps = {
   searchParams?: Promise<{
     category?: string;
     page?: string;
+    search?: string;
     visibleQuery?: string;
     visibleState?: string;
     visibleSort?: string;
+    mediaState?: string;
+    savingsBand?: string;
   }>;
 };
 
@@ -51,45 +57,61 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
     resolvedSearchParams?.category,
     80,
   );
-  const visibleQuery = readSearchTextParam(
-    resolvedSearchParams?.visibleQuery,
+  const searchQuery = readSearchTextParam(
+    resolvedSearchParams?.search ?? resolvedSearchParams?.visibleQuery,
     80,
   );
   const visibleState = readCatalogVisibleState(
     resolvedSearchParams?.visibleState,
   );
   const visibleSort = readCatalogVisibleSort(resolvedSearchParams?.visibleSort);
+  const mediaState = readCatalogMediaState(resolvedSearchParams?.mediaState);
+  const savingsBand = readCatalogSavingsBand(
+    resolvedSearchParams?.savingsBand,
+  );
 
-  const { browseContext, continuationSlice } = await getCatalogIndexPageContext(
+  const {
+    browseContext,
+    continuationSlice,
+    visibleWindow,
+    facetSummary,
+    matchingProductsTotal,
+    pageSize,
+    matchingSetResult,
+  } = await getCatalogIndexPageContext(
     culture,
     safePage,
     activeCategorySlug,
+    searchQuery,
+    visibleState,
+    visibleSort,
+    mediaState,
+    savingsBand,
   );
   const { categoriesResult, productsResult } = browseContext;
-  const loadedProducts = productsResult.data?.items ?? [];
-  const visibleProducts = sortCatalogVisibleProducts(
-    filterCatalogVisibleProducts(loadedProducts, visibleState, visibleQuery),
-    visibleSort,
-  );
 
   return (
     <CatalogPage
       culture={culture}
       categories={categoriesResult.data?.items ?? []}
-      products={visibleProducts}
+      products={visibleWindow.items}
       activeCategorySlug={activeCategorySlug}
-      totalProducts={productsResult.data?.total ?? 0}
-      currentPage={safePage}
-      pageSize={productsResult.data?.request.pageSize ?? 12}
-      visibleQuery={visibleQuery}
+      totalProducts={visibleWindow.total}
+      matchingProductsTotal={matchingProductsTotal}
+      currentPage={visibleWindow.currentPage}
+      pageSize={pageSize}
+      searchQuery={searchQuery}
       visibleState={visibleState}
       visibleSort={visibleSort}
-      loadedProductsCount={loadedProducts.length}
+      mediaState={mediaState}
+      savingsBand={savingsBand}
+      facetSummary={facetSummary}
+      loadedProductsCount={visibleWindow.items.length}
       cmsPages={continuationSlice.cmsPages}
       cartSummary={continuationSlice.cartSummary}
       dataStatus={{
         categories: categoriesResult.status,
-        products: productsResult.status,
+        products: matchingSetResult?.status ?? productsResult.status,
         cmsPages: continuationSlice.cmsPagesStatus,
       }}
     />

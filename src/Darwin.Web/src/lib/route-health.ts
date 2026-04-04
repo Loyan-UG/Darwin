@@ -163,6 +163,39 @@ export function summarizeCatalogRouteHealth(
   };
 }
 
+export function summarizeCatalogIndexPageHealth(
+  result: ResultWithStorefront & {
+    browseContext: CatalogBrowseLike;
+    visibleWindow: { items: unknown[]; total: number };
+    matchingSetResult?: { status: string } | null;
+    matchingProductsTotal: number;
+    facetSummary: {
+      offerCount: number;
+      baseCount: number;
+      withImageCount: number;
+      missingImageCount: number;
+      heroOfferCount: number;
+      valueOfferCount: number;
+    };
+    hasBrowseLens: boolean;
+  },
+) {
+  return {
+    ...summarizeCatalogRouteHealth(result),
+    browseMode: result.hasBrowseLens ? "windowed" : "paged",
+    visibleCount: result.visibleWindow.items.length,
+    visibleTotal: result.visibleWindow.total,
+    matchingStatus: result.matchingSetResult?.status ?? "not-requested",
+    matchingProductsTotal: result.matchingProductsTotal,
+    offerCount: result.facetSummary.offerCount,
+    baseCount: result.facetSummary.baseCount,
+    withImageCount: result.facetSummary.withImageCount,
+    missingImageCount: result.facetSummary.missingImageCount,
+    heroOfferCount: result.facetSummary.heroOfferCount,
+    valueOfferCount: result.facetSummary.valueOfferCount,
+  };
+}
+
 export function summarizeCatalogBrowseCoreHealth(result: CatalogBrowseLike) {
   return {
     categoriesStatus: result.categoriesResult.status,
@@ -206,6 +239,38 @@ export function summarizeCmsRouteHealth(
       countItems(result.browseContext?.pagesResult.data) ||
       countItems(result.detailContext?.relatedPagesResult?.data) ||
       (result.detailContext?.pageResult.data ? 1 : 0),
+  };
+}
+
+export function summarizeCmsIndexPageHealth(
+  result: ResultWithStorefront & {
+    browseContext: CmsBrowseLike;
+    visibleWindow: { items: unknown[]; total: number };
+    matchingSetResult?: { status: string } | null;
+    matchingItemsTotal: number;
+    metadataSummary: {
+      readyCount: number;
+      attentionCount: number;
+      missingMetaTitleCount: number;
+      missingMetaDescriptionCount: number;
+      missingBothCount: number;
+    };
+    hasBrowseLens: boolean;
+  },
+) {
+  return {
+    ...summarizeCmsRouteHealth(result),
+    browseMode: result.hasBrowseLens ? "windowed" : "paged",
+    visibleCount: result.visibleWindow.items.length,
+    visibleTotal: result.visibleWindow.total,
+    matchingStatus: result.matchingSetResult?.status ?? "not-requested",
+    matchingItemsTotal: result.matchingItemsTotal,
+    readyCount: result.metadataSummary.readyCount,
+    attentionCount: result.metadataSummary.attentionCount,
+    missingMetaTitleCount: result.metadataSummary.missingMetaTitleCount,
+    missingMetaDescriptionCount:
+      result.metadataSummary.missingMetaDescriptionCount,
+    missingBothCount: result.metadataSummary.missingBothCount,
   };
 }
 

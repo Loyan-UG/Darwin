@@ -3,13 +3,19 @@ import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-win
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
+  CatalogMediaState,
+  CatalogSavingsBand,
   CatalogVisibleState,
   CatalogVisibleSort,
   PublicCategorySummary,
   PublicProductSummary,
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
-import { getCatalogReviewTargets } from "@/features/catalog/discovery";
+import {
+  getCatalogReviewTargets,
+  getCatalogSavingsPercent,
+  hasPrimaryImage,
+} from "@/features/catalog/discovery";
 import { buildCatalogReviewTargetHref } from "@/features/review/review-window";
 import {
   buildPreferredCatalogReviewWindowHref,
@@ -34,11 +40,23 @@ type CatalogPageProps = {
   } | null;
   activeCategorySlug?: string;
   totalProducts: number;
+  matchingProductsTotal: number;
   currentPage: number;
   pageSize: number;
-  visibleQuery?: string;
+  searchQuery?: string;
   visibleState?: CatalogVisibleState;
   visibleSort?: CatalogVisibleSort;
+  mediaState?: CatalogMediaState;
+  savingsBand?: CatalogSavingsBand;
+  facetSummary: {
+    totalCount: number;
+    offerCount: number;
+    baseCount: number;
+    withImageCount: number;
+    missingImageCount: number;
+    valueOfferCount: number;
+    heroOfferCount: number;
+  };
   loadedProductsCount: number;
   dataStatus?: {
     categories: string;
@@ -50,16 +68,20 @@ type CatalogPageProps = {
 function buildCatalogHref(
   categorySlug?: string,
   page = 1,
-  visibleQuery?: string,
+  searchQuery?: string,
   visibleState?: CatalogVisibleState,
   visibleSort?: CatalogVisibleSort,
+  mediaState?: CatalogMediaState,
+  savingsBand?: CatalogSavingsBand,
 ) {
   return buildAppQueryPath("/catalog", {
     category: categorySlug,
     page: page > 1 ? page : undefined,
-    visibleQuery,
+    search: searchQuery,
     visibleState: visibleState && visibleState !== "all" ? visibleState : undefined,
     visibleSort: visibleSort && visibleSort !== "featured" ? visibleSort : undefined,
+    mediaState: mediaState && mediaState !== "all" ? mediaState : undefined,
+    savingsBand: savingsBand && savingsBand !== "all" ? savingsBand : undefined,
   });
 }
 export function CatalogPage({
@@ -70,11 +92,15 @@ export function CatalogPage({
   cartSummary,
   activeCategorySlug,
   totalProducts,
+  matchingProductsTotal,
   currentPage,
   pageSize,
-  visibleQuery,
+  searchQuery,
   visibleState = "all",
   visibleSort = "featured",
+  mediaState = "all",
+  savingsBand = "all",
+  facetSummary,
   loadedProductsCount,
   dataStatus,
 }: CatalogPageProps) {
@@ -88,35 +114,30 @@ export function CatalogPage({
       : Math.min(totalProducts, pageStart + loadedProductsCount - 1);
   const activeCategory =
     categories.find((category) => category.slug === activeCategorySlug) ?? null;
-  const offerProducts = products.filter(
+  const visibleOfferProducts = products.filter(
     (product) =>
       typeof product.compareAtPriceMinor === "number" &&
       product.compareAtPriceMinor > product.priceMinor,
   );
-  const featuredOfferProduct = offerProducts
+  const featuredOfferProduct = visibleOfferProducts
     .map((product) => ({
       product,
-      savingsPercent: getSavingsPercent(product) ?? 0,
+      savingsPercent: getCatalogSavingsPercent(product),
     }))
     .sort((left, right) => right.savingsPercent - left.savingsPercent)[0] ?? null;
+  const hasSearchQuery = Boolean(searchQuery);
   const hasVisibleLens =
-    Boolean(visibleQuery) || visibleState !== "all" || visibleSort !== "featured";
+    visibleState !== "all" ||
+    visibleSort !== "featured" ||
+    mediaState !== "all" ||
+    savingsBand !== "all";
+  const hasFilteredWindow = hasSearchQuery || hasVisibleLens;
   const hasActiveCategory = Boolean(activeCategory);
   const hasCmsFollowUp = cmsPages.length > 0;
-  const hasOfferCoverage = offerProducts.length > 0;
-  const hasBaseCoverage = products.some(
-    (product) =>
-      typeof product.compareAtPriceMinor !== "number" ||
-      product.compareAtPriceMinor <= product.priceMinor,
-  );
-  const missingImageCount = products.filter(
-    (product) => !product.primaryImageUrl?.trim(),
-  ).length;
-  const compareAtMissingCount = products.filter(
-    (product) =>
-      typeof product.compareAtPriceMinor !== "number" ||
-      product.compareAtPriceMinor <= product.priceMinor,
-  ).length;
+  const hasOfferCoverage = facetSummary.offerCount > 0;
+  const hasBaseCoverage = facetSummary.baseCount > 0;
+  const missingImageCount = facetSummary.missingImageCount;
+  const compareAtMissingCount = facetSummary.baseCount;
   const readinessSignals = [
     hasActiveCategory,
     hasCmsFollowUp,
@@ -137,43 +158,30 @@ export function CatalogPage({
       ? copy.catalogReviewTargetImageMessage
       : target.savingsAmount > 0
         ? formatResource(copy.catalogReviewTargetOfferMessage, {
-            savingsPercent: getSavingsPercent(target.product) ?? 0,
+            savingsPercent: getCatalogSavingsPercent(target.product),
           })
         : copy.catalogReviewTargetBaseMessage,
   }));
-  const visibleBaseCount = Math.max(products.length - offerProducts.length, 0);
+  const visibleBaseCount = facetSummary.baseCount;
   const preferredCatalogReviewState = getPreferredCatalogReviewState(
-    offerProducts.length,
+    facetSummary.offerCount,
     visibleBaseCount,
   );
   const catalogReviewPrimaryHref = buildPreferredCatalogReviewWindowHref(
     preferredCatalogReviewState,
     {
       category: activeCategorySlug,
-      visibleQuery,
+      visibleQuery: searchQuery,
       visibleState,
       visibleSort,
+      mediaState,
+      savingsBand,
     },
   );
   const catalogReviewPrimaryLabel =
     preferredCatalogReviewState === "offers"
       ? copy.catalogReviewOffersCta
       : copy.catalogReviewBaseCta;
-
-  function getSavingsPercent(product: PublicProductSummary) {
-    if (
-      typeof product.compareAtPriceMinor !== "number" ||
-      product.compareAtPriceMinor <= product.priceMinor
-    ) {
-      return null;
-    }
-
-    return Math.round(
-      ((product.compareAtPriceMinor - product.priceMinor) /
-        product.compareAtPriceMinor) *
-        100,
-    );
-  }
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -211,14 +219,14 @@ export function CatalogPage({
                   label: hasVisibleLens
                     ? copy.visibleResultsLabel
                     : copy.currentResultsLabel,
-                  value: String(hasVisibleLens ? products.length : totalProducts),
+                  value: String(hasVisibleLens ? totalProducts : matchingProductsTotal),
                   note: hasVisibleLens
                     ? copy.visibleResultsNote
                     : copy.currentResultsNote,
                 },
                 {
                   label: copy.visibleOffersLabel,
-                  value: String(offerProducts.length),
+                  value: String(facetSummary.offerCount),
                   note: copy.visibleOffersNote,
                 },
                 {
@@ -262,19 +270,19 @@ export function CatalogPage({
             {copy.catalogRouteSummaryTitle}
           </p>
           <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-            {formatResource(copy.catalogRouteSummaryMessage, {
+              {formatResource(copy.catalogRouteSummaryMessage, {
               categoriesStatus: dataStatus?.categories ?? "unknown",
               productsStatus: dataStatus?.products ?? "unknown",
               cmsPagesStatus: dataStatus?.cmsPages ?? "unknown",
               visibleCount: products.length,
-              totalProducts,
+              totalProducts: matchingProductsTotal,
               currentPage,
               totalPages,
             })}
           </p>
         </div>
 
-        {hasVisibleLens && (
+        {hasFilteredWindow && (
           <StatusBanner
             title={copy.visibleLensActiveTitle}
             message={formatResource(copy.visibleLensActiveMessage, {
@@ -291,11 +299,11 @@ export function CatalogPage({
               {copy.resultSummaryTitle}
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {hasVisibleLens
+              {hasFilteredWindow
                 ? formatResource(copy.resultSummaryFilteredMessage, {
                     visibleCount: products.length,
-                    loadedCount: loadedProductsCount,
-                    totalProducts,
+                    loadedCount: totalProducts,
+                    totalProducts: matchingProductsTotal,
                     currentPage,
                   })
                 : formatResource(copy.resultSummaryMessage, {
@@ -328,7 +336,7 @@ export function CatalogPage({
                 </p>
                 <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
                   {formatResource(copy.resultSetVisibleValue, {
-                    count: products.length,
+                    count: totalProducts,
                   })}
                 </p>
               </div>
@@ -338,7 +346,7 @@ export function CatalogPage({
                 </p>
                 <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
                   {formatResource(copy.resultSetTotalValue, {
-                    count: totalProducts,
+                    count: matchingProductsTotal,
                   })}
                 </p>
               </div>
@@ -420,7 +428,7 @@ export function CatalogPage({
                 </p>
                 <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
                   {formatResource(copy.buyingGuideOfferValue, {
-                    count: offerProducts.length,
+                    count: facetSummary.offerCount,
                   })}
                 </p>
               </div>
@@ -434,6 +442,14 @@ export function CatalogPage({
                       ? copy.buyingGuideLensOffers
                       : visibleState === "base"
                         ? copy.buyingGuideLensBase
+                        : mediaState === "missing-image"
+                          ? copy.buyingGuideLensMissingImage
+                          : mediaState === "with-image"
+                            ? copy.buyingGuideLensWithImage
+                            : savingsBand === "hero"
+                              ? copy.buyingGuideLensHeroOffers
+                              : savingsBand === "value"
+                                ? copy.buyingGuideLensValueOffers
                         : copy.buyingGuideLensFiltered
                     : copy.buyingGuideLensDefault}
                 </p>
@@ -451,7 +467,7 @@ export function CatalogPage({
               status: assortmentReadiness,
             })}
           </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogReadinessDiscoveryLabel}
@@ -466,7 +482,7 @@ export function CatalogPage({
               </p>
               <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
                 {formatResource(copy.catalogReadinessOfferValue, {
-                  count: offerProducts.length,
+                  count: facetSummary.offerCount,
                 })}
               </p>
             </div>
@@ -491,6 +507,28 @@ export function CatalogPage({
                 })}
               </p>
             </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.catalogFacetImageLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.catalogFacetImageValue, {
+                  withImageCount: facetSummary.withImageCount,
+                  missingImageCount: facetSummary.missingImageCount,
+                })}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.catalogFacetSavingsLabel}
+              </p>
+              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                {formatResource(copy.catalogFacetSavingsValue, {
+                  valueOfferCount: facetSummary.valueOfferCount,
+                  heroOfferCount: facetSummary.heroOfferCount,
+                })}
+              </p>
+            </div>
             </div>
           </div>
 
@@ -500,7 +538,7 @@ export function CatalogPage({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.catalogReviewMessage, {
-                offerCount: offerProducts.length,
+                offerCount: facetSummary.offerCount,
                 baseCount: visibleBaseCount,
               })}
             </p>
@@ -513,7 +551,15 @@ export function CatalogPage({
               </Link>
               <Link
                 href={localizeHref(
-                  buildCatalogHref(activeCategorySlug, 1, visibleQuery, "all", "featured"),
+                  buildCatalogHref(
+                    activeCategorySlug,
+                    1,
+                    searchQuery,
+                    "all",
+                    "featured",
+                    mediaState,
+                    savingsBand,
+                  ),
                   culture,
                 )}
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
@@ -522,7 +568,15 @@ export function CatalogPage({
               </Link>
               <Link
                 href={localizeHref(
-                  buildCatalogHref(activeCategorySlug, 1, undefined, "all", "featured"),
+                  buildCatalogHref(
+                    activeCategorySlug,
+                    1,
+                    undefined,
+                    "all",
+                    "featured",
+                    "all",
+                    "all",
+                  ),
                   culture,
                 )}
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
@@ -564,9 +618,11 @@ export function CatalogPage({
                       href={localizeHref(
                         buildCatalogReviewTargetHref(product.slug, {
                           category: activeCategorySlug,
-                          visibleQuery,
+                          visibleQuery: searchQuery,
                           visibleState,
                           visibleSort,
+                          mediaState,
+                          savingsBand,
                         }),
                         culture,
                       )}
@@ -694,8 +750,8 @@ export function CatalogPage({
               <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                 {copy.visibleSearchLabel}
                 <input
-                  name="visibleQuery"
-                  defaultValue={visibleQuery}
+                  name="search"
+                  defaultValue={searchQuery}
                   placeholder={copy.visibleSearchPlaceholder}
                   className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 text-sm font-normal outline-none"
                 />
@@ -710,6 +766,30 @@ export function CatalogPage({
                   <option value="all">{copy.visibleStateAllOption}</option>
                   <option value="offers">{copy.visibleStateOffersOption}</option>
                   <option value="base">{copy.visibleStateBaseOption}</option>
+                </select>
+              </label>
+              <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                {copy.mediaStateLabel}
+                <select
+                  name="mediaState"
+                  defaultValue={mediaState}
+                  className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 text-sm font-normal outline-none"
+                >
+                  <option value="all">{copy.mediaStateAllOption}</option>
+                  <option value="with-image">{copy.mediaStateWithImageOption}</option>
+                  <option value="missing-image">{copy.mediaStateMissingImageOption}</option>
+                </select>
+              </label>
+              <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                {copy.savingsBandLabel}
+                <select
+                  name="savingsBand"
+                  defaultValue={savingsBand}
+                  className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 text-sm font-normal outline-none"
+                >
+                  <option value="all">{copy.savingsBandAllOption}</option>
+                  <option value="value">{copy.savingsBandValueOption}</option>
+                  <option value="hero">{copy.savingsBandHeroOption}</option>
                 </select>
               </label>
               <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -737,12 +817,118 @@ export function CatalogPage({
                 </button>
                 <Link
                   href={localizeHref(
-                    buildCatalogHref(activeCategorySlug),
+                    buildCatalogHref(
+                      activeCategorySlug,
+                      1,
+                      searchQuery,
+                      visibleState,
+                      visibleSort,
+                      mediaState,
+                      "value",
+                    ),
+                    culture,
+                  )}
+                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  <p className="font-semibold text-[var(--color-text-primary)]">
+                    {copy.catalogFacetValueOfferCta}
+                  </p>
+                  <p className="mt-2 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.catalogFacetValueOfferMessage, {
+                      count: facetSummary.valueOfferCount,
+                    })}
+                  </p>
+                </Link>
+                <Link
+                  href={localizeHref(
+                    buildCatalogHref(
+                      activeCategorySlug,
+                      1,
+                      undefined,
+                      "all",
+                      "featured",
+                      "all",
+                      "all",
+                    ),
                     culture,
                   )}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-white/70"
                 >
                   {copy.resetVisibleToolsCta}
+                </Link>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Link
+                  href={localizeHref(
+                    buildCatalogHref(
+                      activeCategorySlug,
+                      1,
+                      searchQuery,
+                      visibleState,
+                      visibleSort,
+                      "with-image",
+                      savingsBand,
+                    ),
+                    culture,
+                  )}
+                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  <p className="font-semibold text-[var(--color-text-primary)]">
+                    {copy.catalogFacetWithImageCta}
+                  </p>
+                  <p className="mt-2 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.catalogFacetWithImageMessage, {
+                      count: facetSummary.withImageCount,
+                    })}
+                  </p>
+                </Link>
+                <Link
+                  href={localizeHref(
+                    buildCatalogHref(
+                      activeCategorySlug,
+                      1,
+                      searchQuery,
+                      visibleState,
+                      visibleSort,
+                      "missing-image",
+                      savingsBand,
+                    ),
+                    culture,
+                  )}
+                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  <p className="font-semibold text-[var(--color-text-primary)]">
+                    {copy.catalogFacetMissingImageCta}
+                  </p>
+                  <p className="mt-2 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.catalogFacetMissingImageMessage, {
+                      count: facetSummary.missingImageCount,
+                    })}
+                  </p>
+                </Link>
+                <Link
+                  href={localizeHref(
+                    buildCatalogHref(
+                      activeCategorySlug,
+                      1,
+                      searchQuery,
+                      visibleState,
+                      visibleSort,
+                      mediaState,
+                      "hero",
+                    ),
+                    culture,
+                  )}
+                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  <p className="font-semibold text-[var(--color-text-primary)]">
+                    {copy.catalogFacetHeroOfferCta}
+                  </p>
+                  <p className="mt-2 text-[var(--color-text-secondary)]">
+                    {formatResource(copy.catalogFacetHeroOfferMessage, {
+                      count: facetSummary.heroOfferCount,
+                    })}
+                  </p>
                 </Link>
               </div>
             </form>
@@ -757,7 +943,18 @@ export function CatalogPage({
                     copy.categoryFallbackDescription}
                 </p>
                 <Link
-                  href={localizeHref("/catalog", culture)}
+                  href={localizeHref(
+                    buildCatalogHref(
+                      undefined,
+                      1,
+                      searchQuery,
+                      visibleState,
+                      visibleSort,
+                      mediaState,
+                      savingsBand,
+                    ),
+                    culture,
+                  )}
                   className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-white/70"
                 >
                   {copy.clearCategory}
@@ -766,14 +963,16 @@ export function CatalogPage({
             ) : null}
             <div className="mt-5 flex flex-col gap-2">
               <Link
-                href={localizeHref(
-                  buildCatalogHref(
-                    undefined,
-                    1,
-                    visibleQuery,
-                    visibleState,
-                    visibleSort,
-                  ),
+                  href={localizeHref(
+                    buildCatalogHref(
+                      undefined,
+                      1,
+                      searchQuery,
+                      visibleState,
+                      visibleSort,
+                      mediaState,
+                      savingsBand,
+                    ),
                   culture,
                 )}
                 className={
@@ -791,9 +990,11 @@ export function CatalogPage({
                     buildCatalogHref(
                       category.slug,
                       1,
-                      visibleQuery,
+                      searchQuery,
                       visibleState,
                       visibleSort,
+                      mediaState,
+                      savingsBand,
                     ),
                     culture,
                   )}
@@ -841,7 +1042,7 @@ export function CatalogPage({
                 {products.map((product) => (
                   (() => {
                     const productImageUrl = toWebApiUrl(product.primaryImageUrl ?? "");
-                    const savingsPercent = getSavingsPercent(product);
+                    const savingsPercent = getCatalogSavingsPercent(product);
                     return (
                   <article
                     key={product.id}
@@ -866,7 +1067,7 @@ export function CatalogPage({
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
                           {copy.productEyebrow}
                         </p>
-                        {savingsPercent ? (
+                        {savingsPercent > 0 ? (
                           <span className="rounded-full bg-[var(--color-brand)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-contrast)]">
                             {copy.savePrefix} {savingsPercent}%
                           </span>
@@ -877,9 +1078,11 @@ export function CatalogPage({
                           href={localizeHref(
                             buildCatalogReviewTargetHref(product.slug, {
                               category: activeCategorySlug,
-                              visibleQuery,
+                              visibleQuery: searchQuery,
                               visibleState,
                               visibleSort,
+                              mediaState,
+                              savingsBand,
                             }),
                             culture,
                           )}
@@ -891,15 +1094,16 @@ export function CatalogPage({
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span className="rounded-full bg-[var(--color-surface-panel-strong)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-primary)]">
                           {savingsPercent !== null
+                            && savingsPercent > 0
                             ? copy.catalogCardOfferLabel
                             : copy.catalogCardBaseLabel}
                         </span>
-                        {!product.primaryImageUrl?.trim() ? (
+                        {!hasPrimaryImage(product) ? (
                           <span className="rounded-full bg-[rgba(217,111,50,0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent)]">
                             {copy.catalogCardMissingImageLabel}
                           </span>
                         ) : null}
-                        {savingsPercent !== null ? (
+                        {savingsPercent > 0 ? (
                           <span className="rounded-full bg-[rgba(89,130,70,0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand)]">
                             {formatResource(copy.catalogCardSavingsLabel, {
                               savingsPercent,
@@ -935,9 +1139,11 @@ export function CatalogPage({
                           href={localizeHref(
                             buildCatalogReviewTargetHref(product.slug, {
                               category: activeCategorySlug,
-                              visibleQuery,
+                              visibleQuery: searchQuery,
                               visibleState,
                               visibleSort,
+                              mediaState,
+                              savingsBand,
                             }),
                             culture,
                           )}
@@ -986,9 +1192,11 @@ export function CatalogPage({
                       buildCatalogHref(
                         activeCategorySlug,
                         1,
-                        visibleQuery,
+                        searchQuery,
                         visibleState,
                         visibleSort,
+                        mediaState,
+                        savingsBand,
                       ),
                       culture,
                     )}
@@ -1002,9 +1210,11 @@ export function CatalogPage({
                       buildCatalogHref(
                         activeCategorySlug,
                         Math.max(1, currentPage - 1),
-                        visibleQuery,
+                        searchQuery,
                         visibleState,
                         visibleSort,
+                        mediaState,
+                        savingsBand,
                       ),
                       culture,
                     )}
@@ -1021,9 +1231,11 @@ export function CatalogPage({
                       buildCatalogHref(
                         activeCategorySlug,
                         Math.min(totalPages, currentPage + 1),
-                        visibleQuery,
+                        searchQuery,
                         visibleState,
                         visibleSort,
+                        mediaState,
+                        savingsBand,
                       ),
                       culture,
                     )}
@@ -1037,9 +1249,11 @@ export function CatalogPage({
                       buildCatalogHref(
                         activeCategorySlug,
                         totalPages,
-                        visibleQuery,
+                        searchQuery,
                         visibleState,
                         visibleSort,
+                        mediaState,
+                        savingsBand,
                       ),
                       culture,
                     )}

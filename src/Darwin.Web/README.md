@@ -21,6 +21,8 @@ Run the development server:
 npm run dev
 ```
 
+If `Darwin.WebApi` is running locally for storefront work, prefer its `http` launch profile while `Darwin.Web` points at `http://localhost:5134`. The web app now keeps local TLS handling explicit, but the clean development path is still to avoid forcing HTTP storefront calls through HTTPS redirection when the local certificate is not trusted.
+
 Build and run the production build:
 
 ```bash
@@ -67,9 +69,22 @@ The repository has moved beyond the raw front-office starting line:
 - member order and invoice detail loaders now also emit explicit detail-availability health alongside the broader protected route summary, so diagnostics can separate storefront continuation health from missing or degraded commerce detail payloads
 - public CMS/catalog/menu GET calls now also reuse canonical cached fetches and normalized cache tags, so equivalent public discovery requests avoid more duplicate work and keep cache invalidation/coherence cleaner across storefront routes
 - public GET fetches now also normalize their query-string cache keys before reuse, so equivalent CMS/catalog/menu requests dedupe at the fetch layer itself instead of only sharing invalidation tags after the fact
+- catalog and CMS index routes now also support real public query search through the current WebApi contracts, so storefront discovery is no longer limited to page-local text filtering on already loaded items
+- catalog and CMS search flows now also preserve readiness lenses and review context across list/detail movement, so discovery and review do not lose the active query window while drilling into pages or products
+- catalog browse now also builds image-coverage and offer-strength facets from the full matching assortment before pagination, so counts, quick-review windows, and visible browse context stay aligned with the real assortment instead of only the current page
+- CMS browse now also carries metadata-focus windows such as missing-title, missing-description, and missing-both across the full matching published set before pagination, so debt counts, quick-review actions, and detail follow-up stay aligned with the real content-review window instead of only the current page
+- `/cms` now also exposes direct quick windows for missing title, missing description, and missing both metadata debt, so the main CMS route can jump straight into the right debt-review window without rebuilding metadata filters manually
+- shared route observability now also emits explicit outcome kinds and timing bands such as `slow-success`, `degraded-success`, `slow-degraded-success`, and `failure`, so storefront/member diagnostics can distinguish healthy slowness from degraded slowness without reopening raw loader payloads
+- product detail now also preserves catalog facet context such as image coverage and offer strength while drilling in and back out, so review/browse continuity between `/catalog` and `/catalog/[slug]` no longer loses the active assortment window
+- product detail now also derives its review queue from the full active filtered browse set instead of only the related-products strip, so assortment drill-in stays aligned with the real review window and not just with cross-sell cards
+- product detail now also surfaces previous/next navigation and in-window position from the active filtered browse set, so assortment review can step through the real catalog window directly from the drilled-in route
+- CMS detail now also preserves metadata-focus review context while moving through previous/next pages, review queues, and back to `/cms`, so content drill-in no longer drops the active debt-review window
+- CMS detail now also derives previous/next navigation, review queues, and content-navigation lists from the full active metadata-review set instead of the raw published-page set, so debt-review drill-in stays aligned with the real filtered window and not just the URL state
 - the root HTML shell now suppresses hydration warnings for extension-mutated `<html>` attributes, so storefront startup stays stable when browser tooling injects classes before React hydrates
 - shell navigation now also passes the active culture into CMS menu loading and can project the seeded `Footer` menu into the rendered footer, so seed-driven navigation labels/links stay aligned with the current storefront language instead of defaulting silently
 - when a CMS `Footer` menu is available it is now treated as the authoritative footer navigation, and the fallback footer itself now carries storefront/legal links instead of platform/debug placeholders
+- shared public-API fallback copy is now shopper-friendly instead of infrastructure-facing, so degraded CMS/catalog/cart surfaces say that part of the storefront is temporarily unavailable instead of exposing raw API wording
+- the authoritative footer seed now also includes `Contact` alongside the German legal pages, so service navigation is not reduced to compliance-only links
 - raw shell fallback/debug copy is no longer rendered in the header, utility actions are now icon-first, and the language switcher now uses compact two-letter codes, so the main storefront chrome stays cleaner and less noisy
 - localized query-message resolution now also falls back across the shared resource bundle, so public API degradation shows real shopper-facing copy instead of leaking `i18n:*` keys into the UI
 - Home spotlight empty states now also resolve localized degraded API messages before rendering, so CMS/product spotlight sections no longer leak raw `i18n:*` keys
@@ -206,9 +221,11 @@ The repository has moved beyond the raw front-office starting line:
 - loyalty business detail currently also consumes the canonical scan-preparation contract and can render the active prepared token as a QR image, but this should be treated as a provisional contract-consumption slice rather than a commitment to browser camera/scanner or barcode workflows in `Darwin.Web`
 - the intended web-product direction remains that loyalty on the web may evolve differently from mobile and can later support direct point accrual/redemption flows for store-enabled businesses without requiring browser camera/scanner support
 - catalog list/detail now pass the active request culture to `Darwin.WebApi` and expose contract-safe merchandising context such as selected-category panels, compare-at savings, and category-linked navigation
-- `/catalog` now also exposes a visible-result search/sort lens for the products already loaded on the current server page, while keeping that lens explicit and non-canonical until true public search/facet/sort contracts exist
+- `/catalog` now also keeps its browse controls on the full matching assortment instead of only the currently loaded server page, so active review/sort/filter windows no longer drift around one page of products
 - `/catalog` now also exposes a page-local visible assortment lens for `all`, `offers`, and `base assortment`, so shoppers can separate current-page offer windows from base assortment without pretending backend facets already exist
-- `/catalog` now also exposes a page-local review-priority lens for `offers-first` and `base-first`, so shoppers can inspect the currently loaded assortment from a clearer commercial review order without pretending backend facets already exist
+- `/catalog` now also applies `offers-first` and `base-first` review windows to the full matching assortment when a browse lens is active, so commercial review no longer drifts around the current loaded page while richer backend facet metadata still remains future work
+- `/catalog` now also exposes real browse facets for image coverage and offer strength against the full matching assortment, so shoppers can open image-attention and hero-offer windows without falling back to page-local heuristics
+- `/catalog` now also exposes direct quick windows for image-ready, image-attention, value-offer, and hero-offer browse sets, so the main catalog route can jump straight into the strongest facet-specific windows without rebuilding filters manually
 - `/catalog` now also surfaces visible-vs-loaded-vs-total result summaries plus first/last page jumps, so catalog window navigation is more complete without pretending backend search/facets already exist
 - `/catalog` now also surfaces an offer-focus window plus a buying-guide summary from the live visible product set, so merchandising signals stay explicit even before true backend search/facets arrive
 - `/catalog` now also surfaces explicit assortment-readiness coverage for visible offers, base assortment, and support context, so browse review can inspect route debt from the catalog window itself instead of only from counts and lenses
@@ -351,9 +368,7 @@ The current web slice includes:
 - Home now also uses a dedicated journey/link-list web part to keep CMS, catalog, and account entry flows visible as one system-level composition
 - Home now also exposes category-driven storefront lanes built from live public category plus category-filtered product contracts, so top-level browse paths are not just generic catalog entry cards
 - public CMS listing and CMS slug routes against live `Darwin.WebApi` content endpoints
-- CMS index now also exposes a visible-result search lens over the pages already loaded on the current page, while staying explicit that true CMS search still needs a backend contract
-- CMS index now also exposes a page-local discovery-state lens for pages that are discovery-ready versus pages that still need metadata attention, so public content review is more actionable without pretending backend CMS search already exists
-- CMS index now also exposes a page-local review-priority lens for featured order, title order, ready-first, and attention-first windows, so public content review can move between stronger discovery candidates and metadata debt without pretending backend CMS search already exists
+- CMS index now also applies discovery-state and review-priority windows to the full matching search set when a browse lens is active, so public content review no longer drifts around the current loaded page while richer CMS grouping/search metadata still remains future work
 - CMS index now also surfaces current-window result summaries for visible vs loaded vs total published pages, so public content browsing stays set-aware instead of behaving like a flat card dump
 - CMS index now also surfaces explicit visible discovery-readiness coverage for ready pages, attention pages, and review support, so public content review can inspect window-level discovery debt instead of relying only on lenses and result counts
 - CMS index now also groups the visible page set by title initials with quick-jump anchors, so public content browsing reads like an oriented set instead of one undifferentiated card wall
@@ -375,7 +390,7 @@ The current web slice includes:
 - those CMS product follow-up windows now also rank by the strongest visible savings signal first, so content routes hand off into a clearer best-offer buying opportunity instead of arbitrary catalog order
 - CMS index and CMS detail now also surface live cart/checkout continuity from the canonical public cart contract, so published content can hand off directly into an already active purchase flow instead of only into browse routes
 - public catalog browsing against live `Darwin.WebApi` category/product endpoints
-- page-local visible-result search/sort controls on `/catalog` that preserve category/page context without pretending the current API already supports true cross-catalog search or facets
+- `/catalog` now also applies category/query search plus offer/base browse lenses and review-oriented sort against the full matching assortment when those lenses are active, so pagination and result counts stay real even before richer backend facet metadata exists
 - cart empty state, checkout unavailable state, follow-up-products unavailable state, and confirmation/cart/checkout route summaries now keep the commerce flow observable and actionable instead of collapsing into passive no-data states
 - public product-detail route against the product-by-slug endpoint
 - public cart page plus add/update/remove flows against public cart endpoints with stable anonymous cart identity
@@ -523,6 +538,7 @@ The current web slice includes:
 - member summary snapshots and browser shopping continuity now also load through shared observed helpers with explicit health summaries, so account/Home/commerce routes reuse one traceable baseline for identity, billing, and live-cart continuity instead of rebuilding those snapshots piecemeal
 - public CMS/catalog/menu GET calls now also reuse canonical cached fetches and normalized cache tags, so equivalent public discovery requests avoid more duplicate work and keep cache invalidation/coherence cleaner across storefront routes
 - public GET fetches now also normalize their query-string cache keys before reuse, so equivalent CMS/catalog/menu requests dedupe at the fetch layer itself instead of only sharing invalidation tags after the fact
+- `/catalog` and `/cms` now build their visible browse/review windows inside shared server page-context loaders, so lens-driven review no longer duplicates matching-set fetches in the route files and diagnostics reflect the real visible window instead of only the paged seed fetch
 
 ## Feature Logging Rule
 

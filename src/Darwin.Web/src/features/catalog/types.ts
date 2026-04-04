@@ -68,3 +68,5 @@ export type CatalogVisibleSort =
   | "base-first";
 
 export type CatalogVisibleState = "all" | "offers" | "base";
+export type CatalogMediaState = "all" | "with-image" | "missing-image";
+export type CatalogSavingsBand = "all" | "value" | "hero";

@@ -2,11 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { PublicPageSummary } from "@/features/cms/types";
 import {
+  buildCmsVisibleWindow,
   filterVisiblePages,
   getPendingCmsReviewTargets,
+  readCmsMetadataFocus,
   isDiscoveryReadyPage,
   readCmsVisibleSort,
   readCmsVisibleState,
+  summarizeCmsMetadataDebt,
   sortVisiblePages,
 } from "@/features/cms/discovery";
 
@@ -32,6 +35,12 @@ test("readCmsVisibleSort keeps only supported CMS review-priority values", () =>
   assert.equal(readCmsVisibleSort("title-asc"), "title-asc");
   assert.equal(readCmsVisibleSort("ready-first"), "ready-first");
   assert.equal(readCmsVisibleSort("invalid"), "featured");
+});
+
+test("readCmsMetadataFocus keeps only supported metadata-focus values", () => {
+  assert.equal(readCmsMetadataFocus("missing-title"), "missing-title");
+  assert.equal(readCmsMetadataFocus("missing-both"), "missing-both");
+  assert.equal(readCmsMetadataFocus("invalid"), "all");
 });
 
 test("isDiscoveryReadyPage requires both meta title and meta description", () => {
@@ -77,6 +86,18 @@ test("filterVisiblePages applies query and discovery-state lens together", () =>
     filterVisiblePages(pages, "all", "draft").map((page) => page.id),
     ["attention"],
   );
+  assert.deepEqual(
+    filterVisiblePages(pages, "all", undefined, "missing-title").map(
+      (page) => page.id,
+    ),
+    ["attention"],
+  );
+  assert.deepEqual(
+    filterVisiblePages(pages, "all", undefined, "missing-description").map(
+      (page) => page.id,
+    ),
+    [],
+  );
 });
 
 test("sortVisiblePages prioritizes ready or attention pages inside the visible window", () => {
@@ -115,6 +136,75 @@ test("sortVisiblePages prioritizes ready or attention pages inside the visible w
   );
 });
 
+test("buildCmsVisibleWindow paginates the full matching page set after state and sort lenses", () => {
+  const pages = [
+    createPage({
+      id: "b-ready",
+      title: "Beta Ready",
+      metaTitle: "Meta",
+      metaDescription: "Description",
+    }),
+    createPage({
+      id: "a-attention",
+      title: "Alpha Attention",
+      metaTitle: null,
+      metaDescription: "Missing title",
+    }),
+    createPage({
+      id: "c-ready",
+      title: "Charlie Ready",
+      metaTitle: "Meta",
+      metaDescription: "Description",
+    }),
+  ];
+
+  const window = buildCmsVisibleWindow(pages, {
+    page: 2,
+    pageSize: 1,
+    visibleState: "ready",
+    visibleSort: "title-asc",
+  });
+
+  assert.equal(window.total, 2);
+  assert.equal(window.totalPages, 2);
+  assert.equal(window.currentPage, 2);
+  assert.deepEqual(window.items.map((page) => page.id), ["c-ready"]);
+});
+
+test("buildCmsVisibleWindow also applies metadata focus across the full matching set", () => {
+  const pages = [
+    createPage({
+      id: "both",
+      title: "Both Missing",
+      metaTitle: null,
+      metaDescription: null,
+    }),
+    createPage({
+      id: "title",
+      title: "Title Missing",
+      metaTitle: null,
+      metaDescription: "Description",
+    }),
+    createPage({
+      id: "ready",
+      title: "Ready",
+      metaTitle: "Meta",
+      metaDescription: "Description",
+    }),
+  ];
+
+  const window = buildCmsVisibleWindow(pages, {
+    page: 1,
+    pageSize: 5,
+    visibleState: "all",
+    visibleSort: "title-asc",
+    metadataFocus: "missing-both",
+  });
+
+  assert.equal(window.total, 1);
+  assert.deepEqual(window.items.map((page) => page.id), ["both"]);
+});
+
 test("getPendingCmsReviewTargets prioritizes the strongest metadata debt first", () => {
   const pages = [
     createPage({
@@ -145,4 +235,33 @@ test("getPendingCmsReviewTargets prioritizes the strongest metadata debt first",
   assert.deepEqual(targets.map((target) => target.page.id), ["both", "title"]);
   assert.equal(targets[0]?.missingMetaTitle, true);
   assert.equal(targets[0]?.missingMetaDescription, true);
+});
+
+test("summarizeCmsMetadataDebt counts metadata debt across the matching set", () => {
+  const pages = [
+    createPage({
+      id: "both",
+      metaTitle: null,
+      metaDescription: null,
+    }),
+    createPage({
+      id: "title",
+      metaTitle: null,
+      metaDescription: "Description",
+    }),
+    createPage({
+      id: "ready",
+      metaTitle: "Meta",
+      metaDescription: "Description",
+    }),
+  ];
+
+  assert.deepEqual(summarizeCmsMetadataDebt(pages), {
+    totalCount: 3,
+    readyCount: 1,
+    attentionCount: 2,
+    missingMetaTitleCount: 2,
+    missingMetaDescriptionCount: 1,
+    missingBothCount: 1,
+  });
 });

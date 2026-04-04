@@ -7,6 +7,7 @@ import {
   withFailureDiagnostics,
 } from "@/lib/api-diagnostics";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 import type { MemberRegisterResponse } from "@/features/account/types";
 import { toLocalizedQueryMessage } from "@/localization";
 
@@ -17,7 +18,8 @@ async function postMemberAuthJson<T>(
   const { webApiBaseUrl } = getSiteRuntimeConfig();
 
   try {
-    const response = await fetch(`${webApiBaseUrl}${path}`, {
+    const requestUrl = `${webApiBaseUrl}${path}`;
+    const response = await fetch(requestUrl, buildWebApiFetchInit(requestUrl, {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -25,7 +27,7 @@ async function postMemberAuthJson<T>(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-    });
+    }));
 
     const diagnostics = getResponseDiagnostics("member-auth", path, response);
 

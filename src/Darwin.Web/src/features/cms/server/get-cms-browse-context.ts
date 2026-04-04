@@ -8,14 +8,15 @@ const getCachedCmsBrowseContext = createCachedObservedLoader({
   area: "cms-browse",
   operation: "load-core-context",
   thresholdMs: 250,
-  getContext: (culture: string, page: number) =>
-    cmsBrowseObservationContext(culture, page),
+  getContext: (culture: string, page: number, search?: string) =>
+    cmsBrowseObservationContext(culture, page, search),
   getSuccessContext: summarizeCmsBrowseCoreHealth,
-  load: async (culture: string, page: number) => {
+  load: async (culture: string, page: number, search?: string) => {
     const pagesResult = await getPublishedPages({
       page,
       pageSize: 12,
       culture,
+      search,
     });
 
     return {
@@ -24,6 +25,10 @@ const getCachedCmsBrowseContext = createCachedObservedLoader({
   },
 });
 
-export async function getCmsBrowseContext(culture: string, page: number) {
-  return getCachedCmsBrowseContext(culture, page);
+export async function getCmsBrowseContext(
+  culture: string,
+  page: number,
+  search?: string,
+) {
+  return getCachedCmsBrowseContext(culture, page, search);
 }

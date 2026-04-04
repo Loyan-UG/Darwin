@@ -13,6 +13,7 @@ import {
 } from "@/lib/public-api-cache";
 import { toLocalizedQueryMessage } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 export type PublicApiFetchStatus =
   | "ok"
@@ -38,7 +39,8 @@ async function sendPublicJson<T>(
   const cachePolicy = getPublicApiCachePolicy(key, normalizedPath);
 
   try {
-    const response = await fetch(`${webApiBaseUrl}${normalizedPath}`, {
+    const requestUrl = `${webApiBaseUrl}${normalizedPath}`;
+    const response = await fetch(requestUrl, buildWebApiFetchInit(requestUrl, {
       ...(init ?? {}),
       ...(init?.method && init.method !== "GET"
         ? {
@@ -56,7 +58,7 @@ async function sendPublicJson<T>(
         ...(init?.body ? { "Content-Type": "application/json" } : {}),
         ...(init?.headers ?? {}),
       },
-    });
+    }));
 
     const diagnostics = getResponseDiagnostics(key, normalizedPath, response);
 

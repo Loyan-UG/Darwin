@@ -28,6 +28,7 @@ import {
 } from "@/lib/locale-routing";
 import { toLocalizedQueryMessage } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 function withFlash(path: string, key: string, value: string) {
   return appendAppQueryParam(path, key, value);
@@ -49,7 +50,8 @@ async function createPaymentIntent(path: string) {
   const { webApiBaseUrl } = getSiteRuntimeConfig();
 
   try {
-    const response = await fetch(`${webApiBaseUrl}${path}`, {
+    const requestUrl = `${webApiBaseUrl}${path}`;
+    const response = await fetch(requestUrl, buildWebApiFetchInit(requestUrl, {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -58,7 +60,7 @@ async function createPaymentIntent(path: string) {
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({}),
-    });
+    }));
 
     if (!response.ok) {
       let detail = toLocalizedQueryMessage("memberPaymentHandoffHttpErrorMessage");

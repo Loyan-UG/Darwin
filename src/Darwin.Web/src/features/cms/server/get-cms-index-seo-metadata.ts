@@ -1,5 +1,6 @@
 import "server-only";
 import {
+  readCmsMetadataFocus,
   readCmsVisibleSort,
   readCmsVisibleState,
 } from "@/features/cms/discovery";
@@ -15,9 +16,11 @@ import { getSharedResource } from "@/localization";
 
 type CmsSeoSearchParams = {
   page?: string;
+  search?: string;
   visibleQuery?: string;
   visibleState?: string;
   visibleSort?: string;
+  metadataFocus?: string;
 };
 
 export const getCmsIndexSeoMetadata = createCachedObservedSeoMetadataLoader({
@@ -32,20 +35,27 @@ export const getCmsIndexSeoMetadata = createCachedObservedSeoMetadataLoader({
   load: async (culture: string, searchParams?: CmsSeoSearchParams) => {
     const shared = getSharedResource(culture);
     const safePage = readPositiveIntegerSearchParam(searchParams?.page);
+    const search = readSearchTextParam(searchParams?.search, 80);
     const visibleQuery = readSearchTextParam(searchParams?.visibleQuery);
     const visibleState = readCmsVisibleState(searchParams?.visibleState);
     const visibleSort = readCmsVisibleSort(searchParams?.visibleSort);
+    const metadataFocus = readCmsMetadataFocus(searchParams?.metadataFocus);
     const canonicalPath = buildAppQueryPath("/cms", {
       page: safePage > 1 ? safePage : undefined,
+      search,
       visibleQuery,
       visibleState: visibleState !== "all" ? visibleState : undefined,
       visibleSort: visibleSort !== "featured" ? visibleSort : undefined,
+      metadataFocus:
+        metadataFocus !== "all" ? metadataFocus : undefined,
     });
     const noIndex =
       safePage > 1 ||
+      Boolean(search) ||
       Boolean(visibleQuery) ||
       visibleState !== "all" ||
-      visibleSort !== "featured";
+      visibleSort !== "featured" ||
+      metadataFocus !== "all";
 
     return {
       metadata: buildSeoMetadata({

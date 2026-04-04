@@ -37,8 +37,11 @@ type ProductDetailPageProps = {
     visibleQuery?: string;
     visibleState?: "all" | "offers" | "base";
     visibleSort?: "featured" | "name-asc" | "price-asc" | "price-desc" | "savings-desc" | "offers-first" | "base-first";
+    mediaState?: "all" | "with-image" | "missing-image";
+    savingsBand?: "all" | "value" | "hero";
   };
   relatedProducts: PublicProductSummary[];
+  reviewProducts: PublicProductSummary[];
   cmsPages: PublicPageSummary[];
   cartSummary: {
     status: string;
@@ -48,6 +51,7 @@ type ProductDetailPageProps = {
   } | null;
   status: string;
   relatedProductsStatus?: string;
+  reviewProductsStatus?: string;
   cmsPagesStatus?: string;
 };
 
@@ -58,10 +62,12 @@ export function ProductDetailPage({
   primaryCategory,
   reviewWindow,
   relatedProducts,
+  reviewProducts,
   cmsPages,
   cartSummary,
   status,
   relatedProductsStatus,
+  reviewProductsStatus,
   cmsPagesStatus,
 }: ProductDetailPageProps) {
   const copy = getCatalogResource(culture);
@@ -160,12 +166,26 @@ export function ProductDetailPage({
       visibleQuery: reviewWindow?.visibleQuery,
       visibleState: reviewWindow?.visibleState,
       visibleSort: reviewWindow?.visibleSort,
+      mediaState: reviewWindow?.mediaState,
+      savingsBand: reviewWindow?.savingsBand,
     },
   );
-  const reviewQueueState = getPendingCatalogReviewQueueState(relatedProducts);
+  const reviewQueueState = getPendingCatalogReviewQueueState(reviewProducts, {
+    currentSlug: product.slug,
+  });
   const reviewQueue = reviewQueueState.queue;
   const nextReviewProduct = reviewQueueState.nextTarget;
   const reviewQueuePreview = reviewQueueState.previewTargets;
+  const currentReviewIndex = reviewProducts.findIndex(
+    (reviewProduct) => reviewProduct.slug === product.slug,
+  );
+  const currentReviewPosition = currentReviewIndex >= 0 ? currentReviewIndex + 1 : null;
+  const previousReviewProduct =
+    currentReviewIndex > 0 ? reviewProducts[currentReviewIndex - 1] : null;
+  const nextReviewAdjacentProduct =
+    currentReviewIndex >= 0 && currentReviewIndex < reviewProducts.length - 1
+      ? reviewProducts[currentReviewIndex + 1]
+      : null;
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
@@ -210,9 +230,10 @@ export function ProductDetailPage({
         <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
           {formatResource(copy.productRouteSummaryMessage, {
             status,
-            relatedProductsStatus: relatedProductsStatus ?? "ok",
+            relatedProductsStatus:
+              reviewProductsStatus ?? relatedProductsStatus ?? "ok",
             cmsPagesStatus: cmsPagesStatus ?? "ok",
-            relatedCount: relatedProducts.length,
+            relatedCount: reviewProducts.length,
           })}
         </p>
       </div>
@@ -406,6 +427,26 @@ export function ProductDetailPage({
                 href={localizeHref(
                   buildAppQueryPath("/catalog", {
                     category: primaryCategory?.slug,
+                    visibleQuery: reviewWindow?.visibleQuery,
+                    visibleState:
+                      reviewWindow?.visibleState !== "all"
+                        ? reviewWindow?.visibleState
+                        : undefined,
+                    visibleSort:
+                      reviewWindow?.visibleSort &&
+                      reviewWindow.visibleSort !== "featured"
+                        ? reviewWindow.visibleSort
+                        : undefined,
+                    mediaState:
+                      reviewWindow?.mediaState &&
+                      reviewWindow.mediaState !== "all"
+                        ? reviewWindow.mediaState
+                        : undefined,
+                    savingsBand:
+                      reviewWindow?.savingsBand &&
+                      reviewWindow.savingsBand !== "all"
+                        ? reviewWindow.savingsBand
+                        : undefined,
                   }),
                   culture,
                 )}
@@ -442,13 +483,10 @@ export function ProductDetailPage({
                 </p>
                 <div className="mt-4">
                   <Link
-                    href={localizeHref(
-                      buildCatalogReviewTargetHref(
-                        nextReviewProduct.product.slug,
-                        reviewWindow,
-                      ),
-                      culture,
-                    )}
+                      href={localizeHref(
+                        buildCatalogReviewTargetHref(nextReviewProduct.product.slug, reviewWindow),
+                        culture,
+                      )}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.productNextReviewTargetCta}
@@ -496,6 +534,77 @@ export function ProductDetailPage({
               ) : (
                 <div className="rounded-2xl border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   {copy.productReviewQueueFallback}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <p className="font-semibold text-[var(--color-text-primary)]">
+              {copy.productReviewNavigationTitle}
+            </p>
+            <p className="mt-2">
+              {currentReviewPosition
+                ? formatResource(copy.productReviewNavigationMessage, {
+                    current: currentReviewPosition,
+                    total: reviewProducts.length,
+                  })
+                : copy.productReviewNavigationFallback}
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {previousReviewProduct ? (
+                <Link
+                  href={localizeHref(
+                    buildCatalogReviewTargetHref(
+                      previousReviewProduct.slug,
+                      reviewWindow,
+                    ),
+                    culture,
+                  )}
+                  className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-4 transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.previous}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {previousReviewProduct.name}
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {previousReviewProduct.shortDescription ??
+                      copy.productReviewNavigationAdjacentFallback}
+                  </p>
+                </Link>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {copy.productReviewNavigationPreviousEmpty}
+                </div>
+              )}
+
+              {nextReviewAdjacentProduct ? (
+                <Link
+                  href={localizeHref(
+                    buildCatalogReviewTargetHref(
+                      nextReviewAdjacentProduct.slug,
+                      reviewWindow,
+                    ),
+                    culture,
+                  )}
+                  className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-4 transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                    {copy.next}
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
+                    {nextReviewAdjacentProduct.name}
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {nextReviewAdjacentProduct.shortDescription ??
+                      copy.productReviewNavigationAdjacentFallback}
+                  </p>
+                </Link>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {copy.productReviewNavigationNextEmpty}
                 </div>
               )}
             </div>
@@ -691,7 +800,10 @@ export function ProductDetailPage({
                   <div className="mt-4 flex flex-1 flex-col">
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                       <Link
-                        href={localizeHref(`/catalog/${relatedProduct.slug}`, culture)}
+                        href={localizeHref(
+                          buildCatalogReviewTargetHref(relatedProduct.slug, reviewWindow),
+                          culture,
+                        )}
                         className="transition hover:text-[var(--color-brand)]"
                       >
                         {relatedProduct.name}
@@ -710,7 +822,10 @@ export function ProductDetailPage({
                         )}
                       </p>
                       <Link
-                        href={localizeHref(`/catalog/${relatedProduct.slug}`, culture)}
+                        href={localizeHref(
+                          buildCatalogReviewTargetHref(relatedProduct.slug, reviewWindow),
+                          culture,
+                        )}
                         className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                       >
                         {copy.openProductCta}

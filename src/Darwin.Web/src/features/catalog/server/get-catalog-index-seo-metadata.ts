@@ -4,6 +4,8 @@ import {
   readSearchTextParam,
 } from "@/features/checkout/helpers";
 import {
+  readCatalogMediaState,
+  readCatalogSavingsBand,
   readCatalogVisibleSort,
   readCatalogVisibleState,
 } from "@/features/catalog/discovery";
@@ -16,24 +18,33 @@ import { getCatalogResource } from "@/localization";
 type CatalogSeoSearchParams = {
   category?: string;
   page?: string;
+  search?: string;
   visibleQuery?: string;
   visibleState?: string;
   visibleSort?: string;
+  mediaState?: string;
+  savingsBand?: string;
 };
 
 function buildCatalogPath(
   category?: string,
   page?: number,
+  search?: string,
   visibleQuery?: string,
   visibleState?: string,
   visibleSort?: string,
+  mediaState?: string,
+  savingsBand?: string,
 ) {
   return buildAppQueryPath("/catalog", {
     category,
     page: page && page > 1 ? page : undefined,
+    search,
     visibleQuery,
     visibleState: visibleState && visibleState !== "all" ? visibleState : undefined,
     visibleSort: visibleSort && visibleSort !== "featured" ? visibleSort : undefined,
+    mediaState: mediaState && mediaState !== "all" ? mediaState : undefined,
+    savingsBand: savingsBand && savingsBand !== "all" ? savingsBand : undefined,
   });
 }
 
@@ -50,23 +61,32 @@ export const getCatalogIndexSeoMetadata = createCachedObservedSeoMetadataLoader(
   load: async (culture: string, searchParams?: CatalogSeoSearchParams) => {
     const copy = getCatalogResource(culture);
     const category = readSearchTextParam(searchParams?.category, 80);
+    const search = readSearchTextParam(searchParams?.search, 80);
     const visibleQuery = readSearchTextParam(searchParams?.visibleQuery, 80);
     const visibleState = readCatalogVisibleState(searchParams?.visibleState);
     const visibleSort = readCatalogVisibleSort(searchParams?.visibleSort);
+    const mediaState = readCatalogMediaState(searchParams?.mediaState);
+    const savingsBand = readCatalogSavingsBand(searchParams?.savingsBand);
     const safePage = readPositiveIntegerSearchParam(searchParams?.page);
     const canonicalPath = buildCatalogPath(
       category,
       safePage,
+      search,
       visibleQuery,
       visibleState,
       visibleSort,
+      mediaState,
+      savingsBand,
     );
     const noIndex =
       Boolean(category) ||
       safePage > 1 ||
+      Boolean(search) ||
       Boolean(visibleQuery) ||
       visibleState !== "all" ||
-      visibleSort !== "featured";
+      visibleSort !== "featured" ||
+      mediaState !== "all" ||
+      savingsBand !== "all";
 
     return {
       metadata: buildSeoMetadata({

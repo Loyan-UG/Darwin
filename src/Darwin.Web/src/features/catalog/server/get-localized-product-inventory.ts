@@ -16,7 +16,7 @@ export const getLocalizedProductInventory = createCachedObservedLoader({
 
     return Promise.all(
       supportedCultures.map(async (culture) => {
-        const result = await getPublicProductSet(culture);
+        const result = await getPublicProductSet({ culture });
         return result.status === "ok" && result.data
           ? { culture, items: result.data.items }
           : { culture, items: [] };

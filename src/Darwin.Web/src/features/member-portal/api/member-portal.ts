@@ -31,6 +31,7 @@ import type {
 } from "@/features/member-portal/types";
 import { toLocalizedQueryMessage } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 export type MemberApiFetchStatus =
   | "ok"
@@ -63,14 +64,15 @@ async function fetchMemberJson<T>(
   const { webApiBaseUrl } = getSiteRuntimeConfig();
 
   try {
+    const requestUrl = `${webApiBaseUrl}${path}`;
     const runFetch = async (token: string) =>
-      fetch(`${webApiBaseUrl}${path}`, {
+      fetch(requestUrl, buildWebApiFetchInit(requestUrl, {
         cache: "no-store",
         headers: {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-      });
+      }));
 
     let response = await runFetch(accessToken);
 
@@ -185,8 +187,9 @@ async function mutateMemberJson<T>(
   const { webApiBaseUrl } = getSiteRuntimeConfig();
 
   try {
+    const requestUrl = `${webApiBaseUrl}${path}`;
     const runFetch = async (token: string) =>
-      fetch(`${webApiBaseUrl}${path}`, {
+      fetch(requestUrl, buildWebApiFetchInit(requestUrl, {
         ...init,
         cache: "no-store",
         headers: {
@@ -195,7 +198,7 @@ async function mutateMemberJson<T>(
           Authorization: `Bearer ${token}`,
           ...(init.headers ?? {}),
         },
-      });
+      }));
 
     let response = await runFetch(accessToken);
     if (response.status === 401 || response.status === 403) {

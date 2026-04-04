@@ -13,12 +13,21 @@ const getCachedCatalogIndexRouteContext = createCachedObservedLoader({
   area: "catalog",
   operation: "load-route-context",
   thresholdMs: 325,
-  getContext: (culture: string, page: number, categorySlug?: string) =>
-    catalogIndexRouteObservationContext(culture, page, categorySlug),
+  getContext: (
+    culture: string,
+    page: number,
+    categorySlug?: string,
+    search?: string,
+  ) => catalogIndexRouteObservationContext(culture, page, categorySlug, search),
   getSuccessContext: summarizeCatalogRouteHealth,
-  load: async (culture: string, page: number, categorySlug?: string) => {
+  load: async (
+    culture: string,
+    page: number,
+    categorySlug?: string,
+    search?: string,
+  ) => {
     const [browseContext, storefrontContext] = await Promise.all([
-      getCatalogBrowseContext(culture, page, categorySlug),
+      getCatalogBrowseContext(culture, page, categorySlug, search),
       getPublicStorefrontContext(culture),
     ]);
 
@@ -33,12 +42,44 @@ const getCachedCatalogDetailRouteContext = createCachedObservedLoader({
   area: "product-detail",
   operation: "load-route-context",
   thresholdMs: 325,
-  getContext: (culture: string, slug: string) =>
-    productDetailRouteObservationContext(culture, slug),
+  getContext: (
+    culture: string,
+    slug: string,
+    category?: string,
+    visibleQuery?: string,
+    visibleState?: string,
+    visibleSort?: string,
+    mediaState?: string,
+    savingsBand?: string,
+  ) => ({
+    ...productDetailRouteObservationContext(culture, slug),
+    categorySlug: category ?? null,
+    visibleQuery: visibleQuery ?? null,
+    visibleState: visibleState ?? null,
+    visibleSort: visibleSort ?? null,
+    mediaState: mediaState ?? null,
+    savingsBand: savingsBand ?? null,
+  }),
   getSuccessContext: summarizeCatalogRouteHealth,
-  load: async (culture: string, slug: string) => {
+  load: async (
+    culture: string,
+    slug: string,
+    category?: string,
+    visibleQuery?: string,
+    visibleState?: string,
+    visibleSort?: string,
+    mediaState?: string,
+    savingsBand?: string,
+  ) => {
     const [detailContext, storefrontContext] = await Promise.all([
-      getProductDetailContext(culture, slug),
+      getProductDetailContext(culture, slug, {
+        category,
+        visibleQuery,
+        visibleState,
+        visibleSort,
+        mediaState,
+        savingsBand,
+      }),
       getPublicStorefrontContext(culture),
     ]);
 
@@ -53,10 +94,29 @@ export async function getCatalogIndexRouteContext(
   culture: string,
   page: number,
   categorySlug?: string,
+  search?: string,
 ) {
-  return getCachedCatalogIndexRouteContext(culture, page, categorySlug);
+  return getCachedCatalogIndexRouteContext(culture, page, categorySlug, search);
 }
 
-export async function getCatalogDetailRouteContext(culture: string, slug: string) {
-  return getCachedCatalogDetailRouteContext(culture, slug);
+export async function getCatalogDetailRouteContext(
+  culture: string,
+  slug: string,
+  category?: string,
+  visibleQuery?: string,
+  visibleState?: string,
+  visibleSort?: string,
+  mediaState?: string,
+  savingsBand?: string,
+) {
+  return getCachedCatalogDetailRouteContext(
+    culture,
+    slug,
+    category,
+    visibleQuery,
+    visibleState,
+    visibleSort,
+    mediaState,
+    savingsBand,
+  );
 }

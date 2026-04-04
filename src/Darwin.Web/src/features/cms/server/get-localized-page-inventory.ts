@@ -16,7 +16,7 @@ export const getLocalizedPageInventory = createCachedObservedLoader({
 
     return Promise.all(
       supportedCultures.map(async (culture) => {
-        const result = await getPublishedPageSet(culture);
+        const result = await getPublishedPageSet({ culture });
         return result.status === "ok" && result.data
           ? { culture, items: result.data.items }
           : { culture, items: [] };

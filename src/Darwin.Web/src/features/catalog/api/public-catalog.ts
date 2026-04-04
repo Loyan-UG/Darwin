@@ -24,6 +24,7 @@ export async function getPublicProducts(input: {
   pageSize?: number;
   culture?: string;
   categorySlug?: string;
+  search?: string;
 }) {
   return fetchPublicJson<PagedResponse<PublicProductSummary>>(
     `/api/v1/public/catalog/products${buildQuerySuffix({
@@ -31,16 +32,23 @@ export async function getPublicProducts(input: {
       pageSize: String(input.pageSize ?? 12),
       culture: input.culture,
       categorySlug: input.categorySlug,
+      search: input.search,
     })}`,
     "catalog-products",
   );
 }
 
-export async function getPublicProductSet(culture?: string) {
+export async function getPublicProductSet(input?: {
+  culture?: string;
+  categorySlug?: string;
+  search?: string;
+}) {
   const initialResult = await getPublicProducts({
     page: 1,
     pageSize: 100,
-    culture,
+    culture: input?.culture,
+    categorySlug: input?.categorySlug,
+    search: input?.search,
   });
 
   const total = initialResult.data?.total ?? 0;
@@ -57,7 +65,9 @@ export async function getPublicProductSet(culture?: string) {
   const expandedResult = await getPublicProducts({
     page: 1,
     pageSize: total,
-    culture,
+    culture: input?.culture,
+    categorySlug: input?.categorySlug,
+    search: input?.search,
   });
 
   return expandedResult.status === "ok" && expandedResult.data

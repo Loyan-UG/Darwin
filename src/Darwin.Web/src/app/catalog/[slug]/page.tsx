@@ -1,5 +1,7 @@
 import { ProductDetailPage } from "@/components/catalog/product-detail-page";
 import {
+  readCatalogMediaState,
+  readCatalogSavingsBand,
   readCatalogVisibleSort,
   readCatalogVisibleState,
 } from "@/features/catalog/discovery";
@@ -19,6 +21,8 @@ type ProductDetailRouteProps = {
     visibleQuery?: string;
     visibleState?: string;
     visibleSort?: string;
+    mediaState?: string;
+    savingsBand?: string;
   }>;
 };
 
@@ -36,9 +40,26 @@ export default async function ProductDetailRoute({
   const culture = await getRequestCulture();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const category = readSearchTextParam(resolvedSearchParams?.category, 80);
+  const visibleQuery = readSearchTextParam(
+    resolvedSearchParams?.visibleQuery,
+    80,
+  );
+  const visibleState = readCatalogVisibleState(
+    resolvedSearchParams?.visibleState,
+  );
+  const visibleSort = readCatalogVisibleSort(resolvedSearchParams?.visibleSort);
+  const mediaState = readCatalogMediaState(resolvedSearchParams?.mediaState);
+  const savingsBand = readCatalogSavingsBand(resolvedSearchParams?.savingsBand);
   const { detailContext, continuationSlice } = await getCatalogDetailPageContext(
     culture,
     slug,
+    category,
+    visibleQuery,
+    visibleState,
+    visibleSort,
+    mediaState,
+    savingsBand,
   );
   const {
     productResult,
@@ -46,6 +67,8 @@ export default async function ProductDetailRoute({
     activeCategory,
     relatedProductsResult,
     relatedProducts,
+    reviewProductsResult,
+    reviewProducts,
   } = detailContext;
 
   return (
@@ -55,18 +78,20 @@ export default async function ProductDetailRoute({
       categories={categoriesResult.data?.items ?? []}
       primaryCategory={activeCategory}
       reviewWindow={{
-        category: readSearchTextParam(resolvedSearchParams?.category, 80),
-        visibleQuery: readSearchTextParam(resolvedSearchParams?.visibleQuery, 80),
-        visibleState: readCatalogVisibleState(
-          resolvedSearchParams?.visibleState,
-        ),
-        visibleSort: readCatalogVisibleSort(resolvedSearchParams?.visibleSort),
+        category,
+        visibleQuery,
+        visibleState,
+        visibleSort,
+        mediaState,
+        savingsBand,
       }}
       relatedProducts={relatedProducts}
+      reviewProducts={reviewProducts}
       cmsPages={continuationSlice.cmsPages}
       cartSummary={continuationSlice.cartSummary}
       status={productResult.status}
       relatedProductsStatus={relatedProductsResult?.status}
+      reviewProductsStatus={reviewProductsResult?.status}
       cmsPagesStatus={continuationSlice.cmsPagesStatus}
     />
   );
