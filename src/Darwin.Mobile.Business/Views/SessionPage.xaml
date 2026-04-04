@@ -24,7 +24,7 @@
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="{x:Static res:AppResources.PointsLabel}"
                                        Style="{StaticResource CaptionLabelStyle}" />
-                                <Label Text="{Binding PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
+                                <Label Text="{Binding PointsBalance}"
                                        Style="{StaticResource MetricValueLabelStyle}" />
                             </VerticalStackLayout>
                         </Border>
@@ -32,10 +32,11 @@
                         <Border Grid.Column="1"
                                 Style="{StaticResource MutedCardBorderStyle}">
                             <VerticalStackLayout Spacing="4">
-                                <Label Text="{x:Static res:AppResources.SessionTitle}"
+                                <Label Text="{x:Static res:AppResources.CustomerLabel}"
                                        Style="{StaticResource CaptionLabelStyle}" />
                                 <Label Text="{Binding CustomerName}"
-                                       Style="{StaticResource BodyLabelStyle}" />
+                                       Style="{StaticResource BodyLabelStyle}"
+                                       LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                         </Border>
                     </Grid>

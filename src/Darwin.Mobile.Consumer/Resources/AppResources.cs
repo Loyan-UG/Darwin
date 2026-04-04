@@ -99,6 +99,11 @@ public static class AppResources
     public static string RewardsJoinedBusinessesLabel => ResourceManager.GetString(nameof(RewardsJoinedBusinessesLabel), Culture) ?? "Joined businesses";
     public static string RewardsNextRewardSectionTitle => ResourceManager.GetString(nameof(RewardsNextRewardSectionTitle), Culture) ?? "Next reward progress";
     public static string RewardsAvailableRewardsCountFormat => ResourceManager.GetString(nameof(RewardsAvailableRewardsCountFormat), Culture) ?? "Configured rewards: {0}";
+    public static string RewardsCurrentPointsTitle => ResourceManager.GetString(nameof(RewardsCurrentPointsTitle), Culture) ?? "Current points";
+    public static string RewardsJoinedBusinessesTitle => ResourceManager.GetString(nameof(RewardsJoinedBusinessesTitle), Culture) ?? "Joined businesses";
+    public static string RewardsTotalPointsTitle => ResourceManager.GetString(nameof(RewardsTotalPointsTitle), Culture) ?? "Total points";
+    public static string RewardsConfiguredRewardsTitle => ResourceManager.GetString(nameof(RewardsConfiguredRewardsTitle), Culture) ?? "Configured rewards";
+    public static string RewardsRedeemableRewardsTitle => ResourceManager.GetString(nameof(RewardsRedeemableRewardsTitle), Culture) ?? "Redeemable rewards";
     public static string RewardsRedeemableRewardsCountFormat => ResourceManager.GetString(nameof(RewardsRedeemableRewardsCountFormat), Culture) ?? "Redeemable rewards: {0}";
     public static string RewardsNextRewardNameFormat => ResourceManager.GetString(nameof(RewardsNextRewardNameFormat), Culture) ?? "Next reward: {0}";
     public static string RewardsNextRewardRemainingFormat => ResourceManager.GetString(nameof(RewardsNextRewardRemainingFormat), Culture) ?? "Remaining points: {0}";

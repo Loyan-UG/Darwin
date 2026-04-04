@@ -14,7 +14,7 @@
         <VerticalStackLayout Padding="24,0,24,24" Spacing="14">
             <Image Source="loyan_logo.png"
                    Aspect="AspectFit"
-                   HeightRequest="112"
+                   HeightRequest="224"
                    HorizontalOptions="Center"
                    Margin="0,0,0,4" />
 
@@ -93,7 +93,8 @@
                            FontAttributes="Bold"
                            FontSize="14"
                            HorizontalTextAlignment="Center"
-                           HorizontalOptions="Center">
+                           HorizontalOptions="Center"
+                           IsVisible="{Binding ShowActivationEmailAction}">
                         <Label.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding RequestActivationEmailCommand}" />
                         </Label.GestureRecognizers>
@@ -109,7 +110,8 @@
                    TextColor="{StaticResource BrushOnSurfaceSecondary}"
                    FontSize="14"
                    HorizontalTextAlignment="Center"
-                   HorizontalOptions="Center">
+                   HorizontalOptions="Center"
+                   Margin="0,8,0,0">
                 <Label.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnLegalHubTapped" />
                 </Label.GestureRecognizers>

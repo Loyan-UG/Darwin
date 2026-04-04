@@ -24,6 +24,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private string _email = string.Empty;
     private string _password = string.Empty;
     private string? _infoMessage;
+    private bool _showActivationEmailAction;
 
     /// <summary>
     /// Raised when the page should reveal the error area (for example: scroll to top).
@@ -127,6 +128,16 @@ public sealed partial class LoginViewModel : BaseViewModel
     public bool HasInfo => !string.IsNullOrWhiteSpace(_infoMessage);
 
     /// <summary>
+    /// Gets whether the self-service activation-email action should be shown.
+    /// This action is intentionally hidden for normal sign-in to avoid cluttering the entry screen.
+    /// </summary>
+    public bool ShowActivationEmailAction
+    {
+        get => _showActivationEmailAction;
+        private set => SetProperty(ref _showActivationEmailAction, value);
+    }
+
+    /// <summary>
     /// Executes the login process. Uses <see cref="IAuthService.LoginAsync"/> and
     /// swaps the root page to the authenticated shell on success.
     /// </summary>
@@ -141,6 +152,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         IsBusy = true;
         ErrorMessage = null;
         InfoMessage = null;
+        ShowActivationEmailAction = false;
         RaiseReadinessChanged();
 
         try
@@ -172,6 +184,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         catch (Exception ex)
         {
             ErrorMessage = ResolveLoginErrorMessage(ex);
+            ShowActivationEmailAction = string.Equals(ErrorMessage, AppResources.LoginEmailConfirmationRequired, StringComparison.Ordinal);
             ErrorBecameVisibleRequested?.Invoke();
         }
         finally
@@ -202,6 +215,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         {
             ErrorMessage = AppResources.EmailRequired;
             InfoMessage = null;
+            ShowActivationEmailAction = false;
             ErrorBecameVisibleRequested?.Invoke();
             return;
         }
@@ -209,6 +223,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         IsBusy = true;
         ErrorMessage = null;
         InfoMessage = null;
+        ShowActivationEmailAction = true;
         RaiseReadinessChanged();
 
         try
@@ -217,16 +232,19 @@ public sealed partial class LoginViewModel : BaseViewModel
             if (!sent)
             {
                 ErrorMessage = AppResources.ActivationEmailRequestFailed;
+                ShowActivationEmailAction = true;
                 ErrorBecameVisibleRequested?.Invoke();
                 return;
             }
 
             InfoMessage = AppResources.ActivationEmailSent;
+            ShowActivationEmailAction = true;
             ErrorBecameVisibleRequested?.Invoke();
         }
         catch (Exception ex)
         {
             ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ActivationEmailRequestFailed);
+            ShowActivationEmailAction = true;
             ErrorBecameVisibleRequested?.Invoke();
         }
         finally

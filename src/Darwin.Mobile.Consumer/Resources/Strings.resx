@@ -232,6 +232,21 @@
   <data name="RewardsAvailableRewardsCountFormat" xml:space="preserve">
     <value>Configured rewards: {0}</value>
   </data>
+  <data name="RewardsCurrentPointsTitle" xml:space="preserve">
+    <value>Current points</value>
+  </data>
+  <data name="RewardsJoinedBusinessesTitle" xml:space="preserve">
+    <value>Joined businesses</value>
+  </data>
+  <data name="RewardsTotalPointsTitle" xml:space="preserve">
+    <value>Total points</value>
+  </data>
+  <data name="RewardsConfiguredRewardsTitle" xml:space="preserve">
+    <value>Configured rewards</value>
+  </data>
+  <data name="RewardsRedeemableRewardsTitle" xml:space="preserve">
+    <value>Redeemable rewards</value>
+  </data>
   <data name="RewardsRedeemableRewardsCountFormat" xml:space="preserve">
     <value>Redeemable rewards: {0}</value>
   </data>

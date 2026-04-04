@@ -31,38 +31,39 @@
                       RowSpacing="10">
                     <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
                         <VerticalStackLayout Spacing="4">
-                            <Label Text="{x:Static res:AppResources.DashboardSessionsFormat}" Style="{StaticResource CaptionLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.DashboardSessionsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding TotalSessions}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
                         <VerticalStackLayout Spacing="4">
-                            <Label Text="{x:Static res:AppResources.DashboardAccrualsFormat}" Style="{StaticResource CaptionLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.DashboardAccrualsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding AccrualCount}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
                         <VerticalStackLayout Spacing="4">
-                            <Label Text="{x:Static res:AppResources.DashboardRedemptionsFormat}" Style="{StaticResource CaptionLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.DashboardRedemptionsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding RedemptionCount}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
                         <VerticalStackLayout Spacing="4">
-                            <Label Text="{x:Static res:AppResources.PointsLabel}" Style="{StaticResource CaptionLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.DashboardAccruedPointsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding TotalAccruedPoints, StringFormat='{x:Static res:AppResources.DashboardAccruedPointsFormat}'}" Style="{StaticResource BodyLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.DashboardRedeemedPointsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding TotalRedeemedPoints, StringFormat='{x:Static res:AppResources.DashboardRedeemedPointsFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
                         <VerticalStackLayout Spacing="4">
-                            <Label Text="{x:Static res:AppResources.SubscriptionTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.DashboardSubscriptionIssuesTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding SubscriptionStatusRefreshFailures, StringFormat='{x:Static res:AppResources.DashboardSubscriptionRefreshFailuresFormat}'}" Style="{StaticResource BodyLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
                         <VerticalStackLayout Spacing="4">
-                            <Label Text="{x:Static res:AppResources.ReportingCampaignTargetingDisplayName}" Style="{StaticResource CaptionLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.DashboardCampaignTargetingTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding CampaignTargetingFixMetricsSummary}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>

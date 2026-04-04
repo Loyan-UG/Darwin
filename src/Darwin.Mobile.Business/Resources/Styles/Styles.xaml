@@ -171,11 +171,13 @@
     <Style x:Key="BodyLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
     </Style>
 
     <Style x:Key="SecondaryBodyLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="13" />
         <Setter Property="TextColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
     </Style>
 
     <Style x:Key="SectionEyebrowLabelStyle" TargetType="Label">
@@ -196,12 +198,14 @@
     <Style x:Key="CaptionLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="TextColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
     </Style>
 
     <Style x:Key="MetricValueLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="24" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
     </Style>
 
     <Style x:Key="CardBorderStyle" TargetType="Border">

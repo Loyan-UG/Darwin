@@ -1084,20 +1084,41 @@
   <data name="DashboardSessionsFormat" xml:space="preserve">
     <value>Sessions: {0}</value>
   </data>
+  <data name="DashboardSessionsTitle" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
   <data name="DashboardAccrualsFormat" xml:space="preserve">
     <value>Accruals: {0}</value>
+  </data>
+  <data name="DashboardAccrualsTitle" xml:space="preserve">
+    <value>Accruals</value>
   </data>
   <data name="DashboardRedemptionsFormat" xml:space="preserve">
     <value>Redemptions: {0}</value>
   </data>
+  <data name="DashboardRedemptionsTitle" xml:space="preserve">
+    <value>Redemptions</value>
+  </data>
   <data name="DashboardAccruedPointsFormat" xml:space="preserve">
     <value>Accrued points: {0}</value>
+  </data>
+  <data name="DashboardAccruedPointsTitle" xml:space="preserve">
+    <value>Accrued points</value>
   </data>
   <data name="DashboardRedeemedPointsFormat" xml:space="preserve">
     <value>Redeemed points: {0}</value>
   </data>
+  <data name="DashboardRedeemedPointsTitle" xml:space="preserve">
+    <value>Redeemed points</value>
+  </data>
   <data name="DashboardSubscriptionRefreshFailuresFormat" xml:space="preserve">
     <value>Subscription refresh failures: {0}</value>
+  </data>
+  <data name="DashboardSubscriptionIssuesTitle" xml:space="preserve">
+    <value>Subscription issues</value>
+  </data>
+  <data name="DashboardCampaignTargetingTitle" xml:space="preserve">
+    <value>Campaign targeting</value>
   </data>
   <data name="DashboardInteractionsCountFormat" xml:space="preserve">
     <value>({0})</value>

@@ -21,14 +21,17 @@
                         <Label Text="{x:Static res:AppResources.AccountSummaryLabel}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                        <Label Text="{Binding PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
+                        <Label Text="{x:Static res:AppResources.RewardsCurrentPointsTitle}"
+                               Style="{StaticResource CaptionLabelStyle}" />
+
+                        <Label Text="{Binding PointsBalance}"
                                Style="{StaticResource MetricValueLabelStyle}" />
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10"
                               IsVisible="{Binding HasAccounts}">
                             <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
                                 <VerticalStackLayout Spacing="4">
-                                    <Label Text="{Binding TotalJoinedBusinesses, StringFormat='{x:Static res:AppResources.RewardsOverviewJoinedBusinessesFormat}'}"
+                                    <Label Text="{x:Static res:AppResources.RewardsJoinedBusinessesTitle}"
                                            Style="{StaticResource CaptionLabelStyle}" />
                                     <Label Text="{Binding TotalJoinedBusinesses}"
                                            Style="{StaticResource MetricValueLabelStyle}" />
@@ -37,7 +40,7 @@
 
                             <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
                                 <VerticalStackLayout Spacing="4">
-                                    <Label Text="{Binding TotalPointsAcrossBusinesses, StringFormat='{x:Static res:AppResources.RewardsOverviewTotalPointsFormat}'}"
+                                    <Label Text="{x:Static res:AppResources.RewardsTotalPointsTitle}"
                                            Style="{StaticResource CaptionLabelStyle}" />
                                     <Label Text="{Binding TotalPointsAcrossBusinesses}"
                                            Style="{StaticResource MetricValueLabelStyle}" />
@@ -94,7 +97,8 @@
                                                 <VerticalStackLayout Grid.Column="0" Spacing="3">
                                                     <Label Text="{Binding BusinessName}"
                                                            FontAttributes="Bold"
-                                                           TextColor="{StaticResource BrushOnSurface}" />
+                                                           TextColor="{StaticResource BrushOnSurface}"
+                                                           LineBreakMode="WordWrap" />
                                                     <Label Text="{Binding PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
                                                            Style="{StaticResource SecondaryBodyLabelStyle}" />
                                                 </VerticalStackLayout>
@@ -122,7 +126,7 @@
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                                 <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding AvailableRewardsCount, StringFormat='{x:Static res:AppResources.RewardsAvailableRewardsCountFormat}'}"
+                                        <Label Text="{x:Static res:AppResources.RewardsConfiguredRewardsTitle}"
                                                Style="{StaticResource CaptionLabelStyle}" />
                                         <Label Text="{Binding AvailableRewardsCount}"
                                                Style="{StaticResource MetricValueLabelStyle}" />
@@ -131,7 +135,7 @@
 
                                 <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding RedeemableRewardsCount, StringFormat='{x:Static res:AppResources.RewardsRedeemableRewardsCountFormat}'}"
+                                        <Label Text="{x:Static res:AppResources.RewardsRedeemableRewardsTitle}"
                                                Style="{StaticResource CaptionLabelStyle}" />
                                         <Label Text="{Binding RedeemableRewardsCount}"
                                                Style="{StaticResource MetricValueLabelStyle}" />
@@ -186,7 +190,8 @@
                                                 <Label Text="{Binding Name}"
                                                        FontSize="16"
                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource BrushOnSurface}" />
+                                                       TextColor="{StaticResource BrushOnSurface}"
+                                                       LineBreakMode="WordWrap" />
                                                 <Label Text="{Binding RequiredPoints, StringFormat='{x:Static res:AppResources.RewardCostFormat}'}"
                                                        Style="{StaticResource SecondaryBodyLabelStyle}" />
                                             </VerticalStackLayout>
@@ -244,7 +249,7 @@
                                                    Text="{Binding Notes}"
                                                    FontAttributes="Bold"
                                                    TextColor="{StaticResource BrushOnSurface}"
-                                                   LineBreakMode="TailTruncation" />
+                                                   LineBreakMode="WordWrap" />
 
                                             <Label Grid.Column="2"
                                                    Text="{Binding Delta, StringFormat='{0:+#;-#;0}'}"

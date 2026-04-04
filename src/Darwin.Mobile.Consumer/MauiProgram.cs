@@ -11,7 +11,6 @@ using ZXing.Net.Maui.Controls;
 using UraniumUI.Icons.MaterialIcons;
 #if ANDROID
 using Android.Content.Res;
-using Android.Graphics;
 #endif
 
 
@@ -62,22 +61,22 @@ public static class MauiProgram
     private static void ConfigurePlatformControlColors()
     {
 #if ANDROID
-        var goldTint = ColorStateList.ValueOf(Color.ParseColor("#F4B223"));
-        var goldHighlight = Color.ParseColor("#F4B223");
+        var goldTint = ColorStateList.ValueOf(Android.Graphics.Color.ParseColor("#F4B223"));
+        var goldHighlight = Android.Graphics.Color.ParseColor("#F4B223");
 
-        EntryHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", static (handler, view) =>
+        EntryHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", (handler, view) =>
         {
             handler.PlatformView.BackgroundTintList = goldTint;
             handler.PlatformView.SetHighlightColor(goldHighlight);
         });
 
-        EditorHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", static (handler, view) =>
+        EditorHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", (handler, view) =>
         {
             handler.PlatformView.BackgroundTintList = goldTint;
             handler.PlatformView.SetHighlightColor(goldHighlight);
         });
 
-        PickerHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", static (handler, view) =>
+        PickerHandler.Mapper.AppendToMapping("ConsumerGoldInputTint", (handler, view) =>
         {
             handler.PlatformView.BackgroundTintList = goldTint;
             handler.PlatformView.SetHighlightColor(goldHighlight);
