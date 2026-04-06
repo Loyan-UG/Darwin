@@ -995,6 +995,10 @@ When the separate mobile-review chat starts, it should explicitly revisit these 
 - the seeded footer-linked legal CMS pages (`impressum`, `datenschutz`, `agb`, `widerruf`) now ship with fuller bilingual Germany-oriented starter content instead of one-line placeholders
 - degraded-success diagnostics are now quiet by default during local development, so partial-health tracing no longer floods the browser console while the route still renders successfully
 - `/catalog` and `/cms` now also build their visible browse/review windows inside shared server page-context loaders, so lens-driven review no longer duplicates matching-set fetches in the route files and diagnostics reflect the real visible window instead of only the paged seed fetch
+- shared public-discovery, protected-member, and commerce page-loader cores now also emit stable loader-kind, auth-gate, and continuation diagnostics with direct core tests, so route-family tracing is more actionable and core assembly drift is easier to catch before UI-level regressions
+- multilingual CMS/product inventory for alternates and sitemap now also flows through one shared public-discovery inventory snapshot, so `hreflang` and sitemap discovery reuse a single cached localized source instead of spinning separate page/product inventory loaders
+- shared route observability now also classifies diagnostics by signal kind, attention level, degraded-status keys, and suggested action, so production/staging logs can separate slow-but-healthy work from degraded success and immediate failures much faster
+- shared SEO metadata loaders now also have direct regression coverage, so canonical/no-index/language-alternate assembly for Home, discovery, commerce, and protected routes is less likely to drift silently behind route-level tests
 
 
 

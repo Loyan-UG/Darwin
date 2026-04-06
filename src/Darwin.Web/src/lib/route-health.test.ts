@@ -18,6 +18,7 @@ import {
   summarizeHomeRouteHealth,
   summarizeHomeCategorySpotlightsHealth,
   summarizeLocalizedAlternatesMapHealth,
+  summarizeLocalizedDiscoveryInventoryHealth,
   summarizeMemberCommerceSummaryHealth,
   summarizeMemberCollectionHealth,
   summarizeMemberDashboardHealth,
@@ -619,6 +620,26 @@ test("localized discovery health helpers summarize alternates and sitemap invent
       staticEntryCount: 3,
       cmsEntryCount: 1,
       productEntryCount: 1,
+    },
+  );
+
+  assert.deepEqual(
+    summarizeLocalizedDiscoveryInventoryHealth({
+      pages: [
+        { culture: "de-DE", items: [1, 2] },
+        { culture: "en-US", items: [] },
+      ],
+      products: [
+        { culture: "de-DE", items: [1] },
+        { culture: "en-US", items: [1, 2, 3] },
+      ],
+    }),
+    {
+      localizedCultureCount: 2,
+      localizedPageCount: 2,
+      localizedProductCount: 4,
+      emptyPageCultureCount: 1,
+      emptyProductCultureCount: 0,
     },
   );
 

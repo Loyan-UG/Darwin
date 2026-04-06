@@ -50,3 +50,79 @@ test("createPublicDiscoveryPageLoader keeps route context and adds the configure
   assert.equal(result.continuationSlice.products.length, 2);
   assert.equal(executions, 1);
 });
+
+test("createPublicDiscoveryPageLoader adds canonical loader diagnostics around the custom success summary", async () => {
+  let successSummary: Record<string, unknown> | undefined;
+  const loader = createPublicDiscoveryPageLoaderCore({
+    area: "unit-discovery-page",
+    operation: "load-page",
+    getContext: (culture: string, slug: string) => ({ culture, slug }),
+    getSuccessContext: (result) => ({
+      slug: result.slug,
+    }),
+    loadRouteContext: async (_culture: string, slug: string) => ({
+      slug,
+      storefrontContext: {
+        cmsPagesResult: { status: "ok", data: { items: [{ slug: "faq" }] } },
+        cmsPagesStatus: "ok",
+        cmsPages: [{ slug: "faq" }],
+        categoriesResult: { status: "ok", data: { items: [{ slug: "bakery" }] } },
+        categoriesStatus: "ok",
+        categories: [{ slug: "bakery" }],
+        productsResult: { status: "ok", data: { items: [{ slug: "bread" }] } },
+        productsStatus: "ok",
+        products: [{ slug: "bread" }],
+        storefrontCart: null,
+        storefrontCartStatus: "not-found",
+        cartSnapshots: [],
+        cartLinkedProductSlugs: [],
+      },
+    }),
+    thresholdMs: 999999,
+  });
+
+  await loader("de-DE", "faq");
+  const observed = createPublicDiscoveryPageLoaderCore({
+    area: "unit-discovery-page",
+    operation: "observe-page",
+    getContext: () => ({}),
+    getSuccessContext: (result) => {
+      successSummary = {
+        pageLoaderKind: "public-discovery",
+        continuationCmsCount: result.continuationSlice.cmsPages.length,
+        continuationCategoryCount: result.continuationSlice.categories.length,
+        continuationProductCount: result.continuationSlice.products.length,
+        continuationCartState: result.continuationSlice.cartSummary ? "present" : "missing",
+      };
+
+      return {};
+    },
+    loadRouteContext: async () => ({
+      storefrontContext: {
+        cmsPagesResult: { status: "ok", data: { items: [{ slug: "faq" }] } },
+        cmsPagesStatus: "ok",
+        cmsPages: [{ slug: "faq" }],
+        categoriesResult: { status: "ok", data: { items: [{ slug: "bakery" }] } },
+        categoriesStatus: "ok",
+        categories: [{ slug: "bakery" }],
+        productsResult: { status: "ok", data: { items: [{ slug: "bread" }] } },
+        productsStatus: "ok",
+        products: [{ slug: "bread" }],
+        storefrontCart: null,
+        storefrontCartStatus: "not-found",
+        cartSnapshots: [],
+        cartLinkedProductSlugs: [],
+      },
+    }),
+  });
+
+  await observed("de-DE", "faq");
+
+  assert.deepEqual(successSummary, {
+    pageLoaderKind: "public-discovery",
+    continuationCmsCount: 1,
+    continuationCategoryCount: 1,
+    continuationProductCount: 1,
+    continuationCartState: "missing",
+  });
+});

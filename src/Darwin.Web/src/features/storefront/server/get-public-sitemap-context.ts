@@ -1,7 +1,6 @@
 import "server-only";
 import type { MetadataRoute } from "next";
-import { getLocalizedProductInventory } from "@/features/catalog/server/get-localized-product-inventory";
-import { getLocalizedPageInventory } from "@/features/cms/server/get-localized-page-inventory";
+import { getLocalizedPublicDiscoveryInventory } from "@/features/storefront/server/get-localized-public-discovery-inventory";
 import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { buildLocalizedPath } from "@/lib/locale-routing";
 import { summarizePublicSitemapHealth } from "@/lib/route-health";
@@ -51,10 +50,8 @@ export const getPublicSitemapContext = createCachedObservedLoader({
       toSitemapEntry(path),
     );
 
-    const [localizedCmsSets, localizedProductSets] = await Promise.all([
-      getLocalizedPageInventory(),
-      getLocalizedProductInventory(),
-    ]);
+    const { pages: localizedCmsSets, products: localizedProductSets } =
+      await getLocalizedPublicDiscoveryInventory();
 
     const cmsEntries = groupLocalizedDetailAlternates(
       localizedCmsSets,

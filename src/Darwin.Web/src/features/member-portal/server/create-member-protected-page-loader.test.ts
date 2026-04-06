@@ -71,3 +71,49 @@ test("createMemberProtectedPageLoader keeps authorized route loading behind the 
   assert.deepEqual(result.routeContext, { status: "ok", id: "order-1" });
   assert.equal(protectedExecutions, 1);
 });
+
+test("createMemberProtectedPageLoader keeps a stable entry route and auth gate across guest and member paths", async () => {
+  const guestLoader = createMemberProtectedPageLoaderCore({
+    operation: "unit-protected-page",
+    getContext: (culture: string, id: string) => ({ culture, id }),
+    getEntryRoute: (_culture: string, id: string) => `/orders/${id}`,
+    loadEntryContext: async () => ({
+      session: null,
+      storefrontContext: {
+        cmsPagesResult: { status: "ok", data: { items: [] } },
+        cmsPagesStatus: "ok",
+        cmsPages: [],
+        categoriesResult: { status: "ok", data: { items: [] } },
+        categoriesStatus: "ok",
+        categories: [],
+        productsResult: { status: "ok", data: { items: [] } },
+        productsStatus: "ok",
+        products: [],
+        storefrontCart: null,
+        storefrontCartStatus: "not-found",
+        cartSnapshots: [],
+        cartLinkedProductSlugs: [],
+      },
+    }),
+    summarizeAuthorized: () => ({ detailStatus: "ok" }),
+    loadRouteContext: async () => ({ status: "ok" }),
+  });
+
+  const memberLoader = createMemberProtectedPageLoaderCore({
+    operation: "unit-protected-page",
+    getContext: (culture: string, id: string) => ({ culture, id }),
+    getEntryRoute: (_culture: string, id: string) => `/orders/${id}`,
+    loadEntryContext: async () => ({
+      session: { customerId: "customer-1" },
+      storefrontContext: null,
+    }),
+    summarizeAuthorized: () => ({ detailStatus: "ok" }),
+    loadRouteContext: async () => ({ status: "ok" }),
+  });
+
+  const guest = await guestLoader("de-DE", "order-1");
+  const member = await memberLoader("de-DE", "order-1");
+
+  assert.equal(guest.routeContext, null);
+  assert.equal(member.routeContext?.status, "ok");
+});

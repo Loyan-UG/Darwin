@@ -40,16 +40,92 @@ function getDurationBand(durationMs: number, thresholdMs: number) {
   return "slow";
 }
 
+function getAttentionLevel(input: {
+  durationBand: string;
+  degradedStatusCount?: number;
+  failed?: boolean;
+}) {
+  if (input.failed) {
+    return "high";
+  }
+
+  if (
+    input.durationBand === "very-slow" ||
+    (input.degradedStatusCount ?? 0) > 1
+  ) {
+    return "high";
+  }
+
+  if (
+    input.durationBand === "slow" ||
+    (input.degradedStatusCount ?? 0) === 1
+  ) {
+    return "medium";
+  }
+
+  return "low";
+}
+
+function getSignalKind(input: {
+  degradedStatusCount?: number;
+  failed?: boolean;
+  isSlow?: boolean;
+}) {
+  if (input.failed) {
+    return "failure";
+  }
+
+  if ((input.degradedStatusCount ?? 0) > 0 && input.isSlow) {
+    return "performance-and-health";
+  }
+
+  if ((input.degradedStatusCount ?? 0) > 0) {
+    return "health";
+  }
+
+  if (input.isSlow) {
+    return "performance";
+  }
+
+  return "normal";
+}
+
+function getSuggestedAction(input: {
+  degradedStatusCount?: number;
+  failed?: boolean;
+  isSlow?: boolean;
+}) {
+  if (input.failed) {
+    return "inspect-failure-cause";
+  }
+
+  if ((input.degradedStatusCount ?? 0) > 0 && input.isSlow) {
+    return "inspect-slow-and-degraded-dependencies";
+  }
+
+  if ((input.degradedStatusCount ?? 0) > 0) {
+    return "inspect-degraded-dependencies";
+  }
+
+  if (input.isSlow) {
+    return "inspect-slow-path";
+  }
+
+  return "none";
+}
+
 function buildObservedOutcomeDetail(
   durationMs: number,
   thresholdMs: number,
   degradedStatuses: Array<[string, unknown]>,
 ) {
-  const durationBand = getDurationBand(durationMs, thresholdMs);
   const degradedStatusCount = degradedStatuses.length;
   const degradedStatusMap =
     degradedStatusCount > 0 ? Object.fromEntries(degradedStatuses) : undefined;
+  const degradedStatusKeys =
+    degradedStatusCount > 0 ? degradedStatuses.map(([key]) => key) : undefined;
   const isSlow = durationMs >= thresholdMs;
+  const durationBand = getDurationBand(durationMs, thresholdMs);
 
   return {
     durationBand,
@@ -67,8 +143,13 @@ function buildObservedOutcomeDetail(
         : isSlow
           ? "slow-success"
           : "success",
+    signalKind: getSignalKind({ degradedStatusCount, isSlow }),
+    attentionLevel: getAttentionLevel({ durationBand, degradedStatusCount }),
+    suggestedAction: getSuggestedAction({ degradedStatusCount, isSlow }),
     degradedStatusCount,
     degradedStatuses: degradedStatusMap,
+    degradedStatusKeys,
+    primaryDegradedStatusKey: degradedStatusKeys?.[0],
   };
 }
 
@@ -93,37 +174,37 @@ export async function observeAsyncOperation<T>(
       thresholdMs,
       degradedStatuses,
     );
+    const diagnosticDetail = {
+      area: input.area,
+      operation: input.operation,
+      operationKey: `${input.area}:${input.operation}`,
+      durationMs,
+      ...outcomeDetail,
+      ...(input.context ?? {}),
+      ...(successDetail ?? {}),
+    };
 
     if (durationMs >= thresholdMs) {
-      warn("Darwin.Web slow operation", {
-        area: input.area,
-        operation: input.operation,
-        durationMs,
-        ...outcomeDetail,
-        ...(input.context ?? {}),
-        ...(successDetail ?? {}),
-      });
+      warn("Darwin.Web slow operation", diagnosticDetail);
     } else if (degradedStatuses.length > 0 && shouldLogDegradedOperations()) {
-      warn("Darwin.Web degraded operation", {
-        area: input.area,
-        operation: input.operation,
-        durationMs,
-        ...outcomeDetail,
-        ...(input.context ?? {}),
-        ...(successDetail ?? {}),
-      });
+      warn("Darwin.Web degraded operation", diagnosticDetail);
     }
 
     return result;
   } catch (cause) {
     const durationMs = now() - startedAt;
+    const durationBand = getDurationBand(durationMs, thresholdMs);
     error("Darwin.Web failed operation", {
       area: input.area,
       operation: input.operation,
+      operationKey: `${input.area}:${input.operation}`,
       durationMs,
-      durationBand: getDurationBand(durationMs, thresholdMs),
+      durationBand,
       healthState: "failed",
       outcomeKind: "failure",
+      signalKind: "failure",
+      attentionLevel: getAttentionLevel({ durationBand, failed: true }),
+      suggestedAction: getSuggestedAction({ failed: true }),
       ...(input.context ?? {}),
       cause,
     });

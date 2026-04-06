@@ -46,7 +46,11 @@ export function createMemberProtectedPageLoaderCore<
     area: "member-protected-page-context",
     operation,
     thresholdMs,
-    getContext,
+    getContext: (...args: TArgs) => ({
+      pageLoaderKind: "member-protected",
+      entryRoute: getEntryRoute(...args),
+      ...(getContext(...args) ?? {}),
+    }),
     getSuccessContext: (
       result: ProtectedPageContext<TEntryContext, TRouteContext>,
       ...args: TArgs
@@ -54,6 +58,9 @@ export function createMemberProtectedPageLoaderCore<
       void args;
 
       return {
+        pageLoaderKind: "member-protected",
+        entryRoute: getEntryRoute(...args),
+        authGate: result.entryContext.session ? "authorized" : "guest-fallback",
         sessionState: result.entryContext.session ? "present" : "missing",
         ...(result.routeContext
           ? summarizeAuthorized(result.routeContext, result)

@@ -89,6 +89,15 @@ export function publicSitemapObservationContext(cultures: string[]) {
   };
 }
 
+export function localizedDiscoveryInventoryObservationContext(
+  cultures: string[],
+) {
+  return {
+    cultures: cultures.join(","),
+    scope: "localized-discovery-inventory",
+  };
+}
+
 export function catalogIndexRouteObservationContext(
   culture: string,
   page: number,

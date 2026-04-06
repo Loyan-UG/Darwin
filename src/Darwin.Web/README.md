@@ -539,6 +539,10 @@ The current web slice includes:
 - public CMS/catalog/menu GET calls now also reuse canonical cached fetches and normalized cache tags, so equivalent public discovery requests avoid more duplicate work and keep cache invalidation/coherence cleaner across storefront routes
 - public GET fetches now also normalize their query-string cache keys before reuse, so equivalent CMS/catalog/menu requests dedupe at the fetch layer itself instead of only sharing invalidation tags after the fact
 - `/catalog` and `/cms` now build their visible browse/review windows inside shared server page-context loaders, so lens-driven review no longer duplicates matching-set fetches in the route files and diagnostics reflect the real visible window instead of only the paged seed fetch
+- shared public-discovery, protected-member, and commerce page-loader cores now emit stable loader-kind/auth-gate/continuation diagnostics and carry direct regression coverage, so production tracing can distinguish route families more quickly and core page assembly is less likely to drift silently
+- multilingual CMS/product inventory for alternates and sitemap now loads through one shared public-discovery inventory snapshot, so sitemap and detail-page language discovery reuse a single cached source instead of spinning separate localized inventory loaders for pages and products
+- shared route observability now also classifies diagnostics by signal type, attention level, degraded-status keys, and suggested action, so production/staging logs can distinguish slow-but-healthy work from degraded success and immediate failures without reading raw status maps by hand
+- shared SEO metadata loaders now also have direct regression coverage, so canonical/no-index/language-alternate assembly for Home, discovery, commerce, and protected routes is less likely to drift silently behind route-level tests
 
 ## Feature Logging Rule
 

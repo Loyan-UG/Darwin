@@ -654,6 +654,28 @@ export function summarizeLocalizedInventoryHealth(
   };
 }
 
+export function summarizeLocalizedDiscoveryInventoryHealth(result: {
+  pages: LocalizedInventoryLike;
+  products: LocalizedInventoryLike;
+}) {
+  return {
+    localizedCultureCount: Math.max(result.pages.length, result.products.length),
+    localizedPageCount: result.pages.reduce(
+      (total, entry) => total + entry.items.length,
+      0,
+    ),
+    localizedProductCount: result.products.reduce(
+      (total, entry) => total + entry.items.length,
+      0,
+    ),
+    emptyPageCultureCount: result.pages.filter((entry) => entry.items.length === 0)
+      .length,
+    emptyProductCultureCount: result.products.filter(
+      (entry) => entry.items.length === 0,
+    ).length,
+  };
+}
+
 export function summarizeLocalizedAlternatesMapHealth(
   result: Map<string, Record<string, string>>,
 ) {

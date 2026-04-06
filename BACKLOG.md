@@ -1033,6 +1033,10 @@ Active entries:
 - `Completed foundation`: localized query-message resolution now also falls back across the shared resource bundle, so degraded API states show real shopper-facing copy instead of leaking `i18n:*` keys into the UI
 - `Completed foundation`: degraded-success diagnostics are now quiet by default during local development, so partial-health tracing no longer floods the browser console while the route still renders successfully
 - `Completed foundation`: `/catalog` and `/cms` now build their visible browse/review windows inside shared page-context loaders, so lens-driven review no longer duplicates matching-set fetches in the route files and diagnostics reflect the real visible window instead of only the paged seed fetch
+- `Completed foundation`: shared public-discovery, protected-member, and commerce page-loader cores now also emit stable loader-kind/auth-gate/continuation diagnostics with direct regression coverage, so route-family tracing is more actionable and core page assembly is less likely to drift silently
+- `Completed foundation`: multilingual CMS/product inventory for alternates and sitemap now also flows through one shared public-discovery inventory snapshot, so `hreflang` and sitemap discovery reuse a single cached localized source instead of spinning separate page/product inventory loaders
+- `Completed foundation`: shared route observability now also classifies diagnostics by signal kind, attention level, degraded-status keys, and suggested action, so production/staging logs can separate slow-but-healthy work from degraded success and immediate failures much faster
+- `Completed foundation`: shared SEO metadata loaders now also have direct regression coverage, so canonical/no-index/language-alternate assembly for Home, discovery, commerce, and protected routes is less likely to drift silently behind route-level tests
 - `Future / Later phase`: consider replacing the current savings-first merchandising heuristic on auth/account/commerce continuation surfaces with campaign- or margin-aware ranking once WebApi exposes stronger commercial ranking signals
 
 #### Darwin.Web later quality pass

@@ -28,3 +28,24 @@ test("createCommercePageLoader keeps argument-specific commerce results distinct
   assert.equal(first.step !== third.step, true);
   assert.equal(executions >= 2, true);
 });
+
+test("createCommercePageLoader keeps commerce loader results cache-scoped without mutating the result shape", async () => {
+  const loader = createCommercePageLoaderCore({
+    operation: "unit-commerce-page",
+    getContext: (culture: string, page: string) => ({ culture, page }),
+    getSuccessContext: (result) => ({
+      step: result.step,
+    }),
+    load: async (_culture: string, page: string) => ({
+      step: page,
+      route: `/test/${page}`,
+    }),
+  });
+
+  const result = await loader("de-DE", "cart");
+
+  assert.deepEqual(result, {
+    step: "cart",
+    route: "/test/cart",
+  });
+});

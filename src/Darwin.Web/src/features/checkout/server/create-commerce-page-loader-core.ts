@@ -22,8 +22,14 @@ export function createCommercePageLoaderCore<TArgs extends unknown[], TResult>({
     area: "commerce-page-context",
     operation,
     thresholdMs,
-    getContext,
-    getSuccessContext,
+    getContext: (...args: TArgs) => ({
+      pageLoaderKind: "commerce",
+      ...(getContext(...args) ?? {}),
+    }),
+    getSuccessContext: (result: TResult, ...args: TArgs) => ({
+      pageLoaderKind: "commerce",
+      ...(getSuccessContext(result, ...args) ?? {}),
+    }),
     load,
   });
 }

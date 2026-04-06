@@ -41,18 +41,36 @@ export function createPublicDiscoveryPageLoaderCore<
     area,
     operation,
     thresholdMs,
-    getContext,
-    getSuccessContext,
+    getContext: (...args: TArgs) => ({
+      pageLoaderKind: "public-discovery",
+      ...(getContext(...args) ?? {}),
+    }),
     load: async (...args: TArgs) => {
       const routeContext = await loadRouteContext(...args);
+      const continuationSlice = createStorefrontContinuationSlice(
+        routeContext.storefrontContext,
+        sliceOptions,
+      );
 
       return {
         ...routeContext,
-        continuationSlice: createStorefrontContinuationSlice(
-          routeContext.storefrontContext,
-          sliceOptions,
-        ),
+        continuationSlice,
       };
     },
+    getSuccessContext: (
+      result: TRouteContext & {
+        continuationSlice: ReturnType<typeof createStorefrontContinuationSlice>;
+      },
+      ...args: TArgs
+    ) => ({
+      pageLoaderKind: "public-discovery",
+      continuationCmsCount: result.continuationSlice.cmsPages.length,
+      continuationCategoryCount: result.continuationSlice.categories.length,
+      continuationProductCount: result.continuationSlice.products.length,
+      continuationCartState: result.continuationSlice.cartSummary
+        ? "present"
+        : "missing",
+      ...(getSuccessContext(result, ...args) ?? {}),
+    }),
   });
 }
