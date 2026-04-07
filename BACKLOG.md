@@ -1040,6 +1040,7 @@ Active entries:
 - `Completed foundation`: catalog and CMS index SEO loaders now also consume canonical route arguments instead of raw `searchParams` objects, so browse metadata caching aligns better with the shared page-context model and avoids object-shaped cache misses on repeated discovery requests
 - `Completed foundation`: shared multilingual discovery inventory now also carries precomputed CMS/product alternates plus sitemap-ready detail entries, so detail-page `hreflang` and public sitemap reuse one projection path instead of regrouping the same inventory in multiple loaders
 - `Completed foundation`: shared SEO metadata loaders now also emit canonical `seo-metadata` diagnostics with explicit indexability state, so production tracing can distinguish metadata assembly from page assembly and read indexable versus noindex outcomes directly from the log context
+- `Completed foundation`: shared multilingual discovery projections now also have direct regression coverage for alternates and sitemap assembly, so recent performance refactors around localized inventory reuse are less likely to drift silently behind route-level tests
 - `Future / Later phase`: consider replacing the current savings-first merchandising heuristic on auth/account/commerce continuation surfaces with campaign- or margin-aware ranking once WebApi exposes stronger commercial ranking signals
 
 #### Darwin.Web later quality pass

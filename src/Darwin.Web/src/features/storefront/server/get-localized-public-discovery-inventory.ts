@@ -5,15 +5,12 @@ import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { summarizeLocalizedDiscoveryInventoryHealth } from "@/lib/route-health";
 import { localizedDiscoveryInventoryObservationContext } from "@/lib/route-observation-context";
 import { getSupportedCultures } from "@/lib/request-culture";
-import {
-  groupLocalizedDetailAlternates,
-  mapLocalizedDetailAlternatesById,
-} from "@/lib/sitemap-helpers";
+import { projectLocalizedPublicDiscoveryInventory } from "@/features/storefront/server/localized-public-discovery-projections";
 
 export const getLocalizedPublicDiscoveryInventory = createCachedObservedLoader({
   area: "public-discovery",
   operation: "load-localized-discovery-inventory",
-  thresholdMs: 225,
+  thresholdMs: 325,
   getContext: () =>
     localizedDiscoveryInventoryObservationContext(getSupportedCultures()),
   getSuccessContext: summarizeLocalizedDiscoveryInventoryHealth,
@@ -40,43 +37,6 @@ export const getLocalizedPublicDiscoveryInventory = createCachedObservedLoader({
       }),
     );
 
-    return {
-      pages: localizedByCulture.map((entry) => ({
-        culture: entry.culture,
-        items: entry.pages,
-      })),
-      products: localizedByCulture.map((entry) => ({
-        culture: entry.culture,
-        items: entry.products,
-      })),
-      pageAlternatesById: mapLocalizedDetailAlternatesById(
-        localizedByCulture.map((entry) => ({
-          culture: entry.culture,
-          items: entry.pages,
-        })),
-        (slug) => `/cms/${encodeURIComponent(slug)}`,
-      ),
-      productAlternatesById: mapLocalizedDetailAlternatesById(
-        localizedByCulture.map((entry) => ({
-          culture: entry.culture,
-          items: entry.products,
-        })),
-        (slug) => `/catalog/${encodeURIComponent(slug)}`,
-      ),
-      cmsSitemapEntries: groupLocalizedDetailAlternates(
-        localizedByCulture.map((entry) => ({
-          culture: entry.culture,
-          items: entry.pages,
-        })),
-        (slug) => `/cms/${encodeURIComponent(slug)}`,
-      ),
-      productSitemapEntries: groupLocalizedDetailAlternates(
-        localizedByCulture.map((entry) => ({
-          culture: entry.culture,
-          items: entry.products,
-        })),
-        (slug) => `/catalog/${encodeURIComponent(slug)}`,
-      ),
-    };
+    return projectLocalizedPublicDiscoveryInventory(localizedByCulture);
   },
 });
