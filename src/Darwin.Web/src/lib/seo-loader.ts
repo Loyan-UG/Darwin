@@ -9,6 +9,29 @@ export type SeoMetadataPayload = {
   languageAlternates?: Record<string, string>;
 };
 
+export function buildSeoLoaderObservationContext(
+  area: string,
+  context?: Record<string, unknown>,
+) {
+  return {
+    pageLoaderKind: "seo-metadata",
+    seoArea: area,
+    ...(context ?? {}),
+  };
+}
+
+export function buildSeoLoaderSuccessContext(
+  area: string,
+  result: SeoMetadataPayload,
+) {
+  return {
+    pageLoaderKind: "seo-metadata",
+    seoArea: area,
+    indexability: result.noIndex ? "noindex" : "indexable",
+    ...summarizeSeoMetadataHealth(result),
+  };
+}
+
 type CreateSeoLoaderOptions<TArgs extends unknown[]> = {
   area: string;
   operation: string;
@@ -28,10 +51,11 @@ export function createCachedObservedSeoMetadataLoader<TArgs extends unknown[]>({
     area,
     operation,
     thresholdMs,
-    getContext,
+    getContext: (...args: TArgs) =>
+      buildSeoLoaderObservationContext(area, getContext(...args)),
     getSuccessContext: (result, ...args: TArgs) => {
       void args;
-      return summarizeSeoMetadataHealth(result);
+      return buildSeoLoaderSuccessContext(area, result);
     },
     load,
   });

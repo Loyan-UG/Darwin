@@ -7,7 +7,6 @@ import { summarizePublicSitemapHealth } from "@/lib/route-health";
 import { publicSitemapObservationContext } from "@/lib/route-observation-context";
 import { getSupportedCultures } from "@/lib/request-culture";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
-import { groupLocalizedDetailAlternates } from "@/lib/sitemap-helpers";
 
 function toAbsoluteUrl(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -50,17 +49,15 @@ export const getPublicSitemapContext = createCachedObservedLoader({
       toSitemapEntry(path),
     );
 
-    const { pages: localizedCmsSets, products: localizedProductSets } =
+    const { cmsSitemapEntries, productSitemapEntries } =
       await getLocalizedPublicDiscoveryInventory();
 
-    const cmsEntries = groupLocalizedDetailAlternates(
-      localizedCmsSets,
-      (slug) => `/cms/${encodeURIComponent(slug)}`,
-    ).map((entry) => toSitemapEntry(entry.path, entry.languageAlternates));
-    const productEntries = groupLocalizedDetailAlternates(
-      localizedProductSets,
-      (slug) => `/catalog/${encodeURIComponent(slug)}`,
-    ).map((entry) => toSitemapEntry(entry.path, entry.languageAlternates));
+    const cmsEntries = cmsSitemapEntries.map((entry) =>
+      toSitemapEntry(entry.path, entry.languageAlternates),
+    );
+    const productEntries = productSitemapEntries.map((entry) =>
+      toSitemapEntry(entry.path, entry.languageAlternates),
+    );
 
     return {
       entries: [...staticEntries, ...cmsEntries, ...productEntries],

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
+import {
+  buildSeoLoaderObservationContext,
+  buildSeoLoaderSuccessContext,
+  createCachedObservedSeoMetadataLoader,
+} from "@/lib/seo-loader";
 
 test("createCachedObservedSeoMetadataLoader keeps metadata payloads stable per argument tuple", async () => {
   let executions = 0;
@@ -63,4 +67,42 @@ test("createCachedObservedSeoMetadataLoader preserves no-index and alternate pay
   assert.equal(result.canonicalPath, "/catalog/angebote");
   assert.equal(result.noIndex, true);
   assert.deepEqual(result.languageAlternates, {});
+});
+
+test("buildSeoLoaderObservationContext adds canonical seo-loader diagnostics", () => {
+  assert.deepEqual(
+    buildSeoLoaderObservationContext("catalog-seo", {
+      culture: "de-DE",
+      route: "/catalog",
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "catalog-seo",
+      culture: "de-DE",
+      route: "/catalog",
+    },
+  );
+});
+
+test("buildSeoLoaderSuccessContext classifies indexability alongside health data", () => {
+  assert.deepEqual(
+    buildSeoLoaderSuccessContext("cms-seo", {
+      metadata: {
+        title: "Impressum",
+      },
+      canonicalPath: "/cms/impressum",
+      noIndex: true,
+      languageAlternates: {
+        "de-DE": "/cms/impressum",
+      },
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "cms-seo",
+      indexability: "noindex",
+      canonicalPath: "/cms/impressum",
+      noIndex: true,
+      languageAlternateCount: 1,
+    },
+  );
 });

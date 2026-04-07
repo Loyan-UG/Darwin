@@ -26,7 +26,23 @@ export async function generateMetadata({
 }) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const { metadata } = await getCmsIndexSeoMetadata(culture, resolvedSearchParams);
+  const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
+  const search = readSearchTextParam(resolvedSearchParams?.search);
+  const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
+  const visibleState = readCmsVisibleState(resolvedSearchParams?.visibleState);
+  const visibleSort = readCmsVisibleSort(resolvedSearchParams?.visibleSort);
+  const metadataFocus = readCmsMetadataFocus(
+    resolvedSearchParams?.metadataFocus,
+  );
+  const { metadata } = await getCmsIndexSeoMetadata(
+    culture,
+    safePage,
+    search,
+    visibleQuery,
+    visibleState,
+    visibleSort,
+    metadataFocus,
+  );
   return metadata;
 }
 

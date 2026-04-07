@@ -999,6 +999,9 @@ When the separate mobile-review chat starts, it should explicitly revisit these 
 - multilingual CMS/product inventory for alternates and sitemap now also flows through one shared public-discovery inventory snapshot, so `hreflang` and sitemap discovery reuse a single cached localized source instead of spinning separate page/product inventory loaders
 - shared route observability now also classifies diagnostics by signal kind, attention level, degraded-status keys, and suggested action, so production/staging logs can separate slow-but-healthy work from degraded success and immediate failures much faster
 - shared SEO metadata loaders now also have direct regression coverage, so canonical/no-index/language-alternate assembly for Home, discovery, commerce, and protected routes is less likely to drift silently behind route-level tests
+- catalog and CMS index SEO loaders now also consume canonical route arguments instead of raw `searchParams` objects, so browse metadata caching aligns better with the shared page-context model and avoids object-shaped cache misses on repeated discovery requests
+- shared multilingual discovery inventory now also carries precomputed CMS/product alternates plus sitemap-ready detail entries, so detail-page `hreflang` and public sitemap reuse one projection path instead of regrouping the same inventory in multiple loaders
+- shared SEO metadata loaders now also emit canonical `seo-metadata` diagnostics with explicit indexability state, so production tracing can distinguish metadata assembly from page assembly and read indexable versus noindex outcomes directly from the log context
 
 
 

@@ -1,9 +1,5 @@
 import "server-only";
 import {
-  readPositiveIntegerSearchParam,
-  readSearchTextParam,
-} from "@/features/checkout/helpers";
-import {
   readCatalogMediaState,
   readCatalogSavingsBand,
   readCatalogVisibleSort,
@@ -15,16 +11,17 @@ import { buildSeoMetadata } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { getCatalogResource } from "@/localization";
 
-type CatalogSeoSearchParams = {
-  category?: string;
-  page?: string;
-  search?: string;
-  visibleQuery?: string;
-  visibleState?: string;
-  visibleSort?: string;
-  mediaState?: string;
-  savingsBand?: string;
-};
+type CatalogIndexSeoArgs = [
+  culture: string,
+  page?: number,
+  category?: string,
+  search?: string,
+  visibleQuery?: string,
+  visibleState?: string,
+  visibleSort?: string,
+  mediaState?: string,
+  savingsBand?: string,
+];
 
 function buildCatalogPath(
   category?: string,
@@ -48,45 +45,65 @@ function buildCatalogPath(
   });
 }
 
-export const getCatalogIndexSeoMetadata = createCachedObservedSeoMetadataLoader({
+export const getCatalogIndexSeoMetadata =
+  createCachedObservedSeoMetadataLoader<CatalogIndexSeoArgs>({
   area: "catalog-seo",
   operation: "load-index-seo-metadata",
   thresholdMs: 175,
-  getContext: (culture: string, searchParams?: CatalogSeoSearchParams) =>
-    catalogIndexRouteObservationContext(
-      culture,
-      readPositiveIntegerSearchParam(searchParams?.page),
-      readSearchTextParam(searchParams?.category, 80),
-    ),
-  load: async (culture: string, searchParams?: CatalogSeoSearchParams) => {
+  getContext: (
+    culture: string,
+    page = 1,
+    category?: string,
+    search?: string,
+    _visibleQuery?: string,
+    _visibleState?: string,
+    _visibleSort?: string,
+    _mediaState?: string,
+    _savingsBand?: string,
+  ) => {
+    void _visibleQuery;
+    void _visibleState;
+    void _visibleSort;
+    void _mediaState;
+    void _savingsBand;
+
+    return catalogIndexRouteObservationContext(culture, page, category, search);
+  },
+  load: async (
+    culture: string,
+    page = 1,
+    category?: string,
+    search?: string,
+    visibleQuery?: string,
+    visibleState?: string,
+    visibleSort?: string,
+    mediaState?: string,
+    savingsBand?: string,
+  ) => {
     const copy = getCatalogResource(culture);
-    const category = readSearchTextParam(searchParams?.category, 80);
-    const search = readSearchTextParam(searchParams?.search, 80);
-    const visibleQuery = readSearchTextParam(searchParams?.visibleQuery, 80);
-    const visibleState = readCatalogVisibleState(searchParams?.visibleState);
-    const visibleSort = readCatalogVisibleSort(searchParams?.visibleSort);
-    const mediaState = readCatalogMediaState(searchParams?.mediaState);
-    const savingsBand = readCatalogSavingsBand(searchParams?.savingsBand);
-    const safePage = readPositiveIntegerSearchParam(searchParams?.page);
+    const normalizedVisibleState = readCatalogVisibleState(visibleState);
+    const normalizedVisibleSort = readCatalogVisibleSort(visibleSort);
+    const normalizedMediaState = readCatalogMediaState(mediaState);
+    const normalizedSavingsBand = readCatalogSavingsBand(savingsBand);
     const canonicalPath = buildCatalogPath(
       category,
-      safePage,
+      page,
       search,
       visibleQuery,
-      visibleState,
-      visibleSort,
-      mediaState,
-      savingsBand,
+      normalizedVisibleState,
+      normalizedVisibleSort,
+      normalizedMediaState,
+      normalizedSavingsBand,
     );
     const noIndex =
       Boolean(category) ||
-      safePage > 1 ||
+      page > 1 ||
       Boolean(search) ||
       Boolean(visibleQuery) ||
-      visibleState !== "all" ||
-      visibleSort !== "featured" ||
-      mediaState !== "all" ||
-      savingsBand !== "all";
+      normalizedVisibleState !== "all" ||
+      normalizedVisibleSort !== "featured" ||
+      normalizedMediaState !== "all" ||
+      normalizedSavingsBand !== "all";
 
     return {
       metadata: buildSeoMetadata({

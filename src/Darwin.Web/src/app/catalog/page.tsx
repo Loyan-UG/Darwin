@@ -29,9 +29,34 @@ export async function generateMetadata({
 }) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);
+  const activeCategorySlug = readSearchTextParam(
+    resolvedSearchParams?.category,
+    80,
+  );
+  const search = readSearchTextParam(resolvedSearchParams?.search, 80);
+  const visibleQuery = readSearchTextParam(
+    resolvedSearchParams?.visibleQuery,
+    80,
+  );
+  const visibleState = readCatalogVisibleState(
+    resolvedSearchParams?.visibleState,
+  );
+  const visibleSort = readCatalogVisibleSort(resolvedSearchParams?.visibleSort);
+  const mediaState = readCatalogMediaState(resolvedSearchParams?.mediaState);
+  const savingsBand = readCatalogSavingsBand(
+    resolvedSearchParams?.savingsBand,
+  );
   const { metadata } = await getCatalogIndexSeoMetadata(
     culture,
-    resolvedSearchParams,
+    safePage,
+    activeCategorySlug,
+    search,
+    visibleQuery,
+    visibleState,
+    visibleSort,
+    mediaState,
+    savingsBand,
   );
   return metadata;
 }

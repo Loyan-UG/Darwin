@@ -4,58 +4,74 @@ import {
   readCmsVisibleSort,
   readCmsVisibleState,
 } from "@/features/cms/discovery";
-import {
-  readPositiveIntegerSearchParam,
-  readSearchTextParam,
-} from "@/features/checkout/helpers";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { cmsIndexRouteObservationContext } from "@/lib/route-observation-context";
 import { buildSeoMetadata } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { getSharedResource } from "@/localization";
 
-type CmsSeoSearchParams = {
-  page?: string;
-  search?: string;
-  visibleQuery?: string;
-  visibleState?: string;
-  visibleSort?: string;
-  metadataFocus?: string;
-};
+type CmsIndexSeoArgs = [
+  culture: string,
+  page?: number,
+  search?: string,
+  visibleQuery?: string,
+  visibleState?: string,
+  visibleSort?: string,
+  metadataFocus?: string,
+];
 
-export const getCmsIndexSeoMetadata = createCachedObservedSeoMetadataLoader({
+export const getCmsIndexSeoMetadata =
+  createCachedObservedSeoMetadataLoader<CmsIndexSeoArgs>({
   area: "cms-seo",
   operation: "load-index-seo-metadata",
   thresholdMs: 175,
-  getContext: (culture: string, searchParams?: CmsSeoSearchParams) =>
-    cmsIndexRouteObservationContext(
-      culture,
-      readPositiveIntegerSearchParam(searchParams?.page),
-    ),
-  load: async (culture: string, searchParams?: CmsSeoSearchParams) => {
+  getContext: (
+    culture: string,
+    page = 1,
+    search?: string,
+    _visibleQuery?: string,
+    _visibleState?: string,
+    _visibleSort?: string,
+    _metadataFocus?: string,
+  ) => {
+    void _visibleQuery;
+    void _visibleState;
+    void _visibleSort;
+    void _metadataFocus;
+
+    return cmsIndexRouteObservationContext(culture, page, search);
+  },
+  load: async (
+    culture: string,
+    page = 1,
+    search?: string,
+    visibleQuery?: string,
+    visibleState?: string,
+    visibleSort?: string,
+    metadataFocus?: string,
+  ) => {
     const shared = getSharedResource(culture);
-    const safePage = readPositiveIntegerSearchParam(searchParams?.page);
-    const search = readSearchTextParam(searchParams?.search, 80);
-    const visibleQuery = readSearchTextParam(searchParams?.visibleQuery);
-    const visibleState = readCmsVisibleState(searchParams?.visibleState);
-    const visibleSort = readCmsVisibleSort(searchParams?.visibleSort);
-    const metadataFocus = readCmsMetadataFocus(searchParams?.metadataFocus);
+    const normalizedVisibleState = readCmsVisibleState(visibleState);
+    const normalizedVisibleSort = readCmsVisibleSort(visibleSort);
+    const normalizedMetadataFocus = readCmsMetadataFocus(metadataFocus);
     const canonicalPath = buildAppQueryPath("/cms", {
-      page: safePage > 1 ? safePage : undefined,
+      page: page > 1 ? page : undefined,
       search,
       visibleQuery,
-      visibleState: visibleState !== "all" ? visibleState : undefined,
-      visibleSort: visibleSort !== "featured" ? visibleSort : undefined,
+      visibleState:
+        normalizedVisibleState !== "all" ? normalizedVisibleState : undefined,
+      visibleSort:
+        normalizedVisibleSort !== "featured" ? normalizedVisibleSort : undefined,
       metadataFocus:
-        metadataFocus !== "all" ? metadataFocus : undefined,
+        normalizedMetadataFocus !== "all" ? normalizedMetadataFocus : undefined,
     });
     const noIndex =
-      safePage > 1 ||
+      page > 1 ||
       Boolean(search) ||
       Boolean(visibleQuery) ||
-      visibleState !== "all" ||
-      visibleSort !== "featured" ||
-      metadataFocus !== "all";
+      normalizedVisibleState !== "all" ||
+      normalizedVisibleSort !== "featured" ||
+      normalizedMetadataFocus !== "all";
 
     return {
       metadata: buildSeoMetadata({
