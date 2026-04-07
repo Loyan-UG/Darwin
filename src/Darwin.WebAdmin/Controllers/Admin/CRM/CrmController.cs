@@ -213,7 +213,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("CustomerCreateFailedMessage", ex);
                 EnsureCustomerAddressRows(vm);
                 await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCustomerEditor(vm, "CreateCustomer");
@@ -331,7 +331,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("CustomerUpdateFailedMessage", ex);
                 EnsureCustomerAddressRows(vm);
                 await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCustomerEditor(vm, "EditCustomer");
@@ -467,7 +467,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("InvoiceUpdateFailedMessage", ex);
                 await PopulateInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderInvoiceEditor(vm);
             }
@@ -495,7 +495,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("InvoiceRefundRecordFailedMessage", ex);
             }
 
             return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
@@ -603,7 +603,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("LeadCreateFailedMessage", ex);
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderLeadEditor(vm, nameof(CreateLead));
             }
@@ -684,7 +684,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("LeadUpdateFailedMessage", ex);
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderLeadEditor(vm, nameof(EditLead));
             }
@@ -694,8 +694,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public async Task<IActionResult> Opportunities(int page = 1, int pageSize = 20, string? q = null, OpportunityQueueFilter filter = OpportunityQueueFilter.All, CancellationToken ct = default)
         {
             var (items, total) = await _getOpportunitiesPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
+            var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var vm = new OpportunitiesListVm
             {
+                Summary = MapSummary(summary),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -770,7 +772,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("OpportunityCreateFailedMessage", ex);
                 EnsureOpportunityLineRows(vm);
                 await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderOpportunityEditor(vm, nameof(CreateOpportunity));
@@ -855,7 +857,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("OpportunityUpdateFailedMessage", ex);
                 EnsureOpportunityLineRows(vm);
                 await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderOpportunityEditor(vm, nameof(EditOpportunity));
@@ -922,7 +924,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("LeadConvertFailedMessage", ex);
             }
 
             return RedirectOrHtmx(nameof(EditLead), new { id = vm.LeadId });
@@ -953,7 +955,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("SegmentCreateFailedMessage", ex);
                 return RenderSegmentEditor(vm, nameof(CreateSegment));
             }
         }
@@ -1006,7 +1008,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("SegmentUpdateFailedMessage", ex);
                 return RenderSegmentEditor(vm, nameof(EditSegment));
             }
         }
@@ -1037,7 +1039,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("InteractionAddFailedMessage", ex);
             }
 
             return await CustomerInteractions(vm.CustomerId ?? Guid.Empty, ct: ct).ConfigureAwait(false);
@@ -1069,7 +1071,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("InteractionAddFailedMessage", ex);
             }
 
             return await LeadInteractions(vm.LeadId ?? Guid.Empty, ct: ct).ConfigureAwait(false);
@@ -1101,7 +1103,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("InteractionAddFailedMessage", ex);
             }
 
             return await OpportunityInteractions(vm.OpportunityId ?? Guid.Empty, ct: ct).ConfigureAwait(false);
@@ -1147,7 +1149,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("ConsentAddFailedMessage", ex);
             }
 
             return await CustomerConsents(vm.CustomerId, ct: ct).ConfigureAwait(false);
@@ -1186,7 +1188,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("SegmentAssignFailedMessage", ex);
             }
 
             return await CustomerSegmentMemberships(vm.CustomerId, ct).ConfigureAwait(false);
@@ -1203,7 +1205,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("SegmentRemoveFailedMessage", ex);
             }
 
             return await CustomerSegmentMemberships(customerId, ct).ConfigureAwait(false);
@@ -1237,6 +1239,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
             vm.CustomerOptions = await _referenceData.GetCustomerOptionsAsync(vm.CustomerId, includeEmpty: true, ct).ConfigureAwait(false);
             vm.PaymentOptions = await _referenceData.GetPaymentOptionsAsync(vm.PaymentId, includeEmpty: true, ct).ConfigureAwait(false);
+        }
+
+        private void AddLocalizedModelError(string fallbackKey, Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(ex.Message) ? T(fallbackKey) : ex.Message);
+        }
+
+        private void SetLocalizedError(string fallbackKey, Exception ex)
+        {
+            TempData["Error"] = string.IsNullOrWhiteSpace(ex.Message) ? T(fallbackKey) : ex.Message;
         }
 
         private static void EnsureCustomerAddressRows(CustomerEditVm vm)

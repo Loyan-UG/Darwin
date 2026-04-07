@@ -2562,6 +2562,51 @@
   <data name="SegmentRemovedMessage" xml:space="preserve">
     <value>Segment entfernt.</value>
   </data>
+  <data name="CustomerCreateFailedMessage" xml:space="preserve">
+    <value>Kunde konnte nicht erstellt werden.</value>
+  </data>
+  <data name="CustomerUpdateFailedMessage" xml:space="preserve">
+    <value>Kunde konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="InvoiceUpdateFailedMessage" xml:space="preserve">
+    <value>Rechnung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="InvoiceRefundRecordFailedMessage" xml:space="preserve">
+    <value>Rechnungserstattung konnte nicht erfasst werden.</value>
+  </data>
+  <data name="LeadCreateFailedMessage" xml:space="preserve">
+    <value>Lead konnte nicht erstellt werden.</value>
+  </data>
+  <data name="LeadUpdateFailedMessage" xml:space="preserve">
+    <value>Lead konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="OpportunityCreateFailedMessage" xml:space="preserve">
+    <value>Chance konnte nicht erstellt werden.</value>
+  </data>
+  <data name="OpportunityUpdateFailedMessage" xml:space="preserve">
+    <value>Chance konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="LeadConvertFailedMessage" xml:space="preserve">
+    <value>Lead konnte nicht konvertiert werden.</value>
+  </data>
+  <data name="SegmentCreateFailedMessage" xml:space="preserve">
+    <value>Segment konnte nicht erstellt werden.</value>
+  </data>
+  <data name="SegmentUpdateFailedMessage" xml:space="preserve">
+    <value>Segment konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="InteractionAddFailedMessage" xml:space="preserve">
+    <value>Interaktion konnte nicht hinzugefügt werden.</value>
+  </data>
+  <data name="ConsentAddFailedMessage" xml:space="preserve">
+    <value>Einwilligung konnte nicht erfasst werden.</value>
+  </data>
+  <data name="SegmentAssignFailedMessage" xml:space="preserve">
+    <value>Segment konnte nicht zugewiesen werden.</value>
+  </data>
+  <data name="SegmentRemoveFailedMessage" xml:space="preserve">
+    <value>Segment konnte nicht entfernt werden.</value>
+  </data>
   <data name="WarehouseCreatedMessage" xml:space="preserve">
     <value>Lager erstellt.</value>
   </data>

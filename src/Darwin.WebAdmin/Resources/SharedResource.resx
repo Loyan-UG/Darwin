@@ -2562,6 +2562,51 @@
   <data name="SegmentRemovedMessage" xml:space="preserve">
     <value>Segment removed.</value>
   </data>
+  <data name="CustomerCreateFailedMessage" xml:space="preserve">
+    <value>Failed to create customer.</value>
+  </data>
+  <data name="CustomerUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update customer.</value>
+  </data>
+  <data name="InvoiceUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update invoice.</value>
+  </data>
+  <data name="InvoiceRefundRecordFailedMessage" xml:space="preserve">
+    <value>Failed to record invoice refund.</value>
+  </data>
+  <data name="LeadCreateFailedMessage" xml:space="preserve">
+    <value>Failed to create lead.</value>
+  </data>
+  <data name="LeadUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update lead.</value>
+  </data>
+  <data name="OpportunityCreateFailedMessage" xml:space="preserve">
+    <value>Failed to create opportunity.</value>
+  </data>
+  <data name="OpportunityUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update opportunity.</value>
+  </data>
+  <data name="LeadConvertFailedMessage" xml:space="preserve">
+    <value>Failed to convert lead.</value>
+  </data>
+  <data name="SegmentCreateFailedMessage" xml:space="preserve">
+    <value>Failed to create segment.</value>
+  </data>
+  <data name="SegmentUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update segment.</value>
+  </data>
+  <data name="InteractionAddFailedMessage" xml:space="preserve">
+    <value>Failed to add interaction.</value>
+  </data>
+  <data name="ConsentAddFailedMessage" xml:space="preserve">
+    <value>Failed to record consent.</value>
+  </data>
+  <data name="SegmentAssignFailedMessage" xml:space="preserve">
+    <value>Failed to assign segment.</value>
+  </data>
+  <data name="SegmentRemoveFailedMessage" xml:space="preserve">
+    <value>Failed to remove segment.</value>
+  </data>
   <data name="WarehouseCreatedMessage" xml:space="preserve">
     <value>Warehouse created.</value>
   </data>

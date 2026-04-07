@@ -213,6 +213,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
     public sealed class OpportunitiesListVm
     {
+        public CrmSummaryVm Summary { get; set; } = new();
         public List<OpportunityListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;

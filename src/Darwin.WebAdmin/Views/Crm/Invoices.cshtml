@@ -5,6 +5,7 @@
 }
 
 <div id="crm-invoices-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="mb-1">@T.T("Invoices")</h1>
@@ -16,6 +17,21 @@
        hx-swap="outerHTML"
        hx-push-url="true"
        class="btn btn-outline-secondary">@T.T("Overview")</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Customers")</div><div class="fs-4 fw-semibold">@Model.Summary.CustomerCount</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("OpenOpportunities")</div><div class="fs-4 fw-semibold">@Model.Summary.OpenOpportunityCount</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Segments")</div><div class="fs-4 fw-semibold">@Model.Summary.SegmentCount</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Interactions7d")</div><div class="fs-4 fw-semibold">@Model.Summary.RecentInteractionCount</div></div></div>
+    </div>
 </div>
 
 <div class="card mb-3">
