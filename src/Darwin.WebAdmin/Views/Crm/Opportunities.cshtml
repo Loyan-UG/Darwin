@@ -31,6 +31,63 @@
     </div>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("OpenQueue")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.OpenCount</div>
+                    <div class="small text-muted mt-2">@T.T("Opportunity rows still active in the pipeline.")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("ClosingSoon")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.ClosingSoonCount</div>
+                    <div class="small text-muted mt-2">@T.T("Visible opportunities requiring near-term close-date review.")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("HighValue")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.HighValueCount</div>
+                    <div class="small text-muted mt-2">@T.T("High-value pipeline rows visible in the current slice.")</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("Unassigned")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.UnassignedCount</div>
+                    <div class="small text-muted mt-2">@T.T("Opportunities still missing an explicit owner.")</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("Interactions")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.HighInteractionCount</div>
+                    <div class="small text-muted mt-2">@T.T("Rows with heavier interaction trails that may need operator review.")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("CrmOperatorPlaybooks")</h2>
+            <div class="d-grid gap-3">
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <div class="rounded border p-3 bg-light-subtle">
+                        <div class="fw-semibold">@T.T(playbook.Title)</div>
+                        <div class="small text-muted mt-2">@T.T(playbook.ScopeNote)</div>
+                        <div class="small mt-2"><strong>@T.T("CrmNextStep"):</strong> @T.T(playbook.OperatorAction)</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Opportunities" method="get" class="d-flex gap-2"
           hx-get="@Url.Action("Opportunities", "Crm")"

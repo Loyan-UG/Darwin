@@ -1,12 +1,14 @@
 import "server-only";
 import { getPublicAuthStorefrontContext } from "@/features/account/server/get-public-auth-storefront-context";
 import { createCachedObservedLoader } from "@/lib/observed-loader";
+import { normalizePublicAuthRouteArgs } from "@/lib/route-context-normalization";
 import { summarizePublicAuthRouteHealth } from "@/lib/route-health";
 
 const getCachedPublicAuthRouteContext = createCachedObservedLoader({
   area: "public-auth-route-context",
   operation: "load-route-context",
   thresholdMs: 250,
+  normalizeArgs: normalizePublicAuthRouteArgs,
   getContext: (culture: string, route: string) => ({
     culture,
     route,

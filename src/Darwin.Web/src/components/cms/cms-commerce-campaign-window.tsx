@@ -1,15 +1,16 @@
 import Link from "next/link";
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
 import type {
   PublicCategorySummary,
   PublicProductSummary,
 } from "@/features/catalog/types";
+import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
 import {
-  getProductOpportunityCampaign,
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+  buildStorefrontCategoryCampaignCards,
+  buildStorefrontProductCampaignCards,
+} from "@/features/storefront/storefront-campaigns";
 import { formatMoney } from "@/lib/formatting";
-import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
+import { localizeHref } from "@/lib/locale-routing";
 import { formatResource, getSharedResource } from "@/localization";
 
 type CmsCommerceCampaignWindowProps = {
@@ -30,61 +31,51 @@ export function CmsCommerceCampaignWindow({
   const copy = getSharedResource(culture);
   const rankedProducts = sortProductsByOpportunity(products);
   const campaignCards = [
-    ...categories.slice(0, 2).map((category) => ({
-      id: `cms-campaign-category-${category.id}`,
+    ...buildStorefrontCategoryCampaignCards(categories.slice(0, 2), {
+      prefix: "cms-campaign",
       label: copy.cmsCampaignCategoryLabel,
-      title: formatResource(copy.cmsCampaignCategoryTitle, {
-        category: category.name,
-      }),
-      description:
-        category.description ?? copy.cmsCampaignCategoryFallbackDescription,
-      href: localizeHref(
-        buildAppQueryPath("/catalog", {
-          category: category.slug,
-        }),
-        culture,
-      ),
+      fallbackDescription: copy.cmsCampaignCategoryFallbackDescription,
       ctaLabel: copy.cmsCampaignCategoryCta,
+    }).map((card) => ({
+      ...card,
+      title: formatResource(copy.cmsCampaignCategoryTitle, {
+        category: card.title,
+      }),
       meta: formatResource(copy.cmsCampaignCategoryMeta, {
         status: categoriesStatus,
       }),
     })),
-    ...rankedProducts.slice(0, 2).map((product) => {
-      const savingsPercent = getProductSavingsPercent(product);
-      const campaign = getProductOpportunityCampaign(product);
-      const campaignLabel =
-        campaign === "hero-offer"
-          ? copy.cmsCampaignProductHeroLabel
-          : campaign === "value-offer"
-            ? copy.cmsCampaignProductValueLabel
-            : campaign === "price-drop"
-              ? copy.cmsCampaignProductPriceDropLabel
-              : copy.cmsCampaignProductSteadyLabel;
-
-      return {
-        id: `cms-campaign-product-${product.id}`,
-        label: campaignLabel,
-        title: formatResource(copy.cmsCampaignProductTitle, {
-          product: product.name,
+    ...buildStorefrontProductCampaignCards(rankedProducts.slice(0, 2), {
+      prefix: "cms-campaign",
+      labels: {
+        heroOffer: copy.cmsCampaignProductHeroLabel,
+        valueOffer: copy.cmsCampaignProductValueLabel,
+        priceDrop: copy.cmsCampaignProductPriceDropLabel,
+        steadyPick: copy.cmsCampaignProductSteadyLabel,
+      },
+      formatPrice: (product) =>
+        formatMoney(product.priceMinor, product.currency, culture),
+      describeWithSavings: (_product, input) =>
+        formatResource(copy.cmsCampaignProductDescription, {
+          campaignLabel: input.campaignLabel,
+          savingsPercent: input.savingsPercent,
+          price: input.price,
         }),
-        description:
-          savingsPercent !== null
-            ? formatResource(copy.cmsCampaignProductDescription, {
-                campaignLabel,
-                savingsPercent,
-                price: formatMoney(product.priceMinor, product.currency, culture),
-              })
-            : formatResource(copy.cmsCampaignProductFallbackDescription, {
-                campaignLabel,
-                price: formatMoney(product.priceMinor, product.currency, culture),
-              }),
-        href: localizeHref(`/catalog/${product.slug}`, culture),
-        ctaLabel: copy.cmsCampaignProductCta,
-        meta: formatResource(copy.cmsCampaignProductMeta, {
-          status: productsStatus,
+      describeWithoutSavings: (_product, input) =>
+        formatResource(copy.cmsCampaignProductFallbackDescription, {
+          campaignLabel: input.campaignLabel,
+          price: input.price,
         }),
-      };
-    }),
+      ctaLabel: copy.cmsCampaignProductCta,
+    }).map((card) => ({
+      ...card,
+      title: formatResource(copy.cmsCampaignProductTitle, {
+        product: card.title,
+      }),
+      meta: formatResource(copy.cmsCampaignProductMeta, {
+        status: productsStatus,
+      }),
+    })),
   ];
 
   return (
@@ -108,42 +99,16 @@ export function CmsCommerceCampaignWindow({
           {copy.cmsCampaignWindowCta}
         </Link>
       </div>
-      {campaignCards.length > 0 ? (
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {campaignCards.map((card) => (
-            <Link
-              key={card.id}
-              href={card.href}
-              className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                {card.label}
-              </p>
-              <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                {card.title}
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {card.description}
-              </p>
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="text-sm font-semibold text-[var(--color-brand)]">
-                  {card.ctaLabel}
-                </span>
-                <span className="text-xs font-medium text-[var(--color-text-muted)]">
-                  {card.meta}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-          {formatResource(copy.cmsCampaignWindowEmptyMessage, {
-            categoriesStatus,
-            productsStatus,
-          })}
-        </p>
-      )}
+      <StorefrontCampaignBoard
+        culture={culture}
+        cards={campaignCards}
+        emptyMessage={formatResource(copy.cmsCampaignWindowEmptyMessage, {
+          categoriesStatus,
+          productsStatus,
+        })}
+        columnsClassName="md:grid-cols-2"
+        cardClassName="bg-[var(--color-surface-panel-strong)]"
+      />
     </section>
   );
 }

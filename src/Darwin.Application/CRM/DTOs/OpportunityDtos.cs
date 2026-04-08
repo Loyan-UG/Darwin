@@ -52,5 +52,7 @@ namespace Darwin.Application.CRM.DTOs
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? AssignedToUserDisplayName { get; set; }
+        public int InteractionCount { get; set; }
     }
 }

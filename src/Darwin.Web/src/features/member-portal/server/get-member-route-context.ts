@@ -13,6 +13,11 @@ import {
 import { getPublicStorefrontContext } from "@/features/storefront/server/get-public-storefront-context";
 import { createCachedObservedLoader } from "@/lib/observed-loader";
 import {
+  normalizeCultureArg,
+  normalizeEntityRouteArgs,
+  normalizePagedRouteArgs,
+} from "@/lib/route-context-normalization";
+import {
   summarizeMemberCollectionHealth,
   summarizeMemberDashboardHealth,
   summarizeMemberDetailHealth,
@@ -24,6 +29,7 @@ export const getMemberDashboardRouteContext = createCachedObservedLoader({
   area: "member-route-context",
   operation: "load-dashboard-context",
   thresholdMs: 300,
+  normalizeArgs: normalizeCultureArg,
   getContext: (culture: string) =>
     memberRouteObservationContext(culture, "/account"),
   getSuccessContext: summarizeMemberDashboardHealth,
@@ -53,6 +59,7 @@ export const getMemberEditorRouteContext = createCachedObservedLoader({
   area: "member-route-context",
   operation: "load-editor-context",
   thresholdMs: 275,
+  normalizeArgs: normalizeCultureArg,
   getContext: (culture: string) => ({ culture, routeGroup: "account-editor" }),
   getSuccessContext: summarizeMemberEditorHealth,
   load: async (culture: string) => {
@@ -72,6 +79,7 @@ export const getMemberOrdersRouteContext = createCachedObservedLoader({
   area: "member-route-context",
   operation: "load-orders-context",
   thresholdMs: 300,
+  normalizeArgs: normalizePagedRouteArgs,
   getContext: (culture: string, page: number, pageSize: number) =>
     memberRouteObservationContext(culture, "/orders", {
       page,
@@ -95,6 +103,7 @@ export const getMemberInvoicesRouteContext = createCachedObservedLoader({
   area: "member-route-context",
   operation: "load-invoices-context",
   thresholdMs: 300,
+  normalizeArgs: normalizePagedRouteArgs,
   getContext: (culture: string, page: number, pageSize: number) =>
     memberRouteObservationContext(culture, "/invoices", {
       page,
@@ -118,6 +127,7 @@ export const getMemberOrderDetailRouteContext = createCachedObservedLoader({
   area: "member-route-context",
   operation: "load-order-detail-context",
   thresholdMs: 300,
+  normalizeArgs: normalizeEntityRouteArgs,
   getContext: (culture: string, id: string) =>
     memberRouteObservationContext(culture, "/orders/[id]", { id }),
   getSuccessContext: (result) => ({
@@ -141,6 +151,7 @@ export const getMemberInvoiceDetailRouteContext = createCachedObservedLoader({
   area: "member-route-context",
   operation: "load-invoice-detail-context",
   thresholdMs: 300,
+  normalizeArgs: normalizeEntityRouteArgs,
   getContext: (culture: string, id: string) =>
     memberRouteObservationContext(culture, "/invoices/[id]", { id }),
   getSuccessContext: (result) => ({

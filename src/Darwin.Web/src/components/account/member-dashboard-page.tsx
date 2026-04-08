@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type {
   PublicCategorySummary,
@@ -8,10 +9,7 @@ import type {
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
-import {
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
 import { buildCheckoutDraftSearch, toCheckoutDraftFromMemberAddress } from "@/features/checkout/helpers";
 import { signOutMemberAction } from "@/features/member-session/actions";
 import type { MemberSession } from "@/features/member-session/types";
@@ -25,9 +23,14 @@ import type {
   MyLoyaltyBusinessSummary,
   MyLoyaltyOverview,
 } from "@/features/member-portal/types";
+import {
+  buildStorefrontCategorySpotlightLinkCards,
+  buildStorefrontOfferCards,
+  buildStorefrontPageSpotlightCards,
+} from "@/features/storefront/storefront-campaigns";
 import { formatResource, getMemberResource } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
+import { localizeHref } from "@/lib/locale-routing";
 import { parseUtcTimestamp } from "@/lib/time";
 import { toWebApiUrl } from "@/lib/webapi-url";
 
@@ -181,6 +184,42 @@ export function MemberDashboardPage({
         )
       : sortProductsByOpportunity(products)
     ).slice(0, 3);
+  const storefrontOfferCards = buildStorefrontOfferCards(rankedStorefrontProducts, {
+    labels: {
+      heroOffer: copy.offerCampaignHeroLabel,
+      valueOffer: copy.offerCampaignValueLabel,
+      priceDrop: copy.offerCampaignPriceDropLabel,
+      steadyPick: copy.offerCampaignSteadyLabel,
+    },
+    formatPrice: (product) => formatMoney(product.priceMinor, product.currency, culture),
+    describeWithSavings: (_product, input) =>
+      formatResource(copy.dashboardStorefrontProductOfferDescription, {
+        savingsPercent: input.savingsPercent,
+        price: input.price,
+      }),
+    describeWithoutSavings: (product) =>
+      product.shortDescription ?? copy.dashboardStorefrontProductFallbackDescription,
+    fallbackDescription: copy.dashboardStorefrontProductFallbackDescription,
+    formatMeta: (product) =>
+      typeof product.compareAtPriceMinor === "number" &&
+      product.compareAtPriceMinor > product.priceMinor
+        ? formatResource(copy.dashboardStorefrontProductOfferMeta, {
+            compareAt: formatMoney(
+              product.compareAtPriceMinor,
+              product.currency,
+              culture,
+            ),
+          })
+        : null,
+  });
+  const cmsSpotlightCards = buildStorefrontPageSpotlightCards(cmsPages, {
+    prefix: "dashboard",
+    fallbackDescription: copy.dashboardStorefrontCmsFallbackDescription,
+  });
+  const categorySpotlightCards = buildStorefrontCategorySpotlightLinkCards(categories, {
+    prefix: "dashboard",
+    fallbackDescription: copy.dashboardStorefrontCatalogFallbackDescription,
+  });
   const actionItems: DashboardActionItem[] = [
     hasStorefrontCart
       ? {
@@ -432,183 +471,43 @@ export function MemberDashboardPage({
               )}
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.dashboardStorefrontWindowTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.dashboardStorefrontWindowMessage, {
-                  cmsStatus: cmsPagesStatus,
-                  categoriesStatus,
-                  productsStatus,
-                  pageCount: cmsPages.length,
-                  categoryCount: categories.length,
-                  productCount: products.length,
-                })}
-              </p>
-              <div className="mt-5 grid gap-4 xl:grid-cols-3">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {copy.dashboardStorefrontCmsTitle}
-                    </p>
-                    <Link
-                      href={localizeHref("/cms", culture)}
-                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                    >
-                      {copy.dashboardStorefrontCmsCta}
-                    </Link>
-                  </div>
-                  {cmsPages.length > 0 ? (
-                    <div className="mt-4 flex flex-col gap-3 text-sm text-[var(--color-text-secondary)]">
-                      {cmsPages.map((page) => (
-                        <Link
-                          key={page.id}
-                          href={localizeHref(`/cms/${page.slug}`, culture)}
-                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                        >
-                          <p className="font-semibold text-[var(--color-text-primary)]">
-                            {page.title}
-                          </p>
-                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                            {page.metaDescription ?? copy.dashboardStorefrontCmsFallbackDescription}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {formatResource(copy.dashboardStorefrontCmsEmptyMessage, {
-                        status: cmsPagesStatus,
-                      })}
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {copy.dashboardStorefrontCatalogTitle}
-                    </p>
-                    <Link
-                      href={localizeHref("/catalog", culture)}
-                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                    >
-                      {copy.dashboardStorefrontCatalogCta}
-                    </Link>
-                  </div>
-                  {categories.length > 0 ? (
-                    <div className="mt-4 flex flex-col gap-3 text-sm text-[var(--color-text-secondary)]">
-                      {categories.map((category) => (
-                        <Link
-                          key={category.id}
-                          href={localizeHref(
-                            buildAppQueryPath("/catalog", {
-                              category: category.slug,
-                            }),
-                            culture,
-                          )}
-                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                        >
-                          <p className="font-semibold text-[var(--color-text-primary)]">
-                            {category.name}
-                          </p>
-                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                            {category.description ?? copy.dashboardStorefrontCatalogFallbackDescription}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {formatResource(copy.dashboardStorefrontCatalogEmptyMessage, {
-                        status: categoriesStatus,
-                      })}
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {copy.dashboardStorefrontProductTitle}
-                    </p>
-                    <Link
-                      href={localizeHref("/catalog", culture)}
-                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                    >
-                      {copy.dashboardStorefrontProductCta}
-                    </Link>
-                  </div>
-                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                    {cartLinkedSlugSet.size > 0
-                      ? formatResource(copy.dashboardStorefrontProductCartAwareMessage, {
-                          count: cartLinkedSlugSet.size,
-                        })
-                      : copy.dashboardStorefrontProductMessage}
-                  </p>
-                  {rankedStorefrontProducts.length > 0 ? (
-                    <div className="mt-4 flex flex-col gap-3 text-sm text-[var(--color-text-secondary)]">
-                      {rankedStorefrontProducts.map((product) => {
-                        const savingsPercent = getProductSavingsPercent(product);
-
-                        return (
-                          <Link
-                            key={product.id}
-                            href={localizeHref(`/catalog/${product.slug}`, culture)}
-                            className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                          >
-                            <p className="font-semibold text-[var(--color-text-primary)]">
-                              {product.name}
-                            </p>
-                            <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                              {savingsPercent !== null
-                                ? formatResource(
-                                    copy.dashboardStorefrontProductOfferDescription,
-                                    {
-                                      savingsPercent,
-                                      price: formatMoney(
-                                        product.priceMinor,
-                                        product.currency,
-                                        culture,
-                                      ),
-                                    },
-                                  )
-                                : product.shortDescription ??
-                                  copy.dashboardStorefrontProductFallbackDescription}
-                            </p>
-                            <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                              {formatMoney(product.priceMinor, product.currency, culture)}
-                            </p>
-                            {savingsPercent !== null ? (
-                              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                                {formatResource(
-                                  copy.dashboardStorefrontProductOfferMeta,
-                                  {
-                                    compareAt: formatMoney(
-                                      product.compareAtPriceMinor ??
-                                        product.priceMinor,
-                                      product.currency,
-                                      culture,
-                                    ),
-                                  },
-                                )}
-                              </p>
-                            ) : null}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {formatResource(copy.dashboardStorefrontProductEmptyMessage, {
-                        status: productsStatus,
-                      })}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <MemberStorefrontWindow
+              culture={culture}
+              title={copy.dashboardStorefrontWindowTitle}
+              message={formatResource(copy.dashboardStorefrontWindowMessage, {
+                cmsStatus: cmsPagesStatus,
+                categoriesStatus,
+                productsStatus,
+                pageCount: cmsPages.length,
+                categoryCount: categories.length,
+                productCount: products.length,
+              })}
+              cmsTitle={copy.dashboardStorefrontCmsTitle}
+              cmsCtaLabel={copy.dashboardStorefrontCmsCta}
+              cmsCards={cmsSpotlightCards}
+              cmsEmptyMessage={formatResource(copy.dashboardStorefrontCmsEmptyMessage, {
+                status: cmsPagesStatus,
+              })}
+              catalogTitle={copy.dashboardStorefrontCatalogTitle}
+              catalogCtaLabel={copy.dashboardStorefrontCatalogCta}
+              categoryCards={categorySpotlightCards}
+              catalogEmptyMessage={formatResource(copy.dashboardStorefrontCatalogEmptyMessage, {
+                status: categoriesStatus,
+              })}
+              productTitle={copy.dashboardStorefrontProductTitle}
+              productCtaLabel={copy.dashboardStorefrontProductCta}
+              productMessage={
+                cartLinkedSlugSet.size > 0
+                  ? formatResource(copy.dashboardStorefrontProductCartAwareMessage, {
+                      count: cartLinkedSlugSet.size,
+                    })
+                  : copy.dashboardStorefrontProductMessage
+              }
+              productCards={storefrontOfferCards}
+              productEmptyMessage={formatResource(copy.dashboardStorefrontProductEmptyMessage, {
+                status: productsStatus,
+              })}
+            />
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">

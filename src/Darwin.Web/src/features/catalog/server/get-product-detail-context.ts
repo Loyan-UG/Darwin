@@ -86,6 +86,15 @@ const getCachedProductDetailContext = createCachedObservedLoader({
   area: "product-detail",
   operation: "load-detail-context",
   thresholdMs: 275,
+  normalizeArgs: (
+    culture: string,
+    slug: string,
+    reviewWindow?: ProductDetailReviewWindow,
+  ): [string, string, ProductDetailReviewWindow] => [
+    culture,
+    slug,
+    normalizeReviewWindow(reviewWindow),
+  ],
   getContext: (
     culture: string,
     slug: string,
@@ -185,5 +194,9 @@ export async function getProductDetailContext(
   slug: string,
   reviewWindow?: ProductDetailReviewWindow,
 ) {
-  return getCachedProductDetailContext(culture, slug, reviewWindow);
+  return getCachedProductDetailContext(
+    culture,
+    slug,
+    normalizeReviewWindow(reviewWindow),
+  );
 }

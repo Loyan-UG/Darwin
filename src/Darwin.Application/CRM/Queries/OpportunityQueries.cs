@@ -130,11 +130,21 @@ namespace Darwin.Application.CRM.Queries
                 RowVersion = opportunity.RowVersion,
                 CustomerId = opportunity.CustomerId,
                 CustomerDisplayName = customerName ?? string.Empty,
+                AssignedToUserDisplayName = opportunity.AssignedToUserId.HasValue
+                    ? await _db.Set<User>().AsNoTracking()
+                        .Where(x => x.Id == opportunity.AssignedToUserId.Value)
+                        .Select(x => ((x.FirstName ?? string.Empty) + " " + (x.LastName ?? string.Empty)).Trim())
+                        .FirstOrDefaultAsync(ct)
+                        .ConfigureAwait(false)
+                    : null,
                 Title = opportunity.Title,
                 EstimatedValueMinor = opportunity.EstimatedValueMinor,
                 Stage = opportunity.Stage,
                 ExpectedCloseDateUtc = opportunity.ExpectedCloseDateUtc,
                 AssignedToUserId = opportunity.AssignedToUserId,
+                InteractionCount = await _db.Set<Interaction>().AsNoTracking()
+                    .CountAsync(x => x.OpportunityId == opportunity.Id, ct)
+                    .ConfigureAwait(false),
                 Items = opportunity.Items
                     .OrderBy(x => x.CreatedAtUtc)
                     .Select(x => new OpportunityItemDto

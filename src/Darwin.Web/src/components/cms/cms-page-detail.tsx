@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
+import { CmsStorefrontSupportWindow } from "@/components/cms/cms-storefront-support-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
-import {
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
 import { summarizeCmsContent } from "@/features/cms/content-summary";
 import {
   getCmsReviewTarget,
@@ -20,10 +17,8 @@ import {
   getPendingCmsReviewQueueState,
 } from "@/features/review/review-workflow";
 import type { PublicPageDetail, PublicPageSummary } from "@/features/cms/types";
-import { formatMoney } from "@/lib/formatting";
 import { sanitizeHtmlFragment } from "@/lib/html-fragment";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
-import { toWebApiUrl } from "@/lib/webapi-url";
 import {
   formatResource,
   getSharedResource,
@@ -70,7 +65,6 @@ export function CmsPageDetail({
   cartSummary,
 }: CmsPageDetailProps) {
   const copy = getSharedResource(culture);
-  const productOpportunities = sortProductsByOpportunity(products);
   const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
   const pageReference = page ? localizeHref(`/cms/${page.slug}`, culture) : null;
   const contentSummary = page
@@ -594,162 +588,14 @@ export function CmsPageDetail({
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                  {copy.cmsCatalogWindowTitle}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {formatResource(copy.cmsCatalogWindowMessage, {
-                    categoriesStatus,
-                    categoryCount: categories.length,
-                  })}
-                </p>
-              </div>
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsCatalogWindowCta}
-              </Link>
-            </div>
-            {categories.length > 0 ? (
-              <div className="mt-5 grid gap-3">
-                {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={localizeHref(
-                      buildAppQueryPath("/catalog", { category: category.slug }),
-                      culture,
-                    )}
-                    className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
-                  >
-                    <p className="font-semibold text-[var(--color-text-primary)]">
-                      {category.name}
-                    </p>
-                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {category.description ??
-                        copy.cmsCatalogWindowFallbackDescription}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.cmsCatalogWindowEmptyMessage, {
-                  status: categoriesStatus,
-                })}
-              </p>
-            )}
-          </div>
-
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                  {copy.cmsProductsWindowTitle}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {formatResource(copy.cmsProductsWindowMessage, {
-                    productsStatus,
-                    productCount: products.length,
-                  })}
-                </p>
-              </div>
-              <Link
-                href={localizeHref("/catalog", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsProductsWindowCta}
-              </Link>
-            </div>
-            {productOpportunities.length > 0 ? (
-              <div className="mt-5 grid gap-3">
-                {productOpportunities.map((product) => {
-                  const productImageUrl = toWebApiUrl(product.primaryImageUrl ?? "");
-                  const savingsPercent = getProductSavingsPercent(product);
-                  return (
-                    <Link
-                      key={product.id}
-                      href={localizeHref(`/catalog/${product.slug}`, culture)}
-                      className="grid gap-3 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)] md:grid-cols-[72px_minmax(0,1fr)]"
-                    >
-                      <div className="flex h-[72px] items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-2">
-                        {productImageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={productImageUrl}
-                            alt={product.name}
-                            className="max-h-14 w-auto object-contain"
-                          />
-                        ) : (
-                          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                            {copy.noImage}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[var(--color-text-primary)]">
-                          {product.name}
-                        </p>
-                        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                          {savingsPercent !== null
-                            ? formatResource(copy.cmsProductsWindowOfferDescription, {
-                                savingsPercent,
-                                price: formatMoney(product.priceMinor, product.currency, culture),
-                              })
-                            : product.shortDescription ??
-                              copy.cmsProductsWindowFallbackDescription}
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
-                          {formatMoney(product.priceMinor, product.currency, culture)}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.cmsProductsWindowEmptyMessage, {
-                  status: productsStatus,
-                })}
-              </p>
-            )}
-          </div>
-
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-              {copy.cmsCartWindowTitle}
-            </p>
-            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {cartSummary
-                ? formatResource(copy.cmsCartWindowMessage, {
-                    itemCount: cartSummary.itemCount,
-                    total: formatMoney(
-                      cartSummary.grandTotalGrossMinor,
-                      cartSummary.currency,
-                      culture,
-                    ),
-                  })
-                : copy.cmsCartWindowFallback}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                href={localizeHref("/cart", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsCartWindowCartCta}
-              </Link>
-              <Link
-                href={localizeHref("/checkout", culture)}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.cmsCartWindowCheckoutCta}
-              </Link>
-            </div>
-          </div>
+          <CmsStorefrontSupportWindow
+            culture={culture}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
+            products={products}
+            productsStatus={productsStatus}
+            cartSummary={cartSummary}
+          />
 
           <CmsCommerceCampaignWindow
             culture={culture}

@@ -7,6 +7,91 @@
 
 <div id="crm-customer-editor-shell">
     <h1 class="mb-3">@heading</h1>
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+    @if (Model.Id != Guid.Empty)
+    {
+        <div class="card border-0 bg-light mb-3">
+            <div class="card-body py-3">
+                <div class="row g-3 small">
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("CustomerLinkedUser")</div>
+                        <div class="fw-semibold">@(Model.UserId.HasValue ? Model.UserId.Value.ToString() : T.T("Unlinked"))</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Company")</div>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.CompanyName) ? "-" : Model.CompanyName)</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("TaxProfile")</div>
+                        <div class="fw-semibold">@Model.TaxProfileType</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("TaxId")</div>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.VatId) ? T.T("Missing") : Model.VatId)</div>
+                    </div>
+                </div>
+                <div class="row g-3 small mt-1">
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Locale")</div>
+                        <div class="fw-semibold">@(Model.UsesPlatformLocaleFallback ? T.T("LocaleFallback") : (Model.EffectiveLocale ?? "-"))</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Segments")</div>
+                        <div class="fw-semibold">@Model.SegmentCount</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Opportunities")</div>
+                        <div class="fw-semibold">@Model.OpportunityCount</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Interactions") / @T.T("Consents")</div>
+                        <div class="fw-semibold">@Model.InteractionCount / @Model.ConsentCount</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 bg-light mb-3">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <div class="fw-semibold">@T.T("CustomerFollowUpWorkspace")</div>
+                        <div class="small text-muted mt-1">@T.T("CustomerFollowUpWorkspaceNote")</div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-action="CreateOpportunity"
+                           asp-route-customerId="@Model.Id"
+                           class="btn btn-sm btn-outline-success"
+                           hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = Model.Id })"
+                           hx-target="#crm-customer-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-briefcase"></i> @T.T("CreateOpportunity")
+                        </a>
+                        <a asp-action="Invoices"
+                           asp-route-q="@Model.Id"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Id })"
+                           hx-target="#crm-customer-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-file-invoice"></i> @T.T("ReviewInvoices")
+                        </a>
+                        <a asp-action="Customers"
+                           asp-route-filter="NeedsSegmentation"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Customers", "Crm", new { filter = "NeedsSegmentation" })"
+                           hx-target="#crm-customer-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-tags"></i> @T.T("ReviewSegmentation")
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     <form asp-action="@formAction"
           method="post"
@@ -25,6 +110,78 @@
             <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-customer-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
+
+    @if (Model.Id != Guid.Empty)
+    {
+        <div class="row g-3 mt-4">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>@T.T("Interactions")</span>
+                        <a asp-action="EditCustomer"
+                           asp-route-id="@Model.Id"
+                           asp-fragment="customer-interactions-section"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.Id, fragment = "customer-interactions-section" })"
+                           hx-target="#crm-customer-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                    </div>
+                    <div class="card-body" id="customer-interactions-section"
+                         hx-get="@Url.Action("CustomerInteractions", "Crm", new { customerId = Model.Id })"
+                         hx-trigger="load"
+                         hx-target="this"
+                         hx-swap="innerHTML">
+                        <div class="text-muted small">@T.T("Loading")...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>@T.T("Consents")</span>
+                        <a asp-action="EditCustomer"
+                           asp-route-id="@Model.Id"
+                           asp-fragment="customer-consents-section"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.Id, fragment = "customer-consents-section" })"
+                           hx-target="#crm-customer-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                    </div>
+                    <div class="card-body" id="customer-consents-section"
+                         hx-get="@Url.Action("CustomerConsents", "Crm", new { customerId = Model.Id })"
+                         hx-trigger="load"
+                         hx-target="this"
+                         hx-swap="innerHTML">
+                        <div class="text-muted small">@T.T("Loading")...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>@T.T("Segments")</span>
+                        <a asp-action="EditCustomer"
+                           asp-route-id="@Model.Id"
+                           asp-fragment="customer-segments-section"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.Id, fragment = "customer-segments-section" })"
+                           hx-target="#crm-customer-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                    </div>
+                    <div class="card-body" id="customer-segments-section"
+                         hx-get="@Url.Action("CustomerSegmentMemberships", "Crm", new { customerId = Model.Id })"
+                         hx-trigger="load"
+                         hx-target="this"
+                         hx-swap="innerHTML">
+                        <div class="text-muted small">@T.T("Loading")...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 <partial name="~/Views/Crm/_CustomerFormScript.cshtml" />

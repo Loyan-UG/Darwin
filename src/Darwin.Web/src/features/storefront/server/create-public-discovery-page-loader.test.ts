@@ -126,3 +126,41 @@ test("createPublicDiscoveryPageLoader adds canonical loader diagnostics around t
     continuationCartState: "missing",
   });
 });
+
+test("createPublicDiscoveryPageLoader normalizes equivalent arguments before caching", async () => {
+  const loader = createPublicDiscoveryPageLoaderCore({
+    area: "unit-discovery-page",
+    operation: "load-page",
+    normalizeArgs: (culture: string, slug: string) => [culture.trim(), slug.trim()] as [string, string],
+    getContext: (culture: string, slug: string) => ({ culture, slug }),
+    getSuccessContext: () => ({}),
+    loadRouteContext: async (_culture: string, slug: string) => {
+      return {
+        slug,
+        storefrontContext: {
+          cmsPagesResult: { status: "ok", data: { items: [] } },
+          cmsPagesStatus: "ok",
+          cmsPages: [],
+          categoriesResult: { status: "ok", data: { items: [] } },
+          categoriesStatus: "ok",
+          categories: [],
+          productsResult: { status: "ok", data: { items: [] } },
+          productsStatus: "ok",
+          products: [],
+          storefrontCart: null,
+          storefrontCartStatus: "not-found",
+          cartSnapshots: [],
+          cartLinkedProductSlugs: [],
+        },
+      };
+    },
+  });
+
+  const [first, second] = await Promise.all([
+    loader("de-DE", "faq"),
+    loader(" de-DE ", " faq "),
+  ]);
+
+  assert.equal(first.slug, "faq");
+  assert.equal(second.slug, "faq");
+});

@@ -5,14 +5,66 @@ import { getPublicStorefrontContext } from "@/features/storefront/server/get-pub
 import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { summarizeCatalogRouteHealth } from "@/lib/route-health";
 import {
+  readCatalogMediaState,
+  readCatalogSavingsBand,
+  readCatalogVisibleSort,
+  readCatalogVisibleState,
+} from "@/features/catalog/discovery";
+import {
   catalogIndexRouteObservationContext,
   productDetailRouteObservationContext,
 } from "@/lib/route-observation-context";
+
+function normalizeCatalogIndexArgs(
+  culture: string,
+  page: number,
+  categorySlug?: string,
+  search?: string,
+): [string, number, string | undefined, string | undefined] {
+  return [
+    culture,
+    Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
+    categorySlug?.trim() || undefined,
+    search?.trim() || undefined,
+  ];
+}
+
+function normalizeCatalogDetailArgs(
+  culture: string,
+  slug: string,
+  category?: string,
+  visibleQuery?: string,
+  visibleState?: string,
+  visibleSort?: string,
+  mediaState?: string,
+  savingsBand?: string,
+): [
+  string,
+  string,
+  string | undefined,
+  string | undefined,
+  string | undefined,
+  string | undefined,
+  string | undefined,
+  string | undefined,
+] {
+  return [
+    culture,
+    slug,
+    category?.trim() || undefined,
+    visibleQuery?.trim() || undefined,
+    readCatalogVisibleState(visibleState),
+    readCatalogVisibleSort(visibleSort),
+    readCatalogMediaState(mediaState),
+    readCatalogSavingsBand(savingsBand),
+  ];
+}
 
 const getCachedCatalogIndexRouteContext = createCachedObservedLoader({
   area: "catalog",
   operation: "load-route-context",
   thresholdMs: 325,
+  normalizeArgs: normalizeCatalogIndexArgs,
   getContext: (
     culture: string,
     page: number,
@@ -42,6 +94,7 @@ const getCachedCatalogDetailRouteContext = createCachedObservedLoader({
   area: "product-detail",
   operation: "load-route-context",
   thresholdMs: 325,
+  normalizeArgs: normalizeCatalogDetailArgs,
   getContext: (
     culture: string,
     slug: string,

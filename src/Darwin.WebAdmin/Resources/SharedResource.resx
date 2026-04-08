@@ -3266,4 +3266,236 @@
     <value>Site settings are missing. Configure system settings before relying on mobile operations diagnostics.</value>
     <comment>Error shown when mobile operations diagnostics cannot run because site settings are missing.</comment>
   </data>
+  <data name="CrmCustomersFootprintNote" xml:space="preserve">
+    <value>Current CRM customer footprint.</value>
+    <comment>Summary note for the CRM customers total card.</comment>
+  </data>
+  <data name="CrmCustomerSegmentsCoverageNote" xml:space="preserve">
+    <value>Available segmentation buckets across CRM operations.</value>
+    <comment>Summary note for CRM segment coverage on the customers workspace.</comment>
+  </data>
+  <data name="CrmCustomerPipelineNote" xml:space="preserve">
+    <value>Live opportunity pipeline linked to current CRM customers.</value>
+    <comment>Summary note for pipeline context on the customers workspace.</comment>
+  </data>
+  <data name="CrmCustomerRecentInteractionsNote" xml:space="preserve">
+    <value>Recent interaction signal across support and lifecycle work.</value>
+    <comment>Summary note for recent CRM interactions on the customers workspace.</comment>
+  </data>
+  <data name="CrmCustomerLinkedIdentityNote" xml:space="preserve">
+    <value>Visible customer rows already linked to a platform identity.</value>
+    <comment>Operational note for linked-user customer rows.</comment>
+  </data>
+  <data name="CrmCustomerNeedsSegmentationNote" xml:space="preserve">
+    <value>Current page rows without any CRM segment membership.</value>
+    <comment>Operational note for customers needing segmentation.</comment>
+  </data>
+  <data name="CrmCustomerOpportunityContextNote" xml:space="preserve">
+    <value>Customers already carrying active opportunity context.</value>
+    <comment>Operational note for customers with opportunities.</comment>
+  </data>
+  <data name="CrmCustomerBusinessProfileNote" xml:space="preserve">
+    <value>Visible business-profile customers in this queue slice.</value>
+    <comment>Operational note for business-profile customer rows.</comment>
+  </data>
+  <data name="CrmCustomerMissingVatNote" xml:space="preserve">
+    <value>Business customers still missing VAT data for finance-safe follow-up.</value>
+    <comment>Operational note for business customers missing VAT data.</comment>
+  </data>
+  <data name="CrmOperatorPlaybooks" xml:space="preserve">
+    <value>Operator playbooks</value>
+    <comment>Heading for CRM operator playbooks.</comment>
+  </data>
+  <data name="CrmNextStep" xml:space="preserve">
+    <value>Next step</value>
+    <comment>Label for the recommended next step in CRM playbooks.</comment>
+  </data>
+  <data name="CrmCustomerLocaleFallbackPlaybookTitle" xml:space="preserve">
+    <value>Locale fallback customers</value>
+    <comment>Playbook title for CRM customers relying on locale fallback.</comment>
+  </data>
+  <data name="CrmCustomerLocaleFallbackPlaybookScopeNote" xml:space="preserve">
+    <value>Rows using platform fallback culture usually need a linked identity locale or an explicit CRM locale decision before follow-up gets automated.</value>
+    <comment>Scope note for locale fallback customer playbook.</comment>
+  </data>
+  <data name="CrmCustomerLocaleFallbackPlaybookAction" xml:space="preserve">
+    <value>Review linked-user coverage first, then clean up customer locale assumptions before support and lifecycle messaging rely on them.</value>
+    <comment>Operator action for locale fallback customer playbook.</comment>
+  </data>
+  <data name="CrmCustomerMissingVatPlaybookTitle" xml:space="preserve">
+    <value>B2B customers missing VAT ID</value>
+    <comment>Playbook title for business customers missing VAT data.</comment>
+  </data>
+  <data name="CrmCustomerMissingVatPlaybookScopeNote" xml:space="preserve">
+    <value>Business tax profiles without a VAT ID usually indicate incomplete invoicing and compliance readiness for CRM billing follow-up.</value>
+    <comment>Scope note for missing VAT playbook.</comment>
+  </data>
+  <data name="CrmCustomerMissingVatPlaybookAction" xml:space="preserve">
+    <value>Confirm the tax profile, collect the VAT ID, or downgrade the customer to consumer before invoices and finance operations depend on it.</value>
+    <comment>Operator action for missing VAT playbook.</comment>
+  </data>
+  <data name="CrmCustomerUnsegmentedPlaybookTitle" xml:space="preserve">
+    <value>Unsegmented customers</value>
+    <comment>Playbook title for customers without segment membership.</comment>
+  </data>
+  <data name="CrmCustomerUnsegmentedPlaybookScopeNote" xml:space="preserve">
+    <value>Customers without segment membership are harder to target in lifecycle, support, and retention workflows.</value>
+    <comment>Scope note for unsegmented customer playbook.</comment>
+  </data>
+  <data name="CrmCustomerUnsegmentedPlaybookAction" xml:space="preserve">
+    <value>Assign the customer to an existing segment or review whether CRM taxonomy needs a new segment before campaigns and support playbooks branch on segmentation.</value>
+    <comment>Operator action for unsegmented customer playbook.</comment>
+  </data>
+  <data name="CustomerFollowUpWorkspace" xml:space="preserve">
+    <value>Customer follow-up workspace</value>
+    <comment>Heading for the customer follow-up action card in the CRM editor.</comment>
+  </data>
+  <data name="CustomerFollowUpWorkspaceNote" xml:space="preserve">
+    <value>Open the most common CRM follow-up lanes for this customer without leaving the current editing context.</value>
+    <comment>Supporting note for the customer follow-up action card in the CRM editor.</comment>
+  </data>
+  <data name="ReviewSegmentation" xml:space="preserve">
+    <value>Review segmentation</value>
+    <comment>Action label for reviewing customer segmentation context.</comment>
+  </data>
+  <data name="CreateOpportunity" xml:space="preserve">
+    <value>Create opportunity</value>
+    <comment>Action label for creating a CRM opportunity from customer context.</comment>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading</value>
+    <comment>Generic loading label.</comment>
+  </data>
+  <data name="LeadFollowUpWorkspace" xml:space="preserve">
+    <value>Lead follow-up workspace</value>
+    <comment>Heading for the lead follow-up action card in the CRM editor.</comment>
+  </data>
+  <data name="LeadFollowUpWorkspaceNote" xml:space="preserve">
+    <value>Open the next lead remediation and conversion lanes without leaving the current lead editor.</value>
+    <comment>Supporting note for the lead follow-up action card in the CRM editor.</comment>
+  </data>
+  <data name="OpportunityFollowUpWorkspace" xml:space="preserve">
+    <value>Opportunity follow-up workspace</value>
+    <comment>Heading for the opportunity follow-up action card in the CRM editor.</comment>
+  </data>
+  <data name="OpportunityFollowUpWorkspaceNote" xml:space="preserve">
+    <value>Open the linked customer and finance follow-up lanes for this opportunity from the same workspace.</value>
+    <comment>Supporting note for the opportunity follow-up action card in the CRM editor.</comment>
+  </data>
+  <data name="OpenCustomer" xml:space="preserve">
+    <value>Open customer</value>
+    <comment>Action label for opening a linked CRM customer.</comment>
+  </data>
+  <data name="InvoiceFollowUpWorkspace" xml:space="preserve">
+    <value>Invoice follow-up workspace</value>
+    <comment>Heading for the invoice follow-up action card in the CRM editor.</comment>
+  </data>
+  <data name="InvoiceFollowUpWorkspaceNote" xml:space="preserve">
+    <value>Open the linked customer, order, payment, and related invoice lanes for this invoice from the same workspace.</value>
+    <comment>Supporting note for the invoice follow-up action card in the CRM editor.</comment>
+  </data>
+  <data name="ReviewOrder" xml:space="preserve">
+    <value>Review order</value>
+    <comment>Action label for opening the linked order review lane.</comment>
+  </data>
+  <data name="ReviewPaymentTrail" xml:space="preserve">
+    <value>Review payment trail</value>
+    <comment>Action label for reviewing the linked payment trail.</comment>
+  </data>
+  <data name="RelatedInvoices" xml:space="preserve">
+    <value>Related invoices</value>
+    <comment>Action label for opening related invoices from the CRM invoice editor.</comment>
+  </data>
+  <data name="InvoiceStatusUpdatedMessage" xml:space="preserve">
+    <value>Invoice status updated.</value>
+    <comment>Success message after updating invoice status.</comment>
+  </data>
+  <data name="InvoiceStatusUpdateFailedMessage" xml:space="preserve">
+    <value>Failed to update invoice status.</value>
+    <comment>Error shown when invoice status update fails.</comment>
+  </data>
+  <data name="Qualified leads visible in this queue slice." xml:space="preserve">
+    <value>Qualified leads visible in this queue slice.</value>
+  </data>
+  <data name="Rows that still need an explicit lead owner." xml:space="preserve">
+    <value>Rows that still need an explicit lead owner.</value>
+  </data>
+  <data name="Leads not yet attached to a CRM customer record." xml:space="preserve">
+    <value>Leads not yet attached to a CRM customer record.</value>
+  </data>
+  <data name="Leads already carrying linked customer context." xml:space="preserve">
+    <value>Leads already carrying linked customer context.</value>
+  </data>
+  <data name="Visible leads with heavier interaction history needing review." xml:space="preserve">
+    <value>Visible leads with heavier interaction history needing review.</value>
+  </data>
+  <data name="CrmLeadQualifiedPlaybookTitle" xml:space="preserve">
+    <value>Qualified leads</value>
+  </data>
+  <data name="CrmLeadQualifiedPlaybookScopeNote" xml:space="preserve">
+    <value>Qualified leads should either convert into customers quickly or be explicitly reclassified before the queue grows stale.</value>
+  </data>
+  <data name="CrmLeadQualifiedPlaybookAction" xml:space="preserve">
+    <value>Review ownership and customer linkage first, then convert the lead or push it back to a more realistic status.</value>
+  </data>
+  <data name="CrmLeadUnassignedPlaybookTitle" xml:space="preserve">
+    <value>Unassigned leads</value>
+  </data>
+  <data name="CrmLeadUnassignedPlaybookScopeNote" xml:space="preserve">
+    <value>Leads without owners usually drift because no operator is clearly accountable for next contact and conversion follow-up.</value>
+  </data>
+  <data name="CrmLeadUnassignedPlaybookAction" xml:space="preserve">
+    <value>Assign an owner before adding more interaction noise so the next follow-up is explicit.</value>
+  </data>
+  <data name="CrmLeadUnconvertedPlaybookTitle" xml:space="preserve">
+    <value>Unconverted leads</value>
+  </data>
+  <data name="CrmLeadUnconvertedPlaybookScopeNote" xml:space="preserve">
+    <value>Leads without customer linkage block downstream opportunity, invoice, and retention workflows.</value>
+  </data>
+  <data name="CrmLeadUnconvertedPlaybookAction" xml:space="preserve">
+    <value>Convert the lead when the relationship is real, or clean up qualification assumptions before pipeline work builds on it.</value>
+  </data>
+  <data name="Opportunity rows still active in the pipeline." xml:space="preserve">
+    <value>Opportunity rows still active in the pipeline.</value>
+  </data>
+  <data name="Visible opportunities requiring near-term close-date review." xml:space="preserve">
+    <value>Visible opportunities requiring near-term close-date review.</value>
+  </data>
+  <data name="High-value pipeline rows visible in the current slice." xml:space="preserve">
+    <value>High-value pipeline rows visible in the current slice.</value>
+  </data>
+  <data name="Opportunities still missing an explicit owner." xml:space="preserve">
+    <value>Opportunities still missing an explicit owner.</value>
+  </data>
+  <data name="Rows with heavier interaction trails that may need operator review." xml:space="preserve">
+    <value>Rows with heavier interaction trails that may need operator review.</value>
+  </data>
+  <data name="CrmOpportunityClosingSoonPlaybookTitle" xml:space="preserve">
+    <value>Closing soon opportunities</value>
+  </data>
+  <data name="CrmOpportunityClosingSoonPlaybookScopeNote" xml:space="preserve">
+    <value>Near-term close dates need explicit review so the pipeline does not drift into silent misses.</value>
+  </data>
+  <data name="CrmOpportunityClosingSoonPlaybookAction" xml:space="preserve">
+    <value>Review the owner, latest interaction, and close-date realism before the opportunity ages past the expected window.</value>
+  </data>
+  <data name="CrmOpportunityUnassignedPlaybookTitle" xml:space="preserve">
+    <value>Unassigned opportunities</value>
+  </data>
+  <data name="CrmOpportunityUnassignedPlaybookScopeNote" xml:space="preserve">
+    <value>Pipeline rows without owners usually mean nobody is accountable for moving the deal forward.</value>
+  </data>
+  <data name="CrmOpportunityUnassignedPlaybookAction" xml:space="preserve">
+    <value>Assign an owner before adjusting stage or close date so responsibility is explicit.</value>
+  </data>
+  <data name="CrmOpportunityHighInteractionPlaybookTitle" xml:space="preserve">
+    <value>High-interaction opportunities</value>
+  </data>
+  <data name="CrmOpportunityHighInteractionPlaybookScopeNote" xml:space="preserve">
+    <value>Heavy interaction trails often signal stalled negotiation, support confusion, or unclear next steps.</value>
+  </data>
+  <data name="CrmOpportunityHighInteractionPlaybookAction" xml:space="preserve">
+    <value>Read the recent interaction trail before adding more outreach, then tighten the next operator action.</value>
+  </data>
 </root>

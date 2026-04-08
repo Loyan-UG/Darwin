@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { BusinessDetailWithMyAccount } from "@/features/businesses/types";
 import { getFreshMemberAccessToken } from "@/features/member-session/server";
 import { buildQuerySuffix, serializeQueryParams } from "@/lib/query-params";
@@ -164,6 +165,14 @@ async function fetchMemberJson<T>(
   }
 }
 
+const getCachedMemberJson = cache((path: string) =>
+  fetchMemberJson<unknown>(path),
+);
+
+async function fetchCachedMemberJson<T>(path: string) {
+  return getCachedMemberJson(path) as Promise<MemberApiFetchResult<T>>;
+}
+
 function buildPagedQuery(page?: number, pageSize?: number) {
   return buildQuerySuffix({
     page: String(page ?? 1),
@@ -297,51 +306,59 @@ async function mutateMemberJson<T>(
 }
 
 export async function getCurrentMemberProfile() {
-  return fetchMemberJson<MemberCustomerProfile>("/api/v1/member/profile/me");
+  return fetchCachedMemberJson<MemberCustomerProfile>("/api/v1/member/profile/me");
 }
 
 export async function getCurrentMemberPreferences() {
-  return fetchMemberJson<MemberPreferences>("/api/v1/member/profile/preferences");
+  return fetchCachedMemberJson<MemberPreferences>(
+    "/api/v1/member/profile/preferences",
+  );
 }
 
 export async function getCurrentMemberCustomerContext() {
-  return fetchMemberJson<LinkedCustomerContext>(
+  return fetchCachedMemberJson<LinkedCustomerContext>(
     "/api/v1/member/profile/customer/context",
   );
 }
 
 export async function getCurrentMemberAddresses() {
-  return fetchMemberJson<MemberAddress[]>("/api/v1/member/profile/addresses");
+  return fetchCachedMemberJson<MemberAddress[]>(
+    "/api/v1/member/profile/addresses",
+  );
 }
 
 export async function getCurrentMemberOrders(input?: {
   page?: number;
   pageSize?: number;
 }) {
-  return fetchMemberJson<PagedResponse<MemberOrderSummary>>(
+  return fetchCachedMemberJson<PagedResponse<MemberOrderSummary>>(
     `/api/v1/member/orders${buildPagedQuery(input?.page, input?.pageSize)}`,
   );
 }
 
 export async function getCurrentMemberOrder(id: string) {
-  return fetchMemberJson<MemberOrderDetail>(`/api/v1/member/orders/${id}`);
+  return fetchCachedMemberJson<MemberOrderDetail>(`/api/v1/member/orders/${id}`);
 }
 
 export async function getCurrentMemberInvoices(input?: {
   page?: number;
   pageSize?: number;
 }) {
-  return fetchMemberJson<PagedResponse<MemberInvoiceSummary>>(
+  return fetchCachedMemberJson<PagedResponse<MemberInvoiceSummary>>(
     `/api/v1/member/invoices${buildPagedQuery(input?.page, input?.pageSize)}`,
   );
 }
 
 export async function getCurrentMemberInvoice(id: string) {
-  return fetchMemberJson<MemberInvoiceDetail>(`/api/v1/member/invoices/${id}`);
+  return fetchCachedMemberJson<MemberInvoiceDetail>(
+    `/api/v1/member/invoices/${id}`,
+  );
 }
 
 export async function getCurrentMemberLoyaltyOverview() {
-  return fetchMemberJson<MyLoyaltyOverview>("/api/v1/member/loyalty/my/overview");
+  return fetchCachedMemberJson<MyLoyaltyOverview>(
+    "/api/v1/member/loyalty/my/overview",
+  );
 }
 
 export async function getCurrentMemberLoyaltyBusinesses(input?: {
@@ -349,7 +366,7 @@ export async function getCurrentMemberLoyaltyBusinesses(input?: {
   pageSize?: number;
   includeInactiveBusinesses?: boolean;
 }) {
-  return fetchMemberJson<PagedResponse<MyLoyaltyBusinessSummary>>(
+  return fetchCachedMemberJson<PagedResponse<MyLoyaltyBusinessSummary>>(
     `/api/v1/member/loyalty/my/businesses?${serializeQueryParams({
       page: String(input?.page ?? 1),
       pageSize: String(input?.pageSize ?? 12),
@@ -359,13 +376,13 @@ export async function getCurrentMemberLoyaltyBusinesses(input?: {
 }
 
 export async function getCurrentMemberLoyaltyBusinessDashboard(businessId: string) {
-  return fetchMemberJson<LoyaltyBusinessDashboard>(
+  return fetchCachedMemberJson<LoyaltyBusinessDashboard>(
     `/api/v1/member/loyalty/business/${businessId}/dashboard`,
   );
 }
 
 export async function getCurrentMemberLoyaltyRewards(businessId: string) {
-  return fetchMemberJson<LoyaltyRewardSummary[]>(
+  return fetchCachedMemberJson<LoyaltyRewardSummary[]>(
     `/api/v1/member/loyalty/business/${businessId}/rewards`,
   );
 }
@@ -401,7 +418,7 @@ export async function getCurrentMemberPromotions(input?: {
 }
 
 export async function getCurrentMemberBusinessWithMyAccount(businessId: string) {
-  return fetchMemberJson<BusinessDetailWithMyAccount>(
+  return fetchCachedMemberJson<BusinessDetailWithMyAccount>(
     `/api/v1/member/businesses/${businessId}/with-my-account`,
   );
 }

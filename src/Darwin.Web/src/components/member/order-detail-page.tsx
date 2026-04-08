@@ -2,17 +2,20 @@ import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
 import type {
   PublicCategorySummary,
   PublicProductSummary,
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
-import {
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
 import { createMemberOrderPaymentIntentAction } from "@/features/member-portal/actions";
 import type { MemberOrderDetail } from "@/features/member-portal/types";
+import {
+  buildStorefrontCategorySpotlightLinkCards,
+  buildStorefrontOfferCards,
+  buildStorefrontPageSpotlightCards,
+} from "@/features/storefront/storefront-campaigns";
 import {
   formatResource,
   getMemberResource,
@@ -20,7 +23,7 @@ import {
 } from "@/localization";
 import { parseAddressJson, type ParsedAddress } from "@/lib/address-json";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { buildAppQueryPath, buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
+import { buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 
 type OrderDetailPageProps = {
@@ -154,6 +157,43 @@ export function OrderDetailPage({
   const rankedProducts = sortProductsByOpportunity(products)
     .filter((product) => !cartLinkedSlugSet.has(product.slug.toLowerCase()))
     .slice(0, 3);
+  const storefrontOfferCards = buildStorefrontOfferCards(rankedProducts, {
+    labels: {
+      heroOffer: copy.offerCampaignHeroLabel,
+      valueOffer: copy.offerCampaignValueLabel,
+      priceDrop: copy.offerCampaignPriceDropLabel,
+      steadyPick: copy.offerCampaignSteadyLabel,
+    },
+    formatPrice: (product) =>
+      formatMoney(product.priceMinor, product.currency, culture),
+    describeWithSavings: (_, input) =>
+      formatResource(copy.orderDetailStorefrontProductOfferDescription, {
+        savingsPercent: input.savingsPercent,
+        price: input.price,
+      }),
+    describeWithoutSavings: (product) =>
+      product.shortDescription ?? copy.orderDetailStorefrontProductFallbackDescription,
+    fallbackDescription: copy.orderDetailStorefrontProductFallbackDescription,
+    formatMeta: (product) =>
+      typeof product.compareAtPriceMinor === "number" &&
+      product.compareAtPriceMinor > product.priceMinor
+        ? formatResource(copy.orderDetailStorefrontProductOfferMeta, {
+            compareAt: formatMoney(
+              product.compareAtPriceMinor,
+              product.currency,
+              culture,
+            ),
+          })
+        : null,
+  });
+  const cmsSpotlightCards = buildStorefrontPageSpotlightCards(cmsPages, {
+    prefix: "order-detail",
+    fallbackDescription: copy.orderDetailStorefrontCmsFallbackDescription,
+  });
+  const categorySpotlightCards = buildStorefrontCategorySpotlightLinkCards(categories, {
+    prefix: "order-detail",
+    fallbackDescription: copy.orderDetailStorefrontCatalogFallbackDescription,
+  });
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -500,179 +540,41 @@ export function OrderDetailPage({
               </div>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.orderDetailStorefrontWindowTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.orderDetailStorefrontWindowMessage, {
-                  cmsStatus: cmsPagesStatus,
-                  categoriesStatus,
-                  productsStatus,
-                  pageCount: cmsPages.length,
-                  categoryCount: categories.length,
-                  productCount: products.length,
-                })}
-              </p>
-              <div className="mt-5 grid gap-3">
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {copy.orderDetailStorefrontCmsTitle}
-                    </p>
-                    <Link
-                      href={localizeHref("/cms", culture)}
-                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                    >
-                      {copy.orderDetailStorefrontCmsCta}
-                    </Link>
-                  </div>
-                  {cmsPages.length > 0 ? (
-                    <div className="mt-4 flex flex-col gap-3">
-                      {cmsPages.map((page) => (
-                        <Link
-                          key={page.id}
-                          href={localizeHref(`/cms/${page.slug}`, culture)}
-                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                        >
-                          <p className="font-semibold text-[var(--color-text-primary)]">
-                            {page.title}
-                          </p>
-                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                            {page.metaDescription ?? copy.orderDetailStorefrontCmsFallbackDescription}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {formatResource(copy.orderDetailStorefrontCmsEmptyMessage, {
-                        status: cmsPagesStatus,
-                      })}
-                    </p>
-                  )}
-                </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {copy.orderDetailStorefrontCatalogTitle}
-                    </p>
-                    <Link
-                      href={localizeHref("/catalog", culture)}
-                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                    >
-                      {copy.orderDetailStorefrontCatalogCta}
-                    </Link>
-                  </div>
-                  {categories.length > 0 ? (
-                    <div className="mt-4 flex flex-col gap-3">
-                      {categories.map((category) => (
-                        <Link
-                          key={category.id}
-                          href={localizeHref(
-                            buildAppQueryPath("/catalog", {
-                              category: category.slug,
-                            }),
-                            culture,
-                          )}
-                          className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                        >
-                          <p className="font-semibold text-[var(--color-text-primary)]">
-                            {category.name}
-                          </p>
-                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                            {category.description ?? copy.orderDetailStorefrontCatalogFallbackDescription}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {formatResource(copy.orderDetailStorefrontCatalogEmptyMessage, {
-                        status: categoriesStatus,
-                      })}
-                    </p>
-                  )}
-                </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {copy.orderDetailStorefrontProductTitle}
-                    </p>
-                    <Link
-                      href={localizeHref("/catalog", culture)}
-                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                    >
-                      {copy.orderDetailStorefrontProductCta}
-                    </Link>
-                  </div>
-                  {rankedProducts.length > 0 ? (
-                    <div className="mt-4 flex flex-col gap-3">
-                      <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
-                        {cartLinkedSlugSet.size > 0
-                          ? copy.orderDetailStorefrontProductCartAwareMessage
-                          : copy.orderDetailStorefrontProductMessage}
-                      </p>
-                      {rankedProducts.map((product) => {
-                        const savingsPercent = getProductSavingsPercent(product);
-
-                        return (
-                          <Link
-                            key={product.id}
-                            href={localizeHref(`/catalog/${product.slug}`, culture)}
-                            className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                          >
-                            <p className="font-semibold text-[var(--color-text-primary)]">
-                              {product.name}
-                            </p>
-                            <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                              {savingsPercent !== null
-                                ? formatResource(
-                                    copy.orderDetailStorefrontProductOfferDescription,
-                                    {
-                                      savingsPercent,
-                                      price: formatMoney(
-                                        product.priceMinor,
-                                        product.currency,
-                                        culture,
-                                      ),
-                                    },
-                                  )
-                                : product.shortDescription ??
-                                  copy.orderDetailStorefrontProductFallbackDescription}
-                            </p>
-                            <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                              {formatMoney(product.priceMinor, product.currency, culture)}
-                            </p>
-                            {savingsPercent !== null ? (
-                              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                                {formatResource(
-                                  copy.orderDetailStorefrontProductOfferMeta,
-                                  {
-                                    compareAt: formatMoney(
-                                      product.compareAtPriceMinor ??
-                                        product.priceMinor,
-                                      product.currency,
-                                      culture,
-                                    ),
-                                  },
-                                )}
-                              </p>
-                            ) : null}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {formatResource(copy.orderDetailStorefrontProductEmptyMessage, {
-                        status: productsStatus,
-                      })}
-                    </p>
-                  )}
-                </article>
-              </div>
-            </aside>
+            <MemberStorefrontWindow
+              culture={culture}
+              title={copy.orderDetailStorefrontWindowTitle}
+              message={formatResource(copy.orderDetailStorefrontWindowMessage, {
+                cmsStatus: cmsPagesStatus,
+                categoriesStatus,
+                productsStatus,
+                pageCount: cmsPages.length,
+                categoryCount: categories.length,
+                productCount: products.length,
+              })}
+              cmsTitle={copy.orderDetailStorefrontCmsTitle}
+              cmsCtaLabel={copy.orderDetailStorefrontCmsCta}
+              cmsCards={cmsSpotlightCards}
+              cmsEmptyMessage={formatResource(copy.orderDetailStorefrontCmsEmptyMessage, {
+                status: cmsPagesStatus,
+              })}
+              catalogTitle={copy.orderDetailStorefrontCatalogTitle}
+              catalogCtaLabel={copy.orderDetailStorefrontCatalogCta}
+              categoryCards={categorySpotlightCards}
+              catalogEmptyMessage={formatResource(copy.orderDetailStorefrontCatalogEmptyMessage, {
+                status: categoriesStatus,
+              })}
+              productTitle={copy.orderDetailStorefrontProductTitle}
+              productCtaLabel={copy.orderDetailStorefrontProductCta}
+              productMessage={
+                cartLinkedSlugSet.size > 0
+                  ? copy.orderDetailStorefrontProductCartAwareMessage
+                  : copy.orderDetailStorefrontProductMessage
+              }
+              productCards={storefrontOfferCards}
+              productEmptyMessage={formatResource(copy.orderDetailStorefrontProductEmptyMessage, {
+                status: productsStatus,
+              })}
+            />
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.actionsTitle}</p>

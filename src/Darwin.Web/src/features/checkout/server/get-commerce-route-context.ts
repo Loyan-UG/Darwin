@@ -10,6 +10,11 @@ import {
 import { getPublicStorefrontContext } from "@/features/storefront/server/get-public-storefront-context";
 import { createCachedObservedLoader } from "@/lib/observed-loader";
 import {
+  normalizeConfirmationResultArgs,
+  normalizeConfirmationRouteArgs,
+  normalizeCultureArg,
+} from "@/lib/route-context-normalization";
+import {
   summarizeCommerceRouteHealth,
   summarizeConfirmationResultHealth,
 } from "@/lib/route-health";
@@ -20,6 +25,7 @@ const getCachedConfirmationResult = createCachedObservedLoader({
   area: "commerce-route-context",
   operation: "load-confirmation-result",
   thresholdMs: 275,
+  normalizeArgs: normalizeConfirmationResultArgs,
   getContext: (orderId: string, orderNumber?: string) => ({
     orderId,
     hasOrderNumber: Boolean(orderNumber),
@@ -36,6 +42,7 @@ const getCachedCartRouteContext = createCachedObservedLoader({
   area: "commerce-route-context",
   operation: "load-cart-context",
   thresholdMs: 300,
+  normalizeArgs: normalizeCultureArg,
   getContext: (culture: string) => commerceRouteObservationContext(culture, "/cart"),
   getSuccessContext: summarizeCommerceRouteHealth,
   load: async (culture: string) => {
@@ -59,6 +66,7 @@ const getCachedCheckoutRouteContext = createCachedObservedLoader({
   area: "commerce-route-context",
   operation: "load-checkout-context",
   thresholdMs: 325,
+  normalizeArgs: normalizeCultureArg,
   getContext: (culture: string) =>
     commerceRouteObservationContext(culture, "/checkout"),
   getSuccessContext: summarizeCommerceRouteHealth,
@@ -89,6 +97,7 @@ const getCachedConfirmationRouteContext = createCachedObservedLoader({
   area: "commerce-route-context",
   operation: "load-confirmation-context",
   thresholdMs: 325,
+  normalizeArgs: normalizeConfirmationRouteArgs,
   getContext: (culture: string, orderId: string, orderNumber?: string) =>
     commerceRouteObservationContext(
       culture,

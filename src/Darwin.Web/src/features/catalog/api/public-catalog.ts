@@ -1,6 +1,12 @@
 import "server-only";
+import { cache } from "react";
 import { fetchPublicJson } from "@/lib/api/fetch-public-json";
+import {
+  selectExpandedPublicPagedSet,
+  shouldExpandPublicPagedSet,
+} from "@/lib/expand-public-paged-set";
 import { buildQuerySuffix } from "@/lib/query-params";
+import { normalizePublicProductSetInput } from "@/features/catalog/api/public-catalog-set-input";
 import type {
   PagedResponse,
   PublicCategorySummary,
@@ -43,37 +49,41 @@ export async function getPublicProductSet(input?: {
   categorySlug?: string;
   search?: string;
 }) {
-  const initialResult = await getPublicProducts({
-    page: 1,
-    pageSize: 100,
-    culture: input?.culture,
-    categorySlug: input?.categorySlug,
-    search: input?.search,
-  });
-
-  const total = initialResult.data?.total ?? 0;
-  const loadedCount = initialResult.data?.items.length ?? 0;
-
-  if (
-    initialResult.status !== "ok" ||
-    !initialResult.data ||
-    total <= loadedCount
-  ) {
-    return initialResult;
-  }
-
-  const expandedResult = await getPublicProducts({
-    page: 1,
-    pageSize: total,
-    culture: input?.culture,
-    categorySlug: input?.categorySlug,
-    search: input?.search,
-  });
-
-  return expandedResult.status === "ok" && expandedResult.data
-    ? expandedResult
-    : initialResult;
+  const normalizedInput = normalizePublicProductSetInput(input);
+  return getCachedPublicProductSet(
+    normalizedInput.culture,
+    normalizedInput.categorySlug,
+    normalizedInput.search,
+  );
 }
+
+const getCachedPublicProductSet = cache(
+  async (culture?: string, categorySlug?: string, search?: string) => {
+    const initialResult = await getPublicProducts({
+      page: 1,
+      pageSize: 100,
+      culture,
+      categorySlug,
+      search,
+    });
+
+    if (!shouldExpandPublicPagedSet(initialResult)) {
+      return initialResult;
+    }
+
+    const total = initialResult.data!.total;
+
+    const expandedResult = await getPublicProducts({
+      page: 1,
+      pageSize: total,
+      culture,
+      categorySlug,
+      search,
+    });
+
+    return selectExpandedPublicPagedSet(initialResult, expandedResult);
+  },
+);
 
 export async function getPublicProductBySlug(slug: string, culture?: string) {
   return fetchPublicJson<PublicProductDetail>(

@@ -11,6 +11,9 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     /// </summary>
     public sealed class CustomersListVm
     {
+        public CrmSummaryVm Summary { get; set; } = new();
+        public CustomerOpsSummaryVm OpsSummary { get; set; } = new();
+        public List<CrmPlaybookVm> Playbooks { get; set; } = new();
         public List<CustomerListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
@@ -19,6 +22,16 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public CustomerQueueFilter Filter { get; set; } = CustomerQueueFilter.All;
         public string PlatformDefaultCulture { get; set; } = AdminCultureCatalog.DefaultCulture;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class CustomerOpsSummaryVm
+    {
+        public int LinkedUserCount { get; set; }
+        public int LocaleFallbackCount { get; set; }
+        public int BusinessCount { get; set; }
+        public int MissingVatIdCount { get; set; }
+        public int NeedsSegmentationCount { get; set; }
+        public int HasOpportunitiesCount { get; set; }
     }
 
     public sealed class CustomerListItemVm
@@ -124,6 +137,12 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public string EffectiveLastName { get; set; } = string.Empty;
         public string EffectiveEmail { get; set; } = string.Empty;
         public string? EffectivePhone { get; set; }
+        public string? EffectiveLocale { get; set; }
+        public bool UsesPlatformLocaleFallback { get; set; }
+        public int SegmentCount { get; set; }
+        public int OpportunityCount { get; set; }
+        public int InteractionCount { get; set; }
+        public int ConsentCount { get; set; }
         public IdentityAddressSummaryVm? DefaultBillingAddress { get; set; }
         public IdentityAddressSummaryVm? DefaultShippingAddress { get; set; }
         public List<CustomerAddressVm> Addresses { get; set; } = new();
@@ -137,6 +156,8 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     public sealed class LeadsListVm
     {
         public CrmSummaryVm Summary { get; set; } = new();
+        public LeadOpsSummaryVm OpsSummary { get; set; } = new();
+        public List<CrmPlaybookVm> Playbooks { get; set; } = new();
         public List<LeadListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
@@ -144,6 +165,15 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public string Query { get; set; } = string.Empty;
         public LeadQueueFilter Filter { get; set; } = LeadQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class LeadOpsSummaryVm
+    {
+        public int QualifiedCount { get; set; }
+        public int UnassignedCount { get; set; }
+        public int UnconvertedCount { get; set; }
+        public int LinkedCustomerCount { get; set; }
+        public int HighInteractionCount { get; set; }
     }
 
     public sealed class LeadListItemVm
@@ -195,7 +225,10 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
         public LeadStatus Status { get; set; } = LeadStatus.New;
         public Guid? AssignedToUserId { get; set; }
+        public string? AssignedToUserDisplayName { get; set; }
         public Guid? CustomerId { get; set; }
+        public string? CustomerDisplayName { get; set; }
+        public int InteractionCount { get; set; }
         public ConvertLeadVm Conversion { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
@@ -214,6 +247,8 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     public sealed class OpportunitiesListVm
     {
         public CrmSummaryVm Summary { get; set; } = new();
+        public OpportunityOpsSummaryVm OpsSummary { get; set; } = new();
+        public List<CrmPlaybookVm> Playbooks { get; set; } = new();
         public List<OpportunityListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
@@ -221,6 +256,15 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public string Query { get; set; } = string.Empty;
         public OpportunityQueueFilter Filter { get; set; } = OpportunityQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class OpportunityOpsSummaryVm
+    {
+        public int OpenCount { get; set; }
+        public int ClosingSoonCount { get; set; }
+        public int HighValueCount { get; set; }
+        public int UnassignedCount { get; set; }
+        public int HighInteractionCount { get; set; }
     }
 
     public sealed class OpportunityListItemVm
@@ -272,7 +316,9 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public OpportunityStage Stage { get; set; } = OpportunityStage.Qualification;
         public DateTime? ExpectedCloseDateUtc { get; set; }
         public Guid? AssignedToUserId { get; set; }
+        public string? AssignedToUserDisplayName { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
+        public int InteractionCount { get; set; }
         public List<OpportunityItemVm> Items { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();

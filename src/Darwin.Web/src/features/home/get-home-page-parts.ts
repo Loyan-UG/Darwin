@@ -1,11 +1,12 @@
 import "server-only";
 import { getCatalogReviewTargets } from "@/features/catalog/discovery";
-import {
-  getProductSavingsPercent,
-  getStrongestProductOpportunity,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+import { getProductSavingsPercent } from "@/features/catalog/merchandising";
 import { getPendingCmsReviewTargets, isDiscoveryReadyPage } from "@/features/cms/discovery";
+import {
+  buildStorefrontCategorySpotlightCards,
+  buildStorefrontOfferCards,
+} from "@/features/storefront/storefront-campaigns";
+import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import type { MemberSession } from "@/features/member-session/types";
 import {
   getMemberCommerceSummaryContext,
@@ -85,10 +86,14 @@ export async function getHomePageParts(
     0,
   );
   const spotlightPage = pagesResult.data?.items[0];
-  const rankedProducts = sortProductsByOpportunity(
-    productsResult.data?.items ?? [],
-  );
-  const spotlightProduct = getStrongestProductOpportunity(rankedProducts);
+  const spotlightSelections = buildStorefrontSpotlightSelections({
+    cmsPages: pagesResult.data?.items ?? [],
+    categories: categoriesResult.data?.items ?? [],
+    products: productsResult.data?.items ?? [],
+    offerBoardCount: 3,
+  });
+  const rankedProducts = spotlightSelections.rankedProducts;
+  const spotlightProduct = spotlightSelections.spotlightProduct;
   const visibleOfferCount = rankedProducts.filter(
     (product) => getProductSavingsPercent(product) !== null,
   ).length;
@@ -279,51 +284,37 @@ export async function getHomePageParts(
     categorySpotlights.find((entry) => entry.product && entry.status === "ok") ??
     categorySpotlights[0] ??
     null;
-  const categoryCampaignCards = categorySpotlights.map((entry) => {
-    const product = entry.product;
-    const savingsPercent = product ? getProductSavingsPercent(product) : null;
-
-    return {
-      id: `campaign-board-${entry.category.id}`,
+  const categoryCampaignCards = buildStorefrontCategorySpotlightCards(
+    categorySpotlights,
+    {
       eyebrow: copy.campaignBoardCardEyebrow,
-      title: entry.category.name,
-      description:
-        product && entry.status === "ok"
-          ? savingsPercent !== null
-            ? formatResource(copy.campaignBoardProductDescription, {
-                product: product.name,
-                savings: savingsPercent,
-                price: formatMoney(
-                  product.priceMinor,
-                  product.currency,
-                  culture,
-                ),
-              })
-            : formatResource(copy.campaignBoardFallbackProductDescription, {
-                product: product.name,
-                price: formatMoney(
-                  product.priceMinor,
-                  product.currency,
-                  culture,
-                ),
-              })
-          : formatResource(copy.campaignBoardCategoryFallbackDescription, {
-              status: entry.status,
-            }),
-      href: buildAppQueryPath("/catalog", {
-        category: entry.category.slug,
-      }),
       ctaLabel: copy.campaignBoardCta,
-        meta:
-          product && entry.status === "ok"
-            ? formatResource(copy.campaignBoardProductMeta, {
+      formatPrice: (product) =>
+        formatMoney(product.priceMinor, product.currency, culture),
+      formatProductDescription: (entry, input) =>
+        input.savingsPercent !== null
+          ? formatResource(copy.campaignBoardProductDescription, {
+              product: entry.product!.name,
+              savings: input.savingsPercent,
+              price: input.price,
+            })
+          : formatResource(copy.campaignBoardFallbackProductDescription, {
+              product: entry.product!.name,
+              price: input.price,
+            }),
+      formatFallbackDescription: (entry) =>
+        formatResource(copy.campaignBoardCategoryFallbackDescription, {
+          status: entry.status,
+        }),
+      formatMeta: (entry) =>
+        entry.product && entry.status === "ok"
+          ? formatResource(copy.campaignBoardProductMeta, {
               compareAt:
-                savingsPercent !== null &&
-                product.compareAtPriceMinor !== null &&
-                product.compareAtPriceMinor !== undefined
+                typeof entry.product.compareAtPriceMinor === "number" &&
+                (getProductSavingsPercent(entry.product) ?? 0) > 0
                   ? formatMoney(
-                      product.compareAtPriceMinor,
-                      product.currency,
+                      entry.product.compareAtPriceMinor,
+                      entry.product.currency,
                       culture,
                     )
                   : copy.campaignBoardProductMetaFallback,
@@ -331,7 +322,38 @@ export async function getHomePageParts(
           : formatResource(copy.campaignBoardCategoryMeta, {
               status: entry.status,
             }),
-    };
+    },
+  );
+  const offerBoardCards = buildStorefrontOfferCards(offerBoardProducts, {
+    labels: {
+      heroOffer: copy.offerCampaignHeroLabel,
+      valueOffer: copy.offerCampaignValueLabel,
+      priceDrop: copy.offerCampaignPriceDropLabel,
+      steadyPick: copy.offerCampaignSteadyLabel,
+    },
+    formatPrice: (product) =>
+      formatMoney(product.priceMinor, product.currency, culture),
+    describeWithSavings: (_, input) =>
+      formatResource(copy.offerBoardOfferDescription, {
+        savings: input.savingsPercent,
+        price: input.price,
+      }),
+    describeWithoutSavings: (_, input) =>
+      formatResource(copy.offerBoardOfferFallbackDescription, {
+        price: input.price,
+      }),
+    fallbackDescription: copy.offerBoardOfferFallbackDescription,
+    formatMeta: (product) =>
+      getProductSavingsPercent(product) !== null
+        ? formatResource(copy.offerBoardOfferMeta, {
+            compareAt: formatMoney(
+              product.compareAtPriceMinor ?? product.priceMinor,
+              product.currency,
+              culture,
+            ),
+          })
+        : copy.offerBoardOfferFallbackMeta,
+    ctaLabel: copy.offerBoardCta,
   });
 
   return [
@@ -659,44 +681,15 @@ export async function getHomePageParts(
               count: cartLinkedSlugs.size,
             })
           : copy.offerBoardDescription,
-      cards: offerBoardProducts.map((product) => {
-        const savingsPercent = getProductSavingsPercent(product);
-
-        return {
-          id: `offer-board-${product.id}`,
-          eyebrow: copy.offerBoardOfferEyebrow,
-          title: product.name,
-          description:
-            savingsPercent !== null
-              ? formatResource(copy.offerBoardOfferDescription, {
-                  savings: savingsPercent,
-                  price: formatMoney(
-                    product.priceMinor,
-                    product.currency,
-                    culture,
-                  ),
-                })
-              : formatResource(copy.offerBoardOfferFallbackDescription, {
-                  price: formatMoney(
-                    product.priceMinor,
-                    product.currency,
-                    culture,
-                  ),
-                }),
-          href: `/catalog/${product.slug}`,
-          ctaLabel: copy.offerBoardCta,
-          meta:
-            savingsPercent !== null
-              ? formatResource(copy.offerBoardOfferMeta, {
-                  compareAt: formatMoney(
-                    product.compareAtPriceMinor ?? product.priceMinor,
-                    product.currency,
-                    culture,
-                  ),
-                })
-              : copy.offerBoardOfferFallbackMeta,
-        };
-      }),
+      cards: offerBoardCards.map((product) => ({
+        id: `offer-board-${product.id}`,
+        eyebrow: copy.offerBoardOfferEyebrow,
+        title: product.title,
+        description: product.description,
+        href: product.href,
+        ctaLabel: product.ctaLabel,
+        meta: product.meta ?? undefined,
+      })),
       emptyMessage: resolvedProductsMessage ?? copy.offerBoardEmptyMessage,
     },
     {

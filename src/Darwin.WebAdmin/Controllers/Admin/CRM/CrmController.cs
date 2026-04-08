@@ -133,9 +133,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public async Task<IActionResult> Customers(int page = 1, int pageSize = 20, string? q = null, CustomerQueueFilter filter = CustomerQueueFilter.All, CancellationToken ct = default)
         {
             var (items, total) = await _getCustomersPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
+            var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var customerItems = items.ToList();
             var vm = new CustomersListVm
             {
+                Summary = MapSummary(summary),
+                OpsSummary = BuildCustomerOpsSummary(customerItems),
+                Playbooks = BuildCustomerPlaybooks(),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -143,7 +148,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Filter = filter,
                 PlatformDefaultCulture = settings.DefaultCulture,
                 FilterItems = BuildCustomerFilterItems(filter),
-                Items = items.Select(x => new CustomerListItemVm
+                Items = customerItems.Select(x => new CustomerListItemVm
                 {
                     Id = x.Id,
                     UserId = x.UserId,
@@ -247,6 +252,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 EffectiveLastName = dto.EffectiveLastName,
                 EffectiveEmail = dto.EffectiveEmail,
                 EffectivePhone = dto.EffectivePhone,
+                EffectiveLocale = dto.EffectiveLocale,
+                UsesPlatformLocaleFallback = dto.UsesPlatformLocaleFallback,
+                SegmentCount = dto.SegmentCount,
+                OpportunityCount = dto.OpportunityCount,
+                InteractionCount = dto.InteractionCount,
+                ConsentCount = dto.ConsentCount,
                 DefaultBillingAddress = dto.DefaultBillingAddress is null ? null : new IdentityAddressSummaryVm
                 {
                     FullName = dto.DefaultBillingAddress.FullName,
@@ -487,7 +498,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     PaidAtUtc = vm.PaidAtUtc
                 }, ct).ConfigureAwait(false);
 
-                TempData["Success"] = $"Invoice marked as {vm.TargetStatus}.";
+                SetSuccessMessage("InvoiceStatusUpdatedMessage");
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -495,7 +506,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                SetLocalizedError("InvoiceRefundRecordFailedMessage", ex);
+                SetLocalizedError("InvoiceStatusUpdateFailedMessage", ex);
             }
 
             return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
@@ -524,7 +535,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                SetLocalizedError("InvoiceRefundRecordFailedMessage", ex);
             }
 
             return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.InvoiceId });
@@ -535,16 +546,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             var (items, total) = await _getLeadsPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            var leadItems = items.ToList();
             var vm = new LeadsListVm
             {
                 Summary = MapSummary(summary),
+                OpsSummary = BuildLeadOpsSummary(leadItems),
+                Playbooks = BuildLeadPlaybooks(),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
                 Filter = filter,
                 FilterItems = BuildLeadFilterItems(filter),
-                Items = items.Select(x => new LeadListItemVm
+                Items = leadItems.Select(x => new LeadListItemVm
                 {
                     Id = x.Id,
                     CustomerId = x.CustomerId,
@@ -632,7 +646,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Notes = dto.Notes,
                 Status = dto.Status,
                 AssignedToUserId = dto.AssignedToUserId,
+                AssignedToUserDisplayName = dto.AssignedToUserDisplayName,
                 CustomerId = dto.CustomerId,
+                CustomerDisplayName = dto.CustomerDisplayName,
+                InteractionCount = dto.InteractionCount,
                 Conversion = new ConvertLeadVm
                 {
                     LeadId = dto.Id,
@@ -695,16 +712,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             var (items, total) = await _getOpportunitiesPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            var opportunityItems = items.ToList();
             var vm = new OpportunitiesListVm
             {
                 Summary = MapSummary(summary),
+                OpsSummary = BuildOpportunityOpsSummary(opportunityItems),
+                Playbooks = BuildOpportunityPlaybooks(),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
                 Filter = filter,
                 FilterItems = BuildOpportunityFilterItems(filter),
-                Items = items.Select(x => new OpportunityListItemVm
+                Items = opportunityItems.Select(x => new OpportunityListItemVm
                 {
                     Id = x.Id,
                     CustomerId = x.CustomerId,
@@ -799,7 +819,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Stage = dto.Stage,
                 ExpectedCloseDateUtc = dto.ExpectedCloseDateUtc,
                 AssignedToUserId = dto.AssignedToUserId,
+                AssignedToUserDisplayName = dto.AssignedToUserDisplayName,
                 CustomerDisplayName = dto.CustomerDisplayName,
+                InteractionCount = dto.InteractionCount,
                 Items = dto.Items.Select(x => new OpportunityItemVm
                 {
                     Id = x.Id,
@@ -1371,6 +1393,119 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             yield return new SelectListItem("B2B", CustomerQueueFilter.Business.ToString(), selectedFilter == CustomerQueueFilter.Business);
             yield return new SelectListItem("B2B missing VAT ID", CustomerQueueFilter.MissingVatId.ToString(), selectedFilter == CustomerQueueFilter.MissingVatId);
             yield return new SelectListItem("Uses platform locale fallback", CustomerQueueFilter.UsesPlatformLocaleFallback.ToString(), selectedFilter == CustomerQueueFilter.UsesPlatformLocaleFallback);
+        }
+
+        private static CustomerOpsSummaryVm BuildCustomerOpsSummary(IReadOnlyCollection<CustomerListItemDto> items)
+        {
+            return new CustomerOpsSummaryVm
+            {
+                LinkedUserCount = items.Count(x => x.UserId.HasValue),
+                LocaleFallbackCount = items.Count(x => x.UsesPlatformLocaleFallback),
+                BusinessCount = items.Count(x => x.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business),
+                MissingVatIdCount = items.Count(x => x.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(x.VatId)),
+                NeedsSegmentationCount = items.Count(x => x.SegmentCount == 0),
+                HasOpportunitiesCount = items.Count(x => x.OpportunityCount > 0)
+            };
+        }
+
+        private static List<CrmPlaybookVm> BuildCustomerPlaybooks()
+        {
+            return new List<CrmPlaybookVm>
+            {
+                new()
+                {
+                    Title = "CrmCustomerLocaleFallbackPlaybookTitle",
+                    ScopeNote = "CrmCustomerLocaleFallbackPlaybookScopeNote",
+                    OperatorAction = "CrmCustomerLocaleFallbackPlaybookAction"
+                },
+                new()
+                {
+                    Title = "CrmCustomerMissingVatPlaybookTitle",
+                    ScopeNote = "CrmCustomerMissingVatPlaybookScopeNote",
+                    OperatorAction = "CrmCustomerMissingVatPlaybookAction"
+                },
+                new()
+                {
+                    Title = "CrmCustomerUnsegmentedPlaybookTitle",
+                    ScopeNote = "CrmCustomerUnsegmentedPlaybookScopeNote",
+                    OperatorAction = "CrmCustomerUnsegmentedPlaybookAction"
+                }
+            };
+        }
+
+        private static LeadOpsSummaryVm BuildLeadOpsSummary(IReadOnlyCollection<LeadListItemDto> items)
+        {
+            return new LeadOpsSummaryVm
+            {
+                QualifiedCount = items.Count(x => x.Status == Darwin.Domain.Enums.LeadStatus.Qualified),
+                UnassignedCount = items.Count(x => !x.AssignedToUserId.HasValue),
+                UnconvertedCount = items.Count(x => !x.CustomerId.HasValue),
+                LinkedCustomerCount = items.Count(x => x.CustomerId.HasValue),
+                HighInteractionCount = items.Count(x => x.InteractionCount >= 3)
+            };
+        }
+
+        private static List<CrmPlaybookVm> BuildLeadPlaybooks()
+        {
+            return new List<CrmPlaybookVm>
+            {
+                new()
+                {
+                    Title = "CrmLeadQualifiedPlaybookTitle",
+                    ScopeNote = "CrmLeadQualifiedPlaybookScopeNote",
+                    OperatorAction = "CrmLeadQualifiedPlaybookAction"
+                },
+                new()
+                {
+                    Title = "CrmLeadUnassignedPlaybookTitle",
+                    ScopeNote = "CrmLeadUnassignedPlaybookScopeNote",
+                    OperatorAction = "CrmLeadUnassignedPlaybookAction"
+                },
+                new()
+                {
+                    Title = "CrmLeadUnconvertedPlaybookTitle",
+                    ScopeNote = "CrmLeadUnconvertedPlaybookScopeNote",
+                    OperatorAction = "CrmLeadUnconvertedPlaybookAction"
+                }
+            };
+        }
+
+        private static OpportunityOpsSummaryVm BuildOpportunityOpsSummary(IReadOnlyCollection<OpportunityListItemDto> items)
+        {
+            var closingSoonThreshold = DateTime.UtcNow.Date.AddDays(14);
+            return new OpportunityOpsSummaryVm
+            {
+                OpenCount = items.Count(x => x.Stage != Darwin.Domain.Enums.OpportunityStage.ClosedWon && x.Stage != Darwin.Domain.Enums.OpportunityStage.ClosedLost),
+                ClosingSoonCount = items.Count(x => x.ExpectedCloseDateUtc.HasValue && x.ExpectedCloseDateUtc.Value.Date <= closingSoonThreshold),
+                HighValueCount = items.Count(x => x.EstimatedValueMinor >= 100000),
+                UnassignedCount = items.Count(x => !x.AssignedToUserId.HasValue),
+                HighInteractionCount = items.Count(x => x.InteractionCount >= 3)
+            };
+        }
+
+        private static List<CrmPlaybookVm> BuildOpportunityPlaybooks()
+        {
+            return new List<CrmPlaybookVm>
+            {
+                new()
+                {
+                    Title = "CrmOpportunityClosingSoonPlaybookTitle",
+                    ScopeNote = "CrmOpportunityClosingSoonPlaybookScopeNote",
+                    OperatorAction = "CrmOpportunityClosingSoonPlaybookAction"
+                },
+                new()
+                {
+                    Title = "CrmOpportunityUnassignedPlaybookTitle",
+                    ScopeNote = "CrmOpportunityUnassignedPlaybookScopeNote",
+                    OperatorAction = "CrmOpportunityUnassignedPlaybookAction"
+                },
+                new()
+                {
+                    Title = "CrmOpportunityHighInteractionPlaybookTitle",
+                    ScopeNote = "CrmOpportunityHighInteractionPlaybookScopeNote",
+                    OperatorAction = "CrmOpportunityHighInteractionPlaybookAction"
+                }
+            };
         }
 
         private IActionResult RenderCustomersWorkspace(CustomersListVm vm)

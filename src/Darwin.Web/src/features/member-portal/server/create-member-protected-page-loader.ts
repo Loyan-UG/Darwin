@@ -10,6 +10,7 @@ type CreateMemberProtectedPageLoaderOptions<
 > = {
   operation: string;
   thresholdMs?: number;
+  normalizeArgs?: (...args: TArgs) => TArgs;
   getContext: (...args: TArgs) => Record<string, unknown>;
   getEntryRoute: (...args: TArgs) => string;
   summarizeAuthorized: (
@@ -32,6 +33,7 @@ export function createMemberProtectedPageLoader<
 >({
   operation,
   thresholdMs = 300,
+  normalizeArgs,
   getContext,
   getEntryRoute,
   summarizeAuthorized,
@@ -41,6 +43,7 @@ export function createMemberProtectedPageLoader<
   return createMemberProtectedPageLoaderCore({
     operation,
     thresholdMs,
+    normalizeArgs,
     getContext,
     getEntryRoute,
     summarizeAuthorized,

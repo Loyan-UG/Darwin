@@ -1,8 +1,10 @@
 import { createCachedObservedLoader } from "@/lib/observed-loader";
+import { buildPageLoaderBaseDiagnostics } from "@/lib/page-loader-diagnostics";
 
 type CreateCommercePageLoaderOptions<TArgs extends unknown[], TResult> = {
   operation: string;
   thresholdMs?: number;
+  normalizeArgs?: (...args: TArgs) => TArgs;
   getContext: (...args: TArgs) => Record<string, unknown>;
   getSuccessContext: (
     result: TResult,
@@ -14,6 +16,7 @@ type CreateCommercePageLoaderOptions<TArgs extends unknown[], TResult> = {
 export function createCommercePageLoaderCore<TArgs extends unknown[], TResult>({
   operation,
   thresholdMs = 325,
+  normalizeArgs,
   getContext,
   getSuccessContext,
   load,
@@ -22,14 +25,17 @@ export function createCommercePageLoaderCore<TArgs extends unknown[], TResult>({
     area: "commerce-page-context",
     operation,
     thresholdMs,
-    getContext: (...args: TArgs) => ({
-      pageLoaderKind: "commerce",
-      ...(getContext(...args) ?? {}),
-    }),
-    getSuccessContext: (result: TResult, ...args: TArgs) => ({
-      pageLoaderKind: "commerce",
-      ...(getSuccessContext(result, ...args) ?? {}),
-    }),
+    normalizeArgs,
+    getContext: (...args: TArgs) =>
+      buildPageLoaderBaseDiagnostics("commerce", {
+        hasCanonicalNormalization: Boolean(normalizeArgs),
+        extras: getContext(...args) ?? {},
+      }),
+    getSuccessContext: (result: TResult, ...args: TArgs) =>
+      buildPageLoaderBaseDiagnostics("commerce", {
+        hasCanonicalNormalization: Boolean(normalizeArgs),
+        extras: getSuccessContext(result, ...args) ?? {},
+      }),
     load,
   });
 }

@@ -36,6 +36,15 @@ const getCachedCmsPageDetailContext = createCachedObservedLoader({
   area: "cms-detail",
   operation: "load-core-context",
   thresholdMs: 250,
+  normalizeArgs: (
+    culture: string,
+    slug: string,
+    reviewWindow?: Partial<CmsPageDetailReviewWindow>,
+  ): [string, string, CmsPageDetailReviewWindow] => [
+    culture,
+    slug,
+    normalizeReviewWindow(reviewWindow),
+  ],
   getContext: (
     culture: string,
     slug: string,
@@ -102,5 +111,9 @@ export async function getCmsPageDetailContext(
   slug: string,
   reviewWindow?: Partial<CmsPageDetailReviewWindow>,
 ) {
-  return getCachedCmsPageDetailContext(culture, slug, reviewWindow);
+  return getCachedCmsPageDetailContext(
+    culture,
+    slug,
+    normalizeReviewWindow(reviewWindow),
+  );
 }

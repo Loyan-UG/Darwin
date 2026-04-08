@@ -180,6 +180,24 @@ namespace Darwin.Application.CRM.Queries
                 EffectiveLastName = user?.LastName ?? customer.LastName,
                 EffectiveEmail = user?.Email ?? customer.Email,
                 EffectivePhone = user?.PhoneE164 ?? customer.Phone,
+                EffectiveLocale = user?.Locale,
+                UsesPlatformLocaleFallback = !customer.UserId.HasValue || user == null || string.IsNullOrWhiteSpace(user.Locale),
+                SegmentCount = await _db.Set<CustomerSegmentMembership>()
+                    .AsNoTracking()
+                    .CountAsync(x => x.CustomerId == customer.Id, ct)
+                    .ConfigureAwait(false),
+                OpportunityCount = await _db.Set<Opportunity>()
+                    .AsNoTracking()
+                    .CountAsync(x => x.CustomerId == customer.Id, ct)
+                    .ConfigureAwait(false),
+                InteractionCount = await _db.Set<Interaction>()
+                    .AsNoTracking()
+                    .CountAsync(x => x.CustomerId == customer.Id, ct)
+                    .ConfigureAwait(false),
+                ConsentCount = await _db.Set<Consent>()
+                    .AsNoTracking()
+                    .CountAsync(x => x.CustomerId == customer.Id, ct)
+                    .ConfigureAwait(false),
                 DefaultBillingAddress = billingAddress,
                 DefaultShippingAddress = shippingAddress,
                 Addresses = customer.Addresses
@@ -304,7 +322,25 @@ namespace Darwin.Application.CRM.Queries
                     Notes = x.Notes,
                     Status = x.Status,
                     AssignedToUserId = x.AssignedToUserId,
-                    CustomerId = x.CustomerId
+                    AssignedToUserDisplayName = x.AssignedToUserId.HasValue
+                        ? _db.Set<User>()
+                            .Where(u => u.Id == x.AssignedToUserId.Value)
+                            .Select(u => ((u.FirstName ?? string.Empty) + " " + (u.LastName ?? string.Empty)).Trim())
+                            .FirstOrDefault()
+                        : null,
+                    CustomerId = x.CustomerId,
+                    CustomerDisplayName = x.CustomerId.HasValue
+                        ? _db.Set<Customer>()
+                            .Where(c => c.Id == x.CustomerId.Value)
+                            .Select(c => c.UserId.HasValue
+                                ? _db.Set<User>()
+                                    .Where(u => u.Id == c.UserId.Value)
+                                    .Select(u => ((u.FirstName ?? string.Empty) + " " + (u.LastName ?? string.Empty)).Trim())
+                                    .FirstOrDefault() ?? ((c.FirstName + " " + c.LastName).Trim())
+                                : ((c.FirstName + " " + c.LastName).Trim()))
+                            .FirstOrDefault()
+                        : null,
+                    InteractionCount = _db.Set<Interaction>().Count(i => i.LeadId == x.Id)
                 })
                 .FirstOrDefaultAsync(ct);
         }

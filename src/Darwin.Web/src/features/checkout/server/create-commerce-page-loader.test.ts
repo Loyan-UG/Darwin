@@ -49,3 +49,23 @@ test("createCommercePageLoader keeps commerce loader results cache-scoped withou
     route: "/test/cart",
   });
 });
+
+test("createCommercePageLoader normalizes equivalent arguments before caching", async () => {
+  const loader = createCommercePageLoaderCore({
+    operation: "unit-commerce-page",
+    normalizeArgs: (culture: string, page: string) => [culture.trim(), page.trim()] as [string, string],
+    getContext: (culture: string, page: string) => ({ culture, page }),
+    getSuccessContext: () => ({}),
+    load: async (_culture: string, page: string) => ({
+      step: page,
+    }),
+  });
+
+  const [first, second] = await Promise.all([
+    loader("de-DE", "cart"),
+    loader(" de-DE ", " cart "),
+  ]);
+
+  assert.equal(first.step, "cart");
+  assert.equal(second.step, "cart");
+});

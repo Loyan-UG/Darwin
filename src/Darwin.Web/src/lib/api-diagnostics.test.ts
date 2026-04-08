@@ -24,6 +24,9 @@ test("getResponseDiagnostics extracts request ids and trace headers", () => {
   assert.deepEqual(diagnostics, {
     area: "public-api",
     path: "/api/v1/public/catalog/products",
+    apiKind: "public",
+    surfaceFamily: "public-discovery",
+    surfaceArea: "catalog-products",
     statusCode: 502,
     statusFamily: "server-error",
     requestId: "req-123",
@@ -35,6 +38,9 @@ test("createDiagnostics builds network-failure context without response metadata
   assert.deepEqual(createDiagnostics("member-api", "/api/v1/member/orders"), {
     area: "member-api",
     path: "/api/v1/member/orders",
+    apiKind: "member",
+    surfaceFamily: "member",
+    surfaceArea: "member-orders",
     statusFamily: "network-error",
   });
 });
@@ -52,10 +58,15 @@ test("withFailureDiagnostics classifies retryability for common API failures", (
     {
       area: "public-api",
       path: "/api/v1/public/catalog/products",
+      apiKind: "public",
+      surfaceFamily: "public-discovery",
+      surfaceArea: "catalog-products",
       statusCode: 503,
       statusFamily: "server-error",
       failureKind: "http-error",
       retryable: true,
+      attentionLevel: "high",
+      suggestedAction: "retry-public-discovery-request",
       requestId: undefined,
       traceparent: undefined,
     },
@@ -73,10 +84,15 @@ test("withFailureDiagnostics classifies retryability for common API failures", (
     {
       area: "member-api",
       path: "/api/v1/member/orders",
+      apiKind: "member",
+      surfaceFamily: "member",
+      surfaceArea: "member-orders",
       statusCode: 403,
       statusFamily: "client-error",
       failureKind: "unauthorized",
       retryable: false,
+      attentionLevel: "medium",
+      suggestedAction: "inspect-member-access",
       requestId: undefined,
       traceparent: undefined,
     },

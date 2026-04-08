@@ -115,7 +115,11 @@ test("observeAsyncOperation reports degraded successful operations even when the
     assert.equal(warnings[0]?.degradedStatusCount, 1);
     assert.deepEqual(warnings[0]?.degradedStatuses, { menuStatus: "fallback" });
     assert.deepEqual(warnings[0]?.degradedStatusKeys, ["menuStatus"]);
+    assert.equal(warnings[0]?.degradedSurfaceCount, 1);
+    assert.deepEqual(warnings[0]?.degradedSurfaceKeys, ["menu"]);
+    assert.equal(warnings[0]?.degradedSurfaceFootprint, "menu:fallback");
     assert.equal(warnings[0]?.primaryDegradedStatusKey, "menuStatus");
+    assert.equal(warnings[0]?.primaryDegradedSurface, "menu");
   } finally {
     if (previous === undefined) {
       delete process.env.DARWIN_WEB_LOG_DEGRADED;
@@ -169,5 +173,15 @@ test("observeAsyncOperation distinguishes very slow degraded successes", async (
     "productsStatus",
     "cmsPagesStatus",
   ]);
+  assert.equal(warnings[0]?.degradedSurfaceCount, 2);
+  assert.deepEqual(warnings[0]?.degradedSurfaceKeys, [
+    "products",
+    "cmsPages",
+  ]);
+  assert.equal(
+    warnings[0]?.degradedSurfaceFootprint,
+    "products:fallback|cmsPages:fallback",
+  );
   assert.equal(warnings[0]?.primaryDegradedStatusKey, "productsStatus");
+  assert.equal(warnings[0]?.primaryDegradedSurface, "products");
 });

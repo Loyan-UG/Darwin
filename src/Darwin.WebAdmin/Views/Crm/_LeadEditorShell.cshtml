@@ -6,6 +6,80 @@
 }
 
 <div id="crm-lead-editor-shell">
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+    @if (!isCreate)
+    {
+        <div class="card border-0 bg-light mb-3">
+            <div class="card-body py-3">
+                <div class="row g-3 small">
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Status")</div>
+                        <div class="fw-semibold">@Model.Status</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Owner")</div>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.AssignedToUserDisplayName) ? T.T("Unassigned") : Model.AssignedToUserDisplayName)</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Customer")</div>
+                        <div class="fw-semibold">@(Model.CustomerId.HasValue ? (string.IsNullOrWhiteSpace(Model.CustomerDisplayName) ? T.T("Linked") : Model.CustomerDisplayName) : T.T("Unlinked"))</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Source")</div>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.Source) ? "-" : Model.Source)</div>
+                    </div>
+                </div>
+                <div class="row g-3 small mt-1">
+                    <div class="col-md-3">
+                        <div class="text-muted">@T.T("Interactions")</div>
+                        <div class="fw-semibold">@Model.InteractionCount</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 bg-light mb-3">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <div class="fw-semibold">@T.T("LeadFollowUpWorkspace")</div>
+                        <div class="small text-muted mt-1">@T.T("LeadFollowUpWorkspaceNote")</div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        @if (Model.CustomerId.HasValue)
+                        {
+                            <a asp-action="EditCustomer"
+                               asp-route-id="@Model.CustomerId.Value"
+                               class="btn btn-sm btn-outline-primary"
+                               hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                               hx-target="#crm-lead-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                <i class="fa fa-user"></i> @T.T("OpenCustomer")
+                            </a>
+                            <a asp-action="CreateOpportunity"
+                               asp-route-customerId="@Model.CustomerId.Value"
+                               class="btn btn-sm btn-outline-success"
+                               hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = Model.CustomerId.Value })"
+                               hx-target="#crm-lead-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                <i class="fa fa-briefcase"></i> @T.T("CreateOpportunity")
+                            </a>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-success" disabled>
+                                <i class="fa fa-briefcase"></i> @T.T("CreateOpportunity")
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <form asp-action="@formAction"
           method="post"
           hx-post="@Url.Action(formAction, "Crm")"
@@ -23,4 +97,28 @@
             <a asp-action="Leads" hx-get="@Url.Action("Leads", "Crm")" hx-target="#crm-lead-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
+
+    @if (!isCreate)
+    {
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>@T.T("Interactions")</span>
+                <a asp-action="EditLead"
+                   asp-route-id="@Model.Id"
+                   asp-fragment="lead-interactions-section"
+                   class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("EditLead", "Crm", new { id = Model.Id, fragment = "lead-interactions-section" })"
+                   hx-target="#crm-lead-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Open")</a>
+            </div>
+            <div class="card-body" id="lead-interactions-section"
+                 hx-get="@Url.Action("LeadInteractions", "Crm", new { leadId = Model.Id })"
+                 hx-trigger="load"
+                 hx-target="this"
+                 hx-swap="innerHTML">
+                <div class="text-muted small">@T.T("Loading")...</div>
+            </div>
+        </div>
+    }
 </div>

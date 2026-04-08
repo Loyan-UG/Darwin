@@ -3,6 +3,7 @@ import {
   PublicContinuationRail,
   type PublicContinuationItem,
 } from "@/components/shell/public-continuation-rail";
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
 import type {
   PublicCategorySummary,
   PublicProductSummary,
@@ -10,13 +11,15 @@ import type {
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import {
-  getProductOpportunityCampaign,
-  getProductOpportunityCampaignLabel,
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+  buildStorefrontCategoryCampaignCards,
+  buildStorefrontCategorySpotlightLinkCards,
+  buildStorefrontOfferCards,
+  buildStorefrontPageSpotlightCards,
+  buildStorefrontProductCampaignCards,
+} from "@/features/storefront/storefront-campaigns";
+import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
-import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
+import { localizeHref } from "@/lib/locale-routing";
 import { formatResource, getMemberResource } from "@/localization";
 
 type PublicAuthContinuationProps = {
@@ -45,49 +48,75 @@ export function PublicAuthContinuation({
   const copy = getMemberResource(culture);
   const cartLineCount =
     storefrontCart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
-  const productOpportunities = sortProductsByOpportunity(products);
+  const {
+    campaignCategories,
+    campaignProducts,
+    rankedProducts: productOpportunities,
+  } = buildStorefrontSpotlightSelections({
+    cmsPages,
+    categories,
+    products,
+    categoryCampaignCount: 2,
+    productCampaignCount: 2,
+  });
+  const campaignLabels = {
+    heroOffer: copy.offerCampaignHeroLabel,
+    valueOffer: copy.offerCampaignValueLabel,
+    priceDrop: copy.offerCampaignPriceDropLabel,
+    steadyPick: copy.offerCampaignSteadyLabel,
+  };
   const campaignCards = [
-    ...categories.slice(0, 2).map((category) => ({
-      id: `auth-campaign-category-${category.id}`,
+    ...buildStorefrontCategoryCampaignCards(campaignCategories, {
+      prefix: "auth-campaign",
       label: copy.publicAuthCampaignCategoryLabel,
-      title: category.name,
-      description:
-        category.description ?? copy.publicAuthCampaignCategoryFallbackDescription,
-      href: buildAppQueryPath("/catalog", { category: category.slug }),
+      fallbackDescription: copy.publicAuthCampaignCategoryFallbackDescription,
       ctaLabel: copy.publicAuthCampaignCategoryCta,
-    })),
-    ...productOpportunities.slice(0, 2).map((product) => {
-      const savingsPercent = getProductSavingsPercent(product);
-      const campaignLabel = getProductOpportunityCampaignLabel(
-        getProductOpportunityCampaign(product),
-        {
-          heroOffer: copy.offerCampaignHeroLabel,
-          valueOffer: copy.offerCampaignValueLabel,
-          priceDrop: copy.offerCampaignPriceDropLabel,
-          steadyPick: copy.offerCampaignSteadyLabel,
-        },
-      );
-
-      return {
-        id: `auth-campaign-product-${product.id}`,
-        label: campaignLabel,
-        title: product.name,
-        description:
-          savingsPercent !== null
-            ? formatResource(copy.publicAuthCampaignProductDescription, {
-                campaignLabel,
-                savingsPercent,
-                price: formatMoney(product.priceMinor, product.currency, culture),
-              })
-            : formatResource(copy.publicAuthCampaignProductFallbackDescription, {
-                campaignLabel,
-                price: formatMoney(product.priceMinor, product.currency, culture),
-              }),
-        href: `/catalog/${product.slug}`,
-        ctaLabel: copy.publicAuthCampaignProductCta,
-      };
+    }),
+    ...buildStorefrontProductCampaignCards(campaignProducts, {
+      prefix: "auth-campaign",
+      labels: campaignLabels,
+      formatPrice: (product) =>
+        formatMoney(product.priceMinor, product.currency, culture),
+      describeWithSavings: (_, input) =>
+        formatResource(copy.publicAuthCampaignProductDescription, {
+          campaignLabel: input.campaignLabel,
+          savingsPercent: input.savingsPercent,
+          price: input.price,
+        }),
+      describeWithoutSavings: (_, input) =>
+        formatResource(copy.publicAuthCampaignProductFallbackDescription, {
+          campaignLabel: input.campaignLabel,
+          price: input.price,
+        }),
+      ctaLabel: copy.publicAuthCampaignProductCta,
     }),
   ];
+  const productOpportunityCards = buildStorefrontOfferCards(
+    productOpportunities,
+    {
+      labels: campaignLabels,
+      formatPrice: (product) =>
+        formatMoney(product.priceMinor, product.currency, culture),
+      describeWithSavings: (_, input) =>
+        formatResource(copy.publicAuthProductOfferDescription, {
+          campaignLabel: input.campaignLabel,
+          savingsPercent: input.savingsPercent,
+          price: input.price,
+        }),
+      describeWithoutSavings: (product) =>
+        product.shortDescription ?? copy.publicAuthProductFallbackDescription,
+      fallbackDescription: copy.publicAuthProductFallbackDescription,
+      ctaLabel: copy.publicAuthProductCta,
+    },
+  );
+  const cmsSpotlightCards = buildStorefrontPageSpotlightCards(cmsPages, {
+    prefix: "auth",
+    fallbackDescription: copy.publicAuthCmsFallbackDescription,
+  });
+  const categorySpotlightCards = buildStorefrontCategorySpotlightLinkCards(categories, {
+    prefix: "auth",
+    fallbackDescription: copy.publicAuthCatalogFallbackDescription,
+  });
 
   const items: PublicContinuationItem[] = [
     ...(storefrontCart && cartLineCount > 0
@@ -132,14 +161,13 @@ export function PublicAuthContinuation({
       href: "/",
       ctaLabel: copy.memberCrossSurfaceHomeCta,
     },
-    ...(cmsPages.length > 0
-      ? cmsPages.map((page) => ({
-          id: `auth-cms-${page.id}`,
+    ...(cmsSpotlightCards.length > 0
+      ? cmsSpotlightCards.map((page) => ({
+          id: page.id,
           label: copy.accountHubCmsLabel,
           title: page.title,
-          description:
-            page.metaDescription ?? copy.publicAuthCmsFallbackDescription,
-          href: `/cms/${page.slug}`,
+          description: page.description,
+          href: page.href,
           ctaLabel: copy.accountHubCmsCta,
         }))
       : [
@@ -157,14 +185,13 @@ export function PublicAuthContinuation({
             ctaLabel: copy.accountHubCmsCta,
           },
         ]),
-    ...(categories.length > 0
-      ? categories.map((category) => ({
-          id: `auth-catalog-${category.id}`,
+    ...(categorySpotlightCards.length > 0
+      ? categorySpotlightCards.map((category) => ({
+          id: category.id,
           label: copy.accountHubCatalogLabel,
-          title: category.name,
-          description:
-            category.description ?? copy.publicAuthCatalogFallbackDescription,
-          href: buildAppQueryPath("/catalog", { category: category.slug }),
+          title: category.title,
+          description: category.description,
+          href: category.href,
           ctaLabel: copy.memberCrossSurfaceCatalogCta,
         }))
       : [
@@ -182,38 +209,15 @@ export function PublicAuthContinuation({
             ctaLabel: copy.memberCrossSurfaceCatalogCta,
           },
         ]),
-    ...(productOpportunities.length > 0
-      ? productOpportunities.map((product) => {
-        const savingsPercent = getProductSavingsPercent(product);
-        const campaignLabel = getProductOpportunityCampaignLabel(
-          getProductOpportunityCampaign(product),
-          {
-            heroOffer: copy.offerCampaignHeroLabel,
-            valueOffer: copy.offerCampaignValueLabel,
-            priceDrop: copy.offerCampaignPriceDropLabel,
-            steadyPick: copy.offerCampaignSteadyLabel,
-          },
-        );
-
+    ...(productOpportunityCards.length > 0
+      ? productOpportunityCards.map((product) => {
           return {
             id: `auth-product-${product.id}`,
-            label: campaignLabel,
-            title: product.name,
-            description:
-              savingsPercent !== null
-                ? formatResource(copy.publicAuthProductOfferDescription, {
-                    campaignLabel,
-                    savingsPercent,
-                    price: formatMoney(
-                      product.priceMinor,
-                      product.currency,
-                      culture,
-                    ),
-                  })
-                : product.shortDescription ??
-                  copy.publicAuthProductFallbackDescription,
-            href: `/catalog/${product.slug}`,
-            ctaLabel: copy.publicAuthProductCta,
+            label: product.label,
+            title: product.title,
+            description: product.description,
+            href: product.href,
+            ctaLabel: product.ctaLabel ?? copy.publicAuthProductCta,
           };
         })
       : [
@@ -271,37 +275,15 @@ export function PublicAuthContinuation({
             productsStatus,
           })}
         </p>
-        {campaignCards.length > 0 ? (
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            {campaignCards.map((card) => (
-              <Link
-                key={card.id}
-                href={localizeHref(card.href, culture)}
-                className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 transition hover:bg-[var(--color-surface-panel)]"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                  {card.label}
-                </p>
-                <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                  {card.title}
-                </p>
-                <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {card.description}
-                </p>
-                <p className="mt-3 text-sm font-semibold text-[var(--color-brand)]">
-                  {card.ctaLabel}
-                </p>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-            {formatResource(copy.publicAuthCampaignEmptyMessage, {
-              categoriesStatus,
-              productsStatus,
-            })}
-          </p>
-        )}
+        <StorefrontCampaignBoard
+          culture={culture}
+          cards={campaignCards}
+          emptyMessage={formatResource(copy.publicAuthCampaignEmptyMessage, {
+            categoriesStatus,
+            productsStatus,
+          })}
+          cardClassName="bg-[var(--color-surface-panel-strong)]"
+        />
       </section>
     </div>
   );

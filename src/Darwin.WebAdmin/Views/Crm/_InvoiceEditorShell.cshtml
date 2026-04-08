@@ -3,6 +3,7 @@
 
 <div id="crm-invoice-editor-shell">
     <h1 class="mb-3">@T.T("EditInvoice")</h1>
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
 
     <div class="alert alert-light border mb-3">
         <div class="row g-2 small">
@@ -114,6 +115,67 @@
                 <span class="badge text-bg-primary-subtle border border-primary-subtle text-primary-emphasis ms-auto">
                     @T.T("Current"): @Model.Status
                 </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 bg-light mb-3">
+        <div class="card-body py-3">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <div class="fw-semibold">@T.T("InvoiceFollowUpWorkspace")</div>
+                    <div class="small text-muted mt-1">@T.T("InvoiceFollowUpWorkspaceNote")</div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    @if (Model.CustomerId.HasValue)
+                    {
+                        <a asp-action="EditCustomer"
+                           asp-route-id="@Model.CustomerId.Value"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-user"></i> @T.T("OpenCustomer")
+                        </a>
+                    }
+                    @if (Model.OrderId.HasValue)
+                    {
+                        <a asp-controller="Orders"
+                           asp-action="Details"
+                           asp-route-id="@Model.OrderId.Value"
+                           class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value })"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-box"></i> @T.T("ReviewOrder")
+                        </a>
+                    }
+                    @if (Model.PaymentId.HasValue && Model.OrderId.HasValue)
+                    {
+                        <a asp-controller="Orders"
+                           asp-action="Details"
+                           asp-route-id="@Model.OrderId.Value"
+                           asp-fragment="payments"
+                           class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value, fragment = "payments" })"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-credit-card"></i> @T.T("ReviewPaymentTrail")
+                        </a>
+                    }
+                    <a asp-action="Invoices"
+                       asp-route-q="@Model.CustomerId"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Invoices", "Crm", new { q = Model.CustomerId })"
+                       hx-target="#crm-invoice-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa fa-list"></i> @T.T("RelatedInvoices")
+                    </a>
+                </div>
             </div>
         </div>
     </div>

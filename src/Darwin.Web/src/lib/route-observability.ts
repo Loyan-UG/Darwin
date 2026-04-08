@@ -28,6 +28,22 @@ function getDegradedStatusEntries(detail?: Record<string, unknown>) {
   });
 }
 
+function toDegradedSurfaceKey(statusKey: string) {
+  return statusKey.endsWith("Status")
+    ? statusKey.slice(0, -1 * "Status".length)
+    : statusKey;
+}
+
+function getDegradedSurfaceFootprint(degradedStatuses: Array<[string, unknown]>) {
+  if (degradedStatuses.length === 0) {
+    return undefined;
+  }
+
+  return degradedStatuses
+    .map(([key, value]) => `${toDegradedSurfaceKey(key)}:${String(value)}`)
+    .join("|");
+}
+
 function getDurationBand(durationMs: number, thresholdMs: number) {
   if (durationMs < thresholdMs) {
     return "within-threshold";
@@ -124,6 +140,10 @@ function buildObservedOutcomeDetail(
     degradedStatusCount > 0 ? Object.fromEntries(degradedStatuses) : undefined;
   const degradedStatusKeys =
     degradedStatusCount > 0 ? degradedStatuses.map(([key]) => key) : undefined;
+  const degradedSurfaceKeys =
+    degradedStatusCount > 0
+      ? degradedStatuses.map(([key]) => toDegradedSurfaceKey(key))
+      : undefined;
   const isSlow = durationMs >= thresholdMs;
   const durationBand = getDurationBand(durationMs, thresholdMs);
 
@@ -149,7 +169,11 @@ function buildObservedOutcomeDetail(
     degradedStatusCount,
     degradedStatuses: degradedStatusMap,
     degradedStatusKeys,
+    degradedSurfaceCount: degradedSurfaceKeys?.length ?? 0,
+    degradedSurfaceKeys,
+    degradedSurfaceFootprint: getDegradedSurfaceFootprint(degradedStatuses),
     primaryDegradedStatusKey: degradedStatusKeys?.[0],
+    primaryDegradedSurface: degradedSurfaceKeys?.[0],
   };
 }
 

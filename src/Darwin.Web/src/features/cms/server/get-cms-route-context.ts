@@ -5,14 +5,57 @@ import { getPublicStorefrontContext } from "@/features/storefront/server/get-pub
 import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { summarizeCmsRouteHealth } from "@/lib/route-health";
 import {
+  readCmsMetadataFocus,
+  readCmsVisibleSort,
+  readCmsVisibleState,
+} from "@/features/cms/discovery";
+import {
   cmsDetailRouteObservationContext,
   cmsIndexRouteObservationContext,
 } from "@/lib/route-observation-context";
+
+function normalizeCmsIndexArgs(
+  culture: string,
+  page: number,
+  search?: string,
+): [string, number, string | undefined] {
+  return [
+    culture,
+    Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
+    search?.trim() || undefined,
+  ];
+}
+
+function normalizeCmsDetailArgs(
+  culture: string,
+  slug: string,
+  visibleQuery?: string,
+  visibleState?: string,
+  visibleSort?: string,
+  metadataFocus?: string,
+): [
+  string,
+  string,
+  string | undefined,
+  string | undefined,
+  string | undefined,
+  string | undefined,
+] {
+  return [
+    culture,
+    slug,
+    visibleQuery?.trim() || undefined,
+    readCmsVisibleState(visibleState),
+    readCmsVisibleSort(visibleSort),
+    readCmsMetadataFocus(metadataFocus),
+  ];
+}
 
 const getCachedCmsIndexRouteContext = createCachedObservedLoader({
   area: "cms-index",
   operation: "load-route-context",
   thresholdMs: 325,
+  normalizeArgs: normalizeCmsIndexArgs,
   getContext: (culture: string, page: number, search?: string) =>
     cmsIndexRouteObservationContext(culture, page, search),
   getSuccessContext: summarizeCmsRouteHealth,
@@ -33,6 +76,7 @@ const getCachedCmsDetailRouteContext = createCachedObservedLoader({
   area: "cms-detail",
   operation: "load-route-context",
   thresholdMs: 325,
+  normalizeArgs: normalizeCmsDetailArgs,
   getContext: (
     culture: string,
     slug: string,

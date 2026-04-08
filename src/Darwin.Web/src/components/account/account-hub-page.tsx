@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
+import { StorefrontOfferBoard } from "@/components/storefront/storefront-offer-board";
 import type {
   PublicCategorySummary,
   PublicProductSummary,
@@ -9,15 +10,13 @@ import type {
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import {
-  getProductOpportunityCampaign,
-  getProductOpportunityCampaignLabel,
-  getStrongestProductOpportunity,
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+  buildStorefrontCategorySpotlightLinkCards,
+  buildStorefrontOfferCards,
+  buildStorefrontPageSpotlightCards,
+} from "@/features/storefront/storefront-campaigns";
+import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
 import {
-  buildAppQueryPath,
   buildLocalizedAuthHref,
   localizeHref,
 } from "@/lib/locale-routing";
@@ -52,10 +51,48 @@ export function AccountHubPage({
   const cartLineCount =
     storefrontCart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const preferredReturnPath = returnPath || (cartLineCount > 0 ? "/checkout" : "/account");
-  const spotlightCmsPage = cmsPages[0];
-  const spotlightCategory = categories[0];
-  const spotlightProduct = getStrongestProductOpportunity(products);
-  const rankedOffers = sortProductsByOpportunity(products).slice(0, 3);
+  const {
+    spotlightProduct,
+    offerBoardProducts: rankedOffers,
+  } = buildStorefrontSpotlightSelections({
+    cmsPages,
+    categories,
+    products,
+    offerBoardCount: 3,
+  });
+  const offerBoardCards = buildStorefrontOfferCards(rankedOffers, {
+    labels: {
+      heroOffer: copy.offerCampaignHeroLabel,
+      valueOffer: copy.offerCampaignValueLabel,
+      priceDrop: copy.offerCampaignPriceDropLabel,
+      steadyPick: copy.offerCampaignSteadyLabel,
+    },
+    formatPrice: (product) =>
+      formatMoney(product.priceMinor, product.currency, culture),
+    describeWithSavings: (_, input) =>
+      formatResource(copy.accountHubOfferBoardDescription, {
+        campaignLabel: input.campaignLabel,
+        savingsPercent: input.savingsPercent,
+        price: input.price,
+      }),
+    describeWithoutSavings: (product) =>
+      product.shortDescription ?? copy.accountHubOfferBoardFallbackDescription,
+    fallbackDescription: copy.accountHubOfferBoardFallbackDescription,
+    ctaLabel: copy.accountHubOfferBoardCta,
+  });
+  const cmsSpotlightCards = buildStorefrontPageSpotlightCards(cmsPages.slice(0, 1), {
+    prefix: "account-hub",
+    fallbackDescription: copy.accountHubActionCmsFallbackDescription,
+  });
+  const categorySpotlightCards = buildStorefrontCategorySpotlightLinkCards(
+    categories.slice(0, 1),
+    {
+      prefix: "account-hub",
+      fallbackDescription: copy.accountHubActionCatalogFallbackDescription,
+    },
+  );
+  const cmsSpotlightCard = cmsSpotlightCards[0] ?? null;
+  const categorySpotlightCard = categorySpotlightCards[0] ?? null;
   const accountCards = [
     {
       id: "sign-in",
@@ -260,16 +297,16 @@ export function AccountHubPage({
                 {copy.accountHubActionCmsLabel}
               </p>
               <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
-                {spotlightCmsPage?.title ?? copy.accountHubActionCmsTitle}
+                {cmsSpotlightCard?.title ?? copy.accountHubActionCmsTitle}
               </h2>
               <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {spotlightCmsPage?.metaDescription ??
+                {cmsSpotlightCard?.description ??
                   copy.accountHubActionCmsFallbackDescription}
               </p>
               <div className="mt-4">
                 <Link
                   href={localizeHref(
-                    spotlightCmsPage ? `/cms/${spotlightCmsPage.slug}` : "/cms",
+                    cmsSpotlightCard ? cmsSpotlightCard.href : "/cms",
                     culture,
                   )}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
@@ -284,18 +321,16 @@ export function AccountHubPage({
                 {copy.accountHubActionCatalogLabel}
               </p>
               <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
-                {spotlightCategory?.name ?? copy.accountHubActionCatalogTitle}
+                {categorySpotlightCard?.title ?? copy.accountHubActionCatalogTitle}
               </h2>
               <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {spotlightCategory?.description ??
+                {categorySpotlightCard?.description ??
                   copy.accountHubActionCatalogFallbackDescription}
               </p>
               <div className="mt-4">
                 <Link
                   href={localizeHref(
-                    spotlightCategory
-                      ? buildAppQueryPath("/catalog", { category: spotlightCategory.slug })
-                      : "/catalog",
+                    categorySpotlightCard ? categorySpotlightCard.href : "/catalog",
                     culture,
                   )}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
@@ -348,64 +383,13 @@ export function AccountHubPage({
               status: productsStatus,
             })}
           </p>
-          {rankedOffers.length > 0 ? (
-            <div className="mt-5 grid gap-4 lg:grid-cols-3">
-              {rankedOffers.map((product) => {
-                const savingsPercent = getProductSavingsPercent(product);
-                const campaignLabel = getProductOpportunityCampaignLabel(
-                  getProductOpportunityCampaign(product),
-                  {
-                    heroOffer: copy.offerCampaignHeroLabel,
-                    valueOffer: copy.offerCampaignValueLabel,
-                    priceDrop: copy.offerCampaignPriceDropLabel,
-                    steadyPick: copy.offerCampaignSteadyLabel,
-                  },
-                );
-
-                return (
-                  <article
-                    key={product.id}
-                    className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                      {campaignLabel}
-                    </p>
-                    <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">
-                      {product.name}
-                    </h2>
-                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {savingsPercent !== null
-                        ? formatResource(copy.accountHubOfferBoardDescription, {
-                            campaignLabel,
-                            savingsPercent,
-                            price: formatMoney(
-                              product.priceMinor,
-                              product.currency,
-                              culture,
-                            ),
-                          })
-                        : product.shortDescription ??
-                          copy.accountHubOfferBoardFallbackDescription}
-                    </p>
-                    <div className="mt-4">
-                      <Link
-                        href={localizeHref(`/catalog/${product.slug}`, culture)}
-                        className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                      >
-                        {copy.accountHubOfferBoardCta}
-                      </Link>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {formatResource(copy.accountHubOfferBoardEmptyMessage, {
-                status: productsStatus,
-              })}
-            </p>
-          )}
+          <StorefrontOfferBoard
+            culture={culture}
+            cards={offerBoardCards}
+            emptyMessage={formatResource(copy.accountHubOfferBoardEmptyMessage, {
+              status: productsStatus,
+            })}
+          />
         </aside>
 
         <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">

@@ -5,6 +5,7 @@
 }
 
 <div id="crm-customers-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <h1 class="mb-3">@T.T("Customers")</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -33,6 +34,37 @@
 </div>
 
 <div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("Customers")</div>
+            <div class="display-6 fw-semibold mt-1">@Model.Summary.CustomerCount</div>
+            <div class="small text-muted mt-2">@T.T("CrmCustomersFootprintNote")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("Segments")</div>
+            <div class="display-6 fw-semibold mt-1">@Model.Summary.SegmentCount</div>
+            <div class="small text-muted mt-2">@T.T("CrmCustomerSegmentsCoverageNote")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("OpenPipeline")</div>
+            <div class="display-6 fw-semibold mt-1">@((Model.Summary.OpenPipelineMinor / 100m).ToString("N0"))</div>
+            <div class="small text-muted mt-2">@T.T("CrmCustomerPipelineNote")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("Interactions7d")</div>
+            <div class="display-6 fw-semibold mt-1">@Model.Summary.RecentInteractionCount</div>
+            <div class="small text-muted mt-2">@T.T("CrmCustomerRecentInteractionsNote")</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("PlatformFallbackCulture")</div>
@@ -52,6 +84,63 @@
             <div class="text-muted small">@T.T("VisibleLinkedUserLocales")</div>
             <div class="fw-semibold mt-1">@Model.Items.Count(x => !x.UsesPlatformLocaleFallback)</div>
             <div class="small text-muted mt-2">Current page rows where locale comes from the linked identity profile.</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("LinkedUser")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.LinkedUserCount</div>
+                    <div class="small text-muted mt-2">@T.T("CrmCustomerLinkedIdentityNote")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("NeedsSegmentation")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.NeedsSegmentationCount</div>
+                    <div class="small text-muted mt-2">@T.T("CrmCustomerNeedsSegmentationNote")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("HasOpportunities")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.HasOpportunitiesCount</div>
+                    <div class="small text-muted mt-2">@T.T("CrmCustomerOpportunityContextNote")</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">B2B</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.BusinessCount</div>
+                    <div class="small text-muted mt-2">@T.T("CrmCustomerBusinessProfileNote")</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">@T.T("VatIdMissing")</div>
+                    <div class="fw-semibold mt-1">@Model.OpsSummary.MissingVatIdCount</div>
+                    <div class="small text-muted mt-2">@T.T("CrmCustomerMissingVatNote")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("CrmOperatorPlaybooks")</h2>
+            <div class="d-grid gap-3">
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <div class="rounded border p-3 bg-light-subtle">
+                        <div class="fw-semibold">@T.T(playbook.Title)</div>
+                        <div class="small text-muted mt-2">@T.T(playbook.ScopeNote)</div>
+                        <div class="small mt-2"><strong>@T.T("CrmNextStep"):</strong> @T.T(playbook.OperatorAction)</div>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>

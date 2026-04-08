@@ -91,6 +91,12 @@ namespace Darwin.Application.CRM.DTOs
         public string EffectiveLastName { get; set; } = string.Empty;
         public string EffectiveEmail { get; set; } = string.Empty;
         public string? EffectivePhone { get; set; }
+        public string? EffectiveLocale { get; set; }
+        public bool UsesPlatformLocaleFallback { get; set; }
+        public int SegmentCount { get; set; }
+        public int OpportunityCount { get; set; }
+        public int InteractionCount { get; set; }
+        public int ConsentCount { get; set; }
         public IdentityAddressSummaryDto? DefaultBillingAddress { get; set; }
         public IdentityAddressSummaryDto? DefaultShippingAddress { get; set; }
     }
@@ -131,6 +137,9 @@ namespace Darwin.Application.CRM.DTOs
     {
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string? AssignedToUserDisplayName { get; set; }
+        public string? CustomerDisplayName { get; set; }
+        public int InteractionCount { get; set; }
     }
 
     public sealed class ConvertLeadToCustomerDto

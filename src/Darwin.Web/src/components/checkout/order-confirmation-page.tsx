@@ -6,12 +6,7 @@ import type {
   PublicCategorySummary,
   PublicProductSummary,
 } from "@/features/catalog/types";
-import {
-  getProductOpportunityCampaign,
-  getProductOpportunityCampaignLabel,
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
 import type { PublicStorefrontOrderConfirmation } from "@/features/checkout/types";
@@ -20,6 +15,7 @@ import type {
   MemberOrderSummary,
   MyLoyaltyOverview,
 } from "@/features/member-portal/types";
+import { buildStorefrontOfferCards } from "@/features/storefront/storefront-campaigns";
 import {
   formatResource,
   getCommerceResource,
@@ -250,6 +246,25 @@ export function OrderConfirmationPage({
   const guestOfferBoard = sortProductsByOpportunity(
     products.filter((product) => !purchasedNames.has(product.name.trim().toLowerCase())),
   ).slice(0, 3);
+  const guestOfferBoardCards = buildStorefrontOfferCards(guestOfferBoard, {
+    labels: {
+      heroOffer: copy.offerCampaignHeroLabel,
+      valueOffer: copy.offerCampaignValueLabel,
+      priceDrop: copy.offerCampaignPriceDropLabel,
+      steadyPick: copy.offerCampaignSteadyLabel,
+    },
+    formatPrice: (product) =>
+      formatMoney(product.priceMinor, product.currency, culture),
+    describeWithSavings: (_, input) =>
+      formatResource(copy.confirmationGuestOfferBoardOfferDescription, {
+        campaignLabel: input.campaignLabel,
+        savingsPercent: input.savingsPercent,
+        price: input.price,
+      }),
+    describeWithoutSavings: (product) =>
+      product.shortDescription ?? copy.confirmationGuestOfferBoardFallbackDescription,
+    fallbackDescription: copy.confirmationGuestOfferBoardFallbackDescription,
+  });
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -813,54 +828,30 @@ export function OrderConfirmationPage({
                     </div>
                     <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.confirmationGuestOfferBoardMessage, {
-                        productCount: guestOfferBoard.length,
+                        productCount: guestOfferBoardCards.length,
                       })}
                     </p>
-                    {guestOfferBoard.length > 0 ? (
+                    {guestOfferBoardCards.length > 0 ? (
                       <div className="mt-3 grid gap-3">
-                        {guestOfferBoard.map((product) => {
-                          const savingsPercent = getProductSavingsPercent(product);
-                          const campaignLabel = getProductOpportunityCampaignLabel(
-                            getProductOpportunityCampaign(product),
-                            {
-                              heroOffer: copy.offerCampaignHeroLabel,
-                              valueOffer: copy.offerCampaignValueLabel,
-                              priceDrop: copy.offerCampaignPriceDropLabel,
-                              steadyPick: copy.offerCampaignSteadyLabel,
-                            },
-                          );
-
-                          return (
-                            <div
-                              key={product.id}
-                              className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3"
+                        {guestOfferBoardCards.map((product) => (
+                          <div
+                            key={product.id}
+                            className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3"
+                          >
+                            <Link
+                              href={localizeHref(product.href, culture)}
+                              className="font-semibold text-[var(--color-text-primary)] transition hover:text-[var(--color-brand)]"
                             >
-                              <Link
-                                href={localizeHref(`/catalog/${product.slug}`, culture)}
-                                className="font-semibold text-[var(--color-text-primary)] transition hover:text-[var(--color-brand)]"
-                              >
-                                {product.name}
-                              </Link>
-                              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                                {campaignLabel}
-                              </p>
-                              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                                {savingsPercent !== null
-                                  ? formatResource(copy.confirmationGuestOfferBoardOfferDescription, {
-                                      campaignLabel,
-                                      savingsPercent,
-                                      price: formatMoney(
-                                        product.priceMinor,
-                                        product.currency,
-                                        culture,
-                                      ),
-                                    })
-                                  : product.shortDescription ??
-                                    copy.confirmationGuestOfferBoardFallbackDescription}
-                              </p>
-                            </div>
-                          );
-                        })}
+                              {product.title}
+                            </Link>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                              {product.label}
+                            </p>
+                            <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                              {product.description}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">

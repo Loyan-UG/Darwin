@@ -2,17 +2,17 @@ import Link from "next/link";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { StorefrontOfferBoard } from "@/components/storefront/storefront-offer-board";
 import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
-import {
-  getProductOpportunityCampaign,
-  getProductOpportunityCampaignLabel,
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+import { buildStorefrontOfferCards } from "@/features/storefront/storefront-campaigns";
+import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
-import { buildLocalizedAuthHref, sanitizeAppPath } from "@/lib/locale-routing";
+import {
+  buildLocalizedAuthHref,
+  sanitizeAppPath,
+} from "@/lib/locale-routing";
 import { formatResource, getMemberResource } from "@/localization";
 
 type MemberAuthRequiredProps = {
@@ -48,7 +48,31 @@ export function MemberAuthRequired({
   const safeReturnPath = sanitizeAppPath(returnPath, "/account");
   const signInHref = buildLocalizedAuthHref("/account/sign-in", safeReturnPath, culture);
   const registerHref = buildLocalizedAuthHref("/account/register", safeReturnPath, culture);
-  const offerBoard = sortProductsByOpportunity(products).slice(0, 3);
+  const { offerBoardProducts } = buildStorefrontSpotlightSelections({
+    cmsPages,
+    categories,
+    products,
+    offerBoardCount: 3,
+  });
+  const offerBoard = buildStorefrontOfferCards(offerBoardProducts, {
+    labels: {
+      heroOffer: copy.offerCampaignHeroLabel,
+      valueOffer: copy.offerCampaignValueLabel,
+      priceDrop: copy.offerCampaignPriceDropLabel,
+      steadyPick: copy.offerCampaignSteadyLabel,
+    },
+    formatPrice: (product) =>
+      formatMoney(product.priceMinor, product.currency, culture),
+    describeWithSavings: (_, input) =>
+      formatResource(copy.memberAuthRequiredOfferBoardOfferDescription, {
+        campaignLabel: input.campaignLabel,
+        savingsPercent: input.savingsPercent,
+        price: input.price,
+      }),
+    describeWithoutSavings: (product) =>
+      product.shortDescription ?? copy.memberAuthRequiredOfferBoardFallbackDescription,
+    fallbackDescription: copy.memberAuthRequiredOfferBoardFallbackDescription,
+  });
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="w-full rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
@@ -96,55 +120,11 @@ export function MemberAuthRequired({
           <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
             {copy.memberAuthRequiredOfferBoardMessage}
           </p>
-          {offerBoard.length > 0 ? (
-            <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              {offerBoard.map((product) => {
-                const savingsPercent = getProductSavingsPercent(product);
-                const campaignLabel = getProductOpportunityCampaignLabel(
-                  getProductOpportunityCampaign(product),
-                  {
-                    heroOffer: copy.offerCampaignHeroLabel,
-                    valueOffer: copy.offerCampaignValueLabel,
-                    priceDrop: copy.offerCampaignPriceDropLabel,
-                    steadyPick: copy.offerCampaignSteadyLabel,
-                  },
-                );
-
-                return (
-                  <Link
-                    key={product.id}
-                    href={`/catalog/${product.slug}`}
-                    className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                      {campaignLabel}
-                    </p>
-                    <p className="font-semibold text-[var(--color-text-primary)]">
-                      {product.name}
-                    </p>
-                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {savingsPercent !== null
-                        ? formatResource(copy.memberAuthRequiredOfferBoardOfferDescription, {
-                            campaignLabel,
-                            savingsPercent,
-                            price: formatMoney(
-                              product.priceMinor,
-                              product.currency,
-                              culture,
-                            ),
-                          })
-                        : product.shortDescription ??
-                          copy.memberAuthRequiredOfferBoardFallbackDescription}
-                    </p>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {copy.memberAuthRequiredOfferBoardEmptyMessage}
-            </p>
-          )}
+          <StorefrontOfferBoard
+            culture={culture}
+            cards={offerBoard}
+            emptyMessage={copy.memberAuthRequiredOfferBoardEmptyMessage}
+          />
         </div>
         <div className="mt-8">
           <PublicAuthContinuation

@@ -1,14 +1,10 @@
 import Link from "next/link";
 import type { PublicProductSummary } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
-import {
-  getProductOpportunityCampaign,
-  getProductOpportunityCampaignLabel,
-  getProductSavingsPercent,
-  sortProductsByOpportunity,
-} from "@/features/catalog/merchandising";
+import { buildStorefrontOfferCards } from "@/features/storefront/storefront-campaigns";
+import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
-import { buildLocalizedAuthHref } from "@/lib/locale-routing";
+import { buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getCommerceResource } from "@/localization";
 
 type CommerceAuthHandoffProps = {
@@ -30,7 +26,31 @@ export function CommerceAuthHandoff({
 }: CommerceAuthHandoffProps) {
   const copy = getCommerceResource(culture);
   const cartLineCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-  const productOpportunities = sortProductsByOpportunity(products).slice(0, 3);
+  const { offerBoardProducts } = buildStorefrontSpotlightSelections({
+    cmsPages: [],
+    categories: [],
+    products,
+    offerBoardCount: 3,
+  });
+  const productOpportunities = buildStorefrontOfferCards(offerBoardProducts, {
+    labels: {
+      heroOffer: copy.offerCampaignHeroLabel,
+      valueOffer: copy.offerCampaignValueLabel,
+      priceDrop: copy.offerCampaignPriceDropLabel,
+      steadyPick: copy.offerCampaignSteadyLabel,
+    },
+    formatPrice: (product) =>
+      formatMoney(product.priceMinor, product.currency, culture),
+    describeWithSavings: (_, input) =>
+      formatResource(copy.commerceAuthOfferBoardOfferDescription, {
+        campaignLabel: input.campaignLabel,
+        savingsPercent: input.savingsPercent,
+        price: input.price,
+      }),
+    describeWithoutSavings: (product) =>
+      product.shortDescription ?? copy.commerceAuthOfferBoardFallbackDescription,
+    fallbackDescription: copy.commerceAuthOfferBoardFallbackDescription,
+  });
   const routeTitle =
     routeKey === "checkout"
       ? copy.commerceAuthCheckoutTitle
@@ -118,46 +138,24 @@ export function CommerceAuthHandoff({
         </p>
         {productOpportunities.length > 0 ? (
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
-            {productOpportunities.map((product) => {
-              const savingsPercent = getProductSavingsPercent(product);
-              const campaignLabel = getProductOpportunityCampaignLabel(
-                getProductOpportunityCampaign(product),
-                {
-                  heroOffer: copy.offerCampaignHeroLabel,
-                  valueOffer: copy.offerCampaignValueLabel,
-                  priceDrop: copy.offerCampaignPriceDropLabel,
-                  steadyPick: copy.offerCampaignSteadyLabel,
-                },
-              );
-
+              {productOpportunities.map((product) => {
               return (
                 <Link
                   key={product.id}
-                  href={`/catalog/${product.slug}`}
+                  href={localizeHref(product.href, culture)}
                   className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                    {campaignLabel}
+                    {product.label}
                   </p>
                   <p className="font-semibold text-[var(--color-text-primary)]">
-                    {product.name}
+                    {product.title}
                   </p>
                   <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                    {savingsPercent !== null
-                      ? formatResource(copy.commerceAuthOfferBoardOfferDescription, {
-                          campaignLabel,
-                          savingsPercent,
-                          price: formatMoney(
-                            product.priceMinor,
-                            product.currency,
-                            culture,
-                          ),
-                        })
-                      : product.shortDescription ??
-                        copy.commerceAuthOfferBoardFallbackDescription}
+                    {product.description}
                   </p>
                   <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                    {formatMoney(product.priceMinor, product.currency, culture)}
+                    {product.price}
                   </p>
                 </Link>
               );

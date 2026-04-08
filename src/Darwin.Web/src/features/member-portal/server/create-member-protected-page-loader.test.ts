@@ -117,3 +117,26 @@ test("createMemberProtectedPageLoader keeps a stable entry route and auth gate a
   assert.equal(guest.routeContext, null);
   assert.equal(member.routeContext?.status, "ok");
 });
+
+test("createMemberProtectedPageLoader normalizes equivalent arguments before caching", async () => {
+  const loader = createMemberProtectedPageLoaderCore({
+    operation: "unit-protected-page",
+    normalizeArgs: (culture: string, id: string) => [culture.trim(), id.trim()] as [string, string],
+    getContext: (culture: string, id: string) => ({ culture, id }),
+    getEntryRoute: (_culture: string, id: string) => `/orders/${id}`,
+    loadEntryContext: async () => ({
+      session: { customerId: "customer-1" },
+      storefrontContext: null,
+    }),
+    summarizeAuthorized: (routeContext) => ({ detailStatus: routeContext.status }),
+    loadRouteContext: async (_culture: string, id: string) => ({ status: "ok", id }),
+  });
+
+  const [first, second] = await Promise.all([
+    loader("de-DE", "order-1"),
+    loader(" de-DE ", " order-1 "),
+  ]);
+
+  assert.equal(first.routeContext?.id, "order-1");
+  assert.equal(second.routeContext?.id, "order-1");
+});
