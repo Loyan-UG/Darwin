@@ -272,4 +272,142 @@ public sealed class MemberCommerceContractsSerializationCompatibilityTests
         roundTrip.Actions.OrderPath.Should().BeNull();
         roundTrip.Actions.DocumentPath.Should().EndWith("/document");
     }
+
+    [Fact]
+    public void MemberOrderSummary_Should_RoundTripWithStatusAndCreatedAt()
+    {
+        // Arrange
+        var summary = new MemberOrderSummary
+        {
+            Id = Guid.NewGuid(),
+            OrderNumber = "ORD-2026-2001",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 8700,
+            Status = "Shipped",
+            CreatedAtUtc = new DateTime(2026, 4, 7, 9, 15, 0, DateTimeKind.Utc)
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(summary, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<MemberOrderSummary>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.OrderNumber.Should().Be("ORD-2026-2001");
+        roundTrip.GrandTotalGrossMinor.Should().Be(8700);
+        roundTrip.Status.Should().Be("Shipped");
+        roundTrip.CreatedAtUtc.Should().Be(new DateTime(2026, 4, 7, 9, 15, 0, DateTimeKind.Utc));
+    }
+
+    [Fact]
+    public void MemberInvoiceSummary_Should_RoundTripWithBusinessAndOrderLinks()
+    {
+        // Arrange
+        var businessId = Guid.NewGuid();
+        var orderId = Guid.NewGuid();
+        var summary = new MemberInvoiceSummary
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            BusinessName = "Darwin Bakery",
+            OrderId = orderId,
+            OrderNumber = "ORD-2026-2002",
+            Currency = "EUR",
+            TotalGrossMinor = 1299,
+            RefundedAmountMinor = 0,
+            SettledAmountMinor = 0,
+            BalanceMinor = 1299,
+            Status = "Open",
+            DueDateUtc = new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc),
+            PaidAtUtc = null,
+            CreatedAtUtc = new DateTime(2026, 4, 8, 8, 0, 0, DateTimeKind.Utc)
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(summary, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<MemberInvoiceSummary>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.BusinessId.Should().Be(businessId);
+        roundTrip.OrderId.Should().Be(orderId);
+        roundTrip.OrderNumber.Should().Be("ORD-2026-2002");
+        roundTrip.BalanceMinor.Should().Be(1299);
+        roundTrip.PaidAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public void MemberOrderDetail_Should_RoundTripWithEmptyCollections_NotNullCollections()
+    {
+        // Arrange
+        var detail = new MemberOrderDetail
+        {
+            Id = Guid.NewGuid(),
+            OrderNumber = "ORD-2026-2003",
+            Currency = "EUR",
+            Status = "Placed",
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            CreatedAtUtc = new DateTime(2026, 4, 8, 15, 0, 0, DateTimeKind.Utc),
+            Lines = [],
+            Payments = [],
+            Shipments = [],
+            Invoices = [],
+            Actions = new MemberOrderActions
+            {
+                CanRetryPayment = false,
+                ConfirmationPath = "/api/v1/public/checkout/orders/sample/confirmation",
+                DocumentPath = "/api/v1/member/orders/sample/document"
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(detail, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<MemberOrderDetail>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.Lines.Should().NotBeNull().And.BeEmpty();
+        roundTrip.Payments.Should().NotBeNull().And.BeEmpty();
+        roundTrip.Shipments.Should().NotBeNull().And.BeEmpty();
+        roundTrip.Invoices.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
+    public void MemberInvoiceDetail_Should_RoundTripWithEmptyLines_AndDefaultActionsObject()
+    {
+        // Arrange
+        var detail = new MemberInvoiceDetail
+        {
+            Id = Guid.NewGuid(),
+            Currency = "EUR",
+            TotalGrossMinor = 0,
+            RefundedAmountMinor = 0,
+            SettledAmountMinor = 0,
+            BalanceMinor = 0,
+            Status = "Draft",
+            DueDateUtc = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
+            CreatedAtUtc = new DateTime(2026, 4, 8, 16, 0, 0, DateTimeKind.Utc),
+            TotalNetMinor = 0,
+            TotalTaxMinor = 0,
+            PaymentSummary = string.Empty,
+            Lines = [],
+            Actions = new MemberInvoiceActions
+            {
+                CanRetryPayment = false,
+                DocumentPath = "/api/v1/member/invoices/sample/document"
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(detail, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<MemberInvoiceDetail>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.Lines.Should().NotBeNull().And.BeEmpty();
+        roundTrip.Actions.Should().NotBeNull();
+        roundTrip.Actions.CanRetryPayment.Should().BeFalse();
+        roundTrip.Actions.DocumentPath.Should().Contain("/document");
+    }
 }
