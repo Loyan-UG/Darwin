@@ -9,6 +9,17 @@ namespace Darwin.Tests.Unit.WebApi;
 public sealed class WebApiRouteAliasSourceTests
 {
     [Fact]
+    public void MetaController_Should_ContainCanonicalRoute_AndExpectedMetaEndpoints()
+    {
+        var source = ReadControllerSource("MetaController.cs");
+
+        source.Should().Contain("api/v1/meta");
+        source.Should().Contain("health");
+        source.Should().Contain("info");
+        source.Should().Contain("bootstrap");
+    }
+
+    [Fact]
     public void AuthController_Should_ContainMemberAliases()
     {
         var source = ReadControllerSource("AuthController.cs");

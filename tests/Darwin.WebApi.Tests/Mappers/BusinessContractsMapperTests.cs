@@ -60,6 +60,29 @@ public sealed class BusinessContractsMapperTests
     }
 
     /// <summary>
+    ///     Ensures kilometer-to-meter conversion uses MidpointRounding.AwayFromZero
+    ///     so half-meter boundaries stay deterministic across runtimes.
+    /// </summary>
+    [Fact]
+    public void ToContract_DiscoveryItem_Should_RoundDistanceUsingAwayFromZero()
+    {
+        // Arrange
+        var dto = new BusinessDiscoveryListItemDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Darwin Kiosk",
+            Category = BusinessCategoryKind.Cafe,
+            DistanceKm = 1.2345
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.DistanceMeters.Should().Be(1235);
+    }
+
+    /// <summary>
     ///     Ensures business detail mapping uses defensive defaults for currency/culture,
     ///     preserves contact fields, and builds backward-compatible image arrays.
     /// </summary>
@@ -113,6 +136,46 @@ public sealed class BusinessContractsMapperTests
             "https://cdn.example/primary.jpg",
             "https://cdn.example/gallery-a.jpg",
             "https://cdn.example/gallery-b.jpg");
+    }
+
+    /// <summary>
+    ///     Ensures legacy combined image list trims whitespace and skips empty entries
+    ///     while preserving stable primary-first ordering.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetail_Should_TrimAndFilterImageUrls()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Darwin Roastery",
+            Category = BusinessCategoryKind.Cafe,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            PrimaryImageUrl = " https://cdn.example/primary.jpg ",
+            GalleryImageUrls = [" ", " https://cdn.example/gallery-a.jpg ", null!, "https://cdn.example/gallery-b.jpg"],
+            Locations =
+            [
+                new BusinessPublicLocationDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Primary",
+                    IsPrimary = true,
+                    City = "Berlin"
+                }
+            ]
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.ImageUrls.Should().ContainInOrder(
+            "https://cdn.example/primary.jpg",
+            "https://cdn.example/gallery-a.jpg",
+            "https://cdn.example/gallery-b.jpg");
+        contract.ImageUrls.Should().HaveCount(3);
     }
 
     /// <summary>

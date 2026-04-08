@@ -1,734 +1,244 @@
-﻿# 🧪 Darwin Testing Strategy & Architecture (Expanded)
+# 🧪 Darwin Testing Strategy & Execution Guide (Updated)
 
-This file is an expanded and opinionated testing guide for the Darwin platform. It builds on the existing testing guidance but adds practical utilities, examples and step-by-step patterns aimed at making test creation easy, consistent and robust across Domain, Application, Infrastructure, WebApi and Mobile layers.
-
-Keep this document up-to-date as tests are added and as the CI pipeline evolves. All code examples and comments are in English.
-
----
-
-## 0) Testing scope ownership (important)
-
-- This document is the **single execution tracker** for testing tasks.
-- Main delivery documents (`BACKLOG.md`, `DarwinMobile.md`) intentionally reference testing tasks here instead of duplicating test execution items.
-- When a development backlog item says testing is tracked in `DarwinTesting.md`, update status only in this file to avoid drift.
+This document is the authoritative testing guide for the Darwin repository.
+It is intentionally practical: what exists today, what quality gates enforce, how to run tests locally, and what to improve next.
 
 ---
 
-## Table of contents
+## 1) Scope and goals
 
-1. Goals
-2. Test projects & responsibilities
-3. Test patterns and conventions
-4. Test utilities and helpers (recommended)
-5. Integration testing: WebApplicationFactory + SQLite (detailed)
-6. Sample tests
-   - Unit test example
-   - Mapper unit test
-   - Integration test: loyalty flow (Prepare -> Process -> Confirm)
-   - Contract serialization test
-7. Data seeding & test data builders
-8. Strategies for stateful / multi-step flows
-9. Contract / compatibility tests
-10. Caching & observability tests
-11. CI considerations & pipeline setup
-12. Checklist for adding tests to new features
-13. Appendix: small helper snippets
-14. Current implementation status (done vs pending)
-15. Testing delivery backlog (execution order)
+Darwin testing aims to provide:
+
+- **Regression confidence** for domain logic, application handlers, contracts, API behavior, and mobile shared client behavior.
+- **Fast feedback** through layered suites (small unit tests + deeper integration tests).
+- **Contract stability** for DTO/JSON payloads used by WebApi and mobile clients.
+- **Delivery safety** via CI lane split and per-lane coverage thresholds.
+
+Primary principles:
+
+- Keep tests deterministic and isolated.
+- Prefer clear AAA structure (Arrange / Act / Assert).
+- Use explicit and readable test data.
+- Preserve backward compatibility in contracts unless breaking change is intentional and documented.
 
 ---
 
-## 1) Goals
+## 2) Current test projects (actual state)
 
-- Confidence — tests prevent regressions for features and security rules.
-- Maintainability — tests are readable, small, and follow the solution architecture.
-- Speed — unit tests are fast; integration tests are reasonably fast and stable.
-- Extensibility — tests are structured so new features can easily add tests.
+The repository currently contains these test projects:
 
----
+1. `tests/Darwin.Tests.Unit`
+   - Core unit tests for Domain/Application/Shared-level behavior.
+2. `tests/Darwin.Tests.Integration`
+   - End-to-end API integration coverage through in-process host infrastructure.
+3. `tests/Darwin.Contracts.Tests`
+   - DTO and JSON serialization/compatibility checks.
+4. `tests/Darwin.WebApi.Tests`
+   - WebApi-focused test coverage (e.g., mappers / API-facing conversions).
+5. `tests/Darwin.Infrastructure.Tests`
+   - Infrastructure-focused checks (e.g., persistence setup/design-time factory behavior).
+6. `tests/Darwin.Mobile.Shared.Tests`
+   - Mobile shared client/services reliability and behavior checks.
+7. `tests/Darwin.Tests.Common`
+   - Shared test infrastructure/helpers consumed by other suites.
 
-## 2) Test projects & responsibilities
+### Coverage lanes in CI
 
-Current repository status first:
+CI treats the main suites as independent lanes:
 
-- Active suites with implemented test files:
-  - `tests/Darwin.Tests.Unit`
-  - `tests/Darwin.Tests.Integration`
-- Scaffolded test projects currently present in the solution (currently no test classes committed yet):
-  - `tests/Darwin.WebApi.Tests`
-  - `tests/Darwin.Infrastructure.Tests`
-  - `tests/Darwin.Contracts.Tests`
-  - `tests/Darwin.Mobile.Shared.Tests`
-  - `tests/Darwin.Tests.Common` (helper library placeholder)
-- Unit tests currently cover slug validators, sanitizer helper behavior, and baseline contract serialization compatibility.
-- Integration tests are wired to `Darwin.WebApi` with `WebApplicationFactory<Program>` baseline coverage in Identity/Profile/Loyalty/Meta areas.
+- unit
+- contracts
+- infrastructure
+- webapi
+- integration
+- mobile-shared
 
-Recommended target structure (incremental evolution):
-
-Create separate test projects that align with layered architecture. Each project should reference only the production assemblies it needs.
-
-- `tests/Darwin.UnitTests`  
-  Purpose: Unit tests for Domain, Application and Shared logic. Avoid I/O. Use fakes/mocks.  
-  Tools: xUnit, FluentAssertions, Moq/NSubstitute.
-
-- `tests/Darwin.WebApi.Tests`  
-  Purpose: Integration tests for WebApi controllers and middleware using `WebApplicationFactory<Program>`. Use SQLite in-memory for relational fidelity. Exercise policies and filters.  
-  Tools: xUnit, FluentAssertions, Microsoft.AspNetCore.Mvc.Testing
-
-- `tests/Darwin.Infrastructure.Tests` (optional)  
-  Purpose: Tests for EF Core configs, migrations and DB mappings using SQLite in-memory.
-
-- `tests/Darwin.Mobile.Shared.Tests`  
-  Purpose: Unit tests for the mobile shared client (ApiClient, retry policy, token store). Mock `HttpMessageHandler`.
-
-Note: Migrate to the target naming incrementally. If you rename projects, update CI, solution filters, and documentation in the same PR to avoid broken pipelines.
+Lane coverage is validated from Cobertura reports via `scripts/ci/verify_coverage.py`.
 
 ---
 
-## 3) Test patterns & conventions
+## 3) Responsibilities by lane
 
-- Use AAA (Arrange, Act, Assert).
-- Test naming: `MethodUnderTest_StateUnderTest_ExpectedResult`.
-- Keep tests deterministic and independent.
-- Prefer `Theory` + `MemberData` for data-driven variants.
-- Freeze time via `IClock` or a test clock abstraction.
-- Avoid `Thread.Sleep` or time-based flakiness.
-- For collection assertions, check both count and exact expected items (when relevant).
-- Prefer explicit values over random generation — if randomness is used, it must be seeded.
+### 3.1 Unit lane (`Darwin.Tests.Unit`)
 
-Example naming:
+Use for business rules and handlers that should run without external dependencies:
 
-```csharp
-[Fact]
-public async Task PrepareScanSession_Should_Return_BadRequest_When_BusinessIdEmpty() { ... }
+- Domain validations and invariants.
+- Application handler behavior.
+- Policy resolution and normalization logic.
+- Utility/helper behavior with deterministic inputs.
+
+### 3.2 Contracts lane (`Darwin.Contracts.Tests`)
+
+Use for DTO compatibility and transport safety:
+
+- Property-name compatibility (camelCase / expected naming).
+- Enum and field round-trip behavior.
+- Nullable/optional field transport behavior.
+- Backward-compatible serialization shape for mobile/API consumers.
+
+### 3.3 Infrastructure lane (`Darwin.Infrastructure.Tests`)
+
+Use for persistence/infrastructure correctness:
+
+- Design-time DbContext factory.
+- Mapping/configuration safety checks.
+- Migration-related guard tests where feasible.
+
+### 3.4 WebApi lane (`Darwin.WebApi.Tests`)
+
+Use for API-edge conversion and mapping stability:
+
+- Mapper tests between application DTOs and transport contracts.
+- API-oriented transformation logic.
+
+### 3.5 Integration lane (`Darwin.Tests.Integration`)
+
+Use for behavior across full HTTP pipeline:
+
+- Authentication and authorization boundaries.
+- Request/response shape and status code correctness.
+- Multi-step endpoint flows (Identity/Profile/Loyalty/Meta).
+- Realistic stateful scenarios with deterministic reset.
+
+### 3.6 Mobile.Shared lane (`Darwin.Mobile.Shared.Tests`)
+
+Use for mobile shared client reliability:
+
+- API route consistency.
+- Auth header injection behavior.
+- Retry/reliability behavior.
+- Service-level behavior and failure handling.
+
+---
+
+## 4) Test design conventions
+
+- Follow `MethodUnderTest_State_ExpectedResult` naming pattern.
+- Keep each test focused on a single behavior.
+- Prefer `Theory` + explicit data for matrices.
+- Avoid sleep/time-based flakiness.
+- Use deterministic IDs/timestamps where possible.
+- Assert both success path and essential negative path.
+
+For API/integration tests:
+
+- Verify status code and payload contract together.
+- Assert problem details/error envelope shape where relevant.
+- Keep auth requirements explicit in test names.
+
+---
+
+## 5) Local execution guide
+
+> Prerequisite: .NET SDK compatible with the solution (see root README badges and project configuration).
+
+### 5.1 Run each lane
+
+```bash
+dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj
+
+dotnet test tests/Darwin.Contracts.Tests/Darwin.Contracts.Tests.csproj
+
+dotnet test tests/Darwin.Infrastructure.Tests/Darwin.Infrastructure.Tests.csproj
+
+dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj
+
+dotnet test tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj
+
+dotnet test tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj
+```
+
+### 5.2 Run lane with coverage output
+
+```bash
+dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj \
+  --configuration Release \
+  --collect:"XPlat Code Coverage" \
+  --results-directory TestResults/unit
+```
+
+Repeat with the matching results directory name:
+
+- `TestResults/contracts`
+- `TestResults/infrastructure`
+- `TestResults/webapi`
+- `TestResults/integration`
+- `TestResults/mobile-shared`
+
+### 5.3 Validate coverage thresholds locally
+
+```bash
+python scripts/ci/verify_coverage.py \
+  --unit-threshold 35 \
+  --contracts-threshold 20 \
+  --infrastructure-threshold 20 \
+  --webapi-threshold 20 \
+  --integration-threshold 20 \
+  --mobile-shared-threshold 20
 ```
 
 ---
 
-## 4) Test utilities & helpers (recommended)
+## 6) CI policy (tests-quality-gates workflow)
 
-Create a `tests/Shared` library or a `Tests.Common` folder in each test project to hold helpers that reduce boilerplate.
+The workflow `.github/workflows/tests-quality-gates.yml`:
 
-Essential helpers:
+- Runs each lane independently.
+- Publishes artifacts for each lane.
+- Enforces coverage thresholds using the verification script.
+- Uses a temporary PR soft-gate mode policy (configurable by repository variable and workflow input).
 
-- `WebApiTestFactory` (custom `WebApplicationFactory<Program>`)  
-  - Configure `IConfiguration` overrides, swap external services for fakes, configure SQLite in-memory DB per test or per class, seed data.
-
-- `TestDbFactory`  
-  - Create a fresh `DbContext` pointing at a prepared SQLite in-memory connection. Runs migrations if needed.
-
-- `FakeCurrentUserService` / `TestCurrentUserService`  
-  - Implements `ICurrentUserService` to return a deterministic user id for tests.
-
-- `JwtTokenGenerator`  
-  - Create tokens for integration tests that exercise real auth middleware.
-
-- `JsonExtensions`  
-  - Read `ProblemDetails` from responses and helper methods for `ReadFromJsonAsync<T>()` with proper options.
-
-- `TestDataBuilder` pattern classes  
-  - e.g. `LoyaltyProgramBuilder`, `BusinessBuilder`, `UserBuilder` — fluent builders for test entities and DTOs.
-
-- `TestClock`  
-  - Deterministic `IClock` for time-sensitive tests.
+This separation improves diagnosability and keeps regressions localized to a specific lane.
 
 ---
 
-## 5) Integration testing: WebApplicationFactory + SQLite (detailed)
+## 7) Platform-specific notes
 
-Integration tests must be repeatable and mimic production as closely as practical. Use a custom `WebApplicationFactory<Program>` to configure the test host.
+### Integration tests
 
-Key recommendations:
-- Use SQLite in-memory with an open connection per test class or test method depending on isolation needs:
-  - For independent tests create a new connection per test (more isolation, slower).
-  - For class-level sharing create/open once and reset DB state in `IAsyncLifetime`.
-- Run migrations against the SQLite connection to ensure schema and constraints are applied.
-- Avoid external network calls in integration tests. Replace external services (SMTP, external APIs) with test doubles.
-- Provide a way to seed users/permissions and to issue JWT tokens for authenticated tests.
+- Integration lane in CI expects SQL Server service availability and testing environment configuration.
+- Keep tests resettable/deterministic and avoid hidden shared mutable state.
 
-Example test factory skeleton:
+### Mobile.Shared tests
 
-```csharp
-public sealed class WebApiTestFactory : WebApplicationFactory<Program>
-{
-    private readonly string _connectionString;
-    private readonly SqliteConnection _connection;
-
-    public WebApiTestFactory()
-    {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
-    }
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.ConfigureServices(services =>
-        {
-            // Remove the real DbContext registration and add test SQLite
-            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor != null) services.Remove(descriptor);
-
-            services.AddDbContext<AppDbContext>(options =>
-            {
-                options.UseSqlite(_connection);
-            });
-
-            // Ensure DB is migrated
-            var sp = services.BuildServiceProvider();
-            using var scope = sp.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.EnsureCreated();
-
-            // Replace external integrations (SMTP, push, etc.) with fakes
-            services.AddSingleton<INotificationSender, TestNotificationSender>();
-
-            // Optionally provide test ICurrentUserService or allow generation of real JWT tokens
-        });
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-        if (disposing)
-        {
-            _connection.Close();
-            _connection.Dispose();
-        }
-    }
-}
-```
-
-Notes:
-- If your `Program` configures services differently between environments, use `builder.UseEnvironment("Testing")` and ensure `appsettings.Testing.json` exists for test config.
-- For tests that need JWT-authenticated requests, either:
-  - replace `ICurrentUserService` with a fake in the test factory, or
-  - seed a test user and generate a JWT using project signing keys (preferred for exercising middleware fully).
+- CI installs MAUI workload before running `Darwin.Mobile.Shared.Tests`.
+- Local environments should ensure MAUI workload is available when needed.
 
 ---
 
-## 6) Sample tests
+## 8) What to test when adding new features
 
-Included below are small examples you can copy into test projects. Adapt namespaces and DI setup to your project.
+When implementing a feature, aim for this minimum matrix:
 
-### 6.1 Unit test example (Application handler)
-Example unit test for a handler that prepares a scan session (mock dependencies).
+1. **Unit**: core business rule and at least one negative path.
+2. **Contracts**: payload shape/serialization compatibility for new/changed DTOs.
+3. **WebApi or Integration**: endpoint behavior and auth boundary.
+4. **Mobile.Shared** (if affected): client/service behavior for changed routes or payloads.
 
-```csharp
-public class PrepareScanSessionHandlerTests
-{
-    [Fact]
-    public async Task HandleAsync_Should_Fail_When_BusinessIdEmpty()
-    {
-        // Arrange
-        var db = new TestDbFactory().CreateDbContext();
-        var currentUser = Substitute.For<ICurrentUserService>();
-        currentUser.GetCurrentUserId().Returns(Guid.NewGuid());
-        var clock = new TestClock(DateTime.UtcNow);
-
-        var sut = new PrepareScanSessionHandler(db, currentUser, clock);
-
-        // Act
-        var result = await sut.HandleAsync(null!, CancellationToken.None);
-
-        // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Errors.Should().ContainSingle();
-    }
-}
-```
-
-### 6.2 Mapper unit test
-Verify mapping correctness for `LoyaltyContractsMapper`.
-
-```csharp
-public class LoyaltyContractsMapperTests
-{
-    [Fact]
-    public void ToContract_Should_Map_LoyaltyAccountSummaryDto_To_Contract()
-    {
-        var dto = new LoyaltyAccountSummaryDto
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            BusinessId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            BusinessName = "Test",
-            PointsBalance = 123,
-            LifetimePoints = 456,
-            Status = Darwin.Domain.Enums.LoyaltyAccountStatus.Active,
-            LastAccrualAtUtc = DateTime.UtcNow
-        };
-
-        var contract = LoyaltyContractsMapper.ToContract(dto);
-
-        contract.LoyaltyAccountId.Should().Be(dto.Id);
-        contract.BusinessId.Should().Be(dto.BusinessId);
-        contract.PointsBalance.Should().Be(dto.PointsBalance);
-        contract.Status.Should().Be(dto.Status.ToString());
-    }
-}
-```
-
-### 6.3 Integration test: full loyalty flow (Prepare -> Process -> Confirm)
-This end-to-end style integration test uses `WebApiTestFactory`. It demonstrates the full flow with a seeded business and user.
-
-Important: This test assumes test factory seeds a business and that we can authenticate as a consumer and business.
-
-```csharp
-public class LoyaltyFlowIntegrationTests : IClassFixture<WebApiTestFactory>
-{
-    private readonly WebApiTestFactory _factory;
-
-    public LoyaltyFlowIntegrationTests(WebApiTestFactory factory) => _factory = factory;
-
-    [Fact]
-    public async Task Prepare_Process_ConfirmAccrual_EndToEnd()
-    {
-        // Arrange
-        using var client = _factory.CreateClient();
-        // Obtain bearer token for consumer user (helper)
-        var consumerToken = await TestAuthHelper.GetJwtForConsumerAsync(client);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", consumerToken);
-
-        // Step 1: Prepare (consumer)
-        var prepareReq = new PrepareScanSessionRequest
-        {
-            BusinessId = TestSeed.DefaultBusinessId,
-            Mode = Darwin.Contracts.Loyalty.LoyaltyScanMode.Accrual
-        };
-
-        var prepareResp = await client.PostAsJsonAsync("/api/v1/loyalty/scan/prepare", prepareReq);
-        prepareResp.EnsureSuccessStatusCode();
-
-        var prepareBody = await prepareResp.Content.ReadFromJsonAsync<PrepareScanSessionResponse>();
-        prepareBody.Should().NotBeNull();
-        prepareBody!.ScanSessionToken.Should().NotBeNullOrWhiteSpace();
-
-        // Step 2: Process (business) - authenticate as business
-        var businessToken = await TestAuthHelper.GetJwtForBusinessAsync(client);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", businessToken);
-
-        var processReq = new ProcessScanSessionForBusinessRequest
-        {
-            ScanSessionToken = prepareBody.ScanSessionToken
-        };
-
-        var processResp = await client.PostAsJsonAsync("/api/v1/loyalty/scan/process", processReq);
-        processResp.EnsureSuccessStatusCode();
-
-        var processBody = await processResp.Content.ReadFromJsonAsync<ProcessScanSessionForBusinessResponse>();
-        processBody.Should().NotBeNull();
-        processBody!.Mode.Should().Be(Darwin.Contracts.Loyalty.LoyaltyScanMode.Accrual);
-
-        // Step 3: Confirm accrual
-        var confirmReq = new ConfirmAccrualRequest
-        {
-            ScanSessionToken = prepareBody.ScanSessionToken,
-            Points = 1,
-            Note = "Test visit"
-        };
-
-        var confirmResp = await client.PostAsJsonAsync("/api/v1/loyalty/scan/confirm-accrual", confirmReq);
-        confirmResp.EnsureSuccessStatusCode();
-
-        var confirmBody = await confirmResp.Content.ReadFromJsonAsync<ConfirmAccrualResponse>();
-        confirmBody.Should().NotBeNull();
-        confirmBody!.Success.Should().BeTrue();
-        confirmBody.NewBalance.Should().BeGreaterThanOrEqualTo(0);
-    }
-}
-```
-
-Notes:
-- Use `TestAuthHelper` to generate valid JWT tokens (or swap `ICurrentUserService` in `WebApiTestFactory`).
-- The test should cover token lifecycle: expired tokens, consumed tokens, etc., with additional tests.
-
-### 6.4 Contract serialization test (Darwin.Contracts)
-
-Ensure stable JSON shape for contracts to prevent breaking mobile clients.
-
-```csharp
-[Fact]
-public void LoyaltyAccountSummary_Should_Serialize_To_ExpectedJson()
-{
-    var model = new LoyaltyAccountSummary
-    {
-        BusinessId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-        BusinessName = "X",
-        PointsBalance = 100,
-        LoyaltyAccountId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-        LifetimePoints = 200,
-        Status = "Active",
-        LastAccrualAtUtc = new DateTime(2025,1,1,0,0,0, DateTimeKind.Utc),
-        NextRewardTitle = "Free Coffee"
-    };
-
-    var json = JsonSerializer.Serialize(model, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true });
-
-    // You can assert JSON contains the expected property names and types
-    json.Should().Contain("\"BusinessId\"");
-    json.Should().Contain("\"PointsBalance\": 100");
-    json.Should().Contain("\"NextRewardTitle\": \"Free Coffee\"");
-}
-```
+If behavior crosses layers, prefer one extra integration test over many brittle mocks.
 
 ---
 
-## 7) Data seeding & test data builders
+## 9) Quality gaps and next improvements
 
-- Use small, deterministic builders for domain entities:
-  - `BusinessBuilder.WithDefaultProgram().WithRewardTier(points: 10, name: "Small")`
-  - `UserBuilder.WithEmail("test@example.com").AsConsumer()`
-- Builders return DTOs/equivalent rather than saving to DB directly; test harness can call `SeedAsync()` to persist and return stable ids.
-- Keep seeded datasets minimal for each test to avoid interference.
+Current direction for stronger confidence:
 
-Example builder pattern:
-
-```csharp
-public class BusinessBuilder
-{
-    private readonly Business _b = new Business { Id = Guid.NewGuid(), Name = "Biz" };
-    private readonly List<LoyaltyRewardTier> _tiers = new();
-
-    public BusinessBuilder WithRewardTier(int points, string name)
-    {
-        _tiers.Add(new LoyaltyRewardTier { Id = Guid.NewGuid(), PointsRequired = points, Name = name, IsDeleted = false });
-        return this;
-    }
-
-    public Business Build()
-    {
-        _b.RewardTiers = _tiers;
-        return _b;
-    }
-}
-```
+- Increase depth in infrastructure and webapi lanes where currently thinner than unit/integration.
+- Expand integration matrices for concurrency/authorization edge-cases.
+- Raise lane thresholds gradually after sustained green history.
+- Keep this document synchronized with actual test inventory and CI behavior in each related PR.
 
 ---
 
-## 8) Strategies for stateful / multi-step flows
+## 10) Maintenance rule
 
-Multi-step flows (prepare -> process -> confirm) require tests that assert both actions and side-effects (e.g., token consumed, points changed). Use the following patterns:
+When any of the following changes, update this document in the same PR:
 
-- Use `IClock` or `TestClock` to create deterministic time windows to test expiry behavior.
-- For concurrency tests, use `Task.WhenAll` and assert DB state afterwards for consistency.
-- For negative tests, try both the final result and the intermediate state (e.g. token consumed or status became Expired).
+- test project inventory,
+- coverage lane definitions,
+- threshold values,
+- required local/CI prerequisites,
+- execution commands or workflow structure.
 
----
-
-## 9) Contract / compatibility tests
-
-- Add a contract test project that ensures serialization compatibility.
-- For every contract change:
-  - Add a new test that serializes an instance with the new shape.
-  - If removing fields, ensure older clients can still parse (if required) or plan a breaking change with version bump.
-- Consider maintaining a small set of snapshot JSON files that CI verifies remain compatible.
-
----
-
-## 10) Caching & observability tests
-
-- If you add caching for `GetAvailableLoyaltyRewardsForBusinessHandler`, include:
-  - Unit tests to verify cache hit/miss behavior (use `IMemoryCache` in test).
-  - Integration tests to verify caching reduces DB calls (use a DB call counter or a test double for repository).
-- Observability:
-  - Ensure code emits metrics on critical events (prepare/process/confirm/enrichmentFailure).
-  - Add a smoke test that ensures metrics are emitted (or at least that the code path calls the metric client).
-
----
-
-## 11) CI considerations & pipeline setup
-
-- Execute this pipeline stage order:
-  1. `dotnet build` (fail fast on compile).
-  2. Run unit tests (`Darwin.UnitTests`) in parallel and collect coverage.
-  3. Run integration tests (`Darwin.WebApi.Tests`) with a single worker or limited concurrency to avoid resource contention.
-  4. Run contract serialization tests.
-  5. Run static analysis (Roslyn analyzers, nullable warnings).
-  6. Generate OpenAPI (if applicable) and store as artifact for mobile teams.
-
-- Secrets: do not use real secrets in CI. Use test signing keys and test-only configurations.
-
-- Flaky tests: track them and avoid reintroducing them in CI. If a test is flaky, either fix or remove from CI until stabilized.
-
----
-
-## 12) Checklist for adding tests to new features
-
-When adding a new feature, the developer should include tests according to this checklist:
-
-1. Unit tests for core logic (happy path and at least two edge cases).
-2. Unit tests for validators and error conditions.
-3. Mapper tests if new DTOs or contract mappings were added.
-4. Integration tests for the endpoint(s): one happy path, one failure path (validation or auth).
-5. Contract serialization test for any new or changed contract.
-6. If new DB schema change: infrastructure/migration tests (SQLite).
-7. Add test data builders needed by tests.
-8. Update `Tests.Common` helpers if new test wiring is required.
-9. Document test instructions in the feature PR (how to run locally and any env flags).
-
----
-
-## 13) Appendix — helper snippets
-
-### Read `ProblemDetails` from HttpResponseMessage
-
-```csharp
-public static async Task<ProblemDetails> ReadProblemDetailsAsync(this HttpResponseMessage resp)
-{
-    var json = await resp.Content.ReadAsStringAsync();
-    return JsonSerializer.Deserialize<ProblemDetails>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
-}
-```
-
-### Create authenticated HttpClient (JWT helper)
-
-```csharp
-public static HttpClient WithBearer(this HttpClient client, string token)
-{
-    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    return client;
-}
-```
-
-### Example `TestAuthHelper` (conceptual)
-
-```csharp
-public static class TestAuthHelper
-{
-    public static async Task<string> GetJwtForConsumerAsync(HttpClient client)
-    {
-        var login = new PasswordLoginRequest { Email = "consumer@test.local", Password = "Password123!" };
-        var resp = await client.PostAsJsonAsync("/api/auth/login", login);
-        resp.EnsureSuccessStatusCode();
-        var tokens = await resp.Content.ReadFromJsonAsync<TokenResponse>();
-        return tokens!.AccessToken;
-    }
-
-    public static async Task<string> GetJwtForBusinessAsync(HttpClient client)
-    {
-        var login = new PasswordLoginRequest { Email = "business@test.local", Password = "Password123!" };
-        var resp = await client.PostAsJsonAsync("/api/auth/login", login);
-        resp.EnsureSuccessStatusCode();
-        var tokens = await resp.Content.ReadFromJsonAsync<TokenResponse>();
-        return tokens!.AccessToken;
-    }
-}
-```
-
----
-
-## 14) Current implementation status (done vs pending)
-
-This status is derived from the current repository state and must be refreshed whenever test assets change.
-
-### Done
-
-- [x] `tests/Darwin.Tests.Unit` exists on `net10.0` with xUnit v3 + FluentAssertions setup.
-- [x] Unit tests exist for:
-  - `Catalog/ProductUniqueSlugValidatorTests`
-  - `CMS/PageUniqueSlugValidatorTests`
-  - `Common/HtmlSanitizerHelperTests`
-- [x] `tests/Darwin.Tests.Unit/TestDbFactory.cs` exists for DB-backed unit test setup.
-- [x] `tests/Darwin.Tests.Integration` project exists and can be expanded incrementally.
-
-### Pending
-
-**Status summary (clear split):**
-- **Implemented in code:** all currently scoped test packs have authored tests committed in repository.
-- **Still remaining:** CLI/CI execution evidence, stabilization, and soft-gate rollback completion.
-
-- [x] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>` (initial smoke-test baseline completed).
-- [ ] **P1 — Identity happy-path matrix (authorized):** baseline + core negative-path coverage and authorized matrix are implemented in code; pending CLI/CI execution evidence.
-- [ ] **P2 — Profile optimistic concurrency matrix (`Id` + `RowVersion`):** baseline auth-guard coverage and authorized success/stale-rowversion matrix are implemented in code; pending CLI/CI execution evidence.
-- [ ] **P3 — Loyalty E2E prepare/process/confirm:** baseline auth-guard coverage and authorized end-to-end scenarios are implemented in code; pending CLI/CI execution evidence.
-- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline coverage plus expanded Loyalty timeline/promotions, Profile concurrency payload, Push registration payloads, Business discovery compatibility checks, business campaign/reward configuration property-name compatibility checks (including explicit deserialize/serialize assertions for optional content fields such as subtitle/body/media/landing URLs across create/update and list-item payloads (including core name/title/channels plus targeting/payload JSON, campaign-state/schedule, and serialized item id/rowVersion base64 assertions on list items for both deserialize and serialize checks)), and campaign create/update/list (including item `businessId`/`rowVersion` and explicit create/update schedule field assertions plus targeting/payload JSON string assertions (including update serialization field-name checks)) + reward-tier configuration/delete/mutation payload serialize/deserialize compatibility checks (including tier value/type/self-redemption field assertions, mutation success/failure status assertions, and rowVersion transport/base64 assertions) are implemented in code (`Darwin.Contracts.Tests` + `Darwin.Tests.Unit` + `Darwin.WebApi.Tests` mapper suites); pending CLI/CI execution evidence.
-- [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization). Implemented in code (`ApiClientReliabilityTests`), pending CLI/CI execution evidence.
-- [ ] Add CI lane split and coverage publication for unit/integration. Implemented in code via GitHub Actions quality-gates workflow with lanes for unit/contracts/infrastructure/webapi/integration/mobile-shared (pending CI execution evidence).
-
----
-
-## 15) Testing delivery backlog (execution order)
-
-Keep this list as the execution tracker for the testing workstream.
-
-
-**Completed implementation scope:**
-- All scoped test packs have authored test code committed (identity/profile/loyalty matrices, contracts compatibility, mobile reliability, infrastructure fallback, mapper stability).
-
-**Remaining scope:**
-- Collect CLI/CI execution evidence, stabilize flaky suites, and complete soft-gate rollback to restore hard-gate behavior.
-
-| Order | Work item | Status | Exit criteria |
-|---|---|---|---|
-| 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress (Implemented, pending CLI/CI run) | Smoke suites now run with deterministic DB reset+seed in `IAsyncLifetime`; finalize after CLI/CI evidence confirms stability and runtime overhead is acceptable. |
-| 2 | **P1** Identity flow test pack (authorized matrix first) | In Progress (Implemented, pending CLI/CI run) | Baseline + core negative tests and authorized happy-path matrix are implemented (`register/login`, `refresh`, `password/change`, `logout`, `logout-all`); finalize after passing CLI/CI evidence. |
-| 3 | **P2** Profile concurrency test pack (`RowVersion`) | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized success/stale row-version matrix are implemented; finalize after passing CLI/CI evidence. |
-| 4 | **P3** Loyalty scan journey test pack (prepare/process/confirm) | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
-| 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions, Profile concurrency payload, Push registration payloads, Business discovery compatibility checks, and campaign/reward compatibility matrices (including list-item and rowVersion/base64 assertions) are implemented; contract smoke tests in `Darwin.Contracts.Tests` and mapper stability tests in `Darwin.WebApi.Tests` are added; finalize after passing CLI/CI evidence. |
-| 6 | Mobile.Shared reliability pack | In Progress (Implemented, pending CLI/CI run) | Reliability matrix is implemented (`retry`, `auth header injection`, `no-content normalization`) in `ApiClientReliabilityTests`; finalize after passing CLI/CI evidence. |
-| 7 | CI quality gates | In Progress (Temporary PR soft-gate active) | Workflow keeps all test lanes running, but PR jobs are temporarily `continue-on-error` so failing suites do not block merge. Soft-gate can be disabled immediately by setting repository variable `DARWIN_PR_SOFT_GATE=false`, or per manual run via workflow input `force_strict=true`; restore hard-gate mode in code after completing the rollback checklist and attaching CI evidence. |
-
-> Authoring status note: all currently scoped mobile-critical test packs are now implemented in code; remaining backlog state is strictly about execution evidence and stabilization in CLI/CI.
-
-### Authoring completion checklist (code written)
-
-- [x] Identity authorized happy-path matrix tests authored (`AuthIdentityEndpointAuthorizedMatrixTests`).
-- [x] Profile optimistic concurrency matrix tests authored (`ProfileEndpointAuthorizedConcurrencyTests`).
-- [x] Loyalty E2E prepare/process/confirm tests authored (`LoyaltyEndpointAuthorizedE2eTests`).
-- [x] Contracts compatibility authoring expanded for mobile-critical DTOs (identity/profile/loyalty/promotions/push/business payloads, campaign/reward-configuration management shapes, and WebApi mapper stability scenarios including enum/ledger/business-list mappings plus location/program-tier projections).
-- [x] Mobile.Shared reliability tests authored (`ApiClientReliabilityTests`) including guard-clause and invalid-JSON normalization scenarios.
-- [x] Infrastructure design-time DbContext tests authored (`DesignTimeDbContextFactoryTests`) including no-config fallback path coverage.
-
-
-### Latest local verification snapshot
-
-- Attempted to execute the three prioritized integration matrices directly from CLI:
-  - `dotnet test tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj --filter "FullyQualifiedName~AuthIdentityEndpointAuthorizedMatrixTests|FullyQualifiedName~ProfileEndpointAuthorizedConcurrencyTests|FullyQualifiedName~LoyaltyEndpointAuthorizedE2eTests"`
-- Initial result: execution blocked because `dotnet` CLI was unavailable (`bash: command not found: dotnet`).
-- Follow-up remediation attempts in this environment:
-  - Script install via `curl https://dotnet.microsoft.com/.../dotnet-install.sh` (blocked by outbound proxy HTTP 403).
-  - Package install via `apt-get update && apt-get install dotnet-sdk-10.0` (blocked by repository/proxy HTTP 403).
-- Tracking decision: keep backlog items in **In Progress (Implemented, pending CLI/CI run)** state until local or CI evidence is attached.
-
-Temporary policy note:
-
-- Current phase intentionally uses a **non-blocking PR test gate** to avoid merge deadlocks while unstable suites are being stabilized.
-- CI now includes an explicit `soft-gate-status` job that emits a warning annotation when soft-gate mode is active for PR runs, and also writes run-level summary details (`event`, `mode`, switch variable, and manual `force_strict` input) to `GITHUB_STEP_SUMMARY`.
-- This is temporary and must be reverted to hard-gate mode once the prioritized matrix suites are consistently green in CI.
-
-### Soft-gate rollback checklist (must be completed before re-enabling hard-gate)
-
-- [ ] Collect at least 5 consecutive green PR runs for P1/P2/P3 matrix suites in CI artifacts.
-- [ ] Confirm flakiness root-cause notes are documented for previously failing suites.
-- [ ] Set repository variable `DARWIN_PR_SOFT_GATE=false` (or run `workflow_dispatch` with `force_strict=true`) and verify one PR run is strict (no soft-gate behavior).
-- [ ] Remove PR `continue-on-error` policy from `tests-quality-gates.yml` (code-level cleanup after successful strict verification).
-- [ ] Re-run one full strict CI cycle on PR and one strict push cycle on `work` branch.
-- [ ] Update this document status from **Temporary PR soft-gate active** to **Hard-gate restored** with links to CI evidence.
-
-Backlog update rule:
-
-1. Mark status only after tests are committed and passing in CLI.
-2. Keep each item linked to concrete test file paths in commit/PR notes.
-3. If scope changes, append a short reason in this section.
-
-### Implemented test suites (current)
-
-- Integration baseline suites:
-  - `tests/Darwin.Tests.Integration/Meta/MetaHealthEndpointTests.cs`
-  - `tests/Darwin.Tests.Integration/Meta/MetaInfoEndpointTests.cs`
-  - `tests/Darwin.Tests.Integration/Identity/AuthIdentityEndpointBaselineTests.cs`
-  - `tests/Darwin.Tests.Integration/Identity/AuthIdentityEndpointAuthorizedMatrixTests.cs`
-  - `tests/Darwin.Tests.Integration/Profile/ProfileEndpointBaselineTests.cs`
-  - `tests/Darwin.Tests.Integration/Profile/ProfileEndpointAuthorizedConcurrencyTests.cs`
-  - `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointBaselineTests.cs`
-  - `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`
-- Integration helper assets:
-  - `tests/Darwin.Tests.Common/TestInfrastructure/IntegrationTestHostFactory.cs`
-  - `tests/Darwin.Tests.Common/TestInfrastructure/IntegrationTestClientFactory.cs`
-  - `tests/Darwin.Tests.Common/TestInfrastructure/IdentityFlowTestHelper.cs`
-  - `tests/Darwin.Tests.Common/TestInfrastructure/IntegrationTestDatabaseReset.cs` (includes migration + reset gate for concurrency safety)
-  - `tests/Darwin.Tests.Integration/IntegrationTestAssemblyConfiguration.cs` (disables integration assembly parallelization to avoid DB reset races)
-  - `tests/Darwin.Tests.Integration/TestInfrastructure/DeterministicIntegrationTestBase.cs` (shared `IAsyncLifetime` + host/client lifecycle to remove per-suite duplication)
-- Unit contract compatibility suite:
-  - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
-  - `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsPolicyResolutionTests.cs`
-  - `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsCampaignParsingTests.cs`
-- Contracts project serialization suite:
-  - `tests/Darwin.Contracts.Tests/Serialization/ContractsSerializationSmokeTests.cs`
-- Infrastructure project configuration suite:
-  - `tests/Darwin.Infrastructure.Tests/Persistence/DesignTimeDbContextFactoryTests.cs`
-- WebApi mapper stability suite:
-  - `tests/Darwin.WebApi.Tests/Mappers/BusinessContractsMapperTests.cs`
-  - `tests/Darwin.WebApi.Tests/Mappers/LoyaltyContractsMapperTests.cs`
-- Mobile shared reliability suite:
-  - `tests/Darwin.Mobile.Shared.Tests/Api/ApiClientReliabilityTests.cs`
-- CI quality gate assets:
-  - `.github/workflows/tests-quality-gates.yml`
-  - `scripts/ci/verify_coverage.py`
-
-### Promotions policy/diagnostics test backlog (tracked here by design)
-
-- [x] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
-- [x] Add unit-level coverage for campaign lifecycle resolution (`Draft` / `Scheduled` / `Active` / `Expired`), priority extraction, and eligibility parsing helper paths in `GetMyPromotionsHandler`. Pending CLI/CI execution evidence.
-- [x] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream. Implemented in `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsCampaignParsingTests.cs`; pending CLI/CI execution evidence.
-- [x] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows. Implemented in `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`; pending CLI/CI execution evidence.
-- [x] Expanded policy normalization edge-case coverage in `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsPolicyResolutionTests.cs` (max-card bounding matrix, omitted-window defaults, negative-window lower-bound normalization); pending CLI/CI execution evidence.
-- [x] Applied xUnit cancellation responsiveness rule (`xUnit1051`) to touched async loyalty test paths by propagating `TestContext.Current.CancellationToken` through:
-  - `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`
-  - `tests/Darwin.Tests.Common/TestInfrastructure/IdentityFlowTestHelper.cs`
-  Pending CLI/CI execution evidence.
-- [x] Added promotions diagnostics/item-count coherence integration coverage in `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs` to validate `diagnostics.finalCount` against visible returned collection size and policy cap; pending CLI/CI execution evidence.
-- [x] Added additional authenticated promotions integration coverage for strict max-card policy enforcement and distinct frequency/suppression window round-trip in `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`; pending CLI/CI execution evidence.
-
----
-
-
-## 16) Solution/Test project consistency checklist
-
-- `Darwin.sln` currently includes these test projects:
-  - `tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj`
-  - `tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj`
-  - `tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj`
-  - `tests/Darwin.Infrastructure.Tests/Darwin.Infrastructure.Tests.csproj`
-  - `tests/Darwin.Contracts.Tests/Darwin.Contracts.Tests.csproj`
-  - `tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj`
-- `Test.slnf` currently includes only:
-  - `tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj`
-  - `tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj`
-- Current implemented test suites on disk are still concentrated in the two projects included in `Test.slnf`; remaining projects are scaffolded and should be activated as coverage expands.
-
-## 17) Execution handoff and next actions
-
-Use this list as the immediate continuation plan:
-
-### Immediate continuation checklist (next session start)
-
-1. Run one CI cycle with current soft-gate defaults and collect lane artifacts.
-2. Run one strict cycle (`DARWIN_PR_SOFT_GATE=false` or `force_strict=true`) and capture failures by lane.
-3. Convert any red lane into concrete fix tasks in this document before implementing code changes.
-4. Update each backlog row status/evidence links in the same commit that changes status.
-
-1. **CI quality gates activation — current top priority**
-   - Run the new workflow and capture green evidence for unit/contracts/infrastructure/webapi/integration/mobile-shared lanes.
-   - Tune coverage thresholds only if initial CI evidence shows justified baseline mismatch.
-2. **Test infrastructure hardening**
-   - Validate class-level reset overhead in CI and adjust isolation strategy if run time regresses.
-   - Consolidate additional reusable helpers as needed.
-3. **Contracts compatibility expansion (next wave)**
-   - Continue adding tests for remaining mobile-critical DTO families and explicit versioning scenarios
-
-Operational context and constraints:
-
-- Keep `PackageReference` versions untouched unless explicitly requested.
-- Keep test comments in English with complete XML summaries.
-- Environment here does not provide `dotnet` CLI, so execution evidence must come from CI/local machine.
-
-## Closing notes & recommended next steps
-
-1. Execute the newly implemented identity/profile/loyalty/webapi/mobile/contracts/infrastructure suites in CI and persist passing evidence before marking packs as completed.
-2. Keep mapper and contract compatibility tests expanding with each new mobile-facing DTO/change.
-3. Tune lane coverage thresholds based on first green baseline only when justified by CI evidence.
-
-## 18) CI troubleshooting notes
-
-Use these notes when CI lanes fail before merge or during gate restoration:
-
-- **Integration lane requires SQL Server availability.**
-  - The integration test host uses `AddPersistence(...UseSqlServer...)` and deterministic DB reset/migrate/seed.
-  - CI must provide a reachable SQL Server and set `ConnectionStrings__DefaultConnection` to a test-scoped DB.
-  - Keep `ASPNETCORE_ENVIRONMENT=Testing` for integration jobs so reset guardrails allow destructive reset.
-
-- **Mobile.Shared lane requires MAUI workload on CI agents.**
-  - `Darwin.Mobile.Shared` is a MAUI project (`<UseMaui>true</UseMaui>`).
-  - Before restoring/running `Darwin.Mobile.Shared.Tests`, install MAUI workload (for example `dotnet workload install maui --skip-manifest-update`).
-
-- **Coverage gate script expects all lane artifacts.**
-  - If one lane does not upload `coverage.cobertura.xml`, coverage gate will fail by design.
-  - Verify each lane writes to its own `TestResults/<lane>` directory and uploads that directory.
-
-- [x] Added contracts-project serialization compatibility coverage for promotions diagnostics/policy JSON shape in `tests/Darwin.Contracts.Tests/Serialization/PromotionsContractSerializationCompatibilityTests.cs` (reflection-based, stable camelCase property assertions); pending CLI/CI execution evidence.
-- [x] Added loyalty business mutation contracts compatibility coverage in `tests/Darwin.Contracts.Tests/Serialization/LoyaltyBusinessMutationContractsCompatibilityTests.cs` for `RowVersion` base64 transport and stable core campaign/reward editor fields; pending CLI/CI execution evidence.
-- [x] Added campaign contract compatibility coverage in `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` for stable item core fields, `RowVersion` base64 transport, and schedule field (`startsAtUtc`/`endsAtUtc`) round-trip behavior; pending CLI/CI execution evidence.
-- [x] Expanded `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` with update-like DTO coverage (`Id` + `RowVersion` round-trip/base64) and nullable schedule null-transport assertions (`startsAtUtc`/`endsAtUtc`); pending CLI/CI execution evidence.
-- [x] Expanded `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` with optional content null-transport coverage (`subtitle/body/mediaUrl/landingUrl`) and campaign lifecycle state round-trip (`campaignState`) compatibility checks; pending CLI/CI execution evidence.
-- [x] Expanded `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` with raw `targetingJson/payloadJson` round-trip checks, supported channel-value (`1`/`3`) transport checks, and explicit null `rowVersion` serialization coverage; pending CLI/CI execution evidence.
-- [x] Expanded `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` with `BusinessId` GUID round-trip compatibility and raw schedule value-preservation checks (`StartsAtUtc`/`EndsAtUtc`), including intentionally inverted ranges to enforce non-mutating DTO transport; pending CLI/CI execution evidence.
+This file should always describe **what is true now**, not only future intent.
