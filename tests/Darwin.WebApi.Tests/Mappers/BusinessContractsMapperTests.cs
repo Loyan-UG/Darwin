@@ -14,6 +14,22 @@ namespace Darwin.WebApi.Tests.Mappers;
 public sealed class BusinessContractsMapperTests
 {
     /// <summary>
+    ///     Ensures mapper guard clauses reject null discovery DTO input.
+    /// </summary>
+    [Fact]
+    public void ToContract_DiscoveryItem_Should_Throw_WhenDtoIsNull()
+    {
+        // Arrange
+        BusinessDiscoveryListItemDto? dto = null;
+
+        // Act
+        Action act = () => BusinessContractsMapper.ToContract(dto!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
     ///     Ensures discovery list mapping converts distance from kilometers to meters,
     ///     preserves optional location payload, and emits string category tokens.
     /// </summary>
@@ -231,6 +247,27 @@ public sealed class BusinessContractsMapperTests
         contract.MyAccount.BusinessName.Should().Be("Darwin Market");
     }
 
+    /// <summary>
+    ///     Ensures combined business-detail/account mapping enforces required nested business payload.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetailWithMyAccount_Should_Throw_WhenBusinessIsNull()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailWithMyAccountDto
+        {
+            Business = null!,
+            HasAccount = false,
+            MyAccount = null
+        };
+
+        // Act
+        Action act = () => BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
 
     /// <summary>
     ///     Ensures location mapping preserves address fragments, primary flag,
@@ -276,6 +313,30 @@ public sealed class BusinessContractsMapperTests
         contract.Coordinate!.AltitudeMeters.Should().Be(112.4);
         contract.IsPrimary.Should().BeTrue();
         contract.OpeningHoursJson.Should().Contain("08:00-18:00");
+    }
+
+    /// <summary>
+    ///     Ensures location mapping keeps coordinate null when source coordinate is absent.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessLocation_Should_KeepNullCoordinate_WhenCoordinateMissing()
+    {
+        // Arrange
+        var dto = new BusinessPublicLocationDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "No GPS",
+            City = "Leipzig",
+            IsPrimary = false,
+            Coordinate = null
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.Coordinate.Should().BeNull();
+        contract.City.Should().Be("Leipzig");
     }
 
     /// <summary>
