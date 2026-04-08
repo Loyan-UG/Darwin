@@ -410,4 +410,60 @@ public sealed class MemberCommerceContractsSerializationCompatibilityTests
         roundTrip.Actions.CanRetryPayment.Should().BeFalse();
         roundTrip.Actions.DocumentPath.Should().Contain("/document");
     }
+
+    [Fact]
+    public void MemberOrderSummary_Should_Deserialize_WhenJsonContainsUnknownFields()
+    {
+        // Arrange
+        const string json = """
+            {
+              "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+              "orderNumber": "ORD-2026-2004",
+              "currency": "EUR",
+              "grandTotalGrossMinor": 4500,
+              "status": "Delivered",
+              "createdAtUtc": "2026-04-08T10:30:00Z",
+              "futureMetadata": "ignore-me"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<MemberOrderSummary>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.OrderNumber.Should().Be("ORD-2026-2004");
+        dto.GrandTotalGrossMinor.Should().Be(4500);
+        dto.Status.Should().Be("Delivered");
+    }
+
+    [Fact]
+    public void MemberInvoiceSummary_Should_Deserialize_WithMissingOptionalLinks()
+    {
+        // Arrange
+        const string json = """
+            {
+              "id": "11111111-2222-3333-4444-555555555555",
+              "currency": "EUR",
+              "totalGrossMinor": 2200,
+              "refundedAmountMinor": 0,
+              "settledAmountMinor": 0,
+              "balanceMinor": 2200,
+              "status": "Open",
+              "dueDateUtc": "2026-05-20T00:00:00Z",
+              "createdAtUtc": "2026-04-08T09:00:00Z"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<MemberInvoiceSummary>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.BusinessId.Should().BeNull();
+        dto.BusinessName.Should().BeNull();
+        dto.OrderId.Should().BeNull();
+        dto.OrderNumber.Should().BeNull();
+        dto.BalanceMinor.Should().Be(2200);
+    }
 }

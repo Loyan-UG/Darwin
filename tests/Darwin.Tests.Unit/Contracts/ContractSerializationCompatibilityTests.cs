@@ -2073,4 +2073,59 @@ public sealed class ContractSerializationCompatibilityTests
         roundTrip.DocumentPath.Should().Contain("/document");
     }
 
+    /// <summary>
+    ///     Verifies member order action payloads stay backward-compatible when
+    ///     additional unknown fields are present in JSON responses.
+    /// </summary>
+    [Fact]
+    public void MemberOrderActions_Should_Deserialize_WhenUnknownFieldsExist()
+    {
+        // Arrange
+        const string json = """
+            {
+              "canRetryPayment": true,
+              "paymentIntentPath": "/api/v1/member/orders/1/payment-intent",
+              "confirmationPath": "/api/v1/public/checkout/orders/1/confirmation",
+              "documentPath": "/api/v1/member/orders/1/document",
+              "futureField": "ignore-me"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<MemberOrderActions>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.CanRetryPayment.Should().BeTrue();
+        dto.PaymentIntentPath.Should().Contain("/payment-intent");
+        dto.ConfirmationPath.Should().Contain("/confirmation");
+        dto.DocumentPath.Should().Contain("/document");
+    }
+
+    /// <summary>
+    ///     Verifies member invoice action payloads deserialize with safe defaults
+    ///     when optional fields are omitted by older clients or proxies.
+    /// </summary>
+    [Fact]
+    public void MemberInvoiceActions_Should_Deserialize_WhenOptionalFieldsAreMissing()
+    {
+        // Arrange
+        const string json = """
+            {
+              "canRetryPayment": false,
+              "documentPath": "/api/v1/member/invoices/1/document"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<MemberInvoiceActions>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.CanRetryPayment.Should().BeFalse();
+        dto.PaymentIntentPath.Should().BeNull();
+        dto.OrderPath.Should().BeNull();
+        dto.DocumentPath.Should().Contain("/document");
+    }
+
 }
