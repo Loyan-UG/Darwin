@@ -2,6 +2,8 @@ using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Identity;
 using Darwin.Contracts.Loyalty;
+using Darwin.Contracts.Meta;
+using Darwin.Contracts.Notifications;
 using FluentAssertions;
 using System.Text.Json;
 
@@ -199,6 +201,74 @@ public sealed class ContractsSerializationSmokeTests
         // Assert
         roundTrip.Should().NotBeNull();
         roundTrip!.ConfirmIrreversibleDeletion.Should().BeTrue();
+    }
+
+    /// <summary>
+    ///     Verifies mobile bootstrap transport keeps security/performance knobs stable
+    ///     across JSON serialization boundaries.
+    /// </summary>
+    [Fact]
+    public void AppBootstrapResponse_Should_RoundTripJwtAudienceAndOperationalLimits()
+    {
+        // Arrange
+        var response = new AppBootstrapResponse
+        {
+            JwtAudience = "darwin.mobile",
+            QrTokenRefreshSeconds = 45,
+            MaxOutboxItems = 200
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(response, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<AppBootstrapResponse>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.JwtAudience.Should().Be("darwin.mobile");
+        roundTrip.QrTokenRefreshSeconds.Should().Be(45);
+        roundTrip.MaxOutboxItems.Should().Be(200);
+    }
+
+    /// <summary>
+    ///     Verifies push-device registration request/response contracts keep platform
+    ///     and registration token payloads stable for mobile notification setup flows.
+    /// </summary>
+    [Fact]
+    public void RegisterPushDeviceContracts_Should_RoundTripDisabledNotificationPayload()
+    {
+        // Arrange
+        var request = new RegisterPushDeviceRequest
+        {
+            DeviceId = "device-123",
+            Platform = MobileDevicePlatform.iOS,
+            PushToken = null,
+            NotificationsEnabled = false,
+            DeviceModel = "iPhone 17"
+        };
+
+        var response = new RegisterPushDeviceResponse
+        {
+            DeviceId = "device-123",
+            RegisteredAtUtc = DateTime.UtcNow
+        };
+
+        // Act
+        var requestJson = JsonSerializer.Serialize(request, JsonOptions);
+        var responseJson = JsonSerializer.Serialize(response, JsonOptions);
+        var requestRoundTrip = JsonSerializer.Deserialize<RegisterPushDeviceRequest>(requestJson, JsonOptions);
+        var responseRoundTrip = JsonSerializer.Deserialize<RegisterPushDeviceResponse>(responseJson, JsonOptions);
+
+        // Assert
+        requestRoundTrip.Should().NotBeNull();
+        requestRoundTrip!.DeviceId.Should().Be("device-123");
+        requestRoundTrip.Platform.Should().Be(MobileDevicePlatform.iOS);
+        requestRoundTrip.PushToken.Should().BeNull();
+        requestRoundTrip.NotificationsEnabled.Should().BeFalse();
+        requestRoundTrip.DeviceModel.Should().Be("iPhone 17");
+
+        responseRoundTrip.Should().NotBeNull();
+        responseRoundTrip!.RegisteredAtUtc.Should().BeCloseTo(response.RegisteredAtUtc, TimeSpan.FromSeconds(1));
+        responseRoundTrip.DeviceId.Should().Be("device-123");
     }
 
     /// <summary>
