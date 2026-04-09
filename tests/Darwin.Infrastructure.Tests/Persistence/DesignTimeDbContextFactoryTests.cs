@@ -74,6 +74,25 @@ public sealed class DesignTimeDbContextFactoryTests
     }
 
     /// <summary>
+    ///     Ensures design-time context is configured for SQL Server provider so
+    ///     EF tooling and runtime migrations target the intended database engine.
+    /// </summary>
+    [Fact]
+    public void CreateDbContext_Should_UseSqlServerProvider()
+    {
+        // Arrange
+        var factory = new DesignTimeDbContextFactory();
+
+        // Act
+        using var context = factory.CreateDbContext([]);
+        var providerName = context.Database.ProviderName;
+
+        // Assert
+        providerName.Should().NotBeNullOrWhiteSpace();
+        providerName.Should().Contain("SqlServer");
+    }
+
+    /// <summary>
     ///     Ensures design-time factory falls back to deterministic LocalDB connection string
     ///     when neither environment override nor discoverable appsettings are available.
     /// </summary>

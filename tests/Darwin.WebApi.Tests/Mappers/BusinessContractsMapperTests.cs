@@ -14,6 +14,22 @@ namespace Darwin.WebApi.Tests.Mappers;
 public sealed class BusinessContractsMapperTests
 {
     /// <summary>
+    ///     Ensures mapper guard clauses reject null discovery DTO input.
+    /// </summary>
+    [Fact]
+    public void ToContract_DiscoveryItem_Should_Throw_WhenDtoIsNull()
+    {
+        // Arrange
+        BusinessDiscoveryListItemDto? dto = null;
+
+        // Act
+        Action act = () => BusinessContractsMapper.ToContract(dto!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
     ///     Ensures discovery list mapping converts distance from kilometers to meters,
     ///     preserves optional location payload, and emits string category tokens.
     /// </summary>
@@ -57,6 +73,29 @@ public sealed class BusinessContractsMapperTests
         contract.Rating.Should().Be(4.7d);
         contract.RatingCount.Should().Be(112);
         contract.IsOpenNow.Should().BeTrue();
+    }
+
+    /// <summary>
+    ///     Ensures kilometer-to-meter conversion uses MidpointRounding.AwayFromZero
+    ///     so half-meter boundaries stay deterministic across runtimes.
+    /// </summary>
+    [Fact]
+    public void ToContract_DiscoveryItem_Should_RoundDistanceUsingAwayFromZero()
+    {
+        // Arrange
+        var dto = new BusinessDiscoveryListItemDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Darwin Kiosk",
+            Category = BusinessCategoryKind.Cafe,
+            DistanceKm = 1.2345
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.DistanceMeters.Should().Be(1235);
     }
 
     /// <summary>
@@ -116,6 +155,46 @@ public sealed class BusinessContractsMapperTests
     }
 
     /// <summary>
+    ///     Ensures legacy combined image list trims whitespace and skips empty entries
+    ///     while preserving stable primary-first ordering.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetail_Should_TrimAndFilterImageUrls()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Darwin Roastery",
+            Category = BusinessCategoryKind.Cafe,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            PrimaryImageUrl = " https://cdn.example/primary.jpg ",
+            GalleryImageUrls = [" ", " https://cdn.example/gallery-a.jpg ", null!, "https://cdn.example/gallery-b.jpg"],
+            Locations =
+            [
+                new BusinessPublicLocationDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Primary",
+                    IsPrimary = true,
+                    City = "Berlin"
+                }
+            ]
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.ImageUrls.Should().ContainInOrder(
+            "https://cdn.example/primary.jpg",
+            "https://cdn.example/gallery-a.jpg",
+            "https://cdn.example/gallery-b.jpg");
+        contract.ImageUrls.Should().HaveCount(3);
+    }
+
+    /// <summary>
     ///     Ensures combined business-detail/account mapping preserves HasAccount flag
     ///     and maps nested loyalty account snapshot using contract field names.
     /// </summary>
@@ -168,6 +247,27 @@ public sealed class BusinessContractsMapperTests
         contract.MyAccount.BusinessName.Should().Be("Darwin Market");
     }
 
+    /// <summary>
+    ///     Ensures combined business-detail/account mapping enforces required nested business payload.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetailWithMyAccount_Should_Throw_WhenBusinessIsNull()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailWithMyAccountDto
+        {
+            Business = null!,
+            HasAccount = false,
+            MyAccount = null
+        };
+
+        // Act
+        Action act = () => BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
 
     /// <summary>
     ///     Ensures location mapping preserves address fragments, primary flag,
@@ -213,6 +313,30 @@ public sealed class BusinessContractsMapperTests
         contract.Coordinate!.AltitudeMeters.Should().Be(112.4);
         contract.IsPrimary.Should().BeTrue();
         contract.OpeningHoursJson.Should().Contain("08:00-18:00");
+    }
+
+    /// <summary>
+    ///     Ensures location mapping keeps coordinate null when source coordinate is absent.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessLocation_Should_KeepNullCoordinate_WhenCoordinateMissing()
+    {
+        // Arrange
+        var dto = new BusinessPublicLocationDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "No GPS",
+            City = "Leipzig",
+            IsPrimary = false,
+            Coordinate = null
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.Coordinate.Should().BeNull();
+        contract.City.Should().Be("Leipzig");
     }
 
     /// <summary>

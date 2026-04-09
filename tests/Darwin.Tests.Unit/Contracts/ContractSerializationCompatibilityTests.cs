@@ -2009,4 +2009,123 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Success.Should().BeFalse();
     }
 
+    /// <summary>
+    ///     Verifies member order action metadata keeps canonical camelCase property names
+    ///     and supports nullable payment-intent paths in serialized payloads.
+    /// </summary>
+    [Fact]
+    public void MemberOrderActions_Should_Serialize_WithExpectedPropertyNames_AndNullability()
+    {
+        // Arrange
+        var dto = new MemberOrderActions
+        {
+            CanRetryPayment = false,
+            PaymentIntentPath = null,
+            ConfirmationPath = "/api/v1/public/checkout/orders/11111111-1111-1111-1111-111111111111/confirmation",
+            DocumentPath = "/api/v1/member/orders/11111111-1111-1111-1111-111111111111/document"
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<MemberOrderActions>(json, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"canRetryPayment\"");
+        json.Should().Contain("\"paymentIntentPath\":null");
+        json.Should().Contain("\"confirmationPath\"");
+        json.Should().Contain("\"documentPath\"");
+
+        roundTrip.Should().NotBeNull();
+        roundTrip!.CanRetryPayment.Should().BeFalse();
+        roundTrip.PaymentIntentPath.Should().BeNull();
+        roundTrip.ConfirmationPath.Should().Contain("/confirmation");
+    }
+
+    /// <summary>
+    ///     Verifies member invoice action metadata preserves optional paths and stable
+    ///     camelCase names across JSON round-trip serialization.
+    /// </summary>
+    [Fact]
+    public void MemberInvoiceActions_Should_Serialize_WithExpectedPropertyNames_AndNullability()
+    {
+        // Arrange
+        var dto = new MemberInvoiceActions
+        {
+            CanRetryPayment = true,
+            PaymentIntentPath = null,
+            OrderPath = null,
+            DocumentPath = "/api/v1/member/invoices/22222222-2222-2222-2222-222222222222/document"
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<MemberInvoiceActions>(json, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"canRetryPayment\"");
+        json.Should().Contain("\"paymentIntentPath\":null");
+        json.Should().Contain("\"orderPath\":null");
+        json.Should().Contain("\"documentPath\"");
+
+        roundTrip.Should().NotBeNull();
+        roundTrip!.CanRetryPayment.Should().BeTrue();
+        roundTrip.OrderPath.Should().BeNull();
+        roundTrip.DocumentPath.Should().Contain("/document");
+    }
+
+    /// <summary>
+    ///     Verifies member order action payloads stay backward-compatible when
+    ///     additional unknown fields are present in JSON responses.
+    /// </summary>
+    [Fact]
+    public void MemberOrderActions_Should_Deserialize_WhenUnknownFieldsExist()
+    {
+        // Arrange
+        const string json = """
+            {
+              "canRetryPayment": true,
+              "paymentIntentPath": "/api/v1/member/orders/1/payment-intent",
+              "confirmationPath": "/api/v1/public/checkout/orders/1/confirmation",
+              "documentPath": "/api/v1/member/orders/1/document",
+              "futureField": "ignore-me"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<MemberOrderActions>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.CanRetryPayment.Should().BeTrue();
+        dto.PaymentIntentPath.Should().Contain("/payment-intent");
+        dto.ConfirmationPath.Should().Contain("/confirmation");
+        dto.DocumentPath.Should().Contain("/document");
+    }
+
+    /// <summary>
+    ///     Verifies member invoice action payloads deserialize with safe defaults
+    ///     when optional fields are omitted by older clients or proxies.
+    /// </summary>
+    [Fact]
+    public void MemberInvoiceActions_Should_Deserialize_WhenOptionalFieldsAreMissing()
+    {
+        // Arrange
+        const string json = """
+            {
+              "canRetryPayment": false,
+              "documentPath": "/api/v1/member/invoices/1/document"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<MemberInvoiceActions>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.CanRetryPayment.Should().BeFalse();
+        dto.PaymentIntentPath.Should().BeNull();
+        dto.OrderPath.Should().BeNull();
+        dto.DocumentPath.Should().Contain("/document");
+    }
+
 }
