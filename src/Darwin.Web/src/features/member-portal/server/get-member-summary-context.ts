@@ -8,13 +8,12 @@ import {
   getCurrentMemberPreferences,
   getCurrentMemberProfile,
 } from "@/features/member-portal/api/member-portal";
-import { createCachedObservedLoader } from "@/lib/observed-loader";
+import { createSharedContextLoader } from "@/lib/shared-context-loader";
 import {
   normalizePagingArgs,
 } from "@/lib/route-context-normalization";
 import {
   buildMemberSummaryFootprint,
-  buildSharedContextBaseDiagnostics,
 } from "@/lib/shared-context-diagnostics";
 import {
   summarizeMemberCommerceSummaryHealth,
@@ -23,25 +22,22 @@ import {
 } from "@/lib/route-health";
 import { memberSummaryObservationContext } from "@/lib/route-observation-context";
 
-export const getMemberIdentityContext = createCachedObservedLoader({
+export const getMemberIdentityContext = createSharedContextLoader({
+  kind: "member-summary",
   area: "member-summary",
   operation: "load-identity-context",
-  thresholdMs: 250,
   getContext: () => memberSummaryObservationContext("identity"),
   getSuccessContext: (result) => {
     const summary = summarizeMemberIdentityHealth(result);
-
-    return buildSharedContextBaseDiagnostics("member-summary", {
-      extras: {
-        ...summary,
-        sharedContextFootprint: buildMemberSummaryFootprint({
-          scope: "identity",
-          primaryStatus: summary.profileStatus,
-          secondaryStatus: summary.preferencesStatus,
-          tertiaryStatus: summary.addressesStatus,
-        }),
-      },
-    });
+    return {
+      ...summary,
+      sharedContextFootprint: buildMemberSummaryFootprint({
+        scope: "identity",
+        primaryStatus: summary.profileStatus,
+        secondaryStatus: summary.preferencesStatus,
+        tertiaryStatus: summary.addressesStatus,
+      }),
+    };
   },
   load: () =>
     Promise.all([
@@ -64,25 +60,22 @@ export const getMemberIdentityContext = createCachedObservedLoader({
     ),
 });
 
-export const getMemberCommerceSummaryContext = createCachedObservedLoader({
+export const getMemberCommerceSummaryContext = createSharedContextLoader({
+  kind: "member-summary",
   area: "member-summary",
   operation: "load-commerce-summary",
-  thresholdMs: 250,
   getContext: () => memberSummaryObservationContext("commerce-summary"),
   getSuccessContext: (result) => {
     const summary = summarizeMemberCommerceSummaryHealth(result);
-
-    return buildSharedContextBaseDiagnostics("member-summary", {
-      extras: {
-        ...summary,
-        sharedContextFootprint: buildMemberSummaryFootprint({
-          scope: "commerce-summary",
-          primaryStatus: summary.ordersStatus,
-          secondaryStatus: summary.invoicesStatus,
-          tertiaryStatus: summary.loyaltyStatus,
-        }),
-      },
-    });
+    return {
+      ...summary,
+      sharedContextFootprint: buildMemberSummaryFootprint({
+        scope: "commerce-summary",
+        primaryStatus: summary.ordersStatus,
+        secondaryStatus: summary.invoicesStatus,
+        tertiaryStatus: summary.loyaltyStatus,
+      }),
+    };
   },
   load: () =>
     Promise.all([
@@ -102,10 +95,10 @@ export const getMemberCommerceSummaryContext = createCachedObservedLoader({
     })),
 });
 
-export const getMemberOrdersPageContext = createCachedObservedLoader({
+export const getMemberOrdersPageContext = createSharedContextLoader({
+  kind: "member-summary",
   area: "member-summary",
   operation: "load-orders-page",
-  thresholdMs: 250,
   normalizeArgs: normalizePagingArgs,
   getContext: (page: number, pageSize: number) =>
     memberSummaryObservationContext("commerce-summary", {
@@ -115,17 +108,13 @@ export const getMemberOrdersPageContext = createCachedObservedLoader({
     }),
   getSuccessContext: (result) => {
     const summary = summarizeMemberPagedCollectionHealth(result);
-
-    return buildSharedContextBaseDiagnostics("member-summary", {
-      hasCanonicalNormalization: true,
-      extras: {
-        ...summary,
-        sharedContextFootprint: buildMemberSummaryFootprint({
-          scope: "orders-page",
-          primaryStatus: summary.status,
-        }),
-      },
-    });
+    return {
+      ...summary,
+      sharedContextFootprint: buildMemberSummaryFootprint({
+        scope: "orders-page",
+        primaryStatus: summary.status,
+      }),
+    };
   },
   load: (page: number, pageSize: number) =>
     getCurrentMemberOrders({
@@ -134,10 +123,10 @@ export const getMemberOrdersPageContext = createCachedObservedLoader({
     }),
 });
 
-export const getMemberInvoicesPageContext = createCachedObservedLoader({
+export const getMemberInvoicesPageContext = createSharedContextLoader({
+  kind: "member-summary",
   area: "member-summary",
   operation: "load-invoices-page",
-  thresholdMs: 250,
   normalizeArgs: normalizePagingArgs,
   getContext: (page: number, pageSize: number) =>
     memberSummaryObservationContext("commerce-summary", {
@@ -147,17 +136,13 @@ export const getMemberInvoicesPageContext = createCachedObservedLoader({
     }),
   getSuccessContext: (result) => {
     const summary = summarizeMemberPagedCollectionHealth(result);
-
-    return buildSharedContextBaseDiagnostics("member-summary", {
-      hasCanonicalNormalization: true,
-      extras: {
-        ...summary,
-        sharedContextFootprint: buildMemberSummaryFootprint({
-          scope: "invoices-page",
-          primaryStatus: summary.status,
-        }),
-      },
-    });
+    return {
+      ...summary,
+      sharedContextFootprint: buildMemberSummaryFootprint({
+        scope: "invoices-page",
+        primaryStatus: summary.status,
+      }),
+    };
   },
   load: (page: number, pageSize: number) =>
     getCurrentMemberInvoices({

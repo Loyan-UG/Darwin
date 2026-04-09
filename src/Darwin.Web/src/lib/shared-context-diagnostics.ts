@@ -1,4 +1,4 @@
-type SharedContextKind =
+export type SharedContextKind =
   | "member-summary"
   | "storefront-continuation"
   | "public-storefront"

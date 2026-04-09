@@ -2,6 +2,7 @@ import "server-only";
 import { getCatalogDetailRouteContext } from "@/features/catalog/server/get-catalog-route-context";
 import { getProductLanguageAlternatesMap } from "@/features/catalog/server/get-product-language-alternates-map";
 import { productDetailRouteObservationContext } from "@/lib/route-observation-context";
+import { normalizeEntityRouteArgs } from "@/lib/route-context-normalization";
 import { buildSeoMetadata, deriveSeoDescription } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { getCatalogResource } from "@/localization";
@@ -10,6 +11,7 @@ export const getProductSeoMetadata = createCachedObservedSeoMetadataLoader({
   area: "catalog-seo",
   operation: "load-product-seo-metadata",
   thresholdMs: 200,
+  normalizeArgs: normalizeEntityRouteArgs,
   getContext: (culture: string, slug: string) =>
     productDetailRouteObservationContext(culture, slug),
   load: async (culture: string, slug: string) => {

@@ -23,6 +23,30 @@ type CatalogIndexSeoArgs = [
   savingsBand?: string,
 ];
 
+function normalizeCatalogIndexSeoArgs(
+  culture: string,
+  page = 1,
+  category?: string,
+  search?: string,
+  visibleQuery?: string,
+  visibleState?: string,
+  visibleSort?: string,
+  mediaState?: string,
+  savingsBand?: string,
+): CatalogIndexSeoArgs {
+  return [
+    culture.trim(),
+    Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
+    category?.trim() || undefined,
+    search?.trim() || undefined,
+    visibleQuery?.trim() || undefined,
+    readCatalogVisibleState(visibleState),
+    readCatalogVisibleSort(visibleSort),
+    readCatalogMediaState(mediaState),
+    readCatalogSavingsBand(savingsBand),
+  ];
+}
+
 function buildCatalogPath(
   category?: string,
   page?: number,
@@ -50,6 +74,7 @@ export const getCatalogIndexSeoMetadata =
   area: "catalog-seo",
   operation: "load-index-seo-metadata",
   thresholdMs: 175,
+  normalizeArgs: normalizeCatalogIndexSeoArgs,
   getContext: (
     culture: string,
     page = 1,
@@ -81,10 +106,10 @@ export const getCatalogIndexSeoMetadata =
     savingsBand?: string,
   ) => {
     const copy = getCatalogResource(culture);
-    const normalizedVisibleState = readCatalogVisibleState(visibleState);
-    const normalizedVisibleSort = readCatalogVisibleSort(visibleSort);
-    const normalizedMediaState = readCatalogMediaState(mediaState);
-    const normalizedSavingsBand = readCatalogSavingsBand(savingsBand);
+    const normalizedVisibleState = visibleState ?? "all";
+    const normalizedVisibleSort = visibleSort ?? "featured";
+    const normalizedMediaState = mediaState ?? "all";
+    const normalizedSavingsBand = savingsBand ?? "all";
     const canonicalPath = buildCatalogPath(
       category,
       page,

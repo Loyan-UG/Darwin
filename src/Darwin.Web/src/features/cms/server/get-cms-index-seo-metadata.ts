@@ -20,11 +20,32 @@ type CmsIndexSeoArgs = [
   metadataFocus?: string,
 ];
 
+function normalizeCmsIndexSeoArgs(
+  culture: string,
+  page = 1,
+  search?: string,
+  visibleQuery?: string,
+  visibleState?: string,
+  visibleSort?: string,
+  metadataFocus?: string,
+): CmsIndexSeoArgs {
+  return [
+    culture.trim(),
+    Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
+    search?.trim() || undefined,
+    visibleQuery?.trim() || undefined,
+    readCmsVisibleState(visibleState),
+    readCmsVisibleSort(visibleSort),
+    readCmsMetadataFocus(metadataFocus),
+  ];
+}
+
 export const getCmsIndexSeoMetadata =
   createCachedObservedSeoMetadataLoader<CmsIndexSeoArgs>({
   area: "cms-seo",
   operation: "load-index-seo-metadata",
   thresholdMs: 175,
+  normalizeArgs: normalizeCmsIndexSeoArgs,
   getContext: (
     culture: string,
     page = 1,
@@ -51,9 +72,9 @@ export const getCmsIndexSeoMetadata =
     metadataFocus?: string,
   ) => {
     const shared = getSharedResource(culture);
-    const normalizedVisibleState = readCmsVisibleState(visibleState);
-    const normalizedVisibleSort = readCmsVisibleSort(visibleSort);
-    const normalizedMetadataFocus = readCmsMetadataFocus(metadataFocus);
+    const normalizedVisibleState = visibleState ?? "all";
+    const normalizedVisibleSort = visibleSort ?? "featured";
+    const normalizedMetadataFocus = metadataFocus ?? "all";
     const canonicalPath = buildAppQueryPath("/cms", {
       page: page > 1 ? page : undefined,
       search,

@@ -2,6 +2,7 @@ import "server-only";
 import { getCmsDetailRouteContext } from "@/features/cms/server/get-cms-route-context";
 import { getCmsLanguageAlternatesMap } from "@/features/cms/server/get-cms-language-alternates-map";
 import { cmsDetailRouteObservationContext } from "@/lib/route-observation-context";
+import { normalizeEntityRouteArgs } from "@/lib/route-context-normalization";
 import { buildSeoMetadata, deriveSeoDescription } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { getSharedResource } from "@/localization";
@@ -10,6 +11,7 @@ export const getCmsSeoMetadata = createCachedObservedSeoMetadataLoader({
   area: "cms-seo",
   operation: "load-page-seo-metadata",
   thresholdMs: 200,
+  normalizeArgs: normalizeEntityRouteArgs,
   getContext: (culture: string, slug: string) =>
     cmsDetailRouteObservationContext(culture, slug),
   load: async (culture: string, slug: string) => {

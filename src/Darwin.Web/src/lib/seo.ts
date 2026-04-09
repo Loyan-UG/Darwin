@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getSharedResource } from "@/localization";
+import { canonicalizeLanguageAlternates } from "@/lib/localized-alternates";
 import { buildLocalizedPath, isPublicLocalizedPath } from "@/lib/locale-routing";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { toWebApiUrl } from "@/lib/webapi-url";
@@ -56,7 +57,7 @@ export function buildSeoMetadata({
     : normalizedPath;
   const resolvedImageUrl = imageUrl ? toWebApiUrl(imageUrl) : undefined;
   const normalizedExplicitAlternates = languageAlternates
-    ? {
+    ? canonicalizeLanguageAlternates({
         ...languageAlternates,
         ...(languageAlternates["x-default"]
           ? {}
@@ -65,12 +66,12 @@ export function buildSeoMetadata({
                 languageAlternates[runtimeConfig.defaultCulture] ??
                 localizedCanonicalPath,
             }),
-      }
+      })
     : undefined;
   const derivedLanguageAlternates =
     normalizedExplicitAlternates ??
     (allowLanguageAlternates && isPublicLocalizedPath(normalizedPath)
-      ? {
+      ? canonicalizeLanguageAlternates({
           "x-default": buildLocalizedPath(
             normalizedPath,
             runtimeConfig.defaultCulture,
@@ -81,7 +82,7 @@ export function buildSeoMetadata({
               buildLocalizedPath(normalizedPath, supportedCulture),
             ]),
           ),
-        }
+        })
       : undefined);
 
   return {

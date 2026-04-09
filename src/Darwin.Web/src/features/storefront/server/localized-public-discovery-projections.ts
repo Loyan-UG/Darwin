@@ -1,4 +1,5 @@
 import { buildLocalizedPath } from "@/lib/locale-routing";
+import { canonicalizeLanguageAlternates } from "@/lib/localized-alternates";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import {
   groupLocalizedDetailAlternates,
@@ -68,21 +69,42 @@ function toSitemapEntry(
   path: string,
   languageAlternates?: Record<string, string>,
 ) {
+  const normalizedAlternates =
+    canonicalizeLanguageAlternates(languageAlternates);
+
   return {
     url: toAbsoluteUrl(path),
-    ...(languageAlternates
+    ...(normalizedAlternates
       ? {
           alternates: {
             languages: Object.fromEntries(
-              Object.entries(languageAlternates).map(([culture, alternatePath]) => [
-                culture,
-                toAbsoluteUrl(alternatePath),
-              ]),
+              Object.entries(normalizedAlternates).map(
+                ([culture, alternatePath]) => [
+                  culture,
+                  toAbsoluteUrl(alternatePath),
+                ],
+              ),
             ),
           },
         }
       : {}),
   };
+}
+
+function canonicalizeSupportedCultures(supportedCultures: string[]) {
+  const runtimeConfig = getSiteRuntimeConfig();
+  const allowedCultures = new Set(runtimeConfig.supportedCultures);
+  const normalizedCultures = Array.from(
+    new Set(
+      supportedCultures
+        .map((culture) => culture.trim())
+        .filter((culture) => culture.length > 0 && allowedCultures.has(culture)),
+    ),
+  );
+
+  return runtimeConfig.supportedCultures.filter((culture) =>
+    normalizedCultures.includes(culture),
+  );
 }
 
 export function buildPublicSitemapEntries(input: {
@@ -96,8 +118,9 @@ export function buildPublicSitemapEntries(input: {
     languageAlternates: Record<string, string>;
   }>;
 }) {
+  const supportedCultures = canonicalizeSupportedCultures(input.supportedCultures);
   const indexLevelLocalizedPaths = ["/", "/catalog", "/cms"].flatMap((path) =>
-    input.supportedCultures.map((culture) => buildLocalizedPath(path, culture)),
+    supportedCultures.map((culture) => buildLocalizedPath(path, culture)),
   );
   const staticEntries = Array.from(new Set(indexLevelLocalizedPaths)).map((path) =>
     toSitemapEntry(path),

@@ -1,4 +1,5 @@
 import { buildLocalizedPath } from "@/lib/locale-routing";
+import { canonicalizeLanguageAlternates } from "@/lib/localized-alternates";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
 type LocalizedDetailItem = {
@@ -62,7 +63,10 @@ export function mapLocalizedDetailAlternatesById<
         toPath(item.slug),
         localizedSet.culture,
       );
-      alternatesById.set(item.id, alternates);
+      alternatesById.set(
+        item.id,
+        canonicalizeLanguageAlternates(alternates) ?? {},
+      );
     }
   }
 

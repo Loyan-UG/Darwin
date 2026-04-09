@@ -1,13 +1,14 @@
 import "server-only";
 import { getPublicProductSet } from "@/features/catalog/api/public-catalog";
 import { getPublishedPageSet } from "@/features/cms/api/public-cms";
-import { createCachedObservedLoader } from "@/lib/observed-loader";
+import { createLocalizedDiscoveryLoader } from "@/lib/localized-discovery-loader";
 import { summarizeLocalizedDiscoveryInventoryHealth } from "@/lib/route-health";
 import { localizedDiscoveryInventoryObservationContext } from "@/lib/route-observation-context";
 import { getSupportedCultures } from "@/lib/request-culture";
 import { projectLocalizedPublicDiscoveryInventory } from "@/features/storefront/server/localized-public-discovery-projections";
 
-export const getLocalizedPublicDiscoveryInventory = createCachedObservedLoader({
+export const getLocalizedPublicDiscoveryInventory = createLocalizedDiscoveryLoader({
+  kind: "inventory",
   area: "public-discovery",
   operation: "load-localized-discovery-inventory",
   thresholdMs: 325,

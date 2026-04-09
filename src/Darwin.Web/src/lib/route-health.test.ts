@@ -19,6 +19,7 @@ import {
   summarizeHomeCategorySpotlightsHealth,
   summarizeLocalizedAlternatesMapHealth,
   summarizeLocalizedDiscoveryInventoryHealth,
+  summarizeLocalizedInventoryHealth,
   summarizeMemberCommerceSummaryHealth,
   summarizeMemberCollectionHealth,
   summarizeMemberDashboardHealth,
@@ -595,6 +596,22 @@ test("member and home health helpers summarize route readiness for diagnostics",
 
 test("localized discovery health helpers summarize alternates and sitemap inventory", () => {
   assert.deepEqual(
+    summarizeLocalizedInventoryHealth([
+      { culture: "de-DE", items: [1, 2] },
+      { culture: "en-US", items: [] },
+    ]),
+    {
+      localizedDiscoveryState: "present",
+      localizedCultureCount: 2,
+      localizedItemCount: 2,
+      emptyCultureCount: 1,
+      localizedDiscoveryDetailFootprint: "cultures:2|items:2|empty:1",
+      localizedInventoryFootprint: "cultures:2|items:2|empty:1",
+      localizedInventorySummaryFootprint: "cultures:2|items:2|empty:1",
+    },
+  );
+
+  assert.deepEqual(
     summarizeLocalizedAlternatesMapHealth(
       new Map([
         ["cms-1", { "de-DE": "/cms/eins", "en-US": "/en-US/cms/one" }],
@@ -602,9 +619,13 @@ test("localized discovery health helpers summarize alternates and sitemap invent
       ]),
     ),
     {
+      localizedDiscoveryState: "present",
       itemCount: 2,
       alternateCount: 3,
       multiCultureItemCount: 1,
+      localizedDiscoveryDetailFootprint: "items:2|alternates:3|multi:1",
+      alternateMapFootprint: "items:2|alternates:3|multi:1",
+      alternateMapSummaryFootprint: "items:2|alternates:3|multi:1",
     },
   );
 
@@ -616,10 +637,14 @@ test("localized discovery health helpers summarize alternates and sitemap invent
       productEntryCount: 1,
     }),
     {
+      localizedDiscoveryState: "present",
       totalEntryCount: 5,
       staticEntryCount: 3,
       cmsEntryCount: 1,
       productEntryCount: 1,
+      localizedDiscoveryDetailFootprint: "static:3|cms:1|products:1",
+      sitemapCompositionFootprint: "static:3|cms:1|products:1",
+      sitemapSummaryFootprint: "total:5|static:3|cms:1|products:1",
     },
   );
 
@@ -635,11 +660,16 @@ test("localized discovery health helpers summarize alternates and sitemap invent
       ],
     }),
     {
+      localizedDiscoveryState: "present",
       localizedCultureCount: 2,
       localizedPageCount: 2,
       localizedProductCount: 4,
       emptyPageCultureCount: 1,
       emptyProductCultureCount: 0,
+      localizedDiscoveryDetailFootprint: "pages-empty:1|products-empty:0",
+      localizedDiscoveryFootprint: "pages-empty:1|products-empty:0",
+      localizedDiscoverySummaryFootprint:
+        "cultures:2|pages:2|products:4|pages-empty:1|products-empty:0",
     },
   );
 
@@ -648,14 +678,105 @@ test("localized discovery health helpers summarize alternates and sitemap invent
       canonicalPath: "/catalog/prod-1",
       noIndex: false,
       languageAlternates: {
-        "de-DE": "/catalog/prod-1",
         "en-US": "/en-US/catalog/prod-1",
+        "x-default": "/catalog/prod-1",
+        "de-DE": "/catalog/prod-1",
       },
     }),
     {
       canonicalPath: "/catalog/prod-1",
       noIndex: false,
-      languageAlternateCount: 2,
+      seoIndexability: "indexable",
+      seoMetadataState: "localized",
+      seoVisibilityFootprint: "indexable|localized",
+      languageAlternateState: "present",
+      languageAlternateCount: 3,
+      languageAlternateFootprint: "x-default|de-DE|en-US",
+      seoAlternateDetailFootprint: "x-default|de-DE|en-US",
+      seoAlternateSummaryFootprint: "alternates:3[x-default|de-DE|en-US]",
+      seoSummaryFootprint: "indexable|alternates:3[x-default|de-DE|en-US]",
+      seoTargetFootprint: "indexable|/catalog/prod-1",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeSeoMetadataHealth({
+      canonicalPath: "/account/sign-in",
+      noIndex: true,
+    }),
+    {
+      canonicalPath: "/account/sign-in",
+      noIndex: true,
+      seoIndexability: "noindex",
+      seoMetadataState: "private",
+      seoVisibilityFootprint: "noindex|private",
+      languageAlternateState: "missing",
+      languageAlternateCount: 0,
+      languageAlternateFootprint: "none",
+      seoAlternateDetailFootprint: "none",
+      seoAlternateSummaryFootprint: "alternates:none",
+      seoSummaryFootprint: "noindex|alternates:0[none]",
+      seoTargetFootprint: "noindex|/account/sign-in",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeSeoMetadataHealth({
+      canonicalPath: "/catalog",
+      noIndex: false,
+    }),
+    {
+      canonicalPath: "/catalog",
+      noIndex: false,
+      seoIndexability: "indexable",
+      seoMetadataState: "single-locale",
+      seoVisibilityFootprint: "indexable|single-locale",
+      languageAlternateState: "missing",
+      languageAlternateCount: 0,
+      languageAlternateFootprint: "none",
+      seoAlternateDetailFootprint: "none",
+      seoAlternateSummaryFootprint: "alternates:none",
+      seoSummaryFootprint: "indexable|alternates:0[none]",
+      seoTargetFootprint: "indexable|/catalog",
+    },
+  );
+
+  assert.deepEqual(summarizeLocalizedInventoryHealth([]), {
+    localizedDiscoveryState: "empty",
+    localizedCultureCount: 0,
+    localizedItemCount: 0,
+    emptyCultureCount: 0,
+    localizedDiscoveryDetailFootprint: "cultures:0|items:0|empty:0",
+    localizedInventoryFootprint: "cultures:0|items:0|empty:0",
+    localizedInventorySummaryFootprint: "cultures:0|items:0|empty:0",
+  });
+
+  assert.deepEqual(summarizeLocalizedAlternatesMapHealth(new Map()), {
+    localizedDiscoveryState: "empty",
+    itemCount: 0,
+    alternateCount: 0,
+    multiCultureItemCount: 0,
+    localizedDiscoveryDetailFootprint: "items:0|alternates:0|multi:0",
+    alternateMapFootprint: "items:0|alternates:0|multi:0",
+    alternateMapSummaryFootprint: "items:0|alternates:0|multi:0",
+  });
+
+  assert.deepEqual(
+    summarizePublicSitemapHealth({
+      entries: [],
+      staticEntryCount: 0,
+      cmsEntryCount: 0,
+      productEntryCount: 0,
+    }),
+    {
+      localizedDiscoveryState: "empty",
+      totalEntryCount: 0,
+      staticEntryCount: 0,
+      cmsEntryCount: 0,
+      productEntryCount: 0,
+      localizedDiscoveryDetailFootprint: "static:0|cms:0|products:0",
+      sitemapCompositionFootprint: "static:0|cms:0|products:0",
+      sitemapSummaryFootprint: "total:0|static:0|cms:0|products:0",
     },
   );
 });

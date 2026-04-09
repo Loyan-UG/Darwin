@@ -2,12 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   catalogBrowseObservationContext,
+  catalogLocalizedInventoryObservationContext,
   catalogIndexRouteObservationContext,
   cmsDetailRouteObservationContext,
+  cmsLocalizedInventoryObservationContext,
   commerceRouteObservationContext,
   homeCategorySpotlightsObservationContext,
+  localizedDiscoveryInventoryObservationContext,
   memberRouteObservationContext,
   memberSummaryObservationContext,
+  publicSitemapObservationContext,
   productDetailRelatedObservationContext,
   shellObservationContext,
 } from "@/lib/route-observation-context";
@@ -95,4 +99,57 @@ test("home, shell, and product-related observation contexts stay serializable an
       categorySlug: "snacks",
     },
   );
+});
+
+test("localized discovery observation contexts canonicalize culture lists", () => {
+  assert.deepEqual(
+    localizedDiscoveryInventoryObservationContext([
+      " en-US ",
+      "de-DE",
+      "en-US",
+    ]),
+    {
+      cultures: "de-DE,en-US",
+      cultureCount: 2,
+      cultureFootprint: "de-DE|en-US",
+      scope: "localized-discovery-inventory",
+    },
+  );
+
+  assert.deepEqual(
+    publicSitemapObservationContext(["en-US", "de-DE", "de-DE"]),
+    {
+      cultures: "de-DE,en-US",
+      cultureCount: 2,
+      cultureFootprint: "de-DE|en-US",
+      scope: "public-sitemap",
+    },
+  );
+
+  assert.deepEqual(
+    cmsLocalizedInventoryObservationContext([" de-DE ", "", "en-US"]),
+    {
+      cultures: "de-DE,en-US",
+      cultureCount: 2,
+      cultureFootprint: "de-DE|en-US",
+      scope: "localized-page-inventory",
+    },
+  );
+
+  assert.deepEqual(
+    catalogLocalizedInventoryObservationContext(["en-US", "de-DE"]),
+    {
+      cultures: "de-DE,en-US",
+      cultureCount: 2,
+      cultureFootprint: "de-DE|en-US",
+      scope: "localized-product-inventory",
+    },
+  );
+
+  assert.deepEqual(publicSitemapObservationContext(["", "  "]), {
+    cultures: "",
+    cultureCount: 0,
+    cultureFootprint: "none",
+    scope: "public-sitemap",
+  });
 });

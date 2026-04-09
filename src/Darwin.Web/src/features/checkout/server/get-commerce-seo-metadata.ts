@@ -1,5 +1,6 @@
 import "server-only";
 import { commerceRouteObservationContext } from "@/lib/route-observation-context";
+import { normalizeEntityRouteArgs } from "@/lib/route-context-normalization";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { getCommerceResource } from "@/localization";
@@ -35,10 +36,24 @@ function getRouteDescription(culture: string, route: CommerceSeoRoute) {
   }
 }
 
+function normalizeCommerceSeoArgs(
+  culture: string,
+  route: CommerceSeoRoute,
+  canonicalPath: string,
+): [string, CommerceSeoRoute, string] {
+  const [normalizedCulture, normalizedCanonicalPath] = normalizeEntityRouteArgs(
+    culture,
+    canonicalPath,
+  );
+
+  return [normalizedCulture, route.trim() as CommerceSeoRoute, normalizedCanonicalPath];
+}
+
 const getCachedCommerceSeoMetadata = createCachedObservedSeoMetadataLoader({
   area: "commerce-seo",
   operation: "load-route-seo-metadata",
   thresholdMs: 150,
+  normalizeArgs: normalizeCommerceSeoArgs,
   getContext: (
     culture: string,
     route: CommerceSeoRoute,

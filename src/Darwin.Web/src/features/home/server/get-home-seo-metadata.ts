@@ -1,4 +1,5 @@
 import "server-only";
+import { normalizeCultureArg } from "@/lib/route-context-normalization";
 import { buildSeoMetadata } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { homeSeoObservationContext } from "@/lib/route-observation-context";
@@ -8,6 +9,7 @@ export const getHomeSeoMetadata = createCachedObservedSeoMetadataLoader({
   area: "home-seo",
   operation: "load-home-seo-metadata",
   thresholdMs: 150,
+  normalizeArgs: normalizeCultureArg,
   getContext: homeSeoObservationContext,
   load: async (culture: string) => {
     const shared = getSharedResource(culture);

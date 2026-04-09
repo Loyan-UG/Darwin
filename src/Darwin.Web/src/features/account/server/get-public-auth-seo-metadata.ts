@@ -27,10 +27,18 @@ function getRouteTitle(culture: string, route: PublicAuthRoute) {
   }
 }
 
+function normalizePublicAuthSeoArgs(
+  culture: string,
+  route: PublicAuthRoute,
+): [string, PublicAuthRoute] {
+  return [culture.trim(), route.trim() as PublicAuthRoute];
+}
+
 const getCachedPublicAuthSeoMetadata = createCachedObservedSeoMetadataLoader({
   area: "public-auth-seo",
   operation: "load-route-seo-metadata",
   thresholdMs: 150,
+  normalizeArgs: normalizePublicAuthSeoArgs,
   getContext: (culture: string, route: PublicAuthRoute) => ({
     culture,
     route,

@@ -1,13 +1,14 @@
 import "server-only";
 import { getLocalizedPublicDiscoveryInventory } from "@/features/storefront/server/get-localized-public-discovery-inventory";
 import { buildPublicSitemapEntries } from "@/features/storefront/server/localized-public-discovery-projections";
-import { createCachedObservedLoader } from "@/lib/observed-loader";
+import { createLocalizedDiscoveryLoader } from "@/lib/localized-discovery-loader";
 import { summarizePublicSitemapHealth } from "@/lib/route-health";
 import { publicSitemapObservationContext } from "@/lib/route-observation-context";
 import { getSupportedCultures } from "@/lib/request-culture";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
-export const getPublicSitemapContext = createCachedObservedLoader({
+export const getPublicSitemapContext = createLocalizedDiscoveryLoader({
+  kind: "sitemap",
   area: "public-sitemap",
   operation: "load-sitemap-context",
   thresholdMs: 350,

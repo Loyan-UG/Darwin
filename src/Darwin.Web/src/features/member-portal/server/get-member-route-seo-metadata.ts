@@ -1,4 +1,5 @@
 import "server-only";
+import { normalizeEntityRouteArgs } from "@/lib/route-context-normalization";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { getMemberResource } from "@/localization";
@@ -36,10 +37,24 @@ function getRouteTitle(culture: string, route: MemberSeoRoute) {
   }
 }
 
+function normalizeMemberSeoArgs(
+  culture: string,
+  route: MemberSeoRoute,
+  canonicalPath: string,
+): [string, MemberSeoRoute, string] {
+  const [normalizedCulture, normalizedCanonicalPath] = normalizeEntityRouteArgs(
+    culture,
+    canonicalPath,
+  );
+
+  return [normalizedCulture, route.trim() as MemberSeoRoute, normalizedCanonicalPath];
+}
+
 const getCachedMemberRouteSeoMetadata = createCachedObservedSeoMetadataLoader({
   area: "member-route-seo",
   operation: "load-route-seo-metadata",
   thresholdMs: 150,
+  normalizeArgs: normalizeMemberSeoArgs,
   getContext: (
     culture: string,
     route: MemberSeoRoute,

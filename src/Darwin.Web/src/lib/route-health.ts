@@ -1,4 +1,5 @@
 import type { PublicStorefrontContext } from "@/features/storefront/public-storefront-context";
+import { canonicalizeLanguageAlternates } from "@/lib/localized-alternates";
 
 type CatalogBrowseLike = {
   categoriesResult: { status: string; data?: { items?: unknown[] } | null };
@@ -100,6 +101,22 @@ type LocalizedInventoryLike = Array<{
 type ResultWithStorefront = {
   storefrontContext: PublicStorefrontContext;
 };
+
+function getSeoMetadataState(noIndex: boolean, alternateCount: number) {
+  return noIndex
+    ? "private"
+    : alternateCount > 0
+      ? "localized"
+      : "single-locale";
+}
+
+function getSeoIndexability(noIndex: boolean) {
+  return noIndex ? "noindex" : "indexable";
+}
+
+function getLanguageAlternateState(alternateCount: number) {
+  return alternateCount > 0 ? "present" : "missing";
+}
 
 function countItems(data?: { items?: unknown[] } | null) {
   return data?.items?.length ?? 0;
@@ -644,13 +661,21 @@ export function summarizeMemberCommerceSummaryHealth(
 export function summarizeLocalizedInventoryHealth(
   result: LocalizedInventoryLike,
 ) {
+  const emptyCultureCount = result.filter((entry) => entry.items.length === 0).length;
+  const localizedItemCount = result.reduce(
+    (total, entry) => total + entry.items.length,
+    0,
+  );
+
   return {
+    localizedDiscoveryState:
+      result.length > 0 || localizedItemCount > 0 ? "present" : "empty",
     localizedCultureCount: result.length,
-    localizedItemCount: result.reduce(
-      (total, entry) => total + entry.items.length,
-      0,
-    ),
-    emptyCultureCount: result.filter((entry) => entry.items.length === 0).length,
+    localizedItemCount,
+    emptyCultureCount,
+    localizedDiscoveryDetailFootprint: `cultures:${result.length}|items:${localizedItemCount}|empty:${emptyCultureCount}`,
+    localizedInventoryFootprint: `cultures:${result.length}|items:${localizedItemCount}|empty:${emptyCultureCount}`,
+    localizedInventorySummaryFootprint: `cultures:${result.length}|items:${localizedItemCount}|empty:${emptyCultureCount}`,
   };
 }
 
@@ -658,21 +683,37 @@ export function summarizeLocalizedDiscoveryInventoryHealth(result: {
   pages: LocalizedInventoryLike;
   products: LocalizedInventoryLike;
 }) {
+  const localizedCultureCount = Math.max(result.pages.length, result.products.length);
+  const localizedPageCount = result.pages.reduce(
+    (total, entry) => total + entry.items.length,
+    0,
+  );
+  const localizedProductCount = result.products.reduce(
+    (total, entry) => total + entry.items.length,
+    0,
+  );
+  const emptyPageCultureCount = result.pages.filter(
+    (entry) => entry.items.length === 0,
+  ).length;
+  const emptyProductCultureCount = result.products.filter(
+    (entry) => entry.items.length === 0,
+  ).length;
+
   return {
-    localizedCultureCount: Math.max(result.pages.length, result.products.length),
-    localizedPageCount: result.pages.reduce(
-      (total, entry) => total + entry.items.length,
-      0,
-    ),
-    localizedProductCount: result.products.reduce(
-      (total, entry) => total + entry.items.length,
-      0,
-    ),
-    emptyPageCultureCount: result.pages.filter((entry) => entry.items.length === 0)
-      .length,
-    emptyProductCultureCount: result.products.filter(
-      (entry) => entry.items.length === 0,
-    ).length,
+    localizedDiscoveryState:
+      localizedCultureCount > 0 ||
+      localizedPageCount > 0 ||
+      localizedProductCount > 0
+        ? "present"
+        : "empty",
+    localizedCultureCount,
+    localizedPageCount,
+    localizedProductCount,
+    emptyPageCultureCount,
+    emptyProductCultureCount,
+    localizedDiscoveryDetailFootprint: `pages-empty:${emptyPageCultureCount}|products-empty:${emptyProductCultureCount}`,
+    localizedDiscoveryFootprint: `pages-empty:${emptyPageCultureCount}|products-empty:${emptyProductCultureCount}`,
+    localizedDiscoverySummaryFootprint: `cultures:${localizedCultureCount}|pages:${localizedPageCount}|products:${localizedProductCount}|pages-empty:${emptyPageCultureCount}|products-empty:${emptyProductCultureCount}`,
   };
 }
 
@@ -680,16 +721,23 @@ export function summarizeLocalizedAlternatesMapHealth(
   result: Map<string, Record<string, string>>,
 ) {
   const alternates = Array.from(result.values());
+  const alternateCount = alternates.reduce(
+    (total, entry) => total + Object.keys(entry).length,
+    0,
+  );
+  const multiCultureItemCount = alternates.filter(
+    (entry) => Object.keys(entry).length > 1,
+  ).length;
 
   return {
+    localizedDiscoveryState:
+      result.size > 0 || alternateCount > 0 ? "present" : "empty",
     itemCount: result.size,
-    alternateCount: alternates.reduce(
-      (total, entry) => total + Object.keys(entry).length,
-      0,
-    ),
-    multiCultureItemCount: alternates.filter(
-      (entry) => Object.keys(entry).length > 1,
-    ).length,
+    alternateCount,
+    multiCultureItemCount,
+    localizedDiscoveryDetailFootprint: `items:${result.size}|alternates:${alternateCount}|multi:${multiCultureItemCount}`,
+    alternateMapFootprint: `items:${result.size}|alternates:${alternateCount}|multi:${multiCultureItemCount}`,
+    alternateMapSummaryFootprint: `items:${result.size}|alternates:${alternateCount}|multi:${multiCultureItemCount}`,
   };
 }
 
@@ -700,10 +748,14 @@ export function summarizePublicSitemapHealth(result: {
   productEntryCount: number;
 }) {
   return {
+    localizedDiscoveryState: result.entries.length > 0 ? "present" : "empty",
     totalEntryCount: result.entries.length,
     staticEntryCount: result.staticEntryCount,
     cmsEntryCount: result.cmsEntryCount,
     productEntryCount: result.productEntryCount,
+    localizedDiscoveryDetailFootprint: `static:${result.staticEntryCount}|cms:${result.cmsEntryCount}|products:${result.productEntryCount}`,
+    sitemapCompositionFootprint: `static:${result.staticEntryCount}|cms:${result.cmsEntryCount}|products:${result.productEntryCount}`,
+    sitemapSummaryFootprint: `total:${result.entries.length}|static:${result.staticEntryCount}|cms:${result.cmsEntryCount}|products:${result.productEntryCount}`,
   };
 }
 
@@ -712,9 +764,33 @@ export function summarizeSeoMetadataHealth(result: {
   noIndex: boolean;
   languageAlternates?: Record<string, string>;
 }) {
+  const normalizedAlternates = canonicalizeLanguageAlternates(
+    result.languageAlternates,
+  );
+  const alternateCultures = Object.keys(normalizedAlternates ?? {});
+  const seoIndexability = getSeoIndexability(result.noIndex);
+  const seoMetadataState = getSeoMetadataState(
+    result.noIndex,
+    alternateCultures.length,
+  );
+
   return {
     canonicalPath: result.canonicalPath,
     noIndex: result.noIndex,
-    languageAlternateCount: Object.keys(result.languageAlternates ?? {}).length,
+    seoIndexability,
+    seoMetadataState,
+    seoVisibilityFootprint: `${seoIndexability}|${seoMetadataState}`,
+    languageAlternateState: getLanguageAlternateState(alternateCultures.length),
+    languageAlternateCount: alternateCultures.length,
+    languageAlternateFootprint:
+      alternateCultures.length > 0 ? alternateCultures.join("|") : "none",
+    seoAlternateDetailFootprint:
+      alternateCultures.length > 0 ? alternateCultures.join("|") : "none",
+    seoAlternateSummaryFootprint:
+      alternateCultures.length > 0
+        ? `alternates:${alternateCultures.length}[${alternateCultures.join("|")}]`
+        : "alternates:none",
+    seoSummaryFootprint: `${seoIndexability}|alternates:${alternateCultures.length}[${alternateCultures.length > 0 ? alternateCultures.join("|") : "none"}]`,
+    seoTargetFootprint: `${seoIndexability}|${result.canonicalPath}`,
   };
 }

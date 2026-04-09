@@ -4,35 +4,30 @@ import {
   getPublicProducts,
 } from "@/features/catalog/api/public-catalog";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
-import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { normalizeCultureArg } from "@/lib/route-context-normalization";
 import {
-  buildSharedContextBaseDiagnostics,
   buildStorefrontContinuationFootprint,
 } from "@/lib/shared-context-diagnostics";
+import { createSharedContextLoader } from "@/lib/shared-context-loader";
 import { summarizeStorefrontContinuationHealth } from "@/lib/route-health";
 import { storefrontContinuationObservationContext } from "@/lib/route-observation-context";
 
-const getCachedStorefrontContinuationContext = createCachedObservedLoader({
+const getCachedStorefrontContinuationContext = createSharedContextLoader({
+  kind: "storefront-continuation",
   area: "storefront-continuation",
   operation: "load-context",
-  thresholdMs: 250,
   normalizeArgs: normalizeCultureArg,
   getContext: (culture: string) => storefrontContinuationObservationContext(culture),
   getSuccessContext: (result) => {
     const summary = summarizeStorefrontContinuationHealth(result);
-
-    return buildSharedContextBaseDiagnostics("storefront-continuation", {
-      hasCanonicalNormalization: true,
-      extras: {
-        ...summary,
-        sharedContextFootprint: buildStorefrontContinuationFootprint({
-          cmsStatus: summary.cmsStatus,
-          categoriesStatus: summary.categoriesStatus,
-          productsStatus: summary.productsStatus,
-        }),
-      },
-    });
+    return {
+      ...summary,
+      sharedContextFootprint: buildStorefrontContinuationFootprint({
+        cmsStatus: summary.cmsStatus,
+        categoriesStatus: summary.categoriesStatus,
+        productsStatus: summary.productsStatus,
+      }),
+    };
   },
   load: async (culture: string) => {
     const [cmsPagesResult, categoriesResult, productsResult] = await Promise.all([

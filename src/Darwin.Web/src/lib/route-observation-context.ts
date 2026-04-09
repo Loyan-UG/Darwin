@@ -1,3 +1,26 @@
+function buildCultureListObservationContext(
+  cultures: string[],
+  scope: string,
+) {
+  const normalizedCultures = Array.from(
+    new Set(
+      cultures
+        .map((culture) => culture.trim())
+        .filter((culture) => culture.length > 0),
+    ),
+  ).sort();
+
+  return {
+    cultures: normalizedCultures.join(","),
+    cultureCount: normalizedCultures.length,
+    cultureFootprint:
+      normalizedCultures.length > 0
+        ? normalizedCultures.join("|")
+        : "none",
+    scope,
+  };
+}
+
 export function publicStorefrontObservationContext(culture: string) {
   return { culture };
 }
@@ -37,10 +60,7 @@ export function cmsBrowseObservationContext(
 }
 
 export function cmsLocalizedInventoryObservationContext(cultures: string[]) {
-  return {
-    cultures: cultures.join(","),
-    scope: "localized-page-inventory",
-  };
+  return buildCultureListObservationContext(cultures, "localized-page-inventory");
 }
 
 export function cmsIndexRouteObservationContext(
@@ -76,26 +96,23 @@ export function catalogBrowseObservationContext(
 export function catalogLocalizedInventoryObservationContext(
   cultures: string[],
 ) {
-  return {
-    cultures: cultures.join(","),
-    scope: "localized-product-inventory",
-  };
+  return buildCultureListObservationContext(
+    cultures,
+    "localized-product-inventory",
+  );
 }
 
 export function publicSitemapObservationContext(cultures: string[]) {
-  return {
-    cultures: cultures.join(","),
-    scope: "public-sitemap",
-  };
+  return buildCultureListObservationContext(cultures, "public-sitemap");
 }
 
 export function localizedDiscoveryInventoryObservationContext(
   cultures: string[],
 ) {
-  return {
-    cultures: cultures.join(","),
-    scope: "localized-discovery-inventory",
-  };
+  return buildCultureListObservationContext(
+    cultures,
+    "localized-discovery-inventory",
+  );
 }
 
 export function catalogIndexRouteObservationContext(

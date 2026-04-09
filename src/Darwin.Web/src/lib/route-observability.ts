@@ -44,7 +44,7 @@ function getDegradedSurfaceFootprint(degradedStatuses: Array<[string, unknown]>)
     .join("|");
 }
 
-function getDurationBand(durationMs: number, thresholdMs: number) {
+export function getDurationBand(durationMs: number, thresholdMs: number) {
   if (durationMs < thresholdMs) {
     return "within-threshold";
   }
@@ -56,7 +56,7 @@ function getDurationBand(durationMs: number, thresholdMs: number) {
   return "slow";
 }
 
-function getAttentionLevel(input: {
+export function getAttentionLevel(input: {
   durationBand: string;
   degradedStatusCount?: number;
   failed?: boolean;
@@ -82,7 +82,7 @@ function getAttentionLevel(input: {
   return "low";
 }
 
-function getSignalKind(input: {
+export function getSignalKind(input: {
   degradedStatusCount?: number;
   failed?: boolean;
   isSlow?: boolean;
@@ -106,7 +106,7 @@ function getSignalKind(input: {
   return "normal";
 }
 
-function getSuggestedAction(input: {
+export function getSuggestedAction(input: {
   degradedStatusCount?: number;
   failed?: boolean;
   isSlow?: boolean;

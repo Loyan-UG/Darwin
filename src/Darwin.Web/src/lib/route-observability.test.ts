@@ -1,6 +1,52 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { observeAsyncOperation } from "@/lib/route-observability";
+import {
+  getAttentionLevel,
+  getDurationBand,
+  getSignalKind,
+  getSuggestedAction,
+  observeAsyncOperation,
+} from "@/lib/route-observability";
+
+test("route observability helpers classify duration, signal, attention, and suggested action directly", () => {
+  assert.equal(getDurationBand(10, 50), "within-threshold");
+  assert.equal(getDurationBand(60, 50), "slow");
+  assert.equal(getDurationBand(180, 50), "very-slow");
+
+  assert.equal(getSignalKind({}), "normal");
+  assert.equal(getSignalKind({ isSlow: true }), "performance");
+  assert.equal(getSignalKind({ degradedStatusCount: 1 }), "health");
+  assert.equal(
+    getSignalKind({ degradedStatusCount: 2, isSlow: true }),
+    "performance-and-health",
+  );
+  assert.equal(getSignalKind({ failed: true }), "failure");
+
+  assert.equal(getAttentionLevel({ durationBand: "within-threshold" }), "low");
+  assert.equal(getAttentionLevel({ durationBand: "slow" }), "medium");
+  assert.equal(
+    getAttentionLevel({ durationBand: "within-threshold", degradedStatusCount: 1 }),
+    "medium",
+  );
+  assert.equal(getAttentionLevel({ durationBand: "very-slow" }), "high");
+  assert.equal(
+    getAttentionLevel({ durationBand: "within-threshold", degradedStatusCount: 2 }),
+    "high",
+  );
+  assert.equal(getAttentionLevel({ durationBand: "slow", failed: true }), "high");
+
+  assert.equal(getSuggestedAction({}), "none");
+  assert.equal(getSuggestedAction({ isSlow: true }), "inspect-slow-path");
+  assert.equal(
+    getSuggestedAction({ degradedStatusCount: 1 }),
+    "inspect-degraded-dependencies",
+  );
+  assert.equal(
+    getSuggestedAction({ degradedStatusCount: 2, isSlow: true }),
+    "inspect-slow-and-degraded-dependencies",
+  );
+  assert.equal(getSuggestedAction({ failed: true }), "inspect-failure-cause");
+});
 
 test("observeAsyncOperation reports slow operations above the threshold", async () => {
   const warnings: Array<Record<string, unknown>> = [];

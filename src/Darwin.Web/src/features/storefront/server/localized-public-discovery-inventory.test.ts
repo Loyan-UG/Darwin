@@ -63,3 +63,60 @@ test("projectLocalizedPublicDiscoveryInventory precomputes alternates and sitema
     },
   ]);
 });
+
+test("projectLocalizedPublicDiscoveryInventory skips invalid items and keeps localized alternates canonical", () => {
+  const inventory = projectLocalizedPublicDiscoveryInventory([
+    {
+      culture: "en-US",
+      pages: [
+        { id: "page-1", slug: "imprint" },
+        { id: "", slug: "ignored-empty-id" },
+        { id: "page-missing-slug", slug: "" },
+      ],
+      products: [
+        { id: "product-1", slug: "coffee" },
+        { id: "product-missing-slug", slug: "" },
+      ],
+    },
+    {
+      culture: "de-DE",
+      pages: [{ id: "page-1", slug: "impressum" }],
+      products: [
+        { id: "product-1", slug: "kaffee" },
+        { id: "", slug: "ignored-empty-id" },
+      ],
+    },
+  ]);
+
+  assert.deepEqual(inventory.pageAlternatesById.get("page-1"), {
+    "de-DE": "/cms/impressum",
+    "en-US": "/en-US/cms/imprint",
+  });
+  assert.equal(inventory.pageAlternatesById.has("page-missing-slug"), false);
+  assert.deepEqual(inventory.productAlternatesById.get("product-1"), {
+    "de-DE": "/catalog/kaffee",
+    "en-US": "/en-US/catalog/coffee",
+  });
+  assert.equal(
+    inventory.productAlternatesById.has("product-missing-slug"),
+    false,
+  );
+  assert.deepEqual(inventory.cmsSitemapEntries, [
+    {
+      path: "/cms/impressum",
+      languageAlternates: {
+        "de-DE": "/cms/impressum",
+        "en-US": "/en-US/cms/imprint",
+      },
+    },
+  ]);
+  assert.deepEqual(inventory.productSitemapEntries, [
+    {
+      path: "/catalog/kaffee",
+      languageAlternates: {
+        "de-DE": "/catalog/kaffee",
+        "en-US": "/en-US/catalog/coffee",
+      },
+    },
+  ]);
+});
