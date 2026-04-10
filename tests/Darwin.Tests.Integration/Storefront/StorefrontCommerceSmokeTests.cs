@@ -1,3 +1,4 @@
+using Darwin.Contracts.Cms;
 using System.Net;
 using System.Net.Http.Json;
 using Darwin.Contracts.Cart;
@@ -51,6 +52,39 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
         products.Should().NotBeNull();
         products!.Total.Should().BeGreaterThanOrEqualTo(20);
         products.Items.Should().Contain(item => !string.IsNullOrWhiteSpace(item.Slug));
+    }
+    /// <summary>
+    ///     Verifies that the seeded public menus expose the main storefront and legal
+    ///     routes needed to exercise the full web shell during local development.
+    /// </summary>
+    [Fact]
+    public async Task SeededStorefrontMenus_Should_ExposePrimaryAndFooterNavigationBaseline()
+    {
+        using var client = CreateHttpsClient();
+
+        var mainNavigation = await client.GetFromJsonAsync<PublicMenu>(
+            "/api/v1/public/cms/menus/main-navigation?culture=de-DE",
+            TestContext.Current.CancellationToken);
+        var footerNavigation = await client.GetFromJsonAsync<PublicMenu>(
+            "/api/v1/public/cms/menus/Footer?culture=de-DE",
+            TestContext.Current.CancellationToken);
+
+        mainNavigation.Should().NotBeNull();
+        mainNavigation!.Items.Should().Contain(item => item.Url == "/");
+        mainNavigation.Items.Should().Contain(item => item.Url == "/catalog");
+        mainNavigation.Items.Should().Contain(item => item.Url == "/cms");
+        mainNavigation.Items.Should().Contain(item => item.Url == "/account");
+        mainNavigation.Items.Should().Contain(item => item.Url == "/cart");
+        mainNavigation.Items.Should().Contain(item => item.Url == "/checkout");
+        mainNavigation.Items.Should().Contain(item => item.Url == "/orders");
+        mainNavigation.Items.Should().Contain(item => item.Url == "/invoices");
+
+        footerNavigation.Should().NotBeNull();
+        footerNavigation!.Items.Should().Contain(item => item.Url == "/cms/impressum");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/cms/datenschutz");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/cms/agb");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/cms/widerruf");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/cms/kontakt");
     }
 
     /// <summary>
@@ -193,3 +227,4 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
         PhoneE164 = "+495111234567"
     };
 }
+

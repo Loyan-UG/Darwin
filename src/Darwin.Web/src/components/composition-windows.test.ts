@@ -41,6 +41,8 @@ import { OrdersPage } from "@/components/member/orders-page";
 import { InvoicesPage } from "@/components/member/invoices-page";
 import { OrderDetailPage } from "@/components/member/order-detail-page";
 import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
+import { buildPromotionLaneRouteMapItem } from "@/components/composition-window-promotion-lane";
+import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
 import type {
   PublicCategorySummary,
   PublicProductDetail,
@@ -1924,6 +1926,47 @@ test("CommerceAuthHandoff renders a promotion-lane board for guest cart and chec
 
 
 
+
+test("buildMemberPromotionLaneCards keeps member merchandising lanes explicit", () => {
+  assert.deepEqual(buildMemberPromotionLaneCards([heroProduct], "en-US"), [
+    {
+      id: "member-promotion-lane-hero-offers",
+      label: "Promotion lane",
+      title: "Hero offers currently lead with Apples.",
+      description: "Hero offers stay visible from the member storefront. 1 item starts at \u20ac7.00.",
+      href: "/catalog?visibleState=offers&visibleSort=offers-first&savingsBand=hero",
+      ctaLabel: "Open promotion lane",
+      meta: "1 item",
+    },
+    {
+      id: "member-promotion-lane-value-offers",
+      label: "Promotion lane",
+      title: "Value offers remain available from the member storefront.",
+      description: "Value offers stay visible from the member storefront.",
+      href: "/catalog?visibleState=offers&visibleSort=offers-first&savingsBand=value",
+      ctaLabel: "Open promotion lane",
+      meta: "0 items",
+    },
+    {
+      id: "member-promotion-lane-live-offers",
+      label: "Promotion lane",
+      title: "Live offers remain available from the member storefront.",
+      description: "Live offers stay visible from the member storefront.",
+      href: "/catalog?visibleState=offers&visibleSort=savings-desc",
+      ctaLabel: "Open promotion lane",
+      meta: "0 items",
+    },
+    {
+      id: "member-promotion-lane-base-assortment",
+      label: "Promotion lane",
+      title: "Base assortment remains available from the member storefront.",
+      description: "Base assortment stays visible from the member storefront.",
+      href: "/catalog?visibleState=base&visibleSort=base-first",
+      ctaLabel: "Open promotion lane",
+      meta: "0 items",
+    },
+  ]);
+});
 test("MockCheckoutPage renders explicit success, cancellation, and failure handoff actions", () => {
   const html = renderToStaticMarkup(
     React.createElement(MockCheckoutPage, {
@@ -1994,4 +2037,37 @@ test("CmsContinuationRail renders feature-level wrapper links for home, catalog,
   assert.match(html, /href="\/account"/);
 });
 
+
+
+test("buildPromotionLaneRouteMapItem keeps the strongest merchandising lane explicit", () => {
+  assert.deepEqual(
+    buildPromotionLaneRouteMapItem({
+      id: "shared-promotion-lane",
+      products: [heroProduct],
+      culture: "en-US",
+      copy: {
+        cardLabel: "Promotion lane",
+        heroLabel: "Hero offers",
+        valueLabel: "Value offers",
+        liveOffersLabel: "Live offers",
+        baseLabel: "Base assortment",
+        title: "Open {lane} around {product}",
+        fallbackTitle: "Open {lane}",
+        description: "{count} items in {lane} from {price}",
+        fallbackDescription: "Browse {lane}",
+        cta: "Open promotion lane",
+        meta: "{count} offers visible",
+      },
+    }),
+    {
+      id: "shared-promotion-lane",
+      label: "Promotion lane",
+      title: "Open Hero offers around Apples",
+      description: "1 items in Hero offers from €7.00",
+      href: "/catalog?visibleState=offers&visibleSort=offers-first&savingsBand=hero",
+      ctaLabel: "Open promotion lane",
+      meta: "1 offers visible",
+    },
+  );
+});
 

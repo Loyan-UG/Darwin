@@ -177,15 +177,33 @@ test("route health SEO helpers classify visibility and alternates directly", () 
 test("route health helpers carry core and storefront health together", () => {
   const storefrontContext = createStorefrontContext();
 
-  assert.equal(
+  assert.deepEqual(
     summarizeCatalogRouteHealth({
       storefrontContext,
       browseContext: {
         categoriesResult: { status: "ok", data: { items: [1, 2] } },
         productsResult: { status: "degraded", data: { items: [1] } },
       },
-    }).coreProductsStatus,
-    "degraded",
+    }),
+    {
+      cmsStatus: "ok",
+      cmsCount: 1,
+      categoriesStatus: "degraded",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      heroOfferCount: 1,
+      valueOfferCount: 2,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
+      cartStatus: "not-found",
+      cartLinkedCount: 1,
+      coreCategoriesStatus: "ok",
+      coreCategoryCount: 2,
+      coreProductsStatus: "degraded",
+      coreProductCount: 1,
+    },
   );
 
   assert.deepEqual(
@@ -213,7 +231,35 @@ test("route health helpers carry core and storefront health together", () => {
       hasProduct: true,
       catalogDetailWorkflowFootprint: "product:ok:present|categories:ok:2",
     },
+  );  assert.deepEqual(
+    summarizeCatalogRouteHealth({
+      storefrontContext,
+      detailContext: {
+        categoriesResult: { status: "ok", data: { items: [1, 2] } },
+        productResult: { status: "ok", data: { id: "prod-1" } },
+      },
+    }),
+    {
+      cmsStatus: "ok",
+      cmsCount: 1,
+      categoriesStatus: "degraded",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      heroOfferCount: 1,
+      valueOfferCount: 2,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
+      cartStatus: "not-found",
+      cartLinkedCount: 1,
+      coreCategoriesStatus: "ok",
+      coreCategoryCount: 2,
+      coreProductsStatus: "ok",
+      coreProductCount: 1,
+    },
   );
+
 
   assert.deepEqual(
     summarizeCmsRouteHealth({
@@ -245,12 +291,41 @@ test("route health helpers carry core and storefront health together", () => {
   );
 
   assert.deepEqual(
+    summarizeCmsRouteHealth({
+      storefrontContext,
+      browseContext: {
+        pagesResult: { status: "degraded", data: { items: [1, 2] } },
+      },
+    }),
+    {
+      cmsStatus: "ok",
+      cmsCount: 1,
+      categoriesStatus: "degraded",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      heroOfferCount: 1,
+      valueOfferCount: 2,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
+      cartStatus: "not-found",
+      cartLinkedCount: 1,
+      corePagesStatus: "degraded",
+      corePageCount: 2,
+      cmsWorkflowFootprint: "core:degraded:2|lanes:hero:1|value:2|live:2|base:1",
+      cmsSupportWorkflowFootprint: "categories:degraded:1|products:ok:3|cart:not-found",
+    },
+  );
+
+  assert.deepEqual(
     summarizeCmsBrowseCoreHealth({
       pagesResult: { status: "ok", data: { items: [1, 2, 3] } },
     }),
     {
       pagesStatus: "ok",
       pageCount: 3,
+      cmsBrowseCoreFootprint: "pages:ok:3",
     },
   );
 
@@ -962,13 +1037,20 @@ test("member and home health helpers summarize route readiness for diagnostics",
       memberEntryStorefrontSupportFootprint: "storefront:missing",    },
   );
 
-  assert.equal(
+  assert.deepEqual(
     summarizeMemberCommerceSummaryHealth({
       ordersResult: { status: "ok", data: { items: [1, 2] } },
       invoicesResult: { status: "degraded", data: { items: [1] } },
       loyaltyOverviewResult: { status: "ok" },
-    }).invoiceCount,
-    1,
+    }),
+    {
+      ordersStatus: "ok",
+      orderCount: 2,
+      invoicesStatus: "degraded",
+      invoiceCount: 1,
+      loyaltyStatus: "ok",
+      memberCommerceSummaryFootprint: "orders:ok:2|invoices:degraded:1|loyalty:ok",
+    },
   );
 
   assert.deepEqual(
@@ -1001,6 +1083,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
     {
       status: "degraded",
       hasData: true,
+      memberWorkflowFootprint: "detail:degraded|has-data:yes",
     },
   );
 });
@@ -1191,6 +1274,10 @@ test("localized discovery health helpers summarize alternates and sitemap invent
     },
   );
 });
+
+
+
+
 
 
 

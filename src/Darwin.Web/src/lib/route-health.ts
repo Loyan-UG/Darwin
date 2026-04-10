@@ -279,11 +279,15 @@ export function summarizeCatalogIndexPageHealth(
 }
 
 export function summarizeCatalogBrowseCoreHealth(result: CatalogBrowseLike) {
+  const categoryCount = countItems(result.categoriesResult.data);
+  const productCount = countItems(result.productsResult.data);
+
   return {
     categoriesStatus: result.categoriesResult.status,
-    categoryCount: countItems(result.categoriesResult.data),
+    categoryCount,
     productsStatus: result.productsResult.status,
-    productCount: countItems(result.productsResult.data),
+    productCount,
+    catalogBrowseCoreFootprint: `categories:${result.categoriesResult.status}:${categoryCount}|products:${result.productsResult.status}:${productCount}`,
   };
 }
 
@@ -303,9 +307,12 @@ export function summarizeCatalogDetailCoreHealth(result: CatalogDetailLike) {
 export function summarizeProductDetailRelatedHealth(
   result: ProductDetailRelatedLike,
 ) {
+  const relatedCount = countItems(result.data);
+
   return {
     status: result.status,
-    relatedCount: countItems(result.data),
+    relatedCount,
+    productRelatedWorkflowFootprint: `status:${result.status}|related:${relatedCount}`,
   };
 }
 
@@ -371,9 +378,12 @@ export function summarizeCmsIndexPageHealth(
 }
 
 export function summarizeCmsBrowseCoreHealth(result: CmsBrowseLike) {
+  const pageCount = countItems(result.pagesResult.data);
+
   return {
     pagesStatus: result.pagesResult.status,
-    pageCount: countItems(result.pagesResult.data),
+    pageCount,
+    cmsBrowseCoreFootprint: `pages:${result.pagesResult.status}:${pageCount}`,
   };
 }
 
@@ -467,12 +477,18 @@ export function summarizeMemberCollectionHealth(
 export function summarizeMemberPagedCollectionHealth(
   result: MemberPagedCollectionLike,
 ) {
+  const itemCount = countItems(result.data);
+  const totalCount = result.data?.total ?? 0;
+  const page = result.data?.request?.page ?? 1;
+  const pageSize = result.data?.request?.pageSize ?? itemCount;
+
   return {
     status: result.status,
-    itemCount: countItems(result.data),
-    totalCount: result.data?.total ?? 0,
-    page: result.data?.request?.page ?? 1,
-    pageSize: result.data?.request?.pageSize ?? countItems(result.data),
+    itemCount,
+    totalCount,
+    page,
+    pageSize,
+    memberCollectionWorkflowFootprint: `status:${result.status}|page:${page}|size:${pageSize}|items:${itemCount}|total:${totalCount}`,
   };
 }
 
@@ -494,19 +510,25 @@ export function summarizeHomeDiscoveryHealth(result: {
   categorySpotlights: Array<{ status: string }>;
 }) {
   const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+  const homePageCount = countItems(result.pagesResult.data);
+  const homeCategoryCount = countItems(result.categoriesResult.data);
+  const homeProductCount = countItems(result.productsResult.data);
+  const spotlightCount = result.categorySpotlights.length;
+  const degradedSpotlightCount = result.categorySpotlights.filter(
+    (spotlight) => spotlight.status !== "ok",
+  ).length;
 
   return {
     ...storefrontSummary,
     homePagesStatus: result.pagesResult.status,
-    homePageCount: countItems(result.pagesResult.data),
+    homePageCount,
     homeCategoriesStatus: result.categoriesResult.status,
-    homeCategoryCount: countItems(result.categoriesResult.data),
+    homeCategoryCount,
     homeProductsStatus: result.productsResult.status,
-    homeProductCount: countItems(result.productsResult.data),
-    spotlightCount: result.categorySpotlights.length,
-    degradedSpotlightCount: result.categorySpotlights.filter(
-      (spotlight) => spotlight.status !== "ok",
-    ).length,
+    homeProductCount,
+    spotlightCount,
+    degradedSpotlightCount,
+    homeDiscoveryWorkflowFootprint: `pages:${result.pagesResult.status}:${homePageCount}|categories:${result.categoriesResult.status}:${homeCategoryCount}|products:${result.productsResult.status}:${homeProductCount}|spotlights:${spotlightCount}|degraded:${degradedSpotlightCount}`,
   };
 }
 
@@ -531,15 +553,19 @@ export function summarizeHomeRouteHealth(result: {
 export function summarizeHomeCategorySpotlightsHealth(
   result: HomeCategorySpotlightResultLike,
 ) {
+  const degradedSpotlightCount = result.filter(
+    (entry) => entry.categoryProductsResult.status !== "ok",
+  ).length;
+  const spotlightProductCount = result.reduce(
+    (total, entry) => total + countItems(entry.categoryProductsResult.data),
+    0,
+  );
+
   return {
     spotlightCount: result.length,
-    degradedSpotlightCount: result.filter(
-      (entry) => entry.categoryProductsResult.status !== "ok",
-    ).length,
-    spotlightProductCount: result.reduce(
-      (total, entry) => total + countItems(entry.categoryProductsResult.data),
-      0,
-    ),
+    degradedSpotlightCount,
+    spotlightProductCount,
+    homeCategorySpotlightsFootprint: `spotlights:${result.length}|degraded:${degradedSpotlightCount}|products:${spotlightProductCount}`,
   };
 }
 
@@ -692,23 +718,31 @@ export function summarizeConfirmationPageHealth(result: {
     followUpProductCount: result.followUpProducts.length,
     ...promotionSummary,
     commerceWorkflowFootprint: `surface:confirmation|session:${memberSessionState}|orders:${ordersStatus}|invoices:${invoicesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
+    confirmationFollowUpWorkflowFootprint: `products:${result.followUpProducts.length}|lanes:${promotionSummary.promotionLaneFootprint}`,
+    commerceStorefrontSupportFootprint: `products:${result.followUpProducts.length}|orders:${ordersStatus}|invoices:${invoicesStatus}`,
   };
 }
-
 export function summarizeStorefrontShoppingHealth(result: ShoppingContextLike) {
+  const anonymousCartState = result.anonymousCartId ? "present" : "missing";
+  const liveCartItemCount = result.cartResult.data?.items?.length ?? 0;
+
   return {
-    anonymousCartState: result.anonymousCartId ? "present" : "missing",
+    anonymousCartState,
     liveCartStatus: result.cartResult.status,
-    liveCartItemCount: result.cartResult.data?.items?.length ?? 0,
+    liveCartItemCount,
     snapshotCount: result.cartSnapshots.length,
     cartLinkedCount: result.cartLinkedProductSlugs.length,
+    storefrontShoppingFootprint: `anonymous:${anonymousCartState}|live:${result.cartResult.status}:${liveCartItemCount}|snapshots:${result.cartSnapshots.length}|linked:${result.cartLinkedProductSlugs.length}`,
   };
 }
 
 export function summarizeShellHealth(result: ShellMenuLike) {
+  const menuItemCount = result.data?.items?.length ?? 0;
+
   return {
     menuStatus: result.status,
-    menuItemCount: result.data?.items?.length ?? 0,
+    menuItemCount,
+    shellMenuFootprint: `status:${result.status}|items:${menuItemCount}`,
   };
 }
 
@@ -720,32 +754,45 @@ export function summarizeShellModelHealth(result: {
   utilityLinks: unknown[];
   footerGroups: unknown[];
 }) {
+  const primaryNavigationCount = result.primaryNavigation.length;
+  const utilityLinkCount = result.utilityLinks.length;
+  const footerGroupCount = result.footerGroups.length;
+
   return {
     culture: result.culture,
     menuSource: result.menuSource,
     menuStatus: result.menuStatus,
-    primaryNavigationCount: result.primaryNavigation.length,
-    utilityLinkCount: result.utilityLinks.length,
-    footerGroupCount: result.footerGroups.length,
+    primaryNavigationCount,
+    utilityLinkCount,
+    footerGroupCount,
+    shellModelFootprint: `culture:${result.culture}|source:${result.menuSource}|menu:${result.menuStatus}|primary:${primaryNavigationCount}|utility:${utilityLinkCount}|footer:${footerGroupCount}`,
   };
 }
 
 export function summarizeCartViewModelHealth(result: CartViewModelLike) {
+  const anonymousCartState = result.anonymousId ? "present" : "missing";
+  const cartItemCount = result.cart?.items.length ?? 0;
+  const hasCoupon = Boolean(result.cart?.couponCode);
+
   return {
-    anonymousCartState: result.anonymousId ? "present" : "missing",
+    anonymousCartState,
     cartStatus: result.status,
-    cartItemCount: result.cart?.items.length ?? 0,
-    hasCoupon: Boolean(result.cart?.couponCode),
+    cartItemCount,
+    hasCoupon,
+    cartModelFootprint: `anonymous:${anonymousCartState}|status:${result.status}|items:${cartItemCount}|coupon:${hasCoupon ? "yes" : "no"}`,
   };
 }
 
 export function summarizeMemberIdentityHealth(result: IdentityContextLike) {
+  const addressCount = result.addressesResult.data?.length ?? 0;
+
   return {
     profileStatus: result.profileResult.status,
     preferencesStatus: result.preferencesResult.status,
     customerContextStatus: result.customerContextResult.status,
     addressesStatus: result.addressesResult.status,
-    addressCount: result.addressesResult.data?.length ?? 0,
+    addressCount,
+    memberIdentityFootprint: `profile:${result.profileResult.status}|preferences:${result.preferencesResult.status}|customer:${result.customerContextResult.status}|addresses:${result.addressesResult.status}:${addressCount}`,
   };
 }
 
@@ -979,6 +1026,8 @@ export function summarizeSeoMetadataHealth(result: {
     seoTargetFootprint: `${seoIndexability}|${result.canonicalPath}`,
   };
 }
+
+
 
 
 

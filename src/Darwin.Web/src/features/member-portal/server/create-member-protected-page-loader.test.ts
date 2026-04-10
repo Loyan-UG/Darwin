@@ -192,3 +192,75 @@ test("createMemberProtectedPageLoader feeds normalized args into entry route and
     id: "order-1",
   });
 });
+
+test("createMemberProtectedPageLoader emits protected route diagnostics for authorized members", async () => {
+  const warnings: Array<{ message: string; detail: Record<string, unknown> }> = [];
+  const originalWarn = console.warn;
+  console.warn = ((message, detail) => {
+    warnings.push({ message, detail });
+  }) as typeof console.warn;
+
+  try {
+    const loader = createMemberProtectedPageLoaderCore({
+      operation: "unit-protected-page",
+      thresholdMs: 0,
+      normalizeArgs: (culture: string, id: string) =>
+        [culture.trim(), id.trim()] as [string, string],
+      getContext: (culture: string, id: string) => ({ culture, id }),
+      getEntryRoute: (_culture: string, id: string) => `/orders/${id}`,
+      loadEntryContext: async () => ({
+        session: { customerId: "customer-1" },
+        storefrontContext: null,
+      }),
+      summarizeAuthorized: (routeContext) => ({
+        detailStatus: routeContext.status,
+        detailId: routeContext.id,
+      }),
+      loadRouteContext: async (_culture: string, id: string) => ({
+        status: "ok",
+        id,
+      }),
+    });
+
+    const result = await loader(" de-DE ", " order-1 ");
+
+    assert.equal(result.routeContext?.id, "order-1");
+    assert.equal(warnings.length, 1);
+    assert.equal(warnings[0]?.message, "Darwin.Web slow operation");
+    assert.deepEqual(warnings[0]?.detail, {
+      area: "member-protected-page-context",
+      operation: "unit-protected-page",
+      operationKey: "member-protected-page-context:unit-protected-page",
+      durationMs: warnings[0]?.detail.durationMs,
+      durationBand: "very-slow",
+      healthState: "healthy",
+      outcomeKind: "slow-success",
+      signalKind: "performance",
+      attentionLevel: "high",
+      suggestedAction: "inspect-slow-path",
+      degradedStatusCount: 0,
+      degradedStatuses: undefined,
+      degradedStatusKeys: undefined,
+      degradedSurfaceCount: 0,
+      degradedSurfaceKeys: undefined,
+      degradedSurfaceFootprint: undefined,
+      primaryDegradedStatusKey: undefined,
+      primaryDegradedSurface: undefined,
+      pageLoaderKind: "member-protected",
+      pageLoaderNormalization: "canonical",
+      entryRoute: "/orders/order-1",
+      culture: "de-DE",
+      id: "order-1",
+      authGate: "authorized",
+      sessionState: "present",
+      routeContextState: "loaded",
+      storefrontFallbackState: "missing",
+      protectedRouteFootprint: "auth:authorized|route:loaded|storefront:missing",
+      detailStatus: "ok",
+      detailId: "order-1",
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+

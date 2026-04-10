@@ -83,18 +83,29 @@ test("observeAsyncOperation reports slow operations above the threshold", async 
 
   assert.equal(result, "ok");
   assert.equal(warnings.length, 1);
-  assert.equal(warnings[0]?.area, "home");
-  assert.equal(warnings[0]?.operation, "compose");
-  assert.equal(warnings[0]?.culture, "de-DE");
-  assert.equal(warnings[0]?.route, "/");
-  assert.equal(warnings[0]?.resultStatus, "ok");
-  assert.equal(warnings[0]?.operationKey, "home:compose");
-  assert.equal(warnings[0]?.outcomeKind, "slow-success");
-  assert.equal(warnings[0]?.signalKind, "performance");
-  assert.equal(warnings[0]?.attentionLevel, "medium");
-  assert.equal(warnings[0]?.suggestedAction, "inspect-slow-path");
-  assert.equal(warnings[0]?.healthState, "healthy");
-  assert.equal(warnings[0]?.durationBand, "slow");
+  assert.deepEqual(warnings[0], {
+    area: "home",
+    operation: "compose",
+    operationKey: "home:compose",
+    durationMs: warnings[0]?.durationMs,
+    durationBand: "slow",
+    healthState: "healthy",
+    outcomeKind: "slow-success",
+    signalKind: "performance",
+    attentionLevel: "medium",
+    suggestedAction: "inspect-slow-path",
+    degradedStatusCount: 0,
+    degradedStatuses: undefined,
+    degradedStatusKeys: undefined,
+    degradedSurfaceCount: 0,
+    degradedSurfaceKeys: undefined,
+    degradedSurfaceFootprint: undefined,
+    primaryDegradedStatusKey: undefined,
+    primaryDegradedSurface: undefined,
+    culture: "de-DE",
+    route: "/",
+    resultStatus: "ok",
+  });
 });
 
 test("observeAsyncOperation reports failures with timing metadata", async () => {
@@ -121,16 +132,21 @@ test("observeAsyncOperation reports failures with timing metadata", async () => 
   );
 
   assert.equal(failures.length, 1);
-  assert.equal(failures[0]?.area, "checkout");
-  assert.equal(failures[0]?.operation, "load");
-  assert.equal(failures[0]?.culture, "de-DE");
-  assert.equal(failures[0]?.route, "/checkout");
-  assert.equal(failures[0]?.operationKey, "checkout:load");
-  assert.equal(failures[0]?.outcomeKind, "failure");
-  assert.equal(failures[0]?.signalKind, "failure");
-  assert.equal(failures[0]?.attentionLevel, "high");
-  assert.equal(failures[0]?.suggestedAction, "inspect-failure-cause");
-  assert.equal(failures[0]?.healthState, "failed");
+  assert.deepEqual(failures[0], {
+    area: "checkout",
+    operation: "load",
+    operationKey: "checkout:load",
+    durationMs: failures[0]?.durationMs,
+    durationBand: "slow",
+    healthState: "failed",
+    outcomeKind: "failure",
+    signalKind: "failure",
+    attentionLevel: "high",
+    suggestedAction: "inspect-failure-cause",
+    culture: "de-DE",
+    route: "/checkout",
+    cause: failures[0]?.cause,
+  });
 });
 
 test("observeAsyncOperation reports degraded successful operations even when they are not slow", async () => {
@@ -244,3 +260,5 @@ test("observeAsyncOperation distinguishes very slow degraded successes", async (
   assert.equal(warnings[0]?.primaryDegradedStatusKey, "productsStatus");
   assert.equal(warnings[0]?.primaryDegradedSurface, "products");
 });
+
+

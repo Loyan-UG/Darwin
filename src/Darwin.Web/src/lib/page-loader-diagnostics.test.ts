@@ -73,3 +73,20 @@ test("buildProtectedRouteFootprint keeps auth and fallback state together", () =
     "auth:authorized|route:loaded|storefront:missing",
   );
 });
+
+test("buildPageLoaderBaseDiagnostics keeps raw member-protected diagnostics explicit", () => {
+  assert.deepEqual(
+    buildPageLoaderBaseDiagnostics("member-protected", {
+      extras: {
+        entryRoute: "/orders/order-1",
+        authGate: "authorized",
+      },
+    }),
+    {
+      pageLoaderKind: "member-protected",
+      pageLoaderNormalization: "raw",
+      entryRoute: "/orders/order-1",
+      authGate: "authorized",
+    },
+  );
+});

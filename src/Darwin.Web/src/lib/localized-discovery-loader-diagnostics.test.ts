@@ -216,3 +216,47 @@ test("buildLocalizedDiscoveryLoaderSuccessDiagnostics falls back to an explicit 
     },
   );
 });
+
+test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps raw-culture mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      "inventory",
+      {
+        localizedCultureCount: 1,
+        localizedItemCount: 3,
+        localizedInventoryFootprint: "cultures:1|items:3|empty:0",
+      },
+      {
+        hasCanonicalCultureNormalization: false,
+      },
+    ),
+    {
+      localizedDiscoveryKind: "inventory",
+      localizedDiscoveryNormalization: "raw-cultures",
+      localizedDiscoveryState: "present",
+      localizedDiscoveryDetailFootprint: "cultures:1|items:3|empty:0",
+      localizedDiscoverySummaryFootprint: "cultures:1|items:3|empty:0",
+      localizedCultureCount: 1,
+      localizedItemCount: 3,
+      localizedInventoryFootprint: "cultures:1|items:3|empty:0",
+    },
+  );
+});
+
+test("buildLocalizedDiscoveryLoaderBaseDiagnostics keeps raw-culture mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderBaseDiagnostics("sitemap", {
+      hasCanonicalCultureNormalization: false,
+      extras: {
+        scope: "localized-discovery-sitemap",
+        totalEntryCount: 5,
+      },
+    }),
+    {
+      localizedDiscoveryKind: "sitemap",
+      localizedDiscoveryNormalization: "raw-cultures",
+      scope: "localized-discovery-sitemap",
+      totalEntryCount: 5,
+    },
+  );
+});

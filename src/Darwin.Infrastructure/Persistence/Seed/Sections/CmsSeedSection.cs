@@ -198,10 +198,13 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             {
                 new { Url = "/", Label = "Home", DeLabel = "Start", SortOrder = 0 },
                 new { Url = "/catalog", Label = "Catalog", DeLabel = "Katalog", SortOrder = 1 },
-                new { Url = "/account", Label = "Account", DeLabel = "Konto", SortOrder = 2 },
-                new { Url = "/loyalty", Label = "Loyalty", DeLabel = "Treue", SortOrder = 3 },
-                new { Url = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 4 },
-                new { Url = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 5 }
+                new { Url = "/cms", Label = "CMS", DeLabel = "Inhalte", SortOrder = 2 },
+                new { Url = "/account", Label = "Account", DeLabel = "Konto", SortOrder = 3 },
+                new { Url = "/cart", Label = "Cart", DeLabel = "Warenkorb", SortOrder = 4 },
+                new { Url = "/checkout", Label = "Checkout", DeLabel = "Kasse", SortOrder = 5 },
+                new { Url = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 6 },
+                new { Url = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 7 },
+                new { Url = "/loyalty", Label = "Loyalty", DeLabel = "Treue", SortOrder = 8 }
             };
 
             if (menu == null)
