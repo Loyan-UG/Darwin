@@ -792,3 +792,45 @@ For broader platform documentation, see:
 - Order and invoice detail routes now carry live cart/checkout continuity inside the shared member storefront window, with storefront cart state passed through from the protected route context.
 - Member order and invoice detail diagnostics now emit a compact storefront-support footprint so detail routes expose CMS/category/product/cart continuity operationally, not only in UI.
 - Orders and invoices history routes now carry live cart/checkout continuity inside the shared member storefront window, with storefront cart state passed through from protected route context.
+- Public discovery cache policy now shortens revalidate windows for deeper CMS and catalog pagination, keeping multi-page browse results fresher than stable first-page feeds.
+- Catalog and CMS storefront support windows now render explicit promotion-lane boards, so browse/content support surfaces expose hero, value, live, and base merchandising windows directly instead of only generic product follow-up.
+
+- Catalog/CMS route-health now carries explicit browse/support workflow footprints for new storefront support surfaces, including merchandising lanes and cart continuity.
+
+- Product detail storefront support now includes an explicit promotion-lane board, so drill-in merchandising parity matches catalog and CMS support surfaces.
+
+- Guest confirmation now includes an explicit promotion-lane board so post-purchase merchandising parity matches the main commerce surfaces.
+
+- Confirmation route-health now reports explicit follow-up merchandising footprints so guest after-purchase lanes are visible in diagnostics, not only in the UI.
+
+- Added direct render coverage for guest confirmation merchandising so the after-purchase promotion-lane board does not rely only on build-time safety.
+
+- Direct coverage for member/account/commerce storefront windows now also asserts promotion-lane boards, not only cart continuity.
+
+- Entry and home route-health summaries now carry explicit storefront support footprints so CMS/category/product/cart continuity is visible directly in diagnostics.
+
+- Cart, checkout, and confirmation route-health now expose explicit storefront support footprints so commerce continuity is easier to trace operationally.
+- Catalog browse cache policy now also shortens revalidate windows for deeper paginated product results, so page-two-plus discovery stays fresher instead of sharing the slower first-page browse timing.
+- Direct render coverage for catalog storefront support now also asserts hero/value/live/base promotion lanes, so browse-support merchandising no longer relies only on build-time safety.
+- Product and CMS detail loaders now also emit explicit support-workflow footprints through dedicated helpers with direct unit coverage, so drill-in diagnostics can read related and review follow-up state without relying only on route-health rollups.
+- Catalog and CMS index loaders now also emit explicit support-workflow footprints through dedicated helpers with direct unit coverage, so browse-route diagnostics can read CMS/category/product/cart support state without relying only on route-health rollups.
+- Member dashboard, editor, collection, and detail route loaders now also emit explicit storefront-support footprints through a dedicated helper with direct unit coverage, so protected route diagnostics can read CMS/category/product/cart support state beyond route-health-only rollups.
+- Account and commerce route loaders now also emit explicit storefront-support footprints through dedicated helpers with direct unit coverage, so entry and conversion diagnostics can read CMS/category/product/cart support state beyond route-health-only rollups.
+- Public auth route/page loaders plus protected member-entry context now also emit explicit storefront-support footprints through dedicated helpers with direct unit coverage, so auth and entry diagnostics can read CMS/category/product/cart continuity beyond route-health-only rollups.
+- Route-health expectations now also assert the newer storefront-support footprints for home, auth, account, member-entry, and commerce flows, so those diagnostics do not rely only on helper-level tests.
+- Added a dedicated storefront-support helper plus direct unit coverage for the Home route loader, so Home success diagnostics expose CMS/category/product/cart continuity directly instead of relying only on route-health rollups.
+- Added direct render coverage for PublicAuthContinuation so auth-entry promotion lanes plus cart/CMS/catalog continuity do not rely only on page-level build safety.
+- Tightened path-aware cache windows for large and paged catalog-category feeds, so category-heavy discovery and support surfaces refresh faster than the stable long-lived baseline.
+- Added a dedicated storefront-support helper plus direct unit coverage for Home discovery, so success diagnostics for the public storefront entry carry CMS/category/product/cart continuity directly instead of relying only on route-health rollups.
+- Added direct render coverage for the public account hub page so its action-center, cart continuity, CMS/catalog follow-up, and promotion-lane board do not rely only on inner-window or build-time safety.
+- Added direct render coverage for the public CMS index page so composition, storefront support, promotion lanes, and cart continuity on `/cms` do not rely only on inner-window tests.
+- Added direct render coverage for the public catalog page so composition, storefront support, promotion-lane follow-up, and cart continuity on `/catalog` do not rely only on inner-window tests.
+- Added direct render coverage for the product detail page so composition, storefront support, promotion-lane follow-up, and cart continuity on `/catalog/[slug]` do not rely only on inner-window tests.
+- Added direct render coverage for the CMS detail page so composition, storefront support, promotion-lane follow-up, and cart continuity on `/cms/[slug]` do not rely only on inner-window tests.
+- Added direct render coverage for the member dashboard page so storefront support, promotion lanes, and cart/checkout continuity on the protected overview route do not rely only on inner-window tests.
+- Added direct render coverage for the checkout page so conversion support, promotion lanes, and cart/account continuity on `/checkout` do not rely only on inner-window tests.
+- Added direct render coverage for the orders history page so storefront support, promotion lanes, and cart/checkout continuity on `/orders` do not rely only on inner-window tests.
+- Added direct render coverage for the invoices history page so storefront support, promotion lanes, and cart/checkout continuity on `/invoices` do not rely only on inner-window tests.
+- Added direct render coverage for the order detail page so storefront support, promotion lanes, and cart/checkout continuity on `/orders/[id]` do not rely only on inner-window tests.
+- Added direct render coverage for sign-in, register, activation, and password-recovery pages so the main public-auth family no longer relies only on continuation/composition window tests.
+- Added direct render coverage for catalog and CMS campaign windows so those promotion-lane campaign surfaces do not rely only on surrounding page or support-window tests.

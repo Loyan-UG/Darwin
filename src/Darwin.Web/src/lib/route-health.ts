@@ -252,12 +252,17 @@ export function summarizeCatalogIndexPageHealth(
     hasBrowseLens: boolean;
   },
 ) {
+  const browseMode = result.hasBrowseLens ? "windowed" : "paged";
+  const matchingStatus = result.matchingSetResult?.status ?? "not-requested";
+  const promotionLaneFootprint = `hero:${result.facetSummary.heroOfferCount}|value:${result.facetSummary.valueOfferCount}|live:${result.facetSummary.offerCount}|base:${result.facetSummary.baseCount}`;
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
   return {
     ...summarizeCatalogRouteHealth(result),
-    browseMode: result.hasBrowseLens ? "windowed" : "paged",
+    browseMode,
     visibleCount: result.visibleWindow.items.length,
     visibleTotal: result.visibleWindow.total,
-    matchingStatus: result.matchingSetResult?.status ?? "not-requested",
+    matchingStatus,
     matchingProductsTotal: result.matchingProductsTotal,
     offerCount: result.facetSummary.offerCount,
     baseCount: result.facetSummary.baseCount,
@@ -267,7 +272,9 @@ export function summarizeCatalogIndexPageHealth(
     valueOfferCount: result.facetSummary.valueOfferCount,
     liveOfferCount: result.facetSummary.offerCount,
     baseAssortmentCount: result.facetSummary.baseCount,
-    promotionLaneFootprint: `hero:${result.facetSummary.heroOfferCount}|value:${result.facetSummary.valueOfferCount}|live:${result.facetSummary.offerCount}|base:${result.facetSummary.baseCount}`,
+    promotionLaneFootprint,
+    catalogBrowseWorkflowFootprint: `mode:${browseMode}|matching:${matchingStatus}:${result.matchingProductsTotal}|visible:${result.visibleWindow.items.length}/${result.visibleWindow.total}|lanes:${promotionLaneFootprint}`,
+    catalogSupportWorkflowFootprint: `cms:${storefrontSummary.cmsStatus}:${storefrontSummary.cmsCount}|products:${storefrontSummary.productsStatus}:${storefrontSummary.productCount}|cart:${storefrontSummary.cartStatus}`,
   };
 }
 
@@ -281,11 +288,15 @@ export function summarizeCatalogBrowseCoreHealth(result: CatalogBrowseLike) {
 }
 
 export function summarizeCatalogDetailCoreHealth(result: CatalogDetailLike) {
+  const categoryCount = countItems(result.categoriesResult.data);
+  const hasProduct = Boolean(result.productResult.data);
+
   return {
     categoriesStatus: result.categoriesResult.status,
-    categoryCount: countItems(result.categoriesResult.data),
+    categoryCount,
     productStatus: result.productResult.status,
-    hasProduct: Boolean(result.productResult.data),
+    hasProduct,
+    catalogDetailWorkflowFootprint: `product:${result.productResult.status}:${hasProduct ? "present" : "missing"}|categories:${result.categoriesResult.status}:${categoryCount}`,
   };
 }
 
@@ -305,17 +316,21 @@ export function summarizeCmsRouteHealth(
   },
 ) {
   const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+  const corePagesStatus =
+    result.browseContext?.pagesResult.status ??
+    result.detailContext?.pageResult?.status ??
+    "unknown";
+  const corePageCount =
+    countItems(result.browseContext?.pagesResult.data) ||
+    countItems(result.detailContext?.relatedPagesResult?.data) ||
+    (result.detailContext?.pageResult.data ? 1 : 0);
 
   return {
     ...storefrontSummary,
-    corePagesStatus:
-      result.browseContext?.pagesResult.status ??
-      result.detailContext?.pageResult?.status ??
-      "unknown",
-    corePageCount:
-      countItems(result.browseContext?.pagesResult.data) ||
-      countItems(result.detailContext?.relatedPagesResult?.data) ||
-      (result.detailContext?.pageResult.data ? 1 : 0),
+    corePagesStatus,
+    corePageCount,
+    cmsWorkflowFootprint: `core:${corePagesStatus}:${corePageCount}|lanes:${storefrontSummary.promotionLaneFootprint}`,
+    cmsSupportWorkflowFootprint: `categories:${storefrontSummary.categoriesStatus}:${storefrontSummary.categoryCount}|products:${storefrontSummary.productsStatus}:${storefrontSummary.productCount}|cart:${storefrontSummary.cartStatus}`,
   };
 }
 
@@ -335,12 +350,15 @@ export function summarizeCmsIndexPageHealth(
     hasBrowseLens: boolean;
   },
 ) {
+  const browseMode = result.hasBrowseLens ? "windowed" : "paged";
+  const matchingStatus = result.matchingSetResult?.status ?? "not-requested";
+
   return {
     ...summarizeCmsRouteHealth(result),
-    browseMode: result.hasBrowseLens ? "windowed" : "paged",
+    browseMode,
     visibleCount: result.visibleWindow.items.length,
     visibleTotal: result.visibleWindow.total,
-    matchingStatus: result.matchingSetResult?.status ?? "not-requested",
+    matchingStatus,
     matchingItemsTotal: result.matchingItemsTotal,
     readyCount: result.metadataSummary.readyCount,
     attentionCount: result.metadataSummary.attentionCount,
@@ -348,6 +366,7 @@ export function summarizeCmsIndexPageHealth(
     missingMetaDescriptionCount:
       result.metadataSummary.missingMetaDescriptionCount,
     missingBothCount: result.metadataSummary.missingBothCount,
+    cmsBrowseWorkflowFootprint: `mode:${browseMode}|matching:${matchingStatus}:${result.matchingItemsTotal}|visible:${result.visibleWindow.items.length}/${result.visibleWindow.total}|review:${result.metadataSummary.attentionCount}|ready:${result.metadataSummary.readyCount}`,
   };
 }
 
@@ -359,11 +378,16 @@ export function summarizeCmsBrowseCoreHealth(result: CmsBrowseLike) {
 }
 
 export function summarizeCmsDetailCoreHealth(result: CmsDetailLike) {
+  const hasPage = Boolean(result.pageResult.data);
+  const relatedSeedStatus = result.relatedPagesResult?.status ?? "unknown";
+  const relatedSeedCount = countItems(result.relatedPagesResult?.data);
+
   return {
     pageStatus: result.pageResult.status,
-    hasPage: Boolean(result.pageResult.data),
-    relatedSeedStatus: result.relatedPagesResult?.status ?? "unknown",
-    relatedSeedCount: countItems(result.relatedPagesResult?.data),
+    hasPage,
+    relatedSeedStatus,
+    relatedSeedCount,
+    cmsDetailWorkflowFootprint: `page:${result.pageResult.status}:${hasPage ? "present" : "missing"}|related:${relatedSeedStatus}:${relatedSeedCount}`,
   };
 }
 
@@ -493,10 +517,14 @@ export function summarizeHomeRouteHealth(result: {
   };
   parts: unknown[];
 }) {
+  const storefrontSummary = summarizePublicStorefrontHealth(result.homeDiscoveryContext.storefrontContext);
+
   return {
     memberSessionState: result.memberSession ? "present" : "missing",
     partCount: result.parts.length,
-    ...summarizePublicStorefrontHealth(result.homeDiscoveryContext.storefrontContext),
+    ...storefrontSummary,
+    homeWorkflowFootprint: `session:${result.memberSession ? "present" : "missing"}|parts:${result.parts.length}|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`,
+    homeStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
   };
 }
 
@@ -592,6 +620,7 @@ export function summarizeCartPageHealth(result: {
     followUpProductCount: result.followUpProducts.length,
     ...promotionSummary,
     commerceWorkflowFootprint: `surface:cart|session:${memberSessionState}|addresses:${addressesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
+    commerceStorefrontSupportFootprint: `products:${result.followUpProducts.length}|cart:${result.routeContext.model.status}|addresses:${addressesStatus}`,
   };
 }
 
@@ -610,6 +639,9 @@ export function summarizeCheckoutPageHealth(result: {
   const invoicesStatus =
     result.routeContext.commerceSummaryContext?.invoicesResult.status ??
     "unauthenticated";
+  const storefrontSummary = summarizePublicStorefrontHealth(
+    result.routeContext.storefrontContext,
+  );
   const promotionSummary = summarizePromotionLaneHealth(
     result.routeContext.storefrontContext.products,
   );
@@ -625,6 +657,7 @@ export function summarizeCheckoutPageHealth(result: {
     ),
     ...promotionSummary,
     commerceWorkflowFootprint: `surface:checkout|session:${memberSessionState}|addresses:${addressesStatus}|invoices:${invoicesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
+    commerceStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
   };
 }
 
@@ -720,6 +753,7 @@ export function summarizePublicAuthRouteHealth(result: {
   return {
     ...storefrontSummary,
     authEntryWorkflowFootprint: `route:${result.route ?? "unknown"}|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`,
+    authEntryStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
   };
 }
 
@@ -747,6 +781,7 @@ export function summarizeAccountPageHealth(result: {
       sessionState: "present",
       ...dashboardSummary,
       accountWorkflowFootprint: `surface:member|orders:${dashboardSummary.ordersStatus}|invoices:${dashboardSummary.invoicesStatus}|lanes:${dashboardSummary.promotionLaneFootprint}`,
+      accountStorefrontSupportFootprint: dashboardSummary.memberStorefrontSupportFootprint,
     };
   }
 
@@ -760,6 +795,9 @@ export function summarizeAccountPageHealth(result: {
     accountWorkflowFootprint: storefrontSummary
       ? `surface:public|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`
       : "surface:public|storefront:missing",
+    accountStorefrontSupportFootprint: storefrontSummary
+      ? summarizeStorefrontSupportFootprint(storefrontSummary)
+      : "storefront:missing",
   };
 }
 
@@ -778,6 +816,9 @@ export function summarizeProtectedMemberEntryHealth(result: {
     memberEntryWorkflowFootprint: storefrontSummary
       ? `session:${sessionState}|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`
       : `session:${sessionState}|storefront:missing`,
+    memberEntryStorefrontSupportFootprint: storefrontSummary
+      ? summarizeStorefrontSupportFootprint(storefrontSummary)
+      : "storefront:missing",
   };
 }
 
@@ -929,6 +970,12 @@ export function summarizeSeoMetadataHealth(result: {
     seoTargetFootprint: `${seoIndexability}|${result.canonicalPath}`,
   };
 }
+
+
+
+
+
+
 
 
 

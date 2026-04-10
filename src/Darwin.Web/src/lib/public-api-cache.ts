@@ -1,4 +1,4 @@
-export type PublicApiCachePolicy = {
+﻿export type PublicApiCachePolicy = {
   revalidate: number;
   tags: string[];
 };
@@ -70,6 +70,7 @@ function getNumericQueryParam(path: string, key: string) {
 
 function getPublicApiPathAwareRevalidate(key: string, path: string) {
   const pageSize = getNumericQueryParam(path, "pageSize");
+  const page = getNumericQueryParam(path, "page");
 
   if (key === "cms-page") {
     return 180;
@@ -80,8 +81,15 @@ function getPublicApiPathAwareRevalidate(key: string, path: string) {
   }
 
   if (
+    key === "catalog-categories" &&
+    ((pageSize !== undefined && pageSize > 24) || (page !== undefined && page > 1))
+  ) {
+    return 300;
+  }
+
+  if (
     key === "cms-pages" &&
-    (hasQueryParam(path, "search") || (pageSize !== undefined && pageSize > 24))
+    (hasQueryParam(path, "search") || (pageSize !== undefined && pageSize > 24) || (page !== undefined && page > 1))
   ) {
     return 120;
   }
@@ -91,8 +99,11 @@ function getPublicApiPathAwareRevalidate(key: string, path: string) {
     (hasQueryParam(path, "search") ||
       hasQueryParam(path, "categorySlug") ||
       hasQueryParam(path, "visibleState") ||
+      hasQueryParam(path, "visibleSort") ||
+      hasQueryParam(path, "mediaState") ||
       hasQueryParam(path, "savingsBand") ||
-      (pageSize !== undefined && pageSize > 24))
+      (pageSize !== undefined && pageSize > 24) ||
+      (page !== undefined && page > 1))
   ) {
     return 90;
   }
@@ -190,5 +201,9 @@ export function getPublicApiRequestPlan(
     fetchCacheOptions: getPublicApiFetchCacheOptions(cacheIdentity, method),
   };
 }
+
+
+
+
 
 

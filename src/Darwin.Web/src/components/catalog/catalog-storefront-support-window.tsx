@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
 import { StorefrontOfferBoard } from "@/components/storefront/storefront-offer-board";
 import { StorefrontSpotlightBoard } from "@/components/storefront/storefront-spotlight-board";
 import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import type { PublicProductSummary } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import {
@@ -9,7 +11,7 @@ import {
   buildStorefrontPageSpotlightCards,
 } from "@/features/storefront/storefront-campaigns";
 import { formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getCatalogResource } from "@/localization";
 
 type CatalogStorefrontSupportWindowProps = {
@@ -39,7 +41,53 @@ export function CatalogStorefrontSupportWindow({
     prefix: "catalog-support-cms",
     fallbackDescription: copy.catalogCmsWindowFallbackDescription,
   });
-  const productCards = buildStorefrontOfferCards(sortProductsByOpportunity(products), {
+  const rankedProducts = sortProductsByOpportunity(products);
+  const promotionLaneCards = summarizeCatalogPromotionLanes(rankedProducts).map((entry) => {
+    const laneLabel =
+      entry.lane === "hero-offers"
+        ? copy.campaignWindowPromotionLaneHeroLabel
+        : entry.lane === "value-offers"
+          ? copy.campaignWindowPromotionLaneValueLabel
+          : entry.lane === "live-offers"
+            ? copy.campaignWindowPromotionLaneLiveOffersLabel
+            : copy.campaignWindowPromotionLaneBaseLabel;
+    const href =
+      entry.lane === "hero-offers"
+        ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "offers-first", savingsBand: "hero" })
+        : entry.lane === "value-offers"
+          ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "offers-first", savingsBand: "value" })
+          : entry.lane === "live-offers"
+            ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "savings-desc" })
+            : buildAppQueryPath("/catalog", { visibleState: "base", visibleSort: "base-first" });
+
+    return {
+      id: `catalog-support-promotion-${entry.lane}`,
+      label: copy.campaignWindowPromotionLaneLabel,
+      title: entry.anchorProduct
+        ? formatResource(copy.campaignWindowPromotionLaneTitle, {
+            lane: laneLabel,
+            product: entry.anchorProduct.name,
+          })
+        : formatResource(copy.campaignWindowPromotionLaneFallbackTitle, {
+            lane: laneLabel,
+          }),
+      description: entry.anchorProduct
+        ? formatResource(copy.campaignWindowPromotionLaneDescription, {
+            lane: laneLabel,
+            count: entry.count,
+            price: formatMoney(entry.anchorProduct.priceMinor, entry.anchorProduct.currency, culture),
+          })
+        : formatResource(copy.campaignWindowPromotionLaneFallbackDescription, {
+            lane: laneLabel,
+          }),
+      href,
+      ctaLabel: copy.campaignWindowPromotionLaneCta,
+      meta: formatResource(copy.campaignWindowPromotionLaneMeta, {
+        count: entry.count,
+      }),
+    };
+  });
+  const productCards = buildStorefrontOfferCards(rankedProducts, {
     labels: {
       heroOffer: copy.campaignWindowProductHeroLabel,
       valueOffer: copy.campaignWindowProductValueLabel,
@@ -122,6 +170,20 @@ export function CatalogStorefrontSupportWindow({
       </section>
 
       <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+          {copy.campaignWindowPromotionLaneSectionTitle}
+        </p>
+        <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+          {copy.campaignWindowPromotionLaneSectionMessage}
+        </p>
+        <StorefrontCampaignBoard
+          culture={culture}
+          cards={promotionLaneCards}
+          emptyMessage={copy.campaignWindowPromotionLaneSectionMessage}
+        />
+      </div>
+
+      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
           {copy.catalogCartWindowTitle}
         </p>
@@ -155,3 +217,6 @@ export function CatalogStorefrontSupportWindow({
     </div>
   );
 }
+
+
+

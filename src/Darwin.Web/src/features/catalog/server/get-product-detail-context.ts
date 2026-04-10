@@ -35,6 +35,13 @@ type ProductDetailReviewWindow = {
   savingsBand?: string;
 };
 
+type ProductDetailSupportWorkflowSource = {
+  relatedProductsResult?: { status: string } | null;
+  relatedProducts: Array<unknown>;
+  reviewProductsResult?: { status: string } | null;
+  reviewProducts: Array<unknown>;
+};
+
 function normalizeReviewWindow(reviewWindow?: ProductDetailReviewWindow) {
   return {
     category: reviewWindow?.category?.trim() || undefined,
@@ -44,6 +51,12 @@ function normalizeReviewWindow(reviewWindow?: ProductDetailReviewWindow) {
     mediaState: readCatalogMediaState(reviewWindow?.mediaState),
     savingsBand: readCatalogSavingsBand(reviewWindow?.savingsBand),
   };
+}
+
+export function summarizeProductDetailSupportWorkflow(
+  result: ProductDetailSupportWorkflowSource,
+) {
+  return `related:${result.relatedProductsResult?.status ?? "not-requested"}:${result.relatedProducts.length}|review:${result.reviewProductsResult?.status ?? "not-requested"}:${result.reviewProducts.length}`;
 }
 
 const loadProductDetailCoreContext = createCachedObservedLoader({
@@ -126,6 +139,8 @@ const getCachedProductDetailContext = createCachedObservedLoader({
   },
   getSuccessContext: (result) => ({
     ...summarizeCatalogDetailCoreHealth(result),
+    productDetailSupportWorkflowFootprint:
+      summarizeProductDetailSupportWorkflow(result),
     relatedStatus: result.relatedProductsResult?.status ?? "not-requested",
     relatedCount: result.relatedProducts.length,
     reviewStatus: result.reviewProductsResult?.status ?? "not-requested",

@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
 import { StorefrontSpotlightBoard } from "@/components/storefront/storefront-spotlight-board";
 import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
 import { buildStorefrontCategorySpotlightLinkCards, buildStorefrontOfferCards } from "@/features/storefront/storefront-campaigns";
 import { formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 import { formatResource, getSharedResource } from "@/localization";
 
@@ -35,6 +37,51 @@ export function CmsStorefrontSupportWindow({
   const categoryCards = buildStorefrontCategorySpotlightLinkCards(categories, {
     prefix: "cms-storefront-support",
     fallbackDescription: copy.cmsCatalogWindowFallbackDescription,
+  });
+  const promotionLaneCards = summarizeCatalogPromotionLanes(rankedProducts).map((entry) => {
+    const laneLabel =
+      entry.lane === "hero-offers"
+        ? copy.cmsCampaignPromotionLaneHeroLabel
+        : entry.lane === "value-offers"
+          ? copy.cmsCampaignPromotionLaneValueLabel
+          : entry.lane === "live-offers"
+            ? copy.cmsCampaignPromotionLaneLiveOffersLabel
+            : copy.cmsCampaignPromotionLaneBaseLabel;
+    const href =
+      entry.lane === "hero-offers"
+        ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "offers-first", savingsBand: "hero" })
+        : entry.lane === "value-offers"
+          ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "offers-first", savingsBand: "value" })
+          : entry.lane === "live-offers"
+            ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "savings-desc" })
+            : buildAppQueryPath("/catalog", { visibleState: "base", visibleSort: "base-first" });
+
+    return {
+      id: `cms-support-promotion-${entry.lane}`,
+      label: copy.cmsCampaignPromotionLaneCardLabel,
+      title: entry.anchorProduct
+        ? formatResource(copy.cmsCampaignPromotionLaneTitle, {
+            lane: laneLabel,
+            product: entry.anchorProduct.name,
+          })
+        : formatResource(copy.cmsCampaignPromotionLaneFallbackTitle, {
+            lane: laneLabel,
+          }),
+      description: entry.anchorProduct
+        ? formatResource(copy.cmsCampaignPromotionLaneDescription, {
+            lane: laneLabel,
+            count: entry.count,
+            price: formatMoney(entry.anchorProduct.priceMinor, entry.anchorProduct.currency, culture),
+          })
+        : formatResource(copy.cmsCampaignPromotionLaneFallbackDescription, {
+            lane: laneLabel,
+          }),
+      href,
+      ctaLabel: copy.cmsCampaignPromotionLaneCta,
+      meta: formatResource(copy.cmsCampaignPromotionLaneMeta, {
+        count: entry.count,
+      }),
+    };
   });
   const productCards = buildStorefrontOfferCards(
     rankedProducts,
@@ -160,6 +207,20 @@ export function CmsStorefrontSupportWindow({
       </section>
 
       <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+          {copy.cmsCampaignPromotionLaneSectionTitle}
+        </p>
+        <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+          {copy.cmsCampaignPromotionLaneSectionMessage}
+        </p>
+        <StorefrontCampaignBoard
+          culture={culture}
+          cards={promotionLaneCards}
+          emptyMessage={copy.cmsCampaignPromotionLaneSectionMessage}
+        />
+      </div>
+
+      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
           {copy.cmsCartWindowTitle}
         </p>
@@ -193,3 +254,6 @@ export function CmsStorefrontSupportWindow({
     </div>
   );
 }
+
+
+

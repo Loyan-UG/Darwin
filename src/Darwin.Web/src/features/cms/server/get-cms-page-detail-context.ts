@@ -21,6 +21,17 @@ type CmsPageDetailReviewWindow = {
   metadataFocus: CmsMetadataFocus;
 };
 
+type CmsDetailSupportWorkflowSource = {
+  relatedPagesSeed: {
+    status: string;
+    data?: {
+      items?: Array<unknown>;
+    } | null;
+  };
+  relatedPagesResult?: { status: string } | null;
+  relatedPages: Array<unknown>;
+};
+
 function normalizeReviewWindow(
   reviewWindow?: Partial<CmsPageDetailReviewWindow>,
 ): CmsPageDetailReviewWindow {
@@ -30,6 +41,14 @@ function normalizeReviewWindow(
     visibleSort: reviewWindow?.visibleSort ?? "featured",
     metadataFocus: reviewWindow?.metadataFocus ?? "all",
   };
+}
+
+export function summarizeCmsDetailSupportWorkflow(
+  result: CmsDetailSupportWorkflowSource,
+) {
+  const seededCount = result.relatedPagesSeed.data?.items?.length ?? 0;
+
+  return `seed:${result.relatedPagesSeed.status}:${seededCount}|visible:${result.relatedPagesResult?.status ?? result.relatedPagesSeed.status}:${result.relatedPages.length}`;
 }
 
 const getCachedCmsPageDetailContext = createCachedObservedLoader({
@@ -72,7 +91,7 @@ const getCachedCmsPageDetailContext = createCachedObservedLoader({
   getSuccessContext: (result) => ({
     ...summarizeCmsDetailCoreHealth(result),
     cmsDetailSupportWorkflowFootprint:
-      `review-seed:${result.relatedPagesSeed.status}:${result.relatedPages.length}`,
+      summarizeCmsDetailSupportWorkflow(result),
   }),
   load: async (
     culture: string,

@@ -17,6 +17,18 @@ import {
   summarizeCmsRouteHealth,
 } from "@/lib/route-health";
 
+type CmsIndexSupportWorkflowSource = {
+  categoriesResult?: { status: string; data?: { items?: Array<unknown> } | null } | null;
+  productsResult?: { status: string; data?: { items?: Array<unknown> } | null } | null;
+  cartSummary?: { status: string } | null;
+};
+
+export function summarizeCmsIndexSupportWorkflow(
+  result: CmsIndexSupportWorkflowSource,
+) {
+  return `categories:${result.categoriesResult?.status ?? "unknown"}:${result.categoriesResult?.data?.items?.length ?? 0}|products:${result.productsResult?.status ?? "unknown"}:${result.productsResult?.data?.items?.length ?? 0}|cart:${result.cartSummary?.status ?? "missing"}`;
+}
+
 const getCachedCmsIndexPageContext = createPublicDiscoveryPageLoader({
   area: "cms-page-context",
   operation: "load-index-page-context",
@@ -37,7 +49,6 @@ const getCachedCmsIndexPageContext = createPublicDiscoveryPageLoader({
     visibleSort: visibleSort ?? null,
     metadataFocus: metadataFocus ?? null,
   }),
-  getSuccessContext: summarizeCmsIndexPageHealth,
   loadRouteContext: async (
     culture: string,
     page: number,
@@ -95,6 +106,16 @@ const getCachedCmsIndexPageContext = createPublicDiscoveryPageLoader({
       hasBrowseLens,
     };
   },
+  getSuccessContext: (result) => ({
+    ...summarizeCmsIndexPageHealth(result),
+    cmsIndexSupportWorkflowFootprint: summarizeCmsIndexSupportWorkflow({
+      categoriesResult: result.storefrontContext?.categoriesResult,
+      productsResult: result.storefrontContext?.productsResult,
+      cartSummary: {
+        status: result.storefrontContext?.storefrontCartStatus ?? "missing",
+      },
+    }),
+  }),
 });
 
 const getCachedCmsDetailPageContext = createPublicDiscoveryPageLoader({

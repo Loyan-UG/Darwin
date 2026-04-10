@@ -42,6 +42,7 @@ import {
   summarizeShellModelHealth,
   summarizeStorefrontContinuationHealth,
   summarizeStorefrontShoppingHealth,
+  summarizeStorefrontSupportFootprint,
 } from "@/lib/route-health";
 import type { PublicStorefrontContext } from "@/features/storefront/public-storefront-context";
 
@@ -237,6 +238,7 @@ test("route health helpers carry core and storefront health together", () => {
       corePagesStatus: "ok",
       corePageCount: 3,
       cmsWorkflowFootprint: "core:ok:3|lanes:hero:1|value:2|live:2|base:1",
+      cmsSupportWorkflowFootprint: "categories:degraded:1|products:ok:3|cart:not-found",
     },
   );
 
@@ -365,6 +367,7 @@ test("catalog and CMS index page health summaries expose direct browse and merch
       missingMetaDescriptionCount: 2,
       missingBothCount: 1,
       cmsBrowseWorkflowFootprint: "mode:windowed|matching:ok:6|visible:2/6|review:4|ready:2",
+      cmsSupportWorkflowFootprint: "categories:degraded:1|products:ok:3|cart:not-found",
     },
   );
 });
@@ -555,7 +558,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       cartStatus: "not-found",
       cartLinkedCount: 1,
       accountWorkflowFootprint: "surface:public|cart:not-found|lanes:hero:1|value:2|live:2|base:1",
-    },
+      accountStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",    },
   );
 
   assert.deepEqual(
@@ -607,7 +610,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       memberWorkflowFootprint: "orders:ok|invoices:degraded|loyalty:not-found|lanes:hero:1|value:2|live:2|base:1",
       memberStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",
       accountWorkflowFootprint: "surface:member|orders:ok|invoices:degraded|lanes:hero:1|value:2|live:2|base:1",
-    },
+      accountStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",    },
   );
 
   assert.deepEqual(
@@ -635,7 +638,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       cartStatus: "not-found",
       cartLinkedCount: 1,
       homeWorkflowFootprint: "session:present|parts:3|cart:not-found|lanes:hero:1|value:2|live:2|base:1",
-    },
+      homeStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",    },
   );
 
   assert.deepEqual(
@@ -714,7 +717,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       confirmationPaymentCount: 2,
       recordedPaidPaymentCount: 1,
       commerceRouteWorkflowFootprint: "session:present|cart:ok|addresses:degraded|orders:ok|invoices:degraded|confirmation:ok|lanes:hero:1|value:2|live:2|base:1",
-    },
+      commerceRouteStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",    },
   );
 
   assert.deepEqual(
@@ -771,7 +774,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       baseAssortmentCount: 1,
       promotionLaneFootprint: "hero:1|value:1|live:1|base:1",
       commerceWorkflowFootprint: "surface:cart|session:present|addresses:ok|lanes:hero:1|value:1|live:1|base:1",
-    },
+      commerceStorefrontSupportFootprint: "products:2|cart:ok|addresses:ok",    },
   );
 
   assert.deepEqual(
@@ -805,7 +808,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       baseAssortmentCount: 1,
       promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
       commerceWorkflowFootprint: "surface:checkout|session:missing|addresses:unauthenticated|invoices:unauthenticated|lanes:hero:1|value:2|live:2|base:1",
-    },
+      commerceStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",    },
   );
 
   assert.deepEqual(
@@ -842,7 +845,8 @@ test("member and home health helpers summarize route readiness for diagnostics",
       baseAssortmentCount: 1,
       promotionLaneFootprint: "hero:0|value:1|live:1|base:1",
       commerceWorkflowFootprint: "surface:confirmation|session:present|orders:ok|invoices:degraded|lanes:hero:0|value:1|live:1|base:1",
-    },
+      confirmationFollowUpWorkflowFootprint: "products:2|lanes:hero:0|value:1|live:1|base:1",
+      commerceStorefrontSupportFootprint: "products:2|orders:ok|invoices:degraded",    },
   );
 
   assert.equal(
@@ -902,7 +906,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       cartStatus: "not-found",
       cartLinkedCount: 1,
       authEntryWorkflowFootprint: "route:/account/sign-in|cart:not-found|lanes:hero:1|value:2|live:2|base:1",
-    },
+      authEntryStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",    },
   );
 
   assert.deepEqual(
@@ -926,7 +930,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       cartStatus: "not-found",
       cartLinkedCount: 1,
       memberEntryWorkflowFootprint: "session:missing|cart:not-found|lanes:hero:1|value:2|live:2|base:1",
-    },
+      memberEntryStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",    },
   );
 
   assert.deepEqual(
@@ -937,7 +941,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
     {
       sessionState: "present",
       memberEntryWorkflowFootprint: "session:present|storefront:missing",
-    },
+      memberEntryStorefrontSupportFootprint: "storefront:missing",    },
   );
 
   assert.equal(
@@ -1169,6 +1173,12 @@ test("localized discovery health helpers summarize alternates and sitemap invent
     },
   );
 });
+
+
+
+
+
+
 
 
 

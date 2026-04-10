@@ -15,6 +15,18 @@ import {
   homeDiscoveryObservationContext,
 } from "@/lib/route-observation-context";
 
+type HomeDiscoverySupportSource = {
+  storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0];
+};
+
+export function summarizeHomeDiscoveryStorefrontSupport(
+  result: HomeDiscoverySupportSource,
+) {
+  const storefront = result.storefrontContext;
+
+  return `cms:${storefront.cmsPagesStatus}:${storefront.cmsPages.length}|categories:${storefront.categoriesStatus}:${storefront.categories.length}|products:${storefront.productsStatus}:${storefront.products.length}|cart:${storefront.storefrontCartStatus}`;
+}
+
 const loadHomeCoreContext = createObservedLoader({
   area: "home-discovery",
   operation: "load-core-context",
@@ -56,7 +68,11 @@ const getCachedHomeDiscoveryContext = createCachedObservedLoader({
   operation: "load-discovery-context",
   thresholdMs: 275,
   getContext: (culture: string) => homeDiscoveryObservationContext(culture),
-  getSuccessContext: summarizeHomeDiscoveryHealth,
+  getSuccessContext: (result) => ({
+    ...summarizeHomeDiscoveryHealth(result),
+    homeDiscoveryStorefrontSupportFootprint:
+      summarizeHomeDiscoveryStorefrontSupport(result),
+  }),
   load: async (culture: string) => {
     const storefrontContext = await loadHomeCoreContext(culture);
     const { cmsPagesResult: pagesResult, productsResult, categoriesResult } =

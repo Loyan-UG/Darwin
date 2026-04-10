@@ -8,6 +8,7 @@ import {
 import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { summarizePublicAuthRouteHealth } from "@/lib/route-health";
 import { createStorefrontContinuationWithCartProps } from "@/features/storefront/route-projections";
+import { summarizePublicAuthStorefrontSupport } from "@/features/account/server/get-public-auth-route-context";
 
 function createPublicAuthPageLoader(
   route: "/account/sign-in" | "/account/register" | "/account/activation" | "/account/password",
@@ -21,7 +22,11 @@ function createPublicAuthPageLoader(
       culture,
       route,
     }),
-    getSuccessContext: (result) => summarizePublicAuthRouteHealth({ ...result, route }),
+    getSuccessContext: (result) => ({
+      ...summarizePublicAuthRouteHealth({ ...result, route }),
+      publicAuthPageStorefrontSupportFootprint:
+        summarizePublicAuthStorefrontSupport(result),
+    }),
     load: async (culture: string) => {
       const routeContext = await loadRouteContext(culture);
 

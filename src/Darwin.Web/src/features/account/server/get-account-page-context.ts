@@ -3,15 +3,41 @@ import { getPublicAccountRouteContext } from "@/features/account/server/get-publ
 import { getMemberSession } from "@/features/member-session/cookies";
 import { getMemberDashboardRouteContext } from "@/features/member-portal/server/get-member-route-context";
 import { createCachedObservedLoader } from "@/lib/observed-loader";
+import { summarizePublicStorefrontHealth } from "@/lib/route-health";
 import { summarizeAccountPageHealth } from "@/lib/route-health";
 import { memberRouteObservationContext } from "@/lib/route-observation-context";
+
+type AccountPageStorefrontSupportSource = {
+  session: unknown | null;
+  publicRouteContext: { storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0] } | null;
+  memberRouteContext: { storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0] } | null;
+};
+
+export function summarizeAccountPageStorefrontSupport(
+  result: AccountPageStorefrontSupportSource,
+) {
+  const storefrontContext =
+    result.memberRouteContext?.storefrontContext ??
+    result.publicRouteContext?.storefrontContext ??
+    null;
+
+  if (!storefrontContext) {
+    return `session:${result.session ? "present" : "missing"}|storefront:missing`;
+  }
+
+  return `session:${result.session ? "present" : "missing"}|cms:${storefrontContext.cmsPagesStatus}:${storefrontContext.cmsPages.length}|categories:${storefrontContext.categoriesStatus}:${storefrontContext.categories.length}|products:${storefrontContext.productsStatus}:${storefrontContext.products.length}|cart:${storefrontContext.storefrontCartStatus}`;
+}
 
 export const getAccountPageContext = createCachedObservedLoader({
   area: "account-page-context",
   operation: "load-page-context",
   thresholdMs: 300,
   getContext: (culture: string) => memberRouteObservationContext(culture, "/account"),
-  getSuccessContext: summarizeAccountPageHealth,
+  getSuccessContext: (result) => ({
+    ...summarizeAccountPageHealth(result),
+    accountPageStorefrontSupportFootprint:
+      summarizeAccountPageStorefrontSupport(result),
+  }),
   load: async (culture: string) => {
     const session = await getMemberSession();
 

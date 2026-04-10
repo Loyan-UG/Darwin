@@ -2,12 +2,15 @@ import Link from "next/link";
 import { ConfirmationContentCompositionWindow } from "@/components/checkout/confirmation-content-composition-window";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
 import { CommerceStorefrontWindow } from "@/components/checkout/commerce-storefront-window";
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
+import { StorefrontOfferBoard } from "@/components/storefront/storefront-offer-board";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
   PublicCategorySummary,
   PublicProductSummary,
 } from "@/features/catalog/types";
 import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { createStorefrontPaymentIntentAction } from "@/features/checkout/actions";
 import type { PublicStorefrontOrderConfirmation } from "@/features/checkout/types";
@@ -24,7 +27,7 @@ import {
 } from "@/localization";
 import { parseAddressJson, type ParsedAddress } from "@/lib/address-json";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
-import { buildLocalizedAuthHref, localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
+import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 
 type OrderConfirmationPageProps = {
   culture: string;
@@ -276,6 +279,56 @@ export function OrderConfirmationPage({
     describeWithoutSavings: (product) =>
       product.shortDescription ?? copy.confirmationGuestOfferBoardFallbackDescription,
     fallbackDescription: copy.confirmationGuestOfferBoardFallbackDescription,
+  });
+  const guestPromotionLaneCards = summarizeCatalogPromotionLanes(guestOfferBoard).map((entry) => {
+    const laneLabel =
+      entry.lane === "hero-offers"
+        ? copy.storefrontWindowPromotionLaneHeroLabel
+        : entry.lane === "value-offers"
+          ? copy.storefrontWindowPromotionLaneValueLabel
+          : entry.lane === "live-offers"
+            ? copy.storefrontWindowPromotionLaneLiveOffersLabel
+            : copy.storefrontWindowPromotionLaneBaseLabel;
+    const href =
+      entry.lane === "hero-offers"
+        ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "offers-first", savingsBand: "hero" })
+        : entry.lane === "value-offers"
+          ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "offers-first", savingsBand: "value" })
+          : entry.lane === "live-offers"
+            ? buildAppQueryPath("/catalog", { visibleState: "offers", visibleSort: "savings-desc" })
+            : buildAppQueryPath("/catalog", { visibleState: "base", visibleSort: "base-first" });
+
+    return {
+      id: `confirmation-guest-promotion-${entry.lane}`,
+      label: copy.storefrontWindowPromotionLaneCardLabel,
+      title: entry.anchorProduct
+        ? formatResource(copy.storefrontWindowPromotionLaneTitle, {
+            lane: laneLabel,
+            product: entry.anchorProduct.name,
+          })
+        : formatResource(copy.storefrontWindowPromotionLaneFallbackTitle, {
+            lane: laneLabel,
+          }),
+      description:
+        entry.anchorProduct !== null
+          ? formatResource(copy.storefrontWindowPromotionLaneDescription, {
+              lane: laneLabel,
+              count: entry.count,
+              price: formatMoney(
+                entry.anchorProduct.priceMinor,
+                entry.anchorProduct.currency,
+                culture,
+              ),
+            })
+          : formatResource(copy.storefrontWindowPromotionLaneFallbackDescription, {
+              lane: laneLabel,
+            }),
+      href,
+      ctaLabel: copy.storefrontWindowPromotionLaneCta,
+      meta: formatResource(copy.storefrontWindowPromotionLaneMeta, {
+        count: entry.count,
+      }),
+    };
   });
   const sectionLinks = [
     { id: "confirmation-overview", label: copy.confirmationRouteSummaryTitle },
@@ -872,33 +925,27 @@ export function OrderConfirmationPage({
                         productCount: guestOfferBoardCards.length,
                       })}
                     </p>
-                    {guestOfferBoardCards.length > 0 ? (
-                      <div className="mt-3 grid gap-3">
-                        {guestOfferBoardCards.map((product) => (
-                          <div
-                            key={product.id}
-                            className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3"
-                          >
-                            <Link
-                              href={localizeHref(product.href, culture)}
-                              className="font-semibold text-[var(--color-text-primary)] transition hover:text-[var(--color-brand)]"
-                            >
-                              {product.title}
-                            </Link>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                              {product.label}
-                            </p>
-                            <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                              {product.description}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                        {copy.confirmationGuestOfferBoardEmptyMessage}
+                    <div className="mt-3">
+                      <StorefrontOfferBoard
+                        culture={culture}
+                        cards={guestOfferBoardCards}
+                        emptyMessage={copy.confirmationGuestOfferBoardEmptyMessage}
+                        columnsClassName="grid-cols-1"
+                      />
+                    </div>
+                    <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                        {copy.storefrontWindowPromotionLaneSectionTitle}
                       </p>
-                    )}
+                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {copy.storefrontWindowPromotionLaneSectionMessage}
+                      </p>
+                      <StorefrontCampaignBoard
+                        culture={culture}
+                        cards={guestPromotionLaneCards}
+                        emptyMessage={copy.storefrontWindowPromotionLaneSectionMessage}
+                      />
+                    </div>
                   </article>
                 </div>
                 <div className="mt-6 flex flex-wrap gap-3">
@@ -1056,3 +1103,5 @@ export function OrderConfirmationPage({
     </section>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import {
   getPublicApiCacheIdentity,
@@ -159,6 +159,21 @@ test("normalizePublicApiCachePath keeps equivalent query strings on one canonica
 test("getPublicApiCachePolicy keeps CMS search and catalog review windows on shorter path-aware cache windows", () => {
   assert.equal(
     getPublicApiCachePolicy(
+      "catalog-categories",
+      "/api/v1/public/catalog/categories?culture=de-DE&page=1&pageSize=100",
+    ).revalidate,
+    300,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-categories",
+      "/api/v1/public/catalog/categories?culture=de-DE&page=3&pageSize=12",
+    ).revalidate,
+    300,
+  );
+  assert.equal(
+    getPublicApiCachePolicy(
       "cms-pages",
       "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=12&search=story",
     ).revalidate,
@@ -192,6 +207,30 @@ test("getPublicApiCachePolicy keeps CMS search and catalog review windows on sho
   assert.equal(
     getPublicApiCachePolicy(
       "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleSort=offers-first",
+    ).revalidate,
+    90,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+    ).revalidate,
+    90,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12&visibleSort=offers-first&mediaState=with-image",
+    ).revalidate,
+    90,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
       "/api/v1/public/catalog/products?categorySlug=coffee&page=1&pageSize=12&culture=de-DE",
     ).revalidate,
     90,
@@ -201,6 +240,22 @@ test("getPublicApiCachePolicy keeps CMS search and catalog review windows on sho
     getPublicApiCachePolicy(
       "catalog-products",
       "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=100",
+    ).revalidate,
+    90,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "cms-pages",
+      "/api/v1/public/cms/pages?culture=de-DE&page=3&pageSize=12",
+    ).revalidate,
+    120,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12",
     ).revalidate,
     90,
   );
@@ -223,3 +278,7 @@ test("getPublicApiCachePolicy keeps CMS and catalog detail routes on fresher pat
     120,
   );
 });
+
+
+
+

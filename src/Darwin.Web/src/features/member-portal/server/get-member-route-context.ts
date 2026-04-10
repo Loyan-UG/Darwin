@@ -24,6 +24,19 @@ import {
   summarizeMemberEditorHealth,
 } from "@/lib/route-health";
 import { memberRouteObservationContext } from "@/lib/route-observation-context";
+import { summarizePublicStorefrontHealth } from "@/lib/route-health";
+
+type MemberRouteStorefrontSupportSource = {
+  storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0];
+};
+
+export function summarizeMemberRouteStorefrontSupport(
+  result: MemberRouteStorefrontSupportSource,
+) {
+  const storefront = result.storefrontContext;
+
+  return `cms:${storefront.cmsPagesStatus}:${storefront.cmsPages.length}|categories:${storefront.categoriesStatus}:${storefront.categories.length}|products:${storefront.productsStatus}:${storefront.products.length}|cart:${storefront.storefrontCartStatus}`;
+}
 
 export const getMemberDashboardRouteContext = createCachedObservedLoader({
   area: "member-route-context",
@@ -32,7 +45,11 @@ export const getMemberDashboardRouteContext = createCachedObservedLoader({
   normalizeArgs: normalizeCultureArg,
   getContext: (culture: string) =>
     memberRouteObservationContext(culture, "/account"),
-  getSuccessContext: summarizeMemberDashboardHealth,
+  getSuccessContext: (result) => ({
+    ...summarizeMemberDashboardHealth(result),
+    memberRouteStorefrontSupportFootprint:
+      summarizeMemberRouteStorefrontSupport(result),
+  }),
   load: async (culture: string) => {
     const [
       identityContext,
@@ -61,7 +78,11 @@ export const getMemberEditorRouteContext = createCachedObservedLoader({
   thresholdMs: 275,
   normalizeArgs: normalizeCultureArg,
   getContext: (culture: string) => ({ culture, routeGroup: "account-editor" }),
-  getSuccessContext: summarizeMemberEditorHealth,
+  getSuccessContext: (result) => ({
+    ...summarizeMemberEditorHealth(result),
+    memberRouteStorefrontSupportFootprint:
+      summarizeMemberRouteStorefrontSupport(result),
+  }),
   load: async (culture: string) => {
     const [identityContext, storefrontContext] = await Promise.all([
       getMemberIdentityContext(),
@@ -85,7 +106,11 @@ export const getMemberOrdersRouteContext = createCachedObservedLoader({
       page,
       pageSize,
     }),
-  getSuccessContext: summarizeMemberCollectionHealth,
+  getSuccessContext: (result) => ({
+    ...summarizeMemberCollectionHealth(result),
+    memberRouteStorefrontSupportFootprint:
+      summarizeMemberRouteStorefrontSupport(result),
+  }),
   load: async (culture: string, page: number, pageSize: number) => {
     const [ordersResult, storefrontContext] = await Promise.all([
       getMemberOrdersPageContext(page, pageSize),
@@ -109,7 +134,11 @@ export const getMemberInvoicesRouteContext = createCachedObservedLoader({
       page,
       pageSize,
     }),
-  getSuccessContext: summarizeMemberCollectionHealth,
+  getSuccessContext: (result) => ({
+    ...summarizeMemberCollectionHealth(result),
+    memberRouteStorefrontSupportFootprint:
+      summarizeMemberRouteStorefrontSupport(result),
+  }),
   load: async (culture: string, page: number, pageSize: number) => {
     const [invoicesResult, storefrontContext] = await Promise.all([
       getMemberInvoicesPageContext(page, pageSize),
@@ -132,6 +161,8 @@ export const getMemberOrderDetailRouteContext = createCachedObservedLoader({
     memberRouteObservationContext(culture, "/orders/[id]", { id }),
   getSuccessContext: (result) => ({
     ...summarizeMemberCollectionHealth(result),
+    memberRouteStorefrontSupportFootprint:
+      summarizeMemberRouteStorefrontSupport(result),
     detail: summarizeMemberDetailHealth(result.orderResult),
   }),
   load: async (culture: string, id: string) => {
@@ -156,6 +187,8 @@ export const getMemberInvoiceDetailRouteContext = createCachedObservedLoader({
     memberRouteObservationContext(culture, "/invoices/[id]", { id }),
   getSuccessContext: (result) => ({
     ...summarizeMemberCollectionHealth(result),
+    memberRouteStorefrontSupportFootprint:
+      summarizeMemberRouteStorefrontSupport(result),
     detail: summarizeMemberDetailHealth(result.invoiceResult),
   }),
   load: async (culture: string, id: string) => {

@@ -3,14 +3,34 @@ import { getHomePageParts } from "@/features/home/get-home-page-parts";
 import { getHomeDiscoveryContext } from "@/features/home/server/get-home-discovery-context";
 import { getMemberSession } from "@/features/member-session/cookies";
 import { createObservedLoader } from "@/lib/observed-loader";
-import { summarizeHomeRouteHealth } from "@/lib/route-health";
+import {
+  summarizeHomeRouteHealth,
+  summarizePublicStorefrontHealth,
+} from "@/lib/route-health";
+
+type HomeStorefrontSupportSource = {
+  homeDiscoveryContext: {
+    storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0];
+  };
+};
+
+export function summarizeHomeStorefrontSupport(
+  result: HomeStorefrontSupportSource,
+) {
+  const storefront = result.homeDiscoveryContext.storefrontContext;
+
+  return `cms:${storefront.cmsPagesStatus}:${storefront.cmsPages.length}|categories:${storefront.categoriesStatus}:${storefront.categories.length}|products:${storefront.productsStatus}:${storefront.products.length}|cart:${storefront.storefrontCartStatus}`;
+}
 
 const loadHomeRouteContext = createObservedLoader({
   area: "home-route-context",
   operation: "load-route-context",
   thresholdMs: 350,
   getContext: (culture: string) => ({ culture }),
-  getSuccessContext: summarizeHomeRouteHealth,
+  getSuccessContext: (result) => ({
+    ...summarizeHomeRouteHealth(result),
+    homeRouteStorefrontSupportFootprint: summarizeHomeStorefrontSupport(result),
+  }),
   load: async (culture: string) => {
     const [memberSession, homeDiscoveryContext] = await Promise.all([
       getMemberSession(),

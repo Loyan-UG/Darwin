@@ -18,6 +18,18 @@ import {
   summarizeCatalogRouteHealth,
 } from "@/lib/route-health";
 
+type CatalogIndexSupportWorkflowSource = {
+  cmsPagesResult?: { status: string; data?: { items?: Array<unknown> } | null } | null;
+  productsResult?: { status: string; data?: { items?: Array<unknown> } | null } | null;
+  cartSummary?: { status: string } | null;
+};
+
+export function summarizeCatalogIndexSupportWorkflow(
+  result: CatalogIndexSupportWorkflowSource,
+) {
+  return `cms:${result.cmsPagesResult?.status ?? "unknown"}:${result.cmsPagesResult?.data?.items?.length ?? 0}|products:${result.productsResult?.status ?? "unknown"}:${result.productsResult?.data?.items?.length ?? 0}|cart:${result.cartSummary?.status ?? "missing"}`;
+}
+
 const getCachedCatalogIndexPageContext = createPublicDiscoveryPageLoader({
   area: "catalog-page-context",
   operation: "load-index-page-context",
@@ -42,7 +54,6 @@ const getCachedCatalogIndexPageContext = createPublicDiscoveryPageLoader({
     mediaState: mediaState ?? null,
     savingsBand: savingsBand ?? null,
   }),
-  getSuccessContext: summarizeCatalogIndexPageHealth,
   loadRouteContext: async (
     culture: string,
     page: number,
@@ -112,6 +123,17 @@ const getCachedCatalogIndexPageContext = createPublicDiscoveryPageLoader({
       hasBrowseLens,
     };
   },
+  getSuccessContext: (result) => ({
+    ...summarizeCatalogIndexPageHealth(result),
+    catalogIndexSupportWorkflowFootprint:
+      summarizeCatalogIndexSupportWorkflow({
+        cmsPagesResult: result.storefrontContext?.cmsPagesResult,
+        productsResult: result.storefrontContext?.productsResult,
+        cartSummary: {
+          status: result.storefrontContext?.storefrontCartStatus ?? "missing",
+        },
+      }),
+  }),
 });
 
 const getCachedCatalogDetailPageContext = createPublicDiscoveryPageLoader({
@@ -204,3 +226,4 @@ export function getCatalogDetailPageContext(
     savingsBand,
   );
 }
+
