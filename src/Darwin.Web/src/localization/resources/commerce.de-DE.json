@@ -606,6 +606,10 @@
   "storefrontWindowPromotionLaneCta": "Promotion-Lane oeffnen",
   "storefrontWindowPromotionLaneMeta": "{count} Produkte in dieser Lane.",
   "storefrontWindowCampaignEmptyMessage": "Aus dieser Commerce-Route lassen sich aktuell keine staerkeren Browse-Kampagnen ableiten.",
+  "storefrontWindowCartTitle": "Warenkorb- und Checkout-Fortsetzung",
+  "storefrontWindowCartMessage": "Commerce-Routen sollen Warenkorb-Review und Checkout-Fortsetzung explizit sichtbar halten, damit die Conversion ohne Neuaufbau des aktuellen Storefront-Pfads weiterlaufen kann.",
+  "storefrontWindowCartCartCta": "Warenkorb oeffnen",
+  "storefrontWindowCartCheckoutCta": "Checkout oeffnen",
   "confirmationStorefrontWindowTitle": "After-Purchase-Storefront-Chance",
   "confirmationStorefrontWindowMessage": "Die Bestaetigung haelt jetzt auch live Content-, Browse- und Produktchancen sichtbar, damit der Shopper nach der Bestellung direkt in den naechsten kommerziellen Schritt weitergehen kann.",
   "confirmationCompositionJourneyTitle": "After-Purchase-Journey",
@@ -666,3 +670,4 @@
   "confirmationCompositionRouteMapCommerceCta": "Commerce-Route oeffnen",
   "confirmationCompositionRouteMapCommerceMeta": "{count} sichtbare Produktchancen"
 }
+

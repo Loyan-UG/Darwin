@@ -168,6 +168,18 @@ export function summarizePublicStorefrontHealth(
   };
 }
 
+
+export function summarizeStorefrontSupportFootprint(result: {
+  cmsStatus: string;
+  cmsCount: number;
+  categoriesStatus: string;
+  categoryCount: number;
+  productsStatus: string;
+  productCount: number;
+  cartStatus: string;
+}) {
+  return `cms:${result.cmsStatus}:${result.cmsCount}|categories:${result.categoriesStatus}:${result.categoryCount}|products:${result.productsStatus}:${result.productCount}|cart:${result.cartStatus}`;
+}
 export function summarizeStorefrontContinuationHealth(result: {
   cmsPagesStatus: string;
   cmsPages: unknown[];
@@ -202,8 +214,10 @@ export function summarizeCatalogRouteHealth(
     detailContext?: CatalogDetailLike;
   },
 ) {
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
   return {
-    ...summarizePublicStorefrontHealth(result.storefrontContext),
+    ...storefrontSummary,
     coreCategoriesStatus:
       result.browseContext?.categoriesResult.status ??
       result.detailContext?.categoriesResult.status ??
@@ -290,8 +304,10 @@ export function summarizeCmsRouteHealth(
     detailContext?: CmsDetailLike;
   },
 ) {
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
   return {
-    ...summarizePublicStorefrontHealth(result.storefrontContext),
+    ...storefrontSummary,
     corePagesStatus:
       result.browseContext?.pagesResult.status ??
       result.detailContext?.pageResult?.status ??
@@ -358,33 +374,46 @@ export function summarizeMemberDashboardHealth(
     loyaltyBusinessesResult: { status: string; data?: { items?: unknown[] } | null };
   },
 ) {
+  const addressCount = result.identityContext.addressesResult.data?.length ?? 0;
+  const orderCount = countItems(result.commerceSummaryContext.ordersResult.data);
+  const invoiceCount = countItems(result.commerceSummaryContext.invoicesResult.data);
+  const loyaltyBusinessCount = countItems(result.loyaltyBusinessesResult.data);
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
   return {
-    ...summarizePublicStorefrontHealth(result.storefrontContext),
+    ...storefrontSummary,
     profileStatus: result.identityContext.profileResult.status,
     preferencesStatus: result.identityContext.preferencesResult.status,
     customerContextStatus: result.identityContext.customerContextResult.status,
     addressesStatus: result.identityContext.addressesResult.status,
-    addressCount: result.identityContext.addressesResult.data?.length ?? 0,
+    addressCount,
     ordersStatus: result.commerceSummaryContext.ordersResult.status,
-    orderCount: countItems(result.commerceSummaryContext.ordersResult.data),
+    orderCount,
     invoicesStatus: result.commerceSummaryContext.invoicesResult.status,
-    invoiceCount: countItems(result.commerceSummaryContext.invoicesResult.data),
+    invoiceCount,
     loyaltyStatus: result.commerceSummaryContext.loyaltyOverviewResult.status,
     loyaltyBusinessesStatus: result.loyaltyBusinessesResult.status,
-    loyaltyBusinessCount: countItems(result.loyaltyBusinessesResult.data),
+    loyaltyBusinessCount,
+    memberWorkflowFootprint: `orders:${result.commerceSummaryContext.ordersResult.status}|invoices:${result.commerceSummaryContext.invoicesResult.status}|loyalty:${result.commerceSummaryContext.loyaltyOverviewResult.status}|lanes:${storefrontSummary.promotionLaneFootprint}`,
+    memberStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
   };
 }
 
 export function summarizeMemberEditorHealth(
   result: ResultWithStorefront & { identityContext: IdentityContextLike },
 ) {
+  const addressCount = result.identityContext.addressesResult.data?.length ?? 0;
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
   return {
-    ...summarizePublicStorefrontHealth(result.storefrontContext),
+    ...storefrontSummary,
     profileStatus: result.identityContext.profileResult.status,
     preferencesStatus: result.identityContext.preferencesResult.status,
     customerContextStatus: result.identityContext.customerContextResult.status,
     addressesStatus: result.identityContext.addressesResult.status,
-    addressCount: result.identityContext.addressesResult.data?.length ?? 0,
+    addressCount,
+    memberWorkflowFootprint: `profile:${result.identityContext.profileResult.status}|preferences:${result.identityContext.preferencesResult.status}|addresses:${addressCount}|lanes:${storefrontSummary.promotionLaneFootprint}`,
+    memberStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
   };
 }
 
@@ -394,12 +423,20 @@ export function summarizeMemberCollectionHealth(
     invoicesResult?: { status: string; data?: { items?: unknown[] } | null };
   },
 ) {
+  const orderCount = countItems(result.ordersResult?.data);
+  const invoiceCount = countItems(result.invoicesResult?.data);
+  const ordersStatus = result.ordersResult?.status ?? "unknown";
+  const invoicesStatus = result.invoicesResult?.status ?? "unknown";
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
   return {
-    ...summarizePublicStorefrontHealth(result.storefrontContext),
-    ordersStatus: result.ordersResult?.status ?? "unknown",
-    orderCount: countItems(result.ordersResult?.data),
-    invoicesStatus: result.invoicesResult?.status ?? "unknown",
-    invoiceCount: countItems(result.invoicesResult?.data),
+    ...storefrontSummary,
+    ordersStatus,
+    orderCount,
+    invoicesStatus,
+    invoiceCount,
+    memberWorkflowFootprint: `orders:${ordersStatus}:${orderCount}|invoices:${invoicesStatus}:${invoiceCount}|lanes:${storefrontSummary.promotionLaneFootprint}`,
+    memberStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
   };
 }
 
@@ -416,9 +453,12 @@ export function summarizeMemberPagedCollectionHealth(
 }
 
 export function summarizeMemberDetailHealth(result: MemberDetailLike) {
+  const hasData = Boolean(result.data);
+
   return {
     status: result.status,
-    hasData: Boolean(result.data),
+    hasData,
+    memberWorkflowFootprint: `detail:${result.status}|has-data:${hasData ? "yes" : "no"}`,
   };
 }
 
@@ -429,8 +469,10 @@ export function summarizeHomeDiscoveryHealth(result: {
   productsResult: { status: string; data?: { items?: unknown[] } | null };
   categorySpotlights: Array<{ status: string }>;
 }) {
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
   return {
-    ...summarizePublicStorefrontHealth(result.storefrontContext),
+    ...storefrontSummary,
     homePagesStatus: result.pagesResult.status,
     homePageCount: countItems(result.pagesResult.data),
     homeCategoriesStatus: result.categoriesResult.status,
@@ -482,8 +524,10 @@ export function summarizeCommerceRouteHealth(
     confirmationResult?: ConfirmationResultLike;
   },
 ) {
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
   return {
-    ...summarizePublicStorefrontHealth(result.storefrontContext),
+    ...storefrontSummary,
     cartModelStatus: result.model?.status ?? "unknown",
     cartItemCount: result.model?.cart?.items.length ?? 0,
     hasAnonymousCart: Boolean(result.model?.anonymousId),
@@ -535,14 +579,19 @@ export function summarizeCartPageHealth(result: {
   };
   followUpProducts: ProductPromotionSummaryLike[];
 }) {
+  const memberSessionState = result.routeContext.memberSession ? "present" : "missing";
+  const addressesStatus =
+    result.routeContext.identityContext?.addressesResult.status ?? "unauthenticated";
+  const promotionSummary = summarizePromotionLaneHealth(result.followUpProducts);
+
   return {
     cartStatus: result.routeContext.model.status,
     cartItemCount: result.routeContext.model.cart?.items.length ?? 0,
-    memberSessionState: result.routeContext.memberSession ? "present" : "missing",
-    addressesStatus:
-      result.routeContext.identityContext?.addressesResult.status ?? "unauthenticated",
+    memberSessionState,
+    addressesStatus,
     followUpProductCount: result.followUpProducts.length,
-    ...summarizePromotionLaneHealth(result.followUpProducts),
+    ...promotionSummary,
+    commerceWorkflowFootprint: `surface:cart|session:${memberSessionState}|addresses:${addressesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
   };
 }
 
@@ -555,19 +604,27 @@ export function summarizeCheckoutPageHealth(result: {
     storefrontContext: PublicStorefrontContext;
   };
 }) {
+  const memberSessionState = result.routeContext.memberSession ? "present" : "missing";
+  const addressesStatus =
+    result.routeContext.identityContext?.addressesResult.status ?? "unauthenticated";
+  const invoicesStatus =
+    result.routeContext.commerceSummaryContext?.invoicesResult.status ??
+    "unauthenticated";
+  const promotionSummary = summarizePromotionLaneHealth(
+    result.routeContext.storefrontContext.products,
+  );
+
   return {
     cartStatus: result.routeContext.model.status,
     cartItemCount: result.routeContext.model.cart?.items.length ?? 0,
-    memberSessionState: result.routeContext.memberSession ? "present" : "missing",
-    addressesStatus:
-      result.routeContext.identityContext?.addressesResult.status ?? "unauthenticated",
-    invoicesStatus:
-      result.routeContext.commerceSummaryContext?.invoicesResult.status ??
-      "unauthenticated",
+    memberSessionState,
+    addressesStatus,
+    invoicesStatus,
     invoiceCount: countItems(
       result.routeContext.commerceSummaryContext?.invoicesResult.data,
     ),
-    ...summarizePromotionLaneHealth(result.routeContext.storefrontContext.products),
+    ...promotionSummary,
+    commerceWorkflowFootprint: `surface:checkout|session:${memberSessionState}|addresses:${addressesStatus}|invoices:${invoicesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
   };
 }
 
@@ -579,18 +636,24 @@ export function summarizeConfirmationPageHealth(result: {
   };
   followUpProducts: ProductPromotionSummaryLike[];
 }) {
+  const memberSessionState = result.routeContext.memberSession ? "present" : "missing";
+  const ordersStatus =
+    result.routeContext.commerceSummaryContext?.ordersResult.status ??
+    "unauthenticated";
+  const invoicesStatus =
+    result.routeContext.commerceSummaryContext?.invoicesResult.status ??
+    "unauthenticated";
+  const promotionSummary = summarizePromotionLaneHealth(result.followUpProducts);
+
   return {
     confirmationStatus: result.routeContext.confirmationResult.status,
     lineCount: result.routeContext.confirmationResult.data?.lines?.length ?? 0,
-    memberSessionState: result.routeContext.memberSession ? "present" : "missing",
-    ordersStatus:
-      result.routeContext.commerceSummaryContext?.ordersResult.status ??
-      "unauthenticated",
-    invoicesStatus:
-      result.routeContext.commerceSummaryContext?.invoicesResult.status ??
-      "unauthenticated",
+    memberSessionState,
+    ordersStatus,
+    invoicesStatus,
     followUpProductCount: result.followUpProducts.length,
-    ...summarizePromotionLaneHealth(result.followUpProducts),
+    ...promotionSummary,
+    commerceWorkflowFootprint: `surface:confirmation|session:${memberSessionState}|orders:${ordersStatus}|invoices:${invoicesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
   };
 }
 
@@ -650,8 +713,14 @@ export function summarizeMemberIdentityHealth(result: IdentityContextLike) {
 
 export function summarizePublicAuthRouteHealth(result: {
   storefrontContext: PublicStorefrontContext;
+  route?: string;
 }) {
-  return summarizePublicStorefrontHealth(result.storefrontContext);
+  const storefrontSummary = summarizePublicStorefrontHealth(result.storefrontContext);
+
+  return {
+    ...storefrontSummary,
+    authEntryWorkflowFootprint: `route:${result.route ?? "unknown"}|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`,
+  };
 }
 
 export function summarizeAccountPageHealth(result: {
@@ -667,22 +736,30 @@ export function summarizeAccountPageHealth(result: {
   } | null;
 }) {
   if (result.memberRouteContext) {
+    const dashboardSummary = summarizeMemberDashboardHealth({
+      storefrontContext: result.memberRouteContext.storefrontContext,
+      identityContext: result.memberRouteContext.identityContext,
+      commerceSummaryContext: result.memberRouteContext.commerceSummaryContext,
+      loyaltyBusinessesResult: result.memberRouteContext.loyaltyBusinessesResult,
+    });
+
     return {
       sessionState: "present",
-      ...summarizeMemberDashboardHealth({
-        storefrontContext: result.memberRouteContext.storefrontContext,
-        identityContext: result.memberRouteContext.identityContext,
-        commerceSummaryContext: result.memberRouteContext.commerceSummaryContext,
-        loyaltyBusinessesResult: result.memberRouteContext.loyaltyBusinessesResult,
-      }),
+      ...dashboardSummary,
+      accountWorkflowFootprint: `surface:member|orders:${dashboardSummary.ordersStatus}|invoices:${dashboardSummary.invoicesStatus}|lanes:${dashboardSummary.promotionLaneFootprint}`,
     };
   }
 
+  const storefrontSummary = result.publicRouteContext
+    ? summarizePublicStorefrontHealth(result.publicRouteContext.storefrontContext)
+    : null;
+
   return {
     sessionState: "missing",
-    ...(result.publicRouteContext
-      ? summarizePublicStorefrontHealth(result.publicRouteContext.storefrontContext)
-      : {}),
+    ...(storefrontSummary ?? {}),
+    accountWorkflowFootprint: storefrontSummary
+      ? `surface:public|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`
+      : "surface:public|storefront:missing",
   };
 }
 
@@ -690,11 +767,17 @@ export function summarizeProtectedMemberEntryHealth(result: {
   session: unknown | null;
   storefrontContext: PublicStorefrontContext | null;
 }) {
+  const sessionState = result.session ? "present" : "missing";
+  const storefrontSummary = result.storefrontContext
+    ? summarizePublicStorefrontHealth(result.storefrontContext)
+    : null;
+
   return {
-    sessionState: result.session ? "present" : "missing",
-    ...(result.storefrontContext
-      ? summarizePublicStorefrontHealth(result.storefrontContext)
-      : {}),
+    sessionState,
+    ...(storefrontSummary ?? {}),
+    memberEntryWorkflowFootprint: storefrontSummary
+      ? `session:${sessionState}|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`
+      : `session:${sessionState}|storefront:missing`,
   };
 }
 
@@ -846,6 +929,30 @@ export function summarizeSeoMetadataHealth(result: {
     seoTargetFootprint: `${seoIndexability}|${result.canonicalPath}`,
   };
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

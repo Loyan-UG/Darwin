@@ -40,6 +40,8 @@ type OrderDetailPageProps = {
   products: PublicProductSummary[];
   productsStatus: string;
   cartLinkedProductSlugs: string[];
+  storefrontCart: import("@/features/cart/types").PublicCartSummary | null;
+  storefrontCartStatus: string;
 };
 
 function renderAddress(address: ParsedAddress | null, culture: string) {
@@ -100,6 +102,8 @@ export function OrderDetailPage({
   products,
   productsStatus,
   cartLinkedProductSlugs,
+  storefrontCart,
+  storefrontCartStatus,
 }: OrderDetailPageProps) {
   const copy = getMemberResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
@@ -667,6 +671,19 @@ export function OrderDetailPage({
                 promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
                 promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
                 promotionLaneCards={promotionLaneCards}
+                cartSectionTitle={copy.orderDetailStorefrontCartTitle}
+                cartSectionMessage={
+                  storefrontCart && storefrontCart.items.length > 0
+                    ? formatResource(copy.orderDetailStorefrontCartMessage, {
+                        status: storefrontCartStatus,
+                        count: storefrontCart.items.length,
+                      })
+                    : formatResource(copy.orderDetailStorefrontCartEmptyMessage, {
+                        status: storefrontCartStatus,
+                      })
+                }
+                cartSectionCartCtaLabel={copy.orderDetailStorefrontCartCta}
+                cartSectionCheckoutCtaLabel={copy.orderDetailStorefrontCheckoutCta}
               />
             </div>
 

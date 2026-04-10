@@ -69,6 +69,8 @@ export default async function OrdersRoute({ searchParams }: OrdersRouteProps) {
       visibleState={visibleState ?? "all"}
       {...storefrontProps}
       cartLinkedProductSlugs={storefrontContext.cartLinkedProductSlugs}
+      storefrontCart={storefrontContext.storefrontCart}
+      storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />
   );
 }

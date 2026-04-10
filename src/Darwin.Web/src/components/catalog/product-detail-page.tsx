@@ -3,6 +3,7 @@ import { AddToCartForm } from "@/components/cart/add-to-cart-form";
 import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-window";
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { ProductContentCompositionWindow } from "@/components/catalog/product-content-composition-window";
+import { ProductStorefrontSupportWindow } from "@/components/catalog/product-storefront-support-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { getProductSavingsPercent } from "@/features/catalog/merchandising";
 import {
@@ -791,6 +792,17 @@ export function ProductDetailPage({
           nextReviewProduct={nextReviewProduct?.product ?? null}
         />
       </div>
+
+      <ProductStorefrontSupportWindow
+        culture={culture}
+        cmsPages={cmsPages}
+        cmsPagesStatus={cmsPagesStatus ?? "unknown"}
+        categories={categories}
+        categoriesStatus={status === "ok" ? "ok" : status}
+        products={[product, ...relatedProducts]}
+        productsStatus={relatedProductsStatus ?? reviewProductsStatus ?? status}
+        cartSummary={cartSummary}
+      />
 
       {primaryCategory ? (
         <div

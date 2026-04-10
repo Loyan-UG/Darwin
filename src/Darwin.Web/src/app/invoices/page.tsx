@@ -71,6 +71,8 @@ export default async function InvoicesRoute({
       visibleState={visibleState ?? "all"}
       {...storefrontProps}
       cartLinkedProductSlugs={storefrontContext.cartLinkedProductSlugs}
+      storefrontCart={storefrontContext.storefrontCart}
+      storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />
   );
 }

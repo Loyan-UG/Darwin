@@ -973,16 +973,16 @@ export async function getHomePageParts(
     },
     {
       id: "home-promotion-lanes",
-      kind: "status-list",
+      kind: "card-grid",
       eyebrow: copy.promotionLanesEyebrow,
       title: copy.promotionLanesTitle,
       description: copy.promotionLanesDescription,
-      items: [
+      cards: [
         ...(heroOfferLane
           ? [
               {
                 id: "promotion-lane-hero",
-                label: copy.promotionLaneHeroLabel,
+                eyebrow: copy.promotionLaneHeroLabel,
                 title: heroOfferLane.anchorProduct
                   ? formatResource(copy.promotionLaneHeroTitle, {
                       product: heroOfferLane.anchorProduct.name,
@@ -1004,7 +1004,6 @@ export async function getHomePageParts(
                   savingsBand: "hero",
                 }),
                 ctaLabel: copy.promotionLaneHeroCta,
-                tone: heroOfferLane.count > 0 ? ("ok" as const) : ("warning" as const),
                 meta: formatResource(copy.promotionLaneHeroMeta, {
                   count: heroOfferLane.count,
                 }),
@@ -1015,7 +1014,7 @@ export async function getHomePageParts(
           ? [
               {
                 id: "promotion-lane-value",
-                label: copy.promotionLaneValueLabel,
+                eyebrow: copy.promotionLaneValueLabel,
                 title: valueOfferLane.anchorProduct
                   ? formatResource(copy.promotionLaneValueTitle, {
                       product: valueOfferLane.anchorProduct.name,
@@ -1037,7 +1036,6 @@ export async function getHomePageParts(
                   savingsBand: "value",
                 }),
                 ctaLabel: copy.promotionLaneValueCta,
-                tone: valueOfferLane.count > 0 ? ("ok" as const) : ("warning" as const),
                 meta: formatResource(copy.promotionLaneValueMeta, {
                   count: valueOfferLane.count,
                 }),
@@ -1048,7 +1046,7 @@ export async function getHomePageParts(
           ? [
               {
                 id: "promotion-lane-live-offers",
-                label: copy.promotionLaneLiveOffersLabel,
+                eyebrow: copy.promotionLaneLiveOffersLabel,
                 title: liveOfferLane.anchorProduct
                   ? formatResource(copy.promotionLaneLiveOffersTitle, {
                       product: liveOfferLane.anchorProduct.name,
@@ -1069,7 +1067,6 @@ export async function getHomePageParts(
                   visibleSort: "savings-desc",
                 }),
                 ctaLabel: copy.promotionLaneLiveOffersCta,
-                tone: liveOfferLane.count > 0 ? ("ok" as const) : ("warning" as const),
                 meta: formatResource(copy.promotionLaneLiveOffersMeta, {
                   count: liveOfferLane.count,
                 }),
@@ -1080,7 +1077,7 @@ export async function getHomePageParts(
           ? [
               {
                 id: "promotion-lane-base",
-                label: copy.promotionLaneBaseLabel,
+                eyebrow: copy.promotionLaneBaseLabel,
                 title: baseAssortmentLane.anchorProduct
                   ? formatResource(copy.promotionLaneBaseTitle, {
                       product: baseAssortmentLane.anchorProduct.name,
@@ -1101,8 +1098,6 @@ export async function getHomePageParts(
                   visibleSort: "base-first",
                 }),
                 ctaLabel: copy.promotionLaneBaseCta,
-                tone:
-                  baseAssortmentLane.count > 0 ? ("ok" as const) : ("warning" as const),
                 meta: formatResource(copy.promotionLaneBaseMeta, {
                   count: baseAssortmentLane.count,
                 }),

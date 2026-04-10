@@ -29,6 +29,10 @@ type MemberStorefrontWindowProps = {
   promotionLaneSectionTitle?: string;
   promotionLaneSectionMessage?: string;
   promotionLaneCards?: StorefrontCampaignCard[];
+  cartSectionTitle?: string;
+  cartSectionMessage?: string;
+  cartSectionCartCtaLabel?: string;
+  cartSectionCheckoutCtaLabel?: string;
 };
 
 export function MemberStorefrontWindow({
@@ -51,6 +55,10 @@ export function MemberStorefrontWindow({
   promotionLaneSectionTitle,
   promotionLaneSectionMessage,
   promotionLaneCards = [],
+  cartSectionTitle,
+  cartSectionMessage,
+  cartSectionCartCtaLabel,
+  cartSectionCheckoutCtaLabel,
 }: MemberStorefrontWindowProps) {
   return (
     <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -139,6 +147,38 @@ export function MemberStorefrontWindow({
           />
         </div>
       ) : null}
+      {cartSectionTitle && cartSectionMessage ? (
+        <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {cartSectionTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {cartSectionMessage}
+          </p>
+          {cartSectionCartCtaLabel || cartSectionCheckoutCtaLabel ? (
+            <div className="mt-4 flex flex-wrap gap-3">
+              {cartSectionCartCtaLabel ? (
+                <Link
+                  href={localizeHref("/cart", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {cartSectionCartCtaLabel}
+                </Link>
+              ) : null}
+              {cartSectionCheckoutCtaLabel ? (
+                <Link
+                  href={localizeHref("/checkout", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {cartSectionCheckoutCtaLabel}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
+
+

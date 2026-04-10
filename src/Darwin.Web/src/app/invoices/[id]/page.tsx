@@ -71,6 +71,8 @@ export default async function InvoiceDetailRoute({
       products={storefrontContext.products}
       productsStatus={storefrontContext.productsStatus}
       cartLinkedProductSlugs={storefrontContext.cartLinkedProductSlugs}
+      storefrontCart={storefrontContext.storefrontCart}
+      storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />
   );
 }

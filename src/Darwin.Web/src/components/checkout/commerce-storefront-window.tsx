@@ -322,6 +322,30 @@ export function CommerceStorefrontWindow({
           emptyMessage={copy.storefrontWindowCampaignEmptyMessage}
         />
       </div>
+
+      <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+          {copy.storefrontWindowCartTitle}
+        </p>
+        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+          {copy.storefrontWindowCartMessage}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            href={localizeHref("/cart", culture)}
+            className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+          >
+            {copy.storefrontWindowCartCartCta}
+          </Link>
+          <Link
+            href={localizeHref("/checkout", culture)}
+            className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+          >
+            {copy.storefrontWindowCartCheckoutCta}
+          </Link>
+        </div>
+      </div>
     </section>
   );
 }
+

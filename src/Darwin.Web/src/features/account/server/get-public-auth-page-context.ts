@@ -21,7 +21,7 @@ function createPublicAuthPageLoader(
       culture,
       route,
     }),
-    getSuccessContext: summarizePublicAuthRouteHealth,
+    getSuccessContext: (result) => summarizePublicAuthRouteHealth({ ...result, route }),
     load: async (culture: string) => {
       const routeContext = await loadRouteContext(culture);
 
@@ -70,3 +70,4 @@ export function getPublicActivationPageContext(culture: string) {
 export function getPublicPasswordPageContext(culture: string) {
   return getCachedPublicPasswordPageContext(culture);
 }
+

@@ -36,6 +36,8 @@ type OrdersPageProps = {
   products: PublicProductSummary[];
   productsStatus: string;
   cartLinkedProductSlugs: string[];
+  storefrontCart: import("@/features/cart/types").PublicCartSummary | null;
+  storefrontCartStatus: string;
 };
 
 function isAttentionOrder(order: MemberOrderSummary) {
@@ -76,6 +78,8 @@ export function OrdersPage({
   products,
   productsStatus,
   cartLinkedProductSlugs,
+  storefrontCart,
+  storefrontCartStatus,
 }: OrdersPageProps) {
   const copy = getMemberResource(culture);
   const attentionOrders = orders.filter(isAttentionOrder);
@@ -422,6 +426,19 @@ export function OrdersPage({
             promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
             promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
             promotionLaneCards={promotionLaneCards}
+            cartSectionTitle={copy.ordersStorefrontCartTitle}
+            cartSectionMessage={
+              storefrontCart && storefrontCart.items.length > 0
+                ? formatResource(copy.ordersStorefrontCartMessage, {
+                    status: storefrontCartStatus,
+                    count: storefrontCart.items.length,
+                  })
+                : formatResource(copy.ordersStorefrontCartEmptyMessage, {
+                    status: storefrontCartStatus,
+                  })
+            }
+            cartSectionCartCtaLabel={copy.ordersStorefrontCartCta}
+            cartSectionCheckoutCtaLabel={copy.ordersStorefrontCheckoutCta}
           />
         </div>
 

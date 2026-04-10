@@ -155,3 +155,71 @@ test("normalizePublicApiCachePath keeps equivalent query strings on one canonica
     "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
   );
 });
+
+test("getPublicApiCachePolicy keeps CMS search and catalog review windows on shorter path-aware cache windows", () => {
+  assert.equal(
+    getPublicApiCachePolicy(
+      "cms-pages",
+      "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=12&search=story",
+    ).revalidate,
+    120,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "cms-pages",
+      "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
+    ).revalidate,
+    120,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleState=offers&savingsBand=hero",
+    ).revalidate,
+    90,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&search=coffee",
+    ).revalidate,
+    90,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
+      "/api/v1/public/catalog/products?categorySlug=coffee&page=1&pageSize=12&culture=de-DE",
+    ).revalidate,
+    90,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=100",
+    ).revalidate,
+    90,
+  );
+});
+
+test("getPublicApiCachePolicy keeps CMS and catalog detail routes on fresher path-aware cache windows", () => {
+  assert.equal(
+    getPublicApiCachePolicy(
+      "cms-page",
+      "/api/v1/public/cms/pages/about?culture=de-DE",
+    ).revalidate,
+    180,
+  );
+
+  assert.equal(
+    getPublicApiCachePolicy(
+      "catalog-product-detail",
+      "/api/v1/public/catalog/products/apples?culture=de-DE",
+    ).revalidate,
+    120,
+  );
+});

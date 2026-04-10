@@ -36,6 +36,8 @@ type InvoicesPageProps = {
   products: PublicProductSummary[];
   productsStatus: string;
   cartLinkedProductSlugs: string[];
+  storefrontCart: import("@/features/cart/types").PublicCartSummary | null;
+  storefrontCartStatus: string;
 };
 
 function isOutstandingInvoice(invoice: MemberInvoiceSummary) {
@@ -76,6 +78,8 @@ export function InvoicesPage({
   products,
   productsStatus,
   cartLinkedProductSlugs,
+  storefrontCart,
+  storefrontCartStatus,
 }: InvoicesPageProps) {
   const copy = getMemberResource(culture);
   const outstandingInvoices = invoices.filter(isOutstandingInvoice);
@@ -418,6 +422,19 @@ export function InvoicesPage({
             promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
             promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
             promotionLaneCards={promotionLaneCards}
+            cartSectionTitle={copy.invoicesStorefrontCartTitle}
+            cartSectionMessage={
+              storefrontCart && storefrontCart.items.length > 0
+                ? formatResource(copy.invoicesStorefrontCartMessage, {
+                    status: storefrontCartStatus,
+                    count: storefrontCart.items.length,
+                  })
+                : formatResource(copy.invoicesStorefrontCartEmptyMessage, {
+                    status: storefrontCartStatus,
+                  })
+            }
+            cartSectionCartCtaLabel={copy.invoicesStorefrontCartCta}
+            cartSectionCheckoutCtaLabel={copy.invoicesStorefrontCheckoutCta}
           />
         </div>
 

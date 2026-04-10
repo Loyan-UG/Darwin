@@ -69,7 +69,11 @@ const getCachedCmsPageDetailContext = createCachedObservedLoader({
           : null,
     };
   },
-  getSuccessContext: summarizeCmsDetailCoreHealth,
+  getSuccessContext: (result) => ({
+    ...summarizeCmsDetailCoreHealth(result),
+    cmsDetailSupportWorkflowFootprint:
+      `review-seed:${result.relatedPagesSeed.status}:${result.relatedPages.length}`,
+  }),
   load: async (
     culture: string,
     slug: string,
@@ -117,3 +121,4 @@ export async function getCmsPageDetailContext(
     normalizeReviewWindow(reviewWindow),
   );
 }
+

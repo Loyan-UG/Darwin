@@ -44,6 +44,62 @@ export function getPublicApiKeyTag(key: string) {
   return `public:${key}`;
 }
 
+function hasQueryParam(path: string, key: string) {
+  const [, rawQuery] = path.split("?", 2);
+  if (!rawQuery) {
+    return false;
+  }
+
+  return new URLSearchParams(rawQuery).has(key);
+}
+
+function getNumericQueryParam(path: string, key: string) {
+  const [, rawQuery] = path.split("?", 2);
+  if (!rawQuery) {
+    return undefined;
+  }
+
+  const rawValue = new URLSearchParams(rawQuery).get(key);
+  if (!rawValue) {
+    return undefined;
+  }
+
+  const value = Number(rawValue);
+  return Number.isFinite(value) ? value : undefined;
+}
+
+function getPublicApiPathAwareRevalidate(key: string, path: string) {
+  const pageSize = getNumericQueryParam(path, "pageSize");
+
+  if (key === "cms-page") {
+    return 180;
+  }
+
+  if (key === "catalog-product-detail") {
+    return 120;
+  }
+
+  if (
+    key === "cms-pages" &&
+    (hasQueryParam(path, "search") || (pageSize !== undefined && pageSize > 24))
+  ) {
+    return 120;
+  }
+
+  if (
+    key === "catalog-products" &&
+    (hasQueryParam(path, "search") ||
+      hasQueryParam(path, "categorySlug") ||
+      hasQueryParam(path, "visibleState") ||
+      hasQueryParam(path, "savingsBand") ||
+      (pageSize !== undefined && pageSize > 24))
+  ) {
+    return 90;
+  }
+
+  return getPublicApiRevalidate(key);
+}
+
 export function normalizePublicApiCachePath(path: string) {
   const [pathname, rawQuery] = path.split("?", 2);
   if (!rawQuery) {
@@ -76,7 +132,7 @@ export function getPublicApiCacheIdentity(
   path: string,
 ): PublicApiCacheIdentity {
   const normalizedPath = normalizePublicApiCachePath(path);
-  const revalidate = getPublicApiRevalidate(key);
+  const revalidate = getPublicApiPathAwareRevalidate(key, normalizedPath);
   const keyTag = getPublicApiKeyTag(key);
   const pathTag = getPublicApiPathTag(normalizedPath);
 
@@ -134,3 +190,5 @@ export function getPublicApiRequestPlan(
     fetchCacheOptions: getPublicApiFetchCacheOptions(cacheIdentity, method),
   };
 }
+
+

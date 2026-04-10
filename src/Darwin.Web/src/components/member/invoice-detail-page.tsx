@@ -39,6 +39,8 @@ type InvoiceDetailPageProps = {
   products: PublicProductSummary[];
   productsStatus: string;
   cartLinkedProductSlugs: string[];
+  storefrontCart: import("@/features/cart/types").PublicCartSummary | null;
+  storefrontCartStatus: string;
 };
 
 export function InvoiceDetailPage({
@@ -53,6 +55,8 @@ export function InvoiceDetailPage({
   products,
   productsStatus,
   cartLinkedProductSlugs,
+  storefrontCart,
+  storefrontCartStatus,
 }: InvoiceDetailPageProps) {
   const copy = getMemberResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
@@ -438,6 +442,19 @@ export function InvoiceDetailPage({
                 promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
                 promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
                 promotionLaneCards={promotionLaneCards}
+                cartSectionTitle={copy.invoiceDetailStorefrontCartTitle}
+                cartSectionMessage={
+                  storefrontCart && storefrontCart.items.length > 0
+                    ? formatResource(copy.invoiceDetailStorefrontCartMessage, {
+                        status: storefrontCartStatus,
+                        count: storefrontCart.items.length,
+                      })
+                    : formatResource(copy.invoiceDetailStorefrontCartEmptyMessage, {
+                        status: storefrontCartStatus,
+                      })
+                }
+                cartSectionCartCtaLabel={copy.invoiceDetailStorefrontCartCta}
+                cartSectionCheckoutCtaLabel={copy.invoiceDetailStorefrontCheckoutCta}
               />
             </div>
 

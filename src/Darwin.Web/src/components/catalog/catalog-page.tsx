@@ -1322,3 +1322,4 @@ export function CatalogPage({
     </section>
   );
 }
+

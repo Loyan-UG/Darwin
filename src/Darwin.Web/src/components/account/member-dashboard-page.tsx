@@ -646,6 +646,19 @@ export function MemberDashboardPage({
               promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
               promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
               promotionLaneCards={promotionLaneCards}
+              cartSectionTitle={copy.dashboardStorefrontCartTitle}
+              cartSectionMessage={
+                hasStorefrontCart && storefrontCart
+                  ? formatResource(copy.dashboardStorefrontCartMessage, {
+                      status: storefrontCartStatus,
+                      count: storefrontCart.items.length,
+                    })
+                  : formatResource(copy.dashboardStorefrontCartEmptyMessage, {
+                      status: storefrontCartStatus,
+                    })
+              }
+              cartSectionCartCtaLabel={copy.dashboardStorefrontCartOpenCartCta}
+              cartSectionCheckoutCtaLabel={copy.dashboardStorefrontCartOpenCheckoutCta}
             />
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -800,70 +813,6 @@ export function MemberDashboardPage({
                     : copy.dashboardSecurityVerifyPhoneCta}
                 </Link>
               </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.dashboardStorefrontCartTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.dashboardStorefrontCartMessage, {
-                  status: storefrontCartStatus,
-                  count: storefrontCart?.items.length ?? 0,
-                })}
-              </p>
-              {hasStorefrontCart && storefrontCart ? (
-                <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                        {formatResource(copy.dashboardStorefrontCartSnapshotTitle, {
-                          count: storefrontCart.items.length,
-                        })}
-                      </p>
-                      <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                        {storefrontCart.couponCode
-                          ? formatResource(copy.dashboardStorefrontCartCouponMessage, {
-                              coupon: storefrontCart.couponCode,
-                            })
-                          : copy.dashboardStorefrontCartNoCouponMessage}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                        {copy.dashboardStorefrontCartGrossLabel}
-                      </p>
-                      <p className="mt-2 text-xl font-semibold text-[var(--color-text-primary)]">
-                        {formatMoney(
-                          storefrontCart.grandTotalGrossMinor,
-                          storefrontCart.currency,
-                          culture,
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <Link
-                      href={localizeHref("/cart", culture)}
-                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                    >
-                      {copy.dashboardStorefrontCartOpenCartCta}
-                    </Link>
-                    <Link
-                      href={localizeHref("/checkout", culture)}
-                      className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                    >
-                      {copy.dashboardStorefrontCartOpenCheckoutCta}
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {formatResource(copy.dashboardStorefrontCartEmptyMessage, {
-                    status: storefrontCartStatus,
-                  })}
-                </p>
-              )}
             </div>
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -1307,3 +1256,5 @@ export function MemberDashboardPage({
     </section>
   );
 }
+
+

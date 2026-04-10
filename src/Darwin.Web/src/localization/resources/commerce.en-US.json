@@ -606,6 +606,10 @@
   "storefrontWindowPromotionLaneCta": "Open promotion lane",
   "storefrontWindowPromotionLaneMeta": "{count} products in lane.",
   "storefrontWindowCampaignEmptyMessage": "No stronger browse campaigns are currently derivable from this commerce route.",
+  "storefrontWindowCartTitle": "Cart and checkout continuity",
+  "storefrontWindowCartMessage": "Commerce routes should keep cart review and checkout continuation explicit so conversion can resume without rebuilding the current storefront path.",
+  "storefrontWindowCartCartCta": "Open cart",
+  "storefrontWindowCartCheckoutCta": "Open checkout",
   "confirmationStorefrontWindowTitle": "After-purchase storefront opportunity",
   "confirmationStorefrontWindowMessage": "Confirmation now also keeps live content, browse, and product opportunities visible so the shopper can continue into the next commercial step after the order lands.",
   "confirmationCompositionJourneyTitle": "After-purchase journey",
@@ -666,3 +670,4 @@
   "confirmationCompositionRouteMapCommerceCta": "Open commerce route",
   "confirmationCompositionRouteMapCommerceMeta": "{count} visible product opportunities"
 }
+
