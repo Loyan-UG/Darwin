@@ -589,13 +589,18 @@ export function summarizeCommerceRouteHealth(
 export function summarizeConfirmationResultHealth(
   result: ConfirmationResultLike,
 ) {
+  const lineCount = result.data?.lines?.length ?? 0;
+  const paymentCount = result.data?.payments?.length ?? 0;
+  const paidPaymentCount =
+    result.data?.payments?.filter((payment) => payment.status === "Paid")
+      .length ?? 0;
+
   return {
     status: result.status,
-    lineCount: result.data?.lines?.length ?? 0,
-    paymentCount: result.data?.payments?.length ?? 0,
-    paidPaymentCount:
-      result.data?.payments?.filter((payment) => payment.status === "Paid")
-        .length ?? 0,
+    lineCount,
+    paymentCount,
+    paidPaymentCount,
+    confirmationWorkflowFootprint: `status:${result.status}|lines:${lineCount}|payments:${paymentCount}|paid:${paidPaymentCount}`,
   };
 }
 
@@ -825,12 +830,16 @@ export function summarizeProtectedMemberEntryHealth(result: {
 export function summarizeMemberCommerceSummaryHealth(
   result: CommerceSummaryLike,
 ) {
+  const orderCount = countItems(result.ordersResult.data);
+  const invoiceCount = countItems(result.invoicesResult.data);
+
   return {
     ordersStatus: result.ordersResult.status,
-    orderCount: countItems(result.ordersResult.data),
+    orderCount,
     invoicesStatus: result.invoicesResult.status,
-    invoiceCount: countItems(result.invoicesResult.data),
+    invoiceCount,
     loyaltyStatus: result.loyaltyOverviewResult.status,
+    memberCommerceSummaryFootprint: `orders:${result.ordersResult.status}:${orderCount}|invoices:${result.invoicesResult.status}:${invoiceCount}|loyalty:${result.loyaltyOverviewResult.status}`,
   };
 }
 
@@ -970,6 +979,12 @@ export function summarizeSeoMetadataHealth(result: {
     seoTargetFootprint: `${seoIndexability}|${result.canonicalPath}`,
   };
 }
+
+
+
+
+
+
 
 
 

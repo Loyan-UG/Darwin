@@ -16,6 +16,7 @@ import { PublicAuthCompositionWindow } from "@/components/account/public-auth-co
 import { CartContentCompositionWindow } from "@/components/cart/cart-content-composition-window";
 import { CartPage } from "@/components/cart/cart-page";
 import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-window";
+import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { CatalogPage } from "@/components/catalog/catalog-page";
 import { CatalogContentCompositionWindow } from "@/components/catalog/catalog-content-composition-window";
 import { ProductContentCompositionWindow } from "@/components/catalog/product-content-composition-window";
@@ -23,6 +24,7 @@ import { ProductDetailPage } from "@/components/catalog/product-detail-page";
 import { CommerceAuthHandoff } from "@/components/checkout/commerce-auth-handoff";
 import { CheckoutContentCompositionWindow } from "@/components/checkout/checkout-content-composition-window";
 import { CheckoutPage } from "@/components/checkout/checkout-page";
+import { MockCheckoutPage } from "@/components/checkout/mock-checkout-page";
 import { ConfirmationContentCompositionWindow } from "@/components/checkout/confirmation-content-composition-window";
 import { CommerceStorefrontWindow } from "@/components/checkout/commerce-storefront-window";
 import { OrderConfirmationPage } from "@/components/checkout/order-confirmation-page";
@@ -31,6 +33,7 @@ import { CmsIndexCompositionWindow } from "@/components/cms/cms-index-compositio
 import { CmsPagesIndex } from "@/components/cms/cms-pages-index";
 import { CmsPageDetail } from "@/components/cms/cms-page-detail";
 import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
+import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { CmsStorefrontSupportWindow } from "@/components/cms/cms-storefront-support-window";
 import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { InvoiceDetailPage } from "@/components/member/invoice-detail-page";
@@ -1915,5 +1918,80 @@ test("CommerceAuthHandoff renders a promotion-lane board for guest cart and chec
 
 
 
+
+
+
+
+
+
+test("MockCheckoutPage renders explicit success, cancellation, and failure handoff actions", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(MockCheckoutPage, {
+      culture: "en-US",
+      orderId: "order-1",
+      paymentId: "payment-1",
+      provider: "DarwinCheckout",
+      sessionToken: "session-1",
+      returnUrl: "http://localhost:3000/checkout/orders/order-1/confirmation",
+      cancelUrl: "http://localhost:3000/checkout/orders/order-1/confirmation",
+      cancelActionUrl:
+        "http://localhost:3000/checkout/orders/order-1/confirmation/finalize?providerReference=session-1&outcome=Cancelled&cancelled=true",
+      successUrl:
+        "http://localhost:3000/checkout/orders/order-1/confirmation/finalize?providerReference=session-1&outcome=Succeeded",
+      failureUrl:
+        "http://localhost:3000/checkout/orders/order-1/confirmation/finalize?providerReference=session-1&outcome=Failed&failureReason=Mock%20checkout%20marked%20the%20payment%20as%20failed.",
+      title: "Local hosted checkout",
+      description:
+        "This development route simulates the PSP handoff for storefront checkout and routes back into confirmation reconciliation.",
+    }),
+  );
+
+  assert.match(html, /Mock hosted checkout/);
+  assert.match(html, /Mark payment as succeeded/);
+  assert.match(html, /Mark payment as cancelled/);
+  assert.match(html, /Mark payment as failed/);
+  assert.match(html, /confirmation\/finalize\?providerReference=session-1&amp;outcome=Succeeded/);
+  assert.match(
+    html,
+    /confirmation\/finalize\?providerReference=session-1&amp;outcome=Cancelled&amp;cancelled=true/,
+  );
+  assert.match(html, /confirmation\/finalize\?providerReference=session-1&amp;outcome=Failed/);
+});
+
+test("CatalogContinuationRail renders feature-level wrapper links for home, catalog, CMS, and account follow-up", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(CatalogContinuationRail, {
+      culture: "en-US",
+      title: "Catalog continuation",
+      description: "Stay inside the storefront journey.",
+      catalogHref: "/catalog?visibleState=offers",
+      catalogCtaLabel: "Resume catalog",
+    }),
+  );
+
+  assert.match(html, /Catalog continuation/);
+  assert.match(html, /Stay inside the storefront journey\./);
+  assert.match(html, /href="\/"/);
+  assert.match(html, /href="\/catalog\?visibleState=offers"/);
+  assert.match(html, /href="\/cms"/);
+  assert.match(html, /href="\/account"/);
+  assert.match(html, /Resume catalog/);
+});
+
+test("CmsContinuationRail renders feature-level wrapper links for home, catalog, and account follow-up", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(CmsContinuationRail, {
+      culture: "en-US",
+      title: "CMS continuation",
+      description: "Keep content recovery and storefront follow-up explicit.",
+    }),
+  );
+
+  assert.match(html, /CMS continuation/);
+  assert.match(html, /Keep content recovery and storefront follow-up explicit\./);
+  assert.match(html, /href="\/"/);
+  assert.match(html, /href="\/catalog"/);
+  assert.match(html, /href="\/account"/);
+});
 
 

@@ -137,6 +137,7 @@ test("summarizePublicStorefrontHealth exposes canonical storefront statuses and 
     {
       menuStatus: "ok",
       menuItemCount: 3,
+      shellMenuFootprint: "status:ok|items:3",
     },
   );
 
@@ -156,6 +157,7 @@ test("summarizePublicStorefrontHealth exposes canonical storefront statuses and 
       primaryNavigationCount: 2,
       utilityLinkCount: 1,
       footerGroupCount: 3,
+      shellModelFootprint: "culture:de-DE|source:cms|menu:ok|primary:2|utility:1|footer:3",
     },
   );
 });
@@ -532,6 +534,7 @@ test("member and home health helpers summarize route readiness for diagnostics",
       spotlightCount: 2,
       degradedSpotlightCount: 1,
       spotlightProductCount: 1,
+      homeCategorySpotlightsFootprint: "spotlights:2|degraded:1|products:1",
     },
   );
 
@@ -849,14 +852,21 @@ test("member and home health helpers summarize route readiness for diagnostics",
       commerceStorefrontSupportFootprint: "products:2|orders:ok|invoices:degraded",    },
   );
 
-  assert.equal(
+  assert.deepEqual(
     summarizeStorefrontShoppingHealth({
       anonymousCartId: "cart-1",
       cartResult: { status: "ok", data: { items: [1, 2, 3] } },
       cartSnapshots: [{ id: 1 }],
       cartLinkedProductSlugs: ["prod"],
-    }).liveCartItemCount,
-    3,
+    }),
+    {
+      anonymousCartState: "present",
+      liveCartStatus: "ok",
+      liveCartItemCount: 3,
+      snapshotCount: 1,
+      cartLinkedCount: 1,
+      storefrontShoppingFootprint: "anonymous:present|live:ok:3|snapshots:1|linked:1",
+    },
   );
 
   assert.deepEqual(
@@ -873,17 +883,25 @@ test("member and home health helpers summarize route readiness for diagnostics",
       cartStatus: "ok",
       cartItemCount: 2,
       hasCoupon: true,
+      cartModelFootprint: "anonymous:present|status:ok|items:2|coupon:yes",
     },
   );
 
-  assert.equal(
+  assert.deepEqual(
     summarizeMemberIdentityHealth({
       profileResult: { status: "ok" },
       preferencesResult: { status: "degraded" },
       customerContextResult: { status: "ok" },
       addressesResult: { status: "ok", data: [{ id: 1 }] },
-    }).preferencesStatus,
-    "degraded",
+    }),
+    {
+      profileStatus: "ok",
+      preferencesStatus: "degraded",
+      customerContextStatus: "ok",
+      addressesStatus: "ok",
+      addressCount: 1,
+      memberIdentityFootprint: "profile:ok|preferences:degraded|customer:ok|addresses:ok:1",
+    },
   );
 
   assert.deepEqual(
@@ -1173,6 +1191,8 @@ test("localized discovery health helpers summarize alternates and sitemap invent
     },
   );
 });
+
+
 
 
 

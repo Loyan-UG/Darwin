@@ -668,6 +668,26 @@
   "confirmationCompositionRouteMapCommerceDescription": "Die staerkste sichtbare After-Purchase-Chance ist aktuell fuer {price} verfuegbar.",
   "confirmationCompositionRouteMapCommerceFallbackDescription": "Ein live Katalog-Pfad steht bereit, wenn der Shopper ueber die aktuelle Bestellung hinaus weitermachen will.",
   "confirmationCompositionRouteMapCommerceCta": "Commerce-Route oeffnen",
-  "confirmationCompositionRouteMapCommerceMeta": "{count} sichtbare Produktchancen"
+  "confirmationCompositionRouteMapCommerceMeta": "{count} sichtbare Produktchancen",
+  "mockCheckoutEyebrow": "Mock Hosted Checkout",
+  "mockCheckoutSummaryTitle": "Handoff-Zusammenfassung",
+  "mockCheckoutOrderIdLabel": "Bestell-ID",
+  "mockCheckoutPaymentIdLabel": "Payment-ID",
+  "mockCheckoutProviderLabel": "Provider",
+  "mockCheckoutSessionTokenLabel": "Session-Token",
+  "mockCheckoutReturnLabel": "Return-URL",
+  "mockCheckoutCancelLabel": "Cancel-URL",
+  "mockCheckoutUrlUnavailable": "Nicht verfuegbar",
+  "mockCheckoutSuccessLabel": "Erfolgspfad",
+  "mockCheckoutSuccessCta": "Zahlung als erfolgreich markieren",
+  "mockCheckoutSuccessMessage": "Nutze diesen Pfad, um den Shopper mit einem erfolgreichen Hosted-Checkout-Ausgang durch die Confirmation-Finalize-Route zurueckzufuehren.",
+  "mockCheckoutCancelActionLabel": "Abbruchpfad",
+  "mockCheckoutCancelCta": "Zahlung als abgebrochen markieren",
+  "mockCheckoutCancelMessage": "Nutze diesen Pfad, um den Shopper durch den Abbruch-Handoff zurueckzufuehren und die Bestellung fuer einen Retry sichtbar zu halten.",
+  "mockCheckoutFailureLabel": "Fehlerpfad",
+  "mockCheckoutFailureCta": "Zahlung als fehlgeschlagen markieren",
+  "mockCheckoutFailureMessage": "Nutze diesen Pfad, um einen Provider-Fehler zu simulieren und den Recovery-Flow auf der Bestaetigungsseite explizit zu halten.",
+  "mockCheckoutNotesTitle": "Hinweis fuer lokale Tests",
+  "mockCheckoutNotesMessage": "Diese Route existiert nur fuer lokale Storefront-Checkout-Tests, wenn Darwin.WebApi Payment-Intents an die lokale Web-App statt an einen externen PSP uebergibt."
 }
 

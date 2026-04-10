@@ -247,3 +247,24 @@ test("getHomePageParts keeps home promotion lanes on a real merchandising card b
   assert.ok("items" in readiness);
   assert.equal(readiness.items.length, 2);
 });
+
+test("getHomePageParts keeps the home recovery rail explicit when discovery contracts degrade", async () => {
+  const degradedContext = createHomeDiscoveryContext();
+  degradedContext.pagesResult = { status: "error", message: "cms degraded" };
+  degradedContext.productsResult = { status: "error", message: "catalog degraded" };
+  degradedContext.categoriesResult = { status: "error", message: "categories degraded" };
+
+  const parts = await getHomePageParts("en-US", null, degradedContext);
+  const recoveryRail = parts.find((part) => part.id === "home-recovery-rail");
+
+  assert.ok(recoveryRail);
+  assert.equal(recoveryRail.kind, "spotlight-board");
+  assert.ok("cards" in recoveryRail);
+  assert.equal(recoveryRail.cards.length, 3);
+  assert.equal(recoveryRail.cards[0].href, "/cms");
+  assert.equal(recoveryRail.cards[1].href, "/catalog");
+  assert.equal(recoveryRail.cards[2].href, "/account");
+  assert.match(recoveryRail.cards[0].description, /degraded/i);
+  assert.match(recoveryRail.cards[1].description, /Catalog recovery currently depends/i);
+});
+

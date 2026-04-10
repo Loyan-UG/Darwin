@@ -668,6 +668,26 @@
   "confirmationCompositionRouteMapCommerceDescription": "The strongest visible after-purchase offer is currently available for {price}.",
   "confirmationCompositionRouteMapCommerceFallbackDescription": "A live catalog path is ready when the shopper wants to continue beyond the current order.",
   "confirmationCompositionRouteMapCommerceCta": "Open commerce route",
-  "confirmationCompositionRouteMapCommerceMeta": "{count} visible product opportunities"
+  "confirmationCompositionRouteMapCommerceMeta": "{count} visible product opportunities",
+  "mockCheckoutEyebrow": "Mock hosted checkout",
+  "mockCheckoutSummaryTitle": "Handoff summary",
+  "mockCheckoutOrderIdLabel": "Order ID",
+  "mockCheckoutPaymentIdLabel": "Payment ID",
+  "mockCheckoutProviderLabel": "Provider",
+  "mockCheckoutSessionTokenLabel": "Session token",
+  "mockCheckoutReturnLabel": "Return URL",
+  "mockCheckoutCancelLabel": "Cancel URL",
+  "mockCheckoutUrlUnavailable": "Unavailable",
+  "mockCheckoutSuccessLabel": "Success path",
+  "mockCheckoutSuccessCta": "Mark payment as succeeded",
+  "mockCheckoutSuccessMessage": "Use this path to send the shopper back through the confirmation finalize route with a successful hosted-checkout outcome.",
+  "mockCheckoutCancelActionLabel": "Cancellation path",
+  "mockCheckoutCancelCta": "Mark payment as cancelled",
+  "mockCheckoutCancelMessage": "Use this path to send the shopper back through the cancellation handoff and keep the order visible for retry.",
+  "mockCheckoutFailureLabel": "Failure path",
+  "mockCheckoutFailureCta": "Mark payment as failed",
+  "mockCheckoutFailureMessage": "Use this path to simulate a provider-side payment failure and keep the confirmation recovery flow explicit.",
+  "mockCheckoutNotesTitle": "Local test note",
+  "mockCheckoutNotesMessage": "This route exists only to complete local storefront checkout testing when Darwin.WebApi is configured to hand payment intents off to the local web app instead of an external PSP."
 }
 
