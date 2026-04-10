@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AddToCartForm } from "@/components/cart/add-to-cart-form";
 import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-window";
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
+import { ProductContentCompositionWindow } from "@/components/catalog/product-content-composition-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { getProductSavingsPercent } from "@/features/catalog/merchandising";
 import {
@@ -186,6 +187,13 @@ export function ProductDetailPage({
     currentReviewIndex >= 0 && currentReviewIndex < reviewProducts.length - 1
       ? reviewProducts[currentReviewIndex + 1]
       : null;
+  const sectionLinks = [
+    { href: "#product-overview", label: copy.productRouteSummaryTitle },
+    { href: "#product-readiness", label: copy.productReadinessTitle },
+    { href: "#product-review", label: copy.productReviewQueueTitle },
+    { href: "#product-composition", label: copy.productCrossSurfaceGridTitle },
+    { href: "#product-related", label: copy.relatedProductsTitle },
+  ];
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
@@ -223,7 +231,26 @@ export function ProductDetailPage({
         </span>
       </nav>
 
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <div className="sticky top-24 z-10 -mt-2">
+        <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+          <div className="flex min-w-max flex-wrap gap-2">
+            {sectionLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="product-overview"
+        className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]"
+      >
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
           {copy.productRouteSummaryTitle}
         </p>
@@ -325,7 +352,10 @@ export function ProductDetailPage({
             ) : null}
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+          <div
+            id="product-readiness"
+            className="mt-6 scroll-mt-28 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
+          >
             <p className="font-semibold text-[var(--color-text-primary)]">
               {copy.merchandisingSnapshotTitle}
             </p>
@@ -457,7 +487,10 @@ export function ProductDetailPage({
             </div>
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+          <div
+            id="product-review"
+            className="mt-6 scroll-mt-28 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
+          >
             <p className="font-semibold text-[var(--color-text-primary)]">
               {copy.productNextReviewTargetTitle}
             </p>
@@ -735,14 +768,35 @@ export function ProductDetailPage({
         </div>
       </div>
 
-      <CatalogCampaignWindow
-        culture={culture}
-        categories={categories}
-        products={[product, ...relatedProducts]}
-      />
+      <div id="product-composition" className="scroll-mt-28">
+        <CatalogCampaignWindow
+          culture={culture}
+          categories={categories}
+          products={[product, ...relatedProducts]}
+        />
+      </div>
+
+      <div className="scroll-mt-28">
+        <ProductContentCompositionWindow
+          culture={culture}
+          product={product}
+          primaryCategory={primaryCategory}
+          reviewProducts={reviewProducts}
+          relatedProducts={relatedProducts}
+          cartSummary={cartSummary}
+          reviewCatalogPath={reviewCatalogPath}
+          reviewPrimaryLabel={
+            hasOffer ? copy.productReviewWindowOffersCta : copy.productReviewWindowBaseCta
+          }
+          nextReviewProduct={nextReviewProduct?.product ?? null}
+        />
+      </div>
 
       {primaryCategory ? (
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+        <div
+          id="product-related"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8"
+        >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">

@@ -91,5 +91,11 @@ test("summarizeStorefrontContinuationHealth exposes canonical continuation count
     categoryCount: 1,
     productsStatus: "ok",
     productCount: 3,
+    heroOfferCount: 0,
+    valueOfferCount: 0,
+    liveOfferCount: 0,
+    baseAssortmentCount: 3,
+    promotionLaneFootprint: "hero:0|value:0|live:0|base:3",
   });
 });
+

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { AccountStorefrontWindow } from "@/components/account/account-storefront-window";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
@@ -97,13 +98,32 @@ export function ProfilePage({
   const hasLocale = Boolean(profile?.locale?.trim());
   const hasCurrency = Boolean(profile?.currency?.trim());
   const hasTimezone = Boolean(profile?.timezone?.trim());
+  const sectionLinks = [
+    { href: "#profile-form", label: copy.profileEditTitle },
+    { href: "#profile-readiness", label: copy.profileReadinessTitle },
+    { href: "#profile-composition", label: copy.accountCompositionJourneyProfileTitle },
+    { href: "#profile-verification", label: copy.phoneVerificationTitle },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-col gap-6">
+        <div className="sticky top-24 z-10 -mt-2">
+          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex min-w-max flex-wrap gap-2">
+              {sectionLinks.map((link) => (
+                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
       <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <form
           action={updateMemberProfileAction}
-          className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
+          id="profile-form"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
         >
           <nav
             aria-label={copy.memberBreadcrumbLabel}
@@ -251,7 +271,7 @@ export function ProfilePage({
             </p>
           </aside>
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <aside id="profile-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.profileReadinessTitle}
             </p>
@@ -334,6 +354,49 @@ export function ProfilePage({
             includeLoyalty={false}
           />
 
+          <div id="profile-composition" className="scroll-mt-28">
+            <AccountContentCompositionWindow
+              culture={culture}
+              routeCard={{
+                label: copy.accountCompositionJourneyCurrentLabel,
+                title: copy.accountCompositionJourneyProfileTitle,
+                description: formatResource(copy.accountCompositionJourneyProfileDescription, {
+                  status,
+                }),
+                href: "/account/profile",
+                ctaLabel: copy.accountCompositionJourneyCurrentCta,
+              }}
+              nextCard={{
+                label: copy.accountCompositionJourneyNextLabel,
+                title: copy.accountCompositionJourneyPreferencesTitle,
+                description: copy.accountCompositionJourneyPreferencesDescription,
+                href: "/account/preferences",
+                ctaLabel: copy.accountCompositionJourneyPreferencesCta,
+              }}
+              routeMapItems={[
+                {
+                  label: copy.accountCompositionRouteMapProfileLabel,
+                  title: copy.accountCompositionRouteMapProfileTitle,
+                  description: formatResource(copy.accountCompositionRouteMapProfileDescription, {
+                    status,
+                  }),
+                  href: "/account/profile",
+                  ctaLabel: copy.accountCompositionRouteMapProfileCta,
+                },
+                {
+                  label: copy.accountCompositionRouteMapNextLabel,
+                  title: copy.accountCompositionRouteMapPreferencesTitle,
+                  description: copy.accountCompositionRouteMapPreferencesDescription,
+                  href: "/account/preferences",
+                  ctaLabel: copy.accountCompositionRouteMapPreferencesCta,
+                },
+              ]}
+              cmsPages={cmsPages}
+              categories={categories}
+              products={products}
+            />
+          </div>
+
           <AccountStorefrontWindow
             culture={culture}
             cmsPages={cmsPages}
@@ -344,7 +407,7 @@ export function ProfilePage({
             productsStatus={productsStatus}
           />
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <aside id="profile-verification" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.phoneVerificationEyebrow}
             </p>
@@ -444,6 +507,7 @@ export function ProfilePage({
             )}
           </aside>
         </div>
+      </div>
       </div>
     </section>
   );

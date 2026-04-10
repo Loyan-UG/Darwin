@@ -1,9 +1,108 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  getPublicApiCacheIdentity,
   getPublicApiCachePolicy,
+  getPublicApiFetchCacheOptions,
+  getPublicApiKeyTag,
+  getPublicApiPathTag,
+  getPublicApiRequestPlan,
+  getPublicApiRevalidate,
   normalizePublicApiCachePath,
 } from "@/lib/public-api-cache";
+
+test("public API cache helpers keep revalidate windows and tag identity explicit", () => {
+  assert.equal(getPublicApiRevalidate("cms-menu"), 900);
+  assert.equal(getPublicApiRevalidate("catalog-products"), 120);
+  assert.equal(getPublicApiRevalidate("unknown-feed"), 60);
+  assert.equal(getPublicApiKeyTag("catalog-products"), "public:catalog-products");
+
+  assert.equal(
+    getPublicApiPathTag(
+      "/api/v1/public/catalog/products?pageSize=12&page=1&culture=de-DE",
+    ),
+    "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+  );
+});
+
+test("getPublicApiCacheIdentity keeps normalized paths and canonical tags together", () => {
+  assert.deepEqual(
+    getPublicApiCacheIdentity(
+      "catalog-products",
+      "/api/v1/public/catalog/products?pageSize=12&page=1&culture=de-DE",
+    ),
+    {
+      normalizedPath:
+        "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+      revalidate: 120,
+      keyTag: "public:catalog-products",
+      pathTag:
+        "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+      tags: [
+        "public:catalog-products",
+        "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+      ],
+    },
+  );
+});
+
+test("getPublicApiFetchCacheOptions keeps GET cacheable and mutations no-store", () => {
+  const identity = getPublicApiCacheIdentity(
+    "catalog-products",
+    "/api/v1/public/catalog/products?pageSize=12&page=1&culture=de-DE",
+  );
+
+  assert.deepEqual(getPublicApiFetchCacheOptions(identity), {
+    cache: "force-cache",
+    next: {
+      revalidate: 120,
+      tags: [
+        "public:catalog-products",
+        "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+      ],
+    },
+  });
+
+  assert.deepEqual(getPublicApiFetchCacheOptions(identity, "POST"), {
+    cache: "no-store",
+  });
+});
+
+test("getPublicApiRequestPlan keeps request URL, normalized path, and cache mode together", () => {
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?pageSize=12&page=1&culture=de-DE",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+        revalidate: 120,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "force-cache",
+        next: {
+          revalidate: 120,
+          tags: [
+            "public:catalog-products",
+            "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+          ],
+        },
+      },
+    },
+  );
+});
 
 test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS and category feeds", () => {
   assert.deepEqual(

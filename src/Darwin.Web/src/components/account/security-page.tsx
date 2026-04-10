@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { AccountStorefrontWindow } from "@/components/account/account-storefront-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
@@ -11,7 +12,7 @@ import type {
 import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberCustomerProfile } from "@/features/member-portal/types";
 import type { MemberSession } from "@/features/member-session/types";
-import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
 import { localizeHref } from "@/lib/locale-routing";
 import { parseUtcTimestamp } from "@/lib/time";
@@ -70,13 +71,32 @@ export function SecurityPage({
         : !hasValidSessionExpiry
           ? copy.dashboardSecurityStateRefreshSoon
           : copy.dashboardSecurityStateHealthy;
+  const sectionLinks = [
+    { href: "#security-form", label: copy.securityEditTitle },
+    { href: "#security-state", label: copy.securityCurrentStateTitle },
+    { href: "#security-summary", label: copy.memberRouteSummaryTitle },
+    { href: "#security-composition", label: copy.accountCompositionJourneySecurityTitle },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-col gap-6">
+        <div className="sticky top-24 z-10 -mt-2">
+          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex min-w-max flex-wrap gap-2">
+              {sectionLinks.map((link) => (
+                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
       <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <form
           action={changeMemberPasswordAction}
-          className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
+          id="security-form"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
         >
           <nav
             aria-label={copy.memberBreadcrumbLabel}
@@ -177,7 +197,7 @@ export function SecurityPage({
             {copy.securitySaveCta}
           </button>
 
-          <div className="mt-8 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+          <div id="security-state" className="mt-8 scroll-mt-28 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
               {copy.securityCurrentStateTitle}
             </p>
@@ -231,7 +251,7 @@ export function SecurityPage({
         <div className="flex flex-col gap-6">
           <MemberPortalNav culture={culture} activePath="/account/security" />
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <aside id="security-summary" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.memberRouteSummaryTitle}
             </p>
@@ -264,6 +284,49 @@ export function SecurityPage({
             includeLoyalty={false}
           />
 
+          <div id="security-composition" className="scroll-mt-28">
+            <AccountContentCompositionWindow
+              culture={culture}
+              routeCard={{
+                label: copy.accountCompositionJourneyCurrentLabel,
+                title: copy.accountCompositionJourneySecurityTitle,
+                description: formatResource(copy.accountCompositionJourneySecurityDescription, {
+                  profileStatus,
+                }),
+                href: "/account/security",
+                ctaLabel: copy.accountCompositionJourneyCurrentCta,
+              }}
+              nextCard={{
+                label: copy.accountCompositionJourneyNextLabel,
+                title: copy.accountCompositionJourneyProfileTitle,
+                description: copy.accountCompositionJourneySecurityNextDescription,
+                href: "/account/profile",
+                ctaLabel: copy.accountCompositionJourneySecurityNextCta,
+              }}
+              routeMapItems={[
+                {
+                  label: copy.accountCompositionRouteMapSecurityLabel,
+                  title: copy.accountCompositionRouteMapSecurityTitle,
+                  description: copy.accountCompositionRouteMapSecurityDescription,
+                  href: "/account/security",
+                  ctaLabel: copy.accountCompositionRouteMapSecurityCta,
+                },
+                {
+                  label: copy.accountCompositionRouteMapNextLabel,
+                  title: copy.accountCompositionRouteMapProfileTitle,
+                  description: formatResource(copy.accountCompositionRouteMapSecurityNextDescription, {
+                    profileStatus,
+                  }),
+                  href: "/account/profile",
+                  ctaLabel: copy.accountCompositionRouteMapProfileCta,
+                },
+              ]}
+              cmsPages={cmsPages}
+              categories={categories}
+              products={products}
+            />
+          </div>
+
           <AccountStorefrontWindow
             culture={culture}
             cmsPages={cmsPages}
@@ -274,6 +337,7 @@ export function SecurityPage({
             productsStatus={productsStatus}
           />
         </div>
+      </div>
       </div>
     </section>
   );

@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
 import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
 import type {
   PublicCategorySummary,
@@ -143,11 +145,30 @@ export function InvoiceDetailPage({
     prefix: "invoice-detail",
     fallbackDescription: copy.invoiceDetailStorefrontCatalogFallbackDescription,
   });
+  const promotionLaneCards = buildMemberPromotionLaneCards(rankedProducts, culture);
+  const sectionLinks = [
+    { href: "#invoice-detail-overview", label: copy.invoiceDetailEyebrow },
+    { href: "#invoice-detail-lines", label: copy.invoiceLinesTitle },
+    { href: "#invoice-detail-readiness", label: copy.invoiceDetailReadinessTitle },
+    { href: "#invoice-detail-storefront", label: copy.invoiceDetailStorefrontWindowTitle },
+    { href: "#invoice-detail-actions", label: copy.actionsTitle },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div className="sticky top-24 z-10 -mt-2">
+          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex min-w-max flex-wrap gap-2">
+              {sectionLinks.map((link) => (
+                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div id="invoice-detail-overview" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <nav
             aria-label={copy.memberBreadcrumbLabel}
             className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
@@ -182,7 +203,7 @@ export function InvoiceDetailPage({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-6">
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div id="invoice-detail-lines" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.invoiceLinesTitle}</p>
               <div className="mt-5 flex flex-col gap-4">
                 {invoice.lines.map((line) => (
@@ -236,7 +257,7 @@ export function InvoiceDetailPage({
           <div className="flex flex-col gap-5">
             <MemberPortalNav culture={culture} activePath="/invoices" />
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside id="invoice-detail-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.invoiceDetailReadinessTitle}
               </p>
@@ -284,6 +305,49 @@ export function InvoiceDetailPage({
                 </article>
               </div>
             </aside>
+
+            <AccountContentCompositionWindow
+              culture={culture}
+              routeCard={{
+                label: copy.accountCompositionJourneyCurrentLabel,
+                title: invoice.orderNumber ?? invoice.id,
+                description: formatResource(copy.invoiceDetailReadinessMessage, {
+                  balance: formatMoney(invoice.balanceMinor, invoice.currency, culture),
+                }),
+                href: `/invoices/${invoice.id}`,
+                ctaLabel: copy.accountCompositionJourneyCurrentCta,
+              }}
+              nextCard={{
+                label: copy.accountCompositionJourneyNextLabel,
+                title: invoice.orderId ? copy.ordersTitle : copy.invoicesTitle,
+                description: invoice.orderId
+                  ? copy.invoiceDetailPortalNote
+                  : copy.ordersPortalNote,
+                href: invoice.orderId ? `/orders/${invoice.orderId}` : "/orders",
+                ctaLabel: invoice.orderId
+                  ? copy.openLinkedOrderCta
+                  : copy.accountCompositionJourneySecurityNextCta,
+              }}
+              routeMapItems={[
+                {
+                  label: copy.accountCompositionRouteMapProfileLabel,
+                  title: copy.invoicesTitle,
+                  description: copy.invoicesPortalNote,
+                  href: "/invoices",
+                  ctaLabel: copy.backToInvoicesCta,
+                },
+                {
+                  label: copy.accountCompositionRouteMapNextLabel,
+                  title: copy.invoiceDetailTimelineTitle,
+                  description: copy.invoiceDetailTimelineMessage,
+                  href: `/invoices/${invoice.id}`,
+                  ctaLabel: copy.accountCompositionRouteMapProfileCta,
+                },
+              ]}
+              cmsPages={cmsPages}
+              categories={categories}
+              products={products}
+            />
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
@@ -336,43 +400,48 @@ export function InvoiceDetailPage({
               </div>
             </aside>
 
-            <MemberStorefrontWindow
-              culture={culture}
-              title={copy.invoiceDetailStorefrontWindowTitle}
-              message={formatResource(copy.invoiceDetailStorefrontWindowMessage, {
-                cmsStatus: cmsPagesStatus,
-                categoriesStatus,
-                productsStatus,
-                pageCount: cmsPages.length,
-                categoryCount: categories.length,
-                productCount: products.length,
-              })}
-              cmsTitle={copy.invoiceDetailStorefrontCmsTitle}
-              cmsCtaLabel={copy.invoiceDetailStorefrontCmsCta}
-              cmsCards={cmsSpotlightCards}
-              cmsEmptyMessage={formatResource(copy.invoiceDetailStorefrontCmsEmptyMessage, {
-                status: cmsPagesStatus,
-              })}
-              catalogTitle={copy.invoiceDetailStorefrontCatalogTitle}
-              catalogCtaLabel={copy.invoiceDetailStorefrontCatalogCta}
-              categoryCards={categorySpotlightCards}
-              catalogEmptyMessage={formatResource(copy.invoiceDetailStorefrontCatalogEmptyMessage, {
-                status: categoriesStatus,
-              })}
-              productTitle={copy.invoiceDetailStorefrontProductTitle}
-              productCtaLabel={copy.invoiceDetailStorefrontProductCta}
-              productMessage={
-                cartLinkedSlugSet.size > 0
-                  ? copy.invoiceDetailStorefrontProductCartAwareMessage
-                  : copy.invoiceDetailStorefrontProductMessage
-              }
-              productCards={storefrontOfferCards}
-              productEmptyMessage={formatResource(copy.invoiceDetailStorefrontProductEmptyMessage, {
-                status: productsStatus,
-              })}
-            />
+            <div id="invoice-detail-storefront" className="scroll-mt-28">
+              <MemberStorefrontWindow
+                culture={culture}
+                title={copy.invoiceDetailStorefrontWindowTitle}
+                message={formatResource(copy.invoiceDetailStorefrontWindowMessage, {
+                  cmsStatus: cmsPagesStatus,
+                  categoriesStatus,
+                  productsStatus,
+                  pageCount: cmsPages.length,
+                  categoryCount: categories.length,
+                  productCount: products.length,
+                })}
+                cmsTitle={copy.invoiceDetailStorefrontCmsTitle}
+                cmsCtaLabel={copy.invoiceDetailStorefrontCmsCta}
+                cmsCards={cmsSpotlightCards}
+                cmsEmptyMessage={formatResource(copy.invoiceDetailStorefrontCmsEmptyMessage, {
+                  status: cmsPagesStatus,
+                })}
+                catalogTitle={copy.invoiceDetailStorefrontCatalogTitle}
+                catalogCtaLabel={copy.invoiceDetailStorefrontCatalogCta}
+                categoryCards={categorySpotlightCards}
+                catalogEmptyMessage={formatResource(copy.invoiceDetailStorefrontCatalogEmptyMessage, {
+                  status: categoriesStatus,
+                })}
+                productTitle={copy.invoiceDetailStorefrontProductTitle}
+                productCtaLabel={copy.invoiceDetailStorefrontProductCta}
+                productMessage={
+                  cartLinkedSlugSet.size > 0
+                    ? copy.invoiceDetailStorefrontProductCartAwareMessage
+                    : copy.invoiceDetailStorefrontProductMessage
+                }
+                productCards={storefrontOfferCards}
+                productEmptyMessage={formatResource(copy.invoiceDetailStorefrontProductEmptyMessage, {
+                  status: productsStatus,
+                })}
+                promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
+                promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
+                promotionLaneCards={promotionLaneCards}
+              />
+            </div>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside id="invoice-detail-actions" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.actionsTitle}</p>
               <div className="mt-4 flex flex-col gap-3">
                 {invoice.actions.canRetryPayment && (

@@ -5,6 +5,13 @@ import {
   buildSeoLoaderSuccessContext,
   createCachedObservedSeoMetadataLoader,
 } from "@/lib/seo-loader";
+import { getSeoLoaderNormalizationMode } from "@/lib/seo-loader-diagnostics";
+
+test("getSeoLoaderNormalizationMode keeps canonical versus raw explicit", () => {
+  assert.equal(getSeoLoaderNormalizationMode(true), "canonical");
+  assert.equal(getSeoLoaderNormalizationMode(false), "raw");
+  assert.equal(getSeoLoaderNormalizationMode(undefined), "raw");
+});
 
 test("createCachedObservedSeoMetadataLoader keeps metadata payloads stable per argument tuple", async () => {
   let executions = 0;
@@ -95,6 +102,40 @@ test("createCachedObservedSeoMetadataLoader normalizes equivalent arguments befo
   assert.equal(second.canonicalPath, "/cms/impressum");
   assert.equal(String(first.metadata.title), "de-DE:impressum");
   assert.equal(String(second.metadata.title), "de-DE:impressum");
+});
+
+test("createCachedObservedSeoMetadataLoader feeds normalized args into observation context", async () => {
+  let contextSnapshot: Record<string, unknown> | undefined;
+
+  const loader = createCachedObservedSeoMetadataLoader({
+    area: "unit-seo",
+    operation: "load-metadata",
+    normalizeArgs: (culture: string, slug: string) =>
+      [culture.trim(), slug.trim()] as [string, string],
+    getContext: (culture: string, slug: string) => {
+      contextSnapshot = { culture, slug };
+      return { culture, slug };
+    },
+    load: async (culture: string, slug: string) => ({
+      metadata: {
+        title: `${culture}:${slug}`,
+      },
+      canonicalPath: `/cms/${slug}`,
+      noIndex: false,
+      languageAlternates: {
+        "de-DE": `/cms/${slug}`,
+        "en-US": `/en-US/cms/${slug}`,
+      },
+    }),
+  });
+
+  const result = await loader(" de-DE ", " impressum ");
+
+  assert.equal(result.canonicalPath, "/cms/impressum");
+  assert.deepEqual(contextSnapshot, {
+    culture: "de-DE",
+    slug: "impressum",
+  });
 });
 
 test("buildSeoLoaderObservationContext adds canonical seo-loader diagnostics", () => {

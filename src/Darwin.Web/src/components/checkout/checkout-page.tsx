@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CommerceAuthHandoff } from "@/components/checkout/commerce-auth-handoff";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
+import { CheckoutContentCompositionWindow } from "@/components/checkout/checkout-content-composition-window";
 import { CommerceStorefrontWindow } from "@/components/checkout/commerce-storefront-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { placeStorefrontOrderAction } from "@/features/checkout/actions";
@@ -147,6 +148,12 @@ export function CheckoutPage({
   const invoiceAttentionCount = memberInvoices.filter(
     (invoice) => invoice.balanceMinor > 0,
   ).length;
+  const sectionLinks = [
+    { id: "checkout-overview", label: copy.checkoutRouteSummaryTitle },
+    { id: "checkout-payment-window", label: copy.checkoutPaymentWindowTitle },
+    { id: "checkout-form", label: copy.checkoutHeroTitle },
+    { id: "checkout-composition", label: copy.checkoutCompositionJourneyTitle },
+  ];
 
   if (!cart) {
     return (
@@ -244,7 +251,24 @@ export function CheckoutPage({
           </p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+          <div className="flex flex-wrap gap-2">
+            {sectionLinks.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {section.label}
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <div
+          id="checkout-overview"
+          className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
+        >
           <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.checkoutConfidenceTitle}
@@ -329,7 +353,10 @@ export function CheckoutPage({
           </section>
         </div>
 
-        <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <section
+          id="checkout-payment-window"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.checkoutPaymentWindowTitle}
           </p>
@@ -426,7 +453,10 @@ export function CheckoutPage({
           </div>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_360px]">
+        <div
+          id="checkout-form"
+          className="scroll-mt-28 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_360px]"
+        >
           <div className="grid gap-8">
             <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
               <div>
@@ -1086,6 +1116,24 @@ export function CheckoutPage({
                 {copy.placeOrderButton}
               </button>
             </form>
+
+            <div id="checkout-composition" className="scroll-mt-28">
+              <CheckoutContentCompositionWindow
+                culture={culture}
+                hasMemberSession={hasMemberSession}
+                canPlaceOrder={canPlaceOrder}
+                addressComplete={addressComplete}
+                hasSelectedShipping={hasSelectedShipping}
+                cartHref="/cart"
+                accountHref="/account"
+                cmsPages={cmsPages}
+                categories={categories}
+                products={products}
+                memberInvoices={memberInvoices}
+                projectedCheckoutTotalMinor={projectedCheckoutTotalMinor}
+                currency={cart.currency}
+              />
+            </div>
 
             <CommerceStorefrontWindow
               culture={culture}

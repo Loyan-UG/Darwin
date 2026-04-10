@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { AccountStorefrontWindow } from "@/components/account/account-storefront-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
@@ -89,10 +90,27 @@ export function AddressesPage({
         culture,
       )
     : localizeHref("/checkout", culture);
+  const sectionLinks = [
+    { href: "#addresses-create", label: copy.createAddressEyebrow },
+    { href: "#addresses-readiness", label: copy.addressesReadinessTitle },
+    { href: "#addresses-composition", label: copy.accountCompositionJourneyAddressesTitle },
+    { href: "#addresses-saved", label: copy.savedAddressLabel },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
+        <div className="sticky top-24 z-10 -mt-2">
+          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex min-w-max flex-wrap gap-2">
+              {sectionLinks.map((link) => (
+                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
         <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <nav
             aria-label={copy.memberBreadcrumbLabel}
@@ -133,7 +151,8 @@ export function AddressesPage({
 
         <form
           action={createMemberAddressAction}
-          className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
+          id="addresses-create"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.createAddressEyebrow}
@@ -159,7 +178,7 @@ export function AddressesPage({
         <div className="grid gap-5">
           <MemberPortalNav culture={culture} activePath="/account/addresses" />
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <aside id="addresses-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.addressesRouteSummaryTitle}
             </p>
@@ -244,6 +263,67 @@ export function AddressesPage({
             includeLoyalty={false}
           />
 
+          <div id="addresses-composition" className="scroll-mt-28">
+            <AccountContentCompositionWindow
+              culture={culture}
+              routeCard={{
+                label: copy.accountCompositionJourneyCurrentLabel,
+                title: copy.accountCompositionJourneyAddressesTitle,
+                description: formatResource(copy.accountCompositionJourneyAddressesRouteDescription, {
+                  count: addresses.length,
+                }),
+                href: "/account/addresses",
+                ctaLabel: copy.accountCompositionJourneyCurrentCta,
+              }}
+              nextCard={{
+                label: copy.accountCompositionJourneyNextLabel,
+                title: preferredCheckoutAddress
+                  ? copy.accountCompositionJourneyCheckoutReadyTitle
+                  : copy.accountCompositionJourneyCheckoutSetupTitle,
+                description: preferredCheckoutAddress
+                  ? copy.accountCompositionJourneyCheckoutReadyDescription
+                  : copy.accountCompositionJourneyCheckoutSetupDescription,
+                href: preferredCheckoutAddress
+                  ? `/checkout${buildCheckoutDraftSearch(
+                      toCheckoutDraftFromMemberAddress(preferredCheckoutAddress),
+                      { memberAddressId: preferredCheckoutAddress.id },
+                    )}`
+                  : "/checkout",
+                ctaLabel: copy.accountCompositionJourneyCheckoutCta,
+              }}
+              routeMapItems={[
+                {
+                  label: copy.accountCompositionRouteMapAddressesLabel,
+                  title: copy.accountCompositionRouteMapAddressesTitle,
+                  description: formatResource(copy.accountCompositionRouteMapAddressesRouteDescription, {
+                    count: addresses.length,
+                  }),
+                  href: "/account/addresses",
+                  ctaLabel: copy.accountCompositionRouteMapAddressesCta,
+                },
+                {
+                  label: copy.accountCompositionRouteMapNextLabel,
+                  title: preferredCheckoutAddress
+                    ? copy.accountCompositionRouteMapCheckoutReadyTitle
+                    : copy.accountCompositionRouteMapCheckoutSetupTitle,
+                  description: preferredCheckoutAddress
+                    ? copy.accountCompositionRouteMapCheckoutReadyDescription
+                    : copy.accountCompositionRouteMapCheckoutSetupDescription,
+                  href: preferredCheckoutAddress
+                    ? `/checkout${buildCheckoutDraftSearch(
+                        toCheckoutDraftFromMemberAddress(preferredCheckoutAddress),
+                        { memberAddressId: preferredCheckoutAddress.id },
+                      )}`
+                    : "/checkout",
+                  ctaLabel: copy.accountCompositionRouteMapCheckoutCta,
+                },
+              ]}
+              cmsPages={cmsPages}
+              categories={categories}
+              products={products}
+            />
+          </div>
+
           <AccountStorefrontWindow
             culture={culture}
             cmsPages={cmsPages}
@@ -254,6 +334,7 @@ export function AddressesPage({
             productsStatus={productsStatus}
           />
 
+          <div id="addresses-saved" className="scroll-mt-28 grid gap-5">
           {addresses.map((address) => (
             <article key={address.id} className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -320,6 +401,7 @@ export function AddressesPage({
               </form>
             </article>
           ))}
+          </div>
         </div>
 
         {addresses.length === 0 && (

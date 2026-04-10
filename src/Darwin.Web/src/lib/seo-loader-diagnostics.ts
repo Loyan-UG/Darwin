@@ -1,6 +1,12 @@
 import type { SeoMetadataPayload } from "@/lib/seo-loader";
 import { summarizeSeoMetadataHealth } from "@/lib/route-health";
 
+export function getSeoLoaderNormalizationMode(
+  hasCanonicalNormalization?: boolean,
+) {
+  return hasCanonicalNormalization ? "canonical" : "raw";
+}
+
 export function buildSeoLoaderBaseDiagnostics(
   area: string,
   options?: {
@@ -11,7 +17,9 @@ export function buildSeoLoaderBaseDiagnostics(
   return {
     pageLoaderKind: "seo-metadata",
     seoArea: area,
-    seoNormalization: options?.hasCanonicalNormalization ? "canonical" : "raw",
+    seoNormalization: getSeoLoaderNormalizationMode(
+      options?.hasCanonicalNormalization,
+    ),
     ...(options?.extras ?? {}),
   };
 }

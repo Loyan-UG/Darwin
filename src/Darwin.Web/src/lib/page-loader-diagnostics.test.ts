@@ -4,7 +4,14 @@ import {
   buildContinuationSliceFootprint,
   buildPageLoaderBaseDiagnostics,
   buildProtectedRouteFootprint,
+  getPageLoaderNormalizationMode,
 } from "@/lib/page-loader-diagnostics";
+
+test("getPageLoaderNormalizationMode keeps canonical versus raw explicit", () => {
+  assert.equal(getPageLoaderNormalizationMode(true), "canonical");
+  assert.equal(getPageLoaderNormalizationMode(false), "raw");
+  assert.equal(getPageLoaderNormalizationMode(undefined), "raw");
+});
 
 test("buildPageLoaderBaseDiagnostics keeps loader kind and normalization mode explicit", () => {
   assert.deepEqual(
@@ -35,6 +42,16 @@ test("buildContinuationSliceFootprint keeps continuation counts compact and oper
     }),
     "cms:2|categories:1|products:3|cart:missing",
   );
+
+  assert.equal(
+    buildContinuationSliceFootprint({
+      cmsCount: 0,
+      categoryCount: 0,
+      productCount: 0,
+      cartState: "present",
+    }),
+    "cms:0|categories:0|products:0|cart:present",
+  );
 });
 
 test("buildProtectedRouteFootprint keeps auth and fallback state together", () => {
@@ -45,5 +62,14 @@ test("buildProtectedRouteFootprint keeps auth and fallback state together", () =
       storefrontFallbackState: "present",
     }),
     "auth:guest-fallback|route:guest-fallback|storefront:present",
+  );
+
+  assert.equal(
+    buildProtectedRouteFootprint({
+      authGate: "authorized",
+      routeContextState: "loaded",
+      storefrontFallbackState: "missing",
+    }),
+    "auth:authorized|route:loaded|storefront:missing",
   );
 });

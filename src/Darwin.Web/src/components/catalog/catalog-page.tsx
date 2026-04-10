@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CatalogCampaignWindow } from "@/components/catalog/catalog-campaign-window";
+import { CatalogContentCompositionWindow } from "@/components/catalog/catalog-content-composition-window";
 import { CatalogContinuationRail } from "@/components/catalog/catalog-continuation-rail";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type {
@@ -182,6 +183,16 @@ export function CatalogPage({
     preferredCatalogReviewState === "offers"
       ? copy.catalogReviewOffersCta
       : copy.catalogReviewBaseCta;
+  const sectionLinks = [
+    { id: "catalog-overview", label: copy.resultSummaryTitle },
+    { id: "catalog-composition", label: copy.catalogCompositionJourneyTitle },
+    { id: "catalog-offer-window", label: copy.offerWindowTitle },
+    { id: "catalog-filters", label: copy.categoriesTitle },
+    { id: "catalog-results", label: copy.productEyebrow },
+    ...(totalPages > 1
+      ? [{ id: "catalog-pagination", label: copy.paginationTitle }]
+      : []),
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -293,7 +304,24 @@ export function CatalogPage({
           />
         )}
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+          <div className="flex flex-wrap gap-2">
+            {sectionLinks.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {section.label}
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <div
+          id="catalog-overview"
+          className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]"
+        >
           <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.resultSummaryTitle}
@@ -354,7 +382,25 @@ export function CatalogPage({
           </div>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <div id="catalog-composition" className="scroll-mt-28">
+          <CatalogContentCompositionWindow
+            culture={culture}
+            activeCategory={activeCategory}
+            cmsPages={cmsPages}
+            products={products}
+            cartSummary={cartSummary}
+            totalProducts={totalProducts}
+            currentPage={currentPage}
+            searchQuery={searchQuery}
+            reviewHref={catalogReviewPrimaryHref}
+            reviewLabel={catalogReviewPrimaryLabel}
+          />
+        </div>
+
+        <div
+          id="catalog-offer-window"
+          className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
+        >
           <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.offerWindowTitle}
@@ -728,7 +774,10 @@ export function CatalogPage({
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-5 py-6 shadow-[var(--shadow-panel)]">
+          <aside
+            id="catalog-filters"
+            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-5 py-6 shadow-[var(--shadow-panel)]"
+          >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.categoriesTitle}
             </p>
@@ -1017,7 +1066,7 @@ export function CatalogPage({
             </div>
           </aside>
 
-          <div className="flex flex-col gap-6">
+          <div id="catalog-results" className="scroll-mt-28 flex flex-col gap-6">
             {!hasProducts ? (
               <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
@@ -1175,7 +1224,10 @@ export function CatalogPage({
             )}
 
             {totalPages > 1 && (
-              <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <div
+                id="catalog-pagination"
+                className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+              >
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                   {copy.paginationTitle}
                 </p>

@@ -140,3 +140,55 @@ test("createMemberProtectedPageLoader normalizes equivalent arguments before cac
   assert.equal(first.routeContext?.id, "order-1");
   assert.equal(second.routeContext?.id, "order-1");
 });
+
+test("createMemberProtectedPageLoader feeds normalized args into entry route and diagnostics", async () => {
+  let contextSnapshot: Record<string, unknown> | undefined;
+  let successSnapshot: Record<string, unknown> | undefined;
+  let entryRouteSnapshot: string | undefined;
+
+  const loader = createMemberProtectedPageLoaderCore({
+    operation: "unit-protected-page",
+    normalizeArgs: (culture: string, id: string) =>
+      [culture.trim(), id.trim()] as [string, string],
+    getContext: (culture: string, id: string) => {
+      contextSnapshot = { culture, id };
+      return { culture, id };
+    },
+    getEntryRoute: (_culture: string, id: string) => {
+      entryRouteSnapshot = `/orders/${id}`;
+      return entryRouteSnapshot;
+    },
+    loadEntryContext: async () => ({
+      session: { customerId: "customer-1" },
+      storefrontContext: null,
+    }),
+    summarizeAuthorized: (routeContext) => {
+      successSnapshot = {
+        detailStatus: routeContext.status,
+        id: routeContext.id,
+      };
+
+      return {
+        detailStatus: routeContext.status,
+        detailId: routeContext.id,
+      };
+    },
+    loadRouteContext: async (_culture: string, id: string) => ({
+      status: "ok",
+      id,
+    }),
+  });
+
+  const result = await loader(" de-DE ", " order-1 ");
+
+  assert.equal(result.routeContext?.id, "order-1");
+  assert.deepEqual(contextSnapshot, {
+    culture: "de-DE",
+    id: "order-1",
+  });
+  assert.equal(entryRouteSnapshot, "/orders/order-1");
+  assert.deepEqual(successSnapshot, {
+    detailStatus: "ok",
+    id: "order-1",
+  });
+});

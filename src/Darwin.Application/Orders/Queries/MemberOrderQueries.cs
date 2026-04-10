@@ -114,9 +114,12 @@ public sealed class GetMyOrderForViewHandler
                     UnitPriceGrossMinor = line.UnitPriceGrossMinor,
                     LineGrossMinor = line.LineGrossMinor
                 }).ToList(),
-                Payments = x.Payments.Select(payment => new MemberOrderPaymentDto
+                Payments = x.Payments
+                    .OrderByDescending(payment => payment.CreatedAtUtc)
+                    .Select(payment => new MemberOrderPaymentDto
                 {
                     Id = payment.Id,
+                    CreatedAtUtc = payment.CreatedAtUtc,
                     Provider = payment.Provider,
                     ProviderReference = payment.ProviderTransactionRef,
                     AmountMinor = payment.AmountMinor,

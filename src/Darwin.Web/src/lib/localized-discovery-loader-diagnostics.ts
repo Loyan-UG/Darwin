@@ -1,5 +1,13 @@
 type LocalizedDiscoveryLoaderKind = "inventory" | "sitemap";
 
+export function getLocalizedDiscoveryNormalizationMode(
+  hasCanonicalCultureNormalization?: boolean,
+) {
+  return hasCanonicalCultureNormalization
+    ? "canonical-cultures"
+    : "raw-cultures";
+}
+
 export function buildLocalizedDiscoveryState(extras?: Record<string, unknown>) {
   if (
     extras?.localizedDiscoveryState === "present" ||
@@ -66,9 +74,9 @@ export function buildLocalizedDiscoveryLoaderBaseDiagnostics(
 ) {
   return {
     localizedDiscoveryKind: kind,
-    localizedDiscoveryNormalization: options?.hasCanonicalCultureNormalization
-      ? "canonical-cultures"
-      : "raw-cultures",
+    localizedDiscoveryNormalization: getLocalizedDiscoveryNormalizationMode(
+      options?.hasCanonicalCultureNormalization,
+    ),
     ...(options?.extras ?? {}),
   };
 }

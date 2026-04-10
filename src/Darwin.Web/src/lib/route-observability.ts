@@ -34,7 +34,9 @@ function toDegradedSurfaceKey(statusKey: string) {
     : statusKey;
 }
 
-function getDegradedSurfaceFootprint(degradedStatuses: Array<[string, unknown]>) {
+export function getDegradedSurfaceFootprint(
+  degradedStatuses: Array<[string, unknown]>,
+) {
   if (degradedStatuses.length === 0) {
     return undefined;
   }
@@ -42,6 +44,10 @@ function getDegradedSurfaceFootprint(degradedStatuses: Array<[string, unknown]>)
   return degradedStatuses
     .map(([key, value]) => `${toDegradedSurfaceKey(key)}:${String(value)}`)
     .join("|");
+}
+
+export function buildObservedOperationKey(area: string, operation: string) {
+  return `${area}:${operation}`;
 }
 
 export function getDurationBand(durationMs: number, thresholdMs: number) {
@@ -201,7 +207,7 @@ export async function observeAsyncOperation<T>(
     const diagnosticDetail = {
       area: input.area,
       operation: input.operation,
-      operationKey: `${input.area}:${input.operation}`,
+      operationKey: buildObservedOperationKey(input.area, input.operation),
       durationMs,
       ...outcomeDetail,
       ...(input.context ?? {}),
@@ -221,7 +227,7 @@ export async function observeAsyncOperation<T>(
     error("Darwin.Web failed operation", {
       area: input.area,
       operation: input.operation,
-      operationKey: `${input.area}:${input.operation}`,
+      operationKey: buildObservedOperationKey(input.area, input.operation),
       durationMs,
       durationBand,
       healthState: "failed",

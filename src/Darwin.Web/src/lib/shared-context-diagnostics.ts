@@ -4,6 +4,12 @@ export type SharedContextKind =
   | "public-storefront"
   | "member-entry";
 
+export function getSharedContextNormalizationMode(
+  hasCanonicalNormalization?: boolean,
+) {
+  return hasCanonicalNormalization ? "canonical" : "raw";
+}
+
 export function buildSharedContextBaseDiagnostics(
   kind: SharedContextKind,
   options?: {
@@ -13,9 +19,9 @@ export function buildSharedContextBaseDiagnostics(
 ) {
   return {
     sharedContextKind: kind,
-    sharedContextNormalization: options?.hasCanonicalNormalization
-      ? "canonical"
-      : "raw",
+    sharedContextNormalization: getSharedContextNormalizationMode(
+      options?.hasCanonicalNormalization,
+    ),
     ...(options?.extras ?? {}),
   };
 }

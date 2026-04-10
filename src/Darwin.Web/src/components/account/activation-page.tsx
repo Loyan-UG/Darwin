@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicAuthCompositionWindow } from "@/components/account/public-auth-composition-window";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import type {
@@ -13,7 +14,7 @@ import {
   requestEmailConfirmationAction,
 } from "@/features/account/actions";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
-import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type ActivationPageProps = {
   culture: string;
@@ -170,6 +171,45 @@ export function ActivationPage({
           culture={culture}
           returnPath={returnPath}
           storefrontCart={storefrontCart}
+        />
+
+        <PublicAuthCompositionWindow
+          culture={culture}
+          routeCard={{
+            label: copy.publicAuthCompositionJourneyCurrentLabel,
+            title: copy.publicAuthCompositionJourneyActivationTitle,
+            description: formatResource(copy.publicAuthCompositionJourneyActivationDescription, {
+              returnPath: returnPath || "/account",
+            }),
+            href: "/account/activation",
+            ctaLabel: copy.publicAuthCompositionJourneyCurrentCta,
+          }}
+          nextCard={{
+            label: copy.publicAuthCompositionJourneyNextLabel,
+            title: copy.publicAuthCompositionJourneySignInTitle,
+            description: copy.publicAuthCompositionJourneyActivationNextDescription,
+            href: signInHref,
+            ctaLabel: copy.publicAuthCompositionJourneySignInCta,
+          }}
+          routeMapItems={[
+            {
+              label: copy.publicAuthCompositionRouteMapCurrentLabel,
+              title: copy.publicAuthCompositionRouteMapActivationTitle,
+              description: copy.publicAuthCompositionRouteMapActivationDescription,
+              href: "/account/activation",
+              ctaLabel: copy.publicAuthCompositionRouteMapCurrentCta,
+            },
+            {
+              label: copy.publicAuthCompositionRouteMapNextLabel,
+              title: copy.publicAuthCompositionRouteMapSignInTitle,
+              description: copy.publicAuthCompositionRouteMapActivationNextDescription,
+              href: signInHref,
+              ctaLabel: copy.publicAuthCompositionRouteMapSignInCta,
+            },
+          ]}
+          cmsPages={cmsPages}
+          categories={categories}
+          products={products}
         />
 
         <PublicAuthContinuation

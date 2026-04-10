@@ -341,6 +341,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
             Payments = confirmation.Payments.Select(payment => new StorefrontOrderConfirmationPayment
             {
                 Id = payment.Id,
+                CreatedAtUtc = payment.CreatedAtUtc,
                 Provider = payment.Provider,
                 ProviderReference = payment.ProviderReference,
                 AmountMinor = payment.AmountMinor,

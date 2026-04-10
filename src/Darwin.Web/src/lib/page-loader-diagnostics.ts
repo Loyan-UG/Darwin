@@ -3,6 +3,12 @@ type PageLoaderKind =
   | "member-protected"
   | "commerce";
 
+export function getPageLoaderNormalizationMode(
+  hasCanonicalNormalization?: boolean,
+) {
+  return hasCanonicalNormalization ? "canonical" : "raw";
+}
+
 export function buildPageLoaderBaseDiagnostics(
   kind: PageLoaderKind,
   options?: {
@@ -12,9 +18,9 @@ export function buildPageLoaderBaseDiagnostics(
 ) {
   return {
     pageLoaderKind: kind,
-    pageLoaderNormalization: options?.hasCanonicalNormalization
-      ? "canonical"
-      : "raw",
+    pageLoaderNormalization: getPageLoaderNormalizationMode(
+      options?.hasCanonicalNormalization,
+    ),
     ...(options?.extras ?? {}),
   };
 }

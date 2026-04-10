@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
 import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
 import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
 import type {
@@ -144,9 +146,29 @@ export function InvoicesPage({
     prefix: "invoices",
     fallbackDescription: copy.invoicesStorefrontCatalogFallbackDescription,
   });
+  const promotionLaneCards = buildMemberPromotionLaneCards(rankedProducts, culture);
+  const sectionLinks = [
+    { href: "#invoices-overview", label: copy.invoicesTitle },
+    { href: "#invoices-filters", label: copy.invoicesFilterTitle },
+    { href: "#invoices-readiness", label: copy.invoicesReadinessTitle },
+    { href: "#invoices-storefront", label: copy.invoicesStorefrontWindowTitle },
+    { href: "#invoices-results", label: copy.openInvoiceCta },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-col gap-8">
+        <div className="sticky top-24 z-10 -mt-2">
+          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex min-w-max flex-wrap gap-2">
+              {sectionLinks.map((link) => (
+                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
       <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-8">
         <nav
@@ -166,7 +188,7 @@ export function InvoicesPage({
           </span>
         </nav>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div id="invoices-overview" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.invoicesEyebrow}
           </p>
@@ -198,7 +220,7 @@ export function InvoicesPage({
           </p>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div id="invoices-filters" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.invoicesFilterTitle}
@@ -252,7 +274,7 @@ export function InvoicesPage({
           </form>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div id="invoices-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.invoicesReadinessTitle}
           </p>
@@ -306,45 +328,100 @@ export function InvoicesPage({
           </div>
         </div>
 
-        <MemberStorefrontWindow
+        <AccountContentCompositionWindow
           culture={culture}
-          title={copy.invoicesStorefrontWindowTitle}
-          message={formatResource(copy.invoicesStorefrontWindowMessage, {
-            cmsStatus: cmsPagesStatus,
-            categoriesStatus,
-            productsStatus,
-            pageCount: cmsPages.length,
-            categoryCount: categories.length,
-            productCount: products.length,
-          })}
-          cmsTitle={copy.invoicesStorefrontCmsTitle}
-          cmsCtaLabel={copy.invoicesStorefrontCmsCta}
-          cmsCards={cmsSpotlightCards}
-          cmsEmptyMessage={formatResource(copy.invoicesStorefrontCmsEmptyMessage, {
-            status: cmsPagesStatus,
-          })}
-          catalogTitle={copy.invoicesStorefrontCatalogTitle}
-          catalogCtaLabel={copy.invoicesStorefrontCatalogCta}
-          categoryCards={categorySpotlightCards}
-          catalogEmptyMessage={formatResource(copy.invoicesStorefrontCatalogEmptyMessage, {
-            status: categoriesStatus,
-          })}
-          productTitle={copy.invoicesStorefrontProductTitle}
-          productCtaLabel={copy.invoicesStorefrontProductCta}
-          productMessage={
-            cartLinkedSlugSet.size > 0
-              ? formatResource(copy.invoicesStorefrontProductCartAwareMessage, {
-                  count: cartLinkedSlugSet.size,
+          routeCard={{
+            label: copy.accountCompositionJourneyCurrentLabel,
+            title: copy.invoicesTitle,
+            description: formatResource(copy.invoicesWindowMessage, {
+              count: filteredInvoices.length,
+              loadedCount: invoices.length,
+              currentPage,
+              totalPages,
+              status,
+            }),
+            href: buildInvoicesHref(currentPage, { visibleQuery, visibleState }),
+            ctaLabel: copy.accountCompositionJourneyCurrentCta,
+          }}
+          nextCard={{
+            label: copy.accountCompositionJourneyNextLabel,
+            title: outstandingInvoices[0]?.orderNumber ?? copy.ordersTitle,
+            description: outstandingInvoices[0]
+              ? formatResource(copy.invoicesReadinessMessage, {
+                  count: outstandingInvoices.length,
+                  balance: formatMoney(outstandingBalanceMinor, primaryCurrency, culture),
                 })
-              : copy.invoicesStorefrontProductMessage
-          }
-          productCards={storefrontOfferCards}
-          productEmptyMessage={formatResource(copy.invoicesStorefrontProductEmptyMessage, {
-            status: productsStatus,
-          })}
+              : copy.ordersPortalNote,
+            href: outstandingInvoices[0] ? `/invoices/${outstandingInvoices[0].id}` : "/orders",
+            ctaLabel: outstandingInvoices[0]
+              ? copy.invoicesReadinessPrimaryCta
+              : copy.accountCompositionJourneySecurityNextCta,
+          }}
+          routeMapItems={[
+            {
+              label: copy.accountCompositionRouteMapProfileLabel,
+              title: copy.invoicesRouteLabel,
+              description: copy.invoicesPortalNote,
+              href: "/invoices",
+              ctaLabel: copy.accountCompositionRouteMapProfileCta,
+            },
+            {
+              label: copy.accountCompositionRouteMapNextLabel,
+              title: copy.ordersTitle,
+              description: copy.ordersPortalNote,
+              href: "/orders",
+              ctaLabel: copy.accountCompositionRouteMapAddressesCta,
+            },
+          ]}
+          cmsPages={cmsPages}
+          categories={categories}
+          products={products}
         />
 
-        <div className="grid gap-5">
+        <div id="invoices-storefront" className="scroll-mt-28">
+          <MemberStorefrontWindow
+            culture={culture}
+            title={copy.invoicesStorefrontWindowTitle}
+            message={formatResource(copy.invoicesStorefrontWindowMessage, {
+              cmsStatus: cmsPagesStatus,
+              categoriesStatus,
+              productsStatus,
+              pageCount: cmsPages.length,
+              categoryCount: categories.length,
+              productCount: products.length,
+            })}
+            cmsTitle={copy.invoicesStorefrontCmsTitle}
+            cmsCtaLabel={copy.invoicesStorefrontCmsCta}
+            cmsCards={cmsSpotlightCards}
+            cmsEmptyMessage={formatResource(copy.invoicesStorefrontCmsEmptyMessage, {
+              status: cmsPagesStatus,
+            })}
+            catalogTitle={copy.invoicesStorefrontCatalogTitle}
+            catalogCtaLabel={copy.invoicesStorefrontCatalogCta}
+            categoryCards={categorySpotlightCards}
+            catalogEmptyMessage={formatResource(copy.invoicesStorefrontCatalogEmptyMessage, {
+              status: categoriesStatus,
+            })}
+            productTitle={copy.invoicesStorefrontProductTitle}
+            productCtaLabel={copy.invoicesStorefrontProductCta}
+            productMessage={
+              cartLinkedSlugSet.size > 0
+                ? formatResource(copy.invoicesStorefrontProductCartAwareMessage, {
+                    count: cartLinkedSlugSet.size,
+                  })
+                : copy.invoicesStorefrontProductMessage
+            }
+            productCards={storefrontOfferCards}
+            productEmptyMessage={formatResource(copy.invoicesStorefrontProductEmptyMessage, {
+              status: productsStatus,
+            })}
+            promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
+            promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
+            promotionLaneCards={promotionLaneCards}
+          />
+        </div>
+
+        <div id="invoices-results" className="scroll-mt-28 grid gap-5">
           {filteredInvoices.map((invoice) => (
             <article
               key={invoice.id}
@@ -464,6 +541,7 @@ export function InvoicesPage({
             includeLoyalty
           />
         </div>
+      </div>
       </div>
     </section>
   );

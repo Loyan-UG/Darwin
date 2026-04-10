@@ -7,6 +7,7 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import {
   buildStorefrontCategoryCampaignCards,
   buildStorefrontCategorySpotlightLinkCards,
@@ -15,7 +16,7 @@ import {
   buildStorefrontProductCampaignCards,
 } from "@/features/storefront/storefront-campaigns";
 import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatMoney } from "@/lib/formatting";
 import { formatResource, getMemberResource } from "@/localization";
 
@@ -57,6 +58,72 @@ export function AccountStorefrontWindow({
     priceDrop: copy.offerCampaignPriceDropLabel,
     steadyPick: copy.offerCampaignSteadyLabel,
   };
+  const promotionLaneCards = summarizeCatalogPromotionLanes(productOpportunities).map(
+    (entry) => {
+      const laneLabel =
+        entry.lane === "hero-offers"
+          ? copy.accountStorefrontPromotionLaneHeroLabel
+          : entry.lane === "value-offers"
+            ? copy.accountStorefrontPromotionLaneValueLabel
+            : entry.lane === "live-offers"
+              ? copy.accountStorefrontPromotionLaneLiveOffersLabel
+              : copy.accountStorefrontPromotionLaneBaseLabel;
+      const href =
+        entry.lane === "hero-offers"
+          ? buildAppQueryPath("/catalog", {
+              visibleState: "offers",
+              visibleSort: "offers-first",
+              savingsBand: "hero",
+            })
+          : entry.lane === "value-offers"
+            ? buildAppQueryPath("/catalog", {
+                visibleState: "offers",
+                visibleSort: "offers-first",
+                savingsBand: "value",
+              })
+            : entry.lane === "live-offers"
+              ? buildAppQueryPath("/catalog", {
+                  visibleState: "offers",
+                  visibleSort: "savings-desc",
+                })
+              : buildAppQueryPath("/catalog", {
+                  visibleState: "base",
+                  visibleSort: "base-first",
+                });
+
+      return {
+        id: `account-promotion-lane-${entry.lane}`,
+        label: copy.accountStorefrontPromotionLaneCardLabel,
+        title: entry.anchorProduct
+          ? formatResource(copy.accountStorefrontPromotionLaneTitle, {
+              lane: laneLabel,
+              product: entry.anchorProduct.name,
+            })
+          : formatResource(copy.accountStorefrontPromotionLaneFallbackTitle, {
+              lane: laneLabel,
+            }),
+        description:
+          entry.anchorProduct !== null
+            ? formatResource(copy.accountStorefrontPromotionLaneDescription, {
+                lane: laneLabel,
+                count: entry.count,
+                price: formatMoney(
+                  entry.anchorProduct.priceMinor,
+                  entry.anchorProduct.currency,
+                  culture,
+                ),
+              })
+            : formatResource(copy.accountStorefrontPromotionLaneFallbackDescription, {
+                lane: laneLabel,
+              }),
+        href,
+        ctaLabel: copy.accountStorefrontPromotionLaneCta,
+        meta: formatResource(copy.accountStorefrontPromotionLaneMeta, {
+          count: entry.count,
+        }),
+      };
+    },
+  );
   const campaignBoard = [
     ...buildStorefrontCategoryCampaignCards(campaignCategories, {
       prefix: "account-campaign",
@@ -218,6 +285,20 @@ export function AccountStorefrontWindow({
               productCount: products.length,
             })}
           </p>
+          <div className="mt-4 rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+              {copy.accountStorefrontPromotionLaneSectionTitle}
+            </p>
+            <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.accountStorefrontPromotionLaneSectionMessage}
+            </p>
+            <StorefrontCampaignBoard
+              culture={culture}
+              cards={promotionLaneCards}
+              emptyMessage={copy.accountStorefrontCampaignEmptyMessage}
+              cardClassName="bg-[var(--color-surface-panel-strong)]"
+            />
+          </div>
           <StorefrontCampaignBoard
             culture={culture}
             cards={campaignBoard}

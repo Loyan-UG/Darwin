@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
 import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type {
@@ -157,6 +159,8 @@ export function MemberDashboardPage({
   const outstandingInvoices = recentInvoices.filter(
     (invoice) => invoice.balanceMinor > 0,
   );
+  const primaryCurrency =
+    recentOrders[0]?.currency ?? recentInvoices[0]?.currency ?? "EUR";
   const attentionOrderValueMinor = attentionOrders.reduce(
     (total, order) => total + order.grandTotalGrossMinor,
     0,
@@ -220,6 +224,10 @@ export function MemberDashboardPage({
     prefix: "dashboard",
     fallbackDescription: copy.dashboardStorefrontCatalogFallbackDescription,
   });
+  const promotionLaneCards = buildMemberPromotionLaneCards(
+    rankedStorefrontProducts,
+    culture,
+  );
   const actionItems: DashboardActionItem[] = [
     hasStorefrontCart
       ? {
@@ -313,6 +321,134 @@ export function MemberDashboardPage({
         }
       : null,
   ].filter((item): item is DashboardActionItem => item !== null);
+
+  const dashboardCompositionRouteCard = {
+    label: copy.dashboardCompositionJourneyCurrentLabel,
+    title: copy.dashboardCompositionJourneyCurrentTitle,
+    description: formatResource(copy.dashboardCompositionJourneyCurrentDescription, {
+      profileStatus,
+      preferencesStatus,
+      ordersStatus: recentOrdersStatus,
+      invoicesStatus: recentInvoicesStatus,
+    }),
+    href: "/account",
+    ctaLabel: copy.dashboardCompositionJourneyCurrentCta,
+    meta: formatResource(copy.dashboardCompositionJourneyCurrentMeta, {
+      orderCount: recentOrders.length,
+      invoiceCount: recentInvoices.length,
+    }),
+  };
+  const dashboardCompositionNextCard = attentionOrders[0]
+    ? {
+        label: copy.dashboardCompositionJourneyNextLabel,
+        title: copy.dashboardCompositionJourneyNextOrdersTitle,
+        description: formatResource(copy.dashboardCompositionJourneyNextOrdersDescription, {
+          count: attentionOrders.length,
+          total: formatMoney(attentionOrderValueMinor, primaryCurrency, culture),
+        }),
+        href: `/orders/${attentionOrders[0].id}`,
+        ctaLabel: copy.dashboardCompositionJourneyNextOrdersCta,
+      }
+    : outstandingInvoices[0]
+      ? {
+          label: copy.dashboardCompositionJourneyNextLabel,
+          title: copy.dashboardCompositionJourneyNextInvoicesTitle,
+          description: formatResource(copy.dashboardCompositionJourneyNextInvoicesDescription, {
+            count: outstandingInvoices.length,
+            balance: formatMoney(
+              outstandingInvoiceBalanceMinor,
+              outstandingInvoices[0].currency,
+              culture,
+            ),
+          }),
+          href: `/invoices/${outstandingInvoices[0].id}`,
+          ctaLabel: copy.dashboardCompositionJourneyNextInvoicesCta,
+        }
+      : !profile?.phoneNumberConfirmed || sessionNeedsAttention
+        ? {
+            label: copy.dashboardCompositionJourneyNextLabel,
+            title: copy.dashboardCompositionJourneyNextSecurityTitle,
+            description: formatResource(copy.dashboardCompositionJourneyNextSecurityDescription, {
+              profileStatus,
+            }),
+            href: "/account/security",
+            ctaLabel: copy.dashboardCompositionJourneyNextSecurityCta,
+          }
+        : addresses.length === 0
+          ? {
+              label: copy.dashboardCompositionJourneyNextLabel,
+              title: copy.dashboardCompositionJourneyNextAddressesTitle,
+              description: copy.dashboardCompositionJourneyNextAddressesDescription,
+              href: "/account/addresses",
+              ctaLabel: copy.dashboardCompositionJourneyNextAddressesCta,
+            }
+          : {
+              label: copy.dashboardCompositionJourneyNextLabel,
+              title: copy.dashboardCompositionJourneyNextCheckoutTitle,
+              description: copy.dashboardCompositionJourneyNextCheckoutDescription,
+              href: checkoutHref,
+              ctaLabel: copy.dashboardCompositionJourneyNextCheckoutCta,
+            };
+  const dashboardCompositionRouteMapItems = [
+    {
+      label: copy.dashboardCompositionRouteMapProfileLabel,
+      title: copy.dashboardCompositionRouteMapProfileTitle,
+      description: formatResource(copy.dashboardCompositionRouteMapProfileDescription, {
+        status: profileStatus,
+      }),
+      href: "/account/profile",
+      ctaLabel: copy.dashboardCompositionRouteMapProfileCta,
+      meta: formatResource(copy.dashboardCompositionRouteMapProfileMeta, {
+        phoneState: profile?.phoneNumberConfirmed ? copy.yes : copy.no,
+      }),
+    },
+    {
+      label: copy.dashboardCompositionRouteMapCommerceLabel,
+      title: attentionOrders[0]
+        ? copy.dashboardCompositionRouteMapCommerceOrdersTitle
+        : outstandingInvoices[0]
+          ? copy.dashboardCompositionRouteMapCommerceInvoicesTitle
+          : copy.dashboardCompositionRouteMapCommerceFallbackTitle,
+      description: attentionOrders[0]
+        ? formatResource(copy.dashboardCompositionRouteMapCommerceOrdersDescription, {
+            count: attentionOrders.length,
+            total: formatMoney(attentionOrderValueMinor, primaryCurrency, culture),
+          })
+        : outstandingInvoices[0]
+          ? formatResource(copy.dashboardCompositionRouteMapCommerceInvoicesDescription, {
+              count: outstandingInvoices.length,
+              balance: formatMoney(
+                outstandingInvoiceBalanceMinor,
+                outstandingInvoices[0].currency,
+                culture,
+              ),
+            })
+          : copy.dashboardCompositionRouteMapCommerceFallbackDescription,
+      href: commercePrimaryHref,
+      ctaLabel: commercePrimaryCta,
+      meta: formatResource(copy.dashboardCompositionRouteMapCommerceMeta, {
+        orderCount: attentionOrders.length,
+        invoiceCount: outstandingInvoices.length,
+      }),
+    },
+    {
+      label: copy.dashboardCompositionRouteMapPreferencesLabel,
+      title: copy.dashboardCompositionRouteMapPreferencesTitle,
+      description: formatResource(copy.dashboardCompositionRouteMapPreferencesDescription, {
+        status: preferencesStatus,
+      }),
+      href: "/account/preferences",
+      ctaLabel: copy.dashboardCompositionRouteMapPreferencesCta,
+      meta: formatResource(copy.dashboardCompositionRouteMapPreferencesMeta, {
+        email: emailChannelReady
+          ? copy.dashboardCommunicationReady
+          : copy.dashboardCommunicationNeedsAttention,
+        sms: smsChannelReady
+          ? copy.dashboardCommunicationReady
+          : copy.dashboardCommunicationNeedsAttention,
+      }),
+    },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -507,6 +643,9 @@ export function MemberDashboardPage({
               productEmptyMessage={formatResource(copy.dashboardStorefrontProductEmptyMessage, {
                 status: productsStatus,
               })}
+              promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
+              promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
+              promotionLaneCards={promotionLaneCards}
             />
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -767,6 +906,16 @@ export function MemberDashboardPage({
                 </p>
               )}
             </div>
+
+            <AccountContentCompositionWindow
+              culture={culture}
+              routeCard={dashboardCompositionRouteCard}
+              nextCard={dashboardCompositionNextCard}
+              routeMapItems={dashboardCompositionRouteMapItems}
+              cmsPages={cmsPages}
+              categories={categories}
+              products={rankedStorefrontProducts}
+            />
 
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">

@@ -246,9 +246,12 @@ public sealed class GetStorefrontOrderConfirmationHandler
                     UnitPriceGrossMinor = line.UnitPriceGrossMinor,
                     LineGrossMinor = line.LineGrossMinor
                 }).ToList(),
-                Payments = x.Payments.Select(payment => new StorefrontOrderConfirmationPaymentDto
+                Payments = x.Payments
+                    .OrderByDescending(payment => payment.CreatedAtUtc)
+                    .Select(payment => new StorefrontOrderConfirmationPaymentDto
                 {
                     Id = payment.Id,
+                    CreatedAtUtc = payment.CreatedAtUtc,
                     Provider = payment.Provider,
                     ProviderReference = payment.ProviderTransactionRef,
                     AmountMinor = payment.AmountMinor,

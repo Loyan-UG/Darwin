@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmationContentCompositionWindow } from "@/components/checkout/confirmation-content-composition-window";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
 import { CommerceStorefrontWindow } from "@/components/checkout/commerce-storefront-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
@@ -112,8 +113,19 @@ function resolveDisplayedPaymentStatus(
     return paymentOutcome;
   }
 
-  if (confirmation.payments.length === 1) {
-    return confirmation.payments[0].status;
+  const latestAttempt = [...confirmation.payments].sort((left, right) => {
+    const leftTimestamp = Date.parse(left.createdAtUtc);
+    const rightTimestamp = Date.parse(right.createdAtUtc);
+
+    if (!Number.isNaN(leftTimestamp) && !Number.isNaN(rightTimestamp)) {
+      return rightTimestamp - leftTimestamp;
+    }
+
+    return right.id.localeCompare(left.id);
+  })[0];
+
+  if (latestAttempt) {
+    return latestAttempt.status;
   }
 
   return fallback;
@@ -265,6 +277,12 @@ export function OrderConfirmationPage({
       product.shortDescription ?? copy.confirmationGuestOfferBoardFallbackDescription,
     fallbackDescription: copy.confirmationGuestOfferBoardFallbackDescription,
   });
+  const sectionLinks = [
+    { id: "confirmation-overview", label: copy.confirmationRouteSummaryTitle },
+    { id: "confirmation-payment-window", label: copy.confirmationPaymentWindowTitle },
+    { id: "confirmation-order", label: copy.summaryTitle },
+    { id: "confirmation-composition", label: copy.confirmationCompositionJourneyTitle },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -380,7 +398,24 @@ export function OrderConfirmationPage({
           </p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+          <div className="flex flex-wrap gap-2">
+            {sectionLinks.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {section.label}
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <div
+          id="confirmation-overview"
+          className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
+        >
           <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.confirmationCareTitle}
@@ -474,7 +509,10 @@ export function OrderConfirmationPage({
           </section>
         </div>
 
-        <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <section
+          id="confirmation-payment-window"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.confirmationPaymentWindowTitle}
           </p>
@@ -565,7 +603,10 @@ export function OrderConfirmationPage({
           </div>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_360px]">
+        <div
+          id="confirmation-order"
+          className="scroll-mt-28 grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_360px]"
+        >
           <div className="flex flex-col gap-6">
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <div className="grid gap-5 sm:grid-cols-2">
@@ -951,6 +992,7 @@ export function OrderConfirmationPage({
                         {payment.provider} - {payment.status}
                       </p>
                       <p>{formatMoney(payment.amountMinor, payment.currency, culture)}</p>
+                      <p>{copy.createdLabel} {formatDateTime(payment.createdAtUtc, culture)}</p>
                       <p>{copy.referenceLabel} {payment.providerReference ?? copy.unavailable}</p>
                       {payment.paidAtUtc ? <p>{copy.paidLabel} {formatDateTime(payment.paidAtUtc, culture)}</p> : null}
                     </div>
@@ -971,6 +1013,26 @@ export function OrderConfirmationPage({
                 </div>
               )}
             </aside>
+
+            <div id="confirmation-composition" className="scroll-mt-28">
+              <ConfirmationContentCompositionWindow
+                culture={culture}
+                hasMemberSession={hasMemberSession}
+                paymentNeedsAttention={paymentNeedsAttention}
+                orderNumber={confirmation.orderNumber}
+                orderGrossMinor={confirmation.grandTotalGrossMinor}
+                currency={confirmation.currency}
+                memberOrdersHref={memberOrdersHref}
+                signInHref={signInHref}
+                accountHref="/account"
+                memberOrders={memberOrders}
+                memberInvoices={memberInvoices}
+                memberLoyaltyOverview={memberLoyaltyOverview}
+                cmsPages={cmsPages}
+                categories={categories}
+                products={products}
+              />
+            </div>
 
             <CommerceStorefrontWindow
               culture={culture}

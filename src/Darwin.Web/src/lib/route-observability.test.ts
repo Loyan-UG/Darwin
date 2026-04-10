@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildObservedOperationKey,
   getAttentionLevel,
+  getDegradedSurfaceFootprint,
   getDurationBand,
   getSignalKind,
   getSuggestedAction,
@@ -9,6 +11,17 @@ import {
 } from "@/lib/route-observability";
 
 test("route observability helpers classify duration, signal, attention, and suggested action directly", () => {
+  assert.equal(buildObservedOperationKey("home", "compose"), "home:compose");
+
+  assert.equal(
+    getDegradedSurfaceFootprint([
+      ["menuStatus", "fallback"],
+      ["productsStatus", "stale"],
+    ]),
+    "menu:fallback|products:stale",
+  );
+  assert.equal(getDegradedSurfaceFootprint([]), undefined);
+
   assert.equal(getDurationBand(10, 50), "within-threshold");
   assert.equal(getDurationBand(60, 50), "slow");
   assert.equal(getDurationBand(180, 50), "very-slow");

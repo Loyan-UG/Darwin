@@ -164,3 +164,59 @@ test("createPublicDiscoveryPageLoader normalizes equivalent arguments before cac
   assert.equal(first.slug, "faq");
   assert.equal(second.slug, "faq");
 });
+
+test("createPublicDiscoveryPageLoader feeds normalized args into context and success diagnostics", async () => {
+  let contextSnapshot: Record<string, unknown> | undefined;
+  let successSnapshot: Record<string, unknown> | undefined;
+
+  const loader = createPublicDiscoveryPageLoaderCore({
+    area: "unit-discovery-page",
+    operation: "load-page",
+    normalizeArgs: (culture: string, slug: string) =>
+      [culture.trim(), slug.trim()] as [string, string],
+    getContext: (culture: string, slug: string) => {
+      contextSnapshot = { culture, slug };
+      return { culture, slug };
+    },
+    getSuccessContext: (result) => {
+      successSnapshot = {
+        slug: result.slug,
+        continuationCmsCount: result.continuationSlice.cmsPages.length,
+      };
+
+      return {
+        slug: result.slug,
+      };
+    },
+    loadRouteContext: async (_culture: string, slug: string) => ({
+      slug,
+      storefrontContext: {
+        cmsPagesResult: { status: "ok", data: { items: [{ slug: "faq" }] } },
+        cmsPagesStatus: "ok",
+        cmsPages: [{ slug: "faq" }],
+        categoriesResult: { status: "ok", data: { items: [] } },
+        categoriesStatus: "ok",
+        categories: [],
+        productsResult: { status: "ok", data: { items: [] } },
+        productsStatus: "ok",
+        products: [],
+        storefrontCart: null,
+        storefrontCartStatus: "not-found",
+        cartSnapshots: [],
+        cartLinkedProductSlugs: [],
+      },
+    }),
+  });
+
+  const result = await loader(" de-DE ", " faq ");
+
+  assert.equal(result.slug, "faq");
+  assert.deepEqual(contextSnapshot, {
+    culture: "de-DE",
+    slug: "faq",
+  });
+  assert.deepEqual(successSnapshot, {
+    slug: "faq",
+    continuationCmsCount: 1,
+  });
+});

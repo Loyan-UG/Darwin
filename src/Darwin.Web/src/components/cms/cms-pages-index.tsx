@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
+import { CmsIndexCompositionWindow } from "@/components/cms/cms-index-composition-window";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { CmsStorefrontSupportWindow } from "@/components/cms/cms-storefront-support-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
@@ -169,6 +170,19 @@ export function CmsPagesIndex({
     preferredCmsReviewState === "ready"
       ? copy.cmsIndexReviewReadyCta
       : copy.cmsIndexReviewAttentionCta;
+  const sectionLinks = [
+    { id: "cms-overview", label: copy.cmsResultSummaryTitle },
+    { id: "cms-composition", label: copy.cmsIndexCompositionJourneyTitle },
+    { id: "cms-readiness", label: copy.cmsIndexReadinessTitle },
+    { id: "cms-review", label: copy.cmsIndexReviewTitle },
+    ...(groupedPages.length > 0
+      ? [{ id: "cms-groups", label: copy.cmsGroupingTitle }]
+      : []),
+    { id: "cms-results", label: copy.cmsPageEyebrow },
+    ...(totalPages > 1
+      ? [{ id: "cms-pagination", label: copy.cmsPaginationTitle }]
+      : []),
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -209,7 +223,10 @@ export function CmsPagesIndex({
           />
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div
+          id="cms-review"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+        >
           <form action={localizeHref("/cms", culture)} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_auto_auto] lg:items-end">
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
               {copy.cmsVisibleSearchLabel}
@@ -304,7 +321,24 @@ export function CmsPagesIndex({
           </div>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+          <div className="flex flex-wrap gap-2">
+            {sectionLinks.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {section.label}
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <div
+          id="cms-overview"
+          className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]"
+        >
           <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.cmsResultSummaryTitle}
@@ -365,7 +399,28 @@ export function CmsPagesIndex({
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div id="cms-composition" className="scroll-mt-28">
+          <CmsIndexCompositionWindow
+            culture={culture}
+            searchQuery={searchQuery}
+            visibleState={visibleState}
+            visibleSort={visibleSort}
+            metadataFocus={metadataFocus}
+            currentPage={currentPage}
+            totalItems={totalItems}
+            pages={pages}
+            categories={categories}
+            products={products}
+            cartSummary={cartSummary}
+            reviewHref={cmsReviewPrimaryHref}
+            reviewLabel={cmsReviewPrimaryLabel}
+          />
+        </div>
+
+        <div
+          id="cms-readiness"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.cmsIndexReadinessTitle}
           </p>
@@ -591,7 +646,10 @@ export function CmsPagesIndex({
         </div>
 
         {groupedPages.length > 0 && (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+          <div
+            id="cms-groups"
+            className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]"
+          >
             <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.cmsGroupingTitle}
@@ -732,7 +790,7 @@ export function CmsPagesIndex({
 
         <CmsContinuationRail culture={culture} description={copy.cmsCrossSurfaceMessage} />
 
-        <div className="flex flex-col gap-6">
+        <div id="cms-results" className="scroll-mt-28 flex flex-col gap-6">
           {groupedPages.map((group) => (
             <section key={group.key} id={`cms-group-${group.key}`} className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -844,7 +902,10 @@ export function CmsPagesIndex({
         )}
 
         {totalPages > 1 && (
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div
+            id="cms-pagination"
+            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+          >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.cmsPaginationTitle}
             </p>

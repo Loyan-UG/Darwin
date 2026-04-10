@@ -98,6 +98,7 @@ export type MemberOrderDetail = MemberOrderSummary & {
   }>;
   payments: Array<{
     id: string;
+    createdAtUtc: string;
     provider: string;
     providerReference?: string | null;
     amountMinor: number;

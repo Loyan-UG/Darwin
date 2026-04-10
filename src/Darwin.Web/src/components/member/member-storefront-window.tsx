@@ -1,7 +1,9 @@
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
 import Link from "next/link";
 import { StorefrontOfferBoard } from "@/components/storefront/storefront-offer-board";
 import { StorefrontSpotlightBoard } from "@/components/storefront/storefront-spotlight-board";
 import type {
+  StorefrontCampaignCard,
   StorefrontOfferCard,
   StorefrontSpotlightCard,
 } from "@/features/storefront/storefront-campaigns";
@@ -24,6 +26,9 @@ type MemberStorefrontWindowProps = {
   productMessage: string;
   productCards: StorefrontOfferCard[];
   productEmptyMessage: string;
+  promotionLaneSectionTitle?: string;
+  promotionLaneSectionMessage?: string;
+  promotionLaneCards?: StorefrontCampaignCard[];
 };
 
 export function MemberStorefrontWindow({
@@ -43,6 +48,9 @@ export function MemberStorefrontWindow({
   productMessage,
   productCards,
   productEmptyMessage,
+  promotionLaneSectionTitle,
+  promotionLaneSectionMessage,
+  promotionLaneCards = [],
 }: MemberStorefrontWindowProps) {
   return (
     <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -114,6 +122,23 @@ export function MemberStorefrontWindow({
           />
         </div>
       </div>
+      {promotionLaneCards.length > 0 &&
+      promotionLaneSectionTitle &&
+      promotionLaneSectionMessage ? (
+        <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {promotionLaneSectionTitle}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {promotionLaneSectionMessage}
+          </p>
+          <StorefrontCampaignBoard
+            culture={culture}
+            cards={promotionLaneCards}
+            emptyMessage={promotionLaneSectionMessage}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

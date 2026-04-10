@@ -10,6 +10,7 @@ import type {
 } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import {
   buildStorefrontCategoryCampaignCards,
   buildStorefrontCategorySpotlightLinkCards,
@@ -65,6 +66,58 @@ export function PublicAuthContinuation({
     priceDrop: copy.offerCampaignPriceDropLabel,
     steadyPick: copy.offerCampaignSteadyLabel,
   };
+  const promotionLaneCards = summarizeCatalogPromotionLanes(productOpportunities).map(
+    (entry) => {
+      const laneLabel =
+        entry.lane === "hero-offers"
+          ? copy.publicAuthPromotionLaneHeroLabel
+          : entry.lane === "value-offers"
+            ? copy.publicAuthPromotionLaneValueLabel
+            : entry.lane === "live-offers"
+              ? copy.publicAuthPromotionLaneLiveOffersLabel
+              : copy.publicAuthPromotionLaneBaseLabel;
+      const href =
+        entry.lane === "hero-offers"
+          ? "/catalog?visibleState=offers&visibleSort=offers-first&savingsBand=hero"
+          : entry.lane === "value-offers"
+            ? "/catalog?visibleState=offers&visibleSort=offers-first&savingsBand=value"
+            : entry.lane === "live-offers"
+              ? "/catalog?visibleState=offers&visibleSort=savings-desc"
+              : "/catalog?visibleState=base&visibleSort=base-first";
+
+      return {
+        id: `auth-promotion-lane-${entry.lane}`,
+        label: copy.publicAuthPromotionLaneCardLabel,
+        title: entry.anchorProduct
+          ? formatResource(copy.publicAuthPromotionLaneTitle, {
+              lane: laneLabel,
+              product: entry.anchorProduct.name,
+            })
+          : formatResource(copy.publicAuthPromotionLaneFallbackTitle, {
+              lane: laneLabel,
+            }),
+        description:
+          entry.anchorProduct !== null
+            ? formatResource(copy.publicAuthPromotionLaneDescription, {
+                lane: laneLabel,
+                count: entry.count,
+                price: formatMoney(
+                  entry.anchorProduct.priceMinor,
+                  entry.anchorProduct.currency,
+                  culture,
+                ),
+              })
+            : formatResource(copy.publicAuthPromotionLaneFallbackDescription, {
+                lane: laneLabel,
+              }),
+        href,
+        ctaLabel: copy.publicAuthPromotionLaneCta,
+        meta: formatResource(copy.publicAuthPromotionLaneMeta, {
+          count: entry.count,
+        }),
+      };
+    },
+  );
   const campaignCards = [
     ...buildStorefrontCategoryCampaignCards(campaignCategories, {
       prefix: "auth-campaign",
@@ -275,6 +328,23 @@ export function PublicAuthContinuation({
             productsStatus,
           })}
         </p>
+        <div className="mt-4 rounded-[1.25rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+            {copy.publicAuthPromotionLaneSectionTitle}
+          </p>
+          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+            {copy.publicAuthPromotionLaneSectionMessage}
+          </p>
+          <StorefrontCampaignBoard
+            culture={culture}
+            cards={promotionLaneCards}
+            emptyMessage={formatResource(copy.publicAuthCampaignEmptyMessage, {
+              categoriesStatus,
+              productsStatus,
+            })}
+            cardClassName="bg-[var(--color-surface-panel)]"
+          />
+        </div>
         <StorefrontCampaignBoard
           culture={culture}
           cards={campaignCards}

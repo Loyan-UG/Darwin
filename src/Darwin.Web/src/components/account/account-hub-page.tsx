@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { AccountHubCompositionWindow } from "@/components/account/account-hub-composition-window";
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
 import { StorefrontOfferBoard } from "@/components/storefront/storefront-offer-board";
 import type {
   PublicCategorySummary,
@@ -9,6 +11,7 @@ import type {
 } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import {
   buildStorefrontCategorySpotlightLinkCards,
   buildStorefrontOfferCards,
@@ -80,6 +83,58 @@ export function AccountHubPage({
     fallbackDescription: copy.accountHubOfferBoardFallbackDescription,
     ctaLabel: copy.accountHubOfferBoardCta,
   });
+  const promotionLaneCards = summarizeCatalogPromotionLanes(rankedOffers).map(
+    (entry) => {
+      const laneLabel =
+        entry.lane === "hero-offers"
+          ? copy.accountHubPromotionLaneHeroLabel
+          : entry.lane === "value-offers"
+            ? copy.accountHubPromotionLaneValueLabel
+            : entry.lane === "live-offers"
+              ? copy.accountHubPromotionLaneLiveOffersLabel
+              : copy.accountHubPromotionLaneBaseLabel;
+      const href =
+        entry.lane === "hero-offers"
+          ? "/catalog?visibleState=offers&visibleSort=offers-first&savingsBand=hero"
+          : entry.lane === "value-offers"
+            ? "/catalog?visibleState=offers&visibleSort=offers-first&savingsBand=value"
+            : entry.lane === "live-offers"
+              ? "/catalog?visibleState=offers&visibleSort=savings-desc"
+              : "/catalog?visibleState=base&visibleSort=base-first";
+
+      return {
+        id: `account-hub-promotion-lane-${entry.lane}`,
+        label: copy.accountHubPromotionLaneCardLabel,
+        title: entry.anchorProduct
+          ? formatResource(copy.accountHubPromotionLaneTitle, {
+              lane: laneLabel,
+              product: entry.anchorProduct.name,
+            })
+          : formatResource(copy.accountHubPromotionLaneFallbackTitle, {
+              lane: laneLabel,
+            }),
+        description:
+          entry.anchorProduct !== null
+            ? formatResource(copy.accountHubPromotionLaneDescription, {
+                lane: laneLabel,
+                count: entry.count,
+                price: formatMoney(
+                  entry.anchorProduct.priceMinor,
+                  entry.anchorProduct.currency,
+                  culture,
+                ),
+              })
+            : formatResource(copy.accountHubPromotionLaneFallbackDescription, {
+                lane: laneLabel,
+              }),
+        href,
+        ctaLabel: copy.accountHubPromotionLaneCta,
+        meta: formatResource(copy.accountHubPromotionLaneMeta, {
+          count: entry.count,
+        }),
+      };
+    },
+  );
   const cmsSpotlightCards = buildStorefrontPageSpotlightCards(cmsPages.slice(0, 1), {
     prefix: "account-hub",
     fallbackDescription: copy.accountHubActionCmsFallbackDescription,
@@ -127,11 +182,21 @@ export function AccountHubPage({
       ctaLabel: copy.cardPasswordCta,
     },
   ];
+  const sectionLinks = [
+    { id: "account-entry", label: copy.accountHubTitle },
+    { id: "account-readiness", label: copy.accountHubReadinessTitle },
+    { id: "account-composition", label: copy.accountHubCompositionJourneyTitle },
+    { id: "account-actions", label: copy.accountHubActionCenterTitle },
+    { id: "account-offers", label: copy.accountHubOfferBoardTitle },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div
+          id="account-entry"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.accountHubEyebrow}
           </p>
@@ -142,6 +207,20 @@ export function AccountHubPage({
             {copy.accountHubDescription}
           </p>
         </div>
+
+        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+          <div className="flex flex-wrap gap-2">
+            {sectionLinks.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+              >
+                {section.label}
+              </a>
+            ))}
+          </div>
+        </section>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {accountCards.map((card) => (
@@ -170,7 +249,10 @@ export function AccountHubPage({
           ))}
         </div>
 
-        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+        <aside
+          id="account-readiness"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
             {copy.accountHubReadinessTitle}
           </p>
@@ -253,7 +335,21 @@ export function AccountHubPage({
           storefrontCart={storefrontCart}
         />
 
-        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+        <div id="account-composition" className="scroll-mt-28">
+          <AccountHubCompositionWindow
+            culture={culture}
+            returnPath={preferredReturnPath}
+            storefrontCart={storefrontCart}
+            cmsPages={cmsPages}
+            categories={categories}
+            products={products}
+          />
+        </div>
+
+        <aside
+          id="account-actions"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
             {copy.accountHubActionCenterTitle}
           </p>
@@ -373,7 +469,10 @@ export function AccountHubPage({
           </div>
         </aside>
 
-        <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+        <aside
+          id="account-offers"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.accountHubOfferBoardTitle}
           </p>
@@ -390,6 +489,19 @@ export function AccountHubPage({
               status: productsStatus,
             })}
           />
+          <div className="mt-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.accountHubPromotionLaneSectionTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {copy.accountHubPromotionLaneSectionMessage}
+            </p>
+            <StorefrontCampaignBoard
+              culture={culture}
+              cards={promotionLaneCards}
+              emptyMessage={copy.accountHubPromotionLaneSectionMessage}
+            />
+          </div>
         </aside>
 
         <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">

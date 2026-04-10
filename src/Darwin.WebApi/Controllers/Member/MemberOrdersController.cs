@@ -231,6 +231,7 @@ public sealed class MemberOrdersController : ApiControllerBase
             Payments = dto.Payments.Select(payment => new MemberOrderPayment
             {
                 Id = payment.Id,
+                CreatedAtUtc = payment.CreatedAtUtc,
                 Provider = payment.Provider,
                 ProviderReference = payment.ProviderReference,
                 AmountMinor = payment.AmountMinor,
@@ -327,7 +328,7 @@ public sealed class MemberOrdersController : ApiControllerBase
         builder.AppendLine("Payments:");
         foreach (var payment in dto.Payments)
         {
-            builder.AppendLine($"- {payment.Provider} | {payment.Status} | {payment.Currency} {payment.AmountMinor} | Ref: {payment.ProviderReference ?? "N/A"} | PaidAtUtc: {payment.PaidAtUtc:O}");
+            builder.AppendLine($"- {payment.Provider} | {payment.Status} | {payment.Currency} {payment.AmountMinor} | CreatedAtUtc: {payment.CreatedAtUtc:O} | Ref: {payment.ProviderReference ?? "N/A"} | PaidAtUtc: {payment.PaidAtUtc:O}");
         }
 
         builder.AppendLine();

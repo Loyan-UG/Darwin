@@ -1,10 +1,16 @@
 import Link from "next/link";
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
 import type { PublicProductSummary } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import { buildStorefrontOfferCards } from "@/features/storefront/storefront-campaigns";
 import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
-import { buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
+import {
+  buildAppQueryPath,
+  buildLocalizedAuthHref,
+  localizeHref,
+} from "@/lib/locale-routing";
 import { formatResource, getCommerceResource } from "@/localization";
 
 type CommerceAuthHandoffProps = {
@@ -51,6 +57,72 @@ export function CommerceAuthHandoff({
       product.shortDescription ?? copy.commerceAuthOfferBoardFallbackDescription,
     fallbackDescription: copy.commerceAuthOfferBoardFallbackDescription,
   });
+  const promotionLaneCards = summarizeCatalogPromotionLanes(offerBoardProducts).map(
+    (entry) => {
+      const laneLabel =
+        entry.lane === "hero-offers"
+          ? copy.storefrontWindowPromotionLaneHeroLabel
+          : entry.lane === "value-offers"
+            ? copy.storefrontWindowPromotionLaneValueLabel
+            : entry.lane === "live-offers"
+              ? copy.storefrontWindowPromotionLaneLiveOffersLabel
+              : copy.storefrontWindowPromotionLaneBaseLabel;
+      const href =
+        entry.lane === "hero-offers"
+          ? buildAppQueryPath("/catalog", {
+              visibleState: "offers",
+              visibleSort: "offers-first",
+              savingsBand: "hero",
+            })
+          : entry.lane === "value-offers"
+            ? buildAppQueryPath("/catalog", {
+                visibleState: "offers",
+                visibleSort: "offers-first",
+                savingsBand: "value",
+              })
+            : entry.lane === "live-offers"
+              ? buildAppQueryPath("/catalog", {
+                  visibleState: "offers",
+                  visibleSort: "savings-desc",
+                })
+              : buildAppQueryPath("/catalog", {
+                  visibleState: "base",
+                  visibleSort: "base-first",
+                });
+
+      return {
+        id: `commerce-auth-promotion-lane-${entry.lane}`,
+        label: copy.storefrontWindowPromotionLaneCardLabel,
+        title: entry.anchorProduct
+          ? formatResource(copy.storefrontWindowPromotionLaneTitle, {
+              lane: laneLabel,
+              product: entry.anchorProduct.name,
+            })
+          : formatResource(copy.storefrontWindowPromotionLaneFallbackTitle, {
+              lane: laneLabel,
+            }),
+        description:
+          entry.anchorProduct !== null
+            ? formatResource(copy.storefrontWindowPromotionLaneDescription, {
+                lane: laneLabel,
+                count: entry.count,
+                price: formatMoney(
+                  entry.anchorProduct.priceMinor,
+                  entry.anchorProduct.currency,
+                  culture,
+                ),
+              })
+            : formatResource(copy.storefrontWindowPromotionLaneFallbackDescription, {
+                lane: laneLabel,
+              }),
+        href,
+        ctaLabel: copy.storefrontWindowPromotionLaneCta,
+        meta: formatResource(copy.storefrontWindowPromotionLaneMeta, {
+          count: entry.count,
+        }),
+      };
+    },
+  );
   const routeTitle =
     routeKey === "checkout"
       ? copy.commerceAuthCheckoutTitle
@@ -168,7 +240,22 @@ export function CommerceAuthHandoff({
             })}
           </p>
         )}
+        <div className="mt-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent)]">
+            {copy.storefrontWindowPromotionLaneSectionTitle}
+          </p>
+          <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
+            {copy.storefrontWindowPromotionLaneSectionMessage}
+          </p>
+          <StorefrontCampaignBoard
+            culture={culture}
+            cards={promotionLaneCards}
+            emptyMessage={copy.storefrontWindowPromotionLaneSectionMessage}
+          />
+        </div>
       </div>
     </aside>
   );
 }
+
+

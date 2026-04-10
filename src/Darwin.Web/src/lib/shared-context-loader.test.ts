@@ -2,6 +2,35 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createSharedContextLoader } from "@/lib/shared-context-loader";
 
+test("createSharedContextLoader wraps context and success diagnostics with shared context metadata", async () => {
+  let contextSnapshot: Record<string, unknown> | undefined;
+  let successSnapshot: Record<string, unknown> | undefined;
+
+  const loader = createSharedContextLoader({
+    kind: "storefront-continuation",
+    area: "unit-shared-context",
+    operation: "load-continuation",
+    normalizeArgs: (culture: string) => [culture.trim()] as [string],
+    getContext: (culture: string) => {
+      contextSnapshot = { culture };
+      return { culture };
+    },
+    getSuccessContext: (result) => {
+      successSnapshot = { cmsStatus: result.cmsStatus };
+      return { cmsStatus: result.cmsStatus };
+    },
+    load: async (culture: string) => ({
+      cmsStatus: culture === "de-DE" ? "ok" : "fallback",
+    }),
+  });
+
+  const result = await loader(" de-DE ");
+
+  assert.equal(result.cmsStatus, "ok");
+  assert.deepEqual(contextSnapshot, { culture: "de-DE" });
+  assert.deepEqual(successSnapshot, { cmsStatus: "ok" });
+});
+
 test("createSharedContextLoader keeps shared-context results stable per argument tuple", async () => {
   let executions = 0;
   const loader = createSharedContextLoader({

@@ -1,4 +1,5 @@
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
+import { PublicAuthCompositionWindow } from "@/components/account/public-auth-composition-window";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import Link from "next/link";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
@@ -11,7 +12,7 @@ import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { signInMemberAction } from "@/features/member-session/actions";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
-import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type SignInPageProps = {
   culture: string;
@@ -140,6 +141,44 @@ export function SignInPage({
             email={email}
             returnPath={returnPath}
             compact
+          />
+          <PublicAuthCompositionWindow
+            culture={culture}
+            routeCard={{
+              label: copy.publicAuthCompositionJourneyCurrentLabel,
+              title: copy.publicAuthCompositionJourneySignInTitle,
+              description: formatResource(copy.publicAuthCompositionJourneySignInDescription, {
+                returnPath: returnPath || "/account",
+              }),
+              href: "/account/sign-in",
+              ctaLabel: copy.publicAuthCompositionJourneyCurrentCta,
+            }}
+            nextCard={{
+              label: copy.publicAuthCompositionJourneyNextLabel,
+              title: copy.publicAuthCompositionJourneyRegisterTitle,
+              description: copy.publicAuthCompositionJourneySignInNextDescription,
+              href: registerHref,
+              ctaLabel: copy.publicAuthCompositionJourneyRegisterCta,
+            }}
+            routeMapItems={[
+              {
+                label: copy.publicAuthCompositionRouteMapCurrentLabel,
+                title: copy.publicAuthCompositionRouteMapSignInTitle,
+                description: copy.publicAuthCompositionRouteMapSignInDescription,
+                href: "/account/sign-in",
+                ctaLabel: copy.publicAuthCompositionRouteMapCurrentCta,
+              },
+              {
+                label: copy.publicAuthCompositionRouteMapNextLabel,
+                title: copy.publicAuthCompositionRouteMapRegisterTitle,
+                description: copy.publicAuthCompositionRouteMapRegisterDescription,
+                href: registerHref,
+                ctaLabel: copy.publicAuthCompositionRouteMapRegisterCta,
+              },
+            ]}
+            cmsPages={cmsPages}
+            categories={categories}
+            products={products}
           />
           <PublicAuthContinuation
             culture={culture}

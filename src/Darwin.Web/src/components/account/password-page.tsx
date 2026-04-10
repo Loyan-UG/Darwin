@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
+import { PublicAuthCompositionWindow } from "@/components/account/public-auth-composition-window";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import type {
@@ -14,7 +15,7 @@ import {
   resetPasswordAction,
 } from "@/features/account/actions";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
-import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type PasswordPageProps = {
   culture: string;
@@ -178,6 +179,45 @@ export function PasswordPage({
           culture={culture}
           returnPath={returnPath}
           storefrontCart={storefrontCart}
+        />
+
+        <PublicAuthCompositionWindow
+          culture={culture}
+          routeCard={{
+            label: copy.publicAuthCompositionJourneyCurrentLabel,
+            title: copy.publicAuthCompositionJourneyPasswordTitle,
+            description: formatResource(copy.publicAuthCompositionJourneyPasswordDescription, {
+              returnPath: returnPath || "/account",
+            }),
+            href: "/account/password",
+            ctaLabel: copy.publicAuthCompositionJourneyCurrentCta,
+          }}
+          nextCard={{
+            label: copy.publicAuthCompositionJourneyNextLabel,
+            title: copy.publicAuthCompositionJourneySignInTitle,
+            description: copy.publicAuthCompositionJourneyPasswordNextDescription,
+            href: signInHref,
+            ctaLabel: copy.publicAuthCompositionJourneySignInCta,
+          }}
+          routeMapItems={[
+            {
+              label: copy.publicAuthCompositionRouteMapCurrentLabel,
+              title: copy.publicAuthCompositionRouteMapPasswordTitle,
+              description: copy.publicAuthCompositionRouteMapPasswordDescription,
+              href: "/account/password",
+              ctaLabel: copy.publicAuthCompositionRouteMapCurrentCta,
+            },
+            {
+              label: copy.publicAuthCompositionRouteMapNextLabel,
+              title: copy.publicAuthCompositionRouteMapSignInTitle,
+              description: copy.publicAuthCompositionRouteMapPasswordNextDescription,
+              href: signInHref,
+              ctaLabel: copy.publicAuthCompositionRouteMapSignInCta,
+            },
+          ]}
+          cmsPages={cmsPages}
+          categories={categories}
+          products={products}
         />
 
         <PublicAuthContinuation

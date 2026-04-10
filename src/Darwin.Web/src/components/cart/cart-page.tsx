@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CartContentCompositionWindow } from "@/components/cart/cart-content-composition-window";
 import { CommerceAuthHandoff } from "@/components/checkout/commerce-auth-handoff";
 import { CommerceContinuationRail } from "@/components/checkout/commerce-continuation-rail";
 import { CommerceStorefrontWindow } from "@/components/checkout/commerce-storefront-window";
@@ -121,6 +122,15 @@ export function CartPage({
         culture,
       )
     : localizeHref("/checkout", culture);
+  const hasCartItems = Boolean(cart && cart.items.length > 0);
+  const sectionLinks = hasCartItems
+    ? [
+        { id: "cart-overview", label: copy.cartRouteSummaryTitle },
+        { id: "cart-composition", label: copy.cartCompositionJourneyTitle },
+        { id: "cart-basket", label: copy.cartHeroTitle },
+        { id: "cart-follow-up", label: copy.followUpProductsTitle },
+      ]
+    : [];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
@@ -192,8 +202,27 @@ export function CartPage({
           </p>
         </div>
 
+        {sectionLinks.length > 0 ? (
+          <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex flex-wrap gap-2">
+              {sectionLinks.map((section) => (
+                <a
+                  key={section.id}
+                  href={`#${section.id}`}
+                  className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                >
+                  {section.label}
+                </a>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {cart && cart.items.length > 0 && (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <div
+            id="cart-overview"
+            className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
+          >
             <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.cartOpportunityTitle}
@@ -324,7 +353,25 @@ export function CartPage({
             </div>
           </div>
         ) : (
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="flex flex-col gap-8">
+            <div id="cart-composition" className="scroll-mt-28">
+              <CartContentCompositionWindow
+                culture={culture}
+                hasMemberSession={hasMemberSession}
+                itemCount={cart.items.length}
+                grandTotalMinor={cart.grandTotalGrossMinor}
+                currency={cart.currency}
+                checkoutHref={checkoutHref}
+                cmsPages={cmsPages}
+                categories={categories}
+                products={followUpProducts}
+              />
+            </div>
+
+            <div
+              id="cart-basket"
+              className="scroll-mt-28 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]"
+            >
             <div className="flex flex-col gap-5">
               {cart.items.map((item) => (
                 (() => {
@@ -658,11 +705,15 @@ export function CartPage({
                 </div>
               </div>
             </aside>
+            </div>
           </div>
         )}
 
         {cart && cart.items.length > 0 && (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div
+            id="cart-follow-up"
+            className="scroll-mt-28 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]"
+          >
             <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.followUpProductsTitle}

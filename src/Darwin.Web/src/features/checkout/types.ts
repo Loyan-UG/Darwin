@@ -80,6 +80,7 @@ export type PublicStorefrontOrderConfirmationLine = {
 
 export type PublicStorefrontOrderConfirmationPayment = {
   id: string;
+  createdAtUtc: string;
   provider: string;
   providerReference?: string | null;
   amountMinor: number;

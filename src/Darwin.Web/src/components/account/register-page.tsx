@@ -1,4 +1,5 @@
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
+import { PublicAuthCompositionWindow } from "@/components/account/public-auth-composition-window";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import Link from "next/link";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
@@ -11,7 +12,7 @@ import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { registerMemberAction } from "@/features/account/actions";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
-import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
 
 type RegisterPageProps = {
   culture: string;
@@ -154,6 +155,44 @@ export function RegisterPage({
               compact
             />
           )}
+          <PublicAuthCompositionWindow
+            culture={culture}
+            routeCard={{
+              label: copy.publicAuthCompositionJourneyCurrentLabel,
+              title: copy.publicAuthCompositionJourneyRegisterTitle,
+              description: formatResource(copy.publicAuthCompositionJourneyRegisterDescription, {
+                returnPath: returnPath || "/account",
+              }),
+              href: "/account/register",
+              ctaLabel: copy.publicAuthCompositionJourneyCurrentCta,
+            }}
+            nextCard={{
+              label: copy.publicAuthCompositionJourneyNextLabel,
+              title: copy.publicAuthCompositionJourneyActivationTitle,
+              description: copy.publicAuthCompositionJourneyRegisterNextDescription,
+              href: activationHref,
+              ctaLabel: copy.publicAuthCompositionJourneyActivationCta,
+            }}
+            routeMapItems={[
+              {
+                label: copy.publicAuthCompositionRouteMapCurrentLabel,
+                title: copy.publicAuthCompositionRouteMapRegisterTitle,
+                description: copy.publicAuthCompositionRouteMapRegisterDescription,
+                href: "/account/register",
+                ctaLabel: copy.publicAuthCompositionRouteMapCurrentCta,
+              },
+              {
+                label: copy.publicAuthCompositionRouteMapNextLabel,
+                title: copy.publicAuthCompositionRouteMapActivationTitle,
+                description: copy.publicAuthCompositionRouteMapActivationDescription,
+                href: activationHref,
+                ctaLabel: copy.publicAuthCompositionRouteMapActivationCta,
+              },
+            ]}
+            cmsPages={cmsPages}
+            categories={categories}
+            products={products}
+          />
           <PublicAuthContinuation
             culture={culture}
           cmsPages={cmsPages}

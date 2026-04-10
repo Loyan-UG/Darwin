@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
 import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
 import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
 import type {
@@ -148,9 +150,29 @@ export function OrdersPage({
     prefix: "orders",
     fallbackDescription: copy.ordersStorefrontCatalogFallbackDescription,
   });
+  const promotionLaneCards = buildMemberPromotionLaneCards(rankedProducts, culture);
+  const sectionLinks = [
+    { href: "#orders-overview", label: copy.ordersTitle },
+    { href: "#orders-filters", label: copy.ordersFilterTitle },
+    { href: "#orders-readiness", label: copy.ordersReadinessTitle },
+    { href: "#orders-storefront", label: copy.ordersStorefrontWindowTitle },
+    { href: "#orders-results", label: copy.openOrderCta },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-col gap-8">
+        <div className="sticky top-24 z-10 -mt-2">
+          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex min-w-max flex-wrap gap-2">
+              {sectionLinks.map((link) => (
+                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
       <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-8">
         <nav
@@ -170,7 +192,7 @@ export function OrdersPage({
           </span>
         </nav>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div id="orders-overview" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.ordersEyebrow}
           </p>
@@ -202,7 +224,7 @@ export function OrdersPage({
           </p>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div id="orders-filters" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.ordersFilterTitle}
@@ -256,7 +278,7 @@ export function OrdersPage({
           </form>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div id="orders-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.ordersReadinessTitle}
           </p>
@@ -310,45 +332,100 @@ export function OrdersPage({
           </div>
         </div>
 
-        <MemberStorefrontWindow
+        <AccountContentCompositionWindow
           culture={culture}
-          title={copy.ordersStorefrontWindowTitle}
-          message={formatResource(copy.ordersStorefrontWindowMessage, {
-            cmsStatus: cmsPagesStatus,
-            categoriesStatus,
-            productsStatus,
-            pageCount: cmsPages.length,
-            categoryCount: categories.length,
-            productCount: products.length,
-          })}
-          cmsTitle={copy.ordersStorefrontCmsTitle}
-          cmsCtaLabel={copy.ordersStorefrontCmsCta}
-          cmsCards={cmsSpotlightCards}
-          cmsEmptyMessage={formatResource(copy.ordersStorefrontCmsEmptyMessage, {
-            status: cmsPagesStatus,
-          })}
-          catalogTitle={copy.ordersStorefrontCatalogTitle}
-          catalogCtaLabel={copy.ordersStorefrontCatalogCta}
-          categoryCards={categorySpotlightCards}
-          catalogEmptyMessage={formatResource(copy.ordersStorefrontCatalogEmptyMessage, {
-            status: categoriesStatus,
-          })}
-          productTitle={copy.ordersStorefrontProductTitle}
-          productCtaLabel={copy.ordersStorefrontProductCta}
-          productMessage={
-            cartLinkedSlugSet.size > 0
-              ? formatResource(copy.ordersStorefrontProductCartAwareMessage, {
-                  count: cartLinkedSlugSet.size,
+          routeCard={{
+            label: copy.accountCompositionJourneyCurrentLabel,
+            title: copy.ordersTitle,
+            description: formatResource(copy.ordersWindowMessage, {
+              count: filteredOrders.length,
+              loadedCount: orders.length,
+              currentPage,
+              totalPages,
+              status,
+            }),
+            href: buildOrdersHref(currentPage, { visibleQuery, visibleState }),
+            ctaLabel: copy.accountCompositionJourneyCurrentCta,
+          }}
+          nextCard={{
+            label: copy.accountCompositionJourneyNextLabel,
+            title: attentionOrders[0]?.orderNumber ?? copy.invoicesTitle,
+            description: attentionOrders[0]
+              ? formatResource(copy.ordersReadinessMessage, {
+                  count: attentionOrders.length,
+                  total: formatMoney(attentionGrossMinor, primaryCurrency, culture),
                 })
-              : copy.ordersStorefrontProductMessage
-          }
-          productCards={storefrontOfferCards}
-          productEmptyMessage={formatResource(copy.ordersStorefrontProductEmptyMessage, {
-            status: productsStatus,
-          })}
+              : copy.invoicesPortalNote,
+            href: attentionOrders[0] ? `/orders/${attentionOrders[0].id}` : "/invoices",
+            ctaLabel: attentionOrders[0]
+              ? copy.ordersReadinessPrimaryCta
+              : copy.accountCompositionJourneyAddressesCta,
+          }}
+          routeMapItems={[
+            {
+              label: copy.accountCompositionRouteMapProfileLabel,
+              title: copy.ordersRouteLabel,
+              description: copy.ordersPortalNote,
+              href: "/orders",
+              ctaLabel: copy.accountCompositionRouteMapProfileCta,
+            },
+            {
+              label: copy.accountCompositionRouteMapNextLabel,
+              title: copy.invoicesTitle,
+              description: copy.invoicesPortalNote,
+              href: "/invoices",
+              ctaLabel: copy.accountCompositionRouteMapAddressesCta,
+            },
+          ]}
+          cmsPages={cmsPages}
+          categories={categories}
+          products={products}
         />
 
-        <div className="grid gap-5">
+        <div id="orders-storefront" className="scroll-mt-28">
+          <MemberStorefrontWindow
+            culture={culture}
+            title={copy.ordersStorefrontWindowTitle}
+            message={formatResource(copy.ordersStorefrontWindowMessage, {
+              cmsStatus: cmsPagesStatus,
+              categoriesStatus,
+              productsStatus,
+              pageCount: cmsPages.length,
+              categoryCount: categories.length,
+              productCount: products.length,
+            })}
+            cmsTitle={copy.ordersStorefrontCmsTitle}
+            cmsCtaLabel={copy.ordersStorefrontCmsCta}
+            cmsCards={cmsSpotlightCards}
+            cmsEmptyMessage={formatResource(copy.ordersStorefrontCmsEmptyMessage, {
+              status: cmsPagesStatus,
+            })}
+            catalogTitle={copy.ordersStorefrontCatalogTitle}
+            catalogCtaLabel={copy.ordersStorefrontCatalogCta}
+            categoryCards={categorySpotlightCards}
+            catalogEmptyMessage={formatResource(copy.ordersStorefrontCatalogEmptyMessage, {
+              status: categoriesStatus,
+            })}
+            productTitle={copy.ordersStorefrontProductTitle}
+            productCtaLabel={copy.ordersStorefrontProductCta}
+            productMessage={
+              cartLinkedSlugSet.size > 0
+                ? formatResource(copy.ordersStorefrontProductCartAwareMessage, {
+                    count: cartLinkedSlugSet.size,
+                  })
+                : copy.ordersStorefrontProductMessage
+            }
+            productCards={storefrontOfferCards}
+            productEmptyMessage={formatResource(copy.ordersStorefrontProductEmptyMessage, {
+              status: productsStatus,
+            })}
+            promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
+            promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
+            promotionLaneCards={promotionLaneCards}
+          />
+        </div>
+
+        <div id="orders-results" className="scroll-mt-28 grid gap-5">
           {filteredOrders.map((order) => (
             <article
               key={order.id}
@@ -463,6 +540,7 @@ export function OrdersPage({
             includeLoyalty
           />
         </div>
+      </div>
       </div>
     </section>
   );

@@ -41,6 +41,10 @@ export type ApiFailureKind =
 
 const loggedDiagnosticFailures = new Set<string>();
 
+export function __resetApiFailureLogForTests() {
+  loggedDiagnosticFailures.clear();
+}
+
 function readHeader(
   response: Pick<Response, "headers">,
   names: string[],
@@ -55,7 +59,7 @@ function readHeader(
   return undefined;
 }
 
-function getStatusFamily(statusCode?: number): ApiStatusFamily | undefined {
+export function getStatusFamily(statusCode?: number): ApiStatusFamily | undefined {
   if (statusCode === undefined) {
     return undefined;
   }
@@ -79,7 +83,7 @@ function getStatusFamily(statusCode?: number): ApiStatusFamily | undefined {
   return "unknown";
 }
 
-function isRetryableFailure(
+export function isRetryableFailure(
   failureKind: ApiFailureKind,
   statusCode?: number,
 ) {
@@ -94,7 +98,7 @@ function isRetryableFailure(
   return false;
 }
 
-function getApiKind(path: string): ApiKind {
+export function getApiKind(path: string): ApiKind {
   if (path.startsWith("/api/v1/public/")) {
     return "public";
   }
@@ -110,7 +114,7 @@ function getApiKind(path: string): ApiKind {
   return "other";
 }
 
-function getSurfaceFamily(path: string, area: string): ApiSurfaceFamily {
+export function getSurfaceFamily(path: string, area: string): ApiSurfaceFamily {
   if (area === "cms-menu" || path.includes("/cms/menus/")) {
     return "shell";
   }
@@ -138,7 +142,7 @@ function getSurfaceFamily(path: string, area: string): ApiSurfaceFamily {
   return "other";
 }
 
-function getSurfaceArea(path: string, area: string) {
+export function getSurfaceArea(path: string, area: string) {
   if (area === "cms-menu" || path.includes("/cms/menus/")) {
     return "menu";
   }
@@ -178,7 +182,7 @@ function getSurfaceArea(path: string, area: string) {
   return area;
 }
 
-function getFailureAttentionLevel(
+export function getFailureAttentionLevel(
   failureKind: ApiFailureKind,
   statusCode?: number,
 ): "medium" | "high" {
@@ -194,7 +198,7 @@ function getFailureAttentionLevel(
   return "medium";
 }
 
-function getFailureSuggestedAction(input: {
+export function getFailureSuggestedAction(input: {
   failureKind: ApiFailureKind;
   retryable: boolean;
   surfaceFamily: ApiSurfaceFamily;
@@ -271,11 +275,8 @@ export function withFailureDiagnostics(
   };
 }
 
-export function logApiFailure(
-  diagnostics: ApiDiagnostics,
-  detail: unknown,
-) {
-  const dedupeKey = [
+export function buildApiFailureDedupeKey(diagnostics: ApiDiagnostics) {
+  return [
     diagnostics.area,
     diagnostics.path,
     diagnostics.statusCode ?? "no-status",
@@ -283,6 +284,13 @@ export function logApiFailure(
     diagnostics.requestId ?? "no-request-id",
     diagnostics.traceparent ?? "no-traceparent",
   ].join("|");
+}
+
+export function logApiFailure(
+  diagnostics: ApiDiagnostics,
+  detail: unknown,
+) {
+  const dedupeKey = buildApiFailureDedupeKey(diagnostics);
 
   if (loggedDiagnosticFailures.has(dedupeKey)) {
     return;

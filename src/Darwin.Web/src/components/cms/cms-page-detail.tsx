@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CmsCommerceCampaignWindow } from "@/components/cms/cms-commerce-campaign-window";
+import { CmsContentCompositionWindow } from "@/components/cms/cms-content-composition-window";
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { CmsStorefrontSupportWindow } from "@/components/cms/cms-storefront-support-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
@@ -67,6 +68,7 @@ export function CmsPageDetail({
   const copy = getSharedResource(culture);
   const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
   const pageReference = page ? localizeHref(`/cms/${page.slug}`, culture) : null;
+  const pagePath = page ? `/cms/${page.slug}` : "/cms";
   const contentSummary = page
     ? summarizeCmsContent(page.contentHtml)
     : null;
@@ -140,11 +142,38 @@ export function CmsPageDetail({
   const reviewQueue = reviewQueueState.queue;
   const nextReviewPage = reviewQueueState.nextTarget;
   const reviewQueuePreview = reviewQueueState.previewTargets;
+  const sectionLinks = [
+    { href: "#cms-detail-content", label: copy.cmsPageEyebrow },
+    { href: "#cms-detail-readiness", label: copy.cmsReadinessTitle },
+    { href: "#cms-detail-review", label: copy.cmsReviewQueueTitle },
+    { href: "#cms-detail-composition", label: copy.cmsDetailRouteSummaryTitle },
+    { href: "#cms-detail-support", label: copy.cmsContentNavigationTitle },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-col gap-6">
+        <div className="sticky top-24 z-10 -mt-2">
+          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex min-w-max flex-wrap gap-2">
+              {sectionLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
       <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <article className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8 lg:px-12">
+        <article
+          id="cms-detail-content"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8 lg:px-12"
+        >
           <nav
             aria-label={copy.cmsBreadcrumbLabel}
             className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)]"
@@ -317,7 +346,10 @@ export function CmsPageDetail({
             </div>
           )}
 
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div
+            id="cms-detail-readiness"
+            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+          >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.cmsReadinessTitle}
             </p>
@@ -368,7 +400,10 @@ export function CmsPageDetail({
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div
+            id="cms-detail-review"
+            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+          >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.cmsReviewWindowTitle}
             </p>
@@ -408,7 +443,10 @@ export function CmsPageDetail({
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div
+            id="cms-detail-support"
+            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+          >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.cmsNextReviewTargetTitle}
             </p>
@@ -588,6 +626,24 @@ export function CmsPageDetail({
             </div>
           </div>
 
+          <div id="cms-detail-composition" className="scroll-mt-28">
+            <CmsContentCompositionWindow
+              culture={culture}
+              page={page}
+              pagePath={pagePath}
+              headings={contentSummary?.headings ?? []}
+              readingMinutes={contentSummary?.readingMinutes ?? 1}
+              relatedPages={relatedPages}
+              categories={categories}
+              products={products}
+              cartSummary={cartSummary}
+              reviewWindow={reviewWindow}
+              reviewPrimaryHref={cmsReviewPrimaryHref}
+              reviewPrimaryLabel={cmsReviewPrimaryLabel}
+              reviewNextPage={nextReviewPage?.page ?? null}
+            />
+          </div>
+
           <CmsStorefrontSupportWindow
             culture={culture}
             categories={categories}
@@ -630,6 +686,7 @@ export function CmsPageDetail({
             </p>
           </div>
         </aside>
+      </div>
       </div>
     </section>
   );

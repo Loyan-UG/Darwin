@@ -292,6 +292,9 @@ public sealed class StorefrontOrderConfirmationPaymentDto
     /// <summary>Gets or sets the payment identifier.</summary>
     public Guid Id { get; set; }
 
+    /// <summary>Gets or sets the UTC creation timestamp for the payment attempt.</summary>
+    public DateTime CreatedAtUtc { get; set; }
+
     /// <summary>Gets or sets the provider name.</summary>
     public string Provider { get; set; } = string.Empty;
 

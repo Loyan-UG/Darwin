@@ -5,12 +5,13 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import {
   buildStorefrontCategoryCampaignCards,
   buildStorefrontProductCampaignCards,
 } from "@/features/storefront/storefront-campaigns";
 import { formatMoney } from "@/lib/formatting";
-import { localizeHref } from "@/lib/locale-routing";
+import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getSharedResource } from "@/localization";
 
 type CmsCommerceCampaignWindowProps = {
@@ -30,6 +31,72 @@ export function CmsCommerceCampaignWindow({
 }: CmsCommerceCampaignWindowProps) {
   const copy = getSharedResource(culture);
   const rankedProducts = sortProductsByOpportunity(products);
+  const promotionLaneCards = summarizeCatalogPromotionLanes(rankedProducts).map(
+    (entry) => {
+      const laneLabel =
+        entry.lane === "hero-offers"
+          ? copy.cmsCampaignPromotionLaneHeroLabel
+          : entry.lane === "value-offers"
+            ? copy.cmsCampaignPromotionLaneValueLabel
+            : entry.lane === "live-offers"
+              ? copy.cmsCampaignPromotionLaneLiveOffersLabel
+              : copy.cmsCampaignPromotionLaneBaseLabel;
+      const href =
+        entry.lane === "hero-offers"
+          ? buildAppQueryPath("/catalog", {
+              visibleState: "offers",
+              visibleSort: "offers-first",
+              savingsBand: "hero",
+            })
+          : entry.lane === "value-offers"
+            ? buildAppQueryPath("/catalog", {
+                visibleState: "offers",
+                visibleSort: "offers-first",
+                savingsBand: "value",
+              })
+            : entry.lane === "live-offers"
+              ? buildAppQueryPath("/catalog", {
+                  visibleState: "offers",
+                  visibleSort: "savings-desc",
+                })
+              : buildAppQueryPath("/catalog", {
+                  visibleState: "base",
+                  visibleSort: "base-first",
+                });
+
+      return {
+        id: `cms-promotion-lane-${entry.lane}`,
+        label: copy.cmsCampaignPromotionLaneCardLabel,
+        title: entry.anchorProduct
+          ? formatResource(copy.cmsCampaignPromotionLaneTitle, {
+              lane: laneLabel,
+              product: entry.anchorProduct.name,
+            })
+          : formatResource(copy.cmsCampaignPromotionLaneFallbackTitle, {
+              lane: laneLabel,
+            }),
+        description:
+          entry.anchorProduct !== null
+            ? formatResource(copy.cmsCampaignPromotionLaneDescription, {
+                lane: laneLabel,
+                count: entry.count,
+                price: formatMoney(
+                  entry.anchorProduct.priceMinor,
+                  entry.anchorProduct.currency,
+                  culture,
+                ),
+              })
+            : formatResource(copy.cmsCampaignPromotionLaneFallbackDescription, {
+                lane: laneLabel,
+              }),
+        href,
+        ctaLabel: copy.cmsCampaignPromotionLaneCta,
+        meta: formatResource(copy.cmsCampaignPromotionLaneMeta, {
+          count: entry.count,
+        }),
+      };
+    },
+  );
   const campaignCards = [
     ...buildStorefrontCategoryCampaignCards(categories.slice(0, 2), {
       prefix: "cms-campaign",
@@ -98,6 +165,24 @@ export function CmsCommerceCampaignWindow({
         >
           {copy.cmsCampaignWindowCta}
         </Link>
+      </div>
+      <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+          {copy.cmsCampaignPromotionLaneSectionTitle}
+        </p>
+        <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+          {copy.cmsCampaignPromotionLaneSectionMessage}
+        </p>
+        <StorefrontCampaignBoard
+          culture={culture}
+          cards={promotionLaneCards}
+          emptyMessage={formatResource(copy.cmsCampaignWindowEmptyMessage, {
+            categoriesStatus,
+            productsStatus,
+          })}
+          columnsClassName="md:grid-cols-2"
+          cardClassName="bg-[var(--color-surface-panel)]"
+        />
       </div>
       <StorefrontCampaignBoard
         culture={culture}

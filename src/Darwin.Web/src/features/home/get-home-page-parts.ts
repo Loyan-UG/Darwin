@@ -1,6 +1,7 @@
 import "server-only";
 import { getCatalogReviewTargets } from "@/features/catalog/discovery";
 import { getProductSavingsPercent } from "@/features/catalog/merchandising";
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import { getPendingCmsReviewTargets, isDiscoveryReadyPage } from "@/features/cms/discovery";
 import {
   buildStorefrontCategorySpotlightCards,
@@ -42,11 +43,16 @@ import type { WebPagePart } from "@/web-parts/types";
 export async function getHomePageParts(
   culture: string,
   session?: MemberSession | null,
+  preloadedHomeDiscoveryContext?: Awaited<
+    ReturnType<typeof getHomeDiscoveryContext>
+  >,
 ): Promise<WebPagePart[]> {
   const copy = getHomeResource(culture);
   const supportedCultures = getSupportedCultures();
   const [homeDiscoveryContext, memberCommerceContext, memberIdentityContext] = await Promise.all([
-    getHomeDiscoveryContext(culture),
+    Promise.resolve(
+      preloadedHomeDiscoveryContext ?? getHomeDiscoveryContext(culture),
+    ),
     session
       ? getMemberCommerceSummaryContext()
       : Promise.resolve(null),
@@ -284,6 +290,45 @@ export async function getHomePageParts(
     categorySpotlights.find((entry) => entry.product && entry.status === "ok") ??
     categorySpotlights[0] ??
     null;
+  const promotionLaneSummaries = summarizeCatalogPromotionLanes(rankedProducts);
+  const heroOfferLane = promotionLaneSummaries.find(
+    (entry) => entry.lane === "hero-offers",
+  ) ?? null;
+  const valueOfferLane = promotionLaneSummaries.find(
+    (entry) => entry.lane === "value-offers",
+  ) ?? null;
+  const liveOfferLane = promotionLaneSummaries.find(
+    (entry) => entry.lane === "live-offers",
+  ) ?? null;
+  const baseAssortmentLane = promotionLaneSummaries.find(
+    (entry) => entry.lane === "base-assortment",
+  ) ?? null;
+  const strongestPromotionLane =
+    [heroOfferLane, valueOfferLane, liveOfferLane, baseAssortmentLane].find(
+      (entry) => (entry?.count ?? 0) > 0,
+    ) ?? heroOfferLane;
+  const strongestPromotionLaneHref =
+    strongestPromotionLane?.lane === "hero-offers"
+      ? buildAppQueryPath("/catalog", {
+          visibleState: "offers",
+          visibleSort: "offers-first",
+          savingsBand: "hero",
+        })
+      : strongestPromotionLane?.lane === "value-offers"
+        ? buildAppQueryPath("/catalog", {
+            visibleState: "offers",
+            visibleSort: "offers-first",
+            savingsBand: "value",
+          })
+        : strongestPromotionLane?.lane === "live-offers"
+          ? buildAppQueryPath("/catalog", {
+              visibleState: "offers",
+              visibleSort: "savings-desc",
+            })
+          : buildAppQueryPath("/catalog", {
+              visibleState: "base",
+              visibleSort: "base-first",
+            });
   const categoryCampaignCards = buildStorefrontCategorySpotlightCards(
     categorySpotlights,
     {
@@ -430,6 +475,228 @@ export async function getHomePageParts(
           note: copy.metricCulturesNote,
         },
       ],
+    },
+    {
+      id: "home-composition-route-map",
+      kind: "route-map",
+      eyebrow: copy.homeCompositionEyebrow,
+      title: copy.homeCompositionTitle,
+      description: copy.homeCompositionDescription,
+      items: [
+        {
+          id: "home-composition-current",
+          label: copy.homeCompositionCurrentLabel,
+          title: copy.homeCompositionCurrentTitle,
+          description: formatResource(copy.homeCompositionCurrentDescription, {
+            pagesStatus: pagesResult.status,
+            productsStatus: productsResult.status,
+          }),
+          primaryHref: "/",
+          primaryCtaLabel: copy.homeCompositionCurrentCta,
+          secondaryHref: "/catalog",
+          secondaryCtaLabel: copy.browseCatalogCta,
+          meta: formatResource(copy.homeCompositionCurrentMeta, {
+            pageCount: pagesResult.data?.items.length ?? 0,
+            productCount: productsResult.data?.items.length ?? 0,
+          }),
+        },
+          {
+            id: "home-composition-review",
+            label: copy.homeCompositionReviewLabel,
+          title: preferredCmsReviewState === "needs-attention"
+            ? copy.homeCompositionReviewCmsAttentionTitle
+            : copy.homeCompositionReviewCmsReadyTitle,
+          description: formatResource(copy.homeCompositionReviewDescription, {
+            readyCount: readyCmsPagesCount,
+            attentionCount: cmsAttentionCount,
+            offerCount: visibleOfferCount,
+            baseCount: visibleBaseCount,
+          }),
+          primaryHref: cmsReviewWindowHref,
+          primaryCtaLabel:
+            preferredCmsReviewState === "needs-attention"
+              ? copy.reviewTargetsCmsAttentionCta
+              : copy.reviewTargetsCmsReadyCta,
+          secondaryHref: catalogReviewWindowHref,
+          secondaryCtaLabel:
+            preferredCatalogReviewState === "offers"
+              ? copy.reviewTargetsCatalogOffersCta
+              : copy.reviewTargetsCatalogBaseCta,
+            meta: formatResource(copy.homeCompositionReviewMeta, {
+              cmsStatus: pagesResult.status,
+              catalogStatus: productsResult.status,
+            }),
+          },
+          {
+            id: "home-composition-promotion-lane",
+            label:
+              strongestPromotionLane?.lane === "hero-offers"
+                ? copy.promotionLaneHeroLabel
+                : strongestPromotionLane?.lane === "value-offers"
+                  ? copy.promotionLaneValueLabel
+                  : strongestPromotionLane?.lane === "live-offers"
+                    ? copy.promotionLaneLiveOffersLabel
+                    : copy.promotionLaneBaseLabel,
+            title:
+              strongestPromotionLane?.lane === "hero-offers"
+                ? strongestPromotionLane.anchorProduct
+                  ? formatResource(copy.promotionLaneHeroTitle, {
+                      product: strongestPromotionLane.anchorProduct.name,
+                    })
+                  : copy.promotionLaneHeroFallbackTitle
+                : strongestPromotionLane?.lane === "value-offers"
+                  ? strongestPromotionLane?.anchorProduct
+                    ? formatResource(copy.promotionLaneValueTitle, {
+                        product: strongestPromotionLane.anchorProduct.name,
+                      })
+                    : copy.promotionLaneValueFallbackTitle
+                  : strongestPromotionLane?.lane === "live-offers"
+                    ? strongestPromotionLane?.anchorProduct
+                      ? formatResource(copy.promotionLaneLiveOffersTitle, {
+                          product: strongestPromotionLane.anchorProduct.name,
+                        })
+                      : copy.promotionLaneLiveOffersFallbackTitle
+                    : strongestPromotionLane?.anchorProduct
+                      ? formatResource(copy.promotionLaneBaseTitle, {
+                          product: strongestPromotionLane.anchorProduct.name,
+                        })
+                      : copy.promotionLaneBaseFallbackTitle,
+            description:
+              strongestPromotionLane?.lane === "hero-offers"
+                ? strongestPromotionLane.anchorProduct
+                  ? formatResource(copy.promotionLaneHeroDescription, {
+                      count: strongestPromotionLane.count,
+                      price: formatMoney(
+                        strongestPromotionLane.anchorProduct.priceMinor,
+                        strongestPromotionLane.anchorProduct.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.promotionLaneHeroFallbackDescription
+                : strongestPromotionLane?.lane === "value-offers"
+                  ? strongestPromotionLane?.anchorProduct
+                    ? formatResource(copy.promotionLaneValueDescription, {
+                        count: strongestPromotionLane.count,
+                        price: formatMoney(
+                          strongestPromotionLane.anchorProduct.priceMinor,
+                          strongestPromotionLane.anchorProduct.currency,
+                          culture,
+                        ),
+                      })
+                    : copy.promotionLaneValueFallbackDescription
+                  : strongestPromotionLane?.lane === "live-offers"
+                    ? strongestPromotionLane?.anchorProduct
+                      ? formatResource(copy.promotionLaneLiveOffersDescription, {
+                          count: strongestPromotionLane.count,
+                          price: formatMoney(
+                            strongestPromotionLane.anchorProduct.priceMinor,
+                            strongestPromotionLane.anchorProduct.currency,
+                            culture,
+                          ),
+                        })
+                      : copy.promotionLaneLiveOffersFallbackDescription
+                    : strongestPromotionLane?.anchorProduct
+                      ? formatResource(copy.promotionLaneBaseDescription, {
+                          count: strongestPromotionLane.count,
+                          price: formatMoney(
+                            strongestPromotionLane.anchorProduct.priceMinor,
+                            strongestPromotionLane.anchorProduct.currency,
+                            culture,
+                          ),
+                        })
+                      : copy.promotionLaneBaseFallbackDescription,
+            primaryHref: strongestPromotionLaneHref,
+            primaryCtaLabel:
+              strongestPromotionLane?.lane === "hero-offers"
+                ? copy.promotionLaneHeroCta
+                : strongestPromotionLane?.lane === "value-offers"
+                  ? copy.promotionLaneValueCta
+                  : strongestPromotionLane?.lane === "live-offers"
+                    ? copy.promotionLaneLiveOffersCta
+                    : copy.promotionLaneBaseCta,
+            secondaryHref: "/catalog",
+            secondaryCtaLabel: copy.browseCatalogCta,
+            meta:
+              strongestPromotionLane?.lane === "hero-offers"
+                ? formatResource(copy.promotionLaneHeroMeta, {
+                    count: strongestPromotionLane?.count ?? 0,
+                  })
+                : strongestPromotionLane?.lane === "value-offers"
+                  ? formatResource(copy.promotionLaneValueMeta, {
+                      count: strongestPromotionLane?.count ?? 0,
+                    })
+                  : strongestPromotionLane?.lane === "live-offers"
+                    ? formatResource(copy.promotionLaneLiveOffersMeta, {
+                        count: strongestPromotionLane?.count ?? 0,
+                      })
+                    : formatResource(copy.promotionLaneBaseMeta, {
+                        count: strongestPromotionLane?.count ?? 0,
+                      }),
+          },
+          {
+            id: "home-composition-storefront",
+            label: copy.homeCompositionStorefrontLabel,
+          title: cartResult.data && cartResult.data.items.length > 0
+            ? copy.homeCompositionStorefrontCartTitle
+            : spotlightProduct
+              ? formatResource(copy.homeCompositionStorefrontProductTitle, {
+                  product: spotlightProduct.name,
+                })
+              : spotlightPage
+                ? formatResource(copy.homeCompositionStorefrontPageTitle, {
+                    title: spotlightPage.title,
+                  })
+                : copy.homeCompositionStorefrontFallbackTitle,
+          description: cartResult.data && cartResult.data.items.length > 0
+            ? formatResource(copy.homeCompositionStorefrontCartDescription, {
+                itemCount: cartResult.data.items.length,
+                total: formatMoney(
+                  cartResult.data.grandTotalGrossMinor,
+                  cartResult.data.currency,
+                  culture,
+                ),
+              })
+            : spotlightProduct
+              ? formatResource(copy.homeCompositionStorefrontProductDescription, {
+                  price: formatMoney(
+                    spotlightProduct.priceMinor,
+                    spotlightProduct.currency,
+                    culture,
+                  ),
+                })
+              : spotlightPage?.metaDescription ??
+                copy.homeCompositionStorefrontFallbackDescription,
+          primaryHref: cartResult.data && cartResult.data.items.length > 0
+            ? "/checkout"
+            : spotlightProduct
+              ? `/catalog/${spotlightProduct.slug}`
+              : spotlightPage
+                ? `/cms/${spotlightPage.slug}`
+                : "/catalog",
+          primaryCtaLabel: cartResult.data && cartResult.data.items.length > 0
+            ? copy.openCheckoutCta
+            : spotlightProduct
+              ? copy.viewProductCta
+              : spotlightPage
+                ? copy.readPageCta
+                : copy.browseCatalogCta,
+          secondaryHref: cartResult.data && cartResult.data.items.length > 0
+            ? "/cart"
+            : "/account",
+          secondaryCtaLabel: cartResult.data && cartResult.data.items.length > 0
+            ? copy.cartResumeCartCta
+            : copy.openAccountCta,
+          meta: cartResult.data && cartResult.data.items.length > 0
+            ? formatResource(copy.homeCompositionStorefrontCartMeta, {
+                status: cartResult.status,
+              })
+            : formatResource(copy.homeCompositionStorefrontMeta, {
+                pagesStatus: pagesResult.status,
+                productsStatus: productsResult.status,
+              }),
+        },
+      ],
+      emptyMessage: copy.homeCompositionEmptyMessage,
     },
     {
       id: "home-browse-readiness",
@@ -701,8 +968,149 @@ export async function getHomePageParts(
       cards: categoryCampaignCards,
       emptyMessage:
         resolvedCategoriesMessage ??
-        resolvedProductsMessage ??
-        copy.campaignBoardEmptyMessage,
+          resolvedProductsMessage ??
+          copy.campaignBoardEmptyMessage,
+    },
+    {
+      id: "home-promotion-lanes",
+      kind: "status-list",
+      eyebrow: copy.promotionLanesEyebrow,
+      title: copy.promotionLanesTitle,
+      description: copy.promotionLanesDescription,
+      items: [
+        ...(heroOfferLane
+          ? [
+              {
+                id: "promotion-lane-hero",
+                label: copy.promotionLaneHeroLabel,
+                title: heroOfferLane.anchorProduct
+                  ? formatResource(copy.promotionLaneHeroTitle, {
+                      product: heroOfferLane.anchorProduct.name,
+                    })
+                  : copy.promotionLaneHeroFallbackTitle,
+                description: heroOfferLane.anchorProduct
+                  ? formatResource(copy.promotionLaneHeroDescription, {
+                      count: heroOfferLane.count,
+                      price: formatMoney(
+                        heroOfferLane.anchorProduct.priceMinor,
+                        heroOfferLane.anchorProduct.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.promotionLaneHeroFallbackDescription,
+                href: buildAppQueryPath("/catalog", {
+                  visibleState: "offers",
+                  visibleSort: "offers-first",
+                  savingsBand: "hero",
+                }),
+                ctaLabel: copy.promotionLaneHeroCta,
+                tone: heroOfferLane.count > 0 ? ("ok" as const) : ("warning" as const),
+                meta: formatResource(copy.promotionLaneHeroMeta, {
+                  count: heroOfferLane.count,
+                }),
+              },
+            ]
+          : []),
+        ...(valueOfferLane
+          ? [
+              {
+                id: "promotion-lane-value",
+                label: copy.promotionLaneValueLabel,
+                title: valueOfferLane.anchorProduct
+                  ? formatResource(copy.promotionLaneValueTitle, {
+                      product: valueOfferLane.anchorProduct.name,
+                    })
+                  : copy.promotionLaneValueFallbackTitle,
+                description: valueOfferLane.anchorProduct
+                  ? formatResource(copy.promotionLaneValueDescription, {
+                      count: valueOfferLane.count,
+                      price: formatMoney(
+                        valueOfferLane.anchorProduct.priceMinor,
+                        valueOfferLane.anchorProduct.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.promotionLaneValueFallbackDescription,
+                href: buildAppQueryPath("/catalog", {
+                  visibleState: "offers",
+                  visibleSort: "offers-first",
+                  savingsBand: "value",
+                }),
+                ctaLabel: copy.promotionLaneValueCta,
+                tone: valueOfferLane.count > 0 ? ("ok" as const) : ("warning" as const),
+                meta: formatResource(copy.promotionLaneValueMeta, {
+                  count: valueOfferLane.count,
+                }),
+              },
+            ]
+          : []),
+        ...(liveOfferLane
+          ? [
+              {
+                id: "promotion-lane-live-offers",
+                label: copy.promotionLaneLiveOffersLabel,
+                title: liveOfferLane.anchorProduct
+                  ? formatResource(copy.promotionLaneLiveOffersTitle, {
+                      product: liveOfferLane.anchorProduct.name,
+                    })
+                  : copy.promotionLaneLiveOffersFallbackTitle,
+                description: liveOfferLane.anchorProduct
+                  ? formatResource(copy.promotionLaneLiveOffersDescription, {
+                      count: liveOfferLane.count,
+                      price: formatMoney(
+                        liveOfferLane.anchorProduct.priceMinor,
+                        liveOfferLane.anchorProduct.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.promotionLaneLiveOffersFallbackDescription,
+                href: buildAppQueryPath("/catalog", {
+                  visibleState: "offers",
+                  visibleSort: "savings-desc",
+                }),
+                ctaLabel: copy.promotionLaneLiveOffersCta,
+                tone: liveOfferLane.count > 0 ? ("ok" as const) : ("warning" as const),
+                meta: formatResource(copy.promotionLaneLiveOffersMeta, {
+                  count: liveOfferLane.count,
+                }),
+              },
+            ]
+          : []),
+        ...(baseAssortmentLane
+          ? [
+              {
+                id: "promotion-lane-base",
+                label: copy.promotionLaneBaseLabel,
+                title: baseAssortmentLane.anchorProduct
+                  ? formatResource(copy.promotionLaneBaseTitle, {
+                      product: baseAssortmentLane.anchorProduct.name,
+                    })
+                  : copy.promotionLaneBaseFallbackTitle,
+                description: baseAssortmentLane.anchorProduct
+                  ? formatResource(copy.promotionLaneBaseDescription, {
+                      count: baseAssortmentLane.count,
+                      price: formatMoney(
+                        baseAssortmentLane.anchorProduct.priceMinor,
+                        baseAssortmentLane.anchorProduct.currency,
+                        culture,
+                      ),
+                    })
+                  : copy.promotionLaneBaseFallbackDescription,
+                href: buildAppQueryPath("/catalog", {
+                  visibleState: "base",
+                  visibleSort: "base-first",
+                }),
+                ctaLabel: copy.promotionLaneBaseCta,
+                tone:
+                  baseAssortmentLane.count > 0 ? ("ok" as const) : ("warning" as const),
+                meta: formatResource(copy.promotionLaneBaseMeta, {
+                  count: baseAssortmentLane.count,
+                }),
+              },
+            ]
+          : []),
+      ],
+      emptyMessage: resolvedProductsMessage ?? copy.promotionLanesEmptyMessage,
     },
     {
       id: "home-route-map",

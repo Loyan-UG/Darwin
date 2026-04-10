@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
 import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
 import type {
   PublicCategorySummary,
@@ -71,6 +73,21 @@ function getLatestUtc(values: Array<string | null | undefined>) {
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
 }
 
+function getLatestPaymentAttempt(
+  payments: MemberOrderDetail["payments"],
+) {
+  return [...payments].sort((left, right) => {
+    const leftTimestamp = Date.parse(left.createdAtUtc);
+    const rightTimestamp = Date.parse(right.createdAtUtc);
+
+    if (!Number.isNaN(leftTimestamp) && !Number.isNaN(rightTimestamp)) {
+      return rightTimestamp - leftTimestamp;
+    }
+
+    return right.id.localeCompare(left.id);
+  })[0];
+}
+
 export function OrderDetailPage({
   culture,
   order,
@@ -138,6 +155,7 @@ export function OrderDetailPage({
   const linkedInvoiceAttention = order.invoices.filter(
     (invoice) => !invoice.paidAtUtc,
   ).length;
+  const latestPaymentAttempt = getLatestPaymentAttempt(order.payments);
   const latestPaidAtUtc = getLatestUtc(order.payments.map((payment) => payment.paidAtUtc));
   const latestShippedAtUtc = getLatestUtc(
     order.shipments.map((shipment) => shipment.shippedAtUtc),
@@ -194,11 +212,30 @@ export function OrderDetailPage({
     prefix: "order-detail",
     fallbackDescription: copy.orderDetailStorefrontCatalogFallbackDescription,
   });
+  const promotionLaneCards = buildMemberPromotionLaneCards(rankedProducts, culture);
+  const sectionLinks = [
+    { href: "#order-detail-overview", label: copy.orderDetailEyebrow },
+    { href: "#order-detail-lines", label: copy.orderLinesTitle },
+    { href: "#order-detail-readiness", label: copy.orderDetailReadinessTitle },
+    { href: "#order-detail-storefront", label: copy.orderDetailStorefrontWindowTitle },
+    { href: "#order-detail-actions", label: copy.actionsTitle },
+  ];
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div className="sticky top-24 z-10 -mt-2">
+          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
+            <div className="flex min-w-max flex-wrap gap-2">
+              {sectionLinks.map((link) => (
+                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div id="order-detail-overview" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <nav
             aria-label={copy.memberBreadcrumbLabel}
             className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
@@ -233,7 +270,7 @@ export function OrderDetailPage({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-6">
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div id="order-detail-lines" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.billingTitle}</p>
@@ -276,6 +313,9 @@ export function OrderDetailPage({
                           <div>
                             <p className="text-sm font-semibold text-[var(--color-text-primary)]">{payment.provider}</p>
                             <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{payment.status}</p>
+                            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
+                              {copy.createdLabel} {formatDateTime(payment.createdAtUtc, culture)}
+                            </p>
                             {payment.providerReference ? (
                               <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
                                 {formatResource(copy.referenceLabel, { value: payment.providerReference })}
@@ -393,7 +433,7 @@ export function OrderDetailPage({
           <div className="flex flex-col gap-5">
             <MemberPortalNav culture={culture} activePath="/orders" />
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside id="order-detail-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.orderDetailReadinessTitle}
               </p>
@@ -413,6 +453,11 @@ export function OrderDetailPage({
                       ? copy.orderDetailReadinessPaymentAttention
                       : copy.orderDetailReadinessPaymentHealthy}
                   </p>
+                  {latestPaymentAttempt ? (
+                    <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      {latestPaymentAttempt.provider} / {latestPaymentAttempt.status}
+                    </p>
+                  ) : null}
                 </article>
                 <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
@@ -447,6 +492,50 @@ export function OrderDetailPage({
               </div>
             </aside>
 
+            <AccountContentCompositionWindow
+              culture={culture}
+              routeCard={{
+                label: copy.accountCompositionJourneyCurrentLabel,
+                title: order.orderNumber,
+                description: formatResource(copy.orderDetailReadinessMessage, {
+                  shipments: shipmentsInFlight,
+                  invoices: linkedInvoiceAttention,
+                }),
+                href: `/orders/${order.id}`,
+                ctaLabel: copy.accountCompositionJourneyCurrentCta,
+              }}
+              nextCard={{
+                label: copy.accountCompositionJourneyNextLabel,
+                title: order.invoices[0] ? copy.linkedInvoicesTitle : copy.invoicesTitle,
+                description: order.invoices[0]
+                  ? copy.linkedInvoicesDescription
+                  : copy.invoicesPortalNote,
+                href: order.invoices[0] ? `/invoices/${order.invoices[0].id}` : "/invoices",
+                ctaLabel: order.invoices[0]
+                  ? copy.openInvoiceCta
+                  : copy.accountCompositionJourneyAddressesCta,
+              }}
+              routeMapItems={[
+                {
+                  label: copy.accountCompositionRouteMapProfileLabel,
+                  title: copy.ordersTitle,
+                  description: copy.ordersPortalNote,
+                  href: "/orders",
+                  ctaLabel: copy.backToOrdersCta,
+                },
+                {
+                  label: copy.accountCompositionRouteMapNextLabel,
+                  title: copy.summaryTitle,
+                  description: formatResource(copy.orderDetailTimelineMessage, {}),
+                  href: `/orders/${order.id}`,
+                  ctaLabel: copy.accountCompositionRouteMapProfileCta,
+                },
+              ]}
+              cmsPages={cmsPages}
+              categories={categories}
+              products={products}
+            />
+
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
@@ -471,7 +560,7 @@ export function OrderDetailPage({
               )}
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside id="order-detail-actions" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.orderDetailTimelineTitle}
               </p>
@@ -540,41 +629,46 @@ export function OrderDetailPage({
               </div>
             </aside>
 
-            <MemberStorefrontWindow
-              culture={culture}
-              title={copy.orderDetailStorefrontWindowTitle}
-              message={formatResource(copy.orderDetailStorefrontWindowMessage, {
-                cmsStatus: cmsPagesStatus,
-                categoriesStatus,
-                productsStatus,
-                pageCount: cmsPages.length,
-                categoryCount: categories.length,
-                productCount: products.length,
-              })}
-              cmsTitle={copy.orderDetailStorefrontCmsTitle}
-              cmsCtaLabel={copy.orderDetailStorefrontCmsCta}
-              cmsCards={cmsSpotlightCards}
-              cmsEmptyMessage={formatResource(copy.orderDetailStorefrontCmsEmptyMessage, {
-                status: cmsPagesStatus,
-              })}
-              catalogTitle={copy.orderDetailStorefrontCatalogTitle}
-              catalogCtaLabel={copy.orderDetailStorefrontCatalogCta}
-              categoryCards={categorySpotlightCards}
-              catalogEmptyMessage={formatResource(copy.orderDetailStorefrontCatalogEmptyMessage, {
-                status: categoriesStatus,
-              })}
-              productTitle={copy.orderDetailStorefrontProductTitle}
-              productCtaLabel={copy.orderDetailStorefrontProductCta}
-              productMessage={
-                cartLinkedSlugSet.size > 0
-                  ? copy.orderDetailStorefrontProductCartAwareMessage
-                  : copy.orderDetailStorefrontProductMessage
-              }
-              productCards={storefrontOfferCards}
-              productEmptyMessage={formatResource(copy.orderDetailStorefrontProductEmptyMessage, {
-                status: productsStatus,
-              })}
-            />
+            <div id="order-detail-storefront" className="scroll-mt-28">
+              <MemberStorefrontWindow
+                culture={culture}
+                title={copy.orderDetailStorefrontWindowTitle}
+                message={formatResource(copy.orderDetailStorefrontWindowMessage, {
+                  cmsStatus: cmsPagesStatus,
+                  categoriesStatus,
+                  productsStatus,
+                  pageCount: cmsPages.length,
+                  categoryCount: categories.length,
+                  productCount: products.length,
+                })}
+                cmsTitle={copy.orderDetailStorefrontCmsTitle}
+                cmsCtaLabel={copy.orderDetailStorefrontCmsCta}
+                cmsCards={cmsSpotlightCards}
+                cmsEmptyMessage={formatResource(copy.orderDetailStorefrontCmsEmptyMessage, {
+                  status: cmsPagesStatus,
+                })}
+                catalogTitle={copy.orderDetailStorefrontCatalogTitle}
+                catalogCtaLabel={copy.orderDetailStorefrontCatalogCta}
+                categoryCards={categorySpotlightCards}
+                catalogEmptyMessage={formatResource(copy.orderDetailStorefrontCatalogEmptyMessage, {
+                  status: categoriesStatus,
+                })}
+                productTitle={copy.orderDetailStorefrontProductTitle}
+                productCtaLabel={copy.orderDetailStorefrontProductCta}
+                productMessage={
+                  cartLinkedSlugSet.size > 0
+                    ? copy.orderDetailStorefrontProductCartAwareMessage
+                    : copy.orderDetailStorefrontProductMessage
+                }
+                productCards={storefrontOfferCards}
+                productEmptyMessage={formatResource(copy.orderDetailStorefrontProductEmptyMessage, {
+                  status: productsStatus,
+                })}
+                promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
+                promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
+                promotionLaneCards={promotionLaneCards}
+              />
+            </div>
 
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.actionsTitle}</p>

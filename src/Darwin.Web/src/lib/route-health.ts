@@ -1,3 +1,4 @@
+import { summarizeCatalogPromotionLanes } from "@/features/catalog/promotion-lanes";
 import type { PublicStorefrontContext } from "@/features/storefront/public-storefront-context";
 import { canonicalizeLanguageAlternates } from "@/lib/localized-alternates";
 
@@ -98,11 +99,22 @@ type LocalizedInventoryLike = Array<{
   items: unknown[];
 }>;
 
+type ProductPromotionSummaryLike = {
+  id: string;
+  slug: string;
+  name: string;
+  priceMinor: number;
+  currency: string;
+  shortDescription?: string | null;
+  compareAtPriceMinor?: number | null;
+  primaryImageUrl?: string | null;
+};
+
 type ResultWithStorefront = {
   storefrontContext: PublicStorefrontContext;
 };
 
-function getSeoMetadataState(noIndex: boolean, alternateCount: number) {
+export function getSeoMetadataState(noIndex: boolean, alternateCount: number) {
   return noIndex
     ? "private"
     : alternateCount > 0
@@ -110,16 +122,34 @@ function getSeoMetadataState(noIndex: boolean, alternateCount: number) {
       : "single-locale";
 }
 
-function getSeoIndexability(noIndex: boolean) {
+export function getSeoIndexability(noIndex: boolean) {
   return noIndex ? "noindex" : "indexable";
 }
 
-function getLanguageAlternateState(alternateCount: number) {
+export function getLanguageAlternateState(alternateCount: number) {
   return alternateCount > 0 ? "present" : "missing";
 }
 
 function countItems(data?: { items?: unknown[] } | null) {
   return data?.items?.length ?? 0;
+}
+
+function summarizePromotionLaneHealth(products: ProductPromotionSummaryLike[]) {
+  const lanes = summarizeCatalogPromotionLanes(products);
+  const heroOfferCount = lanes.find((entry) => entry.lane === "hero-offers")?.count ?? 0;
+  const valueOfferCount = lanes.find((entry) => entry.lane === "value-offers")?.count ?? 0;
+  const liveOfferCount = lanes.find((entry) => entry.lane === "live-offers")?.count ?? 0;
+  const baseAssortmentCount =
+    lanes.find((entry) => entry.lane === "base-assortment")?.count ?? 0;
+
+  return {
+    heroOfferCount,
+    valueOfferCount,
+    liveOfferCount,
+    baseAssortmentCount,
+    promotionLaneFootprint:
+      `hero:${heroOfferCount}|value:${valueOfferCount}|live:${liveOfferCount}|base:${baseAssortmentCount}`,
+  };
 }
 
 export function summarizePublicStorefrontHealth(
@@ -132,6 +162,7 @@ export function summarizePublicStorefrontHealth(
     categoryCount: storefrontContext.categories.length,
     productsStatus: storefrontContext.productsStatus,
     productCount: storefrontContext.products.length,
+    ...summarizePromotionLaneHealth(storefrontContext.products),
     cartStatus: storefrontContext.storefrontCartStatus,
     cartLinkedCount: storefrontContext.cartLinkedProductSlugs.length,
   };
@@ -143,7 +174,16 @@ export function summarizeStorefrontContinuationHealth(result: {
   categoriesStatus: string;
   categories: unknown[];
   productsStatus: string;
-  products: unknown[];
+  products: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    priceMinor: number;
+    currency: string;
+    shortDescription?: string | null;
+    compareAtPriceMinor?: number | null;
+    primaryImageUrl?: string | null;
+  }>;
 }) {
   return {
     cmsStatus: result.cmsPagesStatus,
@@ -152,6 +192,7 @@ export function summarizeStorefrontContinuationHealth(result: {
     categoryCount: result.categories.length,
     productsStatus: result.productsStatus,
     productCount: result.products.length,
+    ...summarizePromotionLaneHealth(result.products),
   };
 }
 
@@ -210,6 +251,9 @@ export function summarizeCatalogIndexPageHealth(
     missingImageCount: result.facetSummary.missingImageCount,
     heroOfferCount: result.facetSummary.heroOfferCount,
     valueOfferCount: result.facetSummary.valueOfferCount,
+    liveOfferCount: result.facetSummary.offerCount,
+    baseAssortmentCount: result.facetSummary.baseCount,
+    promotionLaneFootprint: `hero:${result.facetSummary.heroOfferCount}|value:${result.facetSummary.valueOfferCount}|live:${result.facetSummary.offerCount}|base:${result.facetSummary.baseCount}`,
   };
 }
 
@@ -402,11 +446,15 @@ export function summarizeHomeDiscoveryHealth(result: {
 
 export function summarizeHomeRouteHealth(result: {
   memberSession: unknown | null;
+  homeDiscoveryContext: {
+    storefrontContext: PublicStorefrontContext;
+  };
   parts: unknown[];
 }) {
   return {
     memberSessionState: result.memberSession ? "present" : "missing",
     partCount: result.parts.length,
+    ...summarizePublicStorefrontHealth(result.homeDiscoveryContext.storefrontContext),
   };
 }
 
@@ -485,7 +533,7 @@ export function summarizeCartPageHealth(result: {
     memberSession?: unknown | null;
     identityContext?: IdentityContextLike | null;
   };
-  followUpProducts: unknown[];
+  followUpProducts: ProductPromotionSummaryLike[];
 }) {
   return {
     cartStatus: result.routeContext.model.status,
@@ -494,6 +542,7 @@ export function summarizeCartPageHealth(result: {
     addressesStatus:
       result.routeContext.identityContext?.addressesResult.status ?? "unauthenticated",
     followUpProductCount: result.followUpProducts.length,
+    ...summarizePromotionLaneHealth(result.followUpProducts),
   };
 }
 
@@ -503,6 +552,7 @@ export function summarizeCheckoutPageHealth(result: {
     memberSession?: unknown | null;
     identityContext?: IdentityContextLike | null;
     commerceSummaryContext?: CommerceSummaryLike | null;
+    storefrontContext: PublicStorefrontContext;
   };
 }) {
   return {
@@ -517,6 +567,7 @@ export function summarizeCheckoutPageHealth(result: {
     invoiceCount: countItems(
       result.routeContext.commerceSummaryContext?.invoicesResult.data,
     ),
+    ...summarizePromotionLaneHealth(result.routeContext.storefrontContext.products),
   };
 }
 
@@ -526,7 +577,7 @@ export function summarizeConfirmationPageHealth(result: {
     memberSession?: unknown | null;
     commerceSummaryContext?: CommerceSummaryLike | null;
   };
-  followUpProducts: unknown[];
+  followUpProducts: ProductPromotionSummaryLike[];
 }) {
   return {
     confirmationStatus: result.routeContext.confirmationResult.status,
@@ -539,6 +590,7 @@ export function summarizeConfirmationPageHealth(result: {
       result.routeContext.commerceSummaryContext?.invoicesResult.status ??
       "unauthenticated",
     followUpProductCount: result.followUpProducts.length,
+    ...summarizePromotionLaneHealth(result.followUpProducts),
   };
 }
 
@@ -794,3 +846,11 @@ export function summarizeSeoMetadataHealth(result: {
     seoTargetFootprint: `${seoIndexability}|${result.canonicalPath}`,
   };
 }
+
+
+
+
+
+
+
+

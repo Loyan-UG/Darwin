@@ -69,3 +69,41 @@ test("createCommercePageLoader normalizes equivalent arguments before caching", 
   assert.equal(first.step, "cart");
   assert.equal(second.step, "cart");
 });
+
+test("createCommercePageLoader feeds normalized args into context and success diagnostics", async () => {
+  let contextSnapshot: Record<string, unknown> | undefined;
+  let successSnapshot: Record<string, unknown> | undefined;
+
+  const loader = createCommercePageLoaderCore({
+    operation: "unit-commerce-page",
+    normalizeArgs: (culture: string, page: string) =>
+      [culture.trim(), page.trim()] as [string, string],
+    getContext: (culture: string, page: string) => {
+      contextSnapshot = { culture, page };
+      return { culture, page };
+    },
+    getSuccessContext: (result) => {
+      successSnapshot = { step: result.step, page: result.page };
+      return { step: result.step };
+    },
+    load: async (_culture: string, page: string) => ({
+      step: `ready:${page}`,
+      page,
+    }),
+  });
+
+  const result = await loader(" de-DE ", " checkout ");
+
+  assert.deepEqual(result, {
+    step: "ready:checkout",
+    page: "checkout",
+  });
+  assert.deepEqual(contextSnapshot, {
+    culture: "de-DE",
+    page: "checkout",
+  });
+  assert.deepEqual(successSnapshot, {
+    step: "ready:checkout",
+    page: "checkout",
+  });
+});

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { StorefrontCampaignBoard } from "@/components/storefront/storefront-campaign-board";
 import { StorefrontOfferBoard } from "@/components/storefront/storefront-offer-board";
 import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
 import type { PublicCartSummary } from "@/features/cart/types";
@@ -73,6 +75,10 @@ export function MemberAuthRequired({
       product.shortDescription ?? copy.memberAuthRequiredOfferBoardFallbackDescription,
     fallbackDescription: copy.memberAuthRequiredOfferBoardFallbackDescription,
   });
+  const promotionLaneCards = buildMemberPromotionLaneCards(
+    offerBoardProducts,
+    culture,
+  );
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="w-full rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
@@ -125,6 +131,19 @@ export function MemberAuthRequired({
             cards={offerBoard}
             emptyMessage={copy.memberAuthRequiredOfferBoardEmptyMessage}
           />
+          <div className="mt-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent)]">
+              {copy.memberStorefrontPromotionLaneSectionTitle}
+            </p>
+            <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
+              {copy.memberStorefrontPromotionLaneSectionMessage}
+            </p>
+            <StorefrontCampaignBoard
+              culture={culture}
+              cards={promotionLaneCards}
+              emptyMessage={copy.memberStorefrontPromotionLaneSectionMessage}
+            />
+          </div>
         </div>
         <div className="mt-8">
           <PublicAuthContinuation

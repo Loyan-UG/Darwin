@@ -6,7 +6,14 @@ import {
   buildPublicStorefrontFootprint,
   buildSharedContextBaseDiagnostics,
   buildStorefrontContinuationFootprint,
+  getSharedContextNormalizationMode,
 } from "@/lib/shared-context-diagnostics";
+
+test("getSharedContextNormalizationMode keeps canonical versus raw explicit", () => {
+  assert.equal(getSharedContextNormalizationMode(true), "canonical");
+  assert.equal(getSharedContextNormalizationMode(false), "raw");
+  assert.equal(getSharedContextNormalizationMode(), "raw");
+});
 
 test("buildSharedContextBaseDiagnostics keeps shared context kind and normalization mode explicit", () => {
   assert.deepEqual(
@@ -60,5 +67,13 @@ test("buildMemberSummaryFootprint keeps scope and leading statuses together", ()
       tertiaryStatus: "fallback",
     }),
     "scope:identity|primary:ok|secondary:ok|tertiary:fallback",
+  );
+
+  assert.equal(
+    buildMemberSummaryFootprint({
+      scope: "orders-page",
+      primaryStatus: "fallback",
+    }),
+    "scope:orders-page|primary:fallback",
   );
 });
