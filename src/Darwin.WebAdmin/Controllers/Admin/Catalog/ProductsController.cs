@@ -116,9 +116,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             vm.Variants ??= new();
 
             if (vm.Translations.Count == 0)
-                ModelState.AddModelError(nameof(vm.Translations), "At least one translation is required.");
+                ModelState.AddModelError(nameof(vm.Translations), T("ProductAtLeastOneTranslationRequired"));
             if (vm.Variants.Count == 0)
-                ModelState.AddModelError(nameof(vm.Variants), "At least one variant is required.");
+                ModelState.AddModelError(nameof(vm.Variants), T("ProductAtLeastOneVariantRequired"));
 
             if (!ModelState.IsValid)
             {
@@ -401,27 +401,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             }
         }
 
-        private static OperationalPlaybookVm[] BuildProductPlaybooks()
+        private OperationalPlaybookVm[] BuildProductPlaybooks()
         {
             return
             [
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Inactive",
-                    WhyItMatters = "Inactive products stay out of live selling flows even when content and inventory already exist.",
-                    OperatorAction = "Review pricing, legal content, and stock readiness, then reactivate from the product editor when the item is ready."
+                    QueueLabel = T("Inactive"),
+                    WhyItMatters = T("ProductPlaybookInactiveScope"),
+                    OperatorAction = T("ProductPlaybookInactiveAction")
                 },
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Hidden",
-                    WhyItMatters = "Hidden products often indicate merchandising holds, launch timing, or accidental visibility loss.",
-                    OperatorAction = "Confirm whether the product should remain hidden and restore visibility if the business expects it to appear."
+                    QueueLabel = T("Hidden"),
+                    WhyItMatters = T("ProductPlaybookHiddenScope"),
+                    OperatorAction = T("ProductPlaybookHiddenAction")
                 },
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Scheduled",
-                    WhyItMatters = "Publish windows create timing-sensitive catalog behavior around launches, campaigns, and seasonal stock.",
-                    OperatorAction = "Verify the publish window still matches campaign timing and that inventory and content are aligned before the window opens."
+                    QueueLabel = T("Scheduled"),
+                    WhyItMatters = T("ProductPlaybookScheduledScope"),
+                    OperatorAction = T("ProductPlaybookScheduledAction")
                 }
             ];
         }

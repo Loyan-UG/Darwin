@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -2145,6 +2145,21 @@
   <data name="RefundWorkflow" xml:space="preserve">
     <value>Refund Workflow</value>
   </data>
+  <data name="TaxPolicyArchiveReady" xml:space="preserve">
+    <value>Issuer archive-ready</value>
+  </data>
+  <data name="TaxPolicyArchiveIncomplete" xml:space="preserve">
+    <value>Archive issuer data incomplete</value>
+  </data>
+  <data name="TaxPolicyBaselineReady" xml:space="preserve">
+    <value>Baseline ready</value>
+  </data>
+  <data name="TaxPolicyBaselineIncomplete" xml:space="preserve">
+    <value>Baseline incomplete</value>
+  </data>
+  <data name="TaxPolicyComplianceScopeNote" xml:space="preserve">
+    <value>Phase-1 exposes issuer/VAT readiness only. Archive and e-invoice workflows still require deeper compliance implementation.</value>
+  </data>
   <data name="RefundWorkflowNote" xml:space="preserve">
     <value>Use refund when captured funds must be returned. Use void only if funds were not collected.</value>
   </data>
@@ -3509,5 +3524,1601 @@
   </data>
   <data name="LoyaltyPointsAdjustFailed" xml:space="preserve">
     <value>Failed to adjust loyalty points.</value>
+  </data>
+  <data name="ProductsWorkspaceIntro" xml:space="preserve">
+    <value>Track catalog readiness, launch timing, and merchandising visibility from one workspace.</value>
+  </data>
+  <data name="SearchProductsPlaceholder" xml:space="preserve">
+    <value>Search by product name, slug, or SKU</value>
+  </data>
+  <data name="CreateProduct" xml:space="preserve">
+    <value>Create product</value>
+  </data>
+  <data name="EditProduct" xml:space="preserve">
+    <value>Edit product</value>
+  </data>
+  <data name="ProductsOpsTotalNote" xml:space="preserve">
+    <value>Total product footprint currently managed in the admin catalog.</value>
+  </data>
+  <data name="ProductsOpsInactiveNote" xml:space="preserve">
+    <value>Products not yet live in selling flows and still needing release review.</value>
+  </data>
+  <data name="ProductsOpsHiddenNote" xml:space="preserve">
+    <value>Products hidden from merchandising surfaces and needing visibility confirmation.</value>
+  </data>
+  <data name="ProductsOpsScheduledNote" xml:space="preserve">
+    <value>Products with launch windows that need timing, stock, and content alignment.</value>
+  </data>
+  <data name="ProductsOpsSingleVariantNote" xml:space="preserve">
+    <value>Products relying on one sellable variant and often needing pricing or inventory review.</value>
+  </data>
+  <data name="ActiveCatalogWindow" xml:space="preserve">
+    <value>Visible catalog window</value>
+  </data>
+  <data name="ProductsOpsVisibilityWindowNote" xml:space="preserve">
+    <value>Quick signal for how much of the catalog is currently visible to storefront operators.</value>
+  </data>
+  <data name="TotalProductsLabel" xml:space="preserve">
+    <value>Total products</value>
+  </data>
+  <data name="ProductNameDefaultCulture" xml:space="preserve">
+    <value>Name (de-DE)</value>
+  </data>
+  <data name="CatalogWindowLabel" xml:space="preserve">
+    <value>Window</value>
+  </data>
+  <data name="NoProductsFound" xml:space="preserve">
+    <value>No products found.</value>
+  </data>
+  <data name="ProductAtLeastOneTranslationRequired" xml:space="preserve">
+    <value>At least one translation is required.</value>
+  </data>
+  <data name="ProductAtLeastOneVariantRequired" xml:space="preserve">
+    <value>At least one variant is required.</value>
+  </data>
+  <data name="ProductPlaybookInactiveScope" xml:space="preserve">
+    <value>Inactive products stay out of live selling flows even when content and inventory already exist.</value>
+  </data>
+  <data name="ProductPlaybookInactiveAction" xml:space="preserve">
+    <value>Review pricing, legal content, and stock readiness, then reactivate when the item is ready.</value>
+  </data>
+  <data name="ProductPlaybookHiddenScope" xml:space="preserve">
+    <value>Hidden products often indicate merchandising holds, launch timing, or accidental visibility loss.</value>
+  </data>
+  <data name="ProductPlaybookHiddenAction" xml:space="preserve">
+    <value>Confirm whether the product should remain hidden and restore visibility if the business expects it to appear.</value>
+  </data>
+  <data name="ProductPlaybookScheduledScope" xml:space="preserve">
+    <value>Publish windows create timing-sensitive catalog behavior around launches, campaigns, and seasonal stock.</value>
+  </data>
+  <data name="ProductPlaybookScheduledAction" xml:space="preserve">
+    <value>Verify the publish window still matches campaign timing and that inventory and content are aligned before the window opens.</value>
+  </data>
+  <data name="ProductCreateIntro" xml:space="preserve">
+    <value>Define translations, variants, and base merchandising data before publishing the product.</value>
+  </data>
+  <data name="ProductEditIntro" xml:space="preserve">
+    <value>Review translation, variant, and readiness state before changing live catalog data.</value>
+  </data>
+  <data name="ProductIdentifier" xml:space="preserve">
+    <value>Product id</value>
+  </data>
+  <data name="ProductEditorTranslationsNote" xml:space="preserve">
+    <value>Check naming, slug quality, and SEO fields across supported storefront cultures.</value>
+  </data>
+  <data name="ProductEditorVariantsNote" xml:space="preserve">
+    <value>Validate SKU, pricing, and stock assumptions before exposing the product to selling flows.</value>
+  </data>
+  <data name="CatalogReadiness" xml:space="preserve">
+    <value>Catalog readiness</value>
+  </data>
+  <data name="VariantRich" xml:space="preserve">
+    <value>Variant rich</value>
+  </data>
+  <data name="ProductEditorReadinessNote" xml:space="preserve">
+    <value>Use this as a quick signal for whether the product still needs catalog shaping before release.</value>
+  </data>
+  <data name="PrimaryCategory" xml:space="preserve">
+    <value>Primary category</value>
+  </data>
+  <data name="ProductSlugHelp" xml:space="preserve">
+    <value>URL-friendly identifier. Lowercase, digits, hyphens. Example: &lt;code&gt;organic-apple-1kg&lt;/code&gt;.</value>
+  </data>
+  <data name="ProductMetaDescriptionHelp" xml:space="preserve">
+    <value>Short SEO description, usually around 155 characters.</value>
+  </data>
+  <data name="FullDescriptionHtml" xml:space="preserve">
+    <value>Full description (HTML)</value>
+  </data>
+  <data name="Sku" xml:space="preserve">
+    <value>SKU</value>
+  </data>
+  <data name="ProductSkuHelp" xml:space="preserve">
+    <value>Seller stock keeping unit used for catalog, inventory, and fulfillment coordination.</value>
+  </data>
+  <data name="TaxCategory" xml:space="preserve">
+    <value>Tax category</value>
+  </data>
+  <data name="BasePriceNetMinor" xml:space="preserve">
+    <value>Base price (net, minor units)</value>
+  </data>
+  <data name="MinorUnitsHelp" xml:space="preserve">
+    <value>Store prices as integer minor units, for example cents, to avoid floating-point errors.</value>
+  </data>
+  <data name="CompareAtNetMinor" xml:space="preserve">
+    <value>Compare at (net, minor units)</value>
+  </data>
+  <data name="ProductDescriptionPlaceholder" xml:space="preserve">
+    <value>Write product description...</value>
+  </data>
+  <data name="CategoryAtLeastOneTranslationRequired" xml:space="preserve">
+    <value>At least one translation is required.</value>
+  </data>
+  <data name="CategoryConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict: the record was modified by another user.</value>
+  </data>
+  <data name="BrandsWorkspaceIntro" xml:space="preserve">
+    <value>Track brand publishing, SEO readiness, and asset completeness before storefront exposure.</value>
+  </data>
+  <data name="SearchBrandsPlaceholder" xml:space="preserve">
+    <value>Search brands</value>
+  </data>
+  <data name="CreateBrand" xml:space="preserve">
+    <value>Create brand</value>
+  </data>
+  <data name="EditBrand" xml:space="preserve">
+    <value>Edit brand</value>
+  </data>
+  <data name="BrandsOpsTotalNote" xml:space="preserve">
+    <value>Total brand footprint currently managed for navigation and merchandising.</value>
+  </data>
+  <data name="BrandsOpsUnpublishedNote" xml:space="preserve">
+    <value>Brands still excluded from storefront-facing brand navigation.</value>
+  </data>
+  <data name="BrandsOpsMissingSlugNote" xml:space="preserve">
+    <value>Brands missing SEO-safe landing identifiers.</value>
+  </data>
+  <data name="BrandsOpsMissingLogoNote" xml:space="preserve">
+    <value>Brands without visual identity setup for merchandising surfaces.</value>
+  </data>
+  <data name="BrandOperationsPlaybooks" xml:space="preserve">
+    <value>Brand operations playbooks</value>
+  </data>
+  <data name="NoBrandsFound" xml:space="preserve">
+    <value>No brands found.</value>
+  </data>
+  <data name="MissingSlug" xml:space="preserve">
+    <value>Missing slug</value>
+  </data>
+  <data name="MissingLogo" xml:space="preserve">
+    <value>Missing logo</value>
+  </data>
+  <data name="Logo" xml:space="preserve">
+    <value>Logo</value>
+  </data>
+  <data name="LogoMediaId" xml:space="preserve">
+    <value>Logo media id</value>
+  </data>
+  <data name="BrandCreateIntro" xml:space="preserve">
+    <value>Define translation and asset basics before exposing the brand in storefront navigation.</value>
+  </data>
+  <data name="BrandEditIntro" xml:space="preserve">
+    <value>Review slug, logo, and translation quality before changing live brand presentation.</value>
+  </data>
+  <data name="BrandIdentifier" xml:space="preserve">
+    <value>Brand id</value>
+  </data>
+  <data name="BrandSlugHelp" xml:space="preserve">
+    <value>Optional unique, culture-invariant slug used for brand landing pages.</value>
+  </data>
+  <data name="BrandLogoHelp" xml:space="preserve">
+    <value>Optional media-library identifier for brand logo presentation.</value>
+  </data>
+  <data name="BrandCultureHelp" xml:space="preserve">
+    <value>Example: de-DE</value>
+  </data>
+  <data name="DescriptionHtml" xml:space="preserve">
+    <value>Description (HTML)</value>
+  </data>
+  <data name="BrandDescriptionHelp" xml:space="preserve">
+    <value>HTML content will be sanitized before persistence.</value>
+  </data>
+  <data name="BrandPlaybookUnpublishedScope" xml:space="preserve">
+    <value>Unpublished brands stay hidden from brand-driven navigation and merchandising flows.</value>
+  </data>
+  <data name="BrandPlaybookUnpublishedAction" xml:space="preserve">
+    <value>Review whether the brand should remain internal-only, then publish it once storefront exposure is intended.</value>
+  </data>
+  <data name="BrandPlaybookMissingSlugScope" xml:space="preserve">
+    <value>Brands without slugs are harder to use in SEO-aware landing pages and support handoffs.</value>
+  </data>
+  <data name="BrandPlaybookMissingSlugAction" xml:space="preserve">
+    <value>Open the brand editor and add a stable slug before marketing teams link to the brand publicly.</value>
+  </data>
+  <data name="BrandPlaybookMissingLogoScope" xml:space="preserve">
+    <value>Brands without logos create weak or inconsistent catalog presentation across admin and storefront surfaces.</value>
+  </data>
+  <data name="BrandPlaybookMissingLogoAction" xml:space="preserve">
+    <value>Attach a media-library logo if the business expects visual brand presentation.</value>
+  </data>
+  <data name="CategoriesWorkspaceIntro" xml:space="preserve">
+    <value>Maintain storefront navigation structure, publishing state, and tree coherence from one workspace.</value>
+  </data>
+  <data name="SearchCategoriesPlaceholder" xml:space="preserve">
+    <value>Search categories</value>
+  </data>
+  <data name="CategoriesOpsTotalNote" xml:space="preserve">
+    <value>Total category footprint currently managed for storefront navigation.</value>
+  </data>
+  <data name="CategoriesOpsInactiveNote" xml:space="preserve">
+    <value>Inactive categories that can silently remove catalog paths from active navigation.</value>
+  </data>
+  <data name="CategoriesOpsUnpublishedNote" xml:space="preserve">
+    <value>Categories whose structure is ready but still not visible to storefront users.</value>
+  </data>
+  <data name="CategoriesOpsChildNote" xml:space="preserve">
+    <value>Child categories that depend on stable parent assignment and sort order.</value>
+  </data>
+  <data name="CategoryOperationsPlaybooks" xml:space="preserve">
+    <value>Category operations playbooks</value>
+  </data>
+  <data name="RootCategories" xml:space="preserve">
+    <value>Root categories</value>
+  </data>
+  <data name="ChildCategories" xml:space="preserve">
+    <value>Child categories</value>
+  </data>
+  <data name="CategoryNameDefaultCulture" xml:space="preserve">
+    <value>Name (de-DE)</value>
+  </data>
+  <data name="NoCategoriesFound" xml:space="preserve">
+    <value>No categories found.</value>
+  </data>
+  <data name="RootCategory" xml:space="preserve">
+    <value>Root category</value>
+  </data>
+  <data name="ChildCategory" xml:space="preserve">
+    <value>Child category</value>
+  </data>
+  <data name="Parent" xml:space="preserve">
+    <value>Parent</value>
+  </data>
+  <data name="ParentCategory" xml:space="preserve">
+    <value>Parent category</value>
+  </data>
+  <data name="RootCategoryOption" xml:space="preserve">
+    <value>(root)</value>
+  </data>
+  <data name="NoParentOption" xml:space="preserve">
+    <value>(none)</value>
+  </data>
+  <data name="EditCategory" xml:space="preserve">
+    <value>Edit category</value>
+  </data>
+  <data name="CategoryCreateIntro" xml:space="preserve">
+    <value>Define hierarchy, translation, and navigation state before exposing the category tree.</value>
+  </data>
+  <data name="CategoryEditIntro" xml:space="preserve">
+    <value>Review tree placement, translation quality, and publication state before changing live navigation.</value>
+  </data>
+  <data name="CategoryIdentifier" xml:space="preserve">
+    <value>Category id</value>
+  </data>
+  <data name="CategorySlugHelp" xml:space="preserve">
+    <value>URL-friendly identifier. Lowercase, digits, hyphens.</value>
+  </data>
+  <data name="CategoryDescriptionHelp" xml:space="preserve">
+    <value>Optional short text shown on category pages.</value>
+  </data>
+  <data name="CategoryPlaybookInactiveScope" xml:space="preserve">
+    <value>Inactive categories remove products from expected navigation and can look like missing catalog data.</value>
+  </data>
+  <data name="CategoryPlaybookInactiveAction" xml:space="preserve">
+    <value>Confirm whether the category is intentionally disabled, then reactivate it if it still belongs in active navigation.</value>
+  </data>
+  <data name="CategoryPlaybookUnpublishedScope" xml:space="preserve">
+    <value>Unpublished categories may block storefront visibility even when translations and products are already ready.</value>
+  </data>
+  <data name="CategoryPlaybookUnpublishedAction" xml:space="preserve">
+    <value>Confirm publication intent and publish when merchandising wants the structure live.</value>
+  </data>
+  <data name="CategoryPlaybookChildScope" xml:space="preserve">
+    <value>Child categories rely on valid parent structure and often need extra review during navigation refactors.</value>
+  </data>
+  <data name="CategoryPlaybookChildAction" xml:space="preserve">
+    <value>Review parent assignment and sort order so the catalog tree remains coherent for storefront and business users.</value>
+  </data>
+  <data name="ShippingMethodsWorkspaceIntro" xml:space="preserve">
+    <value>Review carrier coverage, rate completeness, and production readiness before storefront routing depends on them.</value>
+  </data>
+  <data name="CreateMethod" xml:space="preserve">
+    <value>Create method</value>
+  </data>
+  <data name="AllMethods" xml:space="preserve">
+    <value>All methods</value>
+  </data>
+  <data name="MissingRates" xml:space="preserve">
+    <value>Missing rates</value>
+  </data>
+  <data name="DhlMethods" xml:space="preserve">
+    <value>DHL methods</value>
+  </data>
+  <data name="GlobalCoverage" xml:space="preserve">
+    <value>Global coverage</value>
+  </data>
+  <data name="MultiRate" xml:space="preserve">
+    <value>Multi-rate</value>
+  </data>
+  <data name="SearchShippingMethodsPlaceholder" xml:space="preserve">
+    <value>Search by name, carrier, service, or countries</value>
+  </data>
+  <data name="ShippingMethodPlaybooks" xml:space="preserve">
+    <value>Shipping method playbooks</value>
+  </data>
+  <data name="Countries" xml:space="preserve">
+    <value>Countries</value>
+  </data>
+  <data name="Rates" xml:space="preserve">
+    <value>Rates</value>
+  </data>
+  <data name="NoShippingMethodsFound" xml:space="preserve">
+    <value>No shipping methods found.</value>
+  </data>
+  <data name="ShippingPlaybookMissingRatesScope" xml:space="preserve">
+    <value>Methods without at least one rate are not storefront-ready.</value>
+  </data>
+  <data name="ShippingPlaybookMissingRatesAction" xml:space="preserve">
+    <value>Open the method, add at least one pricing tier, and verify currency and carrier metadata.</value>
+  </data>
+  <data name="ShippingPlaybookGlobalCoverageScope" xml:space="preserve">
+    <value>Blank country scope means the method applies broadly and deserves extra carrier review.</value>
+  </data>
+  <data name="ShippingPlaybookGlobalCoverageAction" xml:space="preserve">
+    <value>Confirm whether the method is intentionally global or whether country scoping still needs to be narrowed.</value>
+  </data>
+  <data name="ShippingPlaybookDhlScope" xml:space="preserve">
+    <value>Use this subset when carrier setup or service mapping is being validated.</value>
+  </data>
+  <data name="ShippingPlaybookDhlAction" xml:space="preserve">
+    <value>Review service names, rates, and whether the method should stay active for production routing.</value>
+  </data>
+  <data name="CrmOverviewIntro" xml:space="preserve">
+    <value>Track funnel health, open pipeline, and operator follow-up priorities from one CRM surface.</value>
+  </data>
+  <data name="CrmOverviewPipelineNote" xml:space="preserve">
+    <value>Use this as a quick signal for how much active commercial follow-up still needs operator attention.</value>
+  </data>
+  <data name="CrmOverviewPlaybookQualifiedLeadsTitle" xml:space="preserve">
+    <value>Qualified lead follow-up</value>
+  </data>
+  <data name="CrmOverviewPlaybookQualifiedLeadsScope" xml:space="preserve">
+    <value>Qualified leads that linger without conversion usually indicate missed follow-up or unclear ownership.</value>
+  </data>
+  <data name="CrmOverviewPlaybookQualifiedLeadsAction" xml:space="preserve">
+    <value>Open the leads queue, triage qualified rows, and tighten assignment before more outbound work is added.</value>
+  </data>
+  <data name="CrmOverviewPlaybookPipelineTitle" xml:space="preserve">
+    <value>Pipeline pressure review</value>
+  </data>
+  <data name="CrmOverviewPlaybookPipelineScope" xml:space="preserve">
+    <value>Open pipeline value without clear movement often signals stalled negotiation or missing next-step ownership.</value>
+  </data>
+  <data name="CrmOverviewPlaybookPipelineAction" xml:space="preserve">
+    <value>Review open opportunities and invoice risk together before escalation or revenue forecasting changes.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookTaxTitle" xml:space="preserve">
+    <value>Tax and issuer readiness</value>
+  </data>
+  <data name="CrmInvoicesPlaybookTaxScope" xml:space="preserve">
+    <value>Invoices become operationally risky when issuer and VAT policy are only partially configured.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookTaxAction" xml:space="preserve">
+    <value>Review tax settings before posting or refunding invoices that depend on B2B or archive-ready tax data.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookCollectionsTitle" xml:space="preserve">
+    <value>Collections and settlement review</value>
+  </data>
+  <data name="CrmInvoicesPlaybookCollectionsScope" xml:space="preserve">
+    <value>Outstanding balances and unlinked payments create support churn and reconciliation ambiguity.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookCollectionsAction" xml:space="preserve">
+    <value>Use invoice, customer, order, and payment handoffs together before changing status or posting refunds.</value>
+  </data>
+  <data name="MobilePlaybookTransportScope" xml:space="preserve">
+    <value>Business-mobile onboarding depends on bootstrap settings and transport readiness together, especially when activation or alert workflows stall.</value>
+  </data>
+  <data name="MobileBootstrapSingleDeviceOnly" xml:space="preserve">
+    <value>Single device only</value>
+  </data>
+  <data name="PendingApprovalBusinesses" xml:space="preserve">
+    <value>Pending approval businesses</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookPendingTitle" xml:space="preserve">
+    <value>Pending redemptions</value>
+  </data>
+  <data name="LoyaltyCampaignPlaybookPushTitle" xml:space="preserve">
+    <value>Push-enabled campaign hygiene</value>
+  </data>
+  <data name="LoyaltyCampaignPlaybookWindowAction" xml:space="preserve">
+    <value>Review activation state and the UTC campaign window together before escalating a campaign timing issue.</value>
+  </data>
+  <data name="LoyaltyMobileFollowUp" xml:space="preserve">
+    <value>Loyalty follow-up</value>
+  </data>
+  <data name="LoyaltyScanPlaybookFailureScope" xml:space="preserve">
+    <value>Expired and failed sessions usually point to timing, staff workflow, or mobile transport confusion rather than reward-catalog issues.</value>
+  </data>
+  <data name="NoDeviceVersionData" xml:space="preserve">
+    <value>No device version data reported yet.</value>
+  </data>
+  <data name="MobileNotificationsDisabled" xml:space="preserve">
+    <value>Notifications disabled</value>
+  </data>
+  <data name="MobileBootstrapDeviceBindingRequired" xml:space="preserve">
+    <value>Device binding required</value>
+  </data>
+  <data name="OpenBusinessAppSettings" xml:space="preserve">
+    <value>Open business app settings</value>
+  </data>
+  <data name="ActiveDevices" xml:space="preserve">
+    <value>Active devices</value>
+  </data>
+  <data name="LoyaltyAccountPlaybookSuspendedTitle" xml:space="preserve">
+    <value>Suspended accounts</value>
+  </data>
+  <data name="MobileStaleDevices" xml:space="preserve">
+    <value>Stale devices</value>
+  </data>
+  <data name="UnknownDevice" xml:space="preserve">
+    <value>Unknown device</value>
+  </data>
+  <data name="LoyaltyMissingRules" xml:space="preserve">
+    <value>Missing rules</value>
+  </data>
+  <data name="MobileAllStates" xml:space="preserve">
+    <value>All states</value>
+  </data>
+  <data name="LoyaltyCampaignPlaybookWindowScope" xml:space="preserve">
+    <value>Scheduled and expired campaigns are the first place to inspect when support sees stale mobile banners or campaigns that never went live.</value>
+  </data>
+  <data name="LoyaltyRewardTierPlaybookSelfScope" xml:space="preserve">
+    <value>Self-redeemable tiers affect customer-facing behavior without staff mediation and should be reviewed before promotions or reward support cases.</value>
+  </data>
+  <data name="MobileBusinessAppHandoffsTitle" xml:space="preserve">
+    <value>Business app external handoffs</value>
+  </data>
+  <data name="OpenMobileBootstrap" xml:space="preserve">
+    <value>Open mobile bootstrap</value>
+  </data>
+  <data name="LoyaltyScanPlaybookPendingScope" xml:space="preserve">
+    <value>Pending sessions represent customer scans still waiting on business device action and should not sit stale during mobile support incidents.</value>
+  </data>
+  <data name="BusinessesNeedingAttention" xml:space="preserve">
+    <value>Businesses needing attention</value>
+  </data>
+  <data name="LoyaltyScanPlaybookFailureAction" xml:space="preserve">
+    <value>Inspect expiry pressure and failure reasons first, then move to mobile operations or staff process review.</value>
+  </data>
+  <data name="BusinessesRequiringEmailSetup" xml:space="preserve">
+    <value>Businesses requiring email setup</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookPendingScope" xml:space="preserve">
+    <value>Pending redemptions still depend on business-side confirmation and should be reviewed before customers are told the reward path is broken.</value>
+  </data>
+  <data name="LoyaltyAllModes" xml:space="preserve">
+    <value>All modes</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookPendingAction" xml:space="preserve">
+    <value>Confirm the linked scan and account context before manually intervening in reward fulfillment.</value>
+  </data>
+  <data name="LoyaltyCampaignPlaybookPushAction" xml:space="preserve">
+    <value>Prioritize push-enabled campaigns when checking rollout readiness so content, transport, and device diagnostics stay aligned.</value>
+  </data>
+  <data name="MobileBootstrapTitle" xml:space="preserve">
+    <value>Mobile bootstrap</value>
+  </data>
+  <data name="DeviceFleetSnapshotTitle" xml:space="preserve">
+    <value>Device fleet snapshot</value>
+  </data>
+  <data name="LoyaltyCampaignPlaybookPushScope" xml:space="preserve">
+    <value>Push-enabled campaigns increase delivery expectations across mobile operations and communications support.</value>
+  </data>
+  <data name="LoyaltySelfRedemption" xml:space="preserve">
+    <value>Self redemption</value>
+  </data>
+  <data name="LoyaltyAccountPlaybookZeroBalanceScope" xml:space="preserve">
+    <value>Zero-balance accounts often need program, accrual, or campaign review before support treats them as product defects.</value>
+  </data>
+  <data name="RecentMobileDevices" xml:space="preserve">
+    <value>Recent mobile devices</value>
+  </data>
+  <data name="LoyaltyProgramPlaybookSpendTitle" xml:space="preserve">
+    <value>Spend-based accrual review</value>
+  </data>
+  <data name="MobileOnboardingDependenciesTitle" xml:space="preserve">
+    <value>Mobile onboarding dependencies</value>
+  </data>
+  <data name="MobileBootstrapMaxOutboxItems" xml:space="preserve">
+    <value>Max outbox items</value>
+  </data>
+  <data name="MobileBootstrapAccessTokenMinutes" xml:space="preserve">
+    <value>Access token minutes</value>
+  </data>
+  <data name="ClearPush" xml:space="preserve">
+    <value>Clear push</value>
+  </data>
+  <data name="LoyaltyPushEnabled" xml:space="preserve">
+    <value>Push enabled</value>
+  </data>
+  <data name="MobileBusinessMembersOnly" xml:space="preserve">
+    <value>Business members only</value>
+  </data>
+  <data name="BusinessMemberDevices" xml:space="preserve">
+    <value>Business member devices</value>
+  </data>
+  <data name="LoyaltyAccountPlaybookZeroBalanceTitle" xml:space="preserve">
+    <value>Zero-balance members</value>
+  </data>
+  <data name="MobilePushTokenCleared" xml:space="preserve">
+    <value>Push token cleared.</value>
+  </data>
+  <data name="LoyaltyFreeItem" xml:space="preserve">
+    <value>Free item</value>
+  </data>
+  <data name="MobilePushTokenPresent" xml:space="preserve">
+    <value>Token present</value>
+  </data>
+  <data name="LoyaltyAllPrograms" xml:space="preserve">
+    <value>All programs</value>
+  </data>
+  <data name="TransportReadiness" xml:space="preserve">
+    <value>Transport readiness</value>
+  </data>
+  <data name="MobilePlaybookTransportTitle" xml:space="preserve">
+    <value>Transport readiness</value>
+  </data>
+  <data name="MobileOperationsIntro" xml:space="preserve">
+    <value>Bootstrap, onboarding, loyalty, and communication dependencies that directly affect Darwin mobile apps.</value>
+  </data>
+  <data name="AllStatuses" xml:space="preserve">
+    <value>All statuses</value>
+  </data>
+  <data name="MobilePlaybookPushDebtTitle" xml:space="preserve">
+    <value>Push-token debt</value>
+  </data>
+  <data name="LoyaltyRewardTierPlaybookSelfTitle" xml:space="preserve">
+    <value>Self-redemption review</value>
+  </data>
+  <data name="LoyaltyRewardTierPlaybookCatalogScope" xml:space="preserve">
+    <value>Missing descriptions or mixed discount/free-item tiers make campaign copy and support guidance harder to interpret consistently.</value>
+  </data>
+  <data name="MobileBootstrapJwtEnabled" xml:space="preserve">
+    <value>JWT enabled</value>
+  </data>
+  <data name="LoyaltyProgramPlaybookReadinessTitle" xml:space="preserve">
+    <value>Program readiness</value>
+  </data>
+  <data name="LoyaltyProgramPlaybookSpendAction" xml:space="preserve">
+    <value>Validate spend-based accrual settings before investigating balance mismatches so loyalty and payment support stay aligned.</value>
+  </data>
+  <data name="SubscriptionWebsite" xml:space="preserve">
+    <value>Subscription website</value>
+  </data>
+  <data name="MobilePushTokenMissing" xml:space="preserve">
+    <value>Missing token</value>
+  </data>
+  <data name="MobileOperationsPlaybooks" xml:space="preserve">
+    <value>Mobile operations playbooks</value>
+  </data>
+  <data name="LoyaltyAllCampaigns" xml:space="preserve">
+    <value>All campaigns</value>
+  </data>
+  <data name="MobileOperationsTitle" xml:space="preserve">
+    <value>Mobile Operations</value>
+  </data>
+  <data name="LoyaltyAllRewardTiers" xml:space="preserve">
+    <value>All reward tiers</value>
+  </data>
+  <data name="MobileOperationsSnapshotNote" xml:space="preserve">
+    <value>This workspace is an operations snapshot. Member activation, invitation handling, loyalty remediation, and communication triage still continue from Businesses, Loyalty, Business Communications, and Site Settings.</value>
+  </data>
+  <data name="MobileDeviceDeactivateFailed" xml:space="preserve">
+    <value>Device could not be deactivated.</value>
+  </data>
+  <data name="LoyaltyRewardTierPlaybookCatalogTitle" xml:space="preserve">
+    <value>Reward catalog hygiene</value>
+  </data>
+  <data name="MobileBusinessMemberships" xml:space="preserve">
+    <value>{0} business memberships</value>
+  </data>
+  <data name="MobileMissingPushToken" xml:space="preserve">
+    <value>Missing push token</value>
+  </data>
+  <data name="MobilePlaybookLoyaltyScanScope" xml:space="preserve">
+    <value>Scan-session failures often belong with device and staff workflow review, not only reward-catalog cleanup.</value>
+  </data>
+  <data name="MobileDeviceDeactivated" xml:space="preserve">
+    <value>Device deactivated.</value>
+  </data>
+  <data name="PendingActivationMembers" xml:space="preserve">
+    <value>Pending activation members</value>
+  </data>
+  <data name="MobilePushTokenClearFailed" xml:space="preserve">
+    <value>Push token could not be cleared.</value>
+  </data>
+  <data name="MobilePlaybookLoyaltyScanAction" xml:space="preserve">
+    <value>Open scan sessions and pending redemptions from this workspace before escalating a mobile loyalty incident.</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookScanFailureScope" xml:space="preserve">
+    <value>Failed or expired scan-linked redemptions usually indicate operator or device friction rather than loyalty-balance corruption.</value>
+  </data>
+  <data name="MobilePlaybookPushDebtAction" xml:space="preserve">
+    <value>Review missing-token and notifications-disabled lanes before assuming the problem is in loyalty rules or communication templates.</value>
+  </data>
+  <data name="LoyaltyCampaignPlaybookWindowTitle" xml:space="preserve">
+    <value>Activation and window review</value>
+  </data>
+  <data name="LoyaltyScanPlaybookPendingTitle" xml:space="preserve">
+    <value>Pending scanner queue</value>
+  </data>
+  <data name="MobilePlaybookTransportAction" xml:space="preserve">
+    <value>Check mobile bootstrap, admin alerts, and communication readiness together before treating a support case as app-only drift.</value>
+  </data>
+  <data name="NoDevicesMatchCurrentFilters" xml:space="preserve">
+    <value>No devices match the current filters.</value>
+  </data>
+  <data name="MobileBootstrapRefreshTokenDays" xml:space="preserve">
+    <value>Refresh token days</value>
+  </data>
+  <data name="MobileNotificationsOff" xml:space="preserve">
+    <value>Notifications off</value>
+  </data>
+  <data name="MobileConsumerOnly" xml:space="preserve">
+    <value>Consumer only</value>
+  </data>
+  <data name="MobilePlaybookLoyaltyScanTitle" xml:space="preserve">
+    <value>Loyalty scan follow-up</value>
+  </data>
+  <data name="LoyaltyProgramPlaybookSpendScope" xml:space="preserve">
+    <value>Spend-based programs tie loyalty balances more tightly to orders, refunds, and financial support workflows.</value>
+  </data>
+  <data name="MobileSearchUserDeviceVersion" xml:space="preserve">
+    <value>Search user, device, or version</value>
+  </data>
+  <data name="LoyaltySpendBasedAccrual" xml:space="preserve">
+    <value>Spend-based accrual</value>
+  </data>
+  <data name="LoyaltyProgramPlaybookReadinessAction" xml:space="preserve">
+    <value>Keep one clear active program path per business, and review inactive or missing-rule programs before go-live support escalates.</value>
+  </data>
+  <data name="MobilePlaybookPushDebtScope" xml:space="preserve">
+    <value>Missing push tokens and disabled notifications usually explain why loyalty campaigns or mobile alerts appear inconsistent across businesses.</value>
+  </data>
+  <data name="LoyaltyRewardTierPlaybookSelfAction" xml:space="preserve">
+    <value>Prioritize self-redemption tiers when investigating unexpected redemption flow or scanner support issues.</value>
+  </data>
+  <data name="LoyaltyDiscountRewards" xml:space="preserve">
+    <value>Discount rewards</value>
+  </data>
+  <data name="LoyaltyAccountPlaybookZeroBalanceAction" xml:space="preserve">
+    <value>Check recent accrual activity and the active loyalty program before escalating a balance complaint.</value>
+  </data>
+  <data name="MobileBootstrapQrRefreshSeconds" xml:space="preserve">
+    <value>QR refresh seconds</value>
+  </data>
+  <data name="RecentAppVersions" xml:space="preserve">
+    <value>Recent app versions</value>
+  </data>
+  <data name="LoyaltyScanPlaybookPendingAction" xml:space="preserve">
+    <value>Review pending sessions before retrying campaigns or loyalty settings so device-side drift is separated from program drift.</value>
+  </data>
+  <data name="LoyaltyAccountPlaybookSuspendedAction" xml:space="preserve">
+    <value>Review the recent transaction and redemption trail first, then reactivate only after the underlying cause is clear.</value>
+  </data>
+  <data name="LoyaltyProgramPlaybookReadinessScope" xml:space="preserve">
+    <value>Inactive programs and rule-light programs are the first place to review when accrual or redemption expectations drift between mobile, staff, and admin support.</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookScanFailureTitle" xml:space="preserve">
+    <value>Scan-linked redemption failures</value>
+  </data>
+  <data name="LoyaltyRewardTierPlaybookCatalogAction" xml:space="preserve">
+    <value>Fill in descriptions and verify reward type intent before operators, campaigns, or storefront messaging rely on the catalog.</value>
+  </data>
+  <data name="MobileNotificationsOn" xml:space="preserve">
+    <value>Notifications on</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookScanFailureAction" xml:space="preserve">
+    <value>Read the scan outcome first, then decide whether the case needs account review, scanner review, or reward-catalog cleanup.</value>
+  </data>
+  <data name="LoyaltyAccountPlaybookSuspendedScope" xml:space="preserve">
+    <value>Suspended accounts usually indicate unresolved support or fraud-safe follow-up before loyalty earning and redemption can resume.</value>
+  </data>
+  <data name="MobileAllPlatforms" xml:space="preserve">
+    <value>All platforms</value>
+  </data>
+  <data name="LoyaltyScanPlaybookFailureTitle" xml:space="preserve">
+    <value>Expired or failed scans</value>
+  </data>
+  <data name="AddOnEditIntro" xml:space="preserve">
+    <value>Keep add-on scope, active state, and option pricing aligned before widening a storefront issue.</value>
+  </data>
+  <data name="AddOnPlaybookInactiveTitle" xml:space="preserve">
+    <value>Inactive groups</value>
+  </data>
+  <data name="AddOnAllGroups" xml:space="preserve">
+    <value>All groups</value>
+  </data>
+  <data name="AddOnPlaybookVariantScope" xml:space="preserve">
+    <value>Variant-level add-ons create the most specific override path and are the first place to inspect when only one SKU behaves differently.</value>
+  </data>
+  <data name="AddOnSearchBrands" xml:space="preserve">
+    <value>Search brands.</value>
+  </data>
+  <data name="AddOnSearchCategories" xml:space="preserve">
+    <value>Search categories.</value>
+  </data>
+  <data name="WhyItMatters" xml:space="preserve">
+    <value>Why it matters</value>
+  </data>
+  <data name="AddOnAddOption" xml:space="preserve">
+    <value>Add option</value>
+  </data>
+  <data name="AddOnSaveAttachments" xml:space="preserve">
+    <value>Save attachments</value>
+  </data>
+  <data name="AddOnAttachVariantsTitle" xml:space="preserve">
+    <value>Attach variants</value>
+  </data>
+  <data name="AddOnPlaybookScopeScope" xml:space="preserve">
+    <value>Global groups and unattached groups affect whether add-ons show everywhere, nowhere, or only on targeted catalog branches.</value>
+  </data>
+  <data name="AddOnNoCategories" xml:space="preserve">
+    <value>No categories found.</value>
+  </data>
+  <data name="AddOnNoProducts" xml:space="preserve">
+    <value>No products found.</value>
+  </data>
+  <data name="AddOnAttachProductsTitle" xml:space="preserve">
+    <value>Attach products</value>
+  </data>
+  <data name="AddOnVariantProductLinked" xml:space="preserve">
+    <value>Variant/Product linked</value>
+  </data>
+  <data name="AddOnOptionsValues" xml:space="preserve">
+    <value>Options and values</value>
+  </data>
+  <data name="AddOnNewGroup" xml:space="preserve">
+    <value>New group</value>
+  </data>
+  <data name="AddOnSearchNameCurrency" xml:space="preserve">
+    <value>Search name or currency...</value>
+  </data>
+  <data name="AddOnNoBrands" xml:space="preserve">
+    <value>No brands found.</value>
+  </data>
+  <data name="AddOnGroupConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict: the record was modified by another user.</value>
+  </data>
+  <data name="AddOnPlaybookVariantAction" xml:space="preserve">
+    <value>Inspect variant-linked groups before widening an issue to the whole product, category, or brand.</value>
+  </data>
+  <data name="AddOnEditTitle" xml:space="preserve">
+    <value>Edit add-on group</value>
+  </data>
+  <data name="AddOnNoGroups" xml:space="preserve">
+    <value>No add-on groups found.</value>
+  </data>
+  <data name="AddOnPlaybookScopeTitle" xml:space="preserve">
+    <value>Global vs attached scope</value>
+  </data>
+  <data name="AddOnLinkedGroups" xml:space="preserve">
+    <value>Linked groups</value>
+  </data>
+  <data name="AddOnPriceDeltaMinor" xml:space="preserve">
+    <value>Price delta (minor)</value>
+  </data>
+  <data name="AddOnPlaybookVariantTitle" xml:space="preserve">
+    <value>Variant-linked groups</value>
+  </data>
+  <data name="AddOnPlaybookScopeAction" xml:space="preserve">
+    <value>Check scope and attachment level before blaming storefront rendering or product configuration.</value>
+  </data>
+  <data name="AddOnCreateTitle" xml:space="preserve">
+    <value>Create add-on group</value>
+  </data>
+  <data name="AddOnOptionLabel" xml:space="preserve">
+    <value>Option label</value>
+  </data>
+  <data name="AddOnAttachBrandsTitle" xml:space="preserve">
+    <value>Attach brands</value>
+  </data>
+  <data name="AddOnSearchProducts" xml:space="preserve">
+    <value>Search products.</value>
+  </data>
+  <data name="AddOnPlaybookInactiveScope" xml:space="preserve">
+    <value>Inactive add-on groups often explain why expected upsell choices never appear on products or in checkout.</value>
+  </data>
+  <data name="AddOnAddValue" xml:space="preserve">
+    <value>Add value</value>
+  </data>
+  <data name="AddOnOptionsEditorHelp" xml:space="preserve">
+    <value>Use options like Size or Sauce and values like Large or Extra spicy. Values may add or subtract price through minor currency units.</value>
+  </data>
+  <data name="AddOnCreateIntro" xml:space="preserve">
+    <value>Define the shared option structure, pricing deltas, and scope before attaching the group across catalog surfaces.</value>
+  </data>
+  <data name="AddOnRemoveValue" xml:space="preserve">
+    <value>Remove value</value>
+  </data>
+  <data name="AddOnSearchVariants" xml:space="preserve">
+    <value>Search by SKU or product name...</value>
+  </data>
+  <data name="AddOnAttachCategoriesTitle" xml:space="preserve">
+    <value>Attach categories</value>
+  </data>
+  <data name="AddOnValueLabel" xml:space="preserve">
+    <value>Value label</value>
+  </data>
+  <data name="AddOnOperationsPlaybooks" xml:space="preserve">
+    <value>Add-on operations playbooks</value>
+  </data>
+  <data name="AddOnPlaybookInactiveAction" xml:space="preserve">
+    <value>Review inactive groups before product-level debugging so merchandising and pricing support stay aligned.</value>
+  </data>
+  <data name="PriceNet" xml:space="preserve">
+    <value>Price (net)</value>
+  </data>
+  <data name="AddOnRemoveOption" xml:space="preserve">
+    <value>Remove option</value>
+  </data>
+  <data name="AddOnEditHeading" xml:space="preserve">
+    <value>Edit:</value>
+  </data>
+  <data name="AddOnPlaybookUnattachedScope" xml:space="preserve">
+    <value>Configured add-on groups with no assignments cannot affect product configuration in checkout or ordering flows.</value>
+  </data>
+  <data name="AddOnPlaybookGlobalAction" xml:space="preserve">
+    <value>Confirm the scope is really global and review downstream product, category, and brand expectations before editing.</value>
+  </data>
+  <data name="AddOnPlaybookGlobalScope" xml:space="preserve">
+    <value>Global add-on groups can affect broad portions of the catalog and are higher-risk configuration changes.</value>
+  </data>
+  <data name="AddOnPlaybookUnattachedAction" xml:space="preserve">
+    <value>Attach the group to variants, products, categories, or brands depending on the intended scope.</value>
+  </data>
+  <data name="AddOnPlaybookUnattachedTitle" xml:space="preserve">
+    <value>Unattached groups</value>
+  </data>
+  <data name="AddOnPlaybookInactiveScopeLive" xml:space="preserve">
+    <value>Inactive groups stay visible in admin but should not surprise operators expecting them in live product configuration.</value>
+  </data>
+  <data name="AddOnPlaybookGlobalTitle" xml:space="preserve">
+    <value>Global groups</value>
+  </data>
+  <data name="AddOnPlaybookInactiveActionLive" xml:space="preserve">
+    <value>Review whether the group is intentionally retired or should be reactivated before business-side menu operations.</value>
+  </data>
+  <data name="PagesPlaybookLiveWindowScope" xml:space="preserve">
+    <value>A page currently live inside a publish window is timing-sensitive and worth proactive review.</value>
+  </data>
+  <data name="PageTranslationRequired" xml:space="preserve">
+    <value>At least one translation is required.</value>
+  </data>
+  <data name="PageEditTitle" xml:space="preserve">
+    <value>Edit page</value>
+  </data>
+  <data name="PagePublishStartUtc" xml:space="preserve">
+    <value>Publish start (UTC)</value>
+  </data>
+  <data name="PageCreateIntro" xml:space="preserve">
+    <value>Create the storefront page, then complete translations and publish timing deliberately.</value>
+  </data>
+  <data name="PageContentHelpNote" xml:space="preserve">
+    <value>Rich text content rendered on the page.</value>
+  </data>
+  <data name="TotalPages" xml:space="preserve">
+    <value>Total pages</value>
+  </data>
+  <data name="PagesPlaybookDraftScope" xml:space="preserve">
+    <value>Draft pages usually mean unfinished legal, help, onboarding, or campaign content is still waiting on an owner.</value>
+  </data>
+  <data name="CreatePage" xml:space="preserve">
+    <value>Create page</value>
+  </data>
+  <data name="PageConcurrencyConflict" xml:space="preserve">
+    <value>The page was changed by another operator. Reload it before saving again.</value>
+  </data>
+  <data name="PagesPlaybookWindowedAction" xml:space="preserve">
+    <value>Review publish start and end dates and confirm they still match campaign or compliance expectations.</value>
+  </data>
+  <data name="PagePublishEndUtc" xml:space="preserve">
+    <value>Publish end (UTC)</value>
+  </data>
+  <data name="PageMetaDescriptionHelpContent" xml:space="preserve">
+    <value>Short SEO description, ideally around 155 characters or less.</value>
+  </data>
+  <data name="PageSlugHelpContent" xml:space="preserve">
+    <value>URL-friendly identifier. Use lowercase letters, digits, and hyphens. Example: <code>about-us</code>.</value>
+  </data>
+  <data name="NoPagesFound" xml:space="preserve">
+    <value>No pages found.</value>
+  </data>
+  <data name="PagesPlaybookWindowedScope" xml:space="preserve">
+    <value>Windowed pages can silently expire or go live at the wrong time when campaign timing drifts.</value>
+  </data>
+  <data name="PageContentHelpContent" xml:space="preserve">
+    <value>Use headings, lists, and links deliberately. Media should support the publish intent and translation context.</value>
+  </data>
+  <data name="ContentOperationsPlaybooks" xml:space="preserve">
+    <value>Content operations playbooks</value>
+  </data>
+  <data name="PageTranslationsHeading" xml:space="preserve">
+    <value>Translations</value>
+  </data>
+  <data name="PagesWorkspaceIntro" xml:space="preserve">
+    <value>Operate legal, help, and marketing content with publish-window awareness and translation follow-up.</value>
+  </data>
+  <data name="PagesPlaybookLiveWindowAction" xml:space="preserve">
+    <value>Verify content accuracy, links, and expiry timing while the page is actively visible.</value>
+  </data>
+  <data name="PageTranslationsHelp" xml:space="preserve">
+    <value>Keep storefront wording, SEO metadata, and publish timing aligned across cultures.</value>
+  </data>
+  <data name="PageCreateTitle" xml:space="preserve">
+    <value>Create page</value>
+  </data>
+  <data name="SearchPagesPlaceholder" xml:space="preserve">
+    <value>Search title, slug, or translation content</value>
+  </data>
+  <data name="ContentHtml" xml:space="preserve">
+    <value>Content (HTML)</value>
+  </data>
+  <data name="PagesPlaybookDraftAction" xml:space="preserve">
+    <value>Open the page, finish the translations, and publish only after the responsible owner confirms the content.</value>
+  </data>
+  <data name="PrimaryTitleDe" xml:space="preserve">
+    <value>Primary title (de-DE)</value>
+  </data>
+  <data name="PageEditIntro" xml:space="preserve">
+    <value>Review translation coverage, publishing windows, and content accuracy before going live.</value>
+  </data>
+  <data name="PublishWindowUtc" xml:space="preserve">
+    <value>Publish window (UTC)</value>
+  </data>
+  <data name="CrmInvoicesPlaybookRefundScope" xml:space="preserve">
+    <value>Refund activity can drift away from invoice status, payment settlement, and customer communication if it is not reviewed.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookDueSoonTitle" xml:space="preserve">
+    <value>Invoices nearing due date</value>
+  </data>
+  <data name="CrmInvoicesPlaybookVatGapTitle" xml:space="preserve">
+    <value>Business invoices missing VAT ID</value>
+  </data>
+  <data name="CrmInvoicesPlaybookRefundAction" xml:space="preserve">
+    <value>Verify invoice status, refunded amount, related payment trail, and the follow-up communication before closing the case.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookVatGapAction" xml:space="preserve">
+    <value>Open the customer profile, capture the VAT identifier, and review whether reverse-charge handling still applies.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookVatGapScope" xml:space="preserve">
+    <value>A business tax profile without a VAT identifier creates invoicing and compliance cleanup later.</value>
+  </data>
+  <data name="Overdue" xml:space="preserve">
+    <value>Overdue</value>
+  </data>
+  <data name="DueSoon" xml:space="preserve">
+    <value>Due soon</value>
+  </data>
+  <data name="CrmInvoicesPlaybookDueSoonScope" xml:space="preserve">
+    <value>Outstanding invoices close to their due date can turn into support debt and collection churn quickly.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookDueSoonAction" xml:space="preserve">
+    <value>Review payment linkage, follow up with the customer, and confirm the due date still matches the commercial agreement.</value>
+  </data>
+  <data name="CrmInvoicesPlaybookRefundTitle" xml:space="preserve">
+    <value>Refunded invoices need review</value>
+  </data>
+  <data name="BillingPaymentsPlaybookReconciliationDependency" xml:space="preserve">
+    <value>Stripe secret key, webhook secret, and merchant identity should be configured before operators rely on these rows as trustworthy reconciliation evidence.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookHistoryAction" xml:space="preserve">
+    <value>Check provider reference state, last event timestamp, and linked refund activity before deciding whether a row is settled, stale, or missing follow-up.</value>
+  </data>
+  <data name="StripeLinked" xml:space="preserve">
+    <value>Stripe-linked</value>
+  </data>
+  <data name="FullyRefunded" xml:space="preserve">
+    <value>Fully refunded</value>
+  </data>
+  <data name="NotPaidYet" xml:space="preserve">
+    <value>Not paid yet</value>
+  </data>
+  <data name="BillingRefundsPlaybookCompletedTitle" xml:space="preserve">
+    <value>Completed refunds</value>
+  </data>
+  <data name="BillingRefundsPlaybookFailedDependency" xml:space="preserve">
+    <value>Webhook and callback audit depth is still near-term, so operator review remains the source of truth for failed refund follow-up.</value>
+  </data>
+  <data name="BillingRefundsPlaybookPendingScope" xml:space="preserve">
+    <value>Use this queue for refunds that have been requested but are not yet operationally settled.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookReconciliationAction" xml:space="preserve">
+    <value>Start from the payment row, verify provider reference, refund totals, and linked order or invoice context, then document the final state in the payment editor or support queue.</value>
+  </data>
+  <data name="SearchRefundsPlaceholder" xml:space="preserve">
+    <value>Search refunds</value>
+  </data>
+  <data name="BillingPaymentsPlaybookMissingProviderTitle" xml:space="preserve">
+    <value>Stripe rows without provider reference</value>
+  </data>
+  <data name="BillingPaymentsPlaybookFailedDependency" xml:space="preserve">
+    <value>Webhook secret and provider credentials must be configured before trusting automated Stripe lifecycle handling.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookDisputeScope" xml:space="preserve">
+    <value>Use this subset for Stripe rows that should be cross-checked against dispute signals instead of being treated as routine refund noise.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookPendingScope" xml:space="preserve">
+    <value>Use this for payments waiting on capture or manual completion.</value>
+  </data>
+  <data name="BillingRefundsPlaybookHistoryScope" xml:space="preserve">
+    <value>Use provider reference state and last refund event to distinguish stale support markers from real provider-side movement.</value>
+  </data>
+  <data name="BillingRefundsPlaybookHistoryTitle" xml:space="preserve">
+    <value>Refund provider-history review</value>
+  </data>
+  <data name="SearchPaymentsPlaceholder" xml:space="preserve">
+    <value>Search payments</value>
+  </data>
+  <data name="WebhookExceptions" xml:space="preserve">
+    <value>Webhook exceptions</value>
+  </data>
+  <data name="BillingPaymentsPlaybookFailedScope" xml:space="preserve">
+    <value>Treat these as support items first, not silent retries.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookHistoryScope" xml:space="preserve">
+    <value>Use provider reference state and last financial event to spot rows whose provider trail is stale or incomplete.</value>
+  </data>
+  <data name="BillingRefundsPlaybookHistoryAction" xml:space="preserve">
+    <value>Check provider reference state, open-age window, and linked payment before deciding whether the refund is in flight, failed, or simply missing provider correlation.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookHistoryTitle" xml:space="preserve">
+    <value>Provider-history review</value>
+  </data>
+  <data name="BillingRefundsPlaybookPendingTitle" xml:space="preserve">
+    <value>Pending refunds</value>
+  </data>
+  <data name="BillingPaymentsPlaybookFailedAction" xml:space="preserve">
+    <value>Open the linked order or customer, verify provider reference or failure state, and only add or edit payments after support validation.</value>
+  </data>
+  <data name="ReconciliationQueue" xml:space="preserve">
+    <value>Reconciliation queue</value>
+  </data>
+  <data name="NoPaymentsFound" xml:space="preserve">
+    <value>No payments found.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookMissingProviderAction" xml:space="preserve">
+    <value>Open the payment or linked order, verify the real Stripe intent or charge id, and correct the provider reference before treating the record as complete.</value>
+  </data>
+  <data name="BillingRefundsPlaybookFailedAction" xml:space="preserve">
+    <value>Start from the refund row, then move into the linked payment workbench or order refund flow to correct support notes and retry paths manually.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookLinkingTitle" xml:space="preserve">
+    <value>Unlinked or provider-linked rows</value>
+  </data>
+  <data name="BillingPaymentsPlaybookDisputeTitle" xml:space="preserve">
+    <value>Dispute follow-up</value>
+  </data>
+  <data name="BillingRefundsPlaybookHistoryDependency" xml:space="preserve">
+    <value>Stripe webhook secret and provider reference hygiene should be green before these timeline signals are treated as reliable evidence.</value>
+  </data>
+  <data name="BillingRefundsPlaybookCompletedAction" xml:space="preserve">
+    <value>Review linked payment, invoice, and order settlement together when customers ask about refunded value or net collected totals.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookMissingProviderDependency" xml:space="preserve">
+    <value>Stripe webhook secret and secret key should be configured before assuming provider-linked automation is trustworthy.</value>
+  </data>
+  <data name="RefundWebhookTriageNote" xml:space="preserve">
+    <value>Refund triage may depend on callback-level evidence. Use these subsets when Stripe refund or charge behavior looks inconsistent with the queue row alone.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookPendingDependency" xml:space="preserve">
+    <value>Stripe secret key and merchant identity should already be configured before live capture workflows are relied on.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookPendingAction" xml:space="preserve">
+    <value>Review the order and payment rows, then record or correct payment status from the payment editor when the provider outcome is known.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookReconciliationTitle" xml:space="preserve">
+    <value>Reconciliation-needed rows</value>
+  </data>
+  <data name="BillingPaymentsPlaybookLinkingAction" xml:space="preserve">
+    <value>Link order or invoice context where known, or keep the row documented as a standalone support payment until Stripe-specific reconciliation matures.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookHistoryDependency" xml:space="preserve">
+    <value>Stripe webhook secret and provider credentials should be in place before operators treat these timeline signals as trustworthy settlement history.</value>
+  </data>
+  <data name="BillingRefundsPlaybookPendingDependency" xml:space="preserve">
+    <value>Stripe webhook and provider references should be trusted before using pending state as anything more than a manual support marker.</value>
+  </data>
+  <data name="BillingTaxReadinessNote" xml:space="preserve">
+    <value>This phase-1 tax surface improves billing visibility for VAT defaults and invoice issuer identity without claiming a full tax engine or e-invoicing completion.</value>
+  </data>
+  <data name="PartiallyRefunded" xml:space="preserve">
+    <value>Partially refunded</value>
+  </data>
+  <data name="Opened" xml:space="preserve">
+    <value>Opened</value>
+  </data>
+  <data name="BillingPaymentsPlaybookReconciliationScope" xml:space="preserve">
+    <value>Use this subset for pending, failed, refunded, or Stripe-reference-light rows that still need operator confirmation before finance treats them as settled.</value>
+  </data>
+  <data name="OpenLinkedUser" xml:space="preserve">
+    <value>Open linked user</value>
+  </data>
+  <data name="DisputeQueue" xml:space="preserve">
+    <value>Dispute queue</value>
+  </data>
+  <data name="SettingsDependency" xml:space="preserve">
+    <value>Settings dependency</value>
+  </data>
+  <data name="BillingPaymentsPlaybookDisputeAction" xml:space="preserve">
+    <value>Open the dispute-follow-up subset, pivot into webhook dispute signals, then decide whether the next step is payment correction, refund follow-up, or escalation.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookDisputeDependency" xml:space="preserve">
+    <value>Stripe webhook lifecycle visibility and payment settings should be configured before callback anomalies are treated as resolved.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookPendingTitle" xml:space="preserve">
+    <value>Pending payments</value>
+  </data>
+  <data name="BillingRefundsPlaybookPendingAction" xml:space="preserve">
+    <value>Open the linked order and payment, confirm the provider-side outcome, and leave the refund pending only when support expects a later completion signal.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookLinkingScope" xml:space="preserve">
+    <value>These rows usually represent reconciliation or data-hygiene work.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookMissingProviderScope" xml:space="preserve">
+    <value>These rows are risky because callback and reconciliation correlation is weak.</value>
+  </data>
+  <data name="BillingRefundsPlaybookFailedTitle" xml:space="preserve">
+    <value>Failed or provider-sensitive refunds</value>
+  </data>
+  <data name="BillingPaymentsPlaybookLinkingDependency" xml:space="preserve">
+    <value>Phase-1 Stripe readiness should be green before treating provider-linked rows as production-grade evidence.</value>
+  </data>
+  <data name="BillingRefundsPlaybookCompletedDependency" xml:space="preserve">
+    <value>Stripe readiness and provider reference hygiene should already be green before these rows are treated as reconciliation evidence.</value>
+  </data>
+  <data name="BillingPaymentsPlaybookFailedTitle" xml:space="preserve">
+    <value>Failed payments</value>
+  </data>
+  <data name="BillingRefundsPlaybookCompletedScope" xml:space="preserve">
+    <value>These rows represent already recorded customer giveback and should stay aligned with payment and invoice context.</value>
+  </data>
+  <data name="BillingWebhookLifecycleNote" xml:space="preserve">
+    <value>This queue gives callback visibility for phase-1 payment operations. It is intentionally read-oriented and does not claim automated resend or full reconciliation completion.</value>
+  </data>
+  <data name="BillingRefundsPlaybookFailedScope" xml:space="preserve">
+    <value>Use this subset when refund status or Stripe handling needs explicit finance support review.</value>
+  </data>
+  <data name="ShipmentQueueTitle" xml:space="preserve">
+    <value>Shipment Queue</value>
+  </data>
+  <data name="ShipmentQueueIntro" xml:space="preserve">
+    <value>Cross-order shipment review with DHL readiness, handoff thresholds, tracking grace windows, and return follow-up guidance.</value>
+  </data>
+  <data name="AllShipments" xml:space="preserve">
+    <value>All shipments</value>
+  </data>
+  <data name="DhlRows" xml:space="preserve">
+    <value>DHL rows</value>
+  </data>
+  <data name="Threshold" xml:space="preserve">
+    <value>Threshold</value>
+  </data>
+  <data name="Grace" xml:space="preserve">
+    <value>Grace</value>
+  </data>
+  <data name="DhlExceptionFollowUp" xml:space="preserve">
+    <value>DHL exception follow-up</value>
+  </data>
+  <data name="ReturnedParcelsNeedFollowUp" xml:space="preserve">
+    <value>Returned parcels need follow-up.</value>
+  </data>
+  <data name="DhlPhaseOneReadiness" xml:space="preserve">
+    <value>DHL Phase-1 Readiness</value>
+  </data>
+  <data name="OpenShippingSettings" xml:space="preserve">
+    <value>Open Shipping Settings</value>
+  </data>
+  <data name="ShipperIdentity" xml:space="preserve">
+    <value>Shipper Identity</value>
+  </data>
+  <data name="HandoffDelay" xml:space="preserve">
+    <value>Handoff Delay</value>
+  </data>
+  <data name="TrackingGrace" xml:space="preserve">
+    <value>Tracking Grace</value>
+  </data>
+  <data name="ShipmentSupportPlaybooks" xml:space="preserve">
+    <value>Shipment Support Playbooks</value>
+  </data>
+  <data name="SearchShipmentsPlaceholder" xml:space="preserve">
+    <value>Search by order, carrier, service, or tracking</value>
+  </data>
+  <data name="NoShipmentsFound" xml:space="preserve">
+    <value>No shipments found.</value>
+  </data>
+  <data name="NeedsCarrierReview" xml:space="preserve">
+    <value>Needs carrier review</value>
+  </data>
+  <data name="NotYetHandedOver" xml:space="preserve">
+    <value>Not yet handed over</value>
+  </data>
+  <data name="OpenFor" xml:space="preserve">
+    <value>Open for</value>
+  </data>
+  <data name="OlderThanThreshold" xml:space="preserve">
+    <value>Older than threshold</value>
+  </data>
+  <data name="InTransitFor" xml:space="preserve">
+    <value>In transit for</value>
+  </data>
+  <data name="MissingTrackingBeyondGrace" xml:space="preserve">
+    <value>Missing tracking beyond grace</value>
+  </data>
+  <data name="NotSet" xml:space="preserve">
+    <value>Not set</value>
+  </data>
+  <data name="ShipmentPlaybookPendingTitle" xml:space="preserve">
+    <value>Pending / packed shipments</value>
+  </data>
+  <data name="ShipmentPlaybookPendingScope" xml:space="preserve">
+    <value>Rows still pending or packed usually need warehouse allocation, label generation, or final handoff confirmation.</value>
+  </data>
+  <data name="ShipmentPlaybookPendingAction" xml:space="preserve">
+    <value>Review the order shipment tab, confirm warehouse selection, and add a shipment record once the parcel is ready to leave.</value>
+  </data>
+  <data name="ShipmentPlaybookPendingDependency" xml:space="preserve">
+    <value>Shipping methods, warehouse assignment, and allocation settings drive this queue.</value>
+  </data>
+  <data name="ShipmentPlaybookAwaitingHandoffTitle" xml:space="preserve">
+    <value>Awaiting handoff</value>
+  </data>
+  <data name="ShipmentPlaybookAwaitingHandoffScope" xml:space="preserve">
+    <value>These parcels were created but have been open longer than the configured handoff threshold.</value>
+  </data>
+  <data name="ShipmentPlaybookAwaitingHandoffAction" xml:space="preserve">
+    <value>Check carrier pickup status, warehouse packing progress, and raise follow-up if the parcel is still physically on site.</value>
+  </data>
+  <data name="ShipmentPlaybookAwaitingHandoffDependency" xml:space="preserve">
+    <value>Shipment attention delay in shipping settings determines when this queue opens.</value>
+  </data>
+  <data name="ShipmentPlaybookTrackingOverdueTitle" xml:space="preserve">
+    <value>Tracking overdue</value>
+  </data>
+  <data name="ShipmentPlaybookTrackingOverdueScope" xml:space="preserve">
+    <value>Shipped parcels without fresh tracking events beyond the grace window need carrier-side verification.</value>
+  </data>
+  <data name="ShipmentPlaybookTrackingOverdueAction" xml:space="preserve">
+    <value>Review carrier events, confirm the tracking number is valid, and escalate to the carrier if no movement is reported.</value>
+  </data>
+  <data name="ShipmentPlaybookTrackingOverdueDependency" xml:space="preserve">
+    <value>Tracking grace in shipping settings controls when these rows become overdue.</value>
+  </data>
+  <data name="ShipmentPlaybookMissingTrackingTitle" xml:space="preserve">
+    <value>Missing tracking</value>
+  </data>
+  <data name="ShipmentPlaybookMissingTrackingScope" xml:space="preserve">
+    <value>Rows without a tracking number break downstream customer support and return handling.</value>
+  </data>
+  <data name="ShipmentPlaybookMissingTrackingAction" xml:space="preserve">
+    <value>Open the order shipment tab, add the missing tracking reference, and verify the carrier/service pairing is correct.</value>
+  </data>
+  <data name="ShipmentPlaybookMissingTrackingDependency" xml:space="preserve">
+    <value>Carrier/service data and operational handoff discipline both affect this queue.</value>
+  </data>
+  <data name="ShipmentPlaybookDhlDataTitle" xml:space="preserve">
+    <value>DHL rows with incomplete carrier data</value>
+  </data>
+  <data name="ShipmentPlaybookDhlDataScope" xml:space="preserve">
+    <value>DHL-tagged rows without service or complete shipper readiness usually indicate shipping configuration drift.</value>
+  </data>
+  <data name="ShipmentPlaybookDhlDataAction" xml:space="preserve">
+    <value>Review DHL settings, confirm service mapping, and fix missing carrier metadata before the next shipment is created.</value>
+  </data>
+  <data name="ShipmentPlaybookDhlDataDependency" xml:space="preserve">
+    <value>DHL site settings and shipping method definitions are the primary dependencies.</value>
+  </data>
+  <data name="ShipmentPlaybookCarrierReviewTitle" xml:space="preserve">
+    <value>Carrier review queue</value>
+  </data>
+  <data name="ShipmentPlaybookCarrierReviewScope" xml:space="preserve">
+    <value>Carrier review rows combine missing service, stale tracking, or return-oriented exceptions that need manual assessment.</value>
+  </data>
+  <data name="ShipmentPlaybookCarrierReviewAction" xml:space="preserve">
+    <value>Use the order timeline and carrier events to decide whether the issue is a data fix, a provider escalation, or a return follow-up.</value>
+  </data>
+  <data name="ShipmentPlaybookCarrierReviewDependency" xml:space="preserve">
+    <value>Shipping settings, carrier data completeness, and return support rules all influence this queue.</value>
+  </data>
+  <data name="ShipmentPlaybookReturnedTitle" xml:space="preserve">
+    <value>Returned shipments</value>
+  </data>
+  <data name="ShipmentPlaybookReturnedScope" xml:space="preserve">
+    <value>Returned parcels need coordinated review across shipment status, refunds, and support notes.</value>
+  </data>
+  <data name="ShipmentPlaybookReturnedAction" xml:space="preserve">
+    <value>Open the order refund flow, confirm the return reason, and make sure the payment path still allows the intended refund.</value>
+  </data>
+  <data name="ShipmentPlaybookReturnedDependency" xml:space="preserve">
+    <value>Refund availability and payment linkage determine whether a return can be closed cleanly.</value>
+  </data>
+  <data name="ShipmentPlaybookReturnFollowUpTitle" xml:space="preserve">
+    <value>Return follow-up queue</value>
+  </data>
+  <data name="ShipmentPlaybookReturnFollowUpScope" xml:space="preserve">
+    <value>These rows already look return-related and should be triaged before they turn into billing or support drift.</value>
+  </data>
+  <data name="ShipmentPlaybookReturnFollowUpAction" xml:space="preserve">
+    <value>Review the order, open refunds if needed, and confirm the return status is reflected in shipment, payment, and support context.</value>
+  </data>
+  <data name="ShipmentPlaybookReturnFollowUpDependency" xml:space="preserve">
+    <value>Return support flow, refund workflows, and carrier updates all matter here.</value>
+  </data>
+  <data name="WhatsApp" xml:space="preserve">
+    <value>WhatsApp</value>
+  </data>
+  <data name="SMTP" xml:space="preserve">
+    <value>SMTP</value>
+  </data>
+  <data name="SMS" xml:space="preserve">
+    <value>SMS</value>
+  </data>
+  <data name="SiteSettingsOwnershipIntro" xml:space="preserve">
+    <value>Use site settings only for platform-wide defaults, provider credentials, and shared policy. Business-specific branding, sender identity, local defaults, and communication enablement belong in business setup.</value>
+  </data>
+  <data name="Area" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="OwnedHere" xml:space="preserve">
+    <value>Owned Here</value>
+  </data>
+  <data name="BusinessScope" xml:space="preserve">
+    <value>Business Scope</value>
+  </data>
+  <data name="OperatorHandoff" xml:space="preserve">
+    <value>Operator Handoff</value>
+  </data>
+  <data name="GlobalOwner" xml:space="preserve">
+    <value>Global owner</value>
+  </data>
+  <data name="BusinessOwner" xml:space="preserve">
+    <value>Business owner</value>
+  </data>
+  <data name="SiteSettingsLocalizationDefaultsTitle" xml:space="preserve">
+    <value>Localization defaults</value>
+  </data>
+  <data name="SiteSettingsLocalizationDefaultsOwned" xml:space="preserve">
+    <value>Fallback culture, currency, time zone, supported cultures</value>
+  </data>
+  <data name="SiteSettingsLocalizationDefaultsBusiness" xml:space="preserve">
+    <value>Per-business culture, currency, and time zone overrides</value>
+  </data>
+  <data name="SiteSettingsLocalizationDefaultsAction" xml:space="preserve">
+    <value>Adjust final business defaults from business setup after changing platform fallbacks.</value>
+  </data>
+  <data name="SiteSettingsCommunicationPolicyTitle" xml:space="preserve">
+    <value>Transactional communication policy</value>
+  </data>
+  <data name="SiteSettingsCommunicationPolicyOwned" xml:space="preserve">
+    <value>SMTP/SMS/WhatsApp providers, admin routing, subject/body templates, test targets</value>
+  </data>
+  <data name="SiteSettingsCommunicationPolicyBusiness" xml:space="preserve">
+    <value>Sender name, reply-to, support email, channel enablement flags</value>
+  </data>
+  <data name="SiteSettingsCommunicationPolicyAction" xml:space="preserve">
+    <value>Use Business Setup and Business Communications for business-level readiness and flow support.</value>
+  </data>
+  <data name="SiteSettingsPaymentsShippingTitle" xml:space="preserve">
+    <value>Payments and shipping</value>
+  </data>
+  <data name="SiteSettingsPaymentsShippingOwned" xml:space="preserve">
+    <value>Stripe and DHL credentials, webhook/carrier thresholds, VAT and issuer defaults</value>
+  </data>
+  <data name="SiteSettingsPaymentsShippingBusiness" xml:space="preserve">
+    <value>Subscription plan choice, business-facing billing state, business communication around those flows</value>
+  </data>
+  <data name="SiteSettingsPaymentsShippingAction" xml:space="preserve">
+    <value>Use business subscription/support surfaces for tenant-specific triage after platform credentials are ready.</value>
+  </data>
+  <data name="SiteSettingsBrandingDefaultsTitle" xml:space="preserve">
+    <value>Business branding and sender defaults</value>
+  </data>
+  <data name="SiteSettingsBrandingDefaultsOwned" xml:space="preserve">
+    <value>Leave brand display name, logo, support email, sender defaults, and channel toggles in business setup.</value>
+  </data>
+  <data name="SiteSettingsBrandingDefaultsBusiness" xml:space="preserve">
+    <value>Business setup and communication readiness drive the final customer-facing defaults.</value>
+  </data>
+  <data name="SiteSettingsBrandingDefaultsAction" xml:space="preserve">
+    <value>Do not duplicate these values globally unless they are true platform defaults.</value>
+  </data>
+  <data name="SiteSettingsLocalizationIntro" xml:space="preserve">
+    <value>Platform localization owns fallback culture, supported cultures, shared date/time formatting, and the default currency/country baseline. Tenant-specific wording and day-to-day customer-facing defaults still belong in business setup and CRM support follow-up.</value>
+  </data>
+  <data name="SiteSettingsFallbackGovernanceTitle" xml:space="preserve">
+    <value>Fallback governance</value>
+  </data>
+  <data name="SiteSettingsFallbackGovernanceNote" xml:space="preserve">
+    <value>Use these fields when a culture, currency, or time-zone default should change for every new business or for platform-wide fallback behavior.</value>
+  </data>
+  <data name="SiteSettingsBusinessOverridePathTitle" xml:space="preserve">
+    <value>Business override path</value>
+  </data>
+  <data name="SiteSettingsBusinessOverridePathNote" xml:space="preserve">
+    <value>If only one tenant needs a different culture, currency, or time zone, keep the override in business setup instead of mutating the platform fallback.</value>
+  </data>
+  <data name="SiteSettingsOperatorHandoffTitle" xml:space="preserve">
+    <value>Operator handoff</value>
+  </data>
+  <data name="SiteSettingsBusinessDefaults" xml:space="preserve">
+    <value>Business Defaults</value>
+  </data>
+  <data name="SiteSettingsCustomerLocaleReview" xml:space="preserve">
+    <value>Customer Locale Review</value>
+  </data>
+  <data name="SiteSettingsFallbackRuleNote" xml:space="preserve">
+    <value>Fallback rule: keep SupportedCulturesCsv aligned with what admin and customer surfaces can actually render. Add a business-level override only when one tenant must differ from the platform default; otherwise update the global fallback here and review tenant defaults from Business Setup.</value>
+  </data>
+  <data name="CommunicationSubjectPrefixNote" xml:space="preserve">
+    <value>Applied to the current invitation, activation, and password-reset email subjects.</value>
+  </data>
+  <data name="CommunicationTestInboxNote" xml:space="preserve">
+    <value>When configured, current transactional emails are redirected here and include the original recipient in the body.</value>
+  </data>
+  <data name="CommunicationTestEmailReadyNote" xml:space="preserve">
+    <value>A test email can be sent safely from this workspace because SMTP and the test inbox are both configured.</value>
+  </data>
+  <data name="CommunicationTestEmailBlockedNote" xml:space="preserve">
+    <value>Configure both SMTP and the communication test inbox to enable a safe operator-side test email action.</value>
+  </data>
+  <data name="CommunicationTestSmsTargetNote" xml:space="preserve">
+    <value>Used for operator-side SMS transport tests before live rollout.</value>
+  </data>
+  <data name="CommunicationTestSmsReadyNote" xml:space="preserve">
+    <value>A safe operator-side SMS test is available because transport and test target are configured.</value>
+  </data>
+  <data name="CommunicationTestWhatsAppTargetNote" xml:space="preserve">
+    <value>Used for operator-side WhatsApp transport tests before live rollout.</value>
+  </data>
+  <data name="CommunicationTestWhatsAppReadyNote" xml:space="preserve">
+    <value>A safe operator-side WhatsApp test is available because transport and test target are configured.</value>
+  </data>
+  <data name="BusinessesRequiringEmailSetup" xml:space="preserve">
+    <value>Businesses Requiring Email Setup</value>
+  </data>
+  <data name="BusinessesRequiringEmailSetupNote" xml:space="preserve">
+    <value>Businesses with email-related toggles enabled but missing support or sender defaults.</value>
+  </data>
+  <data name="MissingSupportEmail" xml:space="preserve">
+    <value>Missing Support Email</value>
+  </data>
+  <data name="MissingSupportEmailNote" xml:space="preserve">
+    <value>Counts businesses that still have no business-level support mailbox configured.</value>
+  </data>
+  <data name="MissingSenderIdentity" xml:space="preserve">
+    <value>Missing Sender Identity</value>
+  </data>
+  <data name="MissingSenderIdentityNote" xml:space="preserve">
+    <value>Counts businesses missing sender name or reply-to defaults.</value>
+  </data>
+  <data name="ChannelAttempts24h" xml:space="preserve">
+    <value>Channel Attempts (24h)</value>
+  </data>
+  <data name="ChannelAttempts24hNote" xml:space="preserve">
+    <value>Recent SMS and WhatsApp sends for verification and operator diagnostics.</value>
+  </data>
+  <data name="SmsWhatsAppMix" xml:space="preserve">
+    <value>SMS / WhatsApp</value>
+  </data>
+  <data name="SmsWhatsAppMixNote" xml:space="preserve">
+    <value>Cross-channel activity mix for currently live non-email flows.</value>
+  </data>
+  <data name="PhoneVerificationActivityNote" xml:space="preserve">
+    <value>Delivery attempts generated by the canonical mobile-number verification flow.</value>
+  </data>
+  <data name="ChannelFailures" xml:space="preserve">
+    <value>Channel Failures</value>
+  </data>
+  <data name="ChannelFailuresNote" xml:space="preserve">
+    <value>Operator-visible non-email delivery failures that need transport or policy review.</value>
+  </data>
+  <data name="ChannelAuditBaselineNote" xml:space="preserve">
+    <value>This is the current multi-channel audit baseline. It covers the live SMS and WhatsApp families we already use for phone verification and operator diagnostics, without pretending a full outbox or generic notification bus exists yet.</value>
+  </data>
+  <data name="CommunicationTestEmailSentMessage" xml:space="preserve">
+    <value>Communication test email sent to {0}.</value>
+  </data>
+  <data name="CommunicationTestSmsSentMessage" xml:space="preserve">
+    <value>Communication test SMS sent to {0}.</value>
+  </data>
+  <data name="CommunicationTestWhatsAppSentMessage" xml:space="preserve">
+    <value>Communication test WhatsApp message sent to {0}.</value>
+  </data>
+  <data name="WebhookPlatformScopeNote" xml:space="preserve">
+    <value>Phase-1 callbacks are platform scoped.</value>
+  </data>
+  <data name="SearchWebhookDeliveriesPlaceholder" xml:space="preserve">
+    <value>Search event type, callback, status, or idempotency key</value>
+  </data>
+  <data name="WebhookCreatedLabel" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="WebhookLastAttemptLabel" xml:space="preserve">
+    <value>Last attempt</value>
+  </data>
+  <data name="WebhookDisputeEscalationNote" xml:space="preserve">
+    <value>Manual finance escalation only; no dedicated dispute workflow exists yet.</value>
+  </data>
+  <data name="WebhookPaymentEvidenceNote" xml:space="preserve">
+    <value>Treat as payment-callback evidence, then confirm the linked payment/refund queue.</value>
+  </data>
+  <data name="WebhookPlaybookPendingTitle" xml:space="preserve">
+    <value>Pending deliveries</value>
+  </data>
+  <data name="WebhookPlaybookPendingScope" xml:space="preserve">
+    <value>Treat pending webhook rows as lifecycle visibility, not proof that payment automation has completed.</value>
+  </data>
+  <data name="WebhookPlaybookPendingAction" xml:space="preserve">
+    <value>Review event type, callback target, and attempt timeline before assuming Stripe-side updates have reached the platform.</value>
+  </data>
+  <data name="WebhookPlaybookPendingDependency" xml:space="preserve">
+    <value>Stripe webhook secret and payment settings should be configured before pending rows are used as operational evidence.</value>
+  </data>
+  <data name="WebhookPlaybookFailedTitle" xml:space="preserve">
+    <value>Failed deliveries</value>
+  </data>
+  <data name="WebhookPlaybookFailedScope" xml:space="preserve">
+    <value>Use this queue when provider callback correlation is weak or callback endpoints are unhealthy.</value>
+  </data>
+  <data name="WebhookPlaybookFailedAction" xml:space="preserve">
+    <value>Review callback URL, response code, retry count, and the linked payment/provider reference, then escalate through settings or infrastructure rather than editing finance records blindly.</value>
+  </data>
+  <data name="WebhookPlaybookFailedDependency" xml:space="preserve">
+    <value>Webhook endpoint registration and Stripe secret must be correct before failed deliveries are treated as application bugs.</value>
+  </data>
+  <data name="WebhookPlaybookRetryPendingTitle" xml:space="preserve">
+    <value>Retry-pending deliveries</value>
+  </data>
+  <data name="WebhookPlaybookRetryPendingScope" xml:space="preserve">
+    <value>These rows show callbacks that have already had at least one failed/manual retry path.</value>
+  </data>
+  <data name="WebhookPlaybookRetryPendingAction" xml:space="preserve">
+    <value>Use them to prioritize reconciliation review and confirm whether payment/refund state must be corrected manually in WebAdmin.</value>
+  </data>
+  <data name="WebhookPlaybookRetryPendingDependency" xml:space="preserve">
+    <value>Phase-1 still has no automated resend daemon, so operator review remains the source of truth.</value>
+  </data>
+  <data name="WebhookPlaybookPaymentExceptionsTitle" xml:space="preserve">
+    <value>Payment exceptions</value>
+  </data>
+  <data name="WebhookPlaybookPaymentExceptionsScope" xml:space="preserve">
+    <value>Use this subset for payment_intent, charge, and refund callbacks whose status is still failed, pending, or retry-heavy.</value>
+  </data>
+  <data name="WebhookPlaybookPaymentExceptionsAction" xml:space="preserve">
+    <value>Start from the callback row, verify the event type and retry trail, then move into the payment or refund queue before treating the finance record as settled.</value>
+  </data>
+  <data name="WebhookPlaybookPaymentExceptionsDependency" xml:space="preserve">
+    <value>Stripe secret key and webhook secret must be configured before these rows are used as trustworthy provider exception evidence.</value>
+  </data>
+  <data name="WebhookPlaybookDisputeSignalsTitle" xml:space="preserve">
+    <value>Dispute signals</value>
+  </data>
+  <data name="WebhookPlaybookDisputeSignalsScope" xml:space="preserve">
+    <value>This is a phase-1 callback-only proxy for charge dispute or chargeback-like events. It is not a complete dispute workflow.</value>
+  </data>
+  <data name="WebhookPlaybookDisputeSignalsAction" xml:space="preserve">
+    <value>Use the callback row to identify the affected provider signal, then move into payment/refund follow-up and document manual escalation because no dedicated dispute aggregate exists yet.</value>
+  </data>
+  <data name="WebhookPlaybookDisputeSignalsDependency" xml:space="preserve">
+    <value>Webhook registration and payment settings must be healthy before operators interpret dispute-like events as application issues.</value>
   </data>
 </root>

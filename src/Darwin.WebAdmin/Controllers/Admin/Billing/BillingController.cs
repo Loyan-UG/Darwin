@@ -541,52 +541,52 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 new()
                 {
-                    Title = "Pending payments",
-                    ScopeNote = "Use this for payments waiting on capture or manual completion.",
-                    OperatorAction = "Review the order and payment rows, then record or correct payment status from the payment editor when the provider outcome is known.",
-                    SettingsDependency = "Stripe secret key and merchant identity should already be configured before live capture workflows are relied on."
+                    Title = "BillingPaymentsPlaybookPendingTitle",
+                    ScopeNote = "BillingPaymentsPlaybookPendingScope",
+                    OperatorAction = "BillingPaymentsPlaybookPendingAction",
+                    SettingsDependency = "BillingPaymentsPlaybookPendingDependency"
                 },
                 new()
                 {
-                    Title = "Stripe rows without provider reference",
-                    ScopeNote = "These rows are risky because callback/reconciliation correlation is weak.",
-                    OperatorAction = "Open the payment or linked order, verify the real Stripe intent/charge id, and document or correct the provider reference before treating the record as operationally complete.",
-                    SettingsDependency = "Stripe webhook secret and secret key should be configured before assuming provider-linked automation is trustworthy."
+                    Title = "BillingPaymentsPlaybookMissingProviderTitle",
+                    ScopeNote = "BillingPaymentsPlaybookMissingProviderScope",
+                    OperatorAction = "BillingPaymentsPlaybookMissingProviderAction",
+                    SettingsDependency = "BillingPaymentsPlaybookMissingProviderDependency"
                 },
                 new()
                 {
-                    Title = "Failed payments",
-                    ScopeNote = "Treat these as support items first, not silent retries.",
-                    OperatorAction = "Open the linked order/customer, verify the provider reference or failure state, and only add or edit payments after support validation.",
-                    SettingsDependency = "Webhook secret and provider credentials must be configured before trusting automated Stripe lifecycle handling."
+                    Title = "BillingPaymentsPlaybookFailedTitle",
+                    ScopeNote = "BillingPaymentsPlaybookFailedScope",
+                    OperatorAction = "BillingPaymentsPlaybookFailedAction",
+                    SettingsDependency = "BillingPaymentsPlaybookFailedDependency"
                 },
                 new()
                 {
-                    Title = "Reconciliation-needed rows",
-                    ScopeNote = "Use this subset for pending, failed, refunded, or Stripe-reference-light rows that still need operator confirmation before finance treats them as settled.",
-                    OperatorAction = "Start from the payment row, verify provider reference, refund totals, and linked order or invoice context, then document the final state in the payment editor or linked support queue.",
-                    SettingsDependency = "Stripe secret key, webhook secret, and merchant identity should already be configured before operators rely on these rows as trustworthy reconciliation evidence."
+                    Title = "BillingPaymentsPlaybookReconciliationTitle",
+                    ScopeNote = "BillingPaymentsPlaybookReconciliationScope",
+                    OperatorAction = "BillingPaymentsPlaybookReconciliationAction",
+                    SettingsDependency = "BillingPaymentsPlaybookReconciliationDependency"
                 },
                 new()
                 {
-                    Title = "Provider-history review",
-                    ScopeNote = "Use the new provider reference state and last financial event signal to spot rows whose provider trail is stale or incomplete.",
-                    OperatorAction = "Check the provider reference state, last event timestamp, and linked refund activity before deciding whether a row is settled, stale, or missing follow-up.",
-                    SettingsDependency = "Stripe webhook secret and provider credentials should be in place before operators treat these timeline signals as trustworthy settlement history."
+                    Title = "BillingPaymentsPlaybookHistoryTitle",
+                    ScopeNote = "BillingPaymentsPlaybookHistoryScope",
+                    OperatorAction = "BillingPaymentsPlaybookHistoryAction",
+                    SettingsDependency = "BillingPaymentsPlaybookHistoryDependency"
                 },
                 new()
                 {
-                    Title = "Dispute follow-up",
-                    ScopeNote = "Use this subset for Stripe rows that should be cross-checked against dispute signals instead of being treated as routine refund noise.",
-                    OperatorAction = "Open the dispute-follow-up subset, pivot into webhook dispute signals, then decide whether the safe next step is payment correction, refund follow-up, or escalation.",
-                    SettingsDependency = "Stripe webhook lifecycle visibility and payment settings should be configured before callback anomalies are treated as resolved."
+                    Title = "BillingPaymentsPlaybookDisputeTitle",
+                    ScopeNote = "BillingPaymentsPlaybookDisputeScope",
+                    OperatorAction = "BillingPaymentsPlaybookDisputeAction",
+                    SettingsDependency = "BillingPaymentsPlaybookDisputeDependency"
                 },
                 new()
                 {
-                    Title = "Unlinked or provider-linked rows",
-                    ScopeNote = "These rows usually represent reconciliation or data-hygiene work.",
-                    OperatorAction = "Link order/invoice context where known, or keep the row documented as a standalone support payment until Stripe-specific reconciliation matures.",
-                    SettingsDependency = "Phase-1 Stripe readiness should be green before treating provider-linked rows as production-grade evidence."
+                    Title = "BillingPaymentsPlaybookLinkingTitle",
+                    ScopeNote = "BillingPaymentsPlaybookLinkingScope",
+                    OperatorAction = "BillingPaymentsPlaybookLinkingAction",
+                    SettingsDependency = "BillingPaymentsPlaybookLinkingDependency"
                 }
             };
         }
@@ -597,31 +597,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 new()
                 {
-                    Title = "Pending refunds",
-                    ScopeNote = "Use this queue for refunds that have been requested but are not yet operationally settled.",
-                    OperatorAction = "Open the linked order and payment, confirm the provider-side outcome, and only leave the refund pending when support expects a later completion signal.",
-                    SettingsDependency = "Stripe webhook and provider references should be trusted before using pending state as anything more than a manual support marker."
+                    Title = "BillingRefundsPlaybookPendingTitle",
+                    ScopeNote = "BillingRefundsPlaybookPendingScope",
+                    OperatorAction = "BillingRefundsPlaybookPendingAction",
+                    SettingsDependency = "BillingRefundsPlaybookPendingDependency"
                 },
                 new()
                 {
-                    Title = "Completed refunds",
-                    ScopeNote = "These rows represent already-recorded customer giveback and should stay aligned with payment and invoice context.",
-                    OperatorAction = "Review linked payment, invoice, and order settlement together when customers ask about refunded value or net collected totals.",
-                    SettingsDependency = "Stripe readiness and provider reference hygiene should already be green before these rows are treated as reconciliation evidence."
+                    Title = "BillingRefundsPlaybookCompletedTitle",
+                    ScopeNote = "BillingRefundsPlaybookCompletedScope",
+                    OperatorAction = "BillingRefundsPlaybookCompletedAction",
+                    SettingsDependency = "BillingRefundsPlaybookCompletedDependency"
                 },
                 new()
                 {
-                    Title = "Failed or provider-sensitive refunds",
-                    ScopeNote = "Use this subset when refund status or Stripe handling needs explicit finance support review.",
-                    OperatorAction = "Start from the refund row, then move into the linked payment workbench or order refund flow to correct support notes and retry paths manually.",
-                    SettingsDependency = "Webhook/callback audit depth is still near-term, so operator review remains the source of truth for failed refund follow-up."
+                    Title = "BillingRefundsPlaybookFailedTitle",
+                    ScopeNote = "BillingRefundsPlaybookFailedScope",
+                    OperatorAction = "BillingRefundsPlaybookFailedAction",
+                    SettingsDependency = "BillingRefundsPlaybookFailedDependency"
                 },
                 new()
                 {
-                    Title = "Refund provider-history review",
-                    ScopeNote = "Use the provider-reference state and last refund event to distinguish stale support markers from actual provider-side movement.",
-                    OperatorAction = "Check the provider reference state, open-age window, and linked payment before concluding whether the refund is still in flight, failed, or simply missing provider correlation.",
-                    SettingsDependency = "Stripe webhook secret and provider reference hygiene should be green before these timeline signals are treated as reliable evidence."
+                    Title = "BillingRefundsPlaybookHistoryTitle",
+                    ScopeNote = "BillingRefundsPlaybookHistoryScope",
+                    OperatorAction = "BillingRefundsPlaybookHistoryAction",
+                    SettingsDependency = "BillingRefundsPlaybookHistoryDependency"
                 }
             };
         }
@@ -647,44 +647,44 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
         }
 
-        private static List<ProviderPlaybookVm> BuildWebhookPlaybooks()
+        private List<ProviderPlaybookVm> BuildWebhookPlaybooks()
         {
             return new List<ProviderPlaybookVm>
             {
                 new()
                 {
-                    Title = "Pending deliveries",
-                    ScopeNote = "Treat pending webhook rows as lifecycle visibility, not proof that payment automation has completed.",
-                    OperatorAction = "Review event type, callback target, and attempt timeline before assuming Stripe-side updates have reached the platform.",
-                    SettingsDependency = "Stripe webhook secret and payment settings should be configured before pending rows are used as operational evidence."
+                    Title = T("WebhookPlaybookPendingTitle"),
+                    ScopeNote = T("WebhookPlaybookPendingScope"),
+                    OperatorAction = T("WebhookPlaybookPendingAction"),
+                    SettingsDependency = T("WebhookPlaybookPendingDependency")
                 },
                 new()
                 {
-                    Title = "Failed deliveries",
-                    ScopeNote = "Use this queue when provider callback correlation is weak or callback endpoints are unhealthy.",
-                    OperatorAction = "Review callback URL, response code, retry count, and the linked payment/provider reference, then escalate through settings or infrastructure rather than editing finance records blindly.",
-                    SettingsDependency = "Webhook endpoint registration and Stripe secret must be correct before failed deliveries are treated as application bugs."
+                    Title = T("WebhookPlaybookFailedTitle"),
+                    ScopeNote = T("WebhookPlaybookFailedScope"),
+                    OperatorAction = T("WebhookPlaybookFailedAction"),
+                    SettingsDependency = T("WebhookPlaybookFailedDependency")
                 },
                 new()
                 {
-                    Title = "Retry-pending deliveries",
-                    ScopeNote = "These rows show callbacks that have already had at least one failed/manual retry path.",
-                    OperatorAction = "Use them to prioritize reconciliation review and confirm whether payment/refund state must be corrected manually in WebAdmin.",
-                    SettingsDependency = "Phase-1 still has no automated resend daemon, so operator review remains the source of truth."
+                    Title = T("WebhookPlaybookRetryPendingTitle"),
+                    ScopeNote = T("WebhookPlaybookRetryPendingScope"),
+                    OperatorAction = T("WebhookPlaybookRetryPendingAction"),
+                    SettingsDependency = T("WebhookPlaybookRetryPendingDependency")
                 },
                 new()
                 {
-                    Title = "Payment exceptions",
-                    ScopeNote = "Use this subset for payment_intent, charge, and refund callbacks whose status is still failed, pending, or retry-heavy.",
-                    OperatorAction = "Start from the callback row, verify the event type and retry trail, then move into the payment or refund queue before treating the finance record as settled.",
-                    SettingsDependency = "Stripe secret key and webhook secret must be configured before these rows are used as trustworthy provider exception evidence."
+                    Title = T("WebhookPlaybookPaymentExceptionsTitle"),
+                    ScopeNote = T("WebhookPlaybookPaymentExceptionsScope"),
+                    OperatorAction = T("WebhookPlaybookPaymentExceptionsAction"),
+                    SettingsDependency = T("WebhookPlaybookPaymentExceptionsDependency")
                 },
                 new()
                 {
-                    Title = "Dispute signals",
-                    ScopeNote = "This is a phase-1 callback-only proxy for charge dispute or chargeback-like events. It is not a complete dispute workflow.",
-                    OperatorAction = "Use the callback row to identify the affected provider signal, then move into payment/refund follow-up and document manual escalation because no dedicated dispute aggregate exists yet.",
-                    SettingsDependency = "Webhook registration and payment settings must be healthy before operators interpret dispute-like events as application issues."
+                    Title = T("WebhookPlaybookDisputeSignalsTitle"),
+                    ScopeNote = T("WebhookPlaybookDisputeSignalsScope"),
+                    OperatorAction = T("WebhookPlaybookDisputeSignalsAction"),
+                    SettingsDependency = T("WebhookPlaybookDisputeSignalsDependency")
                 }
             };
         }
@@ -1662,3 +1662,4 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         }
     }
 }
+

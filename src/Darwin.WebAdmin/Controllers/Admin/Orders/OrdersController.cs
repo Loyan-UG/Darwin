@@ -177,7 +177,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 ApiBaseUrlConfigured = !string.IsNullOrWhiteSpace(settings.DhlApiBaseUrl),
                 ApiCredentialsConfigured = !string.IsNullOrWhiteSpace(settings.DhlApiKey) && !string.IsNullOrWhiteSpace(settings.DhlApiSecret),
                 AccountNumberConfigured = !string.IsNullOrWhiteSpace(settings.DhlAccountNumber),
-                EnvironmentLabel = string.IsNullOrWhiteSpace(settings.DhlEnvironment) ? "Not set" : settings.DhlEnvironment,
+                EnvironmentLabel = string.IsNullOrWhiteSpace(settings.DhlEnvironment) ? "NotSet" : settings.DhlEnvironment,
                 ShipmentAttentionDelayHours = settings.ShipmentAttentionDelayHours,
                 ShipmentTrackingGraceHours = settings.ShipmentTrackingGraceHours,
                 ShipperIdentityConfigured =
@@ -191,7 +191,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             };
         }
 
-        private static TaxPolicySnapshotVm MapTaxPolicy(Darwin.Application.Settings.DTOs.SiteSettingDto dto)
+        private TaxPolicySnapshotVm MapTaxPolicy(Darwin.Application.Settings.DTOs.SiteSettingDto dto)
         {
             var issuerConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerLegalName);
             var issuerTaxIdConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerTaxId);
@@ -213,10 +213,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName ?? string.Empty,
                 InvoiceIssuerTaxIdConfigured = issuerTaxIdConfigured,
                 ArchiveReadinessComplete = archiveReady,
-                ArchiveReadinessLabel = archiveReady ? "Issuer archive-ready" : "Archive issuer data incomplete",
+                ArchiveReadinessLabel = archiveReady ? T("TaxPolicyArchiveReady") : T("TaxPolicyArchiveIncomplete"),
                 EInvoiceBaselineReady = eInvoiceBaselineReady,
-                EInvoiceBaselineLabel = eInvoiceBaselineReady ? "Baseline ready" : "Baseline incomplete",
-                ComplianceScopeNote = "Phase-1 exposes issuer/VAT readiness only. Archive and e-invoice workflows still require deeper compliance implementation."
+                EInvoiceBaselineLabel = eInvoiceBaselineReady ? T("TaxPolicyBaselineReady") : T("TaxPolicyBaselineIncomplete"),
+                ComplianceScopeNote = T("TaxPolicyComplianceScopeNote")
             };
         }
 
@@ -238,65 +238,65 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             };
         }
 
-        private static List<ShipmentPlaybookVm> BuildShipmentPlaybooks()
+        private List<ShipmentPlaybookVm> BuildShipmentPlaybooks()
         {
             return new List<ShipmentPlaybookVm>
             {
                 new()
                 {
-                    Title = "Pending / packed shipments",
-                    ScopeNote = "Use this queue to push open fulfillment items toward handoff.",
-                    OperatorAction = "Open the order, confirm shipment composition, and add or correct shipment data before carrier handoff.",
-                    SettingsDependency = "DHL shipper identity and account setup should be green before the queue is treated as ready for live carrier operations."
+                    Title = T("ShipmentPlaybookPendingTitle"),
+                    ScopeNote = T("ShipmentPlaybookPendingScope"),
+                    OperatorAction = T("ShipmentPlaybookPendingAction"),
+                    SettingsDependency = T("ShipmentPlaybookPendingDependency")
                 },
                 new()
                 {
-                    Title = "Awaiting handoff",
-                    ScopeNote = "These shipments have stayed pending or packed longer than the configured attention threshold.",
-                    OperatorAction = "Review warehouse and carrier prep, then either add the shipment handoff data or escalate the operational blockage.",
-                    SettingsDependency = "Controlled by the Shipment Attention Delay setting in Shipping settings."
+                    Title = T("ShipmentPlaybookAwaitingHandoffTitle"),
+                    ScopeNote = T("ShipmentPlaybookAwaitingHandoffScope"),
+                    OperatorAction = T("ShipmentPlaybookAwaitingHandoffAction"),
+                    SettingsDependency = T("ShipmentPlaybookAwaitingHandoffDependency")
                 },
                 new()
                 {
-                    Title = "Tracking overdue",
-                    ScopeNote = "These DHL rows passed the tracking grace window without a carrier reference.",
-                    OperatorAction = "Confirm the carrier actually accepted the parcel and update the tracking number or escalate to carrier support.",
-                    SettingsDependency = "Controlled by the Shipment Tracking Grace setting in Shipping settings."
+                    Title = T("ShipmentPlaybookTrackingOverdueTitle"),
+                    ScopeNote = T("ShipmentPlaybookTrackingOverdueScope"),
+                    OperatorAction = T("ShipmentPlaybookTrackingOverdueAction"),
+                    SettingsDependency = T("ShipmentPlaybookTrackingOverdueDependency")
                 },
                 new()
                 {
-                    Title = "Missing tracking",
-                    ScopeNote = "These are shipped or delivered records without tracking context.",
-                    OperatorAction = "Review the order shipment tab and update shipment data through the order workflow when the carrier reference becomes available.",
-                    SettingsDependency = "DHL API/account readiness should be validated first if missing tracking reflects broader provider onboarding issues."
+                    Title = T("ShipmentPlaybookMissingTrackingTitle"),
+                    ScopeNote = T("ShipmentPlaybookMissingTrackingScope"),
+                    OperatorAction = T("ShipmentPlaybookMissingTrackingAction"),
+                    SettingsDependency = T("ShipmentPlaybookMissingTrackingDependency")
                 },
                 new()
                 {
-                    Title = "DHL rows with incomplete carrier data",
-                    ScopeNote = "Use this when DHL shipments exist but service metadata or tracking discipline is weak.",
-                    OperatorAction = "Open the linked order, confirm the intended DHL service, and normalize shipment data before handoff or support escalation.",
-                    SettingsDependency = "DHL environment, account number, and shipper identity should be configured before these rows are treated as ready for production handoff."
+                    Title = T("ShipmentPlaybookDhlDataTitle"),
+                    ScopeNote = T("ShipmentPlaybookDhlDataScope"),
+                    OperatorAction = T("ShipmentPlaybookDhlDataAction"),
+                    SettingsDependency = T("ShipmentPlaybookDhlDataDependency")
                 },
                 new()
                 {
-                    Title = "Carrier review queue",
-                    ScopeNote = "Use this subset for DHL rows with missing service data, missing tracking after shipment, or explicit returned status that needs carrier-facing follow-up.",
-                    OperatorAction = "Start from the shipment row, confirm service and tracking timeline, then move into the order workflow only after the carrier-facing facts are clear.",
-                    SettingsDependency = "DHL environment, account number, shipper identity, and shipment thresholds should be configured before treating this queue as a trustworthy carrier-exception surface."
+                    Title = T("ShipmentPlaybookCarrierReviewTitle"),
+                    ScopeNote = T("ShipmentPlaybookCarrierReviewScope"),
+                    OperatorAction = T("ShipmentPlaybookCarrierReviewAction"),
+                    SettingsDependency = T("ShipmentPlaybookCarrierReviewDependency")
                 },
                 new()
                 {
-                    Title = "Returned shipments",
-                    ScopeNote = "Treat these as return-support follow-up, not just delivery completion.",
-                    OperatorAction = "Open the order and coordinate refund, restock, or customer-support follow-up from the linked order workspace.",
-                    SettingsDependency = "DHL readiness alone does not complete returns; this queue is a phase-1 operational signal until full RMA tooling lands."
+                    Title = T("ShipmentPlaybookReturnedTitle"),
+                    ScopeNote = T("ShipmentPlaybookReturnedScope"),
+                    OperatorAction = T("ShipmentPlaybookReturnedAction"),
+                    SettingsDependency = T("ShipmentPlaybookReturnedDependency")
                 },
                 new()
                 {
-                    Title = "Return follow-up queue",
-                    ScopeNote = "Use this subset for returned shipments that still need refund-path or carrier-completion review.",
-                    OperatorAction = "Open refunds from the shipment row, start a return refund when a refundable payment exists, and keep carrier review attached if tracking or service evidence is still incomplete.",
-                    SettingsDependency = "DHL readiness and visible refundable payments are both needed before treating returned rows as operationally closed."
+                    Title = T("ShipmentPlaybookReturnFollowUpTitle"),
+                    ScopeNote = T("ShipmentPlaybookReturnFollowUpScope"),
+                    OperatorAction = T("ShipmentPlaybookReturnFollowUpAction"),
+                    SettingsDependency = T("ShipmentPlaybookReturnFollowUpDependency")
                 }
             };
         }
@@ -828,19 +828,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem("Refunded", PaymentQueueFilter.Refunded.ToString(), selectedFilter == PaymentQueueFilter.Refunded);
         }
 
-        private static IEnumerable<SelectListItem> BuildShipmentFilterItems(ShipmentQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildShipmentFilterItems(ShipmentQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All shipments", ShipmentQueueFilter.All.ToString(), selectedFilter == ShipmentQueueFilter.All);
-            yield return new SelectListItem("Pending/Packed", ShipmentQueueFilter.Pending.ToString(), selectedFilter == ShipmentQueueFilter.Pending);
-            yield return new SelectListItem("Shipped/Delivered", ShipmentQueueFilter.Shipped.ToString(), selectedFilter == ShipmentQueueFilter.Shipped);
-            yield return new SelectListItem("Missing tracking", ShipmentQueueFilter.MissingTracking.ToString(), selectedFilter == ShipmentQueueFilter.MissingTracking);
-            yield return new SelectListItem("Returned", ShipmentQueueFilter.Returned.ToString(), selectedFilter == ShipmentQueueFilter.Returned);
-            yield return new SelectListItem("DHL", ShipmentQueueFilter.Dhl.ToString(), selectedFilter == ShipmentQueueFilter.Dhl);
-            yield return new SelectListItem("Missing service", ShipmentQueueFilter.MissingService.ToString(), selectedFilter == ShipmentQueueFilter.MissingService);
-            yield return new SelectListItem("Awaiting handoff", ShipmentQueueFilter.AwaitingHandoff.ToString(), selectedFilter == ShipmentQueueFilter.AwaitingHandoff);
-            yield return new SelectListItem("Tracking overdue", ShipmentQueueFilter.TrackingOverdue.ToString(), selectedFilter == ShipmentQueueFilter.TrackingOverdue);
-            yield return new SelectListItem("Carrier review", ShipmentQueueFilter.CarrierReview.ToString(), selectedFilter == ShipmentQueueFilter.CarrierReview);
-            yield return new SelectListItem("Return follow-up", ShipmentQueueFilter.ReturnFollowUp.ToString(), selectedFilter == ShipmentQueueFilter.ReturnFollowUp);
+            yield return new SelectListItem(T("AllShipments"), ShipmentQueueFilter.All.ToString(), selectedFilter == ShipmentQueueFilter.All);
+            yield return new SelectListItem(T("PendingPacked"), ShipmentQueueFilter.Pending.ToString(), selectedFilter == ShipmentQueueFilter.Pending);
+            yield return new SelectListItem(T("ShippedDelivered"), ShipmentQueueFilter.Shipped.ToString(), selectedFilter == ShipmentQueueFilter.Shipped);
+            yield return new SelectListItem(T("MissingTracking"), ShipmentQueueFilter.MissingTracking.ToString(), selectedFilter == ShipmentQueueFilter.MissingTracking);
+            yield return new SelectListItem(T("Returned"), ShipmentQueueFilter.Returned.ToString(), selectedFilter == ShipmentQueueFilter.Returned);
+            yield return new SelectListItem(T("DhlMethods"), ShipmentQueueFilter.Dhl.ToString(), selectedFilter == ShipmentQueueFilter.Dhl);
+            yield return new SelectListItem(T("MissingService"), ShipmentQueueFilter.MissingService.ToString(), selectedFilter == ShipmentQueueFilter.MissingService);
+            yield return new SelectListItem(T("AwaitingHandoff"), ShipmentQueueFilter.AwaitingHandoff.ToString(), selectedFilter == ShipmentQueueFilter.AwaitingHandoff);
+            yield return new SelectListItem(T("TrackingOverdue"), ShipmentQueueFilter.TrackingOverdue.ToString(), selectedFilter == ShipmentQueueFilter.TrackingOverdue);
+            yield return new SelectListItem(T("CarrierReview"), ShipmentQueueFilter.CarrierReview.ToString(), selectedFilter == ShipmentQueueFilter.CarrierReview);
+            yield return new SelectListItem(T("ReturnFollowUp"), ShipmentQueueFilter.ReturnFollowUp.ToString(), selectedFilter == ShipmentQueueFilter.ReturnFollowUp);
         }
 
         private static IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)

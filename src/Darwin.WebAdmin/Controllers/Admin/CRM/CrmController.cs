@@ -355,38 +355,42 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var (items, total) = await _getInvoicesPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var invoiceItems = items.Select(x => new InvoiceListItemVm
+            {
+                Id = x.Id,
+                BusinessId = x.BusinessId,
+                CustomerId = x.CustomerId,
+                CustomerDisplayName = x.CustomerDisplayName,
+                CustomerTaxProfileType = x.CustomerTaxProfileType,
+                CustomerVatId = x.CustomerVatId,
+                OrderId = x.OrderId,
+                OrderNumber = x.OrderNumber,
+                PaymentId = x.PaymentId,
+                PaymentSummary = x.PaymentSummary,
+                Status = x.Status,
+                Currency = x.Currency,
+                TotalNetMinor = x.TotalNetMinor,
+                TotalTaxMinor = x.TotalTaxMinor,
+                TotalGrossMinor = x.TotalGrossMinor,
+                RefundedAmountMinor = x.RefundedAmountMinor,
+                SettledAmountMinor = x.SettledAmountMinor,
+                BalanceMinor = x.BalanceMinor,
+                DueDateUtc = x.DueDateUtc,
+                PaidAtUtc = x.PaidAtUtc,
+                RowVersion = x.RowVersion
+            }).ToList();
+
             return RenderInvoicesWorkspace(new InvoicesListVm
             {
                 Summary = MapSummary(summary),
+                OpsSummary = BuildInvoiceOpsSummary(invoiceItems),
+                Playbooks = BuildInvoicePlaybooks(),
                 TaxPolicy = MapTaxPolicy(settings),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
-                Items = items.Select(x => new InvoiceListItemVm
-                {
-                    Id = x.Id,
-                    BusinessId = x.BusinessId,
-                    CustomerId = x.CustomerId,
-                    CustomerDisplayName = x.CustomerDisplayName,
-                    CustomerTaxProfileType = x.CustomerTaxProfileType,
-                    CustomerVatId = x.CustomerVatId,
-                    OrderId = x.OrderId,
-                    OrderNumber = x.OrderNumber,
-                    PaymentId = x.PaymentId,
-                    PaymentSummary = x.PaymentSummary,
-                    Status = x.Status,
-                    Currency = x.Currency,
-                    TotalNetMinor = x.TotalNetMinor,
-                    TotalTaxMinor = x.TotalTaxMinor,
-                    TotalGrossMinor = x.TotalGrossMinor,
-                    RefundedAmountMinor = x.RefundedAmountMinor,
-                    SettledAmountMinor = x.SettledAmountMinor,
-                    BalanceMinor = x.BalanceMinor,
-                    DueDateUtc = x.DueDateUtc,
-                    PaidAtUtc = x.PaidAtUtc,
-                    RowVersion = x.RowVersion
-                }).ToList()
+                Items = invoiceItems
             });
         }
 
@@ -1355,7 +1359,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
         }
 
-        private static TaxPolicySnapshotVm MapTaxPolicy(Darwin.Application.Settings.DTOs.SiteSettingDto dto)
+        private TaxPolicySnapshotVm MapTaxPolicy(Darwin.Application.Settings.DTOs.SiteSettingDto dto)
         {
             var issuerConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerLegalName);
             var issuerTaxIdConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerTaxId);
@@ -1377,10 +1381,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName ?? string.Empty,
                 InvoiceIssuerTaxIdConfigured = issuerTaxIdConfigured,
                 ArchiveReadinessComplete = archiveReady,
-                ArchiveReadinessLabel = archiveReady ? "Issuer archive-ready" : "Archive issuer data incomplete",
+                ArchiveReadinessLabel = archiveReady ? T("TaxPolicyArchiveReady") : T("TaxPolicyArchiveIncomplete"),
                 EInvoiceBaselineReady = eInvoiceBaselineReady,
-                EInvoiceBaselineLabel = eInvoiceBaselineReady ? "Baseline ready" : "Baseline incomplete",
-                ComplianceScopeNote = "Phase-1 exposes issuer/VAT readiness only. Archive and e-invoice workflows still require deeper compliance implementation."
+                EInvoiceBaselineLabel = eInvoiceBaselineReady ? T("TaxPolicyBaselineReady") : T("TaxPolicyBaselineIncomplete"),
+                ComplianceScopeNote = T("TaxPolicyComplianceScopeNote")
             };
         }
 
@@ -1504,6 +1508,44 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Title = "CrmOpportunityHighInteractionPlaybookTitle",
                     ScopeNote = "CrmOpportunityHighInteractionPlaybookScopeNote",
                     OperatorAction = "CrmOpportunityHighInteractionPlaybookAction"
+                }
+            };
+        }
+
+        private InvoiceOpsSummaryVm BuildInvoiceOpsSummary(List<InvoiceListItemVm> items)
+        {
+            var now = DateTime.UtcNow.Date;
+            return new InvoiceOpsSummaryVm
+            {
+                DraftCount = items.Count(x => x.Status == Darwin.Domain.Enums.InvoiceStatus.Draft),
+                DueSoonCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date >= now && x.DueDateUtc.Date <= now.AddDays(7)),
+                OverdueCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date < now),
+                MissingVatIdCount = items.Count(x => x.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(x.CustomerVatId)),
+                RefundedCount = items.Count(x => x.RefundedAmountMinor > 0)
+            };
+        }
+
+        private List<CrmPlaybookVm> BuildInvoicePlaybooks()
+        {
+            return new List<CrmPlaybookVm>
+            {
+                new()
+                {
+                    Title = "CrmInvoicesPlaybookDueSoonTitle",
+                    ScopeNote = "CrmInvoicesPlaybookDueSoonScope",
+                    OperatorAction = "CrmInvoicesPlaybookDueSoonAction"
+                },
+                new()
+                {
+                    Title = "CrmInvoicesPlaybookVatGapTitle",
+                    ScopeNote = "CrmInvoicesPlaybookVatGapScope",
+                    OperatorAction = "CrmInvoicesPlaybookVatGapAction"
+                },
+                new()
+                {
+                    Title = "CrmInvoicesPlaybookRefundTitle",
+                    ScopeNote = "CrmInvoicesPlaybookRefundScope",
+                    OperatorAction = "CrmInvoicesPlaybookRefundAction"
                 }
             };
         }
@@ -1682,3 +1724,5 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
     }
 }
+
+

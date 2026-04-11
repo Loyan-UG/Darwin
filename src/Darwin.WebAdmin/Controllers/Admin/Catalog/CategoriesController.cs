@@ -106,7 +106,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             vm.Translations ??= new();
             if (vm.Translations.Count == 0)
-                ModelState.AddModelError(nameof(vm.Translations), "At least one translation is required.");
+                ModelState.AddModelError(nameof(vm.Translations), T("CategoryAtLeastOneTranslationRequired"));
 
             if (!ModelState.IsValid)
             {
@@ -213,7 +213,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             }
             catch (DbUpdateConcurrencyException)
             {
-                ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user.");
+                ModelState.AddModelError(string.Empty, T("CategoryConcurrencyConflict"));
                 await LoadLookupsAsync(ct);
                 EnsureEditTranslations(vm);
                 return RenderEditEditor(vm);
@@ -324,29 +324,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             }
         }
 
-        private static OperationalPlaybookVm[] BuildCategoryPlaybooks()
+        private OperationalPlaybookVm[] BuildCategoryPlaybooks()
         {
             return
             [
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Inactive",
-                    WhyItMatters = "Inactive categories remove products from expected navigation and business operators may mistake that for missing catalog data.",
-                    OperatorAction = "Review whether the category is intentionally disabled, then reactivate it if the business still expects it in active navigation."
+                    QueueLabel = T("Inactive"),
+                    WhyItMatters = T("CategoryPlaybookInactiveScope"),
+                    OperatorAction = T("CategoryPlaybookInactiveAction")
                 },
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Unpublished",
-                    WhyItMatters = "Unpublished categories may block storefront visibility even when translations and products are already ready.",
-                    OperatorAction = "Open the category, confirm publication intent, and publish when merchandising wants the structure live."
+                    QueueLabel = T("Unpublished"),
+                    WhyItMatters = T("CategoryPlaybookUnpublishedScope"),
+                    OperatorAction = T("CategoryPlaybookUnpublishedAction")
                 },
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Child Categories",
-                    WhyItMatters = "Child categories rely on a valid parent structure and often need extra review during navigation refactors.",
-                    OperatorAction = "Review parent assignment and sort order so the catalog tree remains coherent for storefront and business users."
+                    QueueLabel = T("ChildCategories"),
+                    WhyItMatters = T("CategoryPlaybookChildScope"),
+                    OperatorAction = T("CategoryPlaybookChildAction")
                 }
             ];
         }
     }
 }
+
+

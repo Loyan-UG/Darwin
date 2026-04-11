@@ -1,4 +1,4 @@
-# Darwin WebAdmin Guide
+﻿# Darwin WebAdmin Guide
 
 [![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/aspnet/core/)
 [![HTMX](https://img.shields.io/badge/HTMX-2.0-3366CC?logo=htmx&logoColor=white)](https://htmx.org/)
@@ -347,6 +347,7 @@ Loyalty and mobile support are now part of the operational scope of WebAdmin, no
 ### Remaining near-term loyalty/mobile gaps
 
 - deeper mobile remediation or telemetry only if support requirements justify it, such as push-delivery diagnostics, per-device remediation actions, or richer scanner/session failure correlation
+- mobile diagnostics are now also on the shared de/en resource path, loyalty/mobile handoff links are first-class inside the workspace, and operator playbooks now explicitly connect push-token debt, scan-session follow-up, and transport-readiness review before support escalates app-only incidents
 
 ### Current mobile-operations coverage
 
@@ -591,6 +592,9 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: supplier administration now includes operational summary cards for total, missing-address, and purchase-order-linked vendors instead of only a searchable list
 - `Completed foundation`: the supplier workspace now includes procurement playbooks, explicit missing-address badges, and active-procurement signals so vendor hygiene can be reviewed before purchase-order and finance follow-up
 
+- products, brands, categories, and shipping methods workspaces now also use shared de/en resource keys, localized operator playbooks, and HTMX-safe editor/workspace shells, so storefront-facing catalog and routing operations no longer lag behind the bilingual admin contract.
+- CRM overview and invoice workspaces now also expose richer operator playbooks and triage guidance, so CRM follow-up no longer depends only on queue rows and editors.
+
 ## 28. Loyalty Workspace Modernization Progress
 
 - `Completed foundation`: loyalty-program administration now includes queue filters for active, inactive, spend-based, and missing-rules programs plus operational summary cards and playbooks
@@ -612,6 +616,7 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: user, role, and permission delete flows now also stay inside their HTMX workspace/editor shells, with queue-safe redirects and modal post context wired for in-place refresh instead of falling back to older full-page delete redirects
 - `Completed foundation`: loyalty workspace cleanup now includes HTMX-safe root redirects and in-shell delete flows for programs and reward tiers, so the remaining destructive/setup paths in loyalty no longer bounce support operators back through older full-page routes
 - `Completed foundation`: loyalty accounts, scan sessions, and redemptions now also expose ops summaries and operator playbooks, so member-balance support, scanner diagnostics, and redemption triage are no longer table-only workspaces
+- Completed foundation: loyalty filter labels and loyalty/mobile operator playbooks now also route through SharedResource*.resx, and the Mobile Operations workspace now exposes explicit loyalty follow-up handoffs plus localized playbooks/feedback, so the remaining loyalty/mobile priority area is no longer split between bilingual loyalty queues and an English-only mobile diagnostics surface
 - `Completed foundation`: loyalty workspaces now render shared alert partials and controller fallbacks for account creation, campaign creation/update, point adjustments, activation, and redemption confirmation, so HTMX-driven loyalty support no longer loses feedback inside fragment refresh paths
 - `Completed foundation`: a focused completion review on the priority chains found that pagination was still falling back to plain `<pager>` navigation; the shared pager tag helper now supports HTMX targets/push-url, and the priority loyalty/access/subscriber-support/payment queues now page in-place instead of breaking out to full-page responses
 - `Completed foundation`: business archive/remove destructive actions on the main business, location, and member queues now carry HTMX modal context, so confirm-delete flows rerender the same workspace shell instead of degrading back to plain full-page post/redirect behavior
@@ -654,3 +659,8 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: the CRM lead and opportunity editors now also embed their live interaction sections and carry direct follow-up handoffs to linked customer, opportunity creation, and invoice review lanes, so conversion and pipeline maintenance rely less on screen-to-screen hopping during support work
 - `Completed foundation`: the CRM invoice editor now also exposes a dedicated follow-up action block for linked customer, order, payment trail, and related invoices, and its status/refund feedback now routes through shared localized messages instead of raw inline strings
 - `Completed foundation`: the CRM leads and opportunities workspaces now also expose ops summaries and operator playbooks for qualification, ownership, conversion, close-date pressure, and high-interaction review, so queue triage is less table-only and closer to the richer editor workbenches
+
+- Products workspace and product editors now use shared de/en resource keys, operator notes, and localized product playbooks for catalog readiness work.
+
+
+

@@ -274,38 +274,38 @@ public sealed class ShippingMethodsController : AdminBaseController
         return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static IEnumerable<SelectListItem> BuildFilterItems(ShippingMethodQueueFilter selected)
+    private IEnumerable<SelectListItem> BuildFilterItems(ShippingMethodQueueFilter selected)
     {
-        yield return new SelectListItem("All methods", ShippingMethodQueueFilter.All.ToString(), selected == ShippingMethodQueueFilter.All);
-        yield return new SelectListItem("Active", ShippingMethodQueueFilter.Active.ToString(), selected == ShippingMethodQueueFilter.Active);
-        yield return new SelectListItem("Inactive", ShippingMethodQueueFilter.Inactive.ToString(), selected == ShippingMethodQueueFilter.Inactive);
-        yield return new SelectListItem("Missing rates", ShippingMethodQueueFilter.MissingRates.ToString(), selected == ShippingMethodQueueFilter.MissingRates);
-        yield return new SelectListItem("DHL", ShippingMethodQueueFilter.Dhl.ToString(), selected == ShippingMethodQueueFilter.Dhl);
-        yield return new SelectListItem("Global coverage", ShippingMethodQueueFilter.GlobalCoverage.ToString(), selected == ShippingMethodQueueFilter.GlobalCoverage);
-        yield return new SelectListItem("Multi-rate", ShippingMethodQueueFilter.MultiRate.ToString(), selected == ShippingMethodQueueFilter.MultiRate);
+        yield return new SelectListItem(T("AllMethods"), ShippingMethodQueueFilter.All.ToString(), selected == ShippingMethodQueueFilter.All);
+        yield return new SelectListItem(T("Active"), ShippingMethodQueueFilter.Active.ToString(), selected == ShippingMethodQueueFilter.Active);
+        yield return new SelectListItem(T("Inactive"), ShippingMethodQueueFilter.Inactive.ToString(), selected == ShippingMethodQueueFilter.Inactive);
+        yield return new SelectListItem(T("MissingRates"), ShippingMethodQueueFilter.MissingRates.ToString(), selected == ShippingMethodQueueFilter.MissingRates);
+        yield return new SelectListItem(T("DhlMethods"), ShippingMethodQueueFilter.Dhl.ToString(), selected == ShippingMethodQueueFilter.Dhl);
+        yield return new SelectListItem(T("GlobalCoverage"), ShippingMethodQueueFilter.GlobalCoverage.ToString(), selected == ShippingMethodQueueFilter.GlobalCoverage);
+        yield return new SelectListItem(T("MultiRate"), ShippingMethodQueueFilter.MultiRate.ToString(), selected == ShippingMethodQueueFilter.MultiRate);
     }
 
-    private static List<ShippingMethodPlaybookVm> BuildPlaybooks()
+    private List<ShippingMethodPlaybookVm> BuildPlaybooks()
     {
         return new List<ShippingMethodPlaybookVm>
         {
             new()
             {
-                Title = "Missing rates",
-                ScopeNote = "Methods without at least one rate are not storefront-ready.",
-                OperatorAction = "Open the method, add at least one pricing tier, and verify the intended currency and carrier metadata."
+                Title = T("MissingRates"),
+                ScopeNote = T("ShippingPlaybookMissingRatesScope"),
+                OperatorAction = T("ShippingPlaybookMissingRatesAction")
             },
             new()
             {
-                Title = "Global coverage",
-                ScopeNote = "Blank country scope means the method applies broadly and deserves extra carrier review.",
-                OperatorAction = "Confirm whether the method is intentionally global or whether country scoping still needs to be narrowed."
+                Title = T("GlobalCoverage"),
+                ScopeNote = T("ShippingPlaybookGlobalCoverageScope"),
+                OperatorAction = T("ShippingPlaybookGlobalCoverageAction")
             },
             new()
             {
-                Title = "DHL methods",
-                ScopeNote = "Use this subset when carrier setup or service mapping is being validated.",
-                OperatorAction = "Review service names, rates, and whether the method should stay active for production routing."
+                Title = T("DhlMethods"),
+                ScopeNote = T("ShippingPlaybookDhlScope"),
+                OperatorAction = T("ShippingPlaybookDhlAction")
             }
         };
     }
@@ -316,3 +316,4 @@ public sealed class ShippingMethodsController : AdminBaseController
         return sizes.Select(x => new SelectListItem(x.ToString(), x.ToString(), x == selected)).ToList();
     }
 }
+

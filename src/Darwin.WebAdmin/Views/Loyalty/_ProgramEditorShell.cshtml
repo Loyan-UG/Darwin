@@ -1,13 +1,3 @@
-@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyProgramEditVm
-@{
-    var isCreate = ViewData["IsCreate"] as bool? == true;
-    ViewData["Title"] = isCreate ? "Create Loyalty Program" : "Edit Loyalty Program";
-}
-
-<div id="loyalty-program-editor-shell">
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">@(isCreate ? "Create Loyalty Program" : "Edit Loyalty Program")</h1>
-</div>
-
-<partial name="_ProgramForm" model="Model" />
-</div>
+﻿@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyProgramEditVm
+@{ var isCreate = ViewData["IsCreate"] as bool? == true; ViewData["Title"] = isCreate ? T.T("LoyaltyCreateProgram") : T.T("LoyaltyEditProgram"); }
+<div id="loyalty-program-editor-shell"><div class="d-flex justify-content-between align-items-center mb-3"><h1 class="mb-0">@(isCreate ? T.T("LoyaltyCreateProgram") : T.T("LoyaltyEditProgram"))</h1></div><partial name="_ProgramForm" model="Model" /></div>

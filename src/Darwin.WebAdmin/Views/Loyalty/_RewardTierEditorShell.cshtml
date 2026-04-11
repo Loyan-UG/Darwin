@@ -1,12 +1,3 @@
-@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyRewardTierEditVm
-@{
-    var isCreate = ViewData["IsCreate"] as bool? == true;
-    ViewData["Title"] = isCreate ? "Create Reward Tier" : "Edit Reward Tier";
-}
-
-<div id="loyalty-reward-tier-editor-shell">
-<h1 class="mb-1">@(isCreate ? "Create Reward Tier" : "Edit Reward Tier")</h1>
-<div class="text-muted mb-3">@Model.ProgramName</div>
-
-<partial name="_RewardTierForm" model="Model" />
-</div>
+﻿@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyRewardTierEditVm
+@{ var isCreate = ViewData["IsCreate"] as bool? == true; ViewData["Title"] = isCreate ? T.T("LoyaltyCreateRewardTier") : T.T("LoyaltyEditRewardTier"); }
+<div id="loyalty-reward-tier-editor-shell"><h1 class="mb-1">@(isCreate ? T.T("LoyaltyCreateRewardTier") : T.T("LoyaltyEditRewardTier"))</h1><div class="text-muted mb-3">@Model.ProgramName</div><partial name="_RewardTierForm" model="Model" /></div>

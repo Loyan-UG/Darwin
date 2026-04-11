@@ -1,101 +1,30 @@
-@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupAttachToBrandsVm
-
+﻿@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupAttachToBrandsVm
 @{
-    ViewData["Title"] = $"Attach Brands to '{Model.AddOnGroupName}'";
+    ViewData["Title"] = T.T("AddOnAttachBrandsTitle");
 }
-
 <div id="add-on-group-attach-brands-shell">
-<h1 class="mb-2"><i class="fa fa-tags"></i> Attach Brands <small class="text-muted">(@Model.AddOnGroupName)</small></h1>
-
-<form method="get" class="row g-2 mb-3" asp-controller="AddOnGroups" asp-action="AttachToBrands"
-      hx-get="@Url.Action("AttachToBrands", "AddOnGroups")"
-      hx-target="#add-on-group-attach-brands-shell"
-      hx-swap="outerHTML"
-      hx-push-url="true">
-    <input type="hidden" name="id" value="@Model.AddOnGroupId" />
-    <div class="col-auto">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search brands." />
-    </div>
-    <div class="col-auto">
-        <button class="btn btn-outline-primary"><i class="fa fa-search"></i> Search</button>
-        <a asp-controller="AddOnGroups" asp-action="AttachToBrands" asp-route-id="@Model.AddOnGroupId" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("AttachToBrands", "AddOnGroups", new { id = Model.AddOnGroupId })"
-           hx-target="#add-on-group-attach-brands-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
-    </div>
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<h1 class="mb-2"><i class="fa fa-tags"></i> @T.T("AddOnAttachBrandsTitle") <small class="text-muted">(@Model.AddOnGroupName)</small></h1>
+<form method="get" class="row g-2 mb-3" asp-controller="AddOnGroups" asp-action="AttachToBrands" hx-get="@Url.Action("AttachToBrands", "AddOnGroups")" hx-target="#add-on-group-attach-brands-shell" hx-swap="outerHTML" hx-push-url="true">
+<input type="hidden" name="id" value="@Model.AddOnGroupId" />
+<div class="col-auto"><input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("AddOnSearchBrands")" /></div>
+<div class="col-auto"><button class="btn btn-outline-primary"><i class="fa fa-search"></i> @T.T("Search")</button><a asp-controller="AddOnGroups" asp-action="AttachToBrands" asp-route-id="@Model.AddOnGroupId" class="btn btn-outline-secondary" hx-get="@Url.Action("AttachToBrands", "AddOnGroups", new { id = Model.AddOnGroupId })" hx-target="#add-on-group-attach-brands-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Reset")</a></div>
 </form>
-
-<form asp-controller="AddOnGroups" asp-action="AttachToBrands" method="post"
-      hx-post="@Url.Action("AttachToBrands", "AddOnGroups")"
-      hx-target="#add-on-group-attach-brands-shell"
-      hx-swap="outerHTML">
-    @Html.AntiForgeryToken()
-    <input type="hidden" name="AddOnGroupId" value="@Model.AddOnGroupId" />
-    <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? "" : Convert.ToBase64String(Model.RowVersion))" />
-    <input type="hidden" name="Page" value="@Model.Page" />
-    <input type="hidden" name="PageSize" value="@Model.PageSize" />
-    <input type="hidden" name="Query" value="@Model.Query" />
-
-    <div class="table-responsive">
-        <table class="table table-sm table-striped align-middle">
-            <thead>
-                <tr>
-                    <th style="width:40px" class="text-center"><input type="checkbox" id="toggleAll" /></th>
-                    <th>Name</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Items is null || Model.Items.Count == 0)
-                {
-                    <tr><td colspan="2" class="text-center text-muted">No brands.</td></tr>
-                }
-                else
-                {
-                    foreach (var b in Model.Items)
-                    {
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="row-check" name="SelectedBrandIds" value="@b.Id" @(b.Selected ? "checked" : "") />
-                            </td>
-                            <td>@b.Display</td>
-                        </tr>
-                    }
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Attachments</button>
-        <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "AddOnGroups")"
-           hx-target="#add-on-groups-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">Back</a>
-    </div>
+<form asp-controller="AddOnGroups" asp-action="AttachToBrands" method="post" hx-post="@Url.Action("AttachToBrands", "AddOnGroups")" hx-target="#add-on-group-attach-brands-shell" hx-swap="outerHTML">
+@Html.AntiForgeryToken()
+<input type="hidden" name="AddOnGroupId" value="@Model.AddOnGroupId" />
+<input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? "" : Convert.ToBase64String(Model.RowVersion))" />
+<input type="hidden" name="Page" value="@Model.Page" />
+<input type="hidden" name="PageSize" value="@Model.PageSize" />
+<input type="hidden" name="Query" value="@Model.Query" />
+<div class="table-responsive"><table class="table table-sm table-striped align-middle"><thead><tr><th style="width:40px" class="text-center"><input type="checkbox" id="toggleAll" /></th><th>@T.T("Name")</th></tr></thead><tbody>@if (Model.Items is null || Model.Items.Count == 0) { <tr><td colspan="2" class="text-center text-muted">@T.T("AddOnNoBrands")</td></tr> } else { foreach (var b in Model.Items) { <tr><td class="text-center"><input type="checkbox" class="row-check" name="SelectedBrandIds" value="@b.Id" @(b.Selected ? "checked" : "") /></td><td>@b.Display</td></tr> } }</tbody></table></div>
+<div class="mt-3"><button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> @T.T("AddOnSaveAttachments")</button><a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary" hx-get="@Url.Action("Index", "AddOnGroups")" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Back")</a></div>
 </form>
-
-<div class="pt-3">
-    <pager page="Model.Page"
-           page-size="Model.PageSize"
-           total="Model.Total"
-           asp-controller="AddOnGroups"
-           asp-action="AttachToBrands"
-           asp-route-id="@Model.AddOnGroupId"
-           asp-route-query="@Model.Query"
-           hx-target="#add-on-group-attach-brands-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">
-    </pager>
-</div>
-
+<div class="pt-3"><pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="AddOnGroups" asp-action="AttachToBrands" asp-route-id="@Model.AddOnGroupId" asp-route-query="@Model.Query" hx-target="#add-on-group-attach-brands-shell" hx-swap="outerHTML" hx-push-url="true"></pager></div>
 @section Scripts {
-    <script>
-        const toggle = document.getElementById('toggleAll');
-        if (toggle) toggle.addEventListener('change', function () {
-            document.querySelectorAll('.row-check').forEach(cb => cb.checked = toggle.checked);
-        });
-    </script>
+<script>
+const toggle = document.getElementById('toggleAll');
+if (toggle) toggle.addEventListener('change', function () { document.querySelectorAll('.row-check').forEach(cb => cb.checked = toggle.checked); });
+</script>
 }
 </div>

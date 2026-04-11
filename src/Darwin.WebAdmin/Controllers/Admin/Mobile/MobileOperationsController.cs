@@ -1,4 +1,4 @@
-using Darwin.Application.Businesses.Queries;
+﻿using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.Queries;
 using Darwin.Application.Settings.Queries;
@@ -105,6 +105,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                 StateFilter = state ?? string.Empty,
                 PlatformItems = BuildPlatformItems(platform),
                 StateItems = BuildStateItems(state),
+                Playbooks = BuildPlaybooks(),
                 Devices = devicesPage.Items.Select(x => new MobileDeviceOpsListItemVm
                 {
                     Id = x.Id,
@@ -135,7 +136,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
             var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Push token cleared." : result.Error;
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("MobilePushTokenCleared") : result.Error ?? T("MobilePushTokenClearFailed");
             return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
         }
 
@@ -144,7 +145,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
             var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Device deactivated." : result.Error;
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("MobileDeviceDeactivated") : result.Error ?? T("MobileDeviceDeactivateFailed");
             return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
         }
 
@@ -174,25 +175,53 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static List<SelectListItem> BuildPlatformItems(MobilePlatform? selected)
+        private List<MobileOpsPlaybookVm> BuildPlaybooks()
         {
-            var items = new List<SelectListItem> { new("All platforms", string.Empty, !selected.HasValue) };
+            return new List<MobileOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = T("MobilePlaybookPushDebtTitle"),
+                    ScopeNote = T("MobilePlaybookPushDebtScope"),
+                    OperatorAction = T("MobilePlaybookPushDebtAction")
+                },
+                new()
+                {
+                    Title = T("MobilePlaybookLoyaltyScanTitle"),
+                    ScopeNote = T("MobilePlaybookLoyaltyScanScope"),
+                    OperatorAction = T("MobilePlaybookLoyaltyScanAction")
+                },
+                new()
+                {
+                    Title = T("MobilePlaybookTransportTitle"),
+                    ScopeNote = T("MobilePlaybookTransportScope"),
+                    OperatorAction = T("MobilePlaybookTransportAction")
+                }
+            };
+        }
+
+        private List<SelectListItem> BuildPlatformItems(MobilePlatform? selected)
+        {
+            var items = new List<SelectListItem> { new(T("MobileAllPlatforms"), string.Empty, !selected.HasValue) };
             items.AddRange(Enum.GetValues<MobilePlatform>()
                 .Where(x => x != MobilePlatform.Unknown)
                 .Select(x => new SelectListItem(x.ToString(), x.ToString(), selected == x)));
             return items;
         }
 
-        private static List<SelectListItem> BuildStateItems(string? selected)
+        private List<SelectListItem> BuildStateItems(string? selected)
         {
             return
             [
-                new("All states", string.Empty, string.IsNullOrWhiteSpace(selected)),
-                new("Stale devices", "stale", string.Equals(selected, "stale", StringComparison.OrdinalIgnoreCase)),
-                new("Missing push token", "missing-push", string.Equals(selected, "missing-push", StringComparison.OrdinalIgnoreCase)),
-                new("Notifications disabled", "notifications-disabled", string.Equals(selected, "notifications-disabled", StringComparison.OrdinalIgnoreCase)),
-                new("Business members only", "business-members", string.Equals(selected, "business-members", StringComparison.OrdinalIgnoreCase))
+                new(T("MobileAllStates"), string.Empty, string.IsNullOrWhiteSpace(selected)),
+                new(T("MobileStaleDevices"), "stale", string.Equals(selected, "stale", StringComparison.OrdinalIgnoreCase)),
+                new(T("MobileMissingPushToken"), "missing-push", string.Equals(selected, "missing-push", StringComparison.OrdinalIgnoreCase)),
+                new(T("MobileNotificationsDisabled"), "notifications-disabled", string.Equals(selected, "notifications-disabled", StringComparison.OrdinalIgnoreCase)),
+                new(T("MobileBusinessMembersOnly"), "business-members", string.Equals(selected, "business-members", StringComparison.OrdinalIgnoreCase))
             ];
         }
     }
 }
+
+
+

@@ -1,4 +1,4 @@
-# Darwin Backlog
+﻿# Darwin Backlog
 
 This document is the execution roadmap for Darwin. It is intentionally priority-based, not merely historical. The current guiding rule is:
 
@@ -416,6 +416,9 @@ Active entries:
 - `Planned / Near-term`: add Stripe-specific operational visibility, provider references, and status history
 - `Planned / Near-term`: deepen refund, reconciliation, dispute, and support workflows
 - `Planned / Near-term`: add webhook/callback audit trail visibility
+
+- storefront-facing catalog and routing operations now also use shared de/en resource keys, localized operator playbooks, and HTMX-safe workspace/editor shells across products, brands, categories, and shipping methods.
+- CRM overview and invoice workspaces now also expose richer operator playbooks and triage guidance on the same bilingual baseline.
 
 ### Shipping and returns
 
@@ -1013,6 +1016,7 @@ Active entries:
 - `Completed foundation`: invoice and order tax surfaces now also expose archive-readiness and e-invoice-baseline indicators based on issuer/VAT completeness, so phase-1 tax support can distinguish missing issuer data from the still-unimplemented deeper compliance workflows
 - `Completed foundation`: Business Communications workspace/profile/audit navigation now also pushes URL state for its main HTMX transitions, so operators can move between workspace, profile, and audit triage without losing browser history fidelity
 - `Completed foundation`: the Mobile Operations workspace now also supports HTMX-safe filtering, pagination, device remediation, and cross-workspace handoffs, so mobile diagnostics no longer drop back to older full-page admin navigation
+- Completed foundation: the loyalty/mobile priority area now also uses shared de/en resource-backed playbooks, filter labels, mobile remediation feedback, and loyalty follow-up handoffs from Mobile Operations, so support no longer jumps from bilingual loyalty queues into an English-only mobile diagnostics surface when scan-session or device incidents overlap
 - `Completed foundation`: inventory controller redirect debt is now closed across warehouses, suppliers, stock actions, stock levels, transfers, and purchase orders, so missing-row, success, and concurrency paths stay inside the HTMX workflow instead of falling back to plain redirects
 - `Completed foundation`: site settings now render through the same HTMX-aware editor shell on both initial GET and save redirect paths, so platform configuration no longer keeps a legacy full-page entry path while the rest of WebAdmin uses workspace shells
 - `Completed foundation`: site settings ownership and operator handoff links now also push browser URL state during HTMX transitions, so platform-to-business navigation from settings no longer loses history fidelity while staying inside the shell workflow
@@ -1036,7 +1040,7 @@ Active entries:
 - `Completed foundation`: `Darwin.Web` authenticated member dashboard now also surfaces live product highlights alongside CMS and category continuation, so signed-in shoppers can see the next buying opportunity directly from `/account`
 - `Completed foundation`: `Darwin.Web` orders and invoices now also surface live product highlights alongside their storefront continuation windows, so member history routes can still create a next-buy moment instead of behaving like passive archives
 - `Completed foundation`: those orders and invoices storefront offer boards now also shift away from products already linked to the active cart when browser storefront-shopping state exists, so member history routes can pitch the next buying move beyond the current basket instead of echoing it
-- `Future / Later phase`: consider a cross-surface commercial ranking service for Darwin.Web that can choose the strongest next-buy/product/content follow-up per route from live cart, order, invoice, and member signals instead of today’s route-local spotlight heuristics
+- `Future / Later phase`: consider a cross-surface commercial ranking service for Darwin.Web that can choose the strongest next-buy/product/content follow-up per route from live cart, order, invoice, and member signals instead of todayâ€™s route-local spotlight heuristics
 - `Completed foundation`: `Darwin.Web` order and invoice detail routes now also surface live product highlights alongside their storefront continuation windows, so protected commerce detail pages can create a next-buy moment instead of only offering content and category follow-up
 - `Completed foundation`: `Darwin.Web` member order and invoice detail routes now also surface explicit operational timelines, so key payment, shipment, delivery, due-date, and settlement milestones stay visible on the detail surfaces instead of being inferred only from summary blocks
 - `Completed foundation`: `Darwin.Web` member dashboard now also surfaces an explicit commerce-readiness layer, so active order follow-up and open billing exposure are visible from `/account` before members drill into history routes
@@ -1073,7 +1077,7 @@ Active entries:
 - `Completed foundation`: cart, checkout, and confirmation now also reuse one shared commerce page-loader helper for follow-up assembly and page health wiring, so the conversion flow no longer drifts in how it builds live shopping and post-purchase context
 - `Completed foundation`: shared observed loader helpers now also back the main storefront, CMS/catalog route-context, member-route, and Home-discovery assembly paths, so caching plus slow/failure diagnostics are wired through one canonical server pattern instead of being hand-built per route
 - `Completed foundation`: shell model assembly now also runs through a shared cached observable loader with explicit shell-model health summaries, so the main storefront chrome no longer keeps its own page-local diagnostics and caching branch in `layout`
-- `Completed foundation`: route diagnostics now also carry health summaries for content, browse, cart, and member readiness on the main storefront/member loaders, so slow or degraded route assembly is easier to trace without reopening each route’s internal fetch graph
+- `Completed foundation`: route diagnostics now also carry health summaries for content, browse, cart, and member readiness on the main storefront/member loaders, so slow or degraded route assembly is easier to trace without reopening each routeâ€™s internal fetch graph
 - `Completed foundation`: shared observed loaders now also emit degraded-success telemetry whenever a route or core loader returns non-`ok` health statuses even without being slow, so production/staging diagnostics can catch partial storefront/member degradation before it turns into outright failures
 - `Completed foundation`: cart, checkout, and confirmation now also load through shared cached observed route-context helpers with explicit commerce health summaries, so the main conversion flow reuses one canonical server assembly pattern instead of keeping route-local diagnostics and caching behavior
 - `Completed foundation`: member summary snapshots and browser shopping continuity now also load through shared observed helpers with explicit health summaries, so account/Home/commerce routes reuse one traceable baseline for identity, billing, and live-cart continuity instead of rebuilding those snapshots piecemeal
@@ -1335,6 +1339,11 @@ These items are intentionally staged after the core public/member flows are comp
 
 
 
+
+
+
+
+- Products workspace and product editors are now de/en resource-backed with localized catalog playbooks, editor guidance, and search/filter surfaces.
 
 
 

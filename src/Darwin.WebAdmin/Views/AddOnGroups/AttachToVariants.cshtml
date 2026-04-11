@@ -1,28 +1,21 @@
-@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupAttachToVariantsVm
+﻿@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupAttachToVariantsVm
 @{
-    ViewData["Title"] = "Attach add-on group to variants";
+    ViewData["Title"] = T.T("AddOnAttachVariantsTitle");
 }
 
 <div id="add-on-group-attach-variants-shell">
-    <h1 class="mb-4">Attach @Model.AddOnGroupName to Variants</h1>
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+    <h1 class="mb-4">@T.T("AddOnAttachVariantsTitle") <small class="text-muted">(@Model.AddOnGroupName)</small></h1>
 
-    <form method="get"
-          class="mb-3"
-          hx-get="@Url.Action("AttachToVariants", "AddOnGroups")"
-          hx-target="#add-on-group-attach-variants-shell"
-          hx-swap="outerHTML"
-          hx-push-url="true">
+    <form method="get" class="mb-3" hx-get="@Url.Action("AttachToVariants", "AddOnGroups")" hx-target="#add-on-group-attach-variants-shell" hx-swap="outerHTML" hx-push-url="true">
         <input type="hidden" name="id" value="@Model.AddOnGroupId" />
         <div class="input-group">
-            <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search by SKU or product name..." />
-            <button type="submit" class="btn btn-primary">Search</button>
+            <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("AddOnSearchVariants")" />
+            <button type="submit" class="btn btn-primary">@T.T("Search")</button>
         </div>
     </form>
 
-    <form method="post"
-          hx-post="@Url.Action("AttachToVariants", "AddOnGroups")"
-          hx-target="#add-on-group-attach-variants-shell"
-          hx-swap="outerHTML">
+    <form method="post" hx-post="@Url.Action("AttachToVariants", "AddOnGroups")" hx-target="#add-on-group-attach-variants-shell" hx-swap="outerHTML">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="AddOnGroupId" />
         <input type="hidden" asp-for="RowVersion" />
@@ -44,10 +37,10 @@
             <thead>
                 <tr>
                     <th style="width:40px;"></th>
-                    <th>SKU</th>
-                    <th>Product</th>
-                    <th>Price (net)</th>
-                    <th>Stock</th>
+                    <th>@T.T("Sku")</th>
+                    <th>@T.T("Product")</th>
+                    <th>@T.T("PriceNet")</th>
+                    <th>@T.T("Stock")</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,13 +52,7 @@
                     var name = parts.Length > 1 ? parts[1] : string.Empty;
 
                     <tr>
-                        <td>
-                            <input type="checkbox"
-                                   class="sel"
-                                   data-id="@id"
-                                   name="SelectedVariantIds"
-                                   @(Model.SelectedVariantIds?.Contains(id) == true ? "checked" : "") />
-                        </td>
+                        <td><input type="checkbox" class="sel" data-id="@id" name="SelectedVariantIds" @(Model.SelectedVariantIds?.Contains(id) == true ? "checked" : "") /></td>
                         <td>@sku</td>
                         <td>@name</td>
                         <td></td>
@@ -76,28 +63,13 @@
         </table>
 
         <div class="mt-3">
-            <button type="submit" class="btn btn-success">Save</button>
-            <a asp-action="Index"
-               class="btn btn-secondary"
-               hx-get="@Url.Action("Index", "AddOnGroups")"
-               hx-target="#add-on-groups-workspace-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true">Cancel</a>
+            <button type="submit" class="btn btn-success">@T.T("Save")</button>
+            <a asp-action="Index" class="btn btn-secondary" hx-get="@Url.Action("Index", "AddOnGroups")" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Cancel")</a>
         </div>
     </form>
 
     <div class="pt-3">
-        <pager page="@Model.Page"
-               page-size="@Model.PageSize"
-               total="@Model.Total"
-               asp-controller="AddOnGroups"
-               asp-action="AttachToVariants"
-               asp-route-id="@Model.AddOnGroupId"
-               asp-route-q="@Model.Query"
-               hx-target="#add-on-group-attach-variants-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true">
-        </pager>
+        <pager page="@Model.Page" page-size="@Model.PageSize" total="@Model.Total" asp-controller="AddOnGroups" asp-action="AttachToVariants" asp-route-id="@Model.AddOnGroupId" asp-route-q="@Model.Query" hx-target="#add-on-group-attach-variants-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
     </div>
 
     @section Scripts {

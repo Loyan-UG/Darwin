@@ -821,7 +821,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FlowKey = "AdminCommunicationTest"
                 }).ConfigureAwait(false);
 
-            TempData["Success"] = $"Communication test email sent to {settings.CommunicationTestInboxEmail}.";
+            TempData["Success"] = string.Format(T("CommunicationTestEmailSentMessage"), settings.CommunicationTestInboxEmail);
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -964,7 +964,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FlowKey = "AdminCommunicationTest"
                 }).ConfigureAwait(false);
 
-            TempData["Success"] = $"Communication test SMS sent to {settings.CommunicationTestSmsRecipientE164}.";
+            TempData["Success"] = string.Format(T("CommunicationTestSmsSentMessage"), settings.CommunicationTestSmsRecipientE164);
             return RedirectToChannelAuditsOrIndex(
                 returnToChannelAudits,
                 page,
@@ -1129,7 +1129,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FlowKey = "AdminCommunicationTest"
                 }).ConfigureAwait(false);
 
-            TempData["Success"] = $"Communication test WhatsApp message sent to {settings.CommunicationTestWhatsAppRecipientE164}.";
+            TempData["Success"] = string.Format(T("CommunicationTestWhatsAppSentMessage"), settings.CommunicationTestWhatsAppRecipientE164);
             return RedirectToChannelAuditsOrIndex(
                 returnToChannelAudits,
                 page,

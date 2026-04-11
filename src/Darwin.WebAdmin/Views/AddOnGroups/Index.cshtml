@@ -1,16 +1,17 @@
-@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupsListVm
+﻿@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupsListVm
 @{
-    ViewData["Title"] = "Add-on Groups";
+    ViewData["Title"] = T.T("AddOnGroups");
 }
 
 <div id="add-on-groups-workspace-shell">
-<h1 class="mb-3"><i class="fa fa-layer-group"></i> Add-on Groups</h1>
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<h1 class="mb-3"><i class="fa fa-layer-group"></i> @T.T("AddOnGroups")</h1>
 
 <div class="row g-3 mb-3">
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Total</div>
+                <div class="text-muted small text-uppercase">@T.T("Total")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
             </div>
         </div>
@@ -18,7 +19,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Inactive</div>
+                <div class="text-muted small text-uppercase">@T.T("Inactive")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div>
             </div>
         </div>
@@ -26,7 +27,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Global</div>
+                <div class="text-muted small text-uppercase">@T.T("Global")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.GlobalCount</div>
             </div>
         </div>
@@ -34,9 +35,9 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Unattached</div>
+                <div class="text-muted small text-uppercase">@T.T("Unattached")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.UnattachedCount</div>
-                <div class="small text-muted mt-1">Linked groups: @Model.Summary.VariantLinkedCount</div>
+                <div class="small text-muted mt-1">@T.T("AddOnLinkedGroups"): @Model.Summary.VariantLinkedCount</div>
             </div>
         </div>
     </div>
@@ -48,18 +49,18 @@
       hx-swap="outerHTML"
       hx-push-url="true">
     <div class="col-auto">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search name/currency..." />
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("AddOnSearchNameCurrency")" />
     </div>
     <div class="col-auto">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-auto">
-        <button class="btn btn-outline-primary"><i class="fa fa-search"></i> Search</button>
+        <button class="btn btn-outline-primary"><i class="fa fa-search"></i> @T.T("Search")</button>
         <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "AddOnGroups")"
            hx-target="#add-on-groups-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
+           hx-push-url="true">@T.T("Reset")</a>
     </div>
     <div class="col-auto ms-auto">
         <a asp-controller="AddOnGroups" asp-action="Create" class="btn btn-primary"
@@ -67,21 +68,21 @@
            hx-target="#add-on-groups-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
-            <i class="fa fa-plus"></i> New Group
+            <i class="fa fa-plus"></i> @T.T("AddOnNewGroup")
         </a>
     </div>
 </form>
 
 <div class="card shadow-sm mb-3">
-    <div class="card-header">Add-on Operations Playbooks</div>
+    <div class="card-header">@T.T("AddOnOperationsPlaybooks")</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Queue</th>
-                        <th>Why It Matters</th>
-                        <th>Operator Action</th>
+                        <th>@T.T("Queue")</th>
+                        <th>@T.T("WhyItMatters")</th>
+                        <th>@T.T("OperatorAction")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -103,20 +104,20 @@
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Currency</th>
-                <th class="text-center">Global</th>
-                <th class="text-center">Active</th>
-                <th class="text-center">Options</th>
-                <th class="text-center">Attachments</th>
-                <th>Modified</th>
-                <th class="text-end" style="width:420px">Actions</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("Currency")</th>
+                <th class="text-center">@T.T("Global")</th>
+                <th class="text-center">@T.T("Active")</th>
+                <th class="text-center">@T.T("Options")</th>
+                <th class="text-center">@T.T("Attachments")</th>
+                <th>@T.T("Modified")</th>
+                <th class="text-end" style="width:420px">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="8" class="text-center text-muted">No groups.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted">@T.T("AddOnNoGroups")</td></tr>
             }
             else
             {
@@ -129,7 +130,7 @@
                             <i class="fa @(g.IsGlobal ? "fa-check text-success" : "fa-minus text-muted")"></i>
                         </td>
                         <td class="text-center">
-                            <span class="badge @(g.IsActive ? "text-bg-success" : "text-bg-secondary")">@(g.IsActive ? "Yes" : "No")</span>
+                            <span class="badge @(g.IsActive ? "text-bg-success" : "text-bg-secondary")">@(g.IsActive ? T.T("Yes") : T.T("No"))</span>
                         </td>
                         <td class="text-center">@g.OptionsCount</td>
                         <td class="text-center">@g.AttachmentCount</td>
@@ -140,66 +141,16 @@
                                hx-target="#add-on-groups-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
-                                <i class="fa fa-pen"></i> Edit
+                                <i class="fa fa-pen"></i> @T.T("Edit")
                             </a>
-
-                            <!-- Attach routes -->
                             <div class="btn-group">
-                                <a class="btn btn-sm btn-outline-primary"
-                                   asp-controller="AddOnGroups"
-                                   asp-action="AttachToVariants"
-                                   asp-route-id="@g.Id"
-                                   hx-get="@Url.Action("AttachToVariants", "AddOnGroups", new { id = g.Id })"
-                                   hx-target="#add-on-groups-workspace-shell"
-                                   hx-swap="outerHTML"
-                                   hx-push-url="true">
-                                    <i class="fa fa-sitemap"></i> Variants
-                                </a>
-                                <a class="btn btn-sm btn-outline-primary"
-                                   asp-controller="AddOnGroups"
-                                   asp-action="AttachToProducts"
-                                   asp-route-id="@g.Id"
-                                   hx-get="@Url.Action("AttachToProducts", "AddOnGroups", new { id = g.Id })"
-                                   hx-target="#add-on-groups-workspace-shell"
-                                   hx-swap="outerHTML"
-                                   hx-push-url="true">
-                                    <i class="fa fa-box"></i> Products
-                                </a>
-                                <a class="btn btn-sm btn-outline-primary"
-                                   asp-controller="AddOnGroups"
-                                   asp-action="AttachToCategories"
-                                   asp-route-id="@g.Id"
-                                   hx-get="@Url.Action("AttachToCategories", "AddOnGroups", new { id = g.Id })"
-                                   hx-target="#add-on-groups-workspace-shell"
-                                   hx-swap="outerHTML"
-                                   hx-push-url="true">
-                                    <i class="fa fa-tags"></i> Categories
-                                </a>
-                                <a class="btn btn-sm btn-outline-primary"
-                                   asp-controller="AddOnGroups"
-                                   asp-action="AttachToBrands"
-                                   asp-route-id="@g.Id"
-                                   hx-get="@Url.Action("AttachToBrands", "AddOnGroups", new { id = g.Id })"
-                                   hx-target="#add-on-groups-workspace-shell"
-                                   hx-swap="outerHTML"
-                                   hx-push-url="true">
-                                    <i class="fa fa-industry"></i> Brands
-                                </a>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToVariants" asp-route-id="@g.Id" hx-get="@Url.Action("AttachToVariants", "AddOnGroups", new { id = g.Id })" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-sitemap"></i> @T.T("Variants")</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToProducts" asp-route-id="@g.Id" hx-get="@Url.Action("AttachToProducts", "AddOnGroups", new { id = g.Id })" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-box"></i> @T.T("Products")</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToCategories" asp-route-id="@g.Id" hx-get="@Url.Action("AttachToCategories", "AddOnGroups", new { id = g.Id })" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-tags"></i> @T.T("Categories")</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToBrands" asp-route-id="@g.Id" hx-get="@Url.Action("AttachToBrands", "AddOnGroups", new { id = g.Id })" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-industry"></i> @T.T("Brands")</a>
                             </div>
-
-                            <!-- Delete via confirm modal (include RowVersion) -->
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-danger"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#confirmDeleteModal"
-                                    data-action="@Url.Action("Delete", "AddOnGroups")"
-                                    data-id="@g.Id"
-                                    data-name="@g.Name"
-                                    data-rowversion="@Convert.ToBase64String(g.RowVersion)"
-                                    data-hx-target="#add-on-groups-workspace-shell"
-                                    data-hx-swap="outerHTML"
-                                    data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                                <i class="fa fa-trash"></i> Delete
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="@Url.Action("Delete", "AddOnGroups")" data-id="@g.Id" data-name="@g.Name" data-rowversion="@Convert.ToBase64String(g.RowVersion)" data-hx-target="#add-on-groups-workspace-shell" data-hx-swap="outerHTML" data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
+                                <i class="fa fa-trash"></i> @T.T("Delete")
                             </button>
                         </td>
                     </tr>
@@ -209,18 +160,6 @@
     </table>
 </div>
 
-<pager page="Model.Page"
-       page-size="Model.PageSize"
-       total="Model.Total"
-      
-       asp-controller="AddOnGroups"
-       asp-action="Index"
-       asp-route-query="@Model.Query"
-       asp-route-filter="@Model.Filter"
-       hx-target="#add-on-groups-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">
-</pager>
-
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="AddOnGroups" asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="@Model.Filter" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 </div>

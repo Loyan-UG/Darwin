@@ -20,17 +20,43 @@
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Customers")</div><div class="fs-4 fw-semibold">@Model.Summary.CustomerCount</div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Draft")</div><div class="fs-4 fw-semibold">@Model.OpsSummary.DraftCount</div></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("DueSoon")</div><div class="fs-4 fw-semibold">@Model.OpsSummary.DueSoonCount</div></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Overdue")</div><div class="fs-4 fw-semibold">@Model.OpsSummary.OverdueCount</div></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("VatIdMissing")</div><div class="fs-4 fw-semibold">@Model.OpsSummary.MissingVatIdCount</div><div class="small text-muted mt-1">@T.T("Refunded"): @Model.OpsSummary.RefundedCount</div></div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Customers")</div><div class="fs-4 fw-semibold">@Model.Summary.CustomerCount</div></div></div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("OpenOpportunities")</div><div class="fs-4 fw-semibold">@Model.Summary.OpenOpportunityCount</div></div></div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Segments")</div><div class="fs-4 fw-semibold">@Model.Summary.SegmentCount</div></div></div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Interactions7d")</div><div class="fs-4 fw-semibold">@Model.Summary.RecentInteractionCount</div></div></div>
+            </div>
+        </div>
     </div>
-    <div class="col-md-3">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("OpenOpportunities")</div><div class="fs-4 fw-semibold">@Model.Summary.OpenOpportunityCount</div></div></div>
-    </div>
-    <div class="col-md-3">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Segments")</div><div class="fs-4 fw-semibold">@Model.Summary.SegmentCount</div></div></div>
-    </div>
-    <div class="col-md-3">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Interactions7d")</div><div class="fs-4 fw-semibold">@Model.Summary.RecentInteractionCount</div></div></div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("CrmOperatorPlaybooks")</h2>
+            <div class="d-grid gap-3">
+                @foreach (var item in Model.Playbooks)
+                {
+                    <div class="rounded border p-3 bg-light-subtle">
+                        <div class="fw-semibold">@T.T(item.Title)</div>
+                        <div class="small text-muted mt-2">@T.T(item.ScopeNote)</div>
+                        <div class="small mt-2"><strong>@T.T("CrmNextStep"):</strong> @item.OperatorAction</div>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
 </div>
 
@@ -41,61 +67,17 @@
     </div>
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-2">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("VatEnabled")</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.VatEnabled ? T.T("Yes") : T.T("No"))</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("DefaultVat")</div>
-                    <div class="fw-semibold mt-1">@Model.TaxPolicy.DefaultVatRatePercent.ToString("0.##")%</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("PriceMode")</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.PricesIncludeVat ? T.T("VatInclusive") : T.T("VatExclusive"))</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("ReverseCharge")</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.AllowReverseCharge ? T.T("Allowed") : T.T("Disabled"))</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("Issuer")</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : T.T("Missing"))</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("TaxId")</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? T.T("Ready") : T.T("Missing"))</div>
-                </div>
-            </div>
+            <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("VatEnabled")</div><div class="fw-semibold mt-1">@(Model.TaxPolicy.VatEnabled ? T.T("Yes") : T.T("No"))</div></div></div>
+            <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("DefaultVat")</div><div class="fw-semibold mt-1">@Model.TaxPolicy.DefaultVatRatePercent.ToString("0.##")%</div></div></div>
+            <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("PriceMode")</div><div class="fw-semibold mt-1">@(Model.TaxPolicy.PricesIncludeVat ? T.T("VatInclusive") : T.T("VatExclusive"))</div></div></div>
+            <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("ReverseCharge")</div><div class="fw-semibold mt-1">@(Model.TaxPolicy.AllowReverseCharge ? T.T("Allowed") : T.T("Disabled"))</div></div></div>
+            <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Issuer")</div><div class="fw-semibold mt-1">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : T.T("Missing"))</div></div></div>
+            <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("TaxId")</div><div class="fw-semibold mt-1">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? T.T("Ready") : T.T("Missing"))</div></div></div>
         </div>
-        <div class="small text-muted mt-3">
-            @T.T("InvoicesTaxPolicyNote")
-        </div>
+        <div class="small text-muted mt-3">@T.T("InvoicesTaxPolicyNote")</div>
         <div class="row g-3 mt-1">
-            <div class="col-md-6">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("ArchiveReadiness")</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.ArchiveReadinessComplete ? T.T("Ready") : T.T("NeedsIssuerData"))</div>
-                    <div class="small text-muted mt-2">@Model.TaxPolicy.ArchiveReadinessLabel</div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("EInvoiceBaseline")</div>
-                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.EInvoiceBaselineReady ? T.T("Ready") : T.T("NotReady"))</div>
-                    <div class="small text-muted mt-2">@Model.TaxPolicy.ComplianceScopeNote</div>
-                </div>
-            </div>
+            <div class="col-md-6"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("ArchiveReadiness")</div><div class="fw-semibold mt-1">@(Model.TaxPolicy.ArchiveReadinessComplete ? T.T("Ready") : T.T("NeedsIssuerData"))</div><div class="small text-muted mt-2">@Model.TaxPolicy.ArchiveReadinessLabel</div></div></div>
+            <div class="col-md-6"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("EInvoiceBaseline")</div><div class="fw-semibold mt-1">@(Model.TaxPolicy.EInvoiceBaselineReady ? T.T("Ready") : T.T("NotReady"))</div><div class="small text-muted mt-2">@Model.TaxPolicy.EInvoiceBaselineLabel</div><div class="small text-muted mt-1">@Model.TaxPolicy.ComplianceScopeNote</div></div></div>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-3">
             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("TaxSettings")</a>
@@ -111,7 +93,7 @@
     </div>
 </div>
 
-<form asp-action="Invoices" method="get" class="row g-2 mb-3"
+<div class="row g-3 mb-3"><div class="col-lg-8"><form asp-action="Invoices" method="get" class="row g-2"
       hx-get="@Url.Action("Invoices", "Crm")"
       hx-target="#crm-invoices-workspace-shell"
       hx-swap="outerHTML"
@@ -265,3 +247,6 @@
 
 <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Crm" asp-action="Invoices" asp-route-q="@Model.Query" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML"></pager>
 </div>
+
+</div>
+

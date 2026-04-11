@@ -1,15 +1,3 @@
-@model Darwin.WebAdmin.ViewModels.Loyalty.CreateLoyaltyAccountVm
-@{
-    ViewData["Title"] = "Create Loyalty Account";
-}
-
-<div id="loyalty-account-create-editor-shell">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h1 class="mb-1">Create Loyalty Account</h1>
-            <div class="text-muted">Provision a loyalty account for a business member who has not self-enrolled yet.</div>
-        </div>
-    </div>
-
-<partial name="_AccountCreateForm" model="Model" />
-</div>
+﻿@model Darwin.WebAdmin.ViewModels.Loyalty.CreateLoyaltyAccountVm
+@{ ViewData["Title"] = T.T("LoyaltyCreateAccountTitle"); }
+<div id="loyalty-account-create-editor-shell"><div class="d-flex justify-content-between align-items-center mb-3"><div><h1 class="mb-1">@T.T("LoyaltyCreateAccountTitle")</h1><div class="text-muted">@T.T("LoyaltyCreateAccountIntro")</div></div></div><partial name="_AccountCreateForm" model="Model" /></div>

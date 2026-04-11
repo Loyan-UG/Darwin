@@ -1,4 +1,4 @@
-using Darwin.Domain.Enums;
+﻿using Darwin.Domain.Enums;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.WebAdmin.ViewModels.Mobile
@@ -42,10 +42,18 @@ namespace Darwin.WebAdmin.ViewModels.Mobile
         public string StateFilter { get; set; } = string.Empty;
         public List<SelectListItem> PlatformItems { get; set; } = new();
         public List<SelectListItem> StateItems { get; set; } = new();
+        public List<MobileOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<MobileDeviceOpsListItemVm> Devices { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
+    }
+
+    public sealed class MobileOpsPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
     public sealed class MobileAppVersionSnapshotVm

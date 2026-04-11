@@ -1,11 +1,25 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.BrandEditVm
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
-    ViewData["Title"] = isCreate ? "Create Brand" : "Edit Brand";
+    ViewData["Title"] = isCreate ? T.T("CreateBrand") : T.T("EditBrand");
 }
 
 <div id="brand-editor-shell">
-    <h1 class="mb-3">@(isCreate ? "Create Brand" : "Edit Brand")</h1>
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+        <div>
+            <h1 class="m-0">@(isCreate ? T.T("CreateBrand") : T.T("EditBrand"))</h1>
+            <div class="small text-muted mt-1">@(isCreate ? T.T("BrandCreateIntro") : T.T("BrandEditIntro"))</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="badge text-bg-light border">@T.T("Translations"): @Model.Translations.Count</div>
+            @if (!isCreate)
+            {
+                <div class="badge text-bg-light border">@T.T("BrandIdentifier"): @Model.Id</div>
+            }
+        </div>
+    </div>
 
     <form asp-action="@(isCreate ? "Create" : "Edit")"
           method="post"

@@ -99,7 +99,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         {
             vm.Translations ??= new();
             if (vm.Translations.Count == 0)
-                ModelState.AddModelError(nameof(vm.Translations), "At least one translation is required.");
+                ModelState.AddModelError(nameof(vm.Translations), T("PageTranslationRequired"));
 
             if (!ModelState.IsValid)
             {
@@ -213,7 +213,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             }
             catch (DbUpdateConcurrencyException)
             {
-                ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user.");
+                ModelState.AddModelError(string.Empty, T("PageConcurrencyConflict"));
                 await LoadCulturesAsync(ct).ConfigureAwait(false);
                 EnsureTranslations(vm);
                 return RenderEditEditor(vm);
@@ -305,29 +305,30 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             }
         }
 
-        private static PagePlaybookVm[] BuildPagePlaybooks()
+        private PagePlaybookVm[] BuildPagePlaybooks()
         {
             return
             [
                 new PagePlaybookVm
                 {
-                    QueueLabel = "Draft",
-                    WhyItMatters = "Draft pages usually represent unfinished legal, help, onboarding, or marketing content that the business may still be waiting for.",
-                    OperatorAction = "Open the page, complete the translations and publish only after the responsible owner confirms the content."
+                    QueueLabel = T("Draft"),
+                    WhyItMatters = T("PagesPlaybookDraftScope"),
+                    OperatorAction = T("PagesPlaybookDraftAction")
                 },
                 new PagePlaybookVm
                 {
-                    QueueLabel = "Windowed",
-                    WhyItMatters = "Windowed pages can silently expire or go live at the wrong time if campaign timing drifts.",
-                    OperatorAction = "Review publish start/end dates and make sure they still match campaign or compliance expectations."
+                    QueueLabel = T("Windowed"),
+                    WhyItMatters = T("PagesPlaybookWindowedScope"),
+                    OperatorAction = T("PagesPlaybookWindowedAction")
                 },
                 new PagePlaybookVm
                 {
-                    QueueLabel = "Live Window",
-                    WhyItMatters = "A page that is currently live within a publish window is timing-sensitive and worth proactive review.",
-                    OperatorAction = "Verify content accuracy, links, and expiry timing while the page is actively visible."
+                    QueueLabel = T("LiveWindow"),
+                    WhyItMatters = T("PagesPlaybookLiveWindowScope"),
+                    OperatorAction = T("PagesPlaybookLiveWindowAction")
                 }
             ];
         }
     }
 }
+

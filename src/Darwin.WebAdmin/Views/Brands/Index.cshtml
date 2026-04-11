@@ -1,111 +1,75 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.BrandsListVm
 @{
-    ViewData["Title"] = "Brands";
+    ViewData["Title"] = T.T("Brands");
 }
 
 <div id="brands-workspace-shell">
-<h1 class="mb-3">Brands</h1>
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="Index" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("Index", "Brands")"
-          hx-target="#brands-workspace-shell"
-          hx-swap="outerHTML"
-          hx-push-url="true">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search...">
-        <input type="hidden" name="filter" value="@Model.Filter">
-        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
-        <a asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Brands")"
+<div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+    <div>
+        <h1 class="m-0">@T.T("Brands")</h1>
+        <div class="small text-muted mt-1">@T.T("BrandsWorkspaceIntro")</div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+        <form asp-action="Index" method="get" class="d-flex gap-2"
+              hx-get="@Url.Action("Index", "Brands")"
+              hx-target="#brands-workspace-shell"
+              hx-swap="outerHTML"
+              hx-push-url="true">
+            <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("SearchBrandsPlaceholder")">
+            <input type="hidden" name="filter" value="@Model.Filter">
+            <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> @T.T("Search")</button>
+            <a asp-action="Index" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Brands")"
+               hx-target="#brands-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Reset")</a>
+        </form>
+
+        <a asp-action="Create" class="btn btn-primary"
+           hx-get="@Url.Action("Create", "Brands")"
            hx-target="#brands-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
-    </form>
-
-    <a asp-action="Create" class="btn btn-primary"
-       hx-get="@Url.Action("Create", "Brands")"
-       hx-target="#brands-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">
-        <i class="fa fa-plus"></i> New Brand
-    </a>
-</div>
-
-<div class="row g-3 mb-3">
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Unpublished</div>
-                <div class="display-6 fw-semibold">@Model.Summary.UnpublishedCount</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Missing Slug</div>
-                <div class="display-6 fw-semibold">@Model.Summary.MissingSlugCount</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Missing Logo</div>
-                <div class="display-6 fw-semibold">@Model.Summary.MissingLogoCount</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Total</div>
-                <div class="display-6 fw-semibold">@Model.Summary.TotalCount</div>
-            </div>
-        </div>
+           hx-push-url="true">
+            <i class="fa fa-plus"></i> @T.T("CreateBrand")
+        </a>
     </div>
 </div>
 
-<div class="card shadow-sm mb-3">
-    <div class="card-body">
-        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-            <div class="d-flex flex-wrap gap-2">
-                <a asp-action="Index" asp-route-query="@Model.Query" class="btn @(string.IsNullOrEmpty(Model.Filter) ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Brands", new { query = Model.Query })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">All</a>
-                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="unpublished" class="btn @(Model.Filter == "unpublished" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "unpublished" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Unpublished</a>
-                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-slug" class="btn @(Model.Filter == "missing-slug" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "missing-slug" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Missing Slug</a>
-                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-logo" class="btn @(Model.Filter == "missing-logo" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "missing-logo" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Missing Logo</a>
-            </div>
-        </div>
-    </div>
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Brands")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.TotalCount</div><div class="small text-muted mt-2">@T.T("BrandsOpsTotalNote")</div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Unpublished")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.UnpublishedCount</div><div class="small text-muted mt-2">@T.T("BrandsOpsUnpublishedNote")</div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("MissingSlug")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.MissingSlugCount</div><div class="small text-muted mt-2">@T.T("BrandsOpsMissingSlugNote")</div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("MissingLogo")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.MissingLogoCount</div><div class="small text-muted mt-2">@T.T("BrandsOpsMissingLogoNote")</div></div></div>
 </div>
 
-<div class="card shadow-sm mb-3">
-    <div class="card-header bg-light fw-semibold">Brand Operations Playbooks</div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Queue</th>
-                        <th>Why It Matters</th>
-                        <th>Operator Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var playbook in Model.Playbooks)
-                    {
-                        <tr>
-                            <td class="fw-semibold">@playbook.QueueLabel</td>
-                            <td>@playbook.WhyItMatters</td>
-                            <td>@playbook.OperatorAction</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="Index" asp-route-query="@Model.Query" class="btn @(string.IsNullOrEmpty(Model.Filter) ? "btn-primary" : "btn-outline-primary")"
+               hx-get="@Url.Action("Index", "Brands", new { query = Model.Query })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("All")</a>
+            <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="unpublished" class="btn @(Model.Filter == "unpublished" ? "btn-primary" : "btn-outline-primary")"
+               hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "unpublished" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Unpublished")</a>
+            <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-slug" class="btn @(Model.Filter == "missing-slug" ? "btn-primary" : "btn-outline-primary")"
+               hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "missing-slug" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MissingSlug")</a>
+            <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-logo" class="btn @(Model.Filter == "missing-logo" ? "btn-primary" : "btn-outline-primary")"
+               hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "missing-logo" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MissingLogo")</a>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("BrandOperationsPlaybooks")</h2>
+            <div class="d-grid gap-3">
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <div class="rounded border p-3 bg-light-subtle">
+                        <div class="fw-semibold">@playbook.QueueLabel</div>
+                        <div class="small text-muted mt-2">@playbook.WhyItMatters</div>
+                        <div class="small mt-2"><strong>@T.T("OperatorAction"):</strong> @playbook.OperatorAction</div>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>
@@ -114,12 +78,12 @@
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Slug</th>
-                <th>Published</th>
-                <th>Logo</th>
-                <th>Modified</th>
-                <th class="text-end" style="width:220px;">Actions</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("Slug")</th>
+                <th>@T.T("Published")</th>
+                <th>@T.T("Logo")</th>
+                <th>@T.T("Modified")</th>
+                <th class="text-end" style="width:220px;">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
@@ -133,21 +97,21 @@
                         <td>
                             @if (b.IsPublished)
                             {
-                                <span class="badge bg-success">Yes</span>
+                                <span class="badge bg-success">@T.T("Yes")</span>
                             }
                             else
                             {
-                                <span class="badge bg-outline-secondary border">No</span>
+                                <span class="badge bg-outline-secondary border">@T.T("No")</span>
                             }
                         </td>
                         <td>
                             @if (b.LogoMediaId != null)
                             {
-                                <span class="badge bg-success">Configured</span>
+                                <span class="badge bg-success">@T.T("Configured")</span>
                             }
                             else
                             {
-                                <span class="badge bg-warning text-dark">Missing</span>
+                                <span class="badge bg-warning text-dark">@T.T("Missing")</span>
                             }
                         </td>
                         <td>@b.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
@@ -157,7 +121,7 @@
                                hx-target="#brands-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
-                                <i class="fa fa-pen"></i> Edit
+                                <i class="fa fa-pen"></i> @T.T("Edit")
                             </a>
 
                             <button type="button"
@@ -171,7 +135,7 @@
                                     data-hx-target="#brands-workspace-shell"
                                     data-hx-swap="outerHTML"
                                     data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                                <i class="fa fa-trash"></i> Delete
+                                <i class="fa fa-trash"></i> @T.T("Delete")
                             </button>
                         </td>
                     </tr>
@@ -179,7 +143,7 @@
             }
             else
             {
-                <tr><td colspan="6" class="text-center text-muted">No brands.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted">@T.T("NoBrandsFound")</td></tr>
             }
         </tbody>
     </table>
@@ -196,7 +160,6 @@
        hx-swap="outerHTML"
        hx-push-url="true">
 </pager>
-
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 </div>

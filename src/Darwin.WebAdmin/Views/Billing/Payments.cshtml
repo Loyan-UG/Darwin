@@ -6,6 +6,7 @@
 }
 
 <div id="billing-payments-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <h1 class="mb-3">@T.T("Payments")</h1>
 
 <div class="card mb-3">
@@ -30,25 +31,25 @@
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("PublishableKey")</div>
-                    <div class="fw-semibold mt-1">@(Model.Stripe.PublishableKeyConfigured ? "Ready" : "Missing")</div>
+                    <div class="fw-semibold mt-1">@(Model.Stripe.PublishableKeyConfigured ? T.T("Ready") : T.T("Missing"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("SecretKey")</div>
-                    <div class="fw-semibold mt-1">@(Model.Stripe.SecretKeyConfigured ? "Ready" : "Missing")</div>
+                    <div class="fw-semibold mt-1">@(Model.Stripe.SecretKeyConfigured ? T.T("Ready") : T.T("Missing"))</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("WebhookSecret")</div>
-                    <div class="fw-semibold mt-1">@(Model.Stripe.WebhookSecretConfigured ? "Ready" : "Missing")</div>
+                    <div class="fw-semibold mt-1">@(Model.Stripe.WebhookSecretConfigured ? T.T("Ready") : T.T("Missing"))</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("MerchantIdentity")</div>
-                    <div class="fw-semibold mt-1">@(Model.Stripe.MerchantDisplayNameConfigured ? Model.Stripe.MerchantDisplayName : "Missing")</div>
+                    <div class="fw-semibold mt-1">@(Model.Stripe.MerchantDisplayNameConfigured ? Model.Stripe.MerchantDisplayName : T.T("Missing"))</div>
                 </div>
             </div>
         </div>
@@ -95,19 +96,17 @@
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("Issuer")</div>
-                    <div class="fw-semibold mt-1">@(Model.Tax.IssuerConfigured ? Model.Tax.InvoiceIssuerLegalName : "Missing")</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.IssuerConfigured ? Model.Tax.InvoiceIssuerLegalName : T.T("Missing"))</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("TaxId")</div>
-                    <div class="fw-semibold mt-1">@(Model.Tax.InvoiceIssuerTaxIdConfigured ? "Ready" : "Missing")</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.InvoiceIssuerTaxIdConfigured ? T.T("Ready") : T.T("Missing"))</div>
                 </div>
             </div>
         </div>
-        <div class="small text-muted mt-3">
-            This is a phase-1 compliance surface for VAT defaults and invoice issuer identity. It improves billing support visibility without claiming full tax-engine, reverse-charge automation, or e-invoicing completion.
-        </div>
+        <div class="small text-muted mt-3">@T.T("BillingTaxReadinessNote")</div>
     </div>
 </div>
 
@@ -124,43 +123,43 @@
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Active Subscriptions</div>
+                    <div class="text-muted small">@T.T("ActiveSubscriptions")</div>
                     <div class="fw-semibold mt-1">@Model.Webhooks.ActiveSubscriptionCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Pending</div>
+                    <div class="text-muted small">@T.T("Pending")</div>
                     <div class="fw-semibold mt-1">@Model.Webhooks.PendingDeliveryCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Failed</div>
+                    <div class="text-muted small">@T.T("Failed")</div>
                     <div class="fw-semibold mt-1">@Model.Webhooks.FailedDeliveryCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Succeeded</div>
+                    <div class="text-muted small">@T.T("Succeeded")</div>
                     <div class="fw-semibold mt-1">@Model.Webhooks.SucceededDeliveryCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Retry Pending</div>
+                    <div class="text-muted small">@T.T("RetryPending")</div>
                     <div class="fw-semibold mt-1">@Model.Webhooks.RetryPendingCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Payment Exceptions</div>
+                    <div class="text-muted small">@T.T("PaymentExceptions")</div>
                     <div class="fw-semibold mt-1">@Model.Webhooks.PaymentExceptionCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Dispute Signals</div>
+                    <div class="text-muted small">@T.T("DisputeSignals")</div>
                     <div class="fw-semibold mt-1">@Model.Webhooks.DisputeSignalCount</div>
                 </div>
             </div>
@@ -171,104 +170,102 @@
                class="btn btn-sm btn-outline-warning"
                hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
                hx-target="#billing-payments-workspace-shell"
-               hx-swap="outerHTML">Review Payment Exceptions</a>
+               hx-swap="outerHTML">@T.T("ReviewPaymentExceptions")</a>
             <a asp-action="Webhooks"
                asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
                class="btn btn-sm btn-outline-dark"
                hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
                hx-target="#billing-payments-workspace-shell"
-               hx-swap="outerHTML">Review Dispute Signals</a>
+               hx-swap="outerHTML">@T.T("ReviewDisputeSignals")</a>
         </div>
-        <div class="small text-muted mt-3">
-            This queue gives callback visibility for phase-1 payment operations. It is intentionally read-oriented and does not claim automated resend or reconciliation completion.
-        </div>
+        <div class="small text-muted mt-3">@T.T("BillingWebhookLifecycleNote")</div>
     </div>
 </div>
 
 <div class="row g-3 mb-3">
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Pending</div>
+            <div class="text-muted small">@T.T("Pending")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Failed</div>
+            <div class="text-muted small">@T.T("Failed")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.FailedCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Refunded</div>
+            <div class="text-muted small">@T.T("Refunded")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.RefundedCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Unlinked</div>
+            <div class="text-muted small">@T.T("Unlinked")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.UnlinkedCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Provider-linked</div>
+            <div class="text-muted small">@T.T("ProviderLinked")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.ProviderLinkedCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Stripe</div>
+            <div class="text-muted small">@T.T("Stripe")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.StripeCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Missing Provider Ref</div>
+            <div class="text-muted small">@T.T("MissingProviderRef")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingProviderRefCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Failed Stripe</div>
+            <div class="text-muted small">@T.T("FailedStripe")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.FailedStripeCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Needs Reconciliation</div>
+            <div class="text-muted small">@T.T("NeedsReconciliation")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.NeedsReconciliationCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Dispute Follow-up</div>
+            <div class="text-muted small">@T.T("DisputeFollowUp")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.DisputeFollowUpCount</div>
         </div>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Phase-1 Payment Support Playbooks</div>
+    <div class="card-header">@T.T("PaymentSupportPlaybooks")</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Queue</th>
-                        <th>Scope</th>
-                        <th>Operator Action</th>
-                        <th>Settings Dependency</th>
+                        <th>@T.T("Queue")</th>
+                        <th>@T.T("Scope")</th>
+                        <th>@T.T("OperatorAction")</th>
+                        <th>@T.T("SettingsDependency")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @foreach (var item in Model.Playbooks)
                 {
                     <tr>
-                        <td class="fw-semibold">@item.Title</td>
-                        <td>@item.ScopeNote</td>
-                        <td>@item.OperatorAction</td>
-                        <td>@item.SettingsDependency</td>
+                        <td class="fw-semibold">@T.T(item.Title)</td>
+                        <td>@T.T(item.ScopeNote)</td>
+                        <td>@T.T(item.OperatorAction)</td>
+                        <td>@T.T(item.SettingsDependency)</td>
                     </tr>
                 }
                 </tbody>
@@ -285,21 +282,21 @@
           hx-target="#billing-payments-workspace-shell"
           hx-swap="outerHTML">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search payments">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchPaymentsPlaceholder")">
         <select name="queue" class="form-select">
-            <option value="">All queues</option>
-            <option value="@PaymentQueueFilter.Pending" selected="@(Model.QueueFilter == PaymentQueueFilter.Pending)">Pending</option>
-            <option value="@PaymentQueueFilter.Failed" selected="@(Model.QueueFilter == PaymentQueueFilter.Failed)">Failed</option>
-            <option value="@PaymentQueueFilter.Refunded" selected="@(Model.QueueFilter == PaymentQueueFilter.Refunded)">Refunded</option>
-            <option value="@PaymentQueueFilter.Unlinked" selected="@(Model.QueueFilter == PaymentQueueFilter.Unlinked)">Unlinked</option>
-            <option value="@PaymentQueueFilter.ProviderLinked" selected="@(Model.QueueFilter == PaymentQueueFilter.ProviderLinked)">Provider-linked</option>
-            <option value="@PaymentQueueFilter.Stripe" selected="@(Model.QueueFilter == PaymentQueueFilter.Stripe)">Stripe</option>
-            <option value="@PaymentQueueFilter.MissingProviderRef" selected="@(Model.QueueFilter == PaymentQueueFilter.MissingProviderRef)">Missing Provider Ref</option>
-            <option value="@PaymentQueueFilter.FailedStripe" selected="@(Model.QueueFilter == PaymentQueueFilter.FailedStripe)">Failed Stripe</option>
-            <option value="@PaymentQueueFilter.NeedsReconciliation" selected="@(Model.QueueFilter == PaymentQueueFilter.NeedsReconciliation)">Needs Reconciliation</option>
-            <option value="@PaymentQueueFilter.DisputeFollowUp" selected="@(Model.QueueFilter == PaymentQueueFilter.DisputeFollowUp)">Dispute Follow-up</option>
+            <option value="">@T.T("AllQueues")</option>
+            <option value="@PaymentQueueFilter.Pending" selected="@(Model.QueueFilter == PaymentQueueFilter.Pending)">@T.T("Pending")</option>
+            <option value="@PaymentQueueFilter.Failed" selected="@(Model.QueueFilter == PaymentQueueFilter.Failed)">@T.T("Failed")</option>
+            <option value="@PaymentQueueFilter.Refunded" selected="@(Model.QueueFilter == PaymentQueueFilter.Refunded)">@T.T("Refunded")</option>
+            <option value="@PaymentQueueFilter.Unlinked" selected="@(Model.QueueFilter == PaymentQueueFilter.Unlinked)">@T.T("Unlinked")</option>
+            <option value="@PaymentQueueFilter.ProviderLinked" selected="@(Model.QueueFilter == PaymentQueueFilter.ProviderLinked)">@T.T("ProviderLinked")</option>
+            <option value="@PaymentQueueFilter.Stripe" selected="@(Model.QueueFilter == PaymentQueueFilter.Stripe)">@T.T("Stripe")</option>
+            <option value="@PaymentQueueFilter.MissingProviderRef" selected="@(Model.QueueFilter == PaymentQueueFilter.MissingProviderRef)">@T.T("MissingProviderRef")</option>
+            <option value="@PaymentQueueFilter.FailedStripe" selected="@(Model.QueueFilter == PaymentQueueFilter.FailedStripe)">@T.T("FailedStripe")</option>
+            <option value="@PaymentQueueFilter.NeedsReconciliation" selected="@(Model.QueueFilter == PaymentQueueFilter.NeedsReconciliation)">@T.T("NeedsReconciliation")</option>
+            <option value="@PaymentQueueFilter.DisputeFollowUp" selected="@(Model.QueueFilter == PaymentQueueFilter.DisputeFollowUp)">@T.T("DisputeFollowUp")</option>
         </select>
-        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> @T.T("Filter")</button>
         <a asp-action="Payments"
            asp-route-businessId="@Model.BusinessId"
            class="btn btn-outline-secondary"
@@ -313,7 +310,7 @@
            hx-get="@Url.Action("Webhooks", "Billing")"
            hx-target="#billing-payments-workspace-shell"
            hx-swap="outerHTML">
-            <i class="fa fa-broadcast-tower"></i> Webhook Queue
+            <i class="fa fa-broadcast-tower"></i> @T.T("WebhookQueue")
         </a>
         <a asp-action="Refunds"
            asp-route-businessId="@Model.BusinessId"
@@ -321,7 +318,7 @@
            hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId })"
            hx-target="#billing-payments-workspace-shell"
            hx-swap="outerHTML">
-            <i class="fa fa-rotate-left"></i> Refund Queue
+            <i class="fa fa-rotate-left"></i> @T.T("RefundQueueTitle")
         </a>
         <a asp-action="CreatePayment"
            asp-route-businessId="@Model.BusinessId"
@@ -329,18 +326,18 @@
            hx-get="@Url.Action("CreatePayment", "Billing", new { businessId = Model.BusinessId })"
            hx-target="#billing-payments-workspace-shell"
            hx-swap="outerHTML">
-            <i class="fa fa-plus"></i> Record Payment
+            <i class="fa fa-plus"></i> @T.T("RecordPayment")
         </a>
     </div>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>Provider</th><th>Order</th><th>Invoice</th><th>Amount</th><th>Customer</th><th>Timeline</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>@T.T("Provider")</th><th>@T.T("Order")</th><th>@T.T("Invoice")</th><th>@T.T("Amount")</th><th>@T.T("Customer")</th><th>@T.T("Timeline")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="7" class="text-center text-muted">No payments found.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">@T.T("NoPaymentsFound")</td></tr>
         }
         else
         {
@@ -355,19 +352,19 @@
                         <span class="badge text-bg-light mt-1">@item.Status</span>
                         @if (item.IsStripe)
                         {
-                            <div><span class="badge text-bg-info mt-1">Stripe</span></div>
+                            <div><span class="badge text-bg-info mt-1">@T.T("Stripe")</span></div>
                         }
                         @if (item.NeedsReconciliation)
                         {
-                            <div><span class="badge text-bg-warning mt-1">Reconciliation</span></div>
+                            <div><span class="badge text-bg-warning mt-1">@T.T("Reconciliation")</span></div>
                         }
                         @if (item.NeedsDisputeFollowUp)
                         {
-                            <div><span class="badge text-bg-dark mt-1">Dispute follow-up</span></div>
+                            <div><span class="badge text-bg-dark mt-1">@T.T("DisputeFollowUp")</span></div>
                         }
                         @if (item.NeedsSupportAttention)
                         {
-                            <div><span class="badge text-bg-secondary mt-1">Needs support</span></div>
+                            <div><span class="badge text-bg-secondary mt-1">@T.T("NeedsSupport")</span></div>
                         }
                     </td>
                     <td>
@@ -407,10 +404,10 @@
                         <div>@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</div>
                         @if (item.RefundedAmountMinor > 0)
                         {
-                            <div class="small text-warning">Refunded: @item.Currency @((item.RefundedAmountMinor / 100M).ToString("0.00"))</div>
-                            <div class="small text-muted">@(item.NetCapturedAmountMinor == 0 ? "Fully refunded" : "Partially refunded")</div>
+                            <div class="small text-warning">@T.T("Refunded"): @item.Currency @((item.RefundedAmountMinor / 100M).ToString("0.00"))</div>
+                            <div class="small text-muted">@(item.NetCapturedAmountMinor == 0 ? T.T("FullyRefunded") : T.T("PartiallyRefunded"))</div>
                         }
-                        <div class="small text-muted">Net: @item.Currency @((item.NetCapturedAmountMinor / 100M).ToString("0.00"))</div>
+                        <div class="small text-muted">@T.T("Net"): @item.Currency @((item.NetCapturedAmountMinor / 100M).ToString("0.00"))</div>
                     </td>
                     <td>
                         @if (item.CustomerId.HasValue)
@@ -439,7 +436,7 @@
                                    hx-get="@Url.Action("Edit", "Users", new { id = item.UserId.Value })"
                                    hx-target="#billing-payments-workspace-shell"
                                    hx-swap="outerHTML">
-                                    @(string.IsNullOrWhiteSpace(item.UserDisplayName) ? "Open linked user" : item.UserDisplayName)
+                                    @(string.IsNullOrWhiteSpace(item.UserDisplayName) ? T.T("OpenLinkedUser") : item.UserDisplayName)
                                 </a>
                             </div>
                         }
@@ -449,19 +446,19 @@
                         }
                     </td>
                     <td>
-                        <div class="small text-muted">Created @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="small text-muted">Opened @item.OpenAgeHours h</div>
+                        <div class="small text-muted">@T.T("Created") @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="small text-muted">@T.T("Opened") @item.OpenAgeHours h</div>
                         @if (item.PaidAtUtc.HasValue)
                         {
-                            <div>Paid @item.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div>@T.T("Paid") @item.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                         }
                         else
                         {
-                            <div class="text-muted">Not paid yet</div>
+                            <div class="text-muted">@T.T("NotPaidYet")</div>
                         }
                         @if (item.LastFinancialEventAtUtc.HasValue)
                         {
-                            <div class="small text-muted">Last event @item.LastFinancialEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div class="small text-muted">@T.T("LastEvent") @item.LastFinancialEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                         }
                         @if (!string.IsNullOrWhiteSpace(item.FailureReason))
                         {
@@ -474,7 +471,7 @@
                            class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditPayment", "Billing", new { id = item.Id })"
                            hx-target="#billing-payments-workspace-shell"
-                           hx-swap="outerHTML">Edit</a>
+                           hx-swap="outerHTML">@T.T("Edit")</a>
                         @if (item.NeedsReconciliation)
                         {
                             <a asp-action="Payments"
@@ -483,7 +480,7 @@
                                class="btn btn-sm btn-outline-warning"
                                hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })"
                                hx-target="#billing-payments-workspace-shell"
-                               hx-swap="outerHTML">Reconciliation Queue</a>
+                               hx-swap="outerHTML">@T.T("ReconciliationQueue")</a>
                         }
                         @if (item.IsStripe && (item.NeedsReconciliation || missingProviderReference))
                         {
@@ -492,7 +489,7 @@
                                class="btn btn-sm btn-outline-warning"
                                hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
                                hx-target="#billing-payments-workspace-shell"
-                               hx-swap="outerHTML">Webhook Exceptions</a>
+                               hx-swap="outerHTML">@T.T("WebhookExceptions")</a>
                         }
                         @if (item.IsStripe && item.NeedsDisputeFollowUp)
                         {
@@ -502,41 +499,41 @@
                                class="btn btn-sm btn-outline-dark"
                                hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })"
                                hx-target="#billing-payments-workspace-shell"
-                               hx-swap="outerHTML">Dispute Queue</a>
+                               hx-swap="outerHTML">@T.T("DisputeQueue")</a>
                             <a asp-action="Webhooks"
                                asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
                                class="btn btn-sm btn-outline-dark"
                                hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
                                hx-target="#billing-payments-workspace-shell"
-                               hx-swap="outerHTML">Dispute Signals</a>
+                               hx-swap="outerHTML">@T.T("DisputeSignals")</a>
                         }
                         @if (item.OrderId.HasValue)
                         {
                             <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@item.OrderId.Value" asp-route-paymentId="@item.Id" class="btn btn-sm btn-outline-danger"
                                hx-get="@Url.Action("AddRefund", "Orders", new { orderId = item.OrderId.Value, paymentId = item.Id })"
                                hx-target="#billing-payments-workspace-shell"
-                               hx-swap="outerHTML">Refund</a>
+                               hx-swap="outerHTML">@T.T("Refund")</a>
                         }
                         @if (item.InvoiceId.HasValue)
                         {
                             <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@item.InvoiceId.Value" class="btn btn-sm btn-outline-primary"
                                hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.InvoiceId.Value })"
                                hx-target="#billing-payments-workspace-shell"
-                               hx-swap="outerHTML">Invoice</a>
+                               hx-swap="outerHTML">@T.T("Invoice")</a>
                         }
                         @if (item.OrderId.HasValue)
                         {
                             <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-info"
                                hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })"
                                hx-target="#billing-payments-workspace-shell"
-                               hx-swap="outerHTML">Order</a>
+                               hx-swap="outerHTML">@T.T("Order")</a>
                         }
                         @if (item.CustomerId.HasValue)
                         {
                             <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" asp-fragment="customer-interactions-section" class="btn btn-sm btn-outline-success"
                                hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })"
                                hx-target="#billing-payments-workspace-shell"
-                               hx-swap="outerHTML">Customer</a>
+                               hx-swap="outerHTML">@T.T("Customer")</a>
                         }
                     </td>
                 </tr>
@@ -548,25 +545,25 @@
 
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Pending" class="btn btn-sm btn-outline-warning"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Pending })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Pending</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Pending })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("Pending")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Failed" class="btn btn-sm btn-outline-danger"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Failed })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Failed</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Failed })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("Failed")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Refunded" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Refunded })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Refunded</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Refunded })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("Refunded")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Unlinked" class="btn btn-sm btn-outline-dark"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Unlinked })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Unlinked</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Unlinked })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("Unlinked")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.ProviderLinked" class="btn btn-sm btn-outline-info"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.ProviderLinked })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Provider-linked</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.ProviderLinked })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("ProviderLinked")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Stripe" class="btn btn-sm btn-outline-primary"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Stripe })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Stripe</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Stripe })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("Stripe")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.MissingProviderRef" class="btn btn-sm btn-outline-warning"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.MissingProviderRef })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Missing Provider Ref</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.MissingProviderRef })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("MissingProviderRef")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.FailedStripe" class="btn btn-sm btn-outline-danger"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.FailedStripe })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Failed Stripe</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.FailedStripe })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("FailedStripe")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.NeedsReconciliation" class="btn btn-sm btn-outline-warning"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Needs Reconciliation</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("NeedsReconciliation")</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.DisputeFollowUp" class="btn btn-sm btn-outline-dark"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Dispute Follow-up</a>
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">@T.T("DisputeFollowUp")</a>
 </div>
 
 <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML"></pager>

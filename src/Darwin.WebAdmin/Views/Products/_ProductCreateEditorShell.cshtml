@@ -1,10 +1,21 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.ProductCreateVm
 @{
-    ViewData["Title"] = "Create Product";
+    ViewData["Title"] = T.T("CreateProduct");
 }
 
 <div id="product-editor-shell">
-    <h2>Create Product</h2>
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+        <div>
+            <h1 class="m-0">@T.T("CreateProduct")</h1>
+            <div class="small text-muted mt-1">@T.T("ProductCreateIntro")</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="badge text-bg-light border">@T.T("Translations"): @Model.Translations.Count</div>
+            <div class="badge text-bg-light border">@T.T("Variants"): @Model.Variants.Count</div>
+        </div>
+    </div>
 
     <form asp-action="Create"
           method="post"
@@ -34,7 +45,7 @@
                 const hidden = el.parentElement.querySelector('textarea');
                 const quill = new Quill(el, {
                     theme: 'snow',
-                    placeholder: 'Write product description...',
+                    placeholder: '@T.T("ProductDescriptionPlaceholder")',
                     modules: {
                         toolbar: [
                             [{ header: [1, 2, 3, false] }],

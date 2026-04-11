@@ -1,10 +1,16 @@
 @model Darwin.WebAdmin.ViewModels.CMS.PageEditVm
 @{
-    ViewData["Title"] = "Edit Page";
+    ViewData["Title"] = T.T("PageEditTitle");
 }
 
 <div id="page-editor-shell">
-    <h2>Edit Page</h2>
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
+        <div>
+            <h2 class="mb-1">@T.T("PageEditTitle")</h2>
+            <p class="text-muted mb-0">@T.T("PageEditIntro")</p>
+        </div>
+    </div>
 
     <form asp-action="Edit"
           method="post"

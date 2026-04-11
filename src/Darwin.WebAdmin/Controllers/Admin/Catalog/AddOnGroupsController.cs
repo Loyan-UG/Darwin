@@ -1,4 +1,4 @@
-﻿using Darwin.Application.Catalog.Commands;
+using Darwin.Application.Catalog.Commands;
 // Application layer
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
@@ -282,7 +282,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             }
             catch (DbUpdateConcurrencyException)
             {
-                ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user.");
+                ModelState.AddModelError(string.Empty, T("AddOnGroupConcurrencyConflict"));
                 return RenderEditEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
@@ -535,7 +535,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     .Select(v => new SelectableItemVm
                     {
                         Id = v.Id,
-                        Display = $"{v.Sku} — {v.ProductName ?? "(no name)"}",
+                        Display = $"{v.Sku} � {v.ProductName ?? "(no name)"}",
                         Selected = attachedSet.Contains(v.Id) /* isSelected: handled client-side via hidden inputs to persist across pages */
                     }).ToList(),
                 SelectedVariantIds = attached.ToList()
@@ -651,39 +651,44 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static IEnumerable<SelectListItem> BuildFilterItems(AddOnGroupQueueFilter selected)
+        private IEnumerable<SelectListItem> BuildFilterItems(AddOnGroupQueueFilter selected)
         {
-            yield return new SelectListItem("All groups", AddOnGroupQueueFilter.All.ToString(), selected == AddOnGroupQueueFilter.All);
-            yield return new SelectListItem("Inactive", AddOnGroupQueueFilter.Inactive.ToString(), selected == AddOnGroupQueueFilter.Inactive);
-            yield return new SelectListItem("Global", AddOnGroupQueueFilter.Global.ToString(), selected == AddOnGroupQueueFilter.Global);
-            yield return new SelectListItem("Unattached", AddOnGroupQueueFilter.Unattached.ToString(), selected == AddOnGroupQueueFilter.Unattached);
-            yield return new SelectListItem("Variant/Product linked", AddOnGroupQueueFilter.VariantLinked.ToString(), selected == AddOnGroupQueueFilter.VariantLinked);
+            yield return new SelectListItem(T("AddOnAllGroups"), AddOnGroupQueueFilter.All.ToString(), selected == AddOnGroupQueueFilter.All);
+            yield return new SelectListItem(T("Inactive"), AddOnGroupQueueFilter.Inactive.ToString(), selected == AddOnGroupQueueFilter.Inactive);
+            yield return new SelectListItem(T("Global"), AddOnGroupQueueFilter.Global.ToString(), selected == AddOnGroupQueueFilter.Global);
+            yield return new SelectListItem(T("Unattached"), AddOnGroupQueueFilter.Unattached.ToString(), selected == AddOnGroupQueueFilter.Unattached);
+            yield return new SelectListItem(T("AddOnVariantProductLinked"), AddOnGroupQueueFilter.VariantLinked.ToString(), selected == AddOnGroupQueueFilter.VariantLinked);
         }
 
-        private static List<AddOnGroupPlaybookVm> BuildPlaybooks()
+        private List<AddOnGroupPlaybookVm> BuildPlaybooks()
         {
             return
             [
                 new()
                 {
-                    QueueLabel = "Unattached groups",
-                    WhyItMatters = "Configured add-on groups with no assignments cannot affect product configuration in checkout or ordering flows.",
-                    OperatorAction = "Attach the group to variants, products, categories, or brands depending on the intended scope."
+                    QueueLabel = T("AddOnPlaybookUnattachedTitle"),
+                    WhyItMatters = T("AddOnPlaybookUnattachedScope"),
+                    OperatorAction = T("AddOnPlaybookUnattachedAction")
                 },
                 new()
                 {
-                    QueueLabel = "Inactive groups",
-                    WhyItMatters = "Inactive groups stay visible in admin but should not surprise operators expecting them in live product configuration.",
-                    OperatorAction = "Review whether the group is intentionally retired or should be reactivated before business-side menu operations."
+                    QueueLabel = T("AddOnPlaybookInactiveTitle"),
+                    WhyItMatters = T("AddOnPlaybookInactiveScopeLive"),
+                    OperatorAction = T("AddOnPlaybookInactiveActionLive")
                 },
                 new()
                 {
-                    QueueLabel = "Global groups",
-                    WhyItMatters = "Global add-on groups can affect broad portions of the catalog and are higher-risk configuration changes.",
-                    OperatorAction = "Confirm the scope is really global and review downstream product/category/brand expectations before editing."
+                    QueueLabel = T("AddOnPlaybookGlobalTitle"),
+                    WhyItMatters = T("AddOnPlaybookGlobalScope"),
+                    OperatorAction = T("AddOnPlaybookGlobalAction")
                 }
             ];
         }
     }
 }
+
+
+
+
+
 

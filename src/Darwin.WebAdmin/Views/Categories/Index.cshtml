@@ -1,6 +1,6 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.CategoriesIndexVm
 @{
-    ViewData["Title"] = "Categories";
+    ViewData["Title"] = T.T("Categories");
     var currentPage = Model.Page;
     var currentPageSize = Model.PageSize;
     var total = Model.Total;
@@ -9,111 +9,66 @@
 }
 
 <div id="categories-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
-    <h2 class="m-0">Categories</h2>
+    <div>
+        <h1 class="m-0">@T.T("Categories")</h1>
+        <div class="small text-muted mt-1">@T.T("CategoriesWorkspaceIntro")</div>
+    </div>
     <div class="d-flex flex-wrap gap-2">
         <form asp-action="Index" method="get" class="d-flex gap-2"
               hx-get="@Url.Action("Index", "Categories")"
               hx-target="#categories-workspace-shell"
               hx-swap="outerHTML"
               hx-push-url="true">
-            <input type="text" name="query" value="@query" class="form-control" placeholder="Search..." />
+            <input type="text" name="query" value="@query" class="form-control" placeholder="@T.T("SearchCategoriesPlaceholder")" />
             <input type="hidden" name="filter" value="@filter" />
-            <button class="btn btn-outline-secondary" type="submit">
-                <i class="fa fa-search"></i> Search
-            </button>
+            <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> @T.T("Search")</button>
             <a asp-action="Index" class="btn btn-outline-secondary"
                hx-get="@Url.Action("Index", "Categories")"
                hx-target="#categories-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">Reset</a>
+               hx-push-url="true">@T.T("Reset")</a>
         </form>
         <a asp-action="Create" class="btn btn-primary"
            hx-get="@Url.Action("Create", "Categories")"
            hx-target="#categories-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Create Category</a>
+           hx-push-url="true">@T.T("CreateCategory")</a>
     </div>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Inactive</div>
-                <div class="display-6 fw-semibold">@Model.Summary.InactiveCount</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Unpublished</div>
-                <div class="display-6 fw-semibold">@Model.Summary.UnpublishedCount</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Root</div>
-                <div class="display-6 fw-semibold">@Model.Summary.RootCount</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Child</div>
-                <div class="display-6 fw-semibold">@Model.Summary.ChildCount</div>
-            </div>
-        </div>
-    </div>
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Categories")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.TotalCount</div><div class="small text-muted mt-2">@T.T("CategoriesOpsTotalNote")</div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Inactive")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.InactiveCount</div><div class="small text-muted mt-2">@T.T("CategoriesOpsInactiveNote")</div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Unpublished")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.UnpublishedCount</div><div class="small text-muted mt-2">@T.T("CategoriesOpsUnpublishedNote")</div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("ChildCategories")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.ChildCount</div><div class="small text-muted mt-2">@T.T("CategoriesOpsChildNote")</div></div></div>
 </div>
 
-<div class="card shadow-sm mb-3">
-    <div class="card-body">
-        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-            <div class="d-flex flex-wrap gap-2">
-                <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Categories", new { query })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">All</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="inactive" class="btn @(filter == "inactive" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Categories", new { query, filter = "inactive" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Inactive</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="unpublished" class="btn @(filter == "unpublished" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Categories", new { query, filter = "unpublished" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Unpublished</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="root" class="btn @(filter == "root" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Categories", new { query, filter = "root" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Root</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="child" class="btn @(filter == "child" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Categories", new { query, filter = "child" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Child</a>
-            </div>
-            <div class="text-muted small">Total categories: @Model.Summary.TotalCount</div>
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("All")</a>
+            <a asp-action="Index" asp-route-query="@query" asp-route-filter="inactive" class="btn @(filter == "inactive" ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query, filter = "inactive" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Inactive")</a>
+            <a asp-action="Index" asp-route-query="@query" asp-route-filter="unpublished" class="btn @(filter == "unpublished" ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query, filter = "unpublished" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Unpublished")</a>
+            <a asp-action="Index" asp-route-query="@query" asp-route-filter="root" class="btn @(filter == "root" ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query, filter = "root" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("RootCategories")</a>
+            <a asp-action="Index" asp-route-query="@query" asp-route-filter="child" class="btn @(filter == "child" ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query, filter = "child" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("ChildCategories")</a>
         </div>
     </div>
-</div>
-
-<div class="card shadow-sm mb-3">
-    <div class="card-header bg-light fw-semibold">Category Operations Playbooks</div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Queue</th>
-                        <th>Why It Matters</th>
-                        <th>Operator Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var playbook in Model.Playbooks)
-                    {
-                        <tr>
-                            <td class="fw-semibold">@playbook.QueueLabel</td>
-                            <td>@playbook.WhyItMatters</td>
-                            <td>@playbook.OperatorAction</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("CategoryOperationsPlaybooks")</h2>
+            <div class="d-grid gap-3">
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <div class="rounded border p-3 bg-light-subtle">
+                        <div class="fw-semibold">@playbook.QueueLabel</div>
+                        <div class="small text-muted mt-2">@playbook.WhyItMatters</div>
+                        <div class="small mt-2"><strong>@T.T("OperatorAction"):</strong> @playbook.OperatorAction</div>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>
@@ -124,19 +79,19 @@
             <table class="table align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Name (de-DE)</th>
-                        <th class="text-center">Active</th>
-                        <th class="text-center">Published</th>
-                        <th class="text-center">Sort</th>
-                        <th>Modified</th>
-                        <th class="text-end">Actions</th>
+                        <th>@T.T("CategoryNameDefaultCulture")</th>
+                        <th class="text-center">@T.T("Active")</th>
+                        <th class="text-center">@T.T("Published")</th>
+                        <th class="text-center">@T.T("SortOrder")</th>
+                        <th>@T.T("Modified")</th>
+                        <th class="text-end">@T.T("Actions")</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">No categories found.</td>
+                            <td colspan="6" class="text-center text-muted py-4">@T.T("NoCategoriesFound")</td>
                         </tr>
                     }
                     else
@@ -146,29 +101,10 @@
                             <tr>
                                 <td>
                                     <div class="fw-semibold">@(string.IsNullOrWhiteSpace(c.Name) ? "-" : c.Name)</div>
-                                    <div class="small text-muted">@(c.ParentId == null ? "Root category" : "Child category")</div>
+                                    <div class="small text-muted">@(c.ParentId == null ? T.T("RootCategory") : T.T("ChildCategory"))</div>
                                 </td>
-                                <td class="text-center">
-                                    @if (c.IsActive)
-                                    {
-                                        <span class="badge bg-success">Yes</span>
-                                    }
-                                    else
-                                    {
-
-                                        <span class="badge bg-outline-secondary border">No</span>
-                                    }
-                                </td>
-                                <td class="text-center">
-                                    @if (c.IsPublished)
-                                    {
-                                        <span class="badge bg-success">Yes</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-outline-secondary border">No</span>
-                                    }
-                                </td>
+                                <td class="text-center">@if (c.IsActive) { <span class="badge bg-success">@T.T("Yes")</span> } else { <span class="badge bg-outline-secondary border">@T.T("No")</span> }</td>
+                                <td class="text-center">@if (c.IsPublished) { <span class="badge bg-success">@T.T("Yes")</span> } else { <span class="badge bg-outline-secondary border">@T.T("No")</span> }</td>
                                 <td class="text-center">@c.SortOrder</td>
                                 <td class="text-nowrap text-muted small">@c.ModifiedAtUtc.ToString("u")</td>
                                 <td class="text-end">
@@ -176,30 +112,14 @@
                                        hx-get="@Url.Action("Edit", "Categories", new { id = c.Id })"
                                        hx-target="#categories-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
-@*                                     <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Delete this category?');">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@c.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="fas fa-trash-alt"></i> Delete
-                                        </button>
-                                    </form> *@
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-danger ms-1"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#confirmDeleteModal"
-                                            data-action="@Url.Action("Delete", "Categories")"
-                                            data-id="@c.Id"
+                                       hx-push-url="true"><i class="fas fa-edit"></i> @T.T("Edit")</a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                                            data-bs-toggle="modal" data-bs-target="#confirmDeleteModal"
+                                            data-action="@Url.Action("Delete", "Categories")" data-id="@c.Id"
                                             data-rowversion="@Convert.ToBase64String(c.RowVersion)"
                                             data-name="@(string.IsNullOrWhiteSpace(c.Name) ? c.Id.ToString() : c.Name)"
-                                            data-hx-target="#categories-workspace-shell"
-                                            data-hx-swap="outerHTML"
-                                            data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                                        <i class="fas fa-trash-alt"></i> Delete
-                                    </button>
-
+                                            data-hx-target="#categories-workspace-shell" data-hx-swap="outerHTML"
+                                            data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');"><i class="fas fa-trash-alt"></i> @T.T("Delete")</button>
                                 </td>
                             </tr>
                         }
@@ -208,17 +128,7 @@
             </table>
         </div>
 
-        <pager page="@currentPage"
-               page-size="@currentPageSize"
-               total="@total"
-               asp-controller="Categories"
-               asp-action="Index"
-               asp-route-query="@query"
-               asp-route-filter="@filter"
-               hx-target="#categories-workspace-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true"></pager>
-
+        <pager page="@currentPage" page-size="@currentPageSize" total="@total" asp-controller="Categories" asp-action="Index" asp-route-query="@query" asp-route-filter="@filter" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
         <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
     </div>
 </div>

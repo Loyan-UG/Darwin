@@ -27,17 +27,17 @@
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-security">@T.T("Security")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-mobile">@T.T("Mobile")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-business-app">@T.T("BusinessApp")</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-payments">Payments</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-payments">@T.T("Payments")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-tax">@T.T("TaxAndInvoicing")</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-shipping">Shipping</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-shipping">@T.T("Shipping")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-retention">@T.T("Operational")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-measurement">@T.T("Units")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-seo">@T.T("Seo")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-analytics">@T.T("Analytics")</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-whatsapp">WhatsApp</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-whatsapp">@T.T("WhatsApp")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-webauthn">@T.T("WebAuthn")</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-smtp">SMTP</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-sms">SMS</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-smtp">@T.T("SMTP")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-sms">@T.T("SMS")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-admin-routing">@T.T("AdminAlerts")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-communications-policy">@T.T("CommunicationPolicy")</a>
         </div>
@@ -47,28 +47,28 @@
         <div class="card-header">@T.T("SettingsOwnershipMatrix")</div>
         <div class="card-body">
             <div class="small text-muted mb-3">
-                Use site settings only for platform-wide defaults, provider credentials, and shared policy. Business-specific branding, sender identity, local defaults, and communication enablement belong in business setup.
+                @T.T("SiteSettingsOwnershipIntro")
             </div>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Area</th>
-                            <th>Owned Here</th>
-                            <th>Business Scope</th>
-                            <th>Operator Handoff</th>
+                            <th>@T.T("Area")</th>
+                            <th>@T.T("OwnedHere")</th>
+                            <th>@T.T("BusinessScope")</th>
+                            <th>@T.T("OperatorHandoff")</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="fw-semibold">Localization defaults</td>
+                            <td class="fw-semibold">@T.T("SiteSettingsLocalizationDefaultsTitle")</td>
                             <td>
-                                <span class="badge bg-primary-subtle text-primary-emphasis">Global owner</span>
-                                <div class="mt-2">Fallback culture, currency, time zone, supported cultures</div>
+                                <span class="badge bg-primary-subtle text-primary-emphasis">@T.T("GlobalOwner")</span>
+                                <div class="mt-2">@T.T("SiteSettingsLocalizationDefaultsOwned")</div>
                             </td>
-                            <td>Per-business culture, currency, and time zone overrides</td>
+                            <td>@T.T("SiteSettingsLocalizationDefaultsBusiness")</td>
                             <td>
-                                <div class="small text-muted mb-2">Adjust final business defaults from business setup after changing platform fallbacks.</div>
+                                <div class="small text-muted mb-2">@T.T("SiteSettingsLocalizationDefaultsAction")</div>
                                 <div class="d-flex flex-wrap gap-2">
                                     <a asp-controller="Businesses"
                                        asp-action="Index"
@@ -76,26 +76,26 @@
                                        hx-get="@Url.Action("Index", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Business Setup Queue</a>
+                                       hx-push-url="true">@T.T("BusinessSetupQueue")</a>
                                     <a asp-controller="Businesses"
                                        asp-action="SupportQueue"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("SupportQueue", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Needs Attention</a>
+                                       hx-push-url="true">@T.T("NeedsAttention")</a>
                                 </div>
                             </td>
                         </tr>
                         <tr>
-                            <td class="fw-semibold">Transactional communication policy</td>
+                            <td class="fw-semibold">@T.T("SiteSettingsCommunicationPolicyTitle")</td>
                             <td>
-                                <span class="badge bg-primary-subtle text-primary-emphasis">Global owner</span>
-                                <div class="mt-2">SMTP/SMS/WhatsApp providers, admin routing, subject/body templates, test targets</div>
+                                <span class="badge bg-primary-subtle text-primary-emphasis">@T.T("GlobalOwner")</span>
+                                <div class="mt-2">@T.T("SiteSettingsCommunicationPolicyOwned")</div>
                             </td>
-                            <td>Sender name, reply-to, support email, channel enablement flags</td>
+                            <td>@T.T("SiteSettingsCommunicationPolicyBusiness")</td>
                             <td>
-                                <div class="small text-muted mb-2">Use Business Setup and Business Communications for business-level readiness and flow support.</div>
+                                <div class="small text-muted mb-2">@T.T("SiteSettingsCommunicationPolicyAction")</div>
                                 <div class="d-flex flex-wrap gap-2">
                                     <a asp-controller="Businesses"
                                        asp-action="SupportQueue"
@@ -103,26 +103,26 @@
                                        hx-get="@Url.Action("SupportQueue", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Business Support</a>
+                                       hx-push-url="true">@T.T("BusinessSupport")</a>
                                     <a asp-controller="BusinessCommunications"
                                        asp-action="Index"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("Index", "BusinessCommunications")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Communication Ops</a>
+                                       hx-push-url="true">@T.T("CommunicationOps")</a>
                                 </div>
                             </td>
                         </tr>
                         <tr>
-                            <td class="fw-semibold">Payments and shipping</td>
+                            <td class="fw-semibold">@T.T("SiteSettingsPaymentsShippingTitle")</td>
                             <td>
-                                <span class="badge bg-primary-subtle text-primary-emphasis">Global owner</span>
-                                <div class="mt-2">Stripe and DHL credentials, webhook/carrier thresholds, VAT and issuer defaults</div>
+                                <span class="badge bg-primary-subtle text-primary-emphasis">@T.T("GlobalOwner")</span>
+                                <div class="mt-2">@T.T("SiteSettingsPaymentsShippingOwned")</div>
                             </td>
-                            <td>Subscription plan choice, business-facing billing state, business communication around those flows</td>
+                            <td>@T.T("SiteSettingsPaymentsShippingBusiness")</td>
                             <td>
-                                <div class="small text-muted mb-2">Use business subscription/support surfaces for tenant-specific triage after platform credentials are ready.</div>
+                                <div class="small text-muted mb-2">@T.T("SiteSettingsPaymentsShippingAction")</div>
                                 <div class="d-flex flex-wrap gap-2">
                                     <a asp-controller="Billing"
                                        asp-action="Payments"
@@ -130,26 +130,26 @@
                                        hx-get="@Url.Action("Payments", "Billing")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Payment Ops</a>
+                                       hx-push-url="true">@T.T("PaymentOps")</a>
                                     <a asp-controller="Orders"
                                        asp-action="ShipmentsQueue"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("ShipmentsQueue", "Orders")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Shipment Ops</a>
+                                       hx-push-url="true">@T.T("ShipmentOps")</a>
                                 </div>
                             </td>
                         </tr>
                         <tr>
-                            <td class="fw-semibold">Business branding and sender defaults</td>
+                            <td class="fw-semibold">@T.T("SiteSettingsBrandingDefaultsTitle")</td>
                             <td>
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis">Business owner</span>
-                                <div class="mt-2">Leave brand display name, logo, support email, sender defaults, and channel toggles in business setup.</div>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis">@T.T("BusinessOwner")</span>
+                                <div class="mt-2">@T.T("SiteSettingsBrandingDefaultsOwned")</div>
                             </td>
-                            <td>Business setup and communication readiness drive the final customer-facing defaults.</td>
+                            <td>@T.T("SiteSettingsBrandingDefaultsBusiness")</td>
                             <td>
-                                <div class="small text-muted mb-2">Do not duplicate these values globally unless they are true platform defaults.</div>
+                                <div class="small text-muted mb-2">@T.T("SiteSettingsBrandingDefaultsAction")</div>
                                 <div class="d-flex flex-wrap gap-2">
                                     <a asp-controller="Businesses"
                                        asp-action="Index"
@@ -157,14 +157,14 @@
                                        hx-get="@Url.Action("Index", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Open Businesses</a>
+                                       hx-push-url="true">@T.T("OpenBusinesses")</a>
                                     <a asp-controller="Businesses"
                                        asp-action="SupportQueue"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("SupportQueue", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Subscriber Support</a>
+                                       hx-push-url="true">@T.T("SubscriberSupport")</a>
                                 </div>
                             </td>
                         </tr>
@@ -207,24 +207,24 @@
         <div class="card-header">@T.T("Localization")</div>
         <div class="card-body">
             <div class="alert alert-secondary mb-3">
-                Platform localization owns fallback culture, supported cultures, shared date/time formatting, and the default currency/country baseline. Tenant-specific wording and day-to-day customer-facing defaults still belong in business setup and CRM support follow-up.
+                @T.T("SiteSettingsLocalizationIntro")
             </div>
             <div class="row g-3 mb-3">
                 <div class="col-lg-4">
                     <div class="border rounded p-3 h-100">
-                        <div class="fw-semibold mb-2">Fallback governance</div>
-                        <div class="small text-muted">Use these fields when a culture, currency, or time-zone default should change for every new business or for platform-wide fallback behavior.</div>
+                        <div class="fw-semibold mb-2">@T.T("SiteSettingsFallbackGovernanceTitle")</div>
+                        <div class="small text-muted">@T.T("SiteSettingsFallbackGovernanceNote")</div>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="border rounded p-3 h-100">
-                        <div class="fw-semibold mb-2">Business override path</div>
-                        <div class="small text-muted">If only one tenant needs a different culture, currency, or time zone, keep the override in business setup instead of mutating the platform fallback.</div>
+                        <div class="fw-semibold mb-2">@T.T("SiteSettingsBusinessOverridePathTitle")</div>
+                        <div class="small text-muted">@T.T("SiteSettingsBusinessOverridePathNote")</div>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="border rounded p-3 h-100">
-                        <div class="fw-semibold mb-2">Operator handoff</div>
+                        <div class="fw-semibold mb-2">@T.T("SiteSettingsOperatorHandoffTitle")</div>
                         <div class="d-flex flex-wrap gap-2">
                             <a asp-controller="Businesses"
                                asp-action="Index"
@@ -232,14 +232,14 @@
                                hx-get="@Url.Action("Index", "Businesses")"
                                hx-target="#site-settings-editor-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">Business Defaults</a>
+                               hx-push-url="true">@T.T("SiteSettingsBusinessDefaults")</a>
                             <a asp-controller="CRM"
                                asp-action="Customers"
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("Customers", "Crm")"
                                hx-target="#site-settings-editor-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">Customer Locale Review</a>
+                               hx-push-url="true">@T.T("SiteSettingsCustomerLocaleReview")</a>
                         </div>
                     </div>
                 </div>
@@ -294,7 +294,7 @@
                 </div>
             </div>
             <div class="alert alert-light border small mb-0">
-                Fallback rule: keep <code>SupportedCulturesCsv</code> aligned with what admin and customer surfaces can actually render. Add a business-level override only when one tenant must differ from the platform default; otherwise update the global fallback here and review tenant defaults from Business Setup.
+                @T.T("SiteSettingsFallbackRuleNote")
             </div>
 
             <div class="mt-3">

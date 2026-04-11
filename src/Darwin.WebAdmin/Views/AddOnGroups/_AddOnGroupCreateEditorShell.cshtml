@@ -1,10 +1,11 @@
-@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupCreateVm
+﻿@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupCreateVm
 @{
-    ViewData["Title"] = "Create Add-on Group";
+    ViewData["Title"] = T.T("AddOnCreateTitle");
 }
 
 <div id="add-on-group-editor-shell">
-    <h1 class="mb-3"><i class="fa fa-plus-circle"></i> New Add-on Group</h1>
+    <h1 class="mb-3"><i class="fa fa-plus-circle"></i> @T.T("AddOnNewGroup")</h1>
+    <div class="text-muted mb-3">@T.T("AddOnCreateIntro")</div>
 
     <form asp-action="Create"
           method="post"
@@ -22,13 +23,10 @@
     (function () {
       const shell = document.getElementById('add-on-group-editor-shell');
       if (!shell) return;
-
       const currency = shell.querySelector('#Currency');
       if (currency && !currency.dataset.uppercaseBound) {
         currency.dataset.uppercaseBound = 'true';
-        currency.addEventListener('input', function () {
-          this.value = this.value.toUpperCase();
-        });
+        currency.addEventListener('input', function () { this.value = this.value.toUpperCase(); });
       }
     })();
 </script>

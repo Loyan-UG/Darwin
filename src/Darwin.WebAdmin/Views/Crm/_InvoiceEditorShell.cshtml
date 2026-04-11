@@ -225,10 +225,12 @@
                         <div class="col-md-2">
                             <div class="text-muted">@T.T("ArchiveReadiness")</div>
                             <div class="fw-semibold">@(Model.TaxPolicy.ArchiveReadinessComplete ? T.T("Ready") : T.T("MissingData"))</div>
+                            <div class="small text-muted mt-1">@Model.TaxPolicy.ArchiveReadinessLabel</div>
                         </div>
                         <div class="col-md-2">
                             <div class="text-muted">@T.T("EInvoiceBaseline")</div>
                             <div class="fw-semibold">@(Model.TaxPolicy.EInvoiceBaselineReady ? T.T("BaselineReady") : T.T("NotReady"))</div>
+                            <div class="small text-muted mt-1">@Model.TaxPolicy.EInvoiceBaselineLabel</div>
                         </div>
                     </div>
                     <div class="small text-muted mt-3">@Model.TaxPolicy.ComplianceScopeNote</div>
@@ -412,8 +414,8 @@
         </div>
 
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="Invoices" hx-get="@Url.Action("Invoices", "Crm")" hx-target="#crm-invoice-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">Back</a>
+            <button type="submit" class="btn btn-primary">@T.T("Save")</button>
+            <a asp-action="Invoices" hx-get="@Url.Action("Invoices", "Crm")" hx-target="#crm-invoice-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 </div>

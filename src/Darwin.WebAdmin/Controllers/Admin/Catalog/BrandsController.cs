@@ -251,29 +251,30 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             }
         }
 
-        private static OperationalPlaybookVm[] BuildBrandPlaybooks()
+        private OperationalPlaybookVm[] BuildBrandPlaybooks()
         {
             return
             [
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Unpublished",
-                    WhyItMatters = "Unpublished brands stay hidden from brand-driven navigation and merchandising flows.",
-                    OperatorAction = "Review whether the brand should remain internal-only, then publish it once storefront exposure is intended."
+                    QueueLabel = T("Unpublished"),
+                    WhyItMatters = T("BrandPlaybookUnpublishedScope"),
+                    OperatorAction = T("BrandPlaybookUnpublishedAction")
                 },
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Missing Slug",
-                    WhyItMatters = "Brands without slugs are harder to use in SEO-aware landing pages and direct support handoffs.",
-                    OperatorAction = "Open the brand editor and add a stable slug before marketing or content teams link to the brand publicly."
+                    QueueLabel = T("MissingSlug"),
+                    WhyItMatters = T("BrandPlaybookMissingSlugScope"),
+                    OperatorAction = T("BrandPlaybookMissingSlugAction")
                 },
                 new OperationalPlaybookVm
                 {
-                    QueueLabel = "Missing Logo",
-                    WhyItMatters = "Brands without logos create a weak or inconsistent catalog presentation across admin and storefront surfaces.",
-                    OperatorAction = "Review the brand asset setup and attach a media-library logo if the business expects visual brand presentation."
+                    QueueLabel = T("MissingLogo"),
+                    WhyItMatters = T("BrandPlaybookMissingLogoScope"),
+                    OperatorAction = T("BrandPlaybookMissingLogoAction")
                 }
             ];
         }
     }
 }
+

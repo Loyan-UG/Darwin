@@ -468,12 +468,23 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     public sealed class InvoicesListVm
     {
         public CrmSummaryVm Summary { get; set; } = new();
+        public InvoiceOpsSummaryVm OpsSummary { get; set; } = new();
+        public List<CrmPlaybookVm> Playbooks { get; set; } = new();
         public TaxPolicySnapshotVm TaxPolicy { get; set; } = new();
         public List<InvoiceListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+    }
+
+    public sealed class InvoiceOpsSummaryVm
+    {
+        public int DraftCount { get; set; }
+        public int DueSoonCount { get; set; }
+        public int OverdueCount { get; set; }
+        public int MissingVatIdCount { get; set; }
+        public int RefundedCount { get; set; }
     }
 
     public sealed class InvoiceListItemVm
@@ -593,3 +604,4 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public int RecentInteractionCount { get; set; }
     }
 }
+

@@ -1,4 +1,4 @@
-using Darwin.Application.Loyalty.Commands;
+﻿using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Queries;
@@ -994,11 +994,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             return RedirectOrHtmx(nameof(AccountDetails), new { id = loyaltyAccountId });
         }
 
-        private static List<SelectListItem> BuildStatusItems(LoyaltyAccountStatus? selected)
+        private List<SelectListItem> BuildStatusItems(LoyaltyAccountStatus? selected)
         {
             var items = new List<SelectListItem>
             {
-                new("All statuses", string.Empty, !selected.HasValue)
+                new(T("AllStatuses"), string.Empty, !selected.HasValue)
             };
 
             items.AddRange(Enum.GetValues<LoyaltyAccountStatus>()
@@ -1007,161 +1007,161 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             return items;
         }
 
-        private static List<SelectListItem> BuildProgramFilterItems(LoyaltyProgramQueueFilter selected)
+        private List<SelectListItem> BuildProgramFilterItems(LoyaltyProgramQueueFilter selected)
         {
             return new List<SelectListItem>
             {
-                new("All programs", LoyaltyProgramQueueFilter.All.ToString(), selected == LoyaltyProgramQueueFilter.All),
-                new("Active", LoyaltyProgramQueueFilter.Active.ToString(), selected == LoyaltyProgramQueueFilter.Active),
-                new("Inactive", LoyaltyProgramQueueFilter.Inactive.ToString(), selected == LoyaltyProgramQueueFilter.Inactive),
-                new("Spend-based accrual", LoyaltyProgramQueueFilter.PerCurrencyUnit.ToString(), selected == LoyaltyProgramQueueFilter.PerCurrencyUnit),
-                new("Missing rules", LoyaltyProgramQueueFilter.MissingRules.ToString(), selected == LoyaltyProgramQueueFilter.MissingRules)
+                new(T("LoyaltyAllPrograms"), LoyaltyProgramQueueFilter.All.ToString(), selected == LoyaltyProgramQueueFilter.All),
+                new(T("Active"), LoyaltyProgramQueueFilter.Active.ToString(), selected == LoyaltyProgramQueueFilter.Active),
+                new(T("Inactive"), LoyaltyProgramQueueFilter.Inactive.ToString(), selected == LoyaltyProgramQueueFilter.Inactive),
+                new(T("LoyaltySpendBasedAccrual"), LoyaltyProgramQueueFilter.PerCurrencyUnit.ToString(), selected == LoyaltyProgramQueueFilter.PerCurrencyUnit),
+                new(T("LoyaltyMissingRules"), LoyaltyProgramQueueFilter.MissingRules.ToString(), selected == LoyaltyProgramQueueFilter.MissingRules)
             };
         }
 
-        private static List<SelectListItem> BuildRewardTierFilterItems(LoyaltyRewardTierQueueFilter selected)
+        private List<SelectListItem> BuildRewardTierFilterItems(LoyaltyRewardTierQueueFilter selected)
         {
             return new List<SelectListItem>
             {
-                new("All reward tiers", LoyaltyRewardTierQueueFilter.All.ToString(), selected == LoyaltyRewardTierQueueFilter.All),
-                new("Self redemption", LoyaltyRewardTierQueueFilter.SelfRedemption.ToString(), selected == LoyaltyRewardTierQueueFilter.SelfRedemption),
+                new(T("LoyaltyAllRewardTiers"), LoyaltyRewardTierQueueFilter.All.ToString(), selected == LoyaltyRewardTierQueueFilter.All),
+                new(T("LoyaltySelfRedemption"), LoyaltyRewardTierQueueFilter.SelfRedemption.ToString(), selected == LoyaltyRewardTierQueueFilter.SelfRedemption),
                 new("Missing description", LoyaltyRewardTierQueueFilter.MissingDescription.ToString(), selected == LoyaltyRewardTierQueueFilter.MissingDescription),
-                new("Discount rewards", LoyaltyRewardTierQueueFilter.DiscountRewards.ToString(), selected == LoyaltyRewardTierQueueFilter.DiscountRewards),
-                new("Free item", LoyaltyRewardTierQueueFilter.FreeItem.ToString(), selected == LoyaltyRewardTierQueueFilter.FreeItem)
+                new(T("LoyaltyDiscountRewards"), LoyaltyRewardTierQueueFilter.DiscountRewards.ToString(), selected == LoyaltyRewardTierQueueFilter.DiscountRewards),
+                new(T("LoyaltyFreeItem"), LoyaltyRewardTierQueueFilter.FreeItem.ToString(), selected == LoyaltyRewardTierQueueFilter.FreeItem)
             };
         }
 
-        private static List<SelectListItem> BuildCampaignFilterItems(LoyaltyCampaignQueueFilter selected)
+        private List<SelectListItem> BuildCampaignFilterItems(LoyaltyCampaignQueueFilter selected)
         {
             return new List<SelectListItem>
             {
-                new("All campaigns", LoyaltyCampaignQueueFilter.All.ToString(), selected == LoyaltyCampaignQueueFilter.All),
-                new("Active", LoyaltyCampaignQueueFilter.Active.ToString(), selected == LoyaltyCampaignQueueFilter.Active),
-                new("Scheduled", LoyaltyCampaignQueueFilter.Scheduled.ToString(), selected == LoyaltyCampaignQueueFilter.Scheduled),
-                new("Draft", LoyaltyCampaignQueueFilter.Draft.ToString(), selected == LoyaltyCampaignQueueFilter.Draft),
-                new("Expired", LoyaltyCampaignQueueFilter.Expired.ToString(), selected == LoyaltyCampaignQueueFilter.Expired),
-                new("Push enabled", LoyaltyCampaignQueueFilter.PushEnabled.ToString(), selected == LoyaltyCampaignQueueFilter.PushEnabled)
+                new(T("LoyaltyAllCampaigns"), LoyaltyCampaignQueueFilter.All.ToString(), selected == LoyaltyCampaignQueueFilter.All),
+                new(T("Active"), LoyaltyCampaignQueueFilter.Active.ToString(), selected == LoyaltyCampaignQueueFilter.Active),
+                new(T("Scheduled"), LoyaltyCampaignQueueFilter.Scheduled.ToString(), selected == LoyaltyCampaignQueueFilter.Scheduled),
+                new(T("Draft"), LoyaltyCampaignQueueFilter.Draft.ToString(), selected == LoyaltyCampaignQueueFilter.Draft),
+                new(T("Expired"), LoyaltyCampaignQueueFilter.Expired.ToString(), selected == LoyaltyCampaignQueueFilter.Expired),
+                new(T("LoyaltyPushEnabled"), LoyaltyCampaignQueueFilter.PushEnabled.ToString(), selected == LoyaltyCampaignQueueFilter.PushEnabled)
             };
         }
 
-        private static List<LoyaltyOpsPlaybookVm> BuildProgramPlaybooks()
+        private List<LoyaltyOpsPlaybookVm> BuildProgramPlaybooks()
         {
             return new List<LoyaltyOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Program readiness",
-                    ScopeNote = "Inactive programs and rule-light programs are the first place to review when accrual or redemption expectations drift between mobile, staff, and admin support.",
-                    OperatorAction = "Keep one clear active program path per business, and review inactive or missing-rule programs before go-live support escalates."
+                    Title = T("LoyaltyProgramPlaybookReadinessTitle"),
+                    ScopeNote = T("LoyaltyProgramPlaybookReadinessScope"),
+                    OperatorAction = T("LoyaltyProgramPlaybookReadinessAction")
                 },
                 new()
                 {
-                    Title = "Spend-based accrual review",
-                    ScopeNote = "Spend-based programs tie loyalty balances more tightly to orders, refunds, and financial support workflows.",
-                    OperatorAction = "Validate spend-based accrual settings before investigating balance mismatches so loyalty and payment support stay aligned."
+                    Title = T("LoyaltyProgramPlaybookSpendTitle"),
+                    ScopeNote = T("LoyaltyProgramPlaybookSpendScope"),
+                    OperatorAction = T("LoyaltyProgramPlaybookSpendAction")
                 }
             };
         }
 
-        private static List<LoyaltyOpsPlaybookVm> BuildRewardTierPlaybooks()
+        private List<LoyaltyOpsPlaybookVm> BuildRewardTierPlaybooks()
         {
             return new List<LoyaltyOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Self-redemption review",
-                    ScopeNote = "Self-redeemable tiers affect customer-facing behavior without staff mediation and should be reviewed before promotions or reward support cases.",
-                    OperatorAction = "Prioritize self-redemption tiers when investigating unexpected redemption flow or scanner support issues."
+                    Title = T("LoyaltyRewardTierPlaybookSelfTitle"),
+                    ScopeNote = T("LoyaltyRewardTierPlaybookSelfScope"),
+                    OperatorAction = T("LoyaltyRewardTierPlaybookSelfAction")
                 },
                 new()
                 {
-                    Title = "Reward catalog hygiene",
-                    ScopeNote = "Missing descriptions or mixed discount/free-item tiers make campaign copy and support guidance harder to interpret consistently.",
-                    OperatorAction = "Fill in descriptions and verify reward type intent before operators, campaigns, or storefront messaging rely on the catalog."
+                    Title = T("LoyaltyRewardTierPlaybookCatalogTitle"),
+                    ScopeNote = T("LoyaltyRewardTierPlaybookCatalogScope"),
+                    OperatorAction = T("LoyaltyRewardTierPlaybookCatalogAction")
                 }
             };
         }
 
-        private static List<LoyaltyOpsPlaybookVm> BuildCampaignPlaybooks()
+        private List<LoyaltyOpsPlaybookVm> BuildCampaignPlaybooks()
         {
             return new List<LoyaltyOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Activation and window review",
-                    ScopeNote = "Scheduled and expired campaigns are the first place to inspect when support sees stale mobile banners or campaigns that never went live.",
-                    OperatorAction = "Review activation state and the UTC campaign window together before escalating a campaign timing issue."
+                    Title = T("LoyaltyCampaignPlaybookWindowTitle"),
+                    ScopeNote = T("LoyaltyCampaignPlaybookWindowScope"),
+                    OperatorAction = T("LoyaltyCampaignPlaybookWindowAction")
                 },
                 new()
                 {
-                    Title = "Push-enabled campaign hygiene",
-                    ScopeNote = "Push-enabled campaigns increase delivery expectations across mobile operations and communications support.",
-                    OperatorAction = "Prioritize push-enabled campaigns when checking rollout readiness so content, transport, and device diagnostics stay aligned."
+                    Title = T("LoyaltyCampaignPlaybookPushTitle"),
+                    ScopeNote = T("LoyaltyCampaignPlaybookPushScope"),
+                    OperatorAction = T("LoyaltyCampaignPlaybookPushAction")
                 }
             };
         }
-        private static List<LoyaltyOpsPlaybookVm> BuildAccountPlaybooks()
+        private List<LoyaltyOpsPlaybookVm> BuildAccountPlaybooks()
         {
             return new List<LoyaltyOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Suspended accounts",
-                    ScopeNote = "Suspended accounts usually indicate unresolved support or fraud-safe follow-up before loyalty earning and redemption can resume.",
-                    OperatorAction = "Review the recent transaction and redemption trail first, then reactivate only after the underlying cause is clear."
+                    Title = T("LoyaltyAccountPlaybookSuspendedTitle"),
+                    ScopeNote = T("LoyaltyAccountPlaybookSuspendedScope"),
+                    OperatorAction = T("LoyaltyAccountPlaybookSuspendedAction")
                 },
                 new()
                 {
-                    Title = "Zero-balance members",
-                    ScopeNote = "Zero-balance accounts often need program, accrual, or campaign review before support treats them as product defects.",
-                    OperatorAction = "Check recent accrual activity and the active loyalty program before escalating a balance complaint."
+                    Title = T("LoyaltyAccountPlaybookZeroBalanceTitle"),
+                    ScopeNote = T("LoyaltyAccountPlaybookZeroBalanceScope"),
+                    OperatorAction = T("LoyaltyAccountPlaybookZeroBalanceAction")
                 }
             };
         }
 
-        private static List<LoyaltyOpsPlaybookVm> BuildScanSessionPlaybooks()
+        private List<LoyaltyOpsPlaybookVm> BuildScanSessionPlaybooks()
         {
             return new List<LoyaltyOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Pending scanner queue",
-                    ScopeNote = "Pending sessions represent customer scans still waiting on business device action and should not sit stale during mobile support incidents.",
-                    OperatorAction = "Review pending sessions before retrying campaigns or loyalty settings so device-side drift is separated from program drift."
+                    Title = T("LoyaltyScanPlaybookPendingTitle"),
+                    ScopeNote = T("LoyaltyScanPlaybookPendingScope"),
+                    OperatorAction = T("LoyaltyScanPlaybookPendingAction")
                 },
                 new()
                 {
-                    Title = "Expired or failed scans",
-                    ScopeNote = "Expired and failed sessions usually point to timing, staff workflow, or mobile transport confusion rather than reward-catalog issues.",
-                    OperatorAction = "Inspect expiry pressure and failure reasons first, then move to mobile operations or staff process review."
+                    Title = T("LoyaltyScanPlaybookFailureTitle"),
+                    ScopeNote = T("LoyaltyScanPlaybookFailureScope"),
+                    OperatorAction = T("LoyaltyScanPlaybookFailureAction")
                 }
             };
         }
 
-        private static List<LoyaltyOpsPlaybookVm> BuildRedemptionPlaybooks()
+        private List<LoyaltyOpsPlaybookVm> BuildRedemptionPlaybooks()
         {
             return new List<LoyaltyOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Pending redemptions",
-                    ScopeNote = "Pending redemptions still depend on business-side confirmation and should be reviewed before customers are told the reward path is broken.",
-                    OperatorAction = "Confirm the linked scan and account context before manually intervening in reward fulfillment."
+                    Title = T("LoyaltyRedemptionPlaybookPendingTitle"),
+                    ScopeNote = T("LoyaltyRedemptionPlaybookPendingScope"),
+                    OperatorAction = T("LoyaltyRedemptionPlaybookPendingAction")
                 },
                 new()
                 {
-                    Title = "Scan-linked redemption failures",
-                    ScopeNote = "Failed or expired scan-linked redemptions usually indicate operator or device friction rather than loyalty-balance corruption.",
-                    OperatorAction = "Read the scan outcome first, then decide whether the case needs account review, scanner review, or reward-catalog cleanup."
+                    Title = T("LoyaltyRedemptionPlaybookScanFailureTitle"),
+                    ScopeNote = T("LoyaltyRedemptionPlaybookScanFailureScope"),
+                    OperatorAction = T("LoyaltyRedemptionPlaybookScanFailureAction")
                 }
             };
         }
 
-        private static List<SelectListItem> BuildModeItems(LoyaltyScanMode? selected)
+        private List<SelectListItem> BuildModeItems(LoyaltyScanMode? selected)
         {
             var items = new List<SelectListItem>
             {
-                new("All modes", string.Empty, !selected.HasValue)
+                new(T("LoyaltyAllModes"), string.Empty, !selected.HasValue)
             };
 
             items.AddRange(Enum.GetValues<LoyaltyScanMode>()
@@ -1170,11 +1170,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             return items;
         }
 
-        private static List<SelectListItem> BuildScanStatusItems(LoyaltyScanStatus? selected)
+        private List<SelectListItem> BuildScanStatusItems(LoyaltyScanStatus? selected)
         {
             var items = new List<SelectListItem>
             {
-                new("All statuses", string.Empty, !selected.HasValue)
+                new(T("AllStatuses"), string.Empty, !selected.HasValue)
             };
 
             items.AddRange(Enum.GetValues<LoyaltyScanStatus>()
@@ -1183,11 +1183,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             return items;
         }
 
-        private static List<SelectListItem> BuildRedemptionStatusItems(LoyaltyRedemptionStatus? selected)
+        private List<SelectListItem> BuildRedemptionStatusItems(LoyaltyRedemptionStatus? selected)
         {
             var items = new List<SelectListItem>
             {
-                new("All statuses", string.Empty, !selected.HasValue)
+                new(T("AllStatuses"), string.Empty, !selected.HasValue)
             };
 
             items.AddRange(Enum.GetValues<LoyaltyRedemptionStatus>()
@@ -1357,3 +1357,4 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         }
     }
 }
+

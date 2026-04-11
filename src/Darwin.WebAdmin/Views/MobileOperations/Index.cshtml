@@ -1,69 +1,98 @@
-@model Darwin.WebAdmin.ViewModels.Mobile.MobileOperationsVm
+﻿@model Darwin.WebAdmin.ViewModels.Mobile.MobileOperationsVm
 @{
-    ViewData["Title"] = "Mobile Operations";
+    ViewData["Title"] = T.T("MobileOperationsTitle");
+    var readyText = T.T("Ready");
+    var missingText = T.T("Missing");
 }
 
 <div id="mobile-operations-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1">Mobile Operations</h1>
-        <p class="text-muted mb-0">Bootstrap, onboarding, and communication dependencies that directly affect Darwin mobile apps.</p>
+        <h1 class="mb-1">@T.T("MobileOperationsTitle")</h1>
+        <p class="text-muted mb-0">@T.T("MobileOperationsIntro")</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-mobile" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" })"
            hx-target="#mobile-operations-workspace-shell"
-           hx-swap="outerHTML">Site Settings</a>
+           hx-swap="outerHTML">@T.T("SiteSettings")</a>
         <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-outline-secondary"
            hx-get="@Url.Action("SupportQueue", "Businesses")"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Support Queue</a>
+           hx-push-url="true">@T.T("SupportQueue")</a>
         <a asp-controller="Loyalty" asp-action="ScanSessions" class="btn btn-outline-secondary"
            hx-get="@Url.Action("ScanSessions", "Loyalty")"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Scan Sessions</a>
+           hx-push-url="true">@T.T("LoyaltyScanSessionsTitle")</a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">@T.T("LoyaltyMobileFollowUp")</div>
+    <div class="card-body d-flex gap-2 flex-wrap">
+        <a asp-controller="Loyalty" asp-action="Accounts" class="btn btn-sm btn-outline-primary"
+           hx-get="@Url.Action("Accounts", "Loyalty")"
+           hx-target="#mobile-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("LoyaltyAccountsTitle")</a>
+        <a asp-controller="Loyalty" asp-action="Redemptions" class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Redemptions", "Loyalty")"
+           hx-target="#mobile-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Redemptions")</a>
+        <a asp-controller="Loyalty" asp-action="Campaigns" class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Campaigns", "Loyalty")"
+           hx-target="#mobile-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Campaigns")</a>
+        <a asp-controller="Loyalty" asp-action="Programs" class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Programs", "Loyalty")"
+           hx-target="#mobile-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Programs")</a>
     </div>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-xl-6">
         <div class="card h-100">
-            <div class="card-header">Mobile Bootstrap</div>
+            <div class="card-header">@T.T("MobileBootstrapTitle")</div>
             <div class="card-body">
-                <div class="mb-2">JWT Enabled: <strong>@(Model.JwtEnabled ? "Yes" : "No")</strong></div>
-                <div class="mb-2">Single Device Only: <strong>@(Model.JwtSingleDeviceOnly ? "Yes" : "No")</strong></div>
-                <div class="mb-2">Device Binding Required: <strong>@(Model.JwtRequireDeviceBinding ? "Yes" : "No")</strong></div>
-                <div class="mb-2">Access Token Minutes: <strong>@Model.JwtAccessTokenMinutes</strong></div>
-                <div class="mb-2">Refresh Token Days: <strong>@Model.JwtRefreshTokenDays</strong></div>
-                <div class="mb-2">QR Refresh Seconds: <strong>@Model.MobileQrTokenRefreshSeconds</strong></div>
-                <div class="mb-2">Max Outbox Items: <strong>@Model.MobileMaxOutboxItems</strong></div>
-                <div class="mb-2">Default Culture: <strong>@Model.DefaultCulture</strong></div>
-                <div>Time Zone: <strong>@Model.TimeZone</strong></div>
+                <div class="mb-2">@T.T("MobileBootstrapJwtEnabled"): <strong>@(Model.JwtEnabled ? readyText : missingText)</strong></div>
+                <div class="mb-2">@T.T("MobileBootstrapSingleDeviceOnly"): <strong>@(Model.JwtSingleDeviceOnly ? readyText : missingText)</strong></div>
+                <div class="mb-2">@T.T("MobileBootstrapDeviceBindingRequired"): <strong>@(Model.JwtRequireDeviceBinding ? readyText : missingText)</strong></div>
+                <div class="mb-2">@T.T("MobileBootstrapAccessTokenMinutes"): <strong>@Model.JwtAccessTokenMinutes</strong></div>
+                <div class="mb-2">@T.T("MobileBootstrapRefreshTokenDays"): <strong>@Model.JwtRefreshTokenDays</strong></div>
+                <div class="mb-2">@T.T("MobileBootstrapQrRefreshSeconds"): <strong>@Model.MobileQrTokenRefreshSeconds</strong></div>
+                <div class="mb-2">@T.T("MobileBootstrapMaxOutboxItems"): <strong>@Model.MobileMaxOutboxItems</strong></div>
+                <div class="mb-2">@T.T("DefaultCulture"): <strong>@Model.DefaultCulture</strong></div>
+                <div>@T.T("TimeZone"): <strong>@Model.TimeZone</strong></div>
             </div>
         </div>
     </div>
     <div class="col-xl-6">
         <div class="card h-100">
-            <div class="card-header">Business App External Handoffs</div>
+            <div class="card-header">@T.T("MobileBusinessAppHandoffsTitle")</div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Subscription Website</div><div class="fs-6 fw-semibold">@(Model.BusinessManagementWebsiteConfigured ? "Ready" : "Missing")</div></div></div>
-                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Account Deletion</div><div class="fs-6 fw-semibold">@(Model.AccountDeletionConfigured ? "Ready" : "Missing")</div></div></div>
-                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">Impressum</div><div class="fs-6 fw-semibold">@(Model.ImpressumConfigured ? "Ready" : "Missing")</div></div></div>
-                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">Privacy</div><div class="fs-6 fw-semibold">@(Model.PrivacyPolicyConfigured ? "Ready" : "Missing")</div></div></div>
-                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">Business Terms</div><div class="fs-6 fw-semibold">@(Model.BusinessTermsConfigured ? "Ready" : "Missing")</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("SubscriptionWebsite")</div><div class="fs-6 fw-semibold">@(Model.BusinessManagementWebsiteConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("AccountDeletion")</div><div class="fs-6 fw-semibold">@(Model.AccountDeletionConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">@T.T("Impressum")</div><div class="fs-6 fw-semibold">@(Model.ImpressumConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">@T.T("Privacy")</div><div class="fs-6 fw-semibold">@(Model.PrivacyPolicyConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">@T.T("BusinessTerms")</div><div class="fs-6 fw-semibold">@(Model.BusinessTermsConfigured ? readyText : missingText)</div></div></div>
                 </div>
                 <div class="d-flex gap-2 mt-3 flex-wrap">
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
                        hx-target="#mobile-operations-workspace-shell"
-                       hx-swap="outerHTML">Open Business App Settings</a>
+                       hx-swap="outerHTML">@T.T("OpenBusinessAppSettings")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-mobile" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" })"
                        hx-target="#mobile-operations-workspace-shell"
-                       hx-swap="outerHTML">Open Mobile Bootstrap</a>
+                       hx-swap="outerHTML">@T.T("OpenMobileBootstrap")</a>
                 </div>
             </div>
         </div>
@@ -73,27 +102,27 @@
 <div class="row g-3 mb-4">
     <div class="col-xl-6">
         <div class="card h-100">
-            <div class="card-header">Mobile Onboarding Dependencies</div>
+            <div class="card-header">@T.T("MobileOnboardingDependenciesTitle")</div>
             <div class="card-body">
-                <div class="mb-2">Businesses Needing Attention: <strong>@Model.AttentionBusinessCount</strong></div>
-                <div class="mb-2">Pending Approval Businesses: <strong>@Model.PendingApprovalBusinessCount</strong></div>
-                <div class="mb-2">Open Invitations: <strong>@Model.OpenInvitationCount</strong></div>
-                <div class="mb-2">Pending Activation Members: <strong>@Model.PendingActivationMemberCount</strong></div>
-                <div class="mb-2">Locked Members: <strong>@Model.LockedMemberCount</strong></div>
-                <div>Businesses Requiring Email Setup: <strong>@Model.BusinessesRequiringEmailSetupCount</strong></div>
+                <div class="mb-2">@T.T("BusinessesNeedingAttention"): <strong>@Model.AttentionBusinessCount</strong></div>
+                <div class="mb-2">@T.T("PendingApprovalBusinesses"): <strong>@Model.PendingApprovalBusinessCount</strong></div>
+                <div class="mb-2">@T.T("OpenInvitations"): <strong>@Model.OpenInvitationCount</strong></div>
+                <div class="mb-2">@T.T("PendingActivationMembers"): <strong>@Model.PendingActivationMemberCount</strong></div>
+                <div class="mb-2">@T.T("LockedMembers"): <strong>@Model.LockedMemberCount</strong></div>
+                <div>@T.T("BusinessesRequiringEmailSetup"): <strong>@Model.BusinessesRequiringEmailSetupCount</strong></div>
             </div>
         </div>
     </div>
     <div class="col-xl-6">
         <div class="card h-100">
-            <div class="card-header">Device Fleet Snapshot</div>
+            <div class="card-header">@T.T("DeviceFleetSnapshotTitle")</div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Active Devices</div><div class="fs-5">@Model.TotalActiveDevices</div></div></div>
-                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Business Member Devices</div><div class="fs-5">@Model.BusinessMemberDevicesCount</div></div></div>
-                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Stale Devices</div><div class="fs-5">@Model.StaleDevicesCount</div></div></div>
-                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Missing Push Token</div><div class="fs-5">@Model.DevicesMissingPushTokenCount</div></div></div>
-                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Notifications Disabled</div><div class="fs-5">@Model.NotificationsDisabledCount</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("ActiveDevices")</div><div class="fs-5">@Model.TotalActiveDevices</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("BusinessMemberDevices")</div><div class="fs-5">@Model.BusinessMemberDevicesCount</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("MobileStaleDevices")</div><div class="fs-5">@Model.StaleDevicesCount</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("MobileMissingPushToken")</div><div class="fs-5">@Model.DevicesMissingPushTokenCount</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("MobileNotificationsDisabled")</div><div class="fs-5">@Model.NotificationsDisabledCount</div></div></div>
                     <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Android</div><div class="fs-5">@Model.AndroidDevicesCount</div></div></div>
                     <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">iOS</div><div class="fs-5">@Model.IosDevicesCount</div></div></div>
                 </div>
@@ -102,14 +131,14 @@
     </div>
     <div class="col-xl-6">
         <div class="card h-100">
-            <div class="card-header">Recent App Versions</div>
+            <div class="card-header">@T.T("RecentAppVersions")</div>
             <div class="table-responsive">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Platform</th><th>Version</th><th>Devices</th><th>Last Seen</th></tr></thead>
+                    <thead><tr><th>@T.T("Platform")</th><th>@T.T("Version")</th><th>@T.T("Devices")</th><th>@T.T("LastSeen")</th></tr></thead>
                     <tbody>
                     @if (Model.RecentVersions.Count == 0)
                     {
-                        <tr><td colspan="4" class="text-center text-muted py-3">No device version data reported yet.</td></tr>
+                        <tr><td colspan="4" class="text-center text-muted py-3">@T.T("NoDeviceVersionData")</td></tr>
                     }
                     else
                     {
@@ -128,25 +157,46 @@
             </div>
         </div>
     </div>
-</div>
-
-<div class="card">
-    <div class="card-header">Transport Readiness</div>
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Email</div><div class="fs-5">@(Model.EmailTransportConfigured ? "Ready" : "Missing")</div></div></div>
-            <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">SMS</div><div class="fs-5">@(Model.SmsTransportConfigured ? "Ready" : "Missing")</div></div></div>
-            <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">WhatsApp</div><div class="fs-5">@(Model.WhatsAppTransportConfigured ? "Ready" : "Missing")</div></div></div>
-            <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Admin Alerts</div><div class="fs-5">@(Model.AdminAlertRoutingConfigured ? "Ready" : "Missing")</div></div></div>
-        </div>
-        <div class="alert alert-secondary mt-3 mb-0">
-            This page is an operations snapshot. Member activation, invitation handling, and communication triage still happen from Businesses, Business Communications, and Site Settings.
+    <div class="col-xl-6">
+        <div class="card h-100">
+            <div class="card-header">@T.T("TransportReadiness")</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Email</div><div class="fs-5">@(Model.EmailTransportConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">SMS</div><div class="fs-5">@(Model.SmsTransportConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">WhatsApp</div><div class="fs-5">@(Model.WhatsAppTransportConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("AdminAlerts")</div><div class="fs-5">@(Model.AdminAlertRoutingConfigured ? readyText : missingText)</div></div></div>
+                </div>
+                <div class="alert alert-secondary mt-3 mb-0">@T.T("MobileOperationsSnapshotNote")</div>
+            </div>
         </div>
     </div>
 </div>
 
+@if (Model.Playbooks.Count > 0)
+{
+    <div class="card mb-4">
+        <div class="card-header">@T.T("MobileOperationsPlaybooks")</div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead><tr><th>@T.T("Playbook")</th><th>@T.T("WhenItApplies")</th><th>@T.T("OperatorAction")</th></tr></thead>
+                <tbody>
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@playbook.Title</td>
+                        <td>@playbook.ScopeNote</td>
+                        <td>@playbook.OperatorAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
 <div class="card mt-4">
-    <div class="card-header">Recent Mobile Devices</div>
+    <div class="card-header">@T.T("RecentMobileDevices")</div>
     <div class="card-body border-bottom">
         <form asp-action="Index" method="get" class="row g-2"
               hx-get="@Url.Action("Index", "MobileOperations")"
@@ -154,7 +204,7 @@
               hx-swap="outerHTML"
               hx-push-url="true">
             <div class="col-md-4">
-                <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search user, device, or version" />
+                <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("MobileSearchUserDeviceVersion")" />
             </div>
             <div class="col-md-3">
                 <select name="platform" asp-items="Model.PlatformItems" class="form-select"></select>
@@ -163,22 +213,22 @@
                 <select name="state" asp-items="Model.StateItems" class="form-select"></select>
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-outline-secondary">Filter</button>
+                <button type="submit" class="btn btn-outline-secondary">@T.T("Filter")</button>
                 <a asp-action="Index" class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Index", "MobileOperations")"
                    hx-target="#mobile-operations-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">Reset</a>
+                   hx-push-url="true">@T.T("Reset")</a>
             </div>
         </form>
     </div>
     <div class="table-responsive">
         <table class="table table-sm table-striped align-middle mb-0">
-            <thead><tr><th>User</th><th>Platform</th><th>Version</th><th>Device</th><th>Push</th><th>Membership</th><th>Last Seen</th><th class="text-end">Actions</th></tr></thead>
+            <thead><tr><th>@T.T("User")</th><th>@T.T("Platform")</th><th>@T.T("Version")</th><th>@T.T("Device")</th><th>@T.T("Push")</th><th>@T.T("Membership")</th><th>@T.T("LastSeen")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
             <tbody>
             @if (Model.Devices.Count == 0)
             {
-                <tr><td colspan="8" class="text-center text-muted py-3">No devices match the current filters.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-3">@T.T("NoDevicesMatchCurrentFilters")</td></tr>
             }
             else
             {
@@ -192,21 +242,21 @@
                         <td>@item.Platform</td>
                         <td>
                             <div>@(item.AppVersion ?? "-")</div>
-                            <div class="small text-muted">@(item.DeviceModel ?? "Unknown device")</div>
+                            <div class="small text-muted">@(item.DeviceModel ?? T.T("UnknownDevice"))</div>
                         </td>
                         <td><code>@item.DeviceId</code></td>
                         <td>
-                            <div>@(item.HasPushToken ? "Token present" : "Missing token")</div>
-                            <div class="small text-muted">@(item.NotificationsEnabled ? "Notifications on" : "Notifications off")</div>
+                            <div>@(item.HasPushToken ? T.T("MobilePushTokenPresent") : T.T("MobilePushTokenMissing"))</div>
+                            <div class="small text-muted">@(item.NotificationsEnabled ? T.T("MobileNotificationsOn") : T.T("MobileNotificationsOff"))</div>
                         </td>
-                        <td>@(item.BusinessMembershipCount > 0 ? $"{item.BusinessMembershipCount} business memberships" : "Consumer only")</td>
-                        <td>@(item.LastSeenAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</td>
+                        <td>@(item.BusinessMembershipCount > 0 ? string.Format(T.T("MobileBusinessMemberships"), item.BusinessMembershipCount) : T.T("MobileConsumerOnly"))</td>
+                        <td>@(item.LastSeenAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? T.T("Never"))</td>
                         <td class="text-end">
                             <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-primary"
                                hx-get="@Url.Action("Edit", "Users", new { id = item.UserId })"
                                hx-target="#mobile-operations-workspace-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">User</a>
+                               hx-push-url="true">@T.T("User")</a>
                             @if (item.HasPushToken)
                             {
                                 <form asp-action="ClearPushToken" method="post" class="d-inline"
@@ -220,7 +270,7 @@
                                     <input type="hidden" name="platform" value="@Model.PlatformFilter" />
                                     <input type="hidden" name="state" value="@Model.StateFilter" />
                                     <input type="hidden" name="page" value="@Model.Page" />
-                                    <button type="submit" class="btn btn-sm btn-outline-warning">Clear Push</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">@T.T("ClearPush")</button>
                                 </form>
                             }
                             @if (item.IsActive)
@@ -236,7 +286,7 @@
                                     <input type="hidden" name="platform" value="@Model.PlatformFilter" />
                                     <input type="hidden" name="state" value="@Model.StateFilter" />
                                     <input type="hidden" name="page" value="@Model.Page" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("Deactivate")</button>
                                 </form>
                             }
                         </td>

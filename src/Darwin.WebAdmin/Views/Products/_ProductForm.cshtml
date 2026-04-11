@@ -8,17 +8,17 @@
 
         <div class="row g-3">
             <div class="col-md-4">
-                <label class="form-label">Brand</label>
+                <label class="form-label">@T.T("Brand")</label>
                 <select asp-for="BrandId" class="form-select"
                         asp-items="@(new SelectList(ViewBag.Brands, "Id", "Name"))"></select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Primary Category</label>
+                <label class="form-label">@T.T("PrimaryCategory")</label>
                 <select asp-for="PrimaryCategoryId" class="form-select"
                         asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))"></select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Kind</label>
+                <label class="form-label">@T.T("Kind")</label>
                 <select asp-for="Kind" class="form-select"
                         asp-items="Html.GetEnumSelectList<ProductKind>()"></select>
             </div>
@@ -26,14 +26,14 @@
 
         <hr />
 
-        <h5>Translations</h5>
+        <h5>@T.T("Translations")</h5>
         @for (int i = 0; i < Model.Translations.Count; i++)
         {
             <div class="border rounded p-3 mb-3">
                 <input type="hidden" name="Translations.Index" value="@i" />
                 <div class="row g-3">
                     <div class="col-md-2">
-                        <label class="form-label">Culture</label>
+                        <label class="form-label">@T.T("Culture")</label>
                         <select asp-for="Translations[@i].Culture" class="form-select">
                             @foreach (var cul in (IEnumerable<string>)ViewBag.Cultures)
                             {
@@ -42,37 +42,37 @@
                         </select>
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label">Name</label>
+                        <label class="form-label">@T.T("Name")</label>
                         <input asp-for="Translations[@i].Name" class="form-control" />
                         <span asp-validation-for="Translations[@i].Name" class="text-danger"></span>
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label">Slug</label>
+                        <label class="form-label">@T.T("Slug")</label>
                         <div class="d-flex align-items-center">
                             <input asp-for="Translations[@i].Slug" class="form-control" />
-                            <field-help title="Slug"
-                                        content="URL-friendly identifier. Lowercase, digits, hyphens. Example: <code>organic-apple-1kg</code>."
+                            <field-help title="@T.T("Slug")"
+                                        content="@T.T("ProductSlugHelp")"
                                         placement="right"></field-help>
                         </div>
                         <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label">Meta Title</label>
+                        <label class="form-label">@T.T("MetaTitle")</label>
                         <input asp-for="Translations[@i].MetaTitle" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Meta Description</label>
+                        <label class="form-label">@T.T("MetaDescription")</label>
                         <div class="d-flex align-items-center">
                             <input asp-for="Translations[@i].MetaDescription" class="form-control" />
-                            <field-help title="Meta Description"
-                                        content="Short SEO description (~155 chars)."
+                            <field-help title="@T.T("MetaDescription")"
+                                        content="@T.T("ProductMetaDescriptionHelp")"
                                         placement="right"></field-help>
                         </div>
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label">Full Description (HTML)</label>
+                        <label class="form-label">@T.T("FullDescriptionHtml")</label>
                         <div id="quill-editor-desc-@i" class="border rounded" data-quill-product-editor="true"></div>
                         <textarea asp-for="Translations[@i].FullDescriptionHtml" class="d-none"></textarea>
                     </div>
@@ -82,27 +82,27 @@
 
         <hr />
 
-        <h5>Variants</h5>
+        <h5>@T.T("Variants")</h5>
         @for (int j = 0; j < Model.Variants.Count; j++)
         {
             <div class="border rounded p-3 mb-3">
                 <input type="hidden" name="Variants.Index" value="@j" />
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">SKU</label>
-                        <field-help title="SKU"
-                                    content="Seller's stock keeping unit."
+                        <label class="form-label">@T.T("Sku")</label>
+                        <field-help title="@T.T("Sku")"
+                                    content="@T.T("ProductSkuHelp")"
                                     placement="right"></field-help>
                         <div class="d-flex align-items-center">
                             <input asp-for="Variants[@j].Sku" class="form-control" />
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">GTIN</label>
+                        <label class="form-label">@T.T("Gtin")</label>
                         <input asp-for="Variants[@j].Gtin" class="form-control" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Currency</label>
+                        <label class="form-label">@T.T("Currency")</label>
                         <select asp-for="Variants[@j].Currency" class="form-select">
                             @foreach (var cur in (IEnumerable<string>)ViewBag.Currencies)
                             {
@@ -111,31 +111,31 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Tax Category</label>
+                        <label class="form-label">@T.T("TaxCategory")</label>
                         <select asp-for="Variants[@j].TaxCategoryId" class="form-select"
                                 asp-items="@(new SelectList(ViewBag.TaxCategories, "Id", "Name"))"></select>
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label">Base Price (Net, minor units)</label>
+                        <label class="form-label">@T.T("BasePriceNetMinor")</label>
                         <div class="d-flex align-items-center">
                             <input asp-for="Variants[@j].BasePriceNetMinor" class="form-control" />
-                            <field-help title="Minor Units"
-                                        content="Store prices as integer minor units (e.g., cents). Avoids floating-point errors."
+                            <field-help title="@T.T("MinorUnits")"
+                                        content="@T.T("MinorUnitsHelp")"
                                         placement="right"></field-help>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Compare At (Net, minor units)</label>
+                        <label class="form-label">@T.T("CompareAtNetMinor")</label>
                         <input asp-for="Variants[@j].CompareAtPriceNetMinor" class="form-control" />
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label">Stock On Hand</label>
+                        <label class="form-label">@T.T("StockOnHand")</label>
                         <input asp-for="Variants[@j].StockOnHand" class="form-control" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Reorder Point</label>
+                        <label class="form-label">@T.T("ReorderPoint")</label>
                         <input asp-for="Variants[@j].ReorderPoint" class="form-control" />
                     </div>
                 </div>
@@ -148,7 +148,7 @@
            hx-get="@Url.Action("Index", "Products")"
            hx-target="#products-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Back</a>
-        <button type="submit" class="btn btn-primary">Save</button>
+           hx-push-url="true">@T.T("Back")</a>
+        <button type="submit" class="btn btn-primary">@T.T("Save")</button>
     </div>
 </div>

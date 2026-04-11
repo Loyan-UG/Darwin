@@ -1,6 +1,6 @@
 @model Darwin.WebAdmin.ViewModels.CMS.PagesIndexVm
 @{
-    ViewData["Title"] = "Pages";
+    ViewData["Title"] = T.T("Pages");
     var currentPage = Model.Page;
     var currentPageSize = Model.PageSize;
     var total = Model.Total;
@@ -8,8 +8,12 @@
     var filter = Model.Filter;
 }
 <div id="pages-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
-    <h2 class="mb-0">Pages</h2>
+    <div>
+        <h1 class="mb-1"><i class="fa fa-file-lines me-2"></i>@T.T("Pages")</h1>
+        <p class="text-muted mb-0">@T.T("PagesWorkspaceIntro")</p>
+    </div>
     <div class="d-flex flex-wrap gap-2">
         <form asp-action="Index"
               method="get"
@@ -18,59 +22,39 @@
               hx-target="#pages-workspace-shell"
               hx-swap="outerHTML"
               hx-push-url="true">
-            <input type="text" name="query" value="@query" class="form-control" placeholder="Search..." />
+            <input type="text" name="query" value="@query" class="form-control" placeholder="@T.T("SearchPagesPlaceholder")" />
             <input type="hidden" name="filter" value="@filter" />
             <button class="btn btn-outline-secondary" type="submit">
-                <i class="fa fa-search"></i> Search
+                <i class="fa fa-search"></i> @T.T("Search")
             </button>
             <a asp-action="Index"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Index", "Pages")"
                hx-target="#pages-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">Reset</a>
+               hx-push-url="true">@T.T("Reset")</a>
         </form>
         <a asp-action="Create"
            class="btn btn-primary"
            hx-get="@Url.Action("Create", "Pages")"
            hx-target="#pages-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Create Page</a>
+           hx-push-url="true"><i class="fa fa-plus"></i> @T.T("CreatePage")</a>
     </div>
 </div>
 
 <div class="row g-3 mb-3">
     <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Draft</div>
-                <div class="display-6 fw-semibold">@Model.Summary.DraftCount</div>
-            </div>
-        </div>
+        <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">@T.T("Draft")</div><div class="display-6 fw-semibold">@Model.Summary.DraftCount</div></div></div>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Published</div>
-                <div class="display-6 fw-semibold">@Model.Summary.PublishedCount</div>
-            </div>
-        </div>
+        <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">@T.T("Published")</div><div class="display-6 fw-semibold">@Model.Summary.PublishedCount</div></div></div>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Windowed</div>
-                <div class="display-6 fw-semibold">@Model.Summary.WindowedCount</div>
-            </div>
-        </div>
+        <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">@T.T("Windowed")</div><div class="display-6 fw-semibold">@Model.Summary.WindowedCount</div></div></div>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small text-uppercase">Live Window</div>
-                <div class="display-6 fw-semibold">@Model.Summary.LiveWindowCount</div>
-            </div>
-        </div>
+        <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">@T.T("LiveWindow")</div><div class="display-6 fw-semibold">@Model.Summary.LiveWindowCount</div></div></div>
     </div>
 </div>
 
@@ -79,31 +63,31 @@
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
             <div class="d-flex flex-wrap gap-2">
                 <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">All</a>
+                   hx-get="@Url.Action("Index", "Pages", new { query })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("All")</a>
                 <a asp-action="Index" asp-route-query="@query" asp-route-filter="draft" class="btn @(filter == "draft" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "draft" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Draft</a>
+                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "draft" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Draft")</a>
                 <a asp-action="Index" asp-route-query="@query" asp-route-filter="published" class="btn @(filter == "published" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "published" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Published</a>
+                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "published" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Published")</a>
                 <a asp-action="Index" asp-route-query="@query" asp-route-filter="windowed" class="btn @(filter == "windowed" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "windowed" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Windowed</a>
+                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "windowed" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Windowed")</a>
                 <a asp-action="Index" asp-route-query="@query" asp-route-filter="live-window" class="btn @(filter == "live-window" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "live-window" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Live Window</a>
+                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "live-window" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("LiveWindow")</a>
             </div>
-            <div class="text-muted small">Total pages: @Model.Summary.TotalCount</div>
+            <div class="text-muted small">@T.T("TotalPages"): @Model.Summary.TotalCount</div>
         </div>
     </div>
 </div>
 
 <div class="card shadow-sm mb-3">
-    <div class="card-header bg-light fw-semibold">Content Operations Playbooks</div>
+    <div class="card-header bg-light fw-semibold">@T.T("ContentOperationsPlaybooks")</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Queue</th>
-                        <th>Why It Matters</th>
-                        <th>Operator Action</th>
+                        <th>@T.T("Queue")</th>
+                        <th>@T.T("WhyItMatters")</th>
+                        <th>@T.T("OperatorAction")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -126,18 +110,18 @@
             <table class="table align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Title (de-DE)</th>
-                        <th>Status</th>
-                        <th>Publish Window (UTC)</th>
-                        <th>Modified</th>
-                        <th class="text-end">Actions</th>
+                        <th>@T.T("PrimaryTitleDe")</th>
+                        <th>@T.T("Status")</th>
+                        <th>@T.T("PublishWindowUtc")</th>
+                        <th>@T.T("Modified")</th>
+                        <th class="text-end">@T.T("Actions")</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No pages found.</td>
+                            <td colspan="5" class="text-center text-muted py-4">@T.T("NoPagesFound")</td>
                         </tr>
                     }
                     else
@@ -149,15 +133,15 @@
                                     <div class="fw-semibold">@(p.Title ?? "-")</div>
                                     @if (p.IsCurrentlyLive)
                                     {
-                                        <span class="badge bg-success mt-1">Live</span>
+                                        <span class="badge bg-success mt-1">@T.T("Live")</span>
                                     }
                                     else if (p.HasPublishWindow)
                                     {
-                                        <span class="badge bg-warning text-dark mt-1">Windowed</span>
+                                        <span class="badge bg-warning text-dark mt-1">@T.T("Windowed")</span>
                                     }
                                 </td>
                                 <td>@p.Status</td>
-                                <td>@(p.PublishStartUtc?.ToString("u") ?? "-") to @(p.PublishEndUtc?.ToString("u") ?? "-")</td>
+                                <td>@(p.PublishStartUtc?.ToString("u") ?? "-") @T.T("To") @(p.PublishEndUtc?.ToString("u") ?? "-")</td>
                                 <td>@p.ModifiedAtUtc.ToString("u")</td>
                                 <td class="text-end">
                                     <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary"
@@ -165,7 +149,7 @@
                                        hx-target="#pages-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">
-                                        <i class="fas fa-pen"></i> Edit
+                                        <i class="fas fa-pen"></i> @T.T("Edit")
                                     </a>
                                     <button type="button"
                                             class="btn btn-sm btn-outline-danger"
@@ -178,7 +162,7 @@
                                             data-hx-target="#pages-workspace-shell"
                                             data-hx-swap="outerHTML"
                                             data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                                        <i class="fa fa-trash"></i> Delete
+                                        <i class="fa fa-trash"></i> @T.T("Delete")
                                     </button>
                                 </td>
                             </tr>

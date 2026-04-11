@@ -55,7 +55,7 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("QueueScope")</div>
             <div class="fw-semibold mt-1">@T.T("Global")</div>
-            <div class="small text-muted mt-2">Phase-1 callbacks are platform scoped.</div>
+            <div class="small text-muted mt-2">@T.T("WebhookPlatformScopeNote")</div>
         </div>
     </div>
 </div>
@@ -67,10 +67,10 @@
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Queue</th>
-                        <th>Scope</th>
+                        <th>@T.T("Queue")</th>
+                        <th>@T.T("Scope")</th>
                         <th>@T.T("OperatorAction")</th>
-                        <th>Settings Dependency</th>
+                        <th>@T.T("SettingsDependency")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -136,7 +136,7 @@
           hx-get="@Url.Action("Webhooks", "Billing")"
           hx-target="#billing-webhooks-workspace-shell"
           hx-swap="outerHTML">
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search event type, callback, status, or idempotency key">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchWebhookDeliveriesPlaceholder")">
         <select name="queue" class="form-select">
             <option value="@BillingWebhookDeliveryQueueFilter.All" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.All)">@T.T("AllDeliveries")</option>
             <option value="@BillingWebhookDeliveryQueueFilter.Pending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Pending)">@T.T("Pending")</option>
@@ -274,21 +274,21 @@
                         }
                     </td>
                     <td>
-                        <div class="small text-muted">Created @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
-                        <div>Last attempt @(item.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                            <div class="small text-muted">@T.T("WebhookCreatedLabel") @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div>@T.T("WebhookLastAttemptLabel") @(item.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
                     </td>
                     <td>
                         <div class="small text-muted">Subscription @item.SubscriptionId</div>
                         <div class="small text-muted">@item.IdempotencyKey</div>
                         @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
                         {
-                            <div class="small text-danger mt-1">Manual finance escalation only; no dedicated dispute workflow exists yet.</div>
+                            <div class="small text-danger mt-1">@T.T("WebhookDisputeEscalationNote")</div>
                         }
                         else if (item.EventType.Contains("payment_intent", StringComparison.OrdinalIgnoreCase) ||
                                  item.EventType.Contains("charge", StringComparison.OrdinalIgnoreCase) ||
                                  item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase))
                         {
-                            <div class="small text-muted mt-1">Treat as payment-callback evidence, then confirm the linked payment/refund queue.</div>
+                            <div class="small text-muted mt-1">@T.T("WebhookPaymentEvidenceNote")</div>
                         }
                     </td>
                     <td class="text-end">

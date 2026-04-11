@@ -1,10 +1,46 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.ProductEditVm
 @{
-    ViewData["Title"] = "Edit Product";
+    ViewData["Title"] = T.T("EditProduct");
 }
 
 <div id="product-editor-shell">
-    <h2>Edit Product</h2>
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+        <div>
+            <h1 class="m-0">@T.T("EditProduct")</h1>
+            <div class="small text-muted mt-1">@T.T("ProductEditIntro")</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="badge text-bg-light border">@T.T("Translations"): @Model.Translations.Count</div>
+            <div class="badge text-bg-light border">@T.T("Variants"): @Model.Variants.Count</div>
+            <div class="badge text-bg-light border">@T.T("ProductIdentifier"): @Model.Id</div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small">@T.T("Translations")</div>
+                <div class="fw-semibold mt-1">@Model.Translations.Count</div>
+                <div class="small text-muted mt-2">@T.T("ProductEditorTranslationsNote")</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small">@T.T("Variants")</div>
+                <div class="fw-semibold mt-1">@Model.Variants.Count</div>
+                <div class="small text-muted mt-2">@T.T("ProductEditorVariantsNote")</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small">@T.T("CatalogReadiness")</div>
+                <div class="fw-semibold mt-1">@T.T(Model.Variants.Count > 1 ? "VariantRich" : "SingleVariant")</div>
+                <div class="small text-muted mt-2">@T.T("ProductEditorReadinessNote")</div>
+            </div>
+        </div>
+    </div>
 
     <form asp-action="Edit"
           method="post"
@@ -36,7 +72,7 @@
                 const hidden = el.parentElement.querySelector('textarea');
                 const quill = new Quill(el, {
                     theme: 'snow',
-                    placeholder: 'Write product description...',
+                    placeholder: '@T.T("ProductDescriptionPlaceholder")',
                     modules: {
                         toolbar: [
                             [{ header: [1, 2, 3, false] }],

@@ -5,49 +5,53 @@
 }
 
 <div id="crm-overview-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">@T.T("CrmOverviewTitle")</h1>
+    <div>
+        <h1 class="mb-0">@T.T("CrmOverviewTitle")</h1>
+        <div class="text-muted small mt-1">@T.T("CrmOverviewIntro")</div>
+    </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Customers"
-           hx-get="@Url.Action("Customers", "Crm")"
-           hx-target="#crm-overview-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true"
-           class="btn btn-outline-primary">@T.T("Customers")</a>
-        <a asp-action="Invoices"
-           hx-get="@Url.Action("Invoices", "Crm")"
-           hx-target="#crm-overview-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true"
-           class="btn btn-outline-secondary">@T.T("Invoices")</a>
+        <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("Customers")</a>
+        <a asp-action="Invoices" hx-get="@Url.Action("Invoices", "Crm")" hx-target="#crm-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Invoices")</a>
     </div>
 </div>
 
 <div class="row g-3">
-    <div class="col-md-4 col-xl-2">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Customers")</div><div class="fs-3 fw-semibold">@Model.CustomerCount</div></div></div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Leads")</div><div class="fs-3 fw-semibold">@Model.LeadCount</div></div></div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("QualifiedLeads")</div><div class="fs-3 fw-semibold">@Model.QualifiedLeadCount</div></div></div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("OpenOpportunities")</div><div class="fs-3 fw-semibold">@Model.OpenOpportunityCount</div></div></div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Segments")</div><div class="fs-3 fw-semibold">@Model.SegmentCount</div></div></div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Interactions7d")</div><div class="fs-3 fw-semibold">@Model.RecentInteractionCount</div></div></div>
-    </div>
+    <div class="col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Customers")</div><div class="fs-3 fw-semibold">@Model.CustomerCount</div></div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Leads")</div><div class="fs-3 fw-semibold">@Model.LeadCount</div></div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("QualifiedLeads")</div><div class="fs-3 fw-semibold">@Model.QualifiedLeadCount</div></div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("OpenOpportunities")</div><div class="fs-3 fw-semibold">@Model.OpenOpportunityCount</div></div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Segments")</div><div class="fs-3 fw-semibold">@Model.SegmentCount</div></div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Interactions7d")</div><div class="fs-3 fw-semibold">@Model.RecentInteractionCount</div></div></div></div>
 </div>
 
-<div class="card mt-4">
-    <div class="card-body">
-        <div class="text-muted small">@T.T("OpenPipeline")</div>
-        <div class="fs-2 fw-semibold">EUR @((Model.OpenPipelineMinor / 100.0M).ToString("0.00"))</div>
+<div class="row g-3 mt-1">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("OpenPipeline")</div>
+                <div class="fs-2 fw-semibold">EUR @((Model.OpenPipelineMinor / 100.0M).ToString("0.00"))</div>
+                <div class="small text-muted mt-2">@T.T("CrmOverviewPipelineNote")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("CrmOperatorPlaybooks")</h2>
+            <div class="d-grid gap-3">
+                <div class="rounded border p-3 bg-light-subtle">
+                    <div class="fw-semibold">@T.T("CrmOverviewPlaybookQualifiedLeadsTitle")</div>
+                    <div class="small text-muted mt-2">@T.T("CrmOverviewPlaybookQualifiedLeadsScope")</div>
+                    <div class="small mt-2"><strong>@T.T("CrmNextStep"):</strong> @T.T("CrmOverviewPlaybookQualifiedLeadsAction")</div>
+                </div>
+                <div class="rounded border p-3 bg-light-subtle">
+                    <div class="fw-semibold">@T.T("CrmOverviewPlaybookPipelineTitle")</div>
+                    <div class="small text-muted mt-2">@T.T("CrmOverviewPlaybookPipelineScope")</div>
+                    <div class="small mt-2"><strong>@T.T("CrmNextStep"):</strong> @T.T("CrmOverviewPlaybookPipelineAction")</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

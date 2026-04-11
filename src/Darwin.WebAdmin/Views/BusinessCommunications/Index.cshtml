@@ -25,22 +25,22 @@
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">SMTP</a>
+           hx-push-url="true">@T.T("SMTP")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">SMS</a>
+           hx-push-url="true">@T.T("SMS")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">WhatsApp</a>
+           hx-push-url="true">@T.T("WhatsApp")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Admin Alerts</a>
+           hx-push-url="true">@T.T("AdminAlerts")</a>
         @if (Model.Transport.CanSendTestEmail)
         {
             <form asp-action="SendTestEmail" method="post" class="d-inline"
@@ -106,21 +106,21 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("TransactionalSubjectPrefix")</div>
             <div class="fw-semibold mt-1">@(Model.Transport.TransactionalSubjectPrefixConfigured ? Model.Transport.TransactionalSubjectPrefix : T.T("NoPrefixConfigured"))</div>
-            <div class="small text-muted mt-2">Applied to the current invitation, activation, and password-reset email subjects.</div>
+            <div class="small text-muted mt-2">@T.T("CommunicationSubjectPrefixNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommunicationTestInbox")</div>
             <div class="fw-semibold mt-1">@(Model.Transport.TestInboxConfigured ? Model.Transport.TestInboxEmail : T.T("NotRerouting"))</div>
-            <div class="small text-muted mt-2">When configured, current transactional emails are redirected here and include the original recipient in the body.</div>
+            <div class="small text-muted mt-2">@T.T("CommunicationTestInboxNote")</div>
             @if (Model.Transport.CanSendTestEmail)
             {
-                <div class="small text-success mt-2">A test email can be sent safely from this workspace because SMTP and the test inbox are both configured.</div>
+                <div class="small text-success mt-2">@T.T("CommunicationTestEmailReadyNote")</div>
             }
             else
             {
-                <div class="small text-muted mt-2">Configure both SMTP and the communication test inbox to enable a safe operator-side test email action.</div>
+                <div class="small text-muted mt-2">@T.T("CommunicationTestEmailBlockedNote")</div>
             }
         </div>
     </div>
@@ -128,10 +128,10 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("SmsTestTarget")</div>
             <div class="fw-semibold mt-1">@(Model.Transport.SmsTestRecipientConfigured ? Model.Transport.TestSmsRecipientE164 : T.T("NotConfigured"))</div>
-            <div class="small text-muted mt-2">Used for operator-side SMS transport tests before live rollout.</div>
+            <div class="small text-muted mt-2">@T.T("CommunicationTestSmsTargetNote")</div>
             @if (Model.Transport.CanSendTestSms)
             {
-                <div class="small text-success mt-2">A safe operator-side SMS test is available because transport and test target are configured.</div>
+                <div class="small text-success mt-2">@T.T("CommunicationTestSmsReadyNote")</div>
             }
         </div>
     </div>
@@ -139,10 +139,10 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("WhatsAppTestTarget")</div>
             <div class="fw-semibold mt-1">@(Model.Transport.WhatsAppTestRecipientConfigured ? Model.Transport.TestWhatsAppRecipientE164 : T.T("NotConfigured"))</div>
-            <div class="small text-muted mt-2">Used for operator-side WhatsApp transport tests before live rollout.</div>
+            <div class="small text-muted mt-2">@T.T("CommunicationTestWhatsAppTargetNote")</div>
             @if (Model.Transport.CanSendTestWhatsApp)
             {
-                <div class="small text-success mt-2">A safe operator-side WhatsApp test is available because transport and test target are configured.</div>
+                <div class="small text-success mt-2">@T.T("CommunicationTestWhatsAppReadyNote")</div>
             }
         </div>
     </div>
@@ -151,23 +151,23 @@
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Businesses Requiring Email Setup</div>
+            <div class="text-muted small">@T.T("BusinessesRequiringEmailSetup")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.BusinessesRequiringEmailSetupCount</div>
-            <div class="small text-muted mt-2">Businesses with email-related toggles enabled but missing support or sender defaults.</div>
+            <div class="small text-muted mt-2">@T.T("BusinessesRequiringEmailSetupNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Missing Support Email</div>
+            <div class="text-muted small">@T.T("MissingSupportEmail")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingSupportEmailCount</div>
-            <div class="small text-muted mt-2">Counts businesses that still have no business-level support mailbox configured.</div>
+            <div class="small text-muted mt-2">@T.T("MissingSupportEmailNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Missing Sender Identity</div>
+            <div class="text-muted small">@T.T("MissingSenderIdentity")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingSenderIdentityCount</div>
-            <div class="small text-muted mt-2">Counts businesses missing sender name or reply-to defaults.</div>
+            <div class="small text-muted mt-2">@T.T("MissingSenderIdentityNote")</div>
         </div>
     </div>
 </div>
@@ -175,30 +175,30 @@
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Channel Attempts (24h)</div>
+            <div class="text-muted small">@T.T("ChannelAttempts24h")</div>
             <div class="fs-4 fw-semibold">@Model.ChannelAuditSummary.Recent24HourCount</div>
-            <div class="small text-muted mt-2">Recent SMS and WhatsApp sends for verification and operator diagnostics.</div>
+            <div class="small text-muted mt-2">@T.T("ChannelAttempts24hNote")</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">SMS / WhatsApp</div>
+            <div class="text-muted small">@T.T("SmsWhatsAppMix")</div>
             <div class="fw-semibold mt-1">@Model.ChannelAuditSummary.SmsCount / @Model.ChannelAuditSummary.WhatsAppCount</div>
-            <div class="small text-muted mt-2">Cross-channel activity mix for currently live non-email flows.</div>
+            <div class="small text-muted mt-2">@T.T("SmsWhatsAppMixNote")</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Phone Verification</div>
+            <div class="text-muted small">@T.T("PhoneVerification")</div>
             <div class="fs-4 fw-semibold">@Model.ChannelAuditSummary.PhoneVerificationCount</div>
-            <div class="small text-muted mt-2">Delivery attempts generated by the canonical mobile-number verification flow.</div>
+            <div class="small text-muted mt-2">@T.T("PhoneVerificationActivityNote")</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Channel Failures</div>
+            <div class="text-muted small">@T.T("ChannelFailures")</div>
             <div class="fs-4 fw-semibold">@Model.ChannelAuditSummary.FailedCount</div>
-            <div class="small text-muted mt-2">Operator-visible non-email delivery failures that need transport or policy review.</div>
+            <div class="small text-muted mt-2">@T.T("ChannelFailuresNote")</div>
         </div>
     </div>
 </div>
@@ -207,7 +207,7 @@
         <div class="card-header">@T.T("RecentSmsWhatsAppActivity")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            This is the current multi-channel audit baseline. It covers the live SMS and WhatsApp families we already use for phone verification and operator diagnostics, without pretending a full outbox or generic notification bus exists yet.
+            @T.T("ChannelAuditBaselineNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">

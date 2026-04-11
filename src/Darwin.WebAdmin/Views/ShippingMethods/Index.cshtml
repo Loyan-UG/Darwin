@@ -1,183 +1,120 @@
 @model Darwin.WebAdmin.ViewModels.Shipping.ShippingMethodsListVm
 @{
-    ViewData["Title"] = "Shipping Methods";
+    ViewData["Title"] = T.T("ShippingMethods");
 }
 
 <div id="shipping-methods-workspace-shell">
-<div class="d-flex justify-content-between align-items-start mb-3">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<div class="d-flex justify-content-between align-items-start mb-3 gap-3 flex-wrap">
     <div>
-        <h1 class="mb-1"><i class="fa-solid fa-truck-fast me-2"></i>Shipping Methods</h1>
-        <p class="text-muted mb-0">Phase-1 shipping configuration with queue filters for active, incomplete, and DHL-first review.</p>
+        <h1 class="mb-1"><i class="fa-solid fa-truck-fast me-2"></i>@T.T("ShippingMethods")</h1>
+        <p class="text-muted mb-0">@T.T("ShippingMethodsWorkspaceIntro")</p>
     </div>
     <a asp-action="Create" class="btn btn-primary"
        hx-get="@Url.Action("Create", "ShippingMethods")"
        hx-target="#shipping-methods-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">
-        <i class="fa-solid fa-plus"></i> Create Method
+        <i class="fa-solid fa-plus"></i> @T.T("CreateMethod")
     </a>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Total</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Active</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Inactive</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Missing Rates</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.MissingRatesCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">DHL Methods</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.DhlCount</div>
-        </div>
-    </div>
-    <div class="col-md-1">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Global</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.GlobalCoverageCount</div>
-        </div>
-    </div>
-    <div class="col-md-1">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Multi-rate</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.MultiRateCount</div>
-        </div>
-    </div>
+<div class="row g-3 mb-4">
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Total")</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Active")</div><div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Inactive")</div><div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("MissingRates")</div><div class="fs-4 fw-semibold">@Model.Summary.MissingRatesCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("DhlMethods")</div><div class="fs-4 fw-semibold">@Model.Summary.DhlCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("GlobalCoverage")</div><div class="fs-4 fw-semibold">@Model.Summary.GlobalCoverageCount</div></div></div>
 </div>
 
-<div class="card mb-3">
-    <div class="card-header">Phase-1 Shipping Method Playbooks</div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Queue</th>
-                        <th>Scope</th>
-                        <th>Operator Action</th>
-                    </tr>
-                </thead>
-                <tbody>
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a asp-action="Index" asp-route-filter="MissingRates" class="btn btn-sm btn-outline-warning" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MissingRates")</a>
+            <a asp-action="Index" asp-route-filter="Dhl" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("DhlMethods")</a>
+            <a asp-action="Index" asp-route-filter="Inactive" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Inactive" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Inactive")</a>
+            <a asp-action="Index" asp-route-filter="GlobalCoverage" class="btn btn-sm btn-outline-info" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "GlobalCoverage" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("GlobalCoverage")</a>
+            <a asp-action="Index" asp-route-filter="MultiRate" class="btn btn-sm btn-outline-primary" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MultiRate" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MultiRate")</a>
+        </div>
+        <form method="get" class="row g-2"
+              hx-get="@Url.Action("Index", "ShippingMethods")"
+              hx-target="#shipping-methods-workspace-shell"
+              hx-swap="outerHTML"
+              hx-push-url="true">
+            <div class="col-md-4">
+                <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("SearchShippingMethodsPlaceholder")" />
+            </div>
+            <div class="col-md-3"><select name="filter" asp-items="Model.FilterItems" class="form-select"></select></div>
+            <div class="col-md-2"><select name="pageSize" asp-items="Model.PageSizeItems" class="form-select"></select></div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")</button>
+                <a asp-action="Index" class="btn btn-outline-secondary" hx-get="@Url.Action("Index", "ShippingMethods")" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Reset")</a>
+            </div>
+        </form>
+    </div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("ShippingMethodPlaybooks")</h2>
+            <div class="d-grid gap-3">
                 @foreach (var item in Model.Playbooks)
                 {
-                    <tr>
-                        <td class="fw-semibold">@item.Title</td>
-                        <td>@item.ScopeNote</td>
-                        <td>@item.OperatorAction</td>
-                    </tr>
+                    <div class="rounded border p-3 bg-light-subtle">
+                        <div class="fw-semibold">@item.Title</div>
+                        <div class="small text-muted mt-2">@item.ScopeNote</div>
+                        <div class="small mt-2"><strong>@T.T("OperatorAction"):</strong> @item.OperatorAction</div>
+                    </div>
                 }
-                </tbody>
-            </table>
+            </div>
         </div>
     </div>
-</div>
-
-<form method="get" class="row g-2 mb-3"
-      hx-get="@Url.Action("Index", "ShippingMethods")"
-      hx-target="#shipping-methods-workspace-shell"
-      hx-swap="outerHTML"
-      hx-push-url="true">
-    <div class="col-md-4">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by name, carrier, service, or countries" />
-    </div>
-    <div class="col-md-3">
-        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-    </div>
-    <div class="col-md-2">
-        <select name="pageSize" asp-items="Model.PageSizeItems" class="form-select"></select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary">
-            <i class="fa-solid fa-magnifying-glass"></i> Search
-        </button>
-        <a asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "ShippingMethods")"
-           hx-target="#shipping-methods-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
-    </div>
-</form>
-
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <a asp-action="Index" asp-route-filter="MissingRates" class="btn btn-sm btn-outline-warning"
-       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Missing Rates</a>
-    <a asp-action="Index" asp-route-filter="Dhl" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">DHL</a>
-    <a asp-action="Index" asp-route-filter="Inactive" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Inactive" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Inactive</a>
-    <a asp-action="Index" asp-route-filter="GlobalCoverage" class="btn btn-sm btn-outline-info"
-       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "GlobalCoverage" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Global Coverage</a>
-    <a asp-action="Index" asp-route-filter="MultiRate" class="btn btn-sm btn-outline-primary"
-       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MultiRate" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Multi-rate</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-hover align-middle">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Carrier / Service</th>
-                <th>Countries</th>
-                <th>Currency</th>
-                <th>Rates</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th class="text-end">Actions</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("CarrierService")</th>
+                <th>@T.T("Countries")</th>
+                <th>@T.T("Currency")</th>
+                <th>@T.T("Rates")</th>
+                <th>@T.T("Status")</th>
+                <th>@T.T("Updated")</th>
+                <th class="text-end">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="8" class="text-center text-muted py-4">No shipping methods found.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted py-4">@T.T("NoShippingMethodsFound")</td></tr>
         }
         else
         {
             foreach (var item in Model.Items)
             {
                 <tr>
-                    <td>
-                        <div class="fw-semibold">@item.Name</div>
-                        <div class="small text-muted">@item.DisplayName</div>
-                    </td>
+                    <td><div class="fw-semibold">@item.Name</div><div class="small text-muted">@item.DisplayName</div></td>
                     <td>@item.Carrier / @item.Service</td>
-                    <td>@(string.IsNullOrWhiteSpace(item.CountriesCsv) ? "All" : item.CountriesCsv)</td>
+                    <td>@(string.IsNullOrWhiteSpace(item.CountriesCsv) ? T.T("All") : item.CountriesCsv)</td>
                     <td>@(string.IsNullOrWhiteSpace(item.Currency) ? "-" : item.Currency)</td>
                     <td>
                         <span class="badge @(item.RatesCount > 0 ? "text-bg-success" : "text-bg-warning")">@item.RatesCount</span>
                         @if (item.HasMultipleRates)
                         {
-                            <div><span class="badge text-bg-info mt-1">Multi-rate</span></div>
+                            <div><span class="badge text-bg-info mt-1">@T.T("MultiRate")</span></div>
                         }
                     </td>
                     <td>
-                        <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">
-                            @(item.IsActive ? "Active" : "Inactive")
-                        </span>
+                        <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? T.T("Active") : T.T("Inactive"))</span>
                         @if (item.IsDhl)
                         {
-                            <div><span class="badge text-bg-primary mt-1">DHL</span></div>
+                            <div><span class="badge text-bg-primary mt-1">@T.T("DhlMethods")</span></div>
                         }
                         @if (item.HasGlobalCoverage)
                         {
-                            <div><span class="badge text-bg-info mt-1">Global coverage</span></div>
+                            <div><span class="badge text-bg-info mt-1">@T.T("GlobalCoverage")</span></div>
                         }
                     </td>
                     <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
@@ -186,9 +123,7 @@
                            hx-get="@Url.Action("Edit", "ShippingMethods", new { id = item.Id })"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">
-                            <i class="fa-solid fa-pen"></i> Edit
-                        </a>
+                           hx-push-url="true"><i class="fa-solid fa-pen"></i> @T.T("Edit")</a>
                     </td>
                 </tr>
             }
@@ -197,15 +132,5 @@
     </table>
 </div>
 
-<pager page="Model.Page"
-       page-size="Model.PageSize"
-       total="Model.Total"
-       asp-controller="ShippingMethods"
-       asp-action="Index"
-       asp-route-query="@Model.Query"
-       asp-route-filter="@Model.Filter"
-       hx-target="#shipping-methods-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">
-</pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="ShippingMethods" asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="@Model.Filter" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
 </div>
