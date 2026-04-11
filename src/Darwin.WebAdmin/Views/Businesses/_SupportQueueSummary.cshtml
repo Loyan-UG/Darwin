@@ -63,6 +63,15 @@
                    hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation" })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML">@T.T("OpenFailedActivationEmails")</a>
+                <span class="mx-1">|</span>
+                <a asp-controller="Users"
+                   asp-action="Index"
+                   asp-route-filter="Unconfirmed"
+                   class="small"
+                   hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
             </div>
         </div>
     </div>
@@ -73,6 +82,21 @@
         @T.T("BusinessesMissingOwner"): <strong>@Model.MissingOwnerBusinessCount</strong>
         <span class="mx-2">|</span>
         @T.T("LockedMembers"): <strong>@Model.LockedMemberCount</strong>
+        <span class="mx-2">|</span>
+        <a asp-controller="Users"
+           asp-action="Index"
+           asp-route-filter="Locked"
+           hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+           hx-target="#business-support-queue-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("UsersFilterLocked")</a>
+        <span class="mx-2">|</span>
+        <a asp-controller="MobileOperations"
+           asp-action="Index"
+           hx-get="@Url.Action("Index", "MobileOperations")"
+           hx-target="#business-support-queue-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("MobileOperationsTitle")</a>
         <span class="mx-2">|</span>
         <a asp-controller="BusinessCommunications"
            asp-action="EmailAudits"

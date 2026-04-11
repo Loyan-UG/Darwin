@@ -1134,6 +1134,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     Title = T("LoyaltyScanPlaybookFailureTitle"),
                     ScopeNote = T("LoyaltyScanPlaybookFailureScope"),
                     OperatorAction = T("LoyaltyScanPlaybookFailureAction")
+                },
+                new()
+                {
+                    Title = T("LoyaltyScanPlaybookProviderTitle"),
+                    ScopeNote = T("LoyaltyScanPlaybookProviderScope"),
+                    OperatorAction = T("LoyaltyScanPlaybookProviderAction")
                 }
             };
         }
@@ -1153,6 +1159,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     Title = T("LoyaltyRedemptionPlaybookScanFailureTitle"),
                     ScopeNote = T("LoyaltyRedemptionPlaybookScanFailureScope"),
                     OperatorAction = T("LoyaltyRedemptionPlaybookScanFailureAction")
+                },
+                new()
+                {
+                    Title = T("LoyaltyRedemptionPlaybookMobileTitle"),
+                    ScopeNote = T("LoyaltyRedemptionPlaybookMobileScope"),
+                    OperatorAction = T("LoyaltyRedemptionPlaybookMobileAction")
                 }
             };
         }
@@ -1357,4 +1369,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         }
     }
 }
+
+
 

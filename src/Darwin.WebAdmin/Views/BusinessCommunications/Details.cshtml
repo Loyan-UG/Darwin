@@ -1,45 +1,46 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessCommunicationProfileVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Business Communication Profile";
+    ViewData["Title"] = T.T("BusinessCommunicationProfileTitle");
 }
 
 <div id="business-communication-profile-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-envelope-open me-2"></i>@Model.Name</h1>
-        <p class="text-muted mb-0">Business-level communication readiness, current policy flags, and phase-1 operational implications.</p>
+        <p class="text-muted mb-0">@T.T("BusinessCommunicationProfileIntro")</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Index" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Back to Communications</a>
+           hx-push-url="true">@T.T("BackToCommunications")</a>
         <a asp-action="ChannelAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">SMS / WhatsApp Audits</a>
+           hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
         <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Email Audits</a>
+           hx-push-url="true">@T.T("EmailAudits")</a>
         <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-primary"
            hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Open Setup</a>
+           hx-push-url="true">@T.T("OpenSetup")</a>
         <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Members</a>
+           hx-push-url="true">@T.T("Members")</a>
         <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Invitations</a>
+           hx-push-url="true">@T.T("Invitations")</a>
     </div>
 </div>
 
@@ -448,12 +449,29 @@
 <div class="row g-3 mt-1">
     <div class="col-lg-4">
         <div class="card h-100">
-            <div class="card-header">SMS / WhatsApp Activity Snapshot</div>
+            <div class="card-header">@T.T("SmsWhatsAppActivitySnapshotTitle")</div>
             <div class="card-body">
-                <div class="mb-2">Attempts (24h): <strong>@Model.ChannelAuditSummary.Recent24HourCount</strong></div>
-                <div class="mb-2">SMS / WhatsApp: <strong>@Model.ChannelAuditSummary.SmsCount / @Model.ChannelAuditSummary.WhatsAppCount</strong></div>
-                <div class="mb-2">Phone Verification: <strong>@Model.ChannelAuditSummary.PhoneVerificationCount</strong></div>
-                <div>Failures: <strong>@Model.ChannelAuditSummary.FailedCount</strong></div>
+                <div class="mb-2">@T.T("Attempts24h"): <strong>@Model.ChannelAuditSummary.Recent24HourCount</strong></div>
+                <div class="mb-2">@T.T("SmsWhatsAppMix"): <strong>@Model.ChannelAuditSummary.SmsCount / @Model.ChannelAuditSummary.WhatsAppCount</strong></div>
+                <div class="mb-2">@T.T("PhoneVerification"): <strong>@Model.ChannelAuditSummary.PhoneVerificationCount</strong></div>
+                <div>@T.T("Failed"): <strong>@Model.ChannelAuditSummary.FailedCount</strong></div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <a asp-action="ChannelAudits" asp-route-businessId="@Model.Id" asp-route-phoneVerificationOnly="true" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id, phoneVerificationOnly = true })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("PhoneVerification")</a>
+                    <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "MobileOperations")"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
+                </div>
             </div>
         </div>
     </div>
@@ -472,10 +490,10 @@
 </div>
 
 <div class="card mt-4">
-    <div class="card-header">Recent SMS / WhatsApp Activity</div>
+            <div class="card-header">@T.T("RecentSmsWhatsAppActivity")</div>
     <div class="card-body">
         <div class="small text-muted mb-3">
-            This keeps non-email delivery visible while investigating one business. It is intentionally scoped to current live SMS and WhatsApp families, especially phone verification and operator transport tests.
+            @T.T("BusinessCommunicationProfileChannelActivityNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
@@ -501,7 +519,7 @@
                         <tr>
                             <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                             <td><span class="badge text-bg-light">@item.Channel</span> <span class="small text-muted">@item.Provider</span></td>
-                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</td>
                             <td>@item.RecipientAddress</td>
                             <td>
                                 @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
@@ -522,6 +540,21 @@
                                 @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
                                 {
                                     <div class="small text-danger mt-1">@item.FailureMessage</div>
+                                }
+                                @if (string.Equals(item.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <div class="mt-2 d-flex flex-wrap gap-2">
+                                        <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary"
+                                           hx-get="@Url.Action("Index", "MobileOperations")"
+                                           hx-target="#business-communication-profile-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                        <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-secondary"
+                                           hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                                           hx-target="#business-communication-profile-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
+                                    </div>
                                 }
                             </td>
                         </tr>

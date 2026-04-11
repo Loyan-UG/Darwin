@@ -136,7 +136,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
             var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("MobilePushTokenCleared") : result.Error ?? T("MobilePushTokenClearFailed");
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("MobilePushTokenCleared");
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("MobilePushTokenClearFailed");
+            }
+
             return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
         }
 
@@ -145,7 +153,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
             var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("MobileDeviceDeactivated") : result.Error ?? T("MobileDeviceDeactivateFailed");
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("MobileDeviceDeactivated");
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("MobileDeviceDeactivateFailed");
+            }
+
             return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
         }
 
@@ -196,6 +212,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                     Title = T("MobilePlaybookTransportTitle"),
                     ScopeNote = T("MobilePlaybookTransportScope"),
                     OperatorAction = T("MobilePlaybookTransportAction")
+                },
+                new()
+                {
+                    Title = T("MobilePlaybookProviderLaneTitle"),
+                    ScopeNote = T("MobilePlaybookProviderLaneScope"),
+                    OperatorAction = T("MobilePlaybookProviderLaneAction")
+                },
+                new()
+                {
+                    Title = T("MobilePlaybookMemberLifecycleTitle"),
+                    ScopeNote = T("MobilePlaybookMemberLifecycleScope"),
+                    OperatorAction = T("MobilePlaybookMemberLifecycleAction")
                 }
             };
         }

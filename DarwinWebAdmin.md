@@ -363,10 +363,14 @@ The dedicated `Mobile Operations` workspace currently provides:
 - lightweight remediation actions for support: clear push token and deactivate device
 - admin-side staff access badge preview/refresh for business members when support needs to mirror the mobile QR badge
 - direct links into support queue, site settings, and scan-session review
+- row-level handoffs from device diagnostics into loyalty accounts, loyalty scan sessions, and communication provider review when app, scan, and transport incidents overlap
+- mobile-used bootstrap validation and misconfiguration feedback now also route through the shared application validation resources instead of raw English-only failure text
 
 The admin dashboard now also exposes a compact loyalty/mobile snapshot so operators can jump directly into loyalty accounts, pending redemptions, scan sessions, and device diagnostics from the landing page instead of relying only on sidebar navigation.
 
 This is intentionally an operational workspace, not yet a full mobile observability and remediation suite.
+
+The identity support chain now also hands mobile-linked users directly into `Mobile Operations` and loyalty account review from the main user queue, so account remediation does not have to rediscover the same person through a separate device-only workspace first.
 
 ## 13. Communication Management UI
 

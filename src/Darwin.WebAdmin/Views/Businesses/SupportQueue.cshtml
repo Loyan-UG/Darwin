@@ -23,6 +23,13 @@
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML">@T.T("Communications")</a>
+        <a asp-controller="MobileOperations"
+           asp-action="Index"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "MobileOperations")"
+           hx-target="#business-support-queue-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("MobileOperationsTitle")</a>
         <a asp-controller="BusinessCommunications"
            asp-action="EmailAudits"
            asp-route-status="Failed"

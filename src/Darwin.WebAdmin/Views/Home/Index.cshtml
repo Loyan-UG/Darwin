@@ -1,26 +1,27 @@
 @model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm
 @inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = T.T("AdminDashboardTitle");
     var canManageIdentity = await Perms.HasAsync("FullAdminAccess");
     var canManageBusinesses = await Perms.HasAsync("ManageBusinessSupport");
 }
 
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
     <div>
-        <h1 class="mb-1">Admin Dashboard</h1>
-        <p class="text-muted mb-0">Use this overview as the operational starting point for the back-office.</p>
+        <h1 class="mb-1">@T.T("AdminDashboardTitle")</h1>
+        <p class="text-muted mb-0">@T.T("AdminDashboardIntro")</p>
     </div>
 
     <form asp-action="Index" method="get" class="d-flex align-items-center gap-2">
-        <label for="businessId" class="form-label mb-0 text-muted">Business context</label>
+        <label for="businessId" class="form-label mb-0 text-muted">@T.T("BusinessContext")</label>
         <select id="businessId" name="businessId" asp-items="Model.BusinessOptions" class="form-select">
             @if (Model.BusinessOptions.Count == 0)
             {
-                <option value="">No active business</option>
+                <option value="">@T.T("NoActiveBusiness")</option>
             }
         </select>
-        <button type="submit" class="btn btn-outline-secondary">Apply</button>
+        <button type="submit" class="btn btn-outline-secondary">@T.T("Apply")</button>
     </form>
 </div>
 
@@ -210,10 +211,10 @@
             <div class="card-header bg-white">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="fw-semibold">Loyalty Operations</div>
-                        <div class="small text-muted">Programs, accounts, redemptions, and scan troubleshooting.</div>
+                        <div class="fw-semibold">@T.T("LoyaltyOperations")</div>
+                        <div class="small text-muted">@T.T("LoyaltyOperationsIntro")</div>
                     </div>
-                    <a asp-controller="Loyalty" asp-action="Accounts" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-secondary">Open Loyalty</a>
+                    <a asp-controller="Loyalty" asp-action="Accounts" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-secondary">@T.T("OpenLoyalty")</a>
                 </div>
             </div>
             <div class="card-body">
@@ -222,35 +223,35 @@
                     <div class="row g-3">
                         <div class="col-sm-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Accounts</div>
+                                <div class="text-muted small">@T.T("Accounts")</div>
                                 <div class="fs-4 fw-semibold">@Model.LoyaltyAccountCount</div>
                             </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Pending Redemptions</div>
+                                <div class="text-muted small">@T.T("PendingRedemptions")</div>
                                 <div class="fs-4 fw-semibold">@Model.PendingRedemptionCount</div>
                             </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Recent Scan Sessions</div>
+                                <div class="text-muted small">@T.T("RecentScanSessions")</div>
                                 <div class="fs-4 fw-semibold">@Model.ScanSessionCount</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex flex-wrap gap-2 mt-3">
-                        <a asp-controller="Loyalty" asp-action="Accounts" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Accounts</a>
-                        <a asp-controller="Loyalty" asp-action="Redemptions" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Redemptions</a>
-                        <a asp-controller="Loyalty" asp-action="ScanSessions" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Scan Sessions</a>
-                        <a asp-controller="Loyalty" asp-action="Campaigns" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Campaigns</a>
+                        <a asp-controller="Loyalty" asp-action="Accounts" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("Accounts")</a>
+                        <a asp-controller="Loyalty" asp-action="Redemptions" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("Redemptions")</a>
+                        <a asp-controller="Loyalty" asp-action="ScanSessions" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("ScanSessions")</a>
+                        <a asp-controller="Loyalty" asp-action="Campaigns" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("Campaigns")</a>
                     </div>
                 }
                 else
                 {
                     <div class="alert alert-secondary mb-0">
-                        Select an active business context to review loyalty activity and mobile-business support flows.
+                        @T.T("SelectBusinessForLoyaltyMobile")
                     </div>
                 }
             </div>
@@ -264,38 +265,38 @@
                 <div class="card-header bg-white">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <div class="fw-semibold">Mobile Operations</div>
-                            <div class="small text-muted">Device fleet health and support remediation.</div>
+                            <div class="fw-semibold">@T.T("MobileOperations")</div>
+                            <div class="small text-muted">@T.T("MobileOperationsDashboardIntro")</div>
                         </div>
-                        <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary">Open Mobile Ops</a>
+                        <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("OpenMobileOps")</a>
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-sm-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Active Devices</div>
+                                <div class="text-muted small">@T.T("ActiveDevices")</div>
                                 <div class="fs-4 fw-semibold">@Model.MobileActiveDeviceCount</div>
                             </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Stale Devices</div>
+                                <div class="text-muted small">@T.T("StaleDevices")</div>
                                 <div class="fs-4 fw-semibold">@Model.MobileStaleDeviceCount</div>
                             </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Missing Push</div>
+                                <div class="text-muted small">@T.T("MissingPush")</div>
                                 <div class="fs-4 fw-semibold">@Model.MobileMissingPushTokenCount</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex flex-wrap gap-2 mt-3">
-                        <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-primary">Device Diagnostics</a>
-                        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">Support Queue</a>
-                        <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-primary">Communications</a>
+                        <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("DeviceDiagnostics")</a>
+                        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("SupportQueue")</a>
+                        <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("Communications")</a>
                     </div>
                 </div>
             </div>

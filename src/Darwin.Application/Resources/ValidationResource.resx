@@ -33,6 +33,21 @@
   <data name="SiteSettingMobileMaxOutboxItemsRange" xml:space="preserve">
     <value>MobileMaxOutboxItems must be between 1 and 10000.</value>
   </data>
+  <data name="AppBootstrapSiteSettingsMissing" xml:space="preserve">
+    <value>Site settings are missing. This is a server misconfiguration.</value>
+  </data>
+  <data name="AppBootstrapJwtDisabled" xml:space="preserve">
+    <value>JWT is disabled. Mobile authentication cannot proceed.</value>
+  </data>
+  <data name="AppBootstrapJwtAudienceMissing" xml:space="preserve">
+    <value>JwtAudience is not configured. This is a server misconfiguration.</value>
+  </data>
+  <data name="AppBootstrapQrTokenRefreshInvalid" xml:space="preserve">
+    <value>MobileQrTokenRefreshSeconds must be a positive integer.</value>
+  </data>
+  <data name="AppBootstrapMaxOutboxItemsInvalid" xml:space="preserve">
+    <value>MobileMaxOutboxItems must be a positive integer.</value>
+  </data>
   <data name="SiteSettingBusinessManagementWebsiteUrlHttps" xml:space="preserve">
     <value>BusinessManagementWebsiteUrl must be an absolute HTTPS URL.</value>
   </data>

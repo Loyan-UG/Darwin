@@ -956,17 +956,43 @@
                         }
                         @if (string.Equals(item.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
                         {
-                            <div class="small text-muted mt-2">Canonical verification flow for Web and Mobile.</div>
+                            <div class="small text-muted mt-2">@T.T("ChannelAuditPhoneVerificationNote")</div>
                             <div class="mt-2 d-flex flex-wrap gap-2">
                                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                                    hx-target="#business-communication-channel-audits-shell"
-                                   hx-swap="outerHTML">Verification Policy</a>
+                                   hx-swap="outerHTML">@T.T("OpenVerificationPolicy")</a>
+                                <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations")"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
+                            </div>
+                        }
+                        else if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) || string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="small text-muted mt-2">@T.T("ChannelAuditIdentityLifecycleNote")</div>
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-controller="Users" asp-action="Index" asp-route-filter="Unconfirmed" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                                <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations")"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                             </div>
                         }
                         else if (string.Equals(item.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
                         {
-                            <div class="small text-muted mt-2">Operator-side transport validation only.</div>
+                            <div class="small text-muted mt-2">@T.T("ChannelAuditAdminTransportNote")</div>
                             <div class="mt-2 d-flex flex-wrap gap-2">
                                 @if (string.Equals(item.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestSms)
                                 {
@@ -1060,7 +1086,7 @@
                                    class="btn btn-sm btn-outline-info"
                                    hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { provider = item.Provider, recipientAddress = string.Empty, query = string.Empty, status = string.Empty, channel = item.Channel, flowKey = item.FlowKey, failedOnly = false, phoneVerificationOnly = false, adminTestOnly = false, repeatedFailuresOnly = Model.RepeatedFailuresOnly, priorSuccessOnly = Model.PriorSuccessOnly, actionReadyOnly = Model.ActionReadyOnly, actionBlockedOnly = Model.ActionBlockedOnly, escalationCandidatesOnly = Model.EscalationCandidatesOnly, heavyChainsOnly = Model.HeavyChainsOnly, providerReviewOnly = Model.ProviderReviewOnly, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = item.BusinessId })"
                                    hx-target="#business-communication-channel-audits-shell"
-                                   hx-swap="outerHTML">Open Provider Lane</a>
+                                   hx-swap="outerHTML">@T.T("OpenProviderLane")</a>
                                 <a asp-action="ChannelAudits"
                                    asp-route-recipientAddress="@item.RecipientAddress"
                                    asp-route-provider="@Model.Provider"
@@ -1084,7 +1110,7 @@
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { recipientAddress = item.RecipientAddress, provider = Model.Provider, flowKey = item.FlowKey, channel = string.Empty, status = string.Empty, query = string.Empty, failedOnly = false, phoneVerificationOnly = false, adminTestOnly = false, repeatedFailuresOnly = Model.RepeatedFailuresOnly, priorSuccessOnly = Model.PriorSuccessOnly, actionReadyOnly = Model.ActionReadyOnly, actionBlockedOnly = Model.ActionBlockedOnly, escalationCandidatesOnly = Model.EscalationCandidatesOnly, heavyChainsOnly = Model.HeavyChainsOnly, providerReviewOnly = Model.ProviderReviewOnly, chainFollowUpOnly = Model.ChainFollowUpOnly, chainResolvedOnly = Model.ChainResolvedOnly, businessId = item.BusinessId })"
                                    hx-target="#business-communication-channel-audits-shell"
-                                   hx-swap="outerHTML">Open Exact Chain</a>
+                                   hx-swap="outerHTML">@T.T("OpenExactChain")</a>
                             </div>
                         }
                     </td>

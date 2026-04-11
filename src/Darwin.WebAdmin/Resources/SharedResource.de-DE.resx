@@ -219,6 +219,183 @@
   <data name="ChangeEmailFailedMessage" xml:space="preserve">
     <value>E-Mail konnte nicht geaendert werden.</value>
   </data>
+  <data name="UsersPageTitle" xml:space="preserve">
+    <value>Benutzer</value>
+  </data>
+  <data name="UsersFilterAll" xml:space="preserve">
+    <value>Alle Benutzer</value>
+  </data>
+  <data name="UsersFilterUnconfirmed" xml:space="preserve">
+    <value>Unbestaetigt</value>
+  </data>
+  <data name="UsersFilterLocked" xml:space="preserve">
+    <value>Gesperrt</value>
+  </data>
+  <data name="UsersFilterInactive" xml:space="preserve">
+    <value>Inaktiv</value>
+  </data>
+  <data name="UsersFilterMobileLinked" xml:space="preserve">
+    <value>Mobil verknuepft</value>
+  </data>
+  <data name="UsersCreateAction" xml:space="preserve">
+    <value>Anlegen</value>
+  </data>
+  <data name="UsersSummaryTotal" xml:space="preserve">
+    <value>Gesamt</value>
+  </data>
+  <data name="UsersSummaryUnconfirmed" xml:space="preserve">
+    <value>Unbestaetigt</value>
+  </data>
+  <data name="UsersSummaryLocked" xml:space="preserve">
+    <value>Gesperrt</value>
+  </data>
+  <data name="UsersSummaryInactive" xml:space="preserve">
+    <value>Inaktiv</value>
+  </data>
+  <data name="UsersSummaryMobileLinked" xml:space="preserve">
+    <value>Mobil verknuepft</value>
+  </data>
+  <data name="UsersPlaybooksTitle" xml:space="preserve">
+    <value>Identity-Support-Playbooks</value>
+  </data>
+  <data name="UsersPlaybooksQueueColumn" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="UsersPlaybooksScopeColumn" xml:space="preserve">
+    <value>Umfang</value>
+  </data>
+  <data name="UsersPlaybooksActionColumn" xml:space="preserve">
+    <value>Operator-Aktion</value>
+  </data>
+  <data name="UsersPlaybooksFollowUpColumn" xml:space="preserve">
+    <value>Nachverfolgung</value>
+  </data>
+  <data name="UsersSearchPlaceholder" xml:space="preserve">
+    <value>Nach E-Mail/Name suchen</value>
+  </data>
+  <data name="UsersSearchAction" xml:space="preserve">
+    <value>Suchen</value>
+  </data>
+  <data name="UsersResetAction" xml:space="preserve">
+    <value>Zuruecksetzen</value>
+  </data>
+  <data name="UsersEmailColumn" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="UsersNameColumn" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="UsersLifecycleColumn" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="UsersActiveColumn" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="UsersActionsColumn" xml:space="preserve">
+    <value>Aktionen</value>
+  </data>
+  <data name="UsersLifecycleUnconfirmedBadge" xml:space="preserve">
+    <value>Unbestaetigt</value>
+  </data>
+  <data name="UsersLifecycleLockedBadge" xml:space="preserve">
+    <value>Gesperrt</value>
+  </data>
+  <data name="UsersLifecycleMobileBadge" xml:space="preserve">
+    <value>Mobil {0}</value>
+  </data>
+  <data name="UsersYes" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="UsersNo" xml:space="preserve">
+    <value>Nein</value>
+  </data>
+  <data name="UsersEditAction" xml:space="preserve">
+    <value>Bearbeiten</value>
+  </data>
+  <data name="UsersEmailAction" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="UsersPasswordAction" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="UsersRolesAction" xml:space="preserve">
+    <value>Rollen</value>
+  </data>
+  <data name="UsersActivationAction" xml:space="preserve">
+    <value>Aktivierung</value>
+  </data>
+  <data name="UsersUnlockAction" xml:space="preserve">
+    <value>Entsperren</value>
+  </data>
+  <data name="UsersLockAction" xml:space="preserve">
+    <value>Sperren</value>
+  </data>
+  <data name="UsersDeleteAction" xml:space="preserve">
+    <value>Loeschen</value>
+  </data>
+  <data name="UsersPlaybookUnconfirmedTitle" xml:space="preserve">
+    <value>Unbestaetigte Konten</value>
+  </data>
+  <data name="UsersPlaybookUnconfirmedScope" xml:space="preserve">
+    <value>Nutze diese Queue fuer Aktivierungs-Support und Onboarding-Nachverfolgung.</value>
+  </data>
+  <data name="UsersPlaybookUnconfirmedAction" xml:space="preserve">
+    <value>Oeffne den Benutzer und sende dann die Aktivierungs-E-Mail erneut oder bestaetige die E-Mail nur dort direkt, wo die Richtlinie es erlaubt.</value>
+  </data>
+  <data name="UsersPlaybookUnconfirmedFollowUp" xml:space="preserve">
+    <value>Wenn wiederholt E-Mail-Fehler auftreten, fahre in Business Communications und Email Audits fort.</value>
+  </data>
+  <data name="UsersPlaybookLockedTitle" xml:space="preserve">
+    <value>Gesperrte Konten</value>
+  </data>
+  <data name="UsersPlaybookLockedScope" xml:space="preserve">
+    <value>Behandle Sperren als Support- und Sicherheitsereignisse, nicht als beilaufige Bereinigung.</value>
+  </data>
+  <data name="UsersPlaybookLockedAction" xml:space="preserve">
+    <value>Oeffne den Benutzer, validiere den Support-Kontext und entsperre erst, wenn das Problem geklaert ist.</value>
+  </data>
+  <data name="UsersPlaybookLockedFollowUp" xml:space="preserve">
+    <value>Wenn die Sperre durch Sicherheitsbedenken ausgeloest wurde, rotiere das Passwort oder pruefe die letzten Auth-Flows.</value>
+  </data>
+  <data name="UsersPlaybookMobileLinkedTitle" xml:space="preserve">
+    <value>Mobil verknuepfte Konten</value>
+  </data>
+  <data name="UsersPlaybookMobileLinkedScope" xml:space="preserve">
+    <value>Diese Benutzer sind wichtig fuer Device-, Push- und Loyalty-bezogenen Support.</value>
+  </data>
+  <data name="UsersPlaybookMobileLinkedAction" xml:space="preserve">
+    <value>Nutze das Benutzerprofil zusammen mit Mobile Operations und Loyalty-Workspaces, wenn veraltete Geraete, fehlende Push-Tokens, Scan-Fehler oder Benachrichtigungsprobleme gemeldet werden.</value>
+  </data>
+  <data name="UsersPlaybookMobileLinkedFollowUp" xml:space="preserve">
+    <value>Pruefe Geraeteflotte und Loyalty-Aktivitaet gegen, bevor du annimmst, dass das Benutzerprofil selbst falsch ist.</value>
+  </data>
+  <data name="MobilePlaybookMemberLifecycleTitle" xml:space="preserve">
+    <value>Mitglieds-Lifecycle-Nachverfolgung</value>
+  </data>
+  <data name="MobilePlaybookMemberLifecycleScope" xml:space="preserve">
+    <value>Nutze diese Lane, wenn Device-Incidents mit ausstehender Aktivierung, gesperrten Mitgliedern oder Business-Member-Onboarding-Luecken ueberlappen.</value>
+  </data>
+  <data name="MobilePlaybookMemberLifecycleAction" xml:space="preserve">
+    <value>Pruefe zuerst das Benutzerkonto und gehe dann in Loyalty oder Mobile Operations weiter, je nachdem ob das Problem Kontostatus, Scan-Aktivitaet oder Device-Gesundheit ist.</value>
+  </data>
+  <data name="SiteSettingsMobileBootstrapIntro" xml:space="preserve">
+    <value>Diese Einstellungen definieren den Bootstrap- und Session-Vertrag der Mobile-Apps. Pruefe Mobile Operations und mobil verknuepfte Benutzer, bevor du einen Incident als reinen App-Drift behandelst.</value>
+  </data>
+  <data name="SiteSettingsBusinessAppHandoffsTitle" xml:space="preserve">
+    <value>Business-App-Rechts- und Billing-Handoffs</value>
+  </data>
+  <data name="SiteSettingsBusinessAppHandoffsIntro" xml:space="preserve">
+    <value>Diese URLs werden von business-orientierten Mobile-Flows verwendet, um Operatoren auf externe Rechts- oder Billing-Seiten weiterzuleiten, statt diese Aktionen in der App auszufuehren.</value>
+  </data>
+  <data name="SiteSettingsBusinessAppHandoffsNote" xml:space="preserve">
+    <value>Pflege hier nur plattformweite Handoff-URLs. Validiere finale Marke, Sender und lokale Business-Defaults in Business Setup, bevor du einen Tenant als go-live-ready behandelst.</value>
+  </data>
+  <data name="SiteSettingsBusinessAppManagementWebsiteHelp" xml:space="preserve">
+    <value>Wird vom Subscription-Screen der Business-App fuer Plan- und Billing-Handoffs genutzt.</value>
+  </data>
+  <data name="SiteSettingsBusinessAppDeletionHelp" xml:space="preserve">
+    <value>Wird vom Account-Deletion-Handoff der Business-App genutzt.</value>
+  </data>
   <data name="EmailChangeRequestedMessage" xml:space="preserve">
     <value>E-Mail-Aenderung angefordert. Der Benutzer muss die neue E-Mail vor der Anmeldung bestaetigen.</value>
   </data>
@@ -1004,6 +1181,18 @@
   </data>
   <data name="Unclassified" xml:space="preserve">
     <value>Nicht klassifiziert</value>
+  </data>
+  <data name="BusinessCommunicationProfileTitle" xml:space="preserve">
+    <value>Business-Kommunikationsprofil</value>
+  </data>
+  <data name="BusinessCommunicationProfileIntro" xml:space="preserve">
+    <value>Business-bezogene Kommunikationsbereitschaft, aktuelle Policy-Flags und operative Phase-1-Auswirkungen.</value>
+  </data>
+  <data name="SmsWhatsAppActivitySnapshotTitle" xml:space="preserve">
+    <value>SMS-/WhatsApp-Aktivitaets-Snapshot</value>
+  </data>
+  <data name="BusinessCommunicationProfileChannelActivityNote" xml:space="preserve">
+    <value>So bleibt Nicht-E-Mail-Zustellung sichtbar, waehrend ein einzelnes Business untersucht wird. Der Fokus liegt bewusst auf den aktuell live genutzten SMS- und WhatsApp-Familien, insbesondere Telefonverifizierung und operatorseitigen Transporttests.</value>
   </data>
   <data name="Sent" xml:space="preserve">
     <value>Gesendet</value>
@@ -2301,6 +2490,9 @@
   <data name="WholeChain" xml:space="preserve">
     <value>Gesamte Kette</value>
   </data>
+  <data name="OpenExactChain" xml:space="preserve">
+    <value>Exakte Kette oeffnen</value>
+  </data>
   <data name="NeedsFollowUp" xml:space="preserve">
     <value>Nachverfolgung noetig</value>
   </data>
@@ -2346,6 +2538,9 @@
   <data name="ProviderReview" xml:space="preserve">
     <value>Provider-Pruefung</value>
   </data>
+  <data name="OpenProviderLane" xml:space="preserve">
+    <value>Provider-Lane oeffnen</value>
+  </data>
   <data name="ProviderReviewMode" xml:space="preserve">
     <value>Provider-Pruefmodus</value>
   </data>
@@ -2384,6 +2579,15 @@
   </data>
   <data name="RerunTestWhatsApp" xml:space="preserve">
     <value>Test-WhatsApp erneut senden</value>
+  </data>
+  <data name="ChannelAuditPhoneVerificationNote" xml:space="preserve">
+    <value>Kanonischer Verifizierungsfluss fuer Web und Mobile.</value>
+  </data>
+  <data name="ChannelAuditIdentityLifecycleNote" xml:space="preserve">
+    <value>Fehler bei Kontoaktivierung und Passwort-Reset brauchen meistens zuerst eine Pruefung des Kontostatus, bevor nur transportseitig triagiert wird.</value>
+  </data>
+  <data name="ChannelAuditAdminTransportNote" xml:space="preserve">
+    <value>Nur operatorseitige Transport-Validierung.</value>
   </data>
   <data name="WebhookDeliveries" xml:space="preserve">
     <value>Webhook-Zustellungen</value>
@@ -3999,6 +4203,15 @@
   <data name="LoyaltyScanPlaybookFailureAction" xml:space="preserve">
     <value>Pruefe zuerst Ablaufdruck und Fehlergruende und gehe dann in Mobile Operations oder Personalprozess-Review.</value>
   </data>
+  <data name="LoyaltyScanPlaybookProviderTitle" xml:space="preserve">
+    <value>Transportbezogene Scan-Pruefung</value>
+  </data>
+  <data name="LoyaltyScanPlaybookProviderScope" xml:space="preserve">
+    <value>Manche Scan-Incidents ueberlappen mit Verifikations- oder Alert-Transportdruck, daher sollte Support Geraeteprobleme von Kommunikations-Lane-Problemen trennen.</value>
+  </data>
+  <data name="LoyaltyScanPlaybookProviderAction" xml:space="preserve">
+    <value>Pruefe Mobile-Diagnostik und Kommunikations-Provider-Lanes gemeinsam, bevor Loyalty-Regeln oder Kampagnensetup geaendert werden.</value>
+  </data>
   <data name="BusinessesRequiringEmailSetup" xml:space="preserve">
     <value>Businesses mit fehlendem E-Mail-Setup</value>
   </data>
@@ -4116,6 +4329,60 @@
   <data name="MobileOperationsTitle" xml:space="preserve">
     <value>Mobile Operations</value>
   </data>
+  <data name="AdminDashboardTitle" xml:space="preserve">
+    <value>Admin-Dashboard</value>
+  </data>
+  <data name="AdminDashboardIntro" xml:space="preserve">
+    <value>Nutze diese Uebersicht als operativen Startpunkt fuer das Backoffice.</value>
+  </data>
+  <data name="BusinessContext" xml:space="preserve">
+    <value>Business-Kontext</value>
+  </data>
+  <data name="NoActiveBusiness" xml:space="preserve">
+    <value>Kein aktives Business</value>
+  </data>
+  <data name="LoyaltyOperations" xml:space="preserve">
+    <value>Loyalty-Operations</value>
+  </data>
+  <data name="LoyaltyOperationsIntro" xml:space="preserve">
+    <value>Programme, Konten, Einloesungen und Scan-Fehlersuche.</value>
+  </data>
+  <data name="OpenLoyalty" xml:space="preserve">
+    <value>Loyalty oeffnen</value>
+  </data>
+  <data name="PendingRedemptions" xml:space="preserve">
+    <value>Ausstehende Einloesungen</value>
+  </data>
+  <data name="RecentScanSessions" xml:space="preserve">
+    <value>Letzte Scan-Sessions</value>
+  </data>
+  <data name="SelectBusinessForLoyaltyMobile" xml:space="preserve">
+    <value>Waehle einen aktiven Business-Kontext, um Loyalty-Aktivitaet und Mobile-Business-Support-Faelle zu pruefen.</value>
+  </data>
+  <data name="MobileOperationsDashboardIntro" xml:space="preserve">
+    <value>Gesundheit der Geraeteflotte und Support-Remediation.</value>
+  </data>
+  <data name="OpenMobileOps" xml:space="preserve">
+    <value>Mobile Ops oeffnen</value>
+  </data>
+  <data name="StaleDevices" xml:space="preserve">
+    <value>Veraltete Geraete</value>
+  </data>
+  <data name="MissingPush" xml:space="preserve">
+    <value>Push fehlt</value>
+  </data>
+  <data name="DeviceDiagnostics" xml:space="preserve">
+    <value>Geraetediagnose</value>
+  </data>
+  <data name="Android" xml:space="preserve">
+    <value>Android</value>
+  </data>
+  <data name="iOS" xml:space="preserve">
+    <value>iOS</value>
+  </data>
+  <data name="OpenCommunicationsWorkspace" xml:space="preserve">
+    <value>Kommunikations-Workspace oeffnen</value>
+  </data>
   <data name="LoyaltyAllRewardTiers" xml:space="preserve">
     <value>Alle Praemienstufen</value>
   </data>
@@ -4163,6 +4430,15 @@
   </data>
   <data name="MobilePlaybookTransportAction" xml:space="preserve">
     <value>Pruefe Mobile Bootstrap, Admin-Alerts und Kommunikationsbereitschaft gemeinsam, bevor ein Fall als App-only Drift behandelt wird.</value>
+  </data>
+  <data name="MobilePlaybookProviderLaneTitle" xml:space="preserve">
+    <value>Provider-Lane-Review</value>
+  </data>
+  <data name="MobilePlaybookProviderLaneScope" xml:space="preserve">
+    <value>Scan- und Alert-Incidents koennen aus Transportdruck statt App-Drift kommen, besonders wenn SMS- oder WhatsApp-Verifikation mit mobilem Support ueberlappt.</value>
+  </data>
+  <data name="MobilePlaybookProviderLaneAction" xml:space="preserve">
+    <value>Oeffne zuerst das Kommunikations-Provider-Review, bevor ein App-Incident eskaliert wird, wenn Verifikation, Alerts oder Scan-Follow-up transportbezogen wirken.</value>
   </data>
   <data name="NoDevicesMatchCurrentFilters" xml:space="preserve">
     <value>Keine Geraete passen zu den aktuellen Filtern.</value>
@@ -4229,6 +4505,15 @@
   </data>
   <data name="LoyaltyRedemptionPlaybookScanFailureAction" xml:space="preserve">
     <value>Lies zuerst das Scan-Ergebnis und entscheide dann zwischen Kontopruefung, Scanner-Review oder Reward-Katalog-Bereinigung.</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookMobileTitle" xml:space="preserve">
+    <value>Mobile-Geraete-Follow-up</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookMobileScope" xml:space="preserve">
+    <value>Ausstehende oder fehlgeschlagene Einloesungen brauchen oft Geraetestatus- und Benachrichtigungspruefung und nicht nur Konto- oder Reward-Review.</value>
+  </data>
+  <data name="LoyaltyRedemptionPlaybookMobileAction" xml:space="preserve">
+    <value>Pruefe das Mitglied in Mobile Operations und kehre dann mit dem Geraetekontext in die Einloesungs- oder Konto-Warteschlange zurueck.</value>
   </data>
   <data name="LoyaltyAccountPlaybookSuspendedScope" xml:space="preserve">
     <value>Gesperrte Konten deuten meist auf offenen Support oder betrugssichere Nachverfolgung hin.</value>
@@ -4991,9 +5276,6 @@
   </data>
   <data name="CommunicationTestWhatsAppReadyNote" xml:space="preserve">
     <value>Ein sicherer operatorseitiger WhatsApp-Test ist verfügbar, weil Transport und Testziel konfiguriert sind.</value>
-  </data>
-  <data name="BusinessesRequiringEmailSetup" xml:space="preserve">
-    <value>Businesses mit fehlender E-Mail-Readiness</value>
   </data>
   <data name="BusinessesRequiringEmailSetupNote" xml:space="preserve">
     <value>Businesses mit aktivierten E-Mail-bezogenen Toggles, aber fehlenden Support- oder Absender-Defaults.</value>

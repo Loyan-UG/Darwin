@@ -100,39 +100,39 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             return RenderIndexWorkspace(vm);
         }
 
-        private static IEnumerable<SelectListItem> BuildUserFilterItems(UserQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildUserFilterItems(UserQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All users", UserQueueFilter.All.ToString(), selectedFilter == UserQueueFilter.All);
-            yield return new SelectListItem("Unconfirmed", UserQueueFilter.Unconfirmed.ToString(), selectedFilter == UserQueueFilter.Unconfirmed);
-            yield return new SelectListItem("Locked", UserQueueFilter.Locked.ToString(), selectedFilter == UserQueueFilter.Locked);
-            yield return new SelectListItem("Inactive", UserQueueFilter.Inactive.ToString(), selectedFilter == UserQueueFilter.Inactive);
-            yield return new SelectListItem("Mobile-linked", UserQueueFilter.MobileLinked.ToString(), selectedFilter == UserQueueFilter.MobileLinked);
+            yield return new SelectListItem(T("UsersFilterAll"), UserQueueFilter.All.ToString(), selectedFilter == UserQueueFilter.All);
+            yield return new SelectListItem(T("UsersFilterUnconfirmed"), UserQueueFilter.Unconfirmed.ToString(), selectedFilter == UserQueueFilter.Unconfirmed);
+            yield return new SelectListItem(T("UsersFilterLocked"), UserQueueFilter.Locked.ToString(), selectedFilter == UserQueueFilter.Locked);
+            yield return new SelectListItem(T("UsersFilterInactive"), UserQueueFilter.Inactive.ToString(), selectedFilter == UserQueueFilter.Inactive);
+            yield return new SelectListItem(T("UsersFilterMobileLinked"), UserQueueFilter.MobileLinked.ToString(), selectedFilter == UserQueueFilter.MobileLinked);
         }
 
-        private static List<UserSupportPlaybookVm> BuildUserSupportPlaybooks()
+        private List<UserSupportPlaybookVm> BuildUserSupportPlaybooks()
         {
             return new List<UserSupportPlaybookVm>
             {
                 new()
                 {
-                    Title = "Unconfirmed accounts",
-                    ScopeNote = "Use this queue for activation support and onboarding follow-up.",
-                    OperatorAction = "Open the user, then send activation email or confirm the email directly only where policy allows.",
-                    FollowUp = "If repeated email failures happen, continue in Business Communications and Email Audits."
+                    Title = T("UsersPlaybookUnconfirmedTitle"),
+                    ScopeNote = T("UsersPlaybookUnconfirmedScope"),
+                    OperatorAction = T("UsersPlaybookUnconfirmedAction"),
+                    FollowUp = T("UsersPlaybookUnconfirmedFollowUp")
                 },
                 new()
                 {
-                    Title = "Locked accounts",
-                    ScopeNote = "Treat lockouts as support/security events, not casual cleanup.",
-                    OperatorAction = "Open the user, validate the support context, then unlock only when the issue is resolved.",
-                    FollowUp = "If the lockout was triggered by security concerns, rotate password or review recent auth flows."
+                    Title = T("UsersPlaybookLockedTitle"),
+                    ScopeNote = T("UsersPlaybookLockedScope"),
+                    OperatorAction = T("UsersPlaybookLockedAction"),
+                    FollowUp = T("UsersPlaybookLockedFollowUp")
                 },
                 new()
                 {
-                    Title = "Mobile-linked accounts",
-                    ScopeNote = "These users are important for device and push-related support.",
-                    OperatorAction = "Use the user profile together with Mobile Operations when stale devices, missing push tokens, or notification issues are reported.",
-                    FollowUp = "Cross-check device fleet health before assuming the user profile itself is wrong."
+                    Title = T("UsersPlaybookMobileLinkedTitle"),
+                    ScopeNote = T("UsersPlaybookMobileLinkedScope"),
+                    OperatorAction = T("UsersPlaybookMobileLinkedAction"),
+                    FollowUp = T("UsersPlaybookMobileLinkedFollowUp")
                 }
             };
         }

@@ -27,6 +27,11 @@
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("LoyaltyScanSessionsTitle")</a>
+        <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+           hx-target="#mobile-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
     </div>
 </div>
 
@@ -110,6 +115,23 @@
                 <div class="mb-2">@T.T("PendingActivationMembers"): <strong>@Model.PendingActivationMemberCount</strong></div>
                 <div class="mb-2">@T.T("LockedMembers"): <strong>@Model.LockedMemberCount</strong></div>
                 <div>@T.T("BusinessesRequiringEmailSetup"): <strong>@Model.BusinessesRequiringEmailSetupCount</strong></div>
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="Unconfirmed" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+                       hx-target="#mobile-operations-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="Locked" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+                       hx-target="#mobile-operations-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterLocked")</a>
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                       hx-target="#mobile-operations-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
+                </div>
             </div>
         </div>
     </div>
@@ -123,8 +145,8 @@
                     <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("MobileStaleDevices")</div><div class="fs-5">@Model.StaleDevicesCount</div></div></div>
                     <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("MobileMissingPushToken")</div><div class="fs-5">@Model.DevicesMissingPushTokenCount</div></div></div>
                     <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">@T.T("MobileNotificationsDisabled")</div><div class="fs-5">@Model.NotificationsDisabledCount</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Android</div><div class="fs-5">@Model.AndroidDevicesCount</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">iOS</div><div class="fs-5">@Model.IosDevicesCount</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Android")</div><div class="fs-5">@Model.AndroidDevicesCount</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("iOS")</div><div class="fs-5">@Model.IosDevicesCount</div></div></div>
                 </div>
             </div>
         </div>
@@ -162,12 +184,26 @@
             <div class="card-header">@T.T("TransportReadiness")</div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Email</div><div class="fs-5">@(Model.EmailTransportConfigured ? readyText : missingText)</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">SMS</div><div class="fs-5">@(Model.SmsTransportConfigured ? readyText : missingText)</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">WhatsApp</div><div class="fs-5">@(Model.WhatsAppTransportConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Email")</div><div class="fs-5">@(Model.EmailTransportConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Sms")</div><div class="fs-5">@(Model.SmsTransportConfigured ? readyText : missingText)</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("WhatsApp")</div><div class="fs-5">@(Model.WhatsAppTransportConfigured ? readyText : missingText)</div></div></div>
                     <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("AdminAlerts")</div><div class="fs-5">@(Model.AdminAlertRoutingConfigured ? readyText : missingText)</div></div></div>
                 </div>
                 <div class="alert alert-secondary mt-3 mb-0">@T.T("MobileOperationsSnapshotNote")</div>
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true })"
+                       hx-target="#mobile-operations-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("ReviewProviderLane")</a>
+                    <a asp-controller="BusinessCommunications" asp-action="Index"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "BusinessCommunications")"
+                       hx-target="#mobile-operations-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("OpenCommunicationsWorkspace")</a>
+                </div>
             </div>
         </div>
     </div>
@@ -257,6 +293,24 @@
                                hx-target="#mobile-operations-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("User")</a>
+                            <a asp-controller="Loyalty" asp-action="Accounts" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Accounts", "Loyalty", new { q = item.UserEmail })"
+                               hx-target="#mobile-operations-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Loyalty")</a>
+                            @if (item.BusinessMembershipCount > 0)
+                            {
+                                <a asp-controller="Loyalty" asp-action="ScanSessions" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("ScanSessions", "Loyalty", new { q = item.UserEmail })"
+                                   hx-target="#mobile-operations-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("LoyaltyScanSessionsTitle")</a>
+                            }
+                            <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true })"
+                               hx-target="#mobile-operations-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("ProviderReview")</a>
                             @if (item.HasPushToken)
                             {
                                 <form asp-action="ClearPushToken" method="post" class="d-inline"

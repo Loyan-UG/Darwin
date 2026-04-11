@@ -6,6 +6,7 @@ using Darwin.Application.Meta.DTOs;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Meta.Queries
 {
@@ -16,15 +17,17 @@ namespace Darwin.Application.Meta.Queries
     public sealed class GetAppBootstrapHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Creates a new instance of the handler using the application DbContext abstraction.
         /// </summary>
         /// <param name="db">Application DbContext abstraction.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="db"/> is null.</exception>
-        public GetAppBootstrapHandler(IAppDbContext db)
+        public GetAppBootstrapHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -46,28 +49,28 @@ namespace Darwin.Application.Meta.Queries
 
             if (settings is null)
             {
-                return Result<AppBootstrapDto>.Fail("SiteSetting is missing. This is a server misconfiguration.");
+                return Result<AppBootstrapDto>.Fail(_localizer["AppBootstrapSiteSettingsMissing"]);
             }
 
             if (!settings.JwtEnabled)
             {
-                return Result<AppBootstrapDto>.Fail("JWT is disabled. Mobile authentication cannot proceed.");
+                return Result<AppBootstrapDto>.Fail(_localizer["AppBootstrapJwtDisabled"]);
             }
 
             var audience = settings.JwtAudience?.Trim();
             if (string.IsNullOrWhiteSpace(audience))
             {
-                return Result<AppBootstrapDto>.Fail("JwtAudience is not configured. This is a server misconfiguration.");
+                return Result<AppBootstrapDto>.Fail(_localizer["AppBootstrapJwtAudienceMissing"]);
             }
 
             if (settings.MobileQrTokenRefreshSeconds <= 0)
             {
-                return Result<AppBootstrapDto>.Fail("MobileQrTokenRefreshSeconds must be a positive integer.");
+                return Result<AppBootstrapDto>.Fail(_localizer["AppBootstrapQrTokenRefreshInvalid"]);
             }
 
             if (settings.MobileMaxOutboxItems <= 0)
             {
-                return Result<AppBootstrapDto>.Fail("MobileMaxOutboxItems must be a positive integer.");
+                return Result<AppBootstrapDto>.Fail(_localizer["AppBootstrapMaxOutboxItemsInvalid"]);
             }
 
             var dto = new AppBootstrapDto(
