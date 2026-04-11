@@ -116,6 +116,92 @@ test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS an
     },
   );
 
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "cms-menu",
+      "/api/v1/public/cms/menus/main-navigation",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/cms/menus/main-navigation",
+      cacheIdentity: {
+        normalizedPath: "/api/v1/public/cms/menus/main-navigation",
+        revalidate: 900,
+        keyTag: "public:cms-menu",
+        pathTag: "path:/api/v1/public/cms/menus/main-navigation",
+        tags: [
+          "public:cms-menu",
+          "path:/api/v1/public/cms/menus/main-navigation",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "force-cache",
+        next: {
+          revalidate: 900,
+          tags: [
+            "public:cms-menu",
+            "path:/api/v1/public/cms/menus/main-navigation",
+          ],
+        },
+      },
+    },
+  );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "cms-menu",
+      "/api/v1/public/cms/menus/main-navigation",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/cms/menus/main-navigation",
+      cacheIdentity: {
+        normalizedPath: "/api/v1/public/cms/menus/main-navigation",
+        revalidate: 900,
+        keyTag: "public:cms-menu",
+        pathTag: "path:/api/v1/public/cms/menus/main-navigation",
+        tags: [
+          "public:cms-menu",
+          "path:/api/v1/public/cms/menus/main-navigation",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-categories",
+      "/api/v1/public/catalog/categories?page=1&pageSize=100",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/categories?page=1&pageSize=100",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/categories?page=1&pageSize=100",
+        revalidate: 900,
+        keyTag: "public:catalog-categories",
+        pathTag:
+          "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
+        tags: [
+          "public:catalog-categories",
+          "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
   assert.deepEqual(
     getPublicApiCachePolicy("catalog-categories", "/api/v1/public/catalog/categories?page=1&pageSize=100"),
     {
@@ -124,6 +210,40 @@ test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS an
         "public:catalog-categories",
         "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
       ],
+    },
+  );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-categories",
+      "/api/v1/public/catalog/categories?page=1&pageSize=100",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/categories?page=1&pageSize=100",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/categories?page=1&pageSize=100",
+        revalidate: 900,
+        keyTag: "public:catalog-categories",
+        pathTag:
+          "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
+        tags: [
+          "public:catalog-categories",
+          "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "force-cache",
+        next: {
+          revalidate: 900,
+          tags: [
+            "public:catalog-categories",
+            "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
+          ],
+        },
+      },
     },
   );
 });
@@ -136,6 +256,62 @@ test("getPublicApiCachePolicy keeps catalog browse and unknown feeds on shorter 
   assert.equal(
     getPublicApiCachePolicy("unknown-feed", "/api/v1/public/unknown").revalidate,
     60,
+  );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "unknown-feed",
+      "/api/v1/public/unknown",
+    ),
+    {
+      requestUrl: "http://localhost:5134/api/v1/public/unknown",
+      cacheIdentity: {
+        normalizedPath: "/api/v1/public/unknown",
+        revalidate: 60,
+        keyTag: "public:unknown-feed",
+        pathTag: "path:/api/v1/public/unknown",
+        tags: [
+          "public:unknown-feed",
+          "path:/api/v1/public/unknown",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "force-cache",
+        next: {
+          revalidate: 60,
+          tags: [
+            "public:unknown-feed",
+            "path:/api/v1/public/unknown",
+          ],
+        },
+      },
+    },
+  );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "unknown-feed",
+      "/api/v1/public/unknown",
+      "POST",
+    ),
+    {
+      requestUrl: "http://localhost:5134/api/v1/public/unknown",
+      cacheIdentity: {
+        normalizedPath: "/api/v1/public/unknown",
+        revalidate: 60,
+        keyTag: "public:unknown-feed",
+        pathTag: "path:/api/v1/public/unknown",
+        tags: [
+          "public:unknown-feed",
+          "path:/api/v1/public/unknown",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
   );
 });
 
@@ -297,6 +473,64 @@ test("getPublicApiCachePolicy keeps CMS and catalog detail routes on fresher pat
   assert.deepEqual(
     getPublicApiRequestPlan(
       "http://localhost:5134",
+      "cms-page",
+      "/api/v1/public/cms/pages/faq?culture=de-DE",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/cms/pages/faq?culture=de-DE",
+      cacheIdentity: {
+        normalizedPath: "/api/v1/public/cms/pages/faq?culture=de-DE",
+        revalidate: 180,
+        keyTag: "public:cms-page",
+        pathTag: "path:/api/v1/public/cms/pages/faq?culture=de-DE",
+        tags: [
+          "public:cms-page",
+          "path:/api/v1/public/cms/pages/faq?culture=de-DE",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "force-cache",
+        next: {
+          revalidate: 180,
+          tags: [
+            "public:cms-page",
+            "path:/api/v1/public/cms/pages/faq?culture=de-DE",
+          ],
+        },
+      },
+    },
+  );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "cms-page",
+      "/api/v1/public/cms/pages/faq?culture=de-DE",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/cms/pages/faq?culture=de-DE",
+      cacheIdentity: {
+        normalizedPath: "/api/v1/public/cms/pages/faq?culture=de-DE",
+        revalidate: 180,
+        keyTag: "public:cms-page",
+        pathTag: "path:/api/v1/public/cms/pages/faq?culture=de-DE",
+        tags: [
+          "public:cms-page",
+          "path:/api/v1/public/cms/pages/faq?culture=de-DE",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
       "catalog-product-detail",
       "/api/v1/public/catalog/products/coffee-machine?culture=de-DE",
     ),
@@ -324,6 +558,33 @@ test("getPublicApiCachePolicy keeps CMS and catalog detail routes on fresher pat
             "path:/api/v1/public/catalog/products/coffee-machine?culture=de-DE",
           ],
         },
+      },
+    },
+  );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-product-detail",
+      "/api/v1/public/catalog/products/coffee-machine?culture=de-DE",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products/coffee-machine?culture=de-DE",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products/coffee-machine?culture=de-DE",
+        revalidate: 120,
+        keyTag: "public:catalog-product-detail",
+        pathTag:
+          "path:/api/v1/public/catalog/products/coffee-machine?culture=de-DE",
+        tags: [
+          "public:catalog-product-detail",
+          "path:/api/v1/public/catalog/products/coffee-machine?culture=de-DE",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
       },
     },
   );
@@ -386,6 +647,33 @@ test("getPublicApiCacheIdentity keeps category-heavy and merchandising browse ca
       },
     },
   );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?mediaState=with-image&visibleSort=offers-first&pageSize=12&page=3&culture=de-DE",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&mediaState=with-image&page=3&pageSize=12&visibleSort=offers-first",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?culture=de-DE&mediaState=with-image&page=3&pageSize=12&visibleSort=offers-first",
+        revalidate: 90,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?culture=de-DE&mediaState=with-image&page=3&pageSize=12&visibleSort=offers-first",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?culture=de-DE&mediaState=with-image&page=3&pageSize=12&visibleSort=offers-first",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
 });
 
 test("getPublicApiRequestPlan keeps CMS search windows canonical and short-lived", () => {
@@ -422,6 +710,33 @@ test("getPublicApiRequestPlan keeps CMS search windows canonical and short-lived
       },
     },
   );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "cms-pages",
+      "/api/v1/public/cms/pages?pageSize=48&search=story&page=1&culture=de-DE",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48&search=story",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48&search=story",
+        revalidate: 120,
+        keyTag: "public:cms-pages",
+        pathTag:
+          "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48&search=story",
+        tags: [
+          "public:cms-pages",
+          "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48&search=story",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
 });
 
 test("getPublicApiRequestPlan keeps mutations uncached while preserving canonical cache identity", () => {
@@ -445,6 +760,33 @@ test("getPublicApiRequestPlan keeps mutations uncached while preserving canonica
         tags: [
           "public:catalog-products",
           "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleState=offers",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&search=coffee",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&search=coffee",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&search=coffee",
+        revalidate: 90,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&search=coffee",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&search=coffee",
         ],
       },
       fetchCacheOptions: {

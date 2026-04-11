@@ -26,10 +26,37 @@ test("buildPageLoaderBaseDiagnostics keeps loader kind and normalization mode ex
     },
   );
 
+  assert.deepEqual(
+    buildPageLoaderBaseDiagnostics("public-discovery", {
+      extras: { route: "/cms" },
+    }),
+    {
+      pageLoaderKind: "public-discovery",
+      pageLoaderNormalization: "raw",
+      route: "/cms",
+    },
+  );
+
   assert.deepEqual(buildPageLoaderBaseDiagnostics("commerce"), {
     pageLoaderKind: "commerce",
     pageLoaderNormalization: "raw",
   });
+
+  assert.deepEqual(
+    buildPageLoaderBaseDiagnostics("commerce", {
+      hasCanonicalNormalization: true,
+      extras: {
+        route: "/checkout",
+        cartState: "present",
+      },
+    }),
+    {
+      pageLoaderKind: "commerce",
+      pageLoaderNormalization: "canonical",
+      route: "/checkout",
+      cartState: "present",
+    },
+  );
 });
 
 test("buildContinuationSliceFootprint keeps continuation counts compact and operational", () => {
@@ -72,6 +99,15 @@ test("buildProtectedRouteFootprint keeps auth and fallback state together", () =
     }),
     "auth:authorized|route:loaded|storefront:missing",
   );
+
+  assert.equal(
+    buildProtectedRouteFootprint({
+      authGate: "authorized",
+      routeContextState: "loaded",
+      storefrontFallbackState: "present",
+    }),
+    "auth:authorized|route:loaded|storefront:present",
+  );
 });
 
 test("buildPageLoaderBaseDiagnostics keeps raw member-protected diagnostics explicit", () => {
@@ -89,4 +125,24 @@ test("buildPageLoaderBaseDiagnostics keeps raw member-protected diagnostics expl
       authGate: "authorized",
     },
   );
+
+  assert.deepEqual(
+    buildPageLoaderBaseDiagnostics("member-protected", {
+      hasCanonicalNormalization: true,
+      extras: {
+        entryRoute: "/account",
+        authGate: "guest-fallback",
+      },
+    }),
+    {
+      pageLoaderKind: "member-protected",
+      pageLoaderNormalization: "canonical",
+      entryRoute: "/account",
+      authGate: "guest-fallback",
+    },
+  );
 });
+
+
+
+

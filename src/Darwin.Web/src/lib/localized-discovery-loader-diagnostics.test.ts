@@ -260,3 +260,32 @@ test("buildLocalizedDiscoveryLoaderBaseDiagnostics keeps raw-culture mode explic
     },
   );
 });
+
+test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps raw sitemap mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      "sitemap",
+      {
+        totalEntryCount: 5,
+        cmsEntryCount: 1,
+        sitemapSummaryFootprint: "total:5|static:4|cms:1|products:0",
+        sitemapCompositionFootprint: "static:4|cms:1|products:0",
+      },
+      {
+        hasCanonicalCultureNormalization: false,
+      },
+    ),
+    {
+      localizedDiscoveryKind: "sitemap",
+      localizedDiscoveryNormalization: "raw-cultures",
+      localizedDiscoveryState: "present",
+      localizedDiscoveryDetailFootprint: "static:4|cms:1|products:0",
+      localizedDiscoverySummaryFootprint: "total:5|static:4|cms:1|products:0",
+      totalEntryCount: 5,
+      cmsEntryCount: 1,
+      sitemapSummaryFootprint: "total:5|static:4|cms:1|products:0",
+      sitemapCompositionFootprint: "static:4|cms:1|products:0",
+    },
+  );
+});
+

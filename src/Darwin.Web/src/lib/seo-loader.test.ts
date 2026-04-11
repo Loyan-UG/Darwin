@@ -154,6 +154,20 @@ test("buildSeoLoaderObservationContext adds canonical seo-loader diagnostics", (
       route: "/catalog",
     },
   );
+
+  assert.deepEqual(
+    buildSeoLoaderObservationContext("catalog-seo", {
+      culture: "en-US",
+      route: "/en-US/catalog",
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "catalog-seo",
+      seoNormalization: "raw",
+      culture: "en-US",
+      route: "/en-US/catalog",
+    },
+  );
 });
 
 test("buildSeoLoaderSuccessContext classifies indexability alongside health data", () => {
@@ -208,3 +222,38 @@ test("buildSeoLoaderSuccessContext keeps alternate footprint culture-stable", ()
   assert.equal(result.languageAlternateFootprint, "x-default|de-DE|en-US");
   assert.equal(result.seoSummaryFootprint, "indexable|alternates:3[x-default|de-DE|en-US]");
 });
+
+test("buildSeoLoaderSuccessContext keeps raw seo diagnostics explicit", () => {
+  assert.deepEqual(
+    buildSeoLoaderSuccessContext("catalog-seo", {
+      metadata: {
+        title: "Catalog",
+      },
+      canonicalPath: "/en-US/catalog",
+      noIndex: false,
+      languageAlternates: {
+        "de-DE": "/catalog",
+        "en-US": "/en-US/catalog",
+      },
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "catalog-seo",
+      seoNormalization: "raw",
+      indexability: "indexable",
+      seoIndexability: "indexable",
+      seoMetadataState: "localized",
+      seoVisibilityFootprint: "indexable|localized",
+      seoTargetFootprint: "indexable|/en-US/catalog",
+      languageAlternateState: "present",
+      languageAlternateFootprint: "de-DE|en-US",
+      seoAlternateDetailFootprint: "de-DE|en-US",
+      seoAlternateSummaryFootprint: "alternates:2[de-DE|en-US]",
+      seoSummaryFootprint: "indexable|alternates:2[de-DE|en-US]",
+      canonicalPath: "/en-US/catalog",
+      noIndex: false,
+      languageAlternateCount: 2,
+    },
+  );
+});
+

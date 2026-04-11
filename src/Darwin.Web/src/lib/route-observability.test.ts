@@ -20,6 +20,13 @@ test("route observability helpers classify duration, signal, attention, and sugg
     ]),
     "menu:fallback|products:stale",
   );
+  assert.equal(
+    getDegradedSurfaceFootprint([
+      ["shell", "fallback"],
+      ["cartStatus", "missing"],
+    ]),
+    "shell:fallback|cart:missing",
+  );
   assert.equal(getDegradedSurfaceFootprint([]), undefined);
 
   assert.equal(getDurationBand(10, 50), "within-threshold");
@@ -29,6 +36,10 @@ test("route observability helpers classify duration, signal, attention, and sugg
   assert.equal(getSignalKind({}), "normal");
   assert.equal(getSignalKind({ isSlow: true }), "performance");
   assert.equal(getSignalKind({ degradedStatusCount: 1 }), "health");
+  assert.equal(
+    getSignalKind({ degradedStatusCount: 1, isSlow: true }),
+    "performance-and-health",
+  );
   assert.equal(
     getSignalKind({ degradedStatusCount: 2, isSlow: true }),
     "performance-and-health",
@@ -47,12 +58,20 @@ test("route observability helpers classify duration, signal, attention, and sugg
     "high",
   );
   assert.equal(getAttentionLevel({ durationBand: "slow", failed: true }), "high");
+  assert.equal(
+    getAttentionLevel({ durationBand: "slow", degradedStatusCount: 1 }),
+    "medium",
+  );
 
   assert.equal(getSuggestedAction({}), "none");
   assert.equal(getSuggestedAction({ isSlow: true }), "inspect-slow-path");
   assert.equal(
     getSuggestedAction({ degradedStatusCount: 1 }),
     "inspect-degraded-dependencies",
+  );
+  assert.equal(
+    getSuggestedAction({ degradedStatusCount: 1, isSlow: true }),
+    "inspect-slow-and-degraded-dependencies",
   );
   assert.equal(
     getSuggestedAction({ degradedStatusCount: 2, isSlow: true }),
@@ -106,6 +125,33 @@ test("observeAsyncOperation reports slow operations above the threshold", async 
     route: "/",
     resultStatus: "ok",
   });
+});
+
+test("observeAsyncOperation keeps healthy successes silent below the threshold", async () => {
+  const warnings: Array<Record<string, unknown>> = [];
+  let tick = 20;
+
+  const result = await observeAsyncOperation(
+    {
+      area: "home",
+      operation: "compose",
+      context: { culture: "en-US", route: "/" },
+      getSuccessDetail: () => ({
+        resultStatus: "ok",
+        menuItemCount: 4,
+      }),
+      thresholdMs: 100,
+      now: () => {
+        tick += 30;
+        return tick;
+      },
+      warn: (_message, detail) => warnings.push(detail),
+    },
+    async () => "ok",
+  );
+
+  assert.equal(result, "ok");
+  assert.deepEqual(warnings, []);
 });
 
 test("observeAsyncOperation reports failures with timing metadata", async () => {
@@ -177,24 +223,30 @@ test("observeAsyncOperation reports degraded successful operations even when the
 
     assert.equal(result, "ok");
     assert.equal(warnings.length, 1);
-    assert.equal(warnings[0]?.area, "shell");
-    assert.equal(warnings[0]?.operation, "menu");
-    assert.equal(warnings[0]?.menuStatus, "fallback");
-    assert.equal(warnings[0]?.operationKey, "shell:menu");
-    assert.equal(warnings[0]?.outcomeKind, "degraded-success");
-    assert.equal(warnings[0]?.signalKind, "health");
-    assert.equal(warnings[0]?.attentionLevel, "medium");
-    assert.equal(warnings[0]?.suggestedAction, "inspect-degraded-dependencies");
-    assert.equal(warnings[0]?.healthState, "degraded");
-    assert.equal(warnings[0]?.durationBand, "within-threshold");
-    assert.equal(warnings[0]?.degradedStatusCount, 1);
-    assert.deepEqual(warnings[0]?.degradedStatuses, { menuStatus: "fallback" });
-    assert.deepEqual(warnings[0]?.degradedStatusKeys, ["menuStatus"]);
-    assert.equal(warnings[0]?.degradedSurfaceCount, 1);
-    assert.deepEqual(warnings[0]?.degradedSurfaceKeys, ["menu"]);
-    assert.equal(warnings[0]?.degradedSurfaceFootprint, "menu:fallback");
-    assert.equal(warnings[0]?.primaryDegradedStatusKey, "menuStatus");
-    assert.equal(warnings[0]?.primaryDegradedSurface, "menu");
+    assert.deepEqual(warnings[0], {
+      area: "shell",
+      operation: "menu",
+      operationKey: "shell:menu",
+      durationMs: warnings[0]?.durationMs,
+      durationBand: "within-threshold",
+      healthState: "degraded",
+      outcomeKind: "degraded-success",
+      signalKind: "health",
+      attentionLevel: "medium",
+      suggestedAction: "inspect-degraded-dependencies",
+      degradedStatusCount: 1,
+      degradedStatuses: { menuStatus: "fallback" },
+      degradedStatusKeys: ["menuStatus"],
+      degradedSurfaceCount: 1,
+      degradedSurfaceKeys: ["menu"],
+      degradedSurfaceFootprint: "menu:fallback",
+      primaryDegradedStatusKey: "menuStatus",
+      primaryDegradedSurface: "menu",
+      culture: "de-DE",
+      route: "/",
+      menuStatus: "fallback",
+      menuItemCount: 3,
+    });
   } finally {
     if (previous === undefined) {
       delete process.env.DARWIN_WEB_LOG_DEGRADED;
@@ -229,36 +281,40 @@ test("observeAsyncOperation distinguishes very slow degraded successes", async (
 
   assert.equal(result, "ok");
   assert.equal(warnings.length, 1);
-  assert.equal(warnings[0]?.outcomeKind, "slow-degraded-success");
-  assert.equal(warnings[0]?.operationKey, "catalog:route-context");
-  assert.equal(warnings[0]?.signalKind, "performance-and-health");
-  assert.equal(warnings[0]?.attentionLevel, "high");
-  assert.equal(
-    warnings[0]?.suggestedAction,
-    "inspect-slow-and-degraded-dependencies",
-  );
-  assert.equal(warnings[0]?.healthState, "multi-degraded");
-  assert.equal(warnings[0]?.durationBand, "very-slow");
-  assert.equal(warnings[0]?.degradedStatusCount, 2);
-  assert.deepEqual(warnings[0]?.degradedStatuses, {
+  assert.deepEqual(warnings[0], {
+    area: "catalog",
+    operation: "route-context",
+    operationKey: "catalog:route-context",
+    durationMs: warnings[0]?.durationMs,
+    durationBand: "very-slow",
+    healthState: "multi-degraded",
+    outcomeKind: "slow-degraded-success",
+    signalKind: "performance-and-health",
+    attentionLevel: "high",
+    suggestedAction: "inspect-slow-and-degraded-dependencies",
+    degradedStatusCount: 2,
+    degradedStatuses: {
+      productsStatus: "fallback",
+      cmsPagesStatus: "fallback",
+    },
+    degradedStatusKeys: ["productsStatus", "cmsPagesStatus"],
+    degradedSurfaceCount: 2,
+    degradedSurfaceKeys: ["products", "cmsPages"],
+    degradedSurfaceFootprint: "products:fallback|cmsPages:fallback",
+    primaryDegradedStatusKey: "productsStatus",
+    primaryDegradedSurface: "products",
+    culture: "de-DE",
+    route: "/catalog",
     productsStatus: "fallback",
     cmsPagesStatus: "fallback",
   });
-  assert.deepEqual(warnings[0]?.degradedStatusKeys, [
-    "productsStatus",
-    "cmsPagesStatus",
-  ]);
-  assert.equal(warnings[0]?.degradedSurfaceCount, 2);
-  assert.deepEqual(warnings[0]?.degradedSurfaceKeys, [
-    "products",
-    "cmsPages",
-  ]);
-  assert.equal(
-    warnings[0]?.degradedSurfaceFootprint,
-    "products:fallback|cmsPages:fallback",
-  );
-  assert.equal(warnings[0]?.primaryDegradedStatusKey, "productsStatus");
-  assert.equal(warnings[0]?.primaryDegradedSurface, "products");
 });
+
+
+
+
+
+
+
 
 

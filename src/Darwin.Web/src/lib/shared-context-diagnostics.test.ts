@@ -27,6 +27,18 @@ test("buildSharedContextBaseDiagnostics keeps shared context kind and normalizat
       culture: "de-DE",
     },
   );
+
+  assert.deepEqual(
+    buildSharedContextBaseDiagnostics("member-summary", {
+      extras: { culture: "en-US", scope: "orders-page" },
+    }),
+    {
+      sharedContextKind: "member-summary",
+      sharedContextNormalization: "raw",
+      culture: "en-US",
+      scope: "orders-page",
+    },
+  );
 });
 
 test("shared context footprint helpers keep operational dependency states compact", () => {
@@ -77,3 +89,4 @@ test("buildMemberSummaryFootprint keeps scope and leading statuses together", ()
     "scope:orders-page|primary:fallback",
   );
 });
+

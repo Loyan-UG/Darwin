@@ -70,6 +70,126 @@ test("createCommercePageLoader normalizes equivalent arguments before caching", 
   assert.equal(second.step, "cart");
 });
 
+test("createCommercePageLoader emits canonical loader diagnostics for slow success paths", async () => {
+  const warnings: Array<{ message: string; detail: Record<string, unknown> }> = [];
+  const originalWarn = console.warn;
+  console.warn = ((message, detail) => {
+    warnings.push({ message, detail });
+  }) as typeof console.warn;
+
+  try {
+    const loader = createCommercePageLoaderCore({
+      operation: "unit-commerce-page",
+      thresholdMs: 0,
+      normalizeArgs: (culture: string, page: string) =>
+        [culture.trim(), page.trim()] as [string, string],
+      getContext: (culture: string, page: string) => ({ culture, page }),
+      getSuccessContext: (result) => ({
+        step: result.step,
+      }),
+      load: async (_culture: string, page: string) => ({
+        step: `ready:${page}`,
+        page,
+      }),
+    });
+
+    const result = await loader(" de-DE ", " checkout ");
+
+    assert.deepEqual(result, {
+      step: "ready:checkout",
+      page: "checkout",
+    });
+    assert.equal(warnings.length, 1);
+    assert.equal(warnings[0]?.message, "Darwin.Web slow operation");
+    assert.deepEqual(warnings[0]?.detail, {
+      area: "commerce-page-context",
+      operation: "unit-commerce-page",
+      operationKey: "commerce-page-context:unit-commerce-page",
+      durationMs: warnings[0]?.detail.durationMs,
+      durationBand: "very-slow",
+      healthState: "healthy",
+      outcomeKind: "slow-success",
+      signalKind: "performance",
+      attentionLevel: "high",
+      suggestedAction: "inspect-slow-path",
+      degradedStatusCount: 0,
+      degradedStatuses: undefined,
+      degradedStatusKeys: undefined,
+      degradedSurfaceCount: 0,
+      degradedSurfaceKeys: undefined,
+      degradedSurfaceFootprint: undefined,
+      primaryDegradedStatusKey: undefined,
+      primaryDegradedSurface: undefined,
+      pageLoaderKind: "commerce",
+      pageLoaderNormalization: "canonical",
+      culture: "de-DE",
+      page: "checkout",
+      step: "ready:checkout",
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
+test("createCommercePageLoader emits raw loader diagnostics for slow success paths", async () => {
+  const warnings: Array<{ message: string; detail: Record<string, unknown> }> = [];
+  const originalWarn = console.warn;
+  console.warn = ((message, detail) => {
+    warnings.push({ message, detail });
+  }) as typeof console.warn;
+
+  try {
+    const loader = createCommercePageLoaderCore({
+      operation: "unit-commerce-page",
+      thresholdMs: 0,
+      getContext: (culture: string, page: string) => ({ culture, page }),
+      getSuccessContext: (result) => ({
+        step: result.step,
+      }),
+      load: async (_culture: string, page: string) => ({
+        step: `ready:${page}`,
+        page,
+      }),
+    });
+
+    const result = await loader("de-DE", "cart");
+
+    assert.deepEqual(result, {
+      step: "ready:cart",
+      page: "cart",
+    });
+    assert.equal(warnings.length, 1);
+    assert.equal(warnings[0]?.message, "Darwin.Web slow operation");
+    assert.deepEqual(warnings[0]?.detail, {
+      area: "commerce-page-context",
+      operation: "unit-commerce-page",
+      operationKey: "commerce-page-context:unit-commerce-page",
+      durationMs: warnings[0]?.detail.durationMs,
+      durationBand: "very-slow",
+      healthState: "healthy",
+      outcomeKind: "slow-success",
+      signalKind: "performance",
+      attentionLevel: "high",
+      suggestedAction: "inspect-slow-path",
+      degradedStatusCount: 0,
+      degradedStatuses: undefined,
+      degradedStatusKeys: undefined,
+      degradedSurfaceCount: 0,
+      degradedSurfaceKeys: undefined,
+      degradedSurfaceFootprint: undefined,
+      primaryDegradedStatusKey: undefined,
+      primaryDegradedSurface: undefined,
+      pageLoaderKind: "commerce",
+      pageLoaderNormalization: "raw",
+      culture: "de-DE",
+      page: "cart",
+      step: "ready:cart",
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
 test("createCommercePageLoader feeds normalized args into context and success diagnostics", async () => {
   let contextSnapshot: Record<string, unknown> | undefined;
   let successSnapshot: Record<string, unknown> | undefined;
@@ -107,3 +227,5 @@ test("createCommercePageLoader feeds normalized args into context and success di
     page: "checkout",
   });
 });
+
+

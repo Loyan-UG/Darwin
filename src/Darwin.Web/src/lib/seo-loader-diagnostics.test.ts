@@ -181,6 +181,22 @@ test("buildSeoLoaderBaseDiagnostics keeps area and normalization mode explicit",
       route: "/catalog",
     },
   );
+
+  assert.deepEqual(
+    buildSeoLoaderBaseDiagnostics("catalog-seo", {
+      extras: {
+        culture: "en-US",
+        route: "/en-US/catalog",
+      },
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "catalog-seo",
+      seoNormalization: "raw",
+      culture: "en-US",
+      route: "/en-US/catalog",
+    },
+  );
 });
 
 test("buildSeoSuccessDiagnostics keeps indexability and alternate footprint aligned", () => {
@@ -278,4 +294,32 @@ test("buildSeoSuccessDiagnostics keeps single-locale public metadata explicit", 
       seoSummaryFootprint: "indexable|alternates:0[none]",
     },
   );
+
+  assert.deepEqual(
+    buildSeoSuccessDiagnostics("catalog-seo", {
+      metadata: {
+        title: "Catalog",
+      },
+      canonicalPath: "/en-US/catalog",
+      noIndex: false,
+      languageAlternates: {
+        "de-DE": "/catalog",
+        "en-US": "/en-US/catalog",
+      },
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "catalog-seo",
+      seoNormalization: "raw",
+      indexability: "indexable",
+      seoMetadataState: "localized",
+      seoVisibilityFootprint: "indexable|localized",
+      seoTargetFootprint: "indexable|/en-US/catalog",
+      languageAlternateState: "present",
+      languageAlternateFootprint: "de-DE|en-US",
+      seoAlternateSummaryFootprint: "alternates:2[de-DE|en-US]",
+      seoSummaryFootprint: "indexable|alternates:2[de-DE|en-US]",
+    },
+  );
 });
+

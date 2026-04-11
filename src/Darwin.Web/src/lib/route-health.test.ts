@@ -1168,6 +1168,25 @@ test("localized discovery health helpers summarize alternates and sitemap invent
   );
 
   assert.deepEqual(
+    summarizeLocalizedDiscoveryInventoryHealth({
+      pages: [],
+      products: [],
+    }),
+    {
+      localizedDiscoveryState: "empty",
+      localizedCultureCount: 0,
+      localizedPageCount: 0,
+      localizedProductCount: 0,
+      emptyPageCultureCount: 0,
+      emptyProductCultureCount: 0,
+      localizedDiscoveryDetailFootprint: "pages-empty:0|products-empty:0",
+      localizedDiscoveryFootprint: "pages-empty:0|products-empty:0",
+      localizedDiscoverySummaryFootprint:
+        "cultures:0|pages:0|products:0|pages-empty:0|products-empty:0",
+    },
+  );
+
+  assert.deepEqual(
     summarizeSeoMetadataHealth({
       canonicalPath: "/catalog/prod-1",
       noIndex: false,
@@ -1274,6 +1293,7 @@ test("localized discovery health helpers summarize alternates and sitemap invent
     },
   );
 });
+
 
 
 
