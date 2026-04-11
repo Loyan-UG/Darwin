@@ -123,12 +123,23 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
         public LoyaltyAccountStatus? StatusFilter { get; set; }
+        public LoyaltyAccountOpsSummaryVm Summary { get; set; } = new();
+        public List<LoyaltyOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> StatusItems { get; set; } = new();
         public List<LoyaltyAccountListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
+    }
+
+    public sealed class LoyaltyAccountOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int SuspendedCount { get; set; }
+        public int ZeroBalanceCount { get; set; }
+        public int RecentAccrualCount { get; set; }
     }
 
     public sealed class CreateLoyaltyAccountVm
@@ -231,6 +242,8 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public string Query { get; set; } = string.Empty;
         public LoyaltyScanMode? ModeFilter { get; set; }
         public LoyaltyScanStatus? StatusFilter { get; set; }
+        public LoyaltyScanSessionOpsSummaryVm Summary { get; set; } = new();
+        public List<LoyaltyOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> ModeItems { get; set; } = new();
         public List<SelectListItem> StatusItems { get; set; } = new();
@@ -240,17 +253,38 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public int Total { get; set; }
     }
 
+    public sealed class LoyaltyScanSessionOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int AccrualCount { get; set; }
+        public int RedemptionCount { get; set; }
+        public int PendingCount { get; set; }
+        public int ExpiredCount { get; set; }
+        public int FailureCount { get; set; }
+    }
+
     public sealed class LoyaltyRedemptionsListVm
     {
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
         public LoyaltyRedemptionStatus? StatusFilter { get; set; }
+        public LoyaltyRedemptionOpsSummaryVm Summary { get; set; } = new();
+        public List<LoyaltyOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> StatusItems { get; set; } = new();
         public List<LoyaltyRedemptionQueueItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
+    }
+
+    public sealed class LoyaltyRedemptionOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int PendingCount { get; set; }
+        public int CompletedCount { get; set; }
+        public int CancelledCount { get; set; }
+        public int ScanFailureCount { get; set; }
     }
 
     public sealed class LoyaltyRedemptionQueueItemVm

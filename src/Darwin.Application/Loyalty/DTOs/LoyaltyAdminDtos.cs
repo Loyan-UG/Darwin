@@ -20,6 +20,15 @@ namespace Darwin.Application.Loyalty.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public sealed class LoyaltyAccountOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int SuspendedCount { get; set; }
+        public int ZeroBalanceCount { get; set; }
+        public int RecentAccrualCount { get; set; }
+    }
+
     public sealed class LoyaltyScanSessionAdminListItemDto
     {
         public Guid Id { get; set; }
@@ -34,5 +43,15 @@ namespace Darwin.Application.Loyalty.DTOs
         public DateTime CreatedAtUtc { get; set; }
         public DateTime ExpiresAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
+    }
+
+    public sealed class LoyaltyScanSessionOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int AccrualCount { get; set; }
+        public int RedemptionCount { get; set; }
+        public int PendingCount { get; set; }
+        public int ExpiredCount { get; set; }
+        public int FailureCount { get; set; }
     }
 }

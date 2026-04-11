@@ -197,6 +197,12 @@ test("buildSeoLoaderBaseDiagnostics keeps area and normalization mode explicit",
       route: "/en-US/catalog",
     },
   );
+
+  assert.deepEqual(buildSeoLoaderBaseDiagnostics("catalog-seo"), {
+    pageLoaderKind: "seo-metadata",
+    seoArea: "catalog-seo",
+    seoNormalization: "raw",
+  });
 });
 
 test("buildSeoSuccessDiagnostics keeps indexability and alternate footprint aligned", () => {
@@ -322,4 +328,51 @@ test("buildSeoSuccessDiagnostics keeps single-locale public metadata explicit", 
     },
   );
 });
-
+test("buildSeoSuccessDiagnostics keeps raw single-locale metadata explicit", () => {
+  assert.deepEqual(
+    buildSeoSuccessDiagnostics("catalog-seo", {
+      metadata: {
+        title: "Catalog",
+      },
+      canonicalPath: "/en-US/catalog",
+      noIndex: false,
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "catalog-seo",
+      seoNormalization: "raw",
+      indexability: "indexable",
+      seoMetadataState: "single-locale",
+      seoVisibilityFootprint: "indexable|single-locale",
+      seoTargetFootprint: "indexable|/en-US/catalog",
+      languageAlternateState: "missing",
+      languageAlternateFootprint: "none",
+      seoAlternateSummaryFootprint: "alternates:none",
+      seoSummaryFootprint: "indexable|alternates:0[none]",
+    },
+  );
+});
+test("buildSeoSuccessDiagnostics keeps raw noindex metadata explicit", () => {
+  assert.deepEqual(
+    buildSeoSuccessDiagnostics("account-seo", {
+      metadata: {
+        title: "Account",
+      },
+      canonicalPath: "/en-US/account/sign-in",
+      noIndex: true,
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "account-seo",
+      seoNormalization: "raw",
+      indexability: "noindex",
+      seoMetadataState: "private",
+      seoVisibilityFootprint: "noindex|private",
+      seoTargetFootprint: "noindex|/en-US/account/sign-in",
+      languageAlternateState: "missing",
+      languageAlternateFootprint: "none",
+      seoAlternateSummaryFootprint: "alternates:none",
+      seoSummaryFootprint: "noindex|alternates:0[none]",
+    },
+  );
+});

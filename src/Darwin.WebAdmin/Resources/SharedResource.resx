@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3497,5 +3497,17 @@
   </data>
   <data name="CrmOpportunityHighInteractionPlaybookAction" xml:space="preserve">
     <value>Read the recent interaction trail before adding more outreach, then tighten the next operator action.</value>
+  </data>
+  <data name="LoyaltyAccountCreateFailed" xml:space="preserve">
+    <value>Failed to create loyalty account.</value>
+  </data>
+  <data name="LoyaltyCampaignCreateFailed" xml:space="preserve">
+    <value>Failed to create loyalty campaign.</value>
+  </data>
+  <data name="LoyaltyCampaignUpdateFailed" xml:space="preserve">
+    <value>Failed to update loyalty campaign.</value>
+  </data>
+  <data name="LoyaltyPointsAdjustFailed" xml:space="preserve">
+    <value>Failed to adjust loyalty points.</value>
   </data>
 </root>

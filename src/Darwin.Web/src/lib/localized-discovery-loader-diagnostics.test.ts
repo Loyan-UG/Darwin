@@ -259,6 +259,16 @@ test("buildLocalizedDiscoveryLoaderBaseDiagnostics keeps raw-culture mode explic
       totalEntryCount: 5,
     },
   );
+
+  assert.deepEqual(buildLocalizedDiscoveryLoaderBaseDiagnostics("inventory"), {
+    localizedDiscoveryKind: "inventory",
+    localizedDiscoveryNormalization: "raw-cultures",
+  });
+
+  assert.deepEqual(buildLocalizedDiscoveryLoaderBaseDiagnostics("sitemap"), {
+    localizedDiscoveryKind: "sitemap",
+    localizedDiscoveryNormalization: "raw-cultures",
+  });
 });
 
 test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps raw sitemap mode explicit", () => {
@@ -289,3 +299,122 @@ test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps raw sitemap mode exp
   );
 });
 
+test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps raw sitemap empty mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      "sitemap",
+      {
+        totalEntryCount: 0,
+        cmsEntryCount: 0,
+      },
+      {
+        hasCanonicalCultureNormalization: false,
+      },
+    ),
+    {
+      localizedDiscoveryKind: "sitemap",
+      localizedDiscoveryNormalization: "raw-cultures",
+      localizedDiscoveryState: "empty",
+      localizedDiscoveryDetailFootprint: "detail:none",
+      localizedDiscoverySummaryFootprint: "summary:none",
+      totalEntryCount: 0,
+      cmsEntryCount: 0,
+    },
+  );
+});
+
+test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps raw inventory empty mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      "inventory",
+      {
+        localizedCultureCount: 0,
+        localizedItemCount: 0,
+      },
+      {
+        hasCanonicalCultureNormalization: false,
+      },
+    ),
+    {
+      localizedDiscoveryKind: "inventory",
+      localizedDiscoveryNormalization: "raw-cultures",
+      localizedDiscoveryState: "empty",
+      localizedDiscoveryDetailFootprint: "detail:none",
+      localizedDiscoverySummaryFootprint: "summary:none",
+      localizedCultureCount: 0,
+      localizedItemCount: 0,
+    },
+  );
+});
+test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps raw inventory unknown mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      "inventory",
+      {},
+      {
+        hasCanonicalCultureNormalization: false,
+      },
+    ),
+    {
+      localizedDiscoveryKind: "inventory",
+      localizedDiscoveryNormalization: "raw-cultures",
+      localizedDiscoveryState: "unknown",
+      localizedDiscoveryDetailFootprint: "detail:none",
+      localizedDiscoverySummaryFootprint: "summary:none",
+    },
+  );
+});
+test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps canonical inventory unknown mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      "inventory",
+      {},
+      {
+        hasCanonicalCultureNormalization: true,
+      },
+    ),
+    {
+      localizedDiscoveryKind: "inventory",
+      localizedDiscoveryNormalization: "canonical-cultures",
+      localizedDiscoveryState: "unknown",
+      localizedDiscoveryDetailFootprint: "detail:none",
+      localizedDiscoverySummaryFootprint: "summary:none",
+    },
+  );
+});
+test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps raw sitemap unknown mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      "sitemap",
+      {},
+      {
+        hasCanonicalCultureNormalization: false,
+      },
+    ),
+    {
+      localizedDiscoveryKind: "sitemap",
+      localizedDiscoveryNormalization: "raw-cultures",
+      localizedDiscoveryState: "unknown",
+      localizedDiscoveryDetailFootprint: "detail:none",
+      localizedDiscoverySummaryFootprint: "summary:none",
+    },
+  );
+});
+test("buildLocalizedDiscoveryLoaderSuccessDiagnostics keeps canonical sitemap unknown mode explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      "sitemap",
+      {},
+      {
+        hasCanonicalCultureNormalization: true,
+      },
+    ),
+    {
+      localizedDiscoveryKind: "sitemap",
+      localizedDiscoveryNormalization: "canonical-cultures",
+      localizedDiscoveryState: "unknown",
+      localizedDiscoveryDetailFootprint: "detail:none",
+      localizedDiscoverySummaryFootprint: "summary:none",
+    },
+  );
+});

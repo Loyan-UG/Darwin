@@ -99,5 +99,34 @@ namespace Darwin.Application.Loyalty.Queries
 
             return (items, total);
         }
+
+        public async Task<LoyaltyRedemptionOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var query =
+                from redemption in _db.Set<LoyaltyRewardRedemption>().AsNoTracking()
+                join tx in _db.Set<LoyaltyPointsTransaction>().AsNoTracking() on redemption.Id equals tx.RewardRedemptionId into txGroup
+                from tx in txGroup.DefaultIfEmpty()
+                join scan in _db.Set<ScanSession>().AsNoTracking() on tx.Id equals scan.ResultingTransactionId into scanGroup
+                from scan in scanGroup.DefaultIfEmpty()
+                where redemption.BusinessId == businessId && !redemption.IsDeleted
+                select new { redemption.Status, ScanFailureReason = scan != null ? scan.FailureReason : null, ScanStatus = scan != null ? scan.Status : (LoyaltyScanStatus?)null };
+
+            return await query
+                .GroupBy(_ => 1)
+                .Select(group => new LoyaltyRedemptionOpsSummaryDto
+                {
+                    TotalCount = group.Count(),
+                    PendingCount = group.Count(x => x.Status == LoyaltyRedemptionStatus.Pending),
+                    CompletedCount = group.Count(x => x.Status == LoyaltyRedemptionStatus.Completed),
+                    CancelledCount = group.Count(x => x.Status == LoyaltyRedemptionStatus.Cancelled),
+                    ScanFailureCount = group.Count(x =>
+                        x.ScanStatus == LoyaltyScanStatus.Cancelled ||
+                        x.ScanStatus == LoyaltyScanStatus.Expired ||
+                        (x.ScanFailureReason != null && x.ScanFailureReason != string.Empty))
+                })
+                .SingleOrDefaultAsync(ct)
+                .ConfigureAwait(false)
+                ?? new LoyaltyRedemptionOpsSummaryDto();
+        }
     }
 }

@@ -168,6 +168,12 @@ test("buildSeoLoaderObservationContext adds canonical seo-loader diagnostics", (
       route: "/en-US/catalog",
     },
   );
+
+  assert.deepEqual(buildSeoLoaderObservationContext("catalog-seo"), {
+    pageLoaderKind: "seo-metadata",
+    seoArea: "catalog-seo",
+    seoNormalization: "raw",
+  });
 });
 
 test("buildSeoLoaderSuccessContext classifies indexability alongside health data", () => {
@@ -256,4 +262,76 @@ test("buildSeoLoaderSuccessContext keeps raw seo diagnostics explicit", () => {
     },
   );
 });
+
+test("createCachedObservedSeoMetadataLoader keeps undefined observation context branches explicit", async () => {
+  const loader = createCachedObservedSeoMetadataLoader({
+    area: "unit-seo",
+    operation: "load-undefined-context",
+    getContext: () => undefined,
+    load: async (culture: string, slug: string) => ({
+      metadata: {
+        title: `${culture}:${slug}`,
+      },
+      canonicalPath: `/cms/${slug}`,
+      noIndex: false,
+      languageAlternates: {},
+    }),
+  });
+
+  const result = await loader("de-DE", "faq");
+
+  assert.equal(result.canonicalPath, "/cms/faq");
+  assert.equal(result.noIndex, false);
+  assert.deepEqual(result.languageAlternates, {});
+});test("createCachedObservedSeoMetadataLoader keeps empty observation context branches explicit", async () => {
+  const loader = createCachedObservedSeoMetadataLoader({
+    area: "unit-seo",
+    operation: "load-empty-context",
+    getContext: () => ({}),
+    load: async (culture: string, slug: string) => ({
+      metadata: {
+        title: `${culture}:${slug}`,
+      },
+      canonicalPath: `/cms/${slug}`,
+      noIndex: false,
+      languageAlternates: {},
+    }),
+  });
+
+  const result = await loader("de-DE", "faq");
+
+  assert.equal(result.canonicalPath, "/cms/faq");
+  assert.equal(result.noIndex, false);
+  assert.deepEqual(result.languageAlternates, {});
+});
+test("buildSeoLoaderSuccessContext keeps raw single-locale seo diagnostics explicit", () => {
+  assert.deepEqual(
+    buildSeoLoaderSuccessContext("catalog-seo", {
+      metadata: {
+        title: "Catalog",
+      },
+      canonicalPath: "/en-US/catalog",
+      noIndex: false,
+    }),
+    {
+      pageLoaderKind: "seo-metadata",
+      seoArea: "catalog-seo",
+      seoNormalization: "raw",
+      indexability: "indexable",
+      seoIndexability: "indexable",
+      seoMetadataState: "single-locale",
+      seoVisibilityFootprint: "indexable|single-locale",
+      seoTargetFootprint: "indexable|/en-US/catalog",
+      languageAlternateState: "missing",
+      languageAlternateFootprint: "none",
+      seoAlternateDetailFootprint: "none",
+      seoAlternateSummaryFootprint: "alternates:none",
+      seoSummaryFootprint: "indexable|alternates:0[none]",
+      canonicalPath: "/en-US/catalog",
+      noIndex: false,
+      languageAlternateCount: 0,
+    },
+  );
+});
+
 

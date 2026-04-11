@@ -96,3 +96,219 @@ test("createCachedObservedLoader reuses normalized argument tuples", async () =>
   assert.equal(first, second);
   assert.equal(first, "de-DE:1:hello");
 });
+
+test("createObservedLoader passes normalized args into success context", async () => {
+  const successCalls: Array<Record<string, unknown>> = [];
+  const loader = createObservedLoader({
+    area: "unit-loader",
+    operation: "run-success-context",
+    normalizeArgs: (culture: string, page: number, query?: string) => [
+      culture.trim(),
+      page > 0 ? page : 1,
+      query?.trim() || undefined,
+    ],
+    getSuccessContext: (
+      result: string,
+      culture: string,
+      page: number,
+      query?: string,
+    ) => {
+      successCalls.push({
+        result,
+        culture,
+        page,
+        query: query ?? null,
+      });
+      return {
+        result,
+        culture,
+        page,
+        query: query ?? null,
+      };
+    },
+    load: async (culture: string, page: number, query?: string) =>
+      `${culture}:${page}:${query ?? "none"}`,
+  });
+
+  const result = await loader(" de-DE ", 0, "  hello  ");
+
+  assert.equal(result, "de-DE:1:hello");
+  assert.deepEqual(successCalls, [
+    {
+      result: "de-DE:1:hello",
+      culture: "de-DE",
+      page: 1,
+      query: "hello",
+    },
+  ]);
+});
+
+test("createCachedObservedLoader keeps bare default loaders usable without extra hooks", async () => {
+  let executions = 0;
+  const loader = createCachedObservedLoader({
+    area: "unit-loader",
+    operation: "run-bare",
+    load: async (culture: string) => {
+      executions += 1;
+      return `${culture}:${executions}`;
+    },
+  });
+
+  const [first, second] = await Promise.all([
+    loader("de-DE"),
+    loader("de-DE"),
+  ]);
+
+  assert.equal(first, second);
+  assert.match(first, /^de-DE:/);
+  assert.equal(executions, 1);
+});
+
+test("createObservedLoader keeps bare default loaders usable without extra hooks", async () => {
+  let executions = 0;
+  const loader = createObservedLoader({
+    area: "unit-loader",
+    operation: "run-bare-direct",
+    load: async (culture: string) => {
+      executions += 1;
+      return `${culture}:${executions}`;
+    },
+  });
+
+  const first = await loader("de-DE");
+  const second = await loader("de-DE");
+
+  assert.equal(first, "de-DE:1");
+  assert.equal(second, "de-DE:2");
+  assert.equal(executions, 2);
+});
+test("createObservedLoader keeps explicit undefined context hooks equivalent to bare defaults", async () => {
+  let executions = 0;
+  const loader = createObservedLoader({
+    area: "unit-loader",
+    operation: "run-undefined-hooks",
+    getContext: () => undefined,
+    getSuccessContext: () => undefined,
+    load: async (culture: string) => {
+      executions += 1;
+      return `${culture}:${executions}`;
+    },
+  });
+
+  const first = await loader("de-DE");
+  const second = await loader("de-DE");
+
+  assert.equal(first, "de-DE:1");
+  assert.equal(second, "de-DE:2");
+  assert.equal(executions, 2);
+});
+test("createCachedObservedLoader keeps explicit undefined context hooks equivalent to bare cached defaults", async () => {
+  let executions = 0;
+  const loader = createCachedObservedLoader({
+    area: "unit-loader",
+    operation: "run-cached-undefined-hooks",
+    getContext: () => undefined,
+    getSuccessContext: () => undefined,
+    load: async (culture: string) => {
+      executions += 1;
+      return `${culture}:${executions}`;
+    },
+  });
+
+  const [first, second] = await Promise.all([
+    loader("de-DE"),
+    loader("de-DE"),
+  ]);
+
+  assert.equal(first, second);
+  assert.match(first, /^de-DE:/);
+  assert.equal(executions, 1);
+});
+
+test("createObservedLoader keeps undefined success-context hooks explicit when base context exists", async () => {
+  let executions = 0;
+  const loader = createObservedLoader({
+    area: "unit-loader",
+    operation: "run-undefined-success-context",
+    getContext: () => ({ culture: "de-DE" }),
+    getSuccessContext: () => undefined,
+    load: async (culture: string) => {
+      executions += 1;
+      return `${culture}:${executions}`;
+    },
+  });
+
+  const first = await loader("de-DE");
+  const second = await loader("de-DE");
+
+  assert.equal(first, "de-DE:1");
+  assert.equal(second, "de-DE:2");
+  assert.equal(executions, 2);
+});
+
+test("createCachedObservedLoader keeps undefined success-context hooks explicit when base context exists", async () => {
+  let executions = 0;
+  const loader = createCachedObservedLoader({
+    area: "unit-loader",
+    operation: "run-cached-undefined-success-context",
+    getContext: () => ({ culture: "de-DE" }),
+    getSuccessContext: () => undefined,
+    load: async (culture: string) => {
+      executions += 1;
+      return `${culture}:${executions}`;
+    },
+  });
+
+  const [first, second] = await Promise.all([
+    loader("de-DE"),
+    loader("de-DE"),
+  ]);
+
+  assert.equal(first, second);
+  assert.match(first, /^de-DE:/);
+  assert.equal(executions, 1);
+});test("createObservedLoader keeps empty observation context hooks equivalent to explicit base defaults", async () => {
+  let executions = 0;
+  const loader = createObservedLoader({
+    area: "unit-loader",
+    operation: "run-empty-context",
+    getContext: () => ({}),
+    getSuccessContext: () => ({}),
+    load: async (culture: string) => {
+      executions += 1;
+      return `${culture}:${executions}`;
+    },
+  });
+
+  const first = await loader("de-DE");
+  const second = await loader("de-DE");
+
+  assert.equal(first, "de-DE:1");
+  assert.equal(second, "de-DE:2");
+  assert.equal(executions, 2);
+});
+
+test("createCachedObservedLoader keeps empty observation context hooks equivalent to explicit cached defaults", async () => {
+  let executions = 0;
+  const loader = createCachedObservedLoader({
+    area: "unit-loader",
+    operation: "run-cached-empty-context",
+    getContext: () => ({}),
+    getSuccessContext: () => ({}),
+    load: async (culture: string) => {
+      executions += 1;
+      return `${culture}:${executions}`;
+    },
+  });
+
+  const [first, second] = await Promise.all([
+    loader("de-DE"),
+    loader("de-DE"),
+  ]);
+
+  assert.equal(first, second);
+  assert.match(first, /^de-DE:/);
+  assert.equal(executions, 1);
+});
+
+

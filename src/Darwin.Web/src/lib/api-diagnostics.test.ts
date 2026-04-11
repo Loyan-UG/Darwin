@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  __resetApiFailureLogForTests,
   buildApiFailureDedupeKey,
   createDiagnostics,
   getApiKind,
@@ -23,6 +24,7 @@ test("API diagnostics helpers classify status, API kind, and operational surface
 
   assert.equal(getApiKind("/api/v1/public/catalog/products"), "public");
   assert.equal(getApiKind("/api/v1/member/orders"), "member");
+  assert.equal(getApiKind("/api/v1/customer/profile"), "member");
   assert.equal(getApiKind("/api/v1/auth/password/reset"), "auth");
   assert.equal(getApiKind("/custom/path"), "other");
 
@@ -40,6 +42,10 @@ test("API diagnostics helpers classify status, API kind, and operational surface
   );
   assert.equal(
     getSurfaceFamily("/api/v1/member/orders", "member-api"),
+    "member",
+  );
+  assert.equal(
+    getSurfaceFamily("/api/v1/customer/profile", "customer-api"),
     "member",
   );
   assert.equal(
@@ -64,8 +70,16 @@ test("API diagnostics helpers classify status, API kind, and operational surface
     "cart",
   );
   assert.equal(
+    getSurfaceArea("/api/v1/public/checkout/intent", "checkout-api"),
+    "checkout",
+  );
+  assert.equal(
     getSurfaceArea("/api/v1/member/invoices", "member-api"),
     "member-invoices",
+  );
+  assert.equal(
+    getSurfaceArea("/api/v1/customer/profile", "customer-api"),
+    "customer-api",
   );
 });
 
@@ -116,6 +130,14 @@ test("API diagnostics helpers classify retryability, attention, and suggested ac
   );
   assert.equal(
     getFailureSuggestedAction({
+      failureKind: "not-found",
+      retryable: false,
+      surfaceFamily: "public-discovery",
+    }),
+    "inspect-public-discovery-availability",
+  );
+  assert.equal(
+    getFailureSuggestedAction({
       failureKind: "http-error",
       retryable: true,
       surfaceFamily: "shell",
@@ -158,18 +180,120 @@ test("getResponseDiagnostics extracts request ids and trace headers", () => {
     requestId: "req-123",
     traceparent: "00-abc-xyz-01",
   });
+
+  const fallbackResponse = new Response(null, {
+    status: 404,
+    headers: {
+      "request-id": "req-456",
+    },
+  });
+
+  assert.deepEqual(
+    getResponseDiagnostics(
+      "member-api",
+      "/api/v1/member/orders",
+      fallbackResponse,
+    ),
+    {
+      area: "member-api",
+      path: "/api/v1/member/orders",
+      apiKind: "member",
+      surfaceFamily: "member",
+      surfaceArea: "member-orders",
+      statusCode: 404,
+      statusFamily: "client-error",
+      requestId: "req-456",
+      traceparent: undefined,
+    },
+  );
+
+  const correlationResponse = new Response(null, {
+    status: 503,
+    headers: {
+      "x-correlation-id": "corr-789",
+    },
+  });
+
+  assert.deepEqual(
+    getResponseDiagnostics(
+      "auth-api",
+      "/api/v1/auth/sign-in",
+      correlationResponse,
+    ),
+    {
+      area: "auth-api",
+      path: "/api/v1/auth/sign-in",
+      apiKind: "auth",
+      surfaceFamily: "auth",
+      surfaceArea: "auth",
+      statusCode: 503,
+      statusFamily: "server-error",
+      requestId: "corr-789",
+      traceparent: undefined,
+    },
+  );
 });
 
-test("createDiagnostics builds network-failure context without response metadata", () => {
-  assert.deepEqual(createDiagnostics("member-api", "/api/v1/member/orders"), {
-    area: "member-api",
-    path: "/api/v1/member/orders",
-    apiKind: "member",
-    surfaceFamily: "member",
-    surfaceArea: "member-orders",
-    statusFamily: "network-error",
+
+test("getResponseDiagnostics falls through blank headers until x-correlation-id remains", () => {
+  const response = new Response(null, {
+    status: 503,
+    headers: {
+      "x-request-id": "   ",
+      "request-id": "   ",
+      "x-correlation-id": " corr-123 ",
+      traceparent: " 00-trace-corr ",
+    },
   });
+
+  assert.deepEqual(
+    getResponseDiagnostics(
+      "auth-api",
+      "/api/v1/auth/sign-in",
+      response,
+    ),
+    {
+      area: "auth-api",
+      path: "/api/v1/auth/sign-in",
+      apiKind: "auth",
+      surfaceFamily: "auth",
+      surfaceArea: "auth",
+      statusCode: 503,
+      statusFamily: "server-error",
+      requestId: "corr-123",
+      traceparent: "00-trace-corr",
+    },
+  );
+});test("getResponseDiagnostics falls through blank request headers before using the next identifier", () => {
+  const response = new Response(null, {
+    status: 502,
+    headers: {
+      "x-request-id": "   ",
+      "request-id": " req-999 ",
+      traceparent: " 00-trace-999 ",
+    },
+  });
+
+  assert.deepEqual(
+    getResponseDiagnostics(
+      "checkout-api",
+      "/api/v1/public/checkout/intent",
+      response,
+    ),
+    {
+      area: "checkout-api",
+      path: "/api/v1/public/checkout/intent",
+      apiKind: "public",
+      surfaceFamily: "commerce",
+      surfaceArea: "checkout",
+      statusCode: 502,
+      statusFamily: "server-error",
+      requestId: "req-999",
+      traceparent: "00-trace-999",
+    },
+  );
 });
+
 
 test("withFailureDiagnostics classifies retryability for common API failures", () => {
   assert.deepEqual(
@@ -269,3 +393,35 @@ test("logApiFailure deduplicates repeated diagnostics before logging", () => {
     console.error = originalError;
   }
 });
+
+test("logApiFailure reset clears dedupe state between runs", () => {
+  const originalError = console.error;
+  const calls: unknown[][] = [];
+  console.error = (...args: unknown[]) => {
+    calls.push(args);
+  };
+
+  try {
+    const diagnostics = withFailureDiagnostics(
+      createDiagnostics("public-api", "/api/v1/public/catalog/products"),
+      "network-error",
+    );
+
+    logApiFailure(diagnostics, new Error("boom"));
+    __resetApiFailureLogForTests();
+    logApiFailure(diagnostics, new Error("boom-again"));
+
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0]?.[0], "Darwin.Web API failure");
+    assert.equal(calls[1]?.[0], "Darwin.Web API failure");
+  } finally {
+    console.error = originalError;
+    __resetApiFailureLogForTests();
+  }
+});
+
+
+
+
+
+

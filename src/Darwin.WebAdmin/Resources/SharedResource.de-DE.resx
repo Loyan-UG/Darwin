@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3497,5 +3497,17 @@
   </data>
   <data name="CrmOpportunityHighInteractionPlaybookAction" xml:space="preserve">
     <value>Lesen Sie die aktuelle Interaktionsspur, bevor Sie weitere Outreach-Schritte hinzufügen, und schärfen Sie dann die nächste Operator-Aktion.</value>
+  </data>
+  <data name="LoyaltyAccountCreateFailed" xml:space="preserve">
+    <value>Treuekonto konnte nicht angelegt werden.</value>
+  </data>
+  <data name="LoyaltyCampaignCreateFailed" xml:space="preserve">
+    <value>Treuekampagne konnte nicht erstellt werden.</value>
+  </data>
+  <data name="LoyaltyCampaignUpdateFailed" xml:space="preserve">
+    <value>Treuekampagne konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="LoyaltyPointsAdjustFailed" xml:space="preserve">
+    <value>Treuepunkte konnten nicht angepasst werden.</value>
   </data>
 </root>

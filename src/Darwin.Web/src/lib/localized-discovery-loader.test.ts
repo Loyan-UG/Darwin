@@ -32,6 +32,16 @@ test("buildLocalizedDiscoveryLoaderDiagnostics keeps localized discovery kind ex
       cultureCount: 2,
     },
   );
+
+  assert.deepEqual(buildLocalizedDiscoveryLoaderDiagnostics("inventory"), {
+    localizedDiscoveryKind: "inventory",
+    localizedDiscoveryNormalization: "canonical-cultures",
+  });
+
+  assert.deepEqual(buildLocalizedDiscoveryLoaderDiagnostics("sitemap"), {
+    localizedDiscoveryKind: "sitemap",
+    localizedDiscoveryNormalization: "canonical-cultures",
+  });
 });
 
 test("createLocalizedDiscoveryLoader forwards inventory results through the shared loader wrapper", async () => {
@@ -94,3 +104,77 @@ test("createLocalizedDiscoveryLoader feeds canonical context and success diagnos
     sitemapSummaryFootprint: "total:8|static:6|cms:1|products:1",
   });
 });
+test("createLocalizedDiscoveryLoader keeps base diagnostics explicit when context hooks return undefined", async () => {
+  const loader = createLocalizedDiscoveryLoader({
+    kind: "inventory",
+    area: "unit-localized-discovery",
+    operation: "load-undefined-context",
+    getContext: () => undefined,
+    getSuccessContext: () => undefined,
+    load: async () => ({
+      pageCount: 0,
+    }),
+  });
+
+  const result = await loader();
+
+  assert.deepEqual(result, {
+    pageCount: 0,
+  });
+});
+test("createLocalizedDiscoveryLoader keeps empty observation context branches explicit", async () => {
+  const loader = createLocalizedDiscoveryLoader({
+    kind: "sitemap",
+    area: "unit-localized-discovery",
+    operation: "load-empty-context",
+    getContext: () => ({}),
+    getSuccessContext: (result) => ({ totalEntryCount: result.totalEntryCount }),
+    load: async () => ({
+      totalEntryCount: 0,
+    }),
+  });
+
+  const result = await loader();
+
+  assert.deepEqual(result, {
+    totalEntryCount: 0,
+  });
+});
+
+test("createLocalizedDiscoveryLoader keeps undefined success-context branches explicit", async () => {
+  const loader = createLocalizedDiscoveryLoader({
+    kind: "inventory",
+    area: "unit-localized-discovery",
+    operation: "load-undefined-success-context",
+    getContext: () => ({ supportedCultures: 2 }),
+    getSuccessContext: () => undefined,
+    load: async () => ({
+      pageCount: 0,
+    }),
+  });
+
+  const result = await loader();
+
+  assert.deepEqual(result, {
+    pageCount: 0,
+  });
+});test("createLocalizedDiscoveryLoader keeps empty success-context branches explicit", async () => {
+  const loader = createLocalizedDiscoveryLoader({
+    kind: "inventory",
+    area: "unit-localized-discovery",
+    operation: "load-empty-success-context",
+    getContext: () => ({ supportedCultures: 2 }),
+    getSuccessContext: () => ({}),
+    load: async () => ({
+      pageCount: 0,
+    }),
+  });
+
+  const result = await loader();
+
+  assert.deepEqual(result, {
+    pageCount: 0,
+  });
+});
+
+

@@ -29,6 +29,19 @@ test("buildSharedContextBaseDiagnostics keeps shared context kind and normalizat
   );
 
   assert.deepEqual(
+    buildSharedContextBaseDiagnostics("storefront-continuation", {
+      hasCanonicalNormalization: true,
+      extras: { culture: "en-US", route: "/catalog" },
+    }),
+    {
+      sharedContextKind: "storefront-continuation",
+      sharedContextNormalization: "canonical",
+      culture: "en-US",
+      route: "/catalog",
+    },
+  );
+
+  assert.deepEqual(
     buildSharedContextBaseDiagnostics("member-summary", {
       extras: { culture: "en-US", scope: "orders-page" },
     }),
@@ -37,6 +50,18 @@ test("buildSharedContextBaseDiagnostics keeps shared context kind and normalizat
       sharedContextNormalization: "raw",
       culture: "en-US",
       scope: "orders-page",
+    },
+  );
+
+  assert.deepEqual(
+    buildSharedContextBaseDiagnostics("member-entry", {
+      extras: { culture: "de-DE", route: "/account" },
+    }),
+    {
+      sharedContextKind: "member-entry",
+      sharedContextNormalization: "raw",
+      culture: "de-DE",
+      route: "/account",
     },
   );
 });
@@ -68,6 +93,14 @@ test("shared context footprint helpers keep operational dependency states compac
     }),
     "session:missing|storefront:present",
   );
+
+  assert.equal(
+    buildMemberEntryFootprint({
+      sessionState: "present",
+      storefrontState: "missing",
+    }),
+    "session:present|storefront:missing",
+  );
 });
 
 test("buildMemberSummaryFootprint keeps scope and leading statuses together", () => {
@@ -88,5 +121,47 @@ test("buildMemberSummaryFootprint keeps scope and leading statuses together", ()
     }),
     "scope:orders-page|primary:fallback",
   );
+
+  assert.equal(
+    buildMemberSummaryFootprint({
+      scope: "commerce-summary",
+      primaryStatus: "ok",
+      secondaryStatus: "degraded",
+    }),
+    "scope:commerce-summary|primary:ok|secondary:degraded",
+  );
+
+  assert.equal(
+    buildMemberSummaryFootprint({
+      scope: "invoices-page",
+      primaryStatus: "warning",
+      tertiaryStatus: "present",
+    }),
+    "scope:invoices-page|primary:warning|tertiary:present",
+  );
 });
+
+test("buildSharedContextBaseDiagnostics keeps bare shared context defaults explicit", () => {
+  assert.deepEqual(buildSharedContextBaseDiagnostics("public-storefront"), {
+    sharedContextKind: "public-storefront",
+    sharedContextNormalization: "raw",
+  });
+
+  assert.deepEqual(buildSharedContextBaseDiagnostics("storefront-continuation"), {
+    sharedContextKind: "storefront-continuation",
+    sharedContextNormalization: "raw",
+  });
+
+  assert.deepEqual(buildSharedContextBaseDiagnostics("member-summary"), {
+    sharedContextKind: "member-summary",
+    sharedContextNormalization: "raw",
+  });
+
+  assert.deepEqual(buildSharedContextBaseDiagnostics("member-entry"), {
+    sharedContextKind: "member-entry",
+    sharedContextNormalization: "raw",
+  });
+});
+
+
 

@@ -4,6 +4,7 @@
 }
 
 <div id="loyalty-redemptions-workspace-shell">
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h1 class="mb-1">Loyalty Redemptions</h1>
@@ -72,6 +73,36 @@
            hx-swap="outerHTML">Cancelled</a>
     </div>
 
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
+        <div class="col-md-2"><div class="card h-100 border-warning-subtle"><div class="card-body"><div class="text-muted small">Pending</div><div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div></div></div></div>
+        <div class="col-md-2"><div class="card h-100 border-success-subtle"><div class="card-body"><div class="text-muted small">Completed</div><div class="fs-4 fw-semibold">@Model.Summary.CompletedCount</div></div></div></div>
+        <div class="col-md-2"><div class="card h-100 border-secondary-subtle"><div class="card-body"><div class="text-muted small">Cancelled</div><div class="fs-4 fw-semibold">@Model.Summary.CancelledCount</div></div></div></div>
+        <div class="col-md-3"><div class="card h-100 border-danger-subtle"><div class="card-body"><div class="text-muted small">Scan-linked Failures</div><div class="fs-4 fw-semibold">@Model.Summary.ScanFailureCount</div></div></div></div>
+    </div>
+
+    @if (Model.Playbooks.Count > 0)
+    {
+        <div class="card mb-4">
+            <div class="card-header">Redemption Playbooks</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead><tr><th>Playbook</th><th>When It Applies</th><th>Operator Action</th></tr></thead>
+                    <tbody>
+                    @foreach (var playbook in Model.Playbooks)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@playbook.Title</td>
+                            <td>@playbook.ScopeNote</td>
+                            <td>@playbook.OperatorAction</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
     <div class="table-responsive">
         <table class="table table-sm table-striped align-middle">
             <thead><tr><th>Member</th><th>Reward</th><th>Status</th><th>Scan</th><th>When</th><th>Note</th><th class="text-end">Actions</th></tr></thead>

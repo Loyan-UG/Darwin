@@ -82,6 +82,18 @@ test("summarizeStorefrontSupportFootprint compacts storefront support state", ()
     "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",
   );
 });
+  assert.equal(
+    summarizeStorefrontSupportFootprint({
+      cmsStatus: "unknown",
+      cmsCount: 0,
+      categoriesStatus: "unknown",
+      categoryCount: 0,
+      productsStatus: "unknown",
+      productCount: 0,
+      cartStatus: "unknown",
+    }),
+    "cms:unknown:0|categories:unknown:0|products:unknown:0|cart:unknown",
+  );
 test("summarizePublicStorefrontHealth exposes canonical storefront statuses and counts", () => {
   assert.deepEqual(summarizePublicStorefrontHealth(createStorefrontContext()), {
     cmsStatus: "ok",
@@ -127,6 +139,61 @@ test("summarizePublicStorefrontHealth exposes canonical storefront statuses and 
     },
   );
 
+  const emptyStorefrontContext: PublicStorefrontContext = {
+    cmsPagesResult: { data: null, status: "unknown" },
+    cmsPages: [],
+    cmsPagesStatus: "unknown",
+    categoriesResult: { data: null, status: "unknown" },
+    categories: [],
+    categoriesStatus: "unknown",
+    productsResult: { data: null, status: "unknown" },
+    products: [],
+    productsStatus: "unknown",
+    storefrontCart: null,
+    storefrontCartStatus: "not-found",
+    cartSnapshots: [],
+    cartLinkedProductSlugs: [],
+  };
+
+  assert.deepEqual(summarizePublicStorefrontHealth(emptyStorefrontContext), {
+    cmsStatus: "unknown",
+    cmsCount: 0,
+    categoriesStatus: "unknown",
+    categoryCount: 0,
+    productsStatus: "unknown",
+    productCount: 0,
+    heroOfferCount: 0,
+    valueOfferCount: 0,
+    liveOfferCount: 0,
+    baseAssortmentCount: 0,
+    promotionLaneFootprint: "hero:0|value:0|live:0|base:0",
+    cartStatus: "not-found",
+    cartLinkedCount: 0,
+  });
+
+  assert.deepEqual(
+    summarizeStorefrontContinuationHealth({
+      cmsPagesStatus: "unknown",
+      cmsPages: [],
+      categoriesStatus: "unknown",
+      categories: [],
+      productsStatus: "unknown",
+      products: [],
+    }),
+    {
+      cmsStatus: "unknown",
+      cmsCount: 0,
+      categoriesStatus: "unknown",
+      categoryCount: 0,
+      productsStatus: "unknown",
+      productCount: 0,
+      heroOfferCount: 0,
+      valueOfferCount: 0,
+      liveOfferCount: 0,
+      baseAssortmentCount: 0,
+      promotionLaneFootprint: "hero:0|value:0|live:0|base:0",
+    },
+  );
   assert.deepEqual(
     summarizeShellHealth({
       status: "ok",
@@ -138,6 +205,30 @@ test("summarizePublicStorefrontHealth exposes canonical storefront statuses and 
       menuStatus: "ok",
       menuItemCount: 3,
       shellMenuFootprint: "status:ok|items:3",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeShellHealth({
+      status: "network-error",
+      data: null,
+    }),
+    {
+      menuStatus: "network-error",
+      menuItemCount: 0,
+      shellMenuFootprint: "status:network-error|items:0",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeShellHealth({
+      status: "unknown",
+      data: null,
+    }),
+    {
+      menuStatus: "unknown",
+      menuItemCount: 0,
+      shellMenuFootprint: "status:unknown|items:0",
     },
   );
 
@@ -158,6 +249,26 @@ test("summarizePublicStorefrontHealth exposes canonical storefront statuses and 
       utilityLinkCount: 1,
       footerGroupCount: 3,
       shellModelFootprint: "culture:de-DE|source:cms|menu:ok|primary:2|utility:1|footer:3",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeShellModelHealth({
+      culture: "en-US",
+      menuSource: "fallback",
+      menuStatus: "network-error",
+      primaryNavigation: [1, 2, 3, 4, 5, 6, 7, 8],
+      utilityLinks: [1, 2, 3],
+      footerGroups: [1, 2, 3],
+    }),
+    {
+      culture: "en-US",
+      menuSource: "fallback",
+      menuStatus: "network-error",
+      primaryNavigationCount: 8,
+      utilityLinkCount: 3,
+      footerGroupCount: 3,
+      shellModelFootprint: "culture:en-US|source:fallback|menu:network-error|primary:8|utility:3|footer:3",
     },
   );
 });
@@ -344,6 +455,58 @@ test("route health helpers carry core and storefront health together", () => {
   );
 });
 
+  assert.deepEqual(
+    summarizeCatalogBrowseCoreHealth({
+      categoriesResult: { status: "unknown", data: null },
+      productsResult: { status: "unknown", data: null },
+    }),
+    {
+      categoriesStatus: "unknown",
+      categoryCount: 0,
+      productsStatus: "unknown",
+      productCount: 0,
+      catalogBrowseCoreFootprint: "categories:unknown:0|products:unknown:0",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeCatalogDetailCoreHealth({
+      categoriesResult: { status: "unknown", data: null },
+      productResult: { status: "unknown", data: null },
+    }),
+    {
+      categoriesStatus: "unknown",
+      categoryCount: 0,
+      productStatus: "unknown",
+      hasProduct: false,
+      catalogDetailWorkflowFootprint: "product:unknown:missing|categories:unknown:0",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeCmsBrowseCoreHealth({
+      pagesResult: { status: "unknown", data: null },
+    }),
+    {
+      pagesStatus: "unknown",
+      pageCount: 0,
+      cmsBrowseCoreFootprint: "pages:unknown:0",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeCmsDetailCoreHealth({
+      pageResult: { status: "unknown", data: null },
+      relatedPagesResult: { status: "unknown", data: null },
+    }),
+    {
+      pageStatus: "unknown",
+      hasPage: false,
+      relatedSeedStatus: "unknown",
+      relatedSeedCount: 0,
+      cmsDetailWorkflowFootprint: "page:unknown:missing|related:unknown:0",
+    },
+  );
 test("catalog and CMS index page health summaries expose direct browse and merchandising context", () => {
   const storefrontContext = createStorefrontContext();
 
@@ -614,6 +777,92 @@ test("member and home health helpers summarize route readiness for diagnostics",
   );
 
   assert.deepEqual(
+    summarizeHomeCategorySpotlightsHealth([]),
+    {
+      spotlightCount: 0,
+      degradedSpotlightCount: 0,
+      spotlightProductCount: 0,
+      homeCategorySpotlightsFootprint: "spotlights:0|degraded:0|products:0",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeCheckoutPageHealth({
+      routeContext: {
+        model: {
+          anonymousId: null,
+          status: "unknown",
+          cart: null,
+        },
+        memberSession: null,
+        identityContext: null,
+        commerceSummaryContext: null,
+        storefrontContext,
+      },
+    }),
+    {
+      cartStatus: "unknown",
+      cartItemCount: 0,
+      memberSessionState: "missing",
+      addressesStatus: "unauthenticated",
+      invoicesStatus: "unauthenticated",
+      invoiceCount: 0,
+      heroOfferCount: 1,
+      valueOfferCount: 2,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
+      commerceWorkflowFootprint: "surface:checkout|session:missing|addresses:unauthenticated|invoices:unauthenticated|lanes:hero:1|value:2|live:2|base:1",
+      commerceStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeConfirmationPageHealth({
+      routeContext: {
+        confirmationResult: {
+          status: "unknown",
+          data: null,
+        },
+        memberSession: null,
+        commerceSummaryContext: null,
+      },
+      followUpProducts: [],
+    }),
+    {
+      confirmationStatus: "unknown",
+      lineCount: 0,
+      memberSessionState: "missing",
+      ordersStatus: "unauthenticated",
+      invoicesStatus: "unauthenticated",
+      followUpProductCount: 0,
+      heroOfferCount: 0,
+      valueOfferCount: 0,
+      liveOfferCount: 0,
+      baseAssortmentCount: 0,
+      promotionLaneFootprint: "hero:0|value:0|live:0|base:0",
+      commerceWorkflowFootprint: "surface:confirmation|session:missing|orders:unauthenticated|invoices:unauthenticated|lanes:hero:0|value:0|live:0|base:0",
+      confirmationFollowUpWorkflowFootprint: "products:0|lanes:hero:0|value:0|live:0|base:0",
+      commerceStorefrontSupportFootprint: "products:0|orders:unauthenticated|invoices:unauthenticated",
+    },
+  );
+  assert.deepEqual(
+    summarizeStorefrontShoppingHealth({
+      anonymousCartId: null,
+      cartResult: { status: "unknown", data: null },
+      cartSnapshots: [],
+      cartLinkedProductSlugs: [],
+    }),
+    {
+      anonymousCartState: "missing",
+      liveCartStatus: "unknown",
+      liveCartItemCount: 0,
+      snapshotCount: 0,
+      cartLinkedCount: 0,
+      storefrontShoppingFootprint: "anonymous:missing|live:unknown:0|snapshots:0|linked:0",
+    },
+  );
+  assert.deepEqual(
     summarizeAccountPageHealth({
       session: null,
       publicRouteContext: {
@@ -720,6 +969,63 @@ test("member and home health helpers summarize route readiness for diagnostics",
   );
 
   assert.deepEqual(
+    summarizeHomeRouteHealth({
+      memberSession: null,
+      homeDiscoveryContext: {
+        storefrontContext,
+      },
+      parts: [],
+    }),
+    {
+      memberSessionState: "missing",
+      partCount: 0,
+      cmsStatus: "ok",
+      cmsCount: 1,
+      categoriesStatus: "degraded",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      heroOfferCount: 1,
+      valueOfferCount: 2,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
+      cartStatus: "not-found",
+      cartLinkedCount: 1,
+      homeWorkflowFootprint: "session:missing|parts:0|cart:not-found|lanes:hero:1|value:2|live:2|base:1",
+      homeStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeCartPageHealth({
+      routeContext: {
+        model: {
+          anonymousId: null,
+          status: "unknown",
+          cart: null,
+        },
+        memberSession: null,
+        identityContext: null,
+      },
+      followUpProducts: [],
+    }),
+    {
+      cartStatus: "unknown",
+      cartItemCount: 0,
+      memberSessionState: "missing",
+      addressesStatus: "unauthenticated",
+      followUpProductCount: 0,
+      heroOfferCount: 0,
+      valueOfferCount: 0,
+      liveOfferCount: 0,
+      baseAssortmentCount: 0,
+      promotionLaneFootprint: "hero:0|value:0|live:0|base:0",
+      commerceWorkflowFootprint: "surface:cart|session:missing|addresses:unauthenticated|lanes:hero:0|value:0|live:0|base:0",
+      commerceStorefrontSupportFootprint: "products:0|cart:unknown|addresses:unauthenticated",
+    },
+  );
+  assert.deepEqual(
     summarizeProductDetailRelatedHealth({
       status: "ok",
       data: { items: [1, 2, 3] },
@@ -799,6 +1105,17 @@ test("member and home health helpers summarize route readiness for diagnostics",
   );
 
   assert.deepEqual(
+    summarizeProductDetailRelatedHealth({
+      status: "unknown",
+      data: null,
+    }),
+    {
+      status: "unknown",
+      relatedCount: 0,
+      productFollowUpFootprint: "related:unknown:0",
+    },
+  );
+  assert.deepEqual(
     summarizeConfirmationResultHealth({
       status: "ok",
       data: {
@@ -855,6 +1172,78 @@ test("member and home health helpers summarize route readiness for diagnostics",
       commerceStorefrontSupportFootprint: "products:2|cart:ok|addresses:ok",    },
   );
 
+  assert.deepEqual(
+    summarizeHomeDiscoveryHealth({
+      storefrontContext,
+      pagesResult: { status: "unknown", data: null },
+      categoriesResult: { status: "unknown", data: null },
+      productsResult: { status: "unknown", data: null },
+      categorySpotlights: [],
+    }),
+    {
+      cmsStatus: "ok",
+      cmsCount: 1,
+      categoriesStatus: "degraded",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      heroOfferCount: 1,
+      valueOfferCount: 2,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
+      cartStatus: "not-found",
+      cartLinkedCount: 1,
+      homePagesStatus: "unknown",
+      homePageCount: 0,
+      homeCategoriesStatus: "unknown",
+      homeCategoryCount: 0,
+      homeProductsStatus: "unknown",
+      homeProductCount: 0,
+      spotlightCount: 0,
+      degradedSpotlightCount: 0,
+      homeDiscoveryWorkflowFootprint: "pages:unknown:0|categories:unknown:0|products:unknown:0|spotlights:0|degraded:0",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeCommerceRouteHealth({
+      storefrontContext,
+    }),
+    {
+      cmsStatus: "ok",
+      cmsCount: 1,
+      categoriesStatus: "degraded",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      heroOfferCount: 1,
+      valueOfferCount: 2,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
+      cartStatus: "not-found",
+      cartLinkedCount: 1,
+      cartModelStatus: "unknown",
+      cartItemCount: 0,
+      hasAnonymousCart: false,
+      hasCoupon: false,
+      memberSessionState: "missing",
+      profileStatus: "unknown",
+      preferencesStatus: "unknown",
+      addressesStatus: "unknown",
+      invoiceSummaryStatus: "unknown",
+      invoiceSummaryCount: 0,
+      orderSummaryStatus: "unknown",
+      orderSummaryCount: 0,
+      confirmationStatus: "unknown",
+      confirmationLineCount: 0,
+      confirmationPaymentCount: 0,
+      recordedPaidPaymentCount: 0,
+      commerceRouteWorkflowFootprint: "session:missing|cart:unknown|addresses:unknown|orders:unknown|invoices:unknown|confirmation:unknown|lanes:hero:1|value:2|live:2|base:1",
+      commerceRouteStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",
+    },
+  );
   assert.deepEqual(
     summarizeCheckoutPageHealth({
       routeContext: {
@@ -963,6 +1352,54 @@ test("member and home health helpers summarize route readiness for diagnostics",
   );
 
   assert.deepEqual(
+    summarizeConfirmationResultHealth({
+      status: "unknown",
+      data: null,
+    }),
+    {
+      status: "unknown",
+      lineCount: 0,
+      paymentCount: 0,
+      paidPaymentCount: 0,
+      confirmationWorkflowFootprint: "status:unknown|lines:0|payments:0|paid:0",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeCartViewModelHealth({
+      anonymousId: null,
+      status: "unknown",
+      cart: null,
+    }),
+    {
+      anonymousCartState: "missing",
+      cartStatus: "unknown",
+      cartItemCount: 0,
+      hasCoupon: false,
+      cartModelFootprint: "anonymous:missing|status:unknown|items:0|coupon:no",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeShellModelHealth({
+      culture: "en-US",
+      menuSource: "fallback",
+      menuStatus: "missing",
+      primaryNavigation: [],
+      utilityLinks: [],
+      footerGroups: [],
+    }),
+    {
+      culture: "en-US",
+      menuSource: "fallback",
+      menuStatus: "missing",
+      primaryNavigationCount: 0,
+      utilityLinkCount: 0,
+      footerGroupCount: 0,
+      shellModelFootprint: "culture:en-US|source:fallback|menu:missing|primary:0|utility:0|footer:0",
+    },
+  );
+  assert.deepEqual(
     summarizeMemberIdentityHealth({
       profileResult: { status: "ok" },
       preferencesResult: { status: "degraded" },
@@ -979,6 +1416,22 @@ test("member and home health helpers summarize route readiness for diagnostics",
     },
   );
 
+  assert.deepEqual(
+    summarizeMemberIdentityHealth({
+      profileResult: { status: "unknown" },
+      preferencesResult: { status: "unknown" },
+      customerContextResult: { status: "unknown" },
+      addressesResult: { status: "unknown", data: null },
+    }),
+    {
+      profileStatus: "unknown",
+      preferencesStatus: "unknown",
+      customerContextStatus: "unknown",
+      addressesStatus: "unknown",
+      addressCount: 0,
+      memberIdentityFootprint: "profile:unknown|preferences:unknown|customer:unknown|addresses:unknown:0",
+    },
+  );
   assert.deepEqual(
     summarizePublicAuthRouteHealth({
       storefrontContext,
@@ -1038,6 +1491,52 @@ test("member and home health helpers summarize route readiness for diagnostics",
   );
 
   assert.deepEqual(
+    summarizeAccountPageHealth({
+      session: null,
+      publicRouteContext: null,
+    }),
+    {
+      sessionState: "missing",
+      accountWorkflowFootprint: "surface:public|storefront:missing",
+      accountStorefrontSupportFootprint: "storefront:missing",
+    },
+  );
+
+  assert.deepEqual(
+    summarizePublicAuthRouteHealth({
+      storefrontContext,
+    }),
+    {
+      cmsStatus: "ok",
+      cmsCount: 1,
+      categoriesStatus: "degraded",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      heroOfferCount: 1,
+      valueOfferCount: 2,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:2|live:2|base:1",
+      cartStatus: "not-found",
+      cartLinkedCount: 1,
+      authEntryWorkflowFootprint: "route:unknown|cart:not-found|lanes:hero:1|value:2|live:2|base:1",
+      authEntryStorefrontSupportFootprint: "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeProtectedMemberEntryHealth({
+      session: null,
+      storefrontContext: null,
+    }),
+    {
+      sessionState: "missing",
+      memberEntryWorkflowFootprint: "session:missing|storefront:missing",
+      memberEntryStorefrontSupportFootprint: "storefront:missing",
+    },
+  );
+  assert.deepEqual(
     summarizeMemberCommerceSummaryHealth({
       ordersResult: { status: "ok", data: { items: [1, 2] } },
       invoicesResult: { status: "degraded", data: { items: [1] } },
@@ -1053,6 +1552,21 @@ test("member and home health helpers summarize route readiness for diagnostics",
     },
   );
 
+  assert.deepEqual(
+    summarizeMemberCommerceSummaryHealth({
+      ordersResult: { status: "unknown", data: null },
+      invoicesResult: { status: "unknown", data: null },
+      loyaltyOverviewResult: { status: "unknown" },
+    }),
+    {
+      ordersStatus: "unknown",
+      orderCount: 0,
+      invoicesStatus: "unknown",
+      invoiceCount: 0,
+      loyaltyStatus: "unknown",
+      memberCommerceSummaryFootprint: "orders:unknown:0|invoices:unknown:0|loyalty:unknown",
+    },
+  );
   assert.deepEqual(
     summarizeMemberPagedCollectionHealth({
       status: "ok",
@@ -1254,6 +1768,27 @@ test("localized discovery health helpers summarize alternates and sitemap invent
     },
   );
 
+  assert.deepEqual(
+    summarizeSeoMetadataHealth({
+      canonicalPath: "",
+      noIndex: false,
+    }),
+    {
+      canonicalPath: "",
+      noIndex: false,
+      seoIndexability: "indexable",
+      seoMetadataState: "single-locale",
+      seoVisibilityFootprint: "indexable|single-locale",
+      languageAlternateState: "missing",
+      languageAlternateCount: 0,
+      languageAlternateFootprint: "none",
+      seoAlternateDetailFootprint: "none",
+      seoAlternateSummaryFootprint: "alternates:none",
+      seoSummaryFootprint: "indexable|alternates:0[none]",
+      seoTargetFootprint: "indexable|",
+    },
+  );
+
   assert.deepEqual(summarizeLocalizedInventoryHealth([]), {
     localizedDiscoveryState: "empty",
     localizedCultureCount: 0,
@@ -1264,6 +1799,32 @@ test("localized discovery health helpers summarize alternates and sitemap invent
     localizedInventorySummaryFootprint: "cultures:0|items:0|empty:0",
   });
 
+  assert.deepEqual(
+    summarizeMemberPagedCollectionHealth({
+      status: "unknown",
+      data: null,
+    }),
+    {
+      status: "unknown",
+      itemCount: 0,
+      totalCount: 0,
+      page: 1,
+      pageSize: 0,
+      memberCollectionWorkflowFootprint: "status:unknown|page:1|size:0|items:0|total:0",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeMemberDetailHealth({
+      status: "unknown",
+      data: null,
+    }),
+    {
+      status: "unknown",
+      hasData: false,
+      memberWorkflowFootprint: "detail:unknown|has-data:no",
+    },
+  );
   assert.deepEqual(summarizeLocalizedAlternatesMapHealth(new Map()), {
     localizedDiscoveryState: "empty",
     itemCount: 0,
@@ -1293,6 +1854,22 @@ test("localized discovery health helpers summarize alternates and sitemap invent
     },
   );
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

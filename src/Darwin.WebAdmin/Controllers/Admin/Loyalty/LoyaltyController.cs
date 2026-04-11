@@ -443,11 +443,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = Array.Empty<LoyaltyAccountAdminListItemDto>();
             var total = 0;
+            var summary = new LoyaltyAccountOpsSummaryVm();
             if (businessId.HasValue)
             {
                 var result = await _getAccountsPage.HandleAsync(businessId.Value, page, pageSize, q, status, ct).ConfigureAwait(false);
+                var summaryDto = await _getAccountsPage.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
                 items = result.Items.ToArray();
                 total = result.Total;
+                summary = new LoyaltyAccountOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    ActiveCount = summaryDto.ActiveCount,
+                    SuspendedCount = summaryDto.SuspendedCount,
+                    ZeroBalanceCount = summaryDto.ZeroBalanceCount,
+                    RecentAccrualCount = summaryDto.RecentAccrualCount
+                };
             }
 
             return RenderAccountsWorkspace(new LoyaltyAccountsListVm
@@ -455,6 +465,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
                 StatusFilter = status,
+                Summary = summary,
+                Playbooks = BuildAccountPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 StatusItems = BuildStatusItems(status),
                 Page = page,
@@ -508,7 +520,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
             if (!result.Succeeded || result.Value is null)
             {
-                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to create loyalty account.");
+                AddLocalizedModelError("LoyaltyAccountCreateFailed", result.Error);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId == Guid.Empty ? null : vm.UserId, includeEmpty: false, ct).ConfigureAwait(false);
                 return RenderAccountCreateEditor(vm);
@@ -530,7 +542,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 var result = await _getCampaigns.HandleAsync(businessId.Value, page, pageSize, filter, ct).ConfigureAwait(false);
                 if (!result.Succeeded || result.Value is null)
                 {
-                    TempData["Error"] = result.Error ?? T("LoyaltyCampaignsLoadFailed");
+                    SetLocalizedErrorMessage("LoyaltyCampaignsLoadFailed", result.Error);
                 }
                 else
                 {
@@ -613,7 +625,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
             if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to create loyalty campaign.");
+                AddLocalizedModelError("LoyaltyCampaignCreateFailed", result.Error);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderCampaignEditor(vm, isCreate: true);
             }
@@ -686,7 +698,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
             if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to update loyalty campaign.");
+                AddLocalizedModelError("LoyaltyCampaignUpdateFailed", result.Error);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderCampaignEditor(vm, isCreate: false);
             }
@@ -707,9 +719,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion ?? Array.Empty<byte>()
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? T(isActive ? "LoyaltyCampaignActivated" : "LoyaltyCampaignDeactivated")
-                : result.Error ?? T("LoyaltyCampaignActivationFailed");
+            SetLocalizedResultMessage(
+                result.Succeeded,
+                isActive ? "LoyaltyCampaignActivated" : "LoyaltyCampaignDeactivated",
+                "LoyaltyCampaignActivationFailed",
+                result.Error);
 
             return RedirectOrHtmx(nameof(Campaigns), new { businessId });
         }
@@ -727,11 +741,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = Array.Empty<LoyaltyScanSessionAdminListItemDto>();
             var total = 0;
+            var summary = new LoyaltyScanSessionOpsSummaryVm();
             if (businessId.HasValue)
             {
                 var result = await _getScanSessionsPage.HandleAsync(businessId.Value, page, pageSize, q, mode, status, ct).ConfigureAwait(false);
+                var summaryDto = await _getScanSessionsPage.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
                 items = result.Items.ToArray();
                 total = result.Total;
+                summary = new LoyaltyScanSessionOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    AccrualCount = summaryDto.AccrualCount,
+                    RedemptionCount = summaryDto.RedemptionCount,
+                    PendingCount = summaryDto.PendingCount,
+                    ExpiredCount = summaryDto.ExpiredCount,
+                    FailureCount = summaryDto.FailureCount
+                };
             }
 
             return RenderScanSessionsWorkspace(new LoyaltyScanSessionsListVm
@@ -740,6 +765,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 Query = q ?? string.Empty,
                 ModeFilter = mode,
                 StatusFilter = status,
+                Summary = summary,
+                Playbooks = BuildScanSessionPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 ModeItems = BuildModeItems(mode),
                 StatusItems = BuildScanStatusItems(status),
@@ -775,11 +802,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = Array.Empty<LoyaltyRewardRedemptionListItemDto>();
             var total = 0;
+            var summary = new LoyaltyRedemptionOpsSummaryVm();
             if (businessId.HasValue)
             {
                 var result = await _getRedemptionsPage.HandleAsync(businessId.Value, page, pageSize, q, status, ct).ConfigureAwait(false);
+                var summaryDto = await _getRedemptionsPage.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
                 items = result.Items.ToArray();
                 total = result.Total;
+                summary = new LoyaltyRedemptionOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    PendingCount = summaryDto.PendingCount,
+                    CompletedCount = summaryDto.CompletedCount,
+                    CancelledCount = summaryDto.CancelledCount,
+                    ScanFailureCount = summaryDto.ScanFailureCount
+                };
             }
 
             return RenderRedemptionsWorkspace(new LoyaltyRedemptionsListVm
@@ -787,6 +824,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
                 StatusFilter = status,
+                Summary = summary,
+                Playbooks = BuildRedemptionPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 StatusItems = BuildRedemptionStatusItems(status),
                 Page = page,
@@ -906,7 +945,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             {
                 var account = await _getAccountForAdmin.HandleAsync(vm.LoyaltyAccountId, ct).ConfigureAwait(false);
                 vm.AccountLabel = account is null ? vm.AccountLabel : $"{account.UserDisplayName} ({account.UserEmail})";
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("LoyaltyPointsAdjustFailed", ex.Message);
                 return RenderAdjustPointsEditor(vm);
             }
         }
@@ -921,7 +960,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyAccountSuspended") : result.Error ?? T("LoyaltyAccountSuspendFailed");
+            SetLocalizedResultMessage(result.Succeeded, "LoyaltyAccountSuspended", "LoyaltyAccountSuspendFailed", result.Error);
             return RedirectOrHtmx(nameof(AccountDetails), new { id });
         }
 
@@ -935,7 +974,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyAccountActivated") : result.Error ?? T("LoyaltyAccountActivateFailed");
+            SetLocalizedResultMessage(result.Succeeded, "LoyaltyAccountActivated", "LoyaltyAccountActivateFailed", result.Error);
             return RedirectOrHtmx(nameof(AccountDetails), new { id });
         }
 
@@ -950,9 +989,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? T("LoyaltyRedemptionConfirmed")
-                : result.Error ?? T("LoyaltyRedemptionConfirmFailed");
+            SetLocalizedResultMessage(result.Succeeded, "LoyaltyRedemptionConfirmed", "LoyaltyRedemptionConfirmFailed", result.Error);
 
             return RedirectOrHtmx(nameof(AccountDetails), new { id = loyaltyAccountId });
         }
@@ -1060,6 +1097,62 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     Title = "Push-enabled campaign hygiene",
                     ScopeNote = "Push-enabled campaigns increase delivery expectations across mobile operations and communications support.",
                     OperatorAction = "Prioritize push-enabled campaigns when checking rollout readiness so content, transport, and device diagnostics stay aligned."
+                }
+            };
+        }
+        private static List<LoyaltyOpsPlaybookVm> BuildAccountPlaybooks()
+        {
+            return new List<LoyaltyOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Suspended accounts",
+                    ScopeNote = "Suspended accounts usually indicate unresolved support or fraud-safe follow-up before loyalty earning and redemption can resume.",
+                    OperatorAction = "Review the recent transaction and redemption trail first, then reactivate only after the underlying cause is clear."
+                },
+                new()
+                {
+                    Title = "Zero-balance members",
+                    ScopeNote = "Zero-balance accounts often need program, accrual, or campaign review before support treats them as product defects.",
+                    OperatorAction = "Check recent accrual activity and the active loyalty program before escalating a balance complaint."
+                }
+            };
+        }
+
+        private static List<LoyaltyOpsPlaybookVm> BuildScanSessionPlaybooks()
+        {
+            return new List<LoyaltyOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Pending scanner queue",
+                    ScopeNote = "Pending sessions represent customer scans still waiting on business device action and should not sit stale during mobile support incidents.",
+                    OperatorAction = "Review pending sessions before retrying campaigns or loyalty settings so device-side drift is separated from program drift."
+                },
+                new()
+                {
+                    Title = "Expired or failed scans",
+                    ScopeNote = "Expired and failed sessions usually point to timing, staff workflow, or mobile transport confusion rather than reward-catalog issues.",
+                    OperatorAction = "Inspect expiry pressure and failure reasons first, then move to mobile operations or staff process review."
+                }
+            };
+        }
+
+        private static List<LoyaltyOpsPlaybookVm> BuildRedemptionPlaybooks()
+        {
+            return new List<LoyaltyOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Pending redemptions",
+                    ScopeNote = "Pending redemptions still depend on business-side confirmation and should be reviewed before customers are told the reward path is broken.",
+                    OperatorAction = "Confirm the linked scan and account context before manually intervening in reward fulfillment."
+                },
+                new()
+                {
+                    Title = "Scan-linked redemption failures",
+                    ScopeNote = "Failed or expired scan-linked redemptions usually indicate operator or device friction rather than loyalty-balance corruption.",
+                    OperatorAction = "Read the scan outcome first, then decide whether the case needs account review, scanner review, or reward-catalog cleanup."
                 }
             };
         }
@@ -1240,6 +1333,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         private bool IsHtmxRequest()
         {
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void AddLocalizedModelError(string fallbackKey, string? error = null)
+        {
+            ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(error) ? T(fallbackKey) : error);
+        }
+
+        private void SetLocalizedErrorMessage(string fallbackKey, string? error = null)
+        {
+            TempData["Error"] = string.IsNullOrWhiteSpace(error) ? T(fallbackKey) : error;
+        }
+
+        private void SetLocalizedResultMessage(bool succeeded, string successKey, string failureKey, string? error = null)
+        {
+            if (succeeded)
+            {
+                SetSuccessMessage(successKey);
+                return;
+            }
+
+            SetLocalizedErrorMessage(failureKey, error);
         }
     }
 }

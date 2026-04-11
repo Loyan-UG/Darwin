@@ -85,6 +85,15 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
         footerNavigation.Items.Should().Contain(item => item.Url == "/cms/agb");
         footerNavigation.Items.Should().Contain(item => item.Url == "/cms/widerruf");
         footerNavigation.Items.Should().Contain(item => item.Url == "/cms/kontakt");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/account/sign-in");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/account/register");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/account/profile");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/account/preferences");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/account/addresses");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/account/security");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/orders");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/invoices");
+        footerNavigation.Items.Should().Contain(item => item.Url == "/mock-checkout");
     }
 
     /// <summary>
@@ -227,4 +236,5 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
         PhoneE164 = "+495111234567"
     };
 }
+
 

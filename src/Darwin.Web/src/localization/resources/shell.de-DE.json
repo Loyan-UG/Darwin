@@ -1,42 +1,152 @@
 {
-  "shellTagline": "Web storefront",
-  "footerEyebrow": "Darwin.Web",
-  "footerTitle": "Grundlage fuer den oeffentlichen Storefront und das Member-Portal",
-  "footerDescription": "Theme-isolierte Shell, CMS-gestuetzte Navigation und Route-Struktur stehen bereit, damit weitere Storefront- und Member-Slices ohne Architektur-Neustart landen koennen.",
-  "footerNavigationTitle": "Service",
-  "fallbackPrimaryNavigation": [
-    { "label": "Start", "href": "/" },
-    { "label": "Katalog", "href": "/catalog" },
-    { "label": "Konto", "href": "/account" },
-    { "label": "Treue", "href": "/loyalty" },
-    { "label": "Bestellungen", "href": "/orders" },
-    { "label": "Rechnungen", "href": "/invoices" }
-  ],
-  "utilityLinks": [
-    { "label": "Store oeffnen", "href": "/catalog" },
-    { "label": "Warenkorb", "href": "/cart" },
-    { "label": "Checkout", "href": "/checkout" }
-  ],
-  "footerGroups": [
-    {
-      "title": "Service",
-      "links": [
-        { "label": "Impressum", "href": "/cms/impressum" },
-        { "label": "Datenschutz", "href": "/cms/datenschutz" },
-        { "label": "AGB", "href": "/cms/agb" },
-        { "label": "Widerruf", "href": "/cms/widerruf" }
-      ]
-    },
-    {
-      "title": "Storefront",
-      "links": [
-        { "label": "Start", "href": "/" },
-        { "label": "Katalog", "href": "/catalog" },
-        { "label": "Konto", "href": "/account" },
-        { "label": "Bestellungen", "href": "/orders" },
-        { "label": "Rechnungen", "href": "/invoices" },
-        { "label": "Kontakt", "href": "/cms/kontakt" }
-      ]
-    }
-  ]
+    "shellTagline":  "Web storefront",
+    "footerEyebrow":  "Darwin.Web",
+    "footerTitle":  "Grundlage fuer den oeffentlichen Storefront und das Member-Portal",
+    "footerDescription":  "Theme-isolierte Shell, CMS-gestuetzte Navigation und Route-Struktur stehen bereit, damit weitere Storefront- und Member-Slices ohne Architektur-Neustart landen koennen.",
+    "footerNavigationTitle":  "Service",
+    "fallbackPrimaryNavigation":  [
+                                      {
+                                          "label":  "Start",
+                                          "href":  "/"
+                                      },
+                                      {
+                                          "label":  "Katalog",
+                                          "href":  "/catalog"
+                                      },
+                                      {
+                                          "label":  "Inhalte",
+                                          "href":  "/cms"
+                                      },
+                                      {
+                                          "label":  "Konto",
+                                          "href":  "/account"
+                                      },
+                                      {
+                                          "label":  "Warenkorb",
+                                          "href":  "/cart"
+                                      },
+                                      {
+                                          "label":  "Kasse",
+                                          "href":  "/checkout"
+                                      },
+                                      {
+                                          "label":  "Bestellungen",
+                                          "href":  "/orders"
+                                      },
+                                      {
+                                          "label":  "Rechnungen",
+                                          "href":  "/invoices"
+                                      }
+                                  ],
+    "utilityLinks":  [
+                         {
+                             "label":  "Store oeffnen",
+                             "href":  "/catalog"
+                         },
+                         {
+                             "label":  "Warenkorb",
+                             "href":  "/cart"
+                         },
+                         {
+                             "label":  "Checkout",
+                             "href":  "/checkout"
+                         }
+                     ],
+    "footerGroups":  [
+                         {
+                             "title":  "Service",
+                             "links":  [
+                                           {
+                                               "label":  "Impressum",
+                                               "href":  "/cms/impressum"
+                                           },
+                                           {
+                                               "label":  "Datenschutz",
+                                               "href":  "/cms/datenschutz"
+                                           },
+                                           {
+                                               "label":  "AGB",
+                                               "href":  "/cms/agb"
+                                           },
+                                           {
+                                               "label":  "Widerruf",
+                                               "href":  "/cms/widerruf"
+                                           }
+                                       ]
+                         },
+                         {
+                             "title":  "Storefront",
+                             "links":  [
+                                           {
+                                               "label":  "Start",
+                                               "href":  "/"
+                                           },
+                                           {
+                                               "label":  "Katalog",
+                                               "href":  "/catalog"
+                                           },
+                                           {
+                                               "label":  "Inhalte",
+                                               "href":  "/cms"
+                                           },
+                                           {
+                                               "label":  "Warenkorb",
+                                               "href":  "/cart"
+                                           },
+                                           {
+                                               "label":  "Kasse",
+                                               "href":  "/checkout"
+                                           },
+                                           {
+                                               "label":  "Konto",
+                                               "href":  "/account"
+                                           },
+                                           {
+                                               "label":  "Bestellungen",
+                                               "href":  "/orders"
+                                           },
+                                           {
+                                               "label":  "Rechnungen",
+                                               "href":  "/invoices"
+                                           },
+                                           {
+                                               "label":  "Kontakt",
+                                               "href":  "/cms/kontakt"
+                                           }
+                                       ]
+                         },
+                         {
+                             "title":  "Member",
+                             "links":  [
+                                           {
+                                               "label":  "Anmelden",
+                                               "href":  "/account/sign-in"
+                                           },
+                                           {
+                                               "label":  "Registrieren",
+                                               "href":  "/account/register"
+                                           },
+                                           {
+                                               "label":  "Profil",
+                                               "href":  "/account/profile"
+                                           },
+                                           {
+                                               "label":  "Praeferenzen",
+                                               "href":  "/account/preferences"
+                                           },
+                                           {
+                                               "label":  "Adressen",
+                                               "href":  "/account/addresses"
+                                           },
+                                           {
+                                               "label":  "Sicherheit",
+                                               "href":  "/account/security"
+                                           },
+                                           {
+                                               "label":  "Mock-Kasse",
+                                               "href":  "/mock-checkout"
+                                           }
+                                       ]
+                         }
+                     ]
 }

@@ -155,3 +155,32 @@ test("sortMenuItems preserves stable ascending order by sortOrder", () => {
 
   assert.deepEqual(labels, ["First", "Second", "Third"]);
 });
+
+test("resolveShellMenu keeps richer fallback navigation discoverable when CMS menu is unavailable", () => {
+  const result = resolveShellMenu({
+    culture: "en-US",
+    menuName: "main-navigation",
+    menuResultStatus: "network-error",
+    menuItems: null,
+    fallbackLinks: [
+      { label: "Home", href: "/" },
+      { label: "Catalog", href: "/catalog" },
+      { label: "CMS", href: "/cms" },
+      { label: "Checkout", href: "/checkout" },
+    ],
+    localizeLink: (href, culture) => `${culture}:${href}`,
+    normalizeHref: (href) => href,
+    formatEmptyMenuMessage: (menuName) => `empty:${menuName}`,
+    formatNotFoundMenuMessage: (menuName) => `missing:${menuName}`,
+  });
+
+  assert.equal(result.menuSource, "fallback");
+  assert.equal(result.menuStatus, "network-error");
+  assert.deepEqual(result.primaryNavigation, [
+    { label: "Home", href: "en-US:/" },
+    { label: "Catalog", href: "en-US:/catalog" },
+    { label: "CMS", href: "en-US:/cms" },
+    { label: "Checkout", href: "en-US:/checkout" },
+  ]);
+});
+

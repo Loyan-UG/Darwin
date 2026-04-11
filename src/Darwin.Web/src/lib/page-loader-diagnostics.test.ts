@@ -79,6 +79,16 @@ test("buildContinuationSliceFootprint keeps continuation counts compact and oper
     }),
     "cms:0|categories:0|products:0|cart:present",
   );
+
+  assert.equal(
+    buildContinuationSliceFootprint({
+      cmsCount: 4,
+      categoryCount: 0,
+      productCount: 1,
+      cartState: "present",
+    }),
+    "cms:4|categories:0|products:1|cart:present",
+  );
 });
 
 test("buildProtectedRouteFootprint keeps auth and fallback state together", () => {
@@ -107,6 +117,15 @@ test("buildProtectedRouteFootprint keeps auth and fallback state together", () =
       storefrontFallbackState: "present",
     }),
     "auth:authorized|route:loaded|storefront:present",
+  );
+
+  assert.equal(
+    buildProtectedRouteFootprint({
+      authGate: "guest-fallback",
+      routeContextState: "guest-fallback",
+      storefrontFallbackState: "missing",
+    }),
+    "auth:guest-fallback|route:guest-fallback|storefront:missing",
   );
 });
 
@@ -143,6 +162,21 @@ test("buildPageLoaderBaseDiagnostics keeps raw member-protected diagnostics expl
   );
 });
 
+test("buildPageLoaderBaseDiagnostics keeps bare loader defaults explicit", () => {
+  assert.deepEqual(buildPageLoaderBaseDiagnostics("public-discovery"), {
+    pageLoaderKind: "public-discovery",
+    pageLoaderNormalization: "raw",
+  });
 
+  assert.deepEqual(buildPageLoaderBaseDiagnostics("commerce"), {
+    pageLoaderKind: "commerce",
+    pageLoaderNormalization: "raw",
+  });
+
+  assert.deepEqual(buildPageLoaderBaseDiagnostics("member-protected"), {
+    pageLoaderKind: "member-protected",
+    pageLoaderNormalization: "raw",
+  });
+});
 
 

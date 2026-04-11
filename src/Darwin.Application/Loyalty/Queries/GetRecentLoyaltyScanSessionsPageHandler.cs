@@ -95,5 +95,28 @@ namespace Darwin.Application.Loyalty.Queries
 
             return (items, total);
         }
+
+        public async Task<LoyaltyScanSessionOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            return await _db.Set<ScanSession>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted)
+                .GroupBy(_ => 1)
+                .Select(group => new LoyaltyScanSessionOpsSummaryDto
+                {
+                    TotalCount = group.Count(),
+                    AccrualCount = group.Count(x => x.Mode == LoyaltyScanMode.Accrual),
+                    RedemptionCount = group.Count(x => x.Mode == LoyaltyScanMode.Redemption),
+                    PendingCount = group.Count(x => x.Status == LoyaltyScanStatus.Pending),
+                    ExpiredCount = group.Count(x => x.Status == LoyaltyScanStatus.Expired),
+                    FailureCount = group.Count(x =>
+                        x.Status == LoyaltyScanStatus.Cancelled ||
+                        x.Status == LoyaltyScanStatus.Expired ||
+                        (x.FailureReason != null && x.FailureReason != string.Empty))
+                })
+                .SingleOrDefaultAsync(ct)
+                .ConfigureAwait(false)
+                ?? new LoyaltyScanSessionOpsSummaryDto();
+        }
     }
 }

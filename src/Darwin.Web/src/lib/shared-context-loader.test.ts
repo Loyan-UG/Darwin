@@ -81,3 +81,108 @@ test("createSharedContextLoader normalizes equivalent arguments before caching",
   assert.equal(first.sessionState, "de-DE:/account");
   assert.equal(second.sessionState, "de-DE:/account");
 });
+
+test("createSharedContextLoader keeps raw member-summary success context explicit", async () => {
+  let successSnapshot: Record<string, unknown> | undefined;
+
+  const loader = createSharedContextLoader({
+    kind: "member-summary",
+    area: "unit-shared-context",
+    operation: "load-summary",
+    getContext: (culture: string, scope: string) => ({ culture, scope }),
+    getSuccessContext: (result, culture: string, scope: string) => {
+      successSnapshot = {
+        culture,
+        scope,
+        primaryStatus: result.primaryStatus,
+      };
+      return successSnapshot;
+    },
+    load: async (_culture: string, scope: string) => ({
+      primaryStatus: scope === "orders-page" ? "ok" : "fallback",
+    }),
+  });
+
+  const result = await loader("en-US", "orders-page");
+
+  assert.equal(result.primaryStatus, "ok");
+  assert.deepEqual(successSnapshot, {
+    culture: "en-US",
+    scope: "orders-page",
+    primaryStatus: "ok",
+  });
+});
+test("createSharedContextLoader keeps base diagnostics explicit when context hooks return undefined", async () => {
+  const loader = createSharedContextLoader({
+    kind: "public-storefront",
+    area: "unit-shared-context",
+    operation: "load-undefined-context",
+    getContext: () => undefined,
+    getSuccessContext: () => undefined,
+    load: async () => ({
+      status: "ok",
+    }),
+  });
+
+  const result = await loader();
+
+  assert.deepEqual(result, {
+    status: "ok",
+  });
+});
+test("createSharedContextLoader keeps empty observation context branches explicit", async () => {
+  const loader = createSharedContextLoader({
+    kind: "public-storefront",
+    area: "unit-shared-context",
+    operation: "load-empty-context",
+    getContext: () => ({}),
+    getSuccessContext: (result) => ({ status: result.status }),
+    load: async () => ({
+      status: "ok",
+    }),
+  });
+
+  const result = await loader();
+
+  assert.deepEqual(result, {
+    status: "ok",
+  });
+});
+
+test("createSharedContextLoader keeps undefined success-context branches explicit", async () => {
+  const loader = createSharedContextLoader({
+    kind: "public-storefront",
+    area: "unit-shared-context",
+    operation: "load-undefined-success-context",
+    getContext: () => ({ culture: "de-DE" }),
+    getSuccessContext: () => undefined,
+    load: async () => ({
+      status: "ok",
+    }),
+  });
+
+  const result = await loader();
+
+  assert.deepEqual(result, {
+    status: "ok",
+  });
+});test("createSharedContextLoader keeps empty success-context branches explicit", async () => {
+  const loader = createSharedContextLoader({
+    kind: "public-storefront",
+    area: "unit-shared-context",
+    operation: "load-empty-success-context",
+    getContext: () => ({ culture: "de-DE" }),
+    getSuccessContext: () => ({}),
+    load: async () => ({
+      status: "ok",
+    }),
+  });
+
+  const result = await loader();
+
+  assert.deepEqual(result, {
+    status: "ok",
+  });
+});
+
+

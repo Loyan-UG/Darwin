@@ -4,6 +4,7 @@
 }
 
 <div id="loyalty-scan-sessions-workspace-shell">
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h1 class="mb-1">Loyalty Scan Sessions</h1>
@@ -89,6 +90,37 @@
            hx-swap="outerHTML">Clear Queue Filters</a>
     </div>
 
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
+        <div class="col-md-2"><div class="card h-100 border-info-subtle"><div class="card-body"><div class="text-muted small">Accrual</div><div class="fs-4 fw-semibold">@Model.Summary.AccrualCount</div></div></div></div>
+        <div class="col-md-2"><div class="card h-100 border-primary-subtle"><div class="card-body"><div class="text-muted small">Redemption</div><div class="fs-4 fw-semibold">@Model.Summary.RedemptionCount</div></div></div></div>
+        <div class="col-md-2"><div class="card h-100 border-warning-subtle"><div class="card-body"><div class="text-muted small">Pending</div><div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div></div></div></div>
+        <div class="col-md-2"><div class="card h-100 border-secondary-subtle"><div class="card-body"><div class="text-muted small">Expired</div><div class="fs-4 fw-semibold">@Model.Summary.ExpiredCount</div></div></div></div>
+        <div class="col-md-2"><div class="card h-100 border-danger-subtle"><div class="card-body"><div class="text-muted small">Failure Pressure</div><div class="fs-4 fw-semibold">@Model.Summary.FailureCount</div></div></div></div>
+    </div>
+
+    @if (Model.Playbooks.Count > 0)
+    {
+        <div class="card mb-4">
+            <div class="card-header">Scan Session Playbooks</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead><tr><th>Playbook</th><th>When It Applies</th><th>Operator Action</th></tr></thead>
+                    <tbody>
+                    @foreach (var playbook in Model.Playbooks)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@playbook.Title</td>
+                            <td>@playbook.ScopeNote</td>
+                            <td>@playbook.OperatorAction</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
     <div class="table-responsive">
         <table class="table table-sm table-striped align-middle">
             <thead><tr><th>Customer</th><th>Mode</th><th>Status</th><th>Outcome</th><th>Created</th><th>Completed</th><th>Failure</th></tr></thead>

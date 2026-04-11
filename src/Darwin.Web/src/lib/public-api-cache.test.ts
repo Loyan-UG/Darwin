@@ -246,6 +246,34 @@ test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS an
       },
     },
   );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-categories",
+      "/api/v1/public/catalog/categories?culture=de-DE&page=1&pageSize=100",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/categories?culture=de-DE&page=1&pageSize=100",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/categories?culture=de-DE&page=1&pageSize=100",
+        revalidate: 300,
+        keyTag: "public:catalog-categories",
+        pathTag:
+          "path:/api/v1/public/catalog/categories?culture=de-DE&page=1&pageSize=100",
+        tags: [
+          "public:catalog-categories",
+          "path:/api/v1/public/catalog/categories?culture=de-DE&page=1&pageSize=100",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+
 });
 
 test("getPublicApiCachePolicy keeps catalog browse and unknown feeds on shorter windows", () => {
@@ -617,6 +645,34 @@ test("getPublicApiCacheIdentity keeps category-heavy and merchandising browse ca
   assert.deepEqual(
     getPublicApiRequestPlan(
       "http://localhost:5134",
+      "catalog-categories",
+      "/api/v1/public/catalog/categories?pageSize=12&page=3&culture=de-DE",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/categories?culture=de-DE&page=3&pageSize=12",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/categories?culture=de-DE&page=3&pageSize=12",
+        revalidate: 300,
+        keyTag: "public:catalog-categories",
+        pathTag:
+          "path:/api/v1/public/catalog/categories?culture=de-DE&page=3&pageSize=12",
+        tags: [
+          "public:catalog-categories",
+          "path:/api/v1/public/catalog/categories?culture=de-DE&page=3&pageSize=12",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
       "catalog-products",
       "/api/v1/public/catalog/products?mediaState=with-image&visibleSort=offers-first&pageSize=12&page=3&culture=de-DE",
     ),
@@ -675,6 +731,37 @@ test("getPublicApiCacheIdentity keeps category-heavy and merchandising browse ca
     },
   );
 });
+
+test("getPublicApiRequestPlan keeps CMS pagination windows uncached for mutations", () => {
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "cms-pages",
+      "/api/v1/public/cms/pages?culture=de-DE&page=3&pageSize=12",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/cms/pages?culture=de-DE&page=3&pageSize=12",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/cms/pages?culture=de-DE&page=3&pageSize=12",
+        revalidate: 120,
+        keyTag: "public:cms-pages",
+        pathTag:
+          "path:/api/v1/public/cms/pages?culture=de-DE&page=3&pageSize=12",
+        tags: [
+          "public:cms-pages",
+          "path:/api/v1/public/cms/pages?culture=de-DE&page=3&pageSize=12",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+});
+
 
 test("getPublicApiRequestPlan keeps CMS search windows canonical and short-lived", () => {
   assert.deepEqual(
@@ -767,6 +854,31 @@ test("getPublicApiRequestPlan keeps mutations uncached while preserving canonica
       },
     },
   );
+
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "cms-pages",
+      "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
+        revalidate: 120,
+        keyTag: "public:cms-pages",
+        pathTag:
+          "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
+        tags: [
+          "public:cms-pages",
+          "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
+        ],
+      },
+    },
+  );
   assert.deepEqual(
     getPublicApiRequestPlan(
       "http://localhost:5134",
@@ -794,4 +906,175 @@ test("getPublicApiRequestPlan keeps mutations uncached while preserving canonica
       },
     },
   );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?categorySlug=coffee&page=1&pageSize=12&culture=de-DE",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?categorySlug=coffee&culture=de-DE&page=1&pageSize=12",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?categorySlug=coffee&culture=de-DE&page=1&pageSize=12",
+        revalidate: 90,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?categorySlug=coffee&culture=de-DE&page=1&pageSize=12",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?categorySlug=coffee&culture=de-DE&page=1&pageSize=12",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleSort=offers-first",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleSort=offers-first",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleSort=offers-first",
+        revalidate: 90,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleSort=offers-first",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleSort=offers-first",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+        revalidate: 90,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleState=offers&savingsBand=hero",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&savingsBand=hero&visibleState=offers",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&savingsBand=hero&visibleState=offers",
+        revalidate: 90,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&savingsBand=hero&visibleState=offers",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&savingsBand=hero&visibleState=offers",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
 });
+
+
+
+test("getPublicApiRequestPlan keeps paged catalog browse windows uncached for mutations", () => {
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12",
+        revalidate: 90,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+});
+
+test("getPublicApiRequestPlan keeps category-heavy catalog browse windows uncached for mutations", () => {
+  assert.deepEqual(
+    getPublicApiRequestPlan(
+      "http://localhost:5134",
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=100",
+      "POST",
+    ),
+    {
+      requestUrl:
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=100",
+      cacheIdentity: {
+        normalizedPath:
+          "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=100",
+        revalidate: 90,
+        keyTag: "public:catalog-products",
+        pathTag:
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=100",
+        tags: [
+          "public:catalog-products",
+          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=100",
+        ],
+      },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
+    },
+  );
+});
+

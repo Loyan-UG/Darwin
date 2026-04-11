@@ -81,5 +81,26 @@ namespace Darwin.Application.Loyalty.Queries
 
             return (items, total);
         }
+
+        public async Task<LoyaltyAccountOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var recentAccrualCutoffUtc = DateTime.UtcNow.AddDays(-30);
+
+            return await _db.Set<LoyaltyAccount>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted)
+                .GroupBy(_ => 1)
+                .Select(group => new LoyaltyAccountOpsSummaryDto
+                {
+                    TotalCount = group.Count(),
+                    ActiveCount = group.Count(x => x.Status == LoyaltyAccountStatus.Active),
+                    SuspendedCount = group.Count(x => x.Status == LoyaltyAccountStatus.Suspended),
+                    ZeroBalanceCount = group.Count(x => x.PointsBalance <= 0),
+                    RecentAccrualCount = group.Count(x => x.LastAccrualAtUtc.HasValue && x.LastAccrualAtUtc >= recentAccrualCutoffUtc)
+                })
+                .SingleOrDefaultAsync(ct)
+                .ConfigureAwait(false)
+                ?? new LoyaltyAccountOpsSummaryDto();
+        }
     }
 }

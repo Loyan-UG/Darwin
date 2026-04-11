@@ -863,6 +863,8 @@ Active entries:
 
 - `Completed`: CRM no longer duplicates loyalty totals; `Customer.LoyaltyPointsTotal` and `LoyaltyPointEntry` are removed
 - `Completed`: loyalty remains owned by `LoyaltyAccount` and `LoyaltyPointsTransaction`
+- `Completed`: loyalty admin queues now include ops summaries and playbooks for accounts, scan sessions, and redemptions
+- `Completed`: loyalty HTMX workspaces now keep localized success/error feedback visible inside fragment refresh flows
 - `Completed`: Lead and Opportunity are part of the domain and application layers
 - `Completed`: inventory supports warehouses, stock levels, transfers, suppliers, and purchase orders
 - `Completed`: billing/accounting supports payments, financial accounts, journal entries, and expenses

@@ -41,6 +41,15 @@ namespace Darwin.Application.Loyalty.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public sealed class LoyaltyRedemptionOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int PendingCount { get; set; }
+        public int CompletedCount { get; set; }
+        public int CancelledCount { get; set; }
+        public int ScanFailureCount { get; set; }
+    }
+
     /// <summary>
     /// DTO used to confirm a previously created, pending loyalty reward redemption.
     /// </summary>
