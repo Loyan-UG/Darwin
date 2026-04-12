@@ -4797,6 +4797,252 @@
   <data name="BusinessCommunicationRerunWhatsAppTestAction" xml:space="preserve">
     <value>Rerun WhatsApp Test</value>
   </data>
+  <data name="EmailAuditsSearchPlaceholder" xml:space="preserve">
+    <value>Search by recipient, subject, provider, flow, or business</value>
+  </data>
+  <data name="EmailAuditsStalePendingOnlyLabel" xml:space="preserve">
+    <value>Stale pending only</value>
+  </data>
+  <data name="EmailAuditsBusinessLinkedFailuresOnlyLabel" xml:space="preserve">
+    <value>Business-linked failures only</value>
+  </data>
+  <data name="EmailAuditsRepeatedFailuresOnlyLabel" xml:space="preserve">
+    <value>Repeated failures only</value>
+  </data>
+  <data name="EmailAuditsPriorSuccessOnlyLabel" xml:space="preserve">
+    <value>Prior success context only</value>
+  </data>
+  <data name="EmailAuditsRetryReadyOnlyLabel" xml:space="preserve">
+    <value>Retry ready only</value>
+  </data>
+  <data name="EmailAuditsRetryBlockedOnlyLabel" xml:space="preserve">
+    <value>Retry blocked only</value>
+  </data>
+  <data name="EmailAuditsHeavyChainsOnlyLabel" xml:space="preserve">
+    <value>Heavy chains only</value>
+  </data>
+  <data name="EmailAuditsDeliveryContextColumn" xml:space="preserve">
+    <value>Delivery Context</value>
+  </data>
+  <data name="EmailAuditsOperatorResponseColumn" xml:space="preserve">
+    <value>Operator Response</value>
+  </data>
+  <data name="EmailAuditsEmptyState" xml:space="preserve">
+    <value>No email audits matched the selected filters.</value>
+  </data>
+  <data name="BusinessCommunicationSearchInvitationAction" xml:space="preserve">
+    <value>Search Invitation</value>
+  </data>
+  <data name="BusinessCommunicationInspectBusinessAction" xml:space="preserve">
+    <value>Inspect Business</value>
+  </data>
+  <data name="BusinessCommunicationOpenUsersAction" xml:space="preserve">
+    <value>Open Users</value>
+  </data>
+  <data name="BusinessMembersTitle" xml:space="preserve">
+    <value>Business Members</value>
+  </data>
+  <data name="BusinessMembersAssignMemberAction" xml:space="preserve">
+    <value>Assign member</value>
+  </data>
+  <data name="BusinessMembersNoActiveOwnerWarning" xml:space="preserve">
+    <value>This business currently has no active owner. Assign one before go-live.</value>
+  </data>
+  <data name="BusinessMembersPendingActivationNote" xml:space="preserve">
+    <value>Some members are still pending activation. Use the inline support actions below to resend activation or confirm the email manually when support policy allows it.</value>
+  </data>
+  <data name="BusinessMembersSearchPlaceholder" xml:space="preserve">
+    <value>Search by user name, email or role</value>
+  </data>
+  <data name="BusinessMembersEmptyState" xml:space="preserve">
+    <value>No members assigned.</value>
+  </data>
+  <data name="BusinessInvitationsTitle" xml:space="preserve">
+    <value>Business Invitations</value>
+  </data>
+  <data name="BusinessInvitationsInviteUserAction" xml:space="preserve">
+    <value>Invite user</value>
+  </data>
+  <data name="BusinessInvitationsSearchPlaceholder" xml:space="preserve">
+    <value>Search by email, role or status</value>
+  </data>
+  <data name="BusinessInvitationsInvitedByColumn" xml:space="preserve">
+    <value>Invited by</value>
+  </data>
+  <data name="BusinessInvitationsExpiresUtcColumn" xml:space="preserve">
+    <value>Expires (UTC)</value>
+  </data>
+  <data name="BusinessInvitationsEmptyState" xml:space="preserve">
+    <value>No invitations found.</value>
+  </data>
+  <data name="BusinessMembersBackToBusinessAction" xml:space="preserve">
+    <value>Back to business</value>
+  </data>
+  <data name="BusinessMembersOwnerOverrideAuditAction" xml:space="preserve">
+    <value>Owner override audit</value>
+  </data>
+  <data name="BusinessMembersBadgeAction" xml:space="preserve">
+    <value>Badge</value>
+  </data>
+  <data name="BusinessSetupMembersPreviewNoAttention" xml:space="preserve">
+    <value>No members currently need activation or lockout support.</value>
+  </data>
+  <data name="BusinessSetupOpenMembersAction" xml:space="preserve">
+    <value>Open Members</value>
+  </data>
+  <data name="BusinessSetupMembersPreviewAttentionCount" xml:space="preserve">
+    <value>{0} member(s) need support action</value>
+  </data>
+  <data name="BusinessSetupInvitationsPreviewNoAttention" xml:space="preserve">
+    <value>No pending or expired invitations require attention right now.</value>
+  </data>
+  <data name="BusinessSetupOpenInvitationsAction" xml:space="preserve">
+    <value>Open Invitations</value>
+  </data>
+  <data name="BusinessSetupInvitationsPreviewOpenCount" xml:space="preserve">
+    <value>{0} open invitation(s)</value>
+  </data>
+  <data name="BusinessSetupInvitationsPreviewExpiresAt" xml:space="preserve">
+    <value>Expires {0} UTC</value>
+  </data>
+  <data name="BusinessLocationsTitle" xml:space="preserve">
+    <value>Business Locations</value>
+  </data>
+  <data name="BusinessLocationsAddLocationAction" xml:space="preserve">
+    <value>Add location</value>
+  </data>
+  <data name="BusinessLocationsSearchPlaceholder" xml:space="preserve">
+    <value>Search by name, city or postal code</value>
+  </data>
+  <data name="BusinessLocationsMissingCoordinatesLabel" xml:space="preserve">
+    <value>Missing Coordinates</value>
+  </data>
+  <data name="BusinessLocationsPlaybooksTitle" xml:space="preserve">
+    <value>Location Operations Playbooks</value>
+  </data>
+  <data name="BusinessLocationsEmptyState" xml:space="preserve">
+    <value>No locations found.</value>
+  </data>
+  <data name="BusinessLocationsAddressMissingBadge" xml:space="preserve">
+    <value>Address missing</value>
+  </data>
+  <data name="BusinessLocationsCoordinatesMissingBadge" xml:space="preserve">
+    <value>Coordinates missing</value>
+  </data>
+  <data name="BusinessSetupReviewOverrideAuditAction" xml:space="preserve">
+    <value>Review Override Audit</value>
+  </data>
+  <data name="BusinessSetupMembersRequiringAttentionTitle" xml:space="preserve">
+    <value>Members Requiring Attention</value>
+  </data>
+  <data name="BusinessSetupPlatformDependenciesTitle" xml:space="preserve">
+    <value>Phase-1 Platform Settings Dependencies</value>
+  </data>
+  <data name="BusinessSetupPlatformDependenciesIntro" xml:space="preserve">
+    <value>Some settings are still managed globally in phase 1. Business-specific provider configuration is planned, but not yet part of the domain model.</value>
+  </data>
+  <data name="BusinessSetupPlatformDependenciesRule" xml:space="preserve">
+    <value>Operator rule: if a change affects every business or any provider secret, threshold, tax issuer default, or admin route, keep it in Site Settings. If it is brand, sender identity, support contact, or local defaults for one tenant, keep it in Business Setup.</value>
+  </data>
+  <data name="BusinessSetupSecurityMobileAccessTitle" xml:space="preserve">
+    <value>Security and Mobile Access</value>
+  </data>
+  <data name="BusinessSetupSecurityMobileAccessNote" xml:space="preserve">
+    <value>JWT/mobile bootstrap remain platform-level in phase 1 and affect business app sign-in, refresh, and QR/session behavior.</value>
+  </data>
+  <data name="BusinessSetupCommunicationsDependencyNote" xml:space="preserve">
+    <value>SMTP, SMS, WhatsApp, and admin alert routing are still global in phase 1 even when sender defaults are business-scoped.</value>
+  </data>
+  <data name="BusinessSetupPaymentsShippingTitle" xml:space="preserve">
+    <value>Payments and Shipping</value>
+  </data>
+  <data name="BusinessSetupPaymentsShippingNote" xml:space="preserve">
+    <value>Stripe-first and DHL-first provider settings still remain a planned phase-1 dependency and are not yet modeled as business-scoped setup categories.</value>
+  </data>
+  <data name="OpenSiteSettingsAction" xml:space="preserve">
+    <value>Open Site Settings</value>
+  </data>
+  <data name="BusinessSetupSaveAction" xml:space="preserve">
+    <value>Save Setup</value>
+  </data>
+  <data name="BusinessSupportOpenQueueAction" xml:space="preserve">
+    <value>Open Queue</value>
+  </data>
+  <data name="BusinessSupportSuspendedBusinessesLabel" xml:space="preserve">
+    <value>Suspended businesses</value>
+  </data>
+  <data name="BusinessSupportMissingOwnerBusinessesLabel" xml:space="preserve">
+    <value>Businesses missing an owner</value>
+  </data>
+  <data name="BusinessSupportLockedMembersLabel" xml:space="preserve">
+    <value>Locked members</value>
+  </data>
+  <data name="BusinessSupportCurrentSnapshotLabel" xml:space="preserve">
+    <value>Current Business Support Snapshot</value>
+  </data>
+  <data name="BusinessSupportOpenInvitationsLabel" xml:space="preserve">
+    <value>Open invitations</value>
+  </data>
+  <data name="BusinessSupportPendingActivationLabel" xml:space="preserve">
+    <value>Pending activation</value>
+  </data>
+  <data name="BusinessSupportOpenPendingActivationAction" xml:space="preserve">
+    <value>Open Pending Activation</value>
+  </data>
+  <data name="BusinessSupportOpenLockedMembersAction" xml:space="preserve">
+    <value>Open Locked Members</value>
+  </data>
+  <data name="BusinessCommunicationOpenFullEmailAuditLogAction" xml:space="preserve">
+    <value>Open Full Email Audit Log</value>
+  </data>
+  <data name="BusinessCommunicationFollowUpBacklogLabel" xml:space="preserve">
+    <value>Follow-up Backlog</value>
+  </data>
+  <data name="BusinessCommunicationFollowUpBacklogNote" xml:space="preserve">
+    <value>Recent failed or stale-pending rows that still need operator follow-up.</value>
+  </data>
+  <data name="BusinessCommunicationHighSeverityRowsLabel" xml:space="preserve">
+    <value>High Severity Rows</value>
+  </data>
+  <data name="BusinessCommunicationHighSeverityRowsNote" xml:space="preserve">
+    <value>Business-linked failures and stale pending rows that deserve first-pass triage.</value>
+  </data>
+  <data name="BusinessCommunicationSlowDeliveriesLabel" xml:space="preserve">
+    <value>Slow Deliveries</value>
+  </data>
+  <data name="BusinessCommunicationSlowDeliveriesNote" xml:space="preserve">
+    <value>Completed deliveries that took longer than the current operator threshold.</value>
+  </data>
+  <data name="BusinessCommunicationSearchPlaceholder" xml:space="preserve">
+    <value>Search by business, legal name, support email, or sender</value>
+  </data>
+  <data name="BusinessCommunicationNeedsSetupOnlyLabel" xml:space="preserve">
+    <value>Needs setup only</value>
+  </data>
+  <data name="BusinessCommunicationSupportEmailColumn" xml:space="preserve">
+    <value>Support Email</value>
+  </data>
+  <data name="BusinessCommunicationSenderIdentityColumn" xml:space="preserve">
+    <value>Sender Identity</value>
+  </data>
+  <data name="BusinessCommunicationEnabledPoliciesColumn" xml:space="preserve">
+    <value>Enabled Policies</value>
+  </data>
+  <data name="BusinessCommunicationGapsColumn" xml:space="preserve">
+    <value>Gaps</value>
+  </data>
+  <data name="BusinessCommunicationEmptyState" xml:space="preserve">
+    <value>No businesses matched the communication filters.</value>
+  </data>
+  <data name="BusinessCommunicationMemberSupportAction" xml:space="preserve">
+    <value>Member Support</value>
+  </data>
+  <data name="ChannelAuditPreviewDetailsColumn" xml:space="preserve">
+    <value>Preview / Details</value>
+  </data>
+  <data name="RetryNowAction" xml:space="preserve">
+    <value>Retry Now</value>
+  </data>
   <data name="DashboardQuickLinksTitle" xml:space="preserve">
     <value>Quick Links</value>
   </data>
@@ -5858,5 +6104,179 @@
   </data>
   <data name="WebhookPlaybookDisputeSignalsDependency" xml:space="preserve">
     <value>Webhook registration and payment settings must be healthy before operators interpret dispute-like events as application issues.</value>
+  </data>
+  <data name="CommunicationOpsDashboardIntro" xml:space="preserve">
+    <value>Phase-1 email/SMS/WhatsApp readiness across platform and business defaults.</value>
+  </data>
+  <data name="CommunicationTransactionalEmailEnabledLabel" xml:space="preserve">
+    <value>Transactional email enabled</value>
+  </data>
+  <data name="CommunicationMarketingEmailEnabledLabel" xml:space="preserve">
+    <value>Marketing email enabled</value>
+  </data>
+  <data name="CommunicationOperationalAlertsEnabledLabel" xml:space="preserve">
+    <value>Operational alerts enabled</value>
+  </data>
+  <data name="CommunicationOpenCurrentBusinessSetupAction" xml:space="preserve">
+    <value>Open current business setup</value>
+  </data>
+  <data name="CommunicationOpenMemberSupportAction" xml:space="preserve">
+    <value>Open member support</value>
+  </data>
+  <data name="CommunicationInspectProfileAction" xml:space="preserve">
+    <value>Inspect communication profile</value>
+  </data>
+  <data name="CommunicationRetriedDeliveryChainsLabel" xml:space="preserve">
+    <value>Retried delivery chains</value>
+  </data>
+  <data name="CommunicationRetriedDeliveryChainsNote" xml:space="preserve">
+    <value>Recent audit rows that are part of a repeated delivery chain for the same flow and recipient.</value>
+  </data>
+  <data name="CommunicationPriorSuccessContextLabel" xml:space="preserve">
+    <value>Prior success context</value>
+  </data>
+  <data name="CommunicationPriorSuccessContextNote" xml:space="preserve">
+    <value>Recent audit rows where the same flow and recipient already had a successful delivery before.</value>
+  </data>
+  <data name="CommunicationRepeatedFailureChainsLabel" xml:space="preserve">
+    <value>Repeated failure chains</value>
+  </data>
+  <data name="CommunicationRepeatedFailureChainsNote" xml:space="preserve">
+    <value>Recent follow-up rows that are not first-time failures and likely need deeper operator review.</value>
+  </data>
+  <data name="CommunicationCurrentTransactionalFlowsTitle" xml:space="preserve">
+    <value>Current transactional communication flows</value>
+  </data>
+  <data name="CommunicationCurrentTransactionalFlowsNote" xml:space="preserve">
+    <value>This is a phase-1 visibility catalog. These flows are operational, but they still use direct transactional composition and do not yet provide a full template engine, delivery log, retry queue, or reusable Communication Core workflow.</value>
+  </data>
+  <data name="CommunicationDeliveryPathColumn" xml:space="preserve">
+    <value>Delivery path</value>
+  </data>
+  <data name="CommunicationTemplateInventoryTitle" xml:space="preserve">
+    <value>Template inventory and operator control</value>
+  </data>
+  <data name="CommunicationTemplateInventoryNote" xml:space="preserve">
+    <value>This inventory shows what is actually configurable today. It does not pretend a reusable template engine exists where only hard-coded transactional composition exists.</value>
+  </data>
+  <data name="CommunicationTemplateSurfaceColumn" xml:space="preserve">
+    <value>Template surface</value>
+  </data>
+  <data name="CommunicationSubjectSourceColumn" xml:space="preserve">
+    <value>Subject source</value>
+  </data>
+  <data name="CommunicationBodySourceColumn" xml:space="preserve">
+    <value>Body source</value>
+  </data>
+  <data name="CommunicationCurrentTemplatePreviewColumn" xml:space="preserve">
+    <value>Current template preview</value>
+  </data>
+  <data name="CommunicationOperatorControlColumn" xml:space="preserve">
+    <value>Operator control</value>
+  </data>
+  <data name="SubjectLabel" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="BodyLabel" xml:space="preserve">
+    <value>Body</value>
+  </data>
+  <data name="FailedAuditsAction" xml:space="preserve">
+    <value>Failed audits</value>
+  </data>
+  <data name="OpenPolicyAction" xml:space="preserve">
+    <value>Open policy</value>
+  </data>
+  <data name="CommunicationCapabilityCoverageTitle" xml:space="preserve">
+    <value>Capability coverage and retry visibility</value>
+  </data>
+  <data name="CommunicationCapabilityCoverageNote" xml:space="preserve">
+    <value>This matrix is intentionally operational, not aspirational. It shows what operators can already inspect today and where Communication Core work is still missing.</value>
+  </data>
+  <data name="Capability" xml:space="preserve">
+    <value>Capability</value>
+  </data>
+  <data name="CurrentState" xml:space="preserve">
+    <value>Current state</value>
+  </data>
+  <data name="CommunicationOperatorVisibilityColumn" xml:space="preserve">
+    <value>Operator visibility</value>
+  </data>
+  <data name="CommunicationChannelTruthTitle" xml:space="preserve">
+    <value>Channel truth and safe live actions</value>
+  </data>
+  <data name="CommunicationChannelTruthNote" xml:space="preserve">
+    <value>This table defines what is actually live per channel. It is here to stop operators from assuming WhatsApp is only future-facing or that SMS and WhatsApp are already a generic notification platform.</value>
+  </data>
+  <data name="CommunicationLiveFlowsColumn" xml:space="preserve">
+    <value>Live flows</value>
+  </data>
+  <data name="CommunicationSafeOperatorActionsColumn" xml:space="preserve">
+    <value>Safe operator actions</value>
+  </data>
+  <data name="CommunicationRiskBoundaryColumn" xml:space="preserve">
+    <value>Risk boundary</value>
+  </data>
+  <data name="CommunicationResendPolicyTitle" xml:space="preserve">
+    <value>Resend and retry policy matrix</value>
+  </data>
+  <data name="CommunicationResendPolicyNote" xml:space="preserve">
+    <value>Operators should use only the safe entry points listed here. Failed audit rows are for triage visibility; they are not a generic replay button.</value>
+  </data>
+  <data name="CommunicationCurrentSafeActionColumn" xml:space="preserve">
+    <value>Current safe action</value>
+  </data>
+  <data name="CommunicationGenericRetryStatusColumn" xml:space="preserve">
+    <value>Generic retry status</value>
+  </data>
+  <data name="CommunicationOperatorEntryPointColumn" xml:space="preserve">
+    <value>Operator entry point</value>
+  </data>
+  <data name="CommunicationEscalationRuleColumn" xml:space="preserve">
+    <value>Escalation rule</value>
+  </data>
+  <data name="CommunicationRecentEmailDeliveryActivityTitle" xml:space="preserve">
+    <value>Recent email delivery activity</value>
+  </data>
+  <data name="CommunicationRecentEmailDeliveryActivityNote" xml:space="preserve">
+    <value>This is a phase-1 email audit trail. It captures delivery attempts and failures for current SMTP-based transactional emails, but it is not yet a full Communication Core delivery-log, search, and retry system.</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="CommunicationNoEmailDeliveryActivity" xml:space="preserve">
+    <value>No email delivery activity has been recorded yet.</value>
+  </data>
+  <data name="High" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="Watch" xml:space="preserve">
+    <value>Watch</value>
+  </data>
+  <data name="Slow" xml:space="preserve">
+    <value>Slow</value>
+  </data>
+  <data name="Normal" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="CommunicationOpenForMinutes" xml:space="preserve">
+    <value>Open for {0} min</value>
+  </data>
+  <data name="CommunicationLatencySeconds" xml:space="preserve">
+    <value>Latency {0} s</value>
+  </data>
+  <data name="CommunicationPriorAttempts" xml:space="preserve">
+    <value>Prior attempts {0}</value>
+  </data>
+  <data name="CommunicationLastSuccessAt" xml:space="preserve">
+    <value>Last success {0}</value>
+  </data>
+  <data name="CommunicationCompletedAt" xml:space="preserve">
+    <value>Completed {0}</value>
+  </data>
+  <data name="CommunicationAttemptRecorded" xml:space="preserve">
+    <value>Attempt recorded</value>
   </data>
 </root>

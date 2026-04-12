@@ -404,18 +404,18 @@
                                                 <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-query="@item.RecipientEmail" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
                                                    hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail, filter = "Open" })"
                                                    hx-target="#business-communication-profile-shell"
-                                                   hx-swap="outerHTML">Search Invitation</a>
+                                                   hx-swap="outerHTML">@T.T("BusinessCommunicationSearchInvitationAction")</a>
                                             }
                                             else if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) || string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
                                             {
                                                 <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-query="@item.RecipientEmail" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
                                                    hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail, filter = "Attention" })"
                                                    hx-target="#business-communication-profile-shell"
-                                                   hx-swap="outerHTML">Member Support</a>
+                                                   hx-swap="outerHTML">@T.T("BusinessCommunicationMemberSupportAction")</a>
                                                 <a asp-controller="Users" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
                                                    hx-get="@Url.Action("Index", "Users", new { q = item.RecipientEmail })"
                                                    hx-target="#business-communication-profile-shell"
-                                                   hx-swap="outerHTML">Open Users</a>
+                                                   hx-swap="outerHTML">@T.T("BusinessCommunicationOpenUsersAction")</a>
                                                 <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
                                                    hx-get="@Url.Action("Index", "MobileOperations", new { q = item.RecipientEmail })"
                                                    hx-target="#business-communication-profile-shell"

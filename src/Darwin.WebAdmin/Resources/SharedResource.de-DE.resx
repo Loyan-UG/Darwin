@@ -4797,6 +4797,252 @@
   <data name="BusinessCommunicationRerunWhatsAppTestAction" xml:space="preserve">
     <value>WhatsApp-Test erneut ausfuehren</value>
   </data>
+  <data name="EmailAuditsSearchPlaceholder" xml:space="preserve">
+    <value>Suche nach Empfaenger, Betreff, Provider, Flow oder Business</value>
+  </data>
+  <data name="EmailAuditsStalePendingOnlyLabel" xml:space="preserve">
+    <value>Nur veraltete Pending-Faelle</value>
+  </data>
+  <data name="EmailAuditsBusinessLinkedFailuresOnlyLabel" xml:space="preserve">
+    <value>Nur business-verknuepfte Fehler</value>
+  </data>
+  <data name="EmailAuditsRepeatedFailuresOnlyLabel" xml:space="preserve">
+    <value>Nur wiederholte Fehler</value>
+  </data>
+  <data name="EmailAuditsPriorSuccessOnlyLabel" xml:space="preserve">
+    <value>Nur mit vorherigem Erfolgskontext</value>
+  </data>
+  <data name="EmailAuditsRetryReadyOnlyLabel" xml:space="preserve">
+    <value>Nur retry-bereit</value>
+  </data>
+  <data name="EmailAuditsRetryBlockedOnlyLabel" xml:space="preserve">
+    <value>Nur retry-blockiert</value>
+  </data>
+  <data name="EmailAuditsHeavyChainsOnlyLabel" xml:space="preserve">
+    <value>Nur schwere Chains</value>
+  </data>
+  <data name="EmailAuditsDeliveryContextColumn" xml:space="preserve">
+    <value>Delivery-Kontext</value>
+  </data>
+  <data name="EmailAuditsOperatorResponseColumn" xml:space="preserve">
+    <value>Operator-Reaktion</value>
+  </data>
+  <data name="EmailAuditsEmptyState" xml:space="preserve">
+    <value>Keine E-Mail-Audits passen zu den ausgewaehlten Filtern.</value>
+  </data>
+  <data name="BusinessCommunicationSearchInvitationAction" xml:space="preserve">
+    <value>Einladung suchen</value>
+  </data>
+  <data name="BusinessCommunicationInspectBusinessAction" xml:space="preserve">
+    <value>Business pruefen</value>
+  </data>
+  <data name="BusinessCommunicationOpenUsersAction" xml:space="preserve">
+    <value>Benutzer oeffnen</value>
+  </data>
+  <data name="BusinessMembersTitle" xml:space="preserve">
+    <value>Business-Mitglieder</value>
+  </data>
+  <data name="BusinessMembersAssignMemberAction" xml:space="preserve">
+    <value>Mitglied zuweisen</value>
+  </data>
+  <data name="BusinessMembersNoActiveOwnerWarning" xml:space="preserve">
+    <value>Dieses Business hat aktuell keinen aktiven Owner. Weise vor dem Go-live einen zu.</value>
+  </data>
+  <data name="BusinessMembersPendingActivationNote" xml:space="preserve">
+    <value>Einige Mitglieder warten noch auf die Aktivierung. Nutze die Inline-Support-Aktionen unten, um die Aktivierung erneut zu senden oder die E-Mail manuell zu bestaetigen, wenn die Support-Policy das erlaubt.</value>
+  </data>
+  <data name="BusinessMembersSearchPlaceholder" xml:space="preserve">
+    <value>Suche nach Benutzername, E-Mail oder Rolle</value>
+  </data>
+  <data name="BusinessMembersEmptyState" xml:space="preserve">
+    <value>Keine Mitglieder zugewiesen.</value>
+  </data>
+  <data name="BusinessInvitationsTitle" xml:space="preserve">
+    <value>Business-Einladungen</value>
+  </data>
+  <data name="BusinessInvitationsInviteUserAction" xml:space="preserve">
+    <value>Benutzer einladen</value>
+  </data>
+  <data name="BusinessInvitationsSearchPlaceholder" xml:space="preserve">
+    <value>Suche nach E-Mail, Rolle oder Status</value>
+  </data>
+  <data name="BusinessInvitationsInvitedByColumn" xml:space="preserve">
+    <value>Eingeladen von</value>
+  </data>
+  <data name="BusinessInvitationsExpiresUtcColumn" xml:space="preserve">
+    <value>Laeuft ab (UTC)</value>
+  </data>
+  <data name="BusinessInvitationsEmptyState" xml:space="preserve">
+    <value>Keine Einladungen gefunden.</value>
+  </data>
+  <data name="BusinessMembersBackToBusinessAction" xml:space="preserve">
+    <value>Zurueck zum Business</value>
+  </data>
+  <data name="BusinessMembersOwnerOverrideAuditAction" xml:space="preserve">
+    <value>Owner-Override-Audit</value>
+  </data>
+  <data name="BusinessMembersBadgeAction" xml:space="preserve">
+    <value>Badge</value>
+  </data>
+  <data name="BusinessSetupMembersPreviewNoAttention" xml:space="preserve">
+    <value>Aktuell benoetigt kein Mitglied Aktivierungs- oder Lockout-Support.</value>
+  </data>
+  <data name="BusinessSetupOpenMembersAction" xml:space="preserve">
+    <value>Mitglieder oeffnen</value>
+  </data>
+  <data name="BusinessSetupMembersPreviewAttentionCount" xml:space="preserve">
+    <value>{0} Mitglied(er) benoetigen eine Support-Aktion</value>
+  </data>
+  <data name="BusinessSetupInvitationsPreviewNoAttention" xml:space="preserve">
+    <value>Keine ausstehenden oder abgelaufenen Einladungen benoetigen aktuell Aufmerksamkeit.</value>
+  </data>
+  <data name="BusinessSetupOpenInvitationsAction" xml:space="preserve">
+    <value>Einladungen oeffnen</value>
+  </data>
+  <data name="BusinessSetupInvitationsPreviewOpenCount" xml:space="preserve">
+    <value>{0} offene Einladung(en)</value>
+  </data>
+  <data name="BusinessSetupInvitationsPreviewExpiresAt" xml:space="preserve">
+    <value>Laeuft ab {0} UTC</value>
+  </data>
+  <data name="BusinessLocationsTitle" xml:space="preserve">
+    <value>Business-Standorte</value>
+  </data>
+  <data name="BusinessLocationsAddLocationAction" xml:space="preserve">
+    <value>Standort hinzufuegen</value>
+  </data>
+  <data name="BusinessLocationsSearchPlaceholder" xml:space="preserve">
+    <value>Suche nach Name, Stadt oder Postleitzahl</value>
+  </data>
+  <data name="BusinessLocationsMissingCoordinatesLabel" xml:space="preserve">
+    <value>Fehlende Koordinaten</value>
+  </data>
+  <data name="BusinessLocationsPlaybooksTitle" xml:space="preserve">
+    <value>Standort-Operations-Playbooks</value>
+  </data>
+  <data name="BusinessLocationsEmptyState" xml:space="preserve">
+    <value>Keine Standorte gefunden.</value>
+  </data>
+  <data name="BusinessLocationsAddressMissingBadge" xml:space="preserve">
+    <value>Adresse fehlt</value>
+  </data>
+  <data name="BusinessLocationsCoordinatesMissingBadge" xml:space="preserve">
+    <value>Koordinaten fehlen</value>
+  </data>
+  <data name="BusinessSetupReviewOverrideAuditAction" xml:space="preserve">
+    <value>Override-Audit pruefen</value>
+  </data>
+  <data name="BusinessSetupMembersRequiringAttentionTitle" xml:space="preserve">
+    <value>Mitglieder mit Aufmerksamkeitsbedarf</value>
+  </data>
+  <data name="BusinessSetupPlatformDependenciesTitle" xml:space="preserve">
+    <value>Phase-1-Abhaengigkeiten von Plattform-Einstellungen</value>
+  </data>
+  <data name="BusinessSetupPlatformDependenciesIntro" xml:space="preserve">
+    <value>Einige Einstellungen werden in Phase 1 noch global verwaltet. Business-spezifische Provider-Konfiguration ist geplant, aber noch kein Teil des Domain-Modells.</value>
+  </data>
+  <data name="BusinessSetupPlatformDependenciesRule" xml:space="preserve">
+    <value>Operator-Regel: wenn eine Aenderung jedes Business oder ein Provider-Secret, einen Schwellenwert, einen Standard fuer Tax-Issuer oder eine Admin-Route betrifft, bleibt sie in Site Settings. Wenn es um Brand, Sender-Identitaet, Support-Kontakt oder lokale Defaults fuer einen Tenant geht, bleibt sie in Business Setup.</value>
+  </data>
+  <data name="BusinessSetupSecurityMobileAccessTitle" xml:space="preserve">
+    <value>Sicherheit und mobiler Zugriff</value>
+  </data>
+  <data name="BusinessSetupSecurityMobileAccessNote" xml:space="preserve">
+    <value>JWT/mobile Bootstrap bleiben in Phase 1 auf Plattformebene und beeinflussen Sign-in, Refresh sowie QR-/Session-Verhalten der Business-App.</value>
+  </data>
+  <data name="BusinessSetupCommunicationsDependencyNote" xml:space="preserve">
+    <value>SMTP, SMS, WhatsApp und Admin-Alert-Routing bleiben in Phase 1 global, auch wenn Sender-Defaults business-spezifisch sind.</value>
+  </data>
+  <data name="BusinessSetupPaymentsShippingTitle" xml:space="preserve">
+    <value>Zahlungen und Versand</value>
+  </data>
+  <data name="BusinessSetupPaymentsShippingNote" xml:space="preserve">
+    <value>Stripe-first- und DHL-first-Provider-Einstellungen bleiben eine geplante Phase-1-Abhaengigkeit und sind noch nicht als business-spezifische Setup-Kategorien modelliert.</value>
+  </data>
+  <data name="OpenSiteSettingsAction" xml:space="preserve">
+    <value>Site Settings oeffnen</value>
+  </data>
+  <data name="BusinessSetupSaveAction" xml:space="preserve">
+    <value>Setup speichern</value>
+  </data>
+  <data name="BusinessSupportOpenQueueAction" xml:space="preserve">
+    <value>Queue oeffnen</value>
+  </data>
+  <data name="BusinessSupportSuspendedBusinessesLabel" xml:space="preserve">
+    <value>Gesperrte Businesses</value>
+  </data>
+  <data name="BusinessSupportMissingOwnerBusinessesLabel" xml:space="preserve">
+    <value>Businesses ohne Owner</value>
+  </data>
+  <data name="BusinessSupportLockedMembersLabel" xml:space="preserve">
+    <value>Gesperrte Mitglieder</value>
+  </data>
+  <data name="BusinessSupportCurrentSnapshotLabel" xml:space="preserve">
+    <value>Aktueller Business-Support-Snapshot</value>
+  </data>
+  <data name="BusinessSupportOpenInvitationsLabel" xml:space="preserve">
+    <value>Offene Einladungen</value>
+  </data>
+  <data name="BusinessSupportPendingActivationLabel" xml:space="preserve">
+    <value>Ausstehende Aktivierung</value>
+  </data>
+  <data name="BusinessSupportOpenPendingActivationAction" xml:space="preserve">
+    <value>Ausstehende Aktivierungen oeffnen</value>
+  </data>
+  <data name="BusinessSupportOpenLockedMembersAction" xml:space="preserve">
+    <value>Gesperrte Mitglieder oeffnen</value>
+  </data>
+  <data name="BusinessCommunicationOpenFullEmailAuditLogAction" xml:space="preserve">
+    <value>Vollstaendiges E-Mail-Auditprotokoll oeffnen</value>
+  </data>
+  <data name="BusinessCommunicationFollowUpBacklogLabel" xml:space="preserve">
+    <value>Follow-up-Backlog</value>
+  </data>
+  <data name="BusinessCommunicationFollowUpBacklogNote" xml:space="preserve">
+    <value>Letzte fehlgeschlagene oder stale-pending Zeilen, die noch Operator-Follow-up benoetigen.</value>
+  </data>
+  <data name="BusinessCommunicationHighSeverityRowsLabel" xml:space="preserve">
+    <value>Zeilen mit hoher Schwere</value>
+  </data>
+  <data name="BusinessCommunicationHighSeverityRowsNote" xml:space="preserve">
+    <value>Business-verknuepfte Fehler und stale-pending Zeilen, die eine erste Triage verdienen.</value>
+  </data>
+  <data name="BusinessCommunicationSlowDeliveriesLabel" xml:space="preserve">
+    <value>Langsame Zustellungen</value>
+  </data>
+  <data name="BusinessCommunicationSlowDeliveriesNote" xml:space="preserve">
+    <value>Abgeschlossene Zustellungen, die laenger als der aktuelle Operator-Schwellenwert gebraucht haben.</value>
+  </data>
+  <data name="BusinessCommunicationSearchPlaceholder" xml:space="preserve">
+    <value>Suche nach Business, juristischem Namen, Support-E-Mail oder Sender</value>
+  </data>
+  <data name="BusinessCommunicationNeedsSetupOnlyLabel" xml:space="preserve">
+    <value>Nur mit Setup-Bedarf</value>
+  </data>
+  <data name="BusinessCommunicationSupportEmailColumn" xml:space="preserve">
+    <value>Support-E-Mail</value>
+  </data>
+  <data name="BusinessCommunicationSenderIdentityColumn" xml:space="preserve">
+    <value>Sender-Identitaet</value>
+  </data>
+  <data name="BusinessCommunicationEnabledPoliciesColumn" xml:space="preserve">
+    <value>Aktive Policies</value>
+  </data>
+  <data name="BusinessCommunicationGapsColumn" xml:space="preserve">
+    <value>Luecken</value>
+  </data>
+  <data name="BusinessCommunicationEmptyState" xml:space="preserve">
+    <value>Keine Businesses passen zu den Kommunikationsfiltern.</value>
+  </data>
+  <data name="BusinessCommunicationMemberSupportAction" xml:space="preserve">
+    <value>Mitglieder-Support</value>
+  </data>
+  <data name="ChannelAuditPreviewDetailsColumn" xml:space="preserve">
+    <value>Vorschau / Details</value>
+  </data>
+  <data name="RetryNowAction" xml:space="preserve">
+    <value>Jetzt erneut versuchen</value>
+  </data>
   <data name="DashboardQuickLinksTitle" xml:space="preserve">
     <value>Schnellzugriffe</value>
   </data>
@@ -5858,5 +6104,179 @@
   </data>
   <data name="WebhookPlaybookDisputeSignalsDependency" xml:space="preserve">
     <value>Webhook-Registrierung und Zahlungseinstellungen müssen gesund sein, bevor disputeartige Events als App-Problem interpretiert werden.</value>
+  </data>
+  <data name="CommunicationOpsDashboardIntro" xml:space="preserve">
+    <value>Phase-1-Bereitschaft für E-Mail, SMS und WhatsApp über Plattform- und Business-Standards hinweg.</value>
+  </data>
+  <data name="CommunicationTransactionalEmailEnabledLabel" xml:space="preserve">
+    <value>Transaktionale E-Mail aktiviert</value>
+  </data>
+  <data name="CommunicationMarketingEmailEnabledLabel" xml:space="preserve">
+    <value>Marketing-E-Mail aktiviert</value>
+  </data>
+  <data name="CommunicationOperationalAlertsEnabledLabel" xml:space="preserve">
+    <value>Betriebliche Warnungen aktiviert</value>
+  </data>
+  <data name="CommunicationOpenCurrentBusinessSetupAction" xml:space="preserve">
+    <value>Aktuelles Business-Setup öffnen</value>
+  </data>
+  <data name="CommunicationOpenMemberSupportAction" xml:space="preserve">
+    <value>Member-Support öffnen</value>
+  </data>
+  <data name="CommunicationInspectProfileAction" xml:space="preserve">
+    <value>Kommunikationsprofil prüfen</value>
+  </data>
+  <data name="CommunicationRetriedDeliveryChainsLabel" xml:space="preserve">
+    <value>Wiederholte Zustellketten</value>
+  </data>
+  <data name="CommunicationRetriedDeliveryChainsNote" xml:space="preserve">
+    <value>Neuere Audit-Zeilen, die Teil einer wiederholten Zustellkette für denselben Flow und Empfänger sind.</value>
+  </data>
+  <data name="CommunicationPriorSuccessContextLabel" xml:space="preserve">
+    <value>Früherer Erfolgskontext</value>
+  </data>
+  <data name="CommunicationPriorSuccessContextNote" xml:space="preserve">
+    <value>Neuere Audit-Zeilen, bei denen derselbe Flow und Empfänger bereits zuvor erfolgreich zugestellt wurden.</value>
+  </data>
+  <data name="CommunicationRepeatedFailureChainsLabel" xml:space="preserve">
+    <value>Wiederholte Fehlerketten</value>
+  </data>
+  <data name="CommunicationRepeatedFailureChainsNote" xml:space="preserve">
+    <value>Neuere Follow-up-Zeilen, die keine Erstfehler sind und voraussichtlich tiefere Operator-Prüfung brauchen.</value>
+  </data>
+  <data name="CommunicationCurrentTransactionalFlowsTitle" xml:space="preserve">
+    <value>Aktuelle transaktionale Kommunikationsflüsse</value>
+  </data>
+  <data name="CommunicationCurrentTransactionalFlowsNote" xml:space="preserve">
+    <value>Dies ist ein Phase-1-Sichtbarkeitskatalog. Diese Flows sind produktiv, nutzen aber noch direkte transaktionale Komposition und bieten noch keine vollständige Template-Engine, kein Delivery-Log, keine Retry-Queue und keinen wiederverwendbaren Communication-Core-Workflow.</value>
+  </data>
+  <data name="CommunicationDeliveryPathColumn" xml:space="preserve">
+    <value>Zustellpfad</value>
+  </data>
+  <data name="CommunicationTemplateInventoryTitle" xml:space="preserve">
+    <value>Template-Inventar und Operator-Steuerung</value>
+  </data>
+  <data name="CommunicationTemplateInventoryNote" xml:space="preserve">
+    <value>Dieses Inventar zeigt, was heute tatsächlich konfigurierbar ist. Es täuscht keine wiederverwendbare Template-Engine vor, wo nur fest codierte transaktionale Komposition existiert.</value>
+  </data>
+  <data name="CommunicationTemplateSurfaceColumn" xml:space="preserve">
+    <value>Template-Oberfläche</value>
+  </data>
+  <data name="CommunicationSubjectSourceColumn" xml:space="preserve">
+    <value>Betreffquelle</value>
+  </data>
+  <data name="CommunicationBodySourceColumn" xml:space="preserve">
+    <value>Textquelle</value>
+  </data>
+  <data name="CommunicationCurrentTemplatePreviewColumn" xml:space="preserve">
+    <value>Aktuelle Template-Vorschau</value>
+  </data>
+  <data name="CommunicationOperatorControlColumn" xml:space="preserve">
+    <value>Operator-Steuerung</value>
+  </data>
+  <data name="SubjectLabel" xml:space="preserve">
+    <value>Betreff</value>
+  </data>
+  <data name="BodyLabel" xml:space="preserve">
+    <value>Inhalt</value>
+  </data>
+  <data name="FailedAuditsAction" xml:space="preserve">
+    <value>Fehlgeschlagene Audits</value>
+  </data>
+  <data name="OpenPolicyAction" xml:space="preserve">
+    <value>Richtlinie öffnen</value>
+  </data>
+  <data name="CommunicationCapabilityCoverageTitle" xml:space="preserve">
+    <value>Capability-Abdeckung und Retry-Sichtbarkeit</value>
+  </data>
+  <data name="CommunicationCapabilityCoverageNote" xml:space="preserve">
+    <value>Diese Matrix ist bewusst operativ, nicht visionär. Sie zeigt, was Operatoren heute bereits prüfen können und wo Communication-Core-Arbeit noch fehlt.</value>
+  </data>
+  <data name="Capability" xml:space="preserve">
+    <value>Capability</value>
+  </data>
+  <data name="CurrentState" xml:space="preserve">
+    <value>Aktueller Stand</value>
+  </data>
+  <data name="CommunicationOperatorVisibilityColumn" xml:space="preserve">
+    <value>Operator-Sichtbarkeit</value>
+  </data>
+  <data name="CommunicationChannelTruthTitle" xml:space="preserve">
+    <value>Kanalwahrheit und sichere Live-Aktionen</value>
+  </data>
+  <data name="CommunicationChannelTruthNote" xml:space="preserve">
+    <value>Diese Tabelle definiert, was pro Kanal tatsächlich live ist. Sie soll verhindern, dass WhatsApp als Zukunftsthema missverstanden wird oder SMS und WhatsApp fälschlich als generische Benachrichtigungsplattform gelten.</value>
+  </data>
+  <data name="CommunicationLiveFlowsColumn" xml:space="preserve">
+    <value>Live-Flows</value>
+  </data>
+  <data name="CommunicationSafeOperatorActionsColumn" xml:space="preserve">
+    <value>Sichere Operator-Aktionen</value>
+  </data>
+  <data name="CommunicationRiskBoundaryColumn" xml:space="preserve">
+    <value>Risikogrenze</value>
+  </data>
+  <data name="CommunicationResendPolicyTitle" xml:space="preserve">
+    <value>Resend- und Retry-Richtlinienmatrix</value>
+  </data>
+  <data name="CommunicationResendPolicyNote" xml:space="preserve">
+    <value>Operatoren sollten nur die hier gelisteten sicheren Einstiegspunkte nutzen. Fehlgeschlagene Audit-Zeilen dienen der Triage-Sichtbarkeit und sind kein generischer Replay-Button.</value>
+  </data>
+  <data name="CommunicationCurrentSafeActionColumn" xml:space="preserve">
+    <value>Aktuell sichere Aktion</value>
+  </data>
+  <data name="CommunicationGenericRetryStatusColumn" xml:space="preserve">
+    <value>Status generischer Retry</value>
+  </data>
+  <data name="CommunicationOperatorEntryPointColumn" xml:space="preserve">
+    <value>Operator-Einstiegspunkt</value>
+  </data>
+  <data name="CommunicationEscalationRuleColumn" xml:space="preserve">
+    <value>Eskalationsregel</value>
+  </data>
+  <data name="CommunicationRecentEmailDeliveryActivityTitle" xml:space="preserve">
+    <value>Neuere E-Mail-Zustellaktivität</value>
+  </data>
+  <data name="CommunicationRecentEmailDeliveryActivityNote" xml:space="preserve">
+    <value>Dies ist eine Phase-1-E-Mail-Auditspur. Sie erfasst Zustellversuche und Fehler für aktuelle SMTP-basierte transaktionale E-Mails, ist aber noch kein vollständiges Communication-Core-System für Delivery-Log, Suche und Retry.</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="CommunicationNoEmailDeliveryActivity" xml:space="preserve">
+    <value>Es wurde noch keine E-Mail-Zustellaktivität erfasst.</value>
+  </data>
+  <data name="High" xml:space="preserve">
+    <value>Hoch</value>
+  </data>
+  <data name="Medium" xml:space="preserve">
+    <value>Mittel</value>
+  </data>
+  <data name="Watch" xml:space="preserve">
+    <value>Beobachten</value>
+  </data>
+  <data name="Slow" xml:space="preserve">
+    <value>Langsam</value>
+  </data>
+  <data name="Normal" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="CommunicationOpenForMinutes" xml:space="preserve">
+    <value>Seit {0} Min. offen</value>
+  </data>
+  <data name="CommunicationLatencySeconds" xml:space="preserve">
+    <value>Latenz {0} Sek.</value>
+  </data>
+  <data name="CommunicationPriorAttempts" xml:space="preserve">
+    <value>Frühere Versuche {0}</value>
+  </data>
+  <data name="CommunicationLastSuccessAt" xml:space="preserve">
+    <value>Letzter Erfolg {0}</value>
+  </data>
+  <data name="CommunicationCompletedAt" xml:space="preserve">
+    <value>Abgeschlossen {0}</value>
+  </data>
+  <data name="CommunicationAttemptRecorded" xml:space="preserve">
+    <value>Versuch erfasst</value>
   </data>
 </root>

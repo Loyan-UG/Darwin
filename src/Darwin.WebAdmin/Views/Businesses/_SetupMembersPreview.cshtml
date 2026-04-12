@@ -3,14 +3,14 @@
 
 @if (Model.AttentionCount == 0)
 {
-    <div class="text-success">No members currently need activation or lockout support.</div>
+    <div class="text-success">@T.T("BusinessSetupMembersPreviewNoAttention")</div>
     <div class="d-flex gap-2 flex-wrap mt-3">
         <a asp-action="Members"
            asp-route-businessId="@Model.BusinessId"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
            hx-target="#business-setup-shell"
-           hx-swap="outerHTML">Open Members</a>
+           hx-swap="outerHTML">@T.T("BusinessSetupOpenMembersAction")</a>
         <a asp-controller="MobileOperations"
            asp-action="Index"
            class="btn btn-sm btn-outline-secondary"
@@ -23,14 +23,14 @@
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="fw-semibold">@Model.AttentionCount member(s) need support action</div>
+        <div class="fw-semibold">@string.Format(T.T("BusinessSetupMembersPreviewAttentionCount"), Model.AttentionCount)</div>
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="Members"
                asp-route-businessId="@Model.BusinessId"
                class="btn btn-sm btn-outline-secondary"
                hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
                hx-target="#business-setup-shell"
-               hx-swap="outerHTML">Open Members</a>
+               hx-swap="outerHTML">@T.T("BusinessSetupOpenMembersAction")</a>
             <a asp-controller="MobileOperations"
                asp-action="Index"
                class="btn btn-sm btn-outline-secondary"
@@ -45,8 +45,8 @@ else
         <table class="table table-sm align-middle mb-0">
             <thead>
                 <tr>
-                    <th>User</th>
-                    <th>Status</th>
+                    <th>@T.T("User")</th>
+                    <th>@T.T("Status")</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,11 +78,11 @@ else
                     <td>
                         @if (!item.EmailConfirmed)
                         {
-                            <span class="badge text-bg-warning">Pending activation</span>
+                            <span class="badge text-bg-warning">@T.T("PendingActivation")</span>
                         }
                         @if (item.LockoutEndUtc.HasValue && item.LockoutEndUtc.Value > DateTime.UtcNow)
                         {
-                            <span class="badge text-bg-danger ms-1">Locked</span>
+                            <span class="badge text-bg-danger ms-1">@T.T("Locked")</span>
                         }
                     </td>
                 </tr>

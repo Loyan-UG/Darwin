@@ -1,11 +1,12 @@
 @model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="communication-ops-card" class="card shadow-sm">
     <div class="card-header bg-white">
         <div class="d-flex align-items-center justify-content-between">
             <div>
-                <div class="fw-semibold">Communication Operations</div>
-                <div class="small text-muted">Phase-1 email/SMS/WhatsApp readiness across platform and business defaults.</div>
+                <div class="fw-semibold">@T.T("CommunicationOpsTitle")</div>
+                <div class="small text-muted">@T.T("CommunicationOpsDashboardIntro")</div>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <button type="button"
@@ -13,13 +14,13 @@
                         hx-get="@Url.Action("CommunicationOpsFragment", "Home", new { businessId = Model.SelectedBusinessId })"
                         hx-target="#communication-ops-card"
                         hx-swap="outerHTML">
-                    Refresh
+                    @T.T("Refresh")
                 </button>
-                <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary">Open Workspace</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary">SMTP</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary">SMS</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary">WhatsApp</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary">Admin Alerts</a>
+                <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("OpenWorkspaceAction")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary">@T.T("SMTP")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary">@T.T("SMS")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary">@T.T("WhatsApp")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary">@T.T("AdminAlerts")</a>
             </div>
         </div>
     </div>
@@ -27,65 +28,65 @@
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Email Transport</div>
-                    <div class="fw-semibold mt-1">@(Model.CommunicationOps.EmailTransportConfigured ? "Ready" : "Needs setup")</div>
+                    <div class="text-muted small">@T.T("EmailTransport")</div>
+                    <div class="fw-semibold mt-1">@(Model.CommunicationOps.EmailTransportConfigured ? T.T("Ready") : T.T("NeedsSetup"))</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">SMS Transport</div>
-                    <div class="fw-semibold mt-1">@(Model.CommunicationOps.SmsTransportConfigured ? "Ready" : "Not ready")</div>
+                    <div class="text-muted small">@T.T("SmsTransport")</div>
+                    <div class="fw-semibold mt-1">@(Model.CommunicationOps.SmsTransportConfigured ? T.T("Ready") : T.T("NotReady"))</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">WhatsApp Transport</div>
-                    <div class="fw-semibold mt-1">@(Model.CommunicationOps.WhatsAppTransportConfigured ? "Ready" : "Not ready")</div>
+                    <div class="text-muted small">@T.T("WhatsAppTransport")</div>
+                    <div class="fw-semibold mt-1">@(Model.CommunicationOps.WhatsAppTransportConfigured ? T.T("Ready") : T.T("NotReady"))</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Admin Alert Routing</div>
-                    <div class="fw-semibold mt-1">@(Model.CommunicationOps.AdminAlertRoutingConfigured ? "Configured" : "Missing")</div>
+                    <div class="text-muted small">@T.T("AdminAlertRouting")</div>
+                    <div class="fw-semibold mt-1">@(Model.CommunicationOps.AdminAlertRoutingConfigured ? T.T("Configured") : T.T("Missing"))</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Businesses Requiring Email Setup</div>
+                    <div class="text-muted small">@T.T("BusinessesRequiringEmailSetup")</div>
                     <div class="fs-4 fw-semibold">@Model.CommunicationOps.BusinessesRequiringEmailSetupCount</div>
-                    <div class="small text-muted mt-2">Businesses with email-related toggles enabled but missing support or sender identity fields.</div>
+                    <div class="small text-muted mt-2">@T.T("BusinessesRequiringEmailSetupNote")</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Missing Support Email</div>
+                    <div class="text-muted small">@T.T("MissingSupportEmail")</div>
                     <div class="fs-4 fw-semibold">@Model.CommunicationOps.MissingSupportEmailCount</div>
-                    <div class="small text-muted mt-2">Transactional and support-facing flows should not depend only on global sender details.</div>
+                    <div class="small text-muted mt-2">@T.T("MissingSupportEmailNote")</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Missing Sender Identity</div>
+                    <div class="text-muted small">@T.T("MissingSenderIdentity")</div>
                     <div class="fs-4 fw-semibold">@Model.CommunicationOps.MissingSenderIdentityCount</div>
-                    <div class="small text-muted mt-2">Counts businesses missing sender display name or reply-to defaults.</div>
+                    <div class="small text-muted mt-2">@T.T("MissingSenderIdentityNote")</div>
                 </div>
             </div>
         </div>
 
         <div class="small text-muted mt-3">
-            Transactional email enabled: <strong>@Model.CommunicationOps.TransactionalEmailBusinessesCount</strong>
+            @T.T("CommunicationTransactionalEmailEnabledLabel"): <strong>@Model.CommunicationOps.TransactionalEmailBusinessesCount</strong>
             <span class="mx-2">|</span>
-            Marketing email enabled: <strong>@Model.CommunicationOps.MarketingEmailBusinessesCount</strong>
+            @T.T("CommunicationMarketingEmailEnabledLabel"): <strong>@Model.CommunicationOps.MarketingEmailBusinessesCount</strong>
             <span class="mx-2">|</span>
-            Operational alerts enabled: <strong>@Model.CommunicationOps.OperationalAlertBusinessesCount</strong>
+            @T.T("CommunicationOperationalAlertsEnabledLabel"): <strong>@Model.CommunicationOps.OperationalAlertBusinessesCount</strong>
         </div>
 
         @if (Model.SelectedBusinessId.HasValue)
         {
             <div class="d-flex flex-wrap gap-2 mt-3">
-                <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Open Current Business Setup</a>
-                <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="Attention" class="btn btn-sm btn-outline-primary">Open Member Support</a>
-                <a asp-controller="BusinessCommunications" asp-action="Details" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Inspect Communication Profile</a>
+                <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("CommunicationOpenCurrentBusinessSetupAction")</a>
+                <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="Attention" class="btn btn-sm btn-outline-primary">@T.T("CommunicationOpenMemberSupportAction")</a>
+                <a asp-controller="BusinessCommunications" asp-action="Details" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("CommunicationInspectProfileAction")</a>
             </div>
         }
     </div>

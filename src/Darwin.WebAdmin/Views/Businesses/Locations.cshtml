@@ -1,12 +1,13 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessLocationsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Business Locations";
+    ViewData["Title"] = T.T("BusinessLocationsTitle");
 }
 
 <div id="business-locations-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1"><i class="fa-solid fa-location-dot me-2"></i>Locations</h1>
+        <h1 class="mb-1"><i class="fa-solid fa-location-dot me-2"></i>@T.T("BusinessLocationsTitle")</h1>
         <p class="text-muted mb-0">@Model.Business.Name</p>
     </div>
     <div class="d-flex gap-2">
@@ -15,20 +16,20 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
-           hx-swap="outerHTML">Back to business</a>
+           hx-swap="outerHTML">@T.T("BusinessMembersBackToBusinessAction")</a>
         <a asp-action="Invitations"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
-           hx-swap="outerHTML">Invitations</a>
+           hx-swap="outerHTML">@T.T("Invitations")</a>
         <a asp-action="CreateLocation"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-primary"
            hx-get="@Url.Action("CreateLocation", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
            hx-swap="outerHTML">
-            <i class="fa-solid fa-plus"></i> Add location
+            <i class="fa-solid fa-plus"></i> @T.T("BusinessLocationsAddLocationAction")
         </a>
     </div>
 </div>
@@ -40,51 +41,51 @@
       hx-swap="outerHTML">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by name, city or postal code" />
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessLocationsSearchPlaceholder")" />
     </div>
     <div class="col-md-3">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")</button>
         <a asp-action="Locations"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML">@T.T("Reset")</a>
     </div>
 </form>
 
 <div class="row g-3 mb-3">
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">Total</div>
+            <div class="text-muted small text-uppercase">@T.T("Total")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">Primary</div>
+            <div class="text-muted small text-uppercase">@T.T("Primary")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PrimaryCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">Missing Address</div>
+            <div class="text-muted small text-uppercase">@T.T("MissingAddress")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingAddressCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">Missing Coordinates</div>
+            <div class="text-muted small text-uppercase">@T.T("BusinessLocationsMissingCoordinatesLabel")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingCoordinatesCount</div>
         </div>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Location Operations Playbooks</div>
+    <div class="card-header">@T.T("BusinessLocationsPlaybooksTitle")</div>
     <div class="card-body">
         <ul class="mb-0">
             @foreach (var playbook in Model.Playbooks)
@@ -99,18 +100,18 @@
     <table class="table table-sm table-hover align-middle">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>City</th>
-                <th>Region</th>
-                <th>Country</th>
-                <th class="text-center">Primary</th>
-                <th class="text-end" style="width:240px">Actions</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("City")</th>
+                <th>@T.T("Region")</th>
+                <th>@T.T("Country")</th>
+                <th class="text-center">@T.T("Primary")</th>
+                <th class="text-end" style="width:240px">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted py-4">No locations found.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-4">@T.T("BusinessLocationsEmptyState")</td></tr>
         }
         else
         {
@@ -124,17 +125,17 @@
                     <td class="text-center">
                         @if (item.IsPrimary)
                         {
-                            <span class="badge text-bg-success">Primary</span>
+                            <span class="badge text-bg-success">@T.T("Primary")</span>
                         }
                     </td>
                     <td class="text-end">
                         @if (!item.HasAddress)
                         {
-                            <span class="badge text-bg-warning me-1">Address missing</span>
+                            <span class="badge text-bg-warning me-1">@T.T("BusinessLocationsAddressMissingBadge")</span>
                         }
                         @if (!item.HasCoordinates)
                         {
-                            <span class="badge text-bg-secondary me-1">Coordinates missing</span>
+                            <span class="badge text-bg-secondary me-1">@T.T("BusinessLocationsCoordinatesMissingBadge")</span>
                         }
                         <a asp-action="EditLocation"
                            asp-route-id="@item.Id"

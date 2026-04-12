@@ -549,7 +549,7 @@
                        hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.Id })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML">
-                        <i class="fa-solid fa-clipboard-list"></i> Review Override Audit
+                        <i class="fa-solid fa-clipboard-list"></i> @T.T("BusinessSetupReviewOverrideAuditAction")
                     </a>
                 </div>
             </div>
@@ -558,7 +558,7 @@
         <div class="row g-3 mb-4">
             <div class="col-lg-6">
                 <div class="card h-100">
-                    <div class="card-header">Members Requiring Attention</div>
+                    <div class="card-header">@T.T("BusinessSetupMembersRequiringAttentionTitle")</div>
                     <div class="card-body"
                          hx-get="@Url.Action("SetupMembersPreview", "Businesses", new { businessId = Model.Id })"
                          hx-trigger="load"
@@ -570,7 +570,7 @@
             </div>
             <div class="col-lg-6">
                 <div class="card h-100">
-                    <div class="card-header">Open Invitations</div>
+                    <div class="card-header">@T.T("OpenInvitations")</div>
                     <div class="card-body"
                          hx-get="@Url.Action("SetupInvitationsPreview", "Businesses", new { businessId = Model.Id })"
                          hx-trigger="load"
@@ -583,19 +583,19 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">Phase-1 Platform Settings Dependencies</div>
+            <div class="card-header">@T.T("BusinessSetupPlatformDependenciesTitle")</div>
             <div class="card-body">
                 <p class="text-muted mb-3">
-                    Some settings are still managed globally in phase 1. Business-specific provider configuration is planned, but not yet part of the domain model.
+                    @T.T("BusinessSetupPlatformDependenciesIntro")
                 </p>
                 <div class="alert alert-light border small">
-                    Operator rule: if a change affects every business or any provider secret, threshold, tax issuer default, or admin route, keep it in Site Settings. If it is brand, sender identity, support contact, or local defaults for one tenant, keep it in Business Setup.
+                    @T.T("BusinessSetupPlatformDependenciesRule")
                 </div>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="fw-semibold">Security and Mobile Access</div>
-                            <div class="small text-muted mt-2">JWT/mobile bootstrap remain platform-level in phase 1 and affect business app sign-in, refresh, and QR/session behavior.</div>
+                            <div class="fw-semibold">@T.T("BusinessSetupSecurityMobileAccessTitle")</div>
+                            <div class="small text-muted mt-2">@T.T("BusinessSetupSecurityMobileAccessNote")</div>
                             <div class="d-flex gap-2 mt-3 flex-wrap">
                                 <a asp-controller="SiteSettings"
                                    asp-action="Edit"
@@ -603,21 +603,21 @@
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-security" })"
                                    hx-target="#business-setup-shell"
-                                   hx-swap="outerHTML">Security</a>
+                                   hx-swap="outerHTML">@T.T("Security")</a>
                                 <a asp-controller="SiteSettings"
                                    asp-action="Edit"
                                    asp-fragment="site-settings-mobile"
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" })"
                                    hx-target="#business-setup-shell"
-                                   hx-swap="outerHTML">Mobile</a>
+                                   hx-swap="outerHTML">@T.T("Mobile")</a>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="fw-semibold">Communications</div>
-                            <div class="small text-muted mt-2">SMTP, SMS, WhatsApp, and admin alert routing are still global in phase 1 even when sender defaults are business-scoped.</div>
+                            <div class="fw-semibold">@T.T("Communications")</div>
+                            <div class="small text-muted mt-2">@T.T("BusinessSetupCommunicationsDependencyNote")</div>
                             <div class="d-flex gap-2 mt-3 flex-wrap">
                                 <a asp-controller="SiteSettings"
                                    asp-action="Edit"
@@ -646,20 +646,20 @@
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
                                    hx-target="#business-setup-shell"
-                                   hx-swap="outerHTML">Alerts</a>
+                                   hx-swap="outerHTML">@T.T("AdminAlerts")</a>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="fw-semibold">Payments and Shipping</div>
-                            <div class="small text-muted mt-2">Stripe-first and DHL-first provider settings still remain a planned phase-1 dependency and are not yet modeled as business-scoped setup categories.</div>
+                            <div class="fw-semibold">@T.T("BusinessSetupPaymentsShippingTitle")</div>
+                            <div class="small text-muted mt-2">@T.T("BusinessSetupPaymentsShippingNote")</div>
                             <a asp-controller="SiteSettings"
                                asp-action="Edit"
                                class="btn btn-sm btn-outline-secondary mt-3"
                                hx-get="@Url.Action("Edit", "SiteSettings")"
                                hx-target="#business-setup-shell"
-                               hx-swap="outerHTML">Open Site Settings</a>
+                               hx-swap="outerHTML">@T.T("OpenSiteSettingsAction")</a>
                         </div>
                     </div>
                 </div>
@@ -668,14 +668,14 @@
 
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">
-                <i class="fa-solid fa-floppy-disk"></i> Save Setup
+                <i class="fa-solid fa-floppy-disk"></i> @T.T("BusinessSetupSaveAction")
             </button>
             <a asp-action="Edit"
                asp-route-id="@Model.Id"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
                hx-target="#business-setup-shell"
-               hx-swap="outerHTML">Back to business</a>
+               hx-swap="outerHTML">@T.T("BusinessMembersBackToBusinessAction")</a>
         </div>
     </form>
 </div>

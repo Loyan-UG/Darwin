@@ -420,51 +420,51 @@
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Retried Delivery Chains</div>
+            <div class="text-muted small">@T.T("CommunicationRetriedDeliveryChainsLabel")</div>
             <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.PriorAttemptCount > 0)</div>
-            <div class="small text-muted mt-2">Recent audit rows that are part of a repeated delivery chain for the same flow and recipient.</div>
+            <div class="small text-muted mt-2">@T.T("CommunicationRetriedDeliveryChainsNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Prior Success Context</div>
+            <div class="text-muted small">@T.T("CommunicationPriorSuccessContextLabel")</div>
             <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.LastSuccessfulAttemptAtUtc.HasValue)</div>
-            <div class="small text-muted mt-2">Recent audit rows where the same flow/recipient already had a successful delivery before.</div>
+            <div class="small text-muted mt-2">@T.T("CommunicationPriorSuccessContextNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Repeated Failure Chains</div>
+            <div class="text-muted small">@T.T("CommunicationRepeatedFailureChainsLabel")</div>
             <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.PriorFailureCount > 0 && x.NeedsOperatorFollowUp)</div>
-            <div class="small text-muted mt-2">Recent follow-up rows that are not first-time failures and likely need deeper operator review.</div>
+            <div class="small text-muted mt-2">@T.T("CommunicationRepeatedFailureChainsNote")</div>
         </div>
     </div>
 </div>
 
 <div class="small text-muted mb-3">
-    Transactional email enabled: <strong>@Model.Summary.TransactionalEmailBusinessesCount</strong>
+    @T.T("CommunicationTransactionalEmailEnabledLabel"): <strong>@Model.Summary.TransactionalEmailBusinessesCount</strong>
     <span class="mx-2">|</span>
-    Marketing email enabled: <strong>@Model.Summary.MarketingEmailBusinessesCount</strong>
+    @T.T("CommunicationMarketingEmailEnabledLabel"): <strong>@Model.Summary.MarketingEmailBusinessesCount</strong>
     <span class="mx-2">|</span>
-    Operational alerts enabled: <strong>@Model.Summary.OperationalAlertBusinessesCount</strong>
+    @T.T("CommunicationOperationalAlertsEnabledLabel"): <strong>@Model.Summary.OperationalAlertBusinessesCount</strong>
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Current Transactional Communication Flows</div>
+    <div class="card-header">@T.T("CommunicationCurrentTransactionalFlowsTitle")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            This is a phase-1 visibility catalog. These flows are operational, but they still use direct transactional composition and do not yet provide a full template engine, delivery log, retry queue, or reusable Communication Core workflow.
+            @T.T("CommunicationCurrentTransactionalFlowsNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Flow</th>
-                        <th>Channel</th>
-                        <th>Trigger</th>
-                        <th>Delivery Path</th>
-                        <th>Current Status</th>
-                        <th>Next Step</th>
+                        <th>@T.T("Flow")</th>
+                        <th>@T.T("Channel")</th>
+                        <th>@T.T("Trigger")</th>
+                        <th>@T.T("CommunicationDeliveryPathColumn")</th>
+                        <th>@T.T("CurrentStatus")</th>
+                        <th>@T.T("NextStep")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -486,24 +486,24 @@
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Template Inventory and Operator Control</div>
+    <div class="card-header">@T.T("CommunicationTemplateInventoryTitle")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            This inventory shows what is actually configurable today. It does not pretend a reusable template engine exists where only hard-coded transactional composition exists.
+            @T.T("CommunicationTemplateInventoryNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Flow</th>
-                        <th>Template Surface</th>
-                        <th>Subject Source</th>
-                        <th>Body Source</th>
-                        <th>Current Template Preview</th>
-                        <th>Supported Tokens</th>
-                        <th>Operator Control</th>
-                        <th>Actions</th>
-                        <th>Next Step</th>
+                        <th>@T.T("Flow")</th>
+                        <th>@T.T("CommunicationTemplateSurfaceColumn")</th>
+                        <th>@T.T("CommunicationSubjectSourceColumn")</th>
+                        <th>@T.T("CommunicationBodySourceColumn")</th>
+                        <th>@T.T("CommunicationCurrentTemplatePreviewColumn")</th>
+                        <th>@T.T("SupportedTokens")</th>
+                        <th>@T.T("CommunicationOperatorControlColumn")</th>
+                        <th>@T.T("Actions")</th>
+                        <th>@T.T("NextStep")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -515,8 +515,8 @@
                         <td>@item.SubjectSource</td>
                         <td>@item.BodySource</td>
                         <td>
-                            <div class="small"><strong>Subject:</strong> @item.CurrentSubjectTemplate</div>
-                            <div class="small text-muted mt-1"><strong>Body:</strong> @item.CurrentBodyTemplate</div>
+                            <div class="small"><strong>@T.T("SubjectLabel"):</strong> @item.CurrentSubjectTemplate</div>
+                            <div class="small text-muted mt-1"><strong>@T.T("BodyLabel"):</strong> @item.CurrentBodyTemplate</div>
                         </td>
                         <td><code>@item.SupportedTokens</code></td>
                         <td>@item.OperatorControl</td>
@@ -531,7 +531,7 @@
                                        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Failed Audits</a>
+                                       hx-push-url="true">@T.T("FailedAuditsAction")</a>
                                 }
                                 @if (item.OperatorActionTarget == "Invitations")
                                 {
@@ -569,7 +569,7 @@
                                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Open Policy</a>
+                                       hx-push-url="true">@T.T("OpenPolicyAction")</a>
                                 }
                             </div>
                         </td>
@@ -583,19 +583,19 @@
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Capability Coverage and Retry Visibility</div>
+    <div class="card-header">@T.T("CommunicationCapabilityCoverageTitle")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            This matrix is intentionally operational, not aspirational. It shows what operators can already inspect today and where Communication Core work is still missing.
+            @T.T("CommunicationCapabilityCoverageNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Capability</th>
-                        <th>Current State</th>
-                        <th>Operator Visibility</th>
-                        <th>Next Step</th>
+                        <th>@T.T("Capability")</th>
+                        <th>@T.T("CurrentState")</th>
+                        <th>@T.T("CommunicationOperatorVisibilityColumn")</th>
+                        <th>@T.T("NextStep")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -615,21 +615,21 @@
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Channel Truth and Safe Live Actions</div>
+    <div class="card-header">@T.T("CommunicationChannelTruthTitle")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            This table defines what is actually live per channel. It is here to stop two common operator mistakes: assuming WhatsApp is only a future concept, or assuming SMS/WhatsApp are already a generic notification platform.
+            @T.T("CommunicationChannelTruthNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Channel</th>
-                        <th>Current State</th>
-                        <th>Live Flows</th>
-                        <th>Safe Operator Actions</th>
-                        <th>Risk Boundary</th>
-                        <th>Next Step</th>
+                        <th>@T.T("Channel")</th>
+                        <th>@T.T("CurrentState")</th>
+                        <th>@T.T("CommunicationLiveFlowsColumn")</th>
+                        <th>@T.T("CommunicationSafeOperatorActionsColumn")</th>
+                        <th>@T.T("CommunicationRiskBoundaryColumn")</th>
+                        <th>@T.T("NextStep")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -651,21 +651,21 @@
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Resend and Retry Policy Matrix</div>
+    <div class="card-header">@T.T("CommunicationResendPolicyTitle")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            Operators should use only the safe entry points listed here. Failed audit rows are for triage visibility; they are not a generic replay button.
+            @T.T("CommunicationResendPolicyNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Flow</th>
-                        <th>Current Safe Action</th>
-                        <th>Generic Retry Status</th>
-                        <th>Operator Entry Point</th>
-                        <th>Actions</th>
-                        <th>Escalation Rule</th>
+                        <th>@T.T("Flow")</th>
+                        <th>@T.T("CommunicationCurrentSafeActionColumn")</th>
+                        <th>@T.T("CommunicationGenericRetryStatusColumn")</th>
+                        <th>@T.T("CommunicationOperatorEntryPointColumn")</th>
+                        <th>@T.T("Actions")</th>
+                        <th>@T.T("CommunicationEscalationRuleColumn")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -687,7 +687,7 @@
                                        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">Failed Audits</a>
+                                       hx-push-url="true">@T.T("FailedAuditsAction")</a>
                                 }
                                 @if (item.OperatorActionTarget == "Invitations")
                                 {
@@ -731,28 +731,28 @@
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Recent Email Delivery Activity</div>
+    <div class="card-header">@T.T("CommunicationRecentEmailDeliveryActivityTitle")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            This is a phase-1 email audit trail. It captures delivery attempts and failures for current SMTP-based transactional emails, but it is not yet a full Communication Core delivery-log/search/retry system.
+            @T.T("CommunicationRecentEmailDeliveryActivityNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>When (UTC)</th>
-                        <th>Flow</th>
-                        <th>Recipient</th>
-                        <th>Subject</th>
-                        <th>Status</th>
-                        <th>Delivery Context</th>
-                        <th>Details</th>
+                        <th>@T.T("WhenUtc")</th>
+                        <th>@T.T("Flow")</th>
+                        <th>@T.T("Recipient")</th>
+                        <th>@T.T("SubjectLabel")</th>
+                        <th>@T.T("Status")</th>
+                        <th>@T.T("EmailAuditsDeliveryContextColumn")</th>
+                        <th>@T.T("Details")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.RecentEmailAudits.Count == 0)
                 {
-                    <tr><td colspan="7" class="text-center text-muted py-3">No email delivery activity has been recorded yet.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-3">@T.T("CommunicationNoEmailDeliveryActivity")</td></tr>
                 }
                 else
                 {
@@ -760,17 +760,17 @@
                     {
                         <tr>
                             <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</td>
                             <td>@item.RecipientEmail</td>
                             <td>@item.Subject</td>
                             <td>
                                 @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-success">Sent</span>
+                                    <span class="badge text-bg-success">@T.T("Sent")</span>
                                 }
                                 else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-danger">Failed</span>
+                                    <span class="badge text-bg-danger">@T.T("Failed")</span>
                                 }
                                 else
                                 {
@@ -780,36 +780,36 @@
                             <td>
                                 @if (string.Equals(item.Severity, "High", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-danger">High</span>
+                                    <span class="badge text-bg-danger">@T.T("High")</span>
                                 }
                                 else if (string.Equals(item.Severity, "Medium", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-warning">Medium</span>
+                                    <span class="badge text-bg-warning">@T.T("Medium")</span>
                                 }
                                 else if (string.Equals(item.Severity, "Watch", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-secondary">Watch</span>
+                                    <span class="badge text-bg-secondary">@T.T("Watch")</span>
                                 }
                                 else if (string.Equals(item.Severity, "Slow", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-info">Slow</span>
+                                    <span class="badge text-bg-info">@T.T("Slow")</span>
                                 }
                                 else
                                 {
-                                    <span class="badge text-bg-light">Normal</span>
+                                    <span class="badge text-bg-light">@T.T("Normal")</span>
                                 }
-                                <div class="small text-muted mt-1">Open for @item.AttemptAgeMinutes min</div>
+                                <div class="small text-muted mt-1">@string.Format(T.T("CommunicationOpenForMinutes"), item.AttemptAgeMinutes)</div>
                                 @if (item.CompletionLatencySeconds.HasValue)
                                 {
-                                    <div class="small text-muted">Latency @item.CompletionLatencySeconds.Value s</div>
+                                    <div class="small text-muted">@string.Format(T.T("CommunicationLatencySeconds"), item.CompletionLatencySeconds.Value)</div>
                                 }
                                 @if (item.PriorAttemptCount > 0)
                                 {
-                                    <div class="small text-muted">Prior attempts @item.PriorAttemptCount</div>
+                                    <div class="small text-muted">@string.Format(T.T("CommunicationPriorAttempts"), item.PriorAttemptCount)</div>
                                 }
                                 @if (item.LastSuccessfulAttemptAtUtc.HasValue)
                                 {
-                                    <div class="small text-muted">Last success @item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                    <div class="small text-muted">@string.Format(T.T("CommunicationLastSuccessAt"), item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
                                 }
                             </td>
                             <td>
@@ -819,11 +819,11 @@
                                 }
                                 else if (item.CompletedAtUtc.HasValue)
                                 {
-                                    <div class="small text-muted">Completed @item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                    <div class="small text-muted">@string.Format(T.T("CommunicationCompletedAt"), item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
                                 }
                                 else
                                 {
-                                    <div class="small text-muted">Attempt recorded</div>
+                                    <div class="small text-muted">@T.T("CommunicationAttemptRecorded")</div>
                                 }
                             </td>
                         </tr>
@@ -837,7 +837,7 @@
                hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
                hx-target="#business-communications-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">Open Full Email Audit Log</a>
+               hx-push-url="true">@T.T("BusinessCommunicationOpenFullEmailAuditLogAction")</a>
         </div>
     </div>
 </div>
@@ -845,23 +845,23 @@
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Follow-up Backlog</div>
+            <div class="text-muted small">@T.T("BusinessCommunicationFollowUpBacklogLabel")</div>
             <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</div>
-            <div class="small text-muted mt-2">Recent failed or stale-pending rows that still need operator follow-up.</div>
+            <div class="small text-muted mt-2">@T.T("BusinessCommunicationFollowUpBacklogNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">High Severity Rows</div>
+            <div class="text-muted small">@T.T("BusinessCommunicationHighSeverityRowsLabel")</div>
             <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "High", StringComparison.OrdinalIgnoreCase))</div>
-            <div class="small text-muted mt-2">Business-linked failures and stale pending rows that deserve first-pass triage.</div>
+            <div class="small text-muted mt-2">@T.T("BusinessCommunicationHighSeverityRowsNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Slow Deliveries</div>
+            <div class="text-muted small">@T.T("BusinessCommunicationSlowDeliveriesLabel")</div>
             <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "Slow", StringComparison.OrdinalIgnoreCase))</div>
-            <div class="small text-muted mt-2">Completed deliveries that took longer than the current operator threshold.</div>
+            <div class="small text-muted mt-2">@T.T("BusinessCommunicationSlowDeliveriesNote")</div>
         </div>
     </div>
 </div>
@@ -871,7 +871,7 @@
       hx-target="#business-communications-workspace-shell"
       hx-swap="outerHTML">
     <div class="col-md-4">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business, legal name, support email, or sender" />
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessCommunicationSearchPlaceholder")" />
     </div>
     <div class="col-md-3">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
@@ -887,16 +887,16 @@
     <div class="col-auto">
         <div class="form-check mt-2">
             <input type="checkbox" name="setupOnly" value="true" class="form-check-input" id="setupOnly" checked="@(Model.SetupOnly ? "checked" : null)" />
-            <label class="form-check-label" for="setupOnly">Needs setup only</label>
+            <label class="form-check-label" for="setupOnly">@T.T("BusinessCommunicationNeedsSetupOnlyLabel")</label>
         </div>
     </div>
     <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")</button>
         <a asp-action="Index" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Reset</a>
+           hx-push-url="true">@T.T("Reset")</a>
     </div>
 </form>
 
@@ -904,18 +904,18 @@
     <table class="table table-sm table-hover align-middle">
         <thead>
             <tr>
-                <th>Business</th>
-                <th>Support Email</th>
-                <th>Sender Identity</th>
-                <th>Enabled Policies</th>
-                <th>Gaps</th>
-                <th class="text-end" style="width:220px">Actions</th>
+                <th>@T.T("Business")</th>
+                <th>@T.T("BusinessCommunicationSupportEmailColumn")</th>
+                <th>@T.T("BusinessCommunicationSenderIdentityColumn")</th>
+                <th>@T.T("BusinessCommunicationEnabledPoliciesColumn")</th>
+                <th>@T.T("BusinessCommunicationGapsColumn")</th>
+                <th class="text-end" style="width:220px">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted py-4">No businesses matched the communication filters.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-4">@T.T("BusinessCommunicationEmptyState")</td></tr>
         }
         else
         {

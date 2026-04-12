@@ -3,14 +3,14 @@
 
 @if (Model.OpenCount == 0)
 {
-    <div class="text-success">No pending or expired invitations require attention right now.</div>
+    <div class="text-success">@T.T("BusinessSetupInvitationsPreviewNoAttention")</div>
     <div class="d-flex gap-2 flex-wrap mt-3">
         <a asp-action="Invitations"
            asp-route-businessId="@Model.BusinessId"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
            hx-target="#business-setup-shell"
-           hx-swap="outerHTML">Open Invitations</a>
+           hx-swap="outerHTML">@T.T("BusinessSetupOpenInvitationsAction")</a>
         <a asp-controller="MobileOperations"
            asp-action="Index"
            class="btn btn-sm btn-outline-secondary"
@@ -23,14 +23,14 @@
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="fw-semibold">@Model.OpenCount open invitation(s)</div>
+        <div class="fw-semibold">@string.Format(T.T("BusinessSetupInvitationsPreviewOpenCount"), Model.OpenCount)</div>
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="Invitations"
                asp-route-businessId="@Model.BusinessId"
                class="btn btn-sm btn-outline-secondary"
                hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
                hx-target="#business-setup-shell"
-               hx-swap="outerHTML">Open Invitations</a>
+               hx-swap="outerHTML">@T.T("BusinessSetupOpenInvitationsAction")</a>
             <a asp-controller="MobileOperations"
                asp-action="Index"
                class="btn btn-sm btn-outline-secondary"
@@ -45,9 +45,9 @@ else
         <table class="table table-sm align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Role</th>
+                    <th>@T.T("Email")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("Role")</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,16 +56,16 @@ else
                 <tr>
                     <td>
                         <div class="fw-semibold">@item.Email</div>
-                        <div class="small text-muted">Expires @item.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</div>
+                        <div class="small text-muted">@string.Format(T.T("BusinessSetupInvitationsPreviewExpiresAt"), item.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm"))</div>
                     </td>
                     <td>
                         @if (item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Pending)
                         {
-                            <span class="badge text-bg-primary">Pending</span>
+                            <span class="badge text-bg-primary">@T.T("Pending")</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-warning">Expired</span>
+                            <span class="badge text-bg-warning">@T.T("Expired")</span>
                         }
                     </td>
                     <td>@item.Role</td>

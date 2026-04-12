@@ -2,14 +2,14 @@
 @inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Business Members";
+    ViewData["Title"] = T.T("BusinessMembersTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
 }
 
 <div id="business-members-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1"><i class="fa-solid fa-user-group me-2"></i>Business Members</h1>
+        <h1 class="mb-1"><i class="fa-solid fa-user-group me-2"></i>@T.T("BusinessMembersTitle")</h1>
         <p class="text-muted mb-0">@Model.Business.Name</p>
     </div>
     <div class="d-flex gap-2">
@@ -25,7 +25,7 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-members-workspace-shell"
-           hx-swap="outerHTML">Invitations</a>
+           hx-swap="outerHTML">@T.T("Invitations")</a>
         @if (isFullAdmin)
         {
             <a asp-action="Edit"
@@ -33,26 +33,26 @@
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
                hx-target="#business-members-workspace-shell"
-               hx-swap="outerHTML">Back to business</a>
+               hx-swap="outerHTML">@T.T("BusinessMembersBackToBusinessAction")</a>
             <a asp-action="Setup"
                asp-route-id="@Model.Business.Id"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
                hx-target="#business-members-workspace-shell"
-               hx-swap="outerHTML">Setup</a>
+               hx-swap="outerHTML">@T.T("Setup")</a>
             <a asp-action="OwnerOverrideAudits"
                asp-route-businessId="@Model.Business.Id"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.Business.Id })"
                hx-target="#business-members-workspace-shell"
-               hx-swap="outerHTML">Owner override audit</a>
-            <a asp-action="CreateMember"
+               hx-swap="outerHTML">@T.T("BusinessMembersOwnerOverrideAuditAction")</a>
+           <a asp-action="CreateMember"
                asp-route-businessId="@Model.Business.Id"
                class="btn btn-primary"
                hx-get="@Url.Action("CreateMember", "Businesses", new { businessId = Model.Business.Id })"
                hx-target="#business-members-workspace-shell"
                hx-swap="outerHTML">
-                <i class="fa-solid fa-plus"></i> Assign member
+                <i class="fa-solid fa-plus"></i> @T.T("BusinessMembersAssignMemberAction")
             </a>
         }
     </div>
@@ -61,14 +61,14 @@
 @if (Model.Business.ActiveOwnerCount == 0)
 {
     <div class="alert alert-warning">
-        This business currently has no active owner. Assign one before go-live.
+        @T.T("BusinessMembersNoActiveOwnerWarning")
     </div>
 }
 
 @if (Model.Items.Exists(x => !x.EmailConfirmed))
 {
     <div class="alert alert-info">
-        Some members are still pending activation. Use the inline support actions below to resend activation or confirm the email manually when support policy allows it.
+        @T.T("BusinessMembersPendingActivationNote")
         <div class="d-flex gap-2 flex-wrap mt-3">
             <a asp-controller="Users"
                asp-action="Index"
@@ -96,19 +96,19 @@
       hx-swap="outerHTML">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by user name, email or role" />
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessMembersSearchPlaceholder")" />
     </div>
     <div class="col-md-3">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")</button>
         <a asp-action="Members"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-members-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML">@T.T("Reset")</a>
     </div>
 </form>
 
@@ -116,18 +116,18 @@
     <table class="table table-sm table-hover align-middle">
         <thead>
             <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Role</th>
-                <th class="text-center">Active</th>
-                <th class="text-end" style="width:440px">Actions</th>
+                <th>@T.T("User")</th>
+                <th>@T.T("Email")</th>
+                <th>@T.T("Status")</th>
+                <th>@T.T("Role")</th>
+                <th class="text-center">@T.T("Active")</th>
+                <th class="text-end" style="width:440px">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted py-4">No members assigned.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-4">@T.T("BusinessMembersEmptyState")</td></tr>
         }
         else
         {
@@ -139,27 +139,27 @@
                     <td>
                         @if (!item.EmailConfirmed)
                         {
-                            <span class="badge text-bg-warning">Pending activation</span>
+                            <span class="badge text-bg-warning">@T.T("PendingActivation")</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-success">Confirmed</span>
+                            <span class="badge text-bg-success">@T.T("Confirmed")</span>
                         }
 
                         @if (item.LockoutEndUtc.HasValue && item.LockoutEndUtc.Value > DateTime.UtcNow)
                         {
-                            <span class="badge text-bg-danger ms-1">Locked</span>
+                            <span class="badge text-bg-danger ms-1">@T.T("Locked")</span>
                         }
                     </td>
                     <td>@item.Role</td>
                     <td class="text-center">
                         @if (item.IsActive)
                         {
-                            <span class="badge text-bg-success">Yes</span>
+                            <span class="badge text-bg-success">@T.T("Yes")</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">No</span>
+                            <span class="badge text-bg-secondary">@T.T("No")</span>
                         }
                     </td>
                     <td class="text-end">
@@ -170,7 +170,7 @@
                                hx-get="@Url.Action("StaffAccessBadge", "Businesses", new { id = item.Id })"
                                hx-target="#business-members-workspace-shell"
                                hx-swap="outerHTML">
-                                <i class="fa-solid fa-qrcode"></i> Badge
+                                <i class="fa-solid fa-qrcode"></i> @T.T("BusinessMembersBadgeAction")
                             </a>
                             @if (isFullAdmin)
                             {
@@ -189,7 +189,7 @@
                                    hx-get="@Url.Action("Edit", "Users", new { id = item.UserId })"
                                    hx-target="#business-members-workspace-shell"
                                    hx-swap="outerHTML">
-                                    <i class="fa-solid fa-user"></i> Open User
+                                    <i class="fa-solid fa-user"></i> @T.T("OpenUserAction")
                                 </a>
                                 <a asp-controller="MobileOperations"
                                    asp-action="Index"
@@ -240,7 +240,7 @@
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="businessId" value="@item.BusinessId" />
                                     <button type="submit" class="btn btn-sm btn-outline-primary">
-                                        <i class="fa-solid fa-paper-plane"></i> Send activation
+                                    <i class="fa-solid fa-paper-plane"></i> @T.T("BusinessMemberSendActivationAction")
                                     </button>
                                 </form>
                                 <form asp-action="ConfirmMemberEmail"
@@ -253,7 +253,7 @@
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="businessId" value="@item.BusinessId" />
                                     <button type="submit" class="btn btn-sm btn-outline-success">
-                                        <i class="fa-solid fa-check"></i> Confirm email
+                                        <i class="fa-solid fa-check"></i> @T.T("BusinessMemberConfirmEmailAction")
                                     </button>
                                 </form>
                             }
@@ -267,7 +267,7 @@
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="businessId" value="@item.BusinessId" />
                                 <button type="submit" class="btn btn-sm btn-outline-warning">
-                                    <i class="fa-solid fa-key"></i> Send reset
+                                    <i class="fa-solid fa-key"></i> @T.T("BusinessMemberSendResetAction")
                                 </button>
                             </form>
                             @if (item.LockoutEndUtc.HasValue && item.LockoutEndUtc.Value > DateTime.UtcNow)
@@ -282,7 +282,7 @@
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="businessId" value="@item.BusinessId" />
                                     <button type="submit" class="btn btn-sm btn-outline-success">
-                                        <i class="fa-solid fa-lock-open"></i> Unlock
+                                        <i class="fa-solid fa-lock-open"></i> @T.T("UsersUnlockAction")
                                     </button>
                                 </form>
                             }
@@ -298,7 +298,7 @@
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="businessId" value="@item.BusinessId" />
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="fa-solid fa-lock"></i> Lock
+                                        <i class="fa-solid fa-lock"></i> @T.T("UsersLockAction")
                                     </button>
                                 </form>
                             }

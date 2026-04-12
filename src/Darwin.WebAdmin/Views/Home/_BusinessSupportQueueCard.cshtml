@@ -1,11 +1,12 @@
 @model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="business-support-queue-card" class="card h-100 shadow-sm border-warning-subtle">
     <div class="card-header bg-white">
         <div class="d-flex align-items-center justify-content-between">
             <div>
-                <div class="fw-semibold">Business Support Queue</div>
-                <div class="small text-muted">Onboarding, activation, and invitation follow-up.</div>
+                <div class="fw-semibold">@T.T("BusinessSupportQueueTitle")</div>
+                <div class="small text-muted">@T.T("BusinessSupportQueueIntro")</div>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <button type="button"
@@ -13,9 +14,9 @@
                         hx-get="@Url.Action("BusinessSupportQueueFragment", "Home", new { businessId = Model.SelectedBusinessId })"
                         hx-target="#business-support-queue-card"
                         hx-swap="outerHTML">
-                    Refresh
+                    @T.T("Refresh")
                 </button>
-                <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary">Open Queue</a>
+                <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary">@T.T("BusinessSupportOpenQueueAction")</a>
             </div>
         </div>
     </div>
@@ -23,54 +24,54 @@
         <div class="row g-3">
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Needs Attention</div>
+                    <div class="text-muted small">@T.T("NeedsAttention")</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessSupport.AttentionBusinessCount</div>
                 </div>
             </div>
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Pending Approval</div>
+                    <div class="text-muted small">@T.T("PendingApproval")</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessSupport.PendingApprovalBusinessCount</div>
                 </div>
             </div>
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Open Invitations</div>
+                    <div class="text-muted small">@T.T("OpenInvitations")</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessSupport.OpenInvitationCount</div>
                 </div>
             </div>
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">Pending Activation</div>
+                    <div class="text-muted small">@T.T("PendingActivation")</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessSupport.PendingActivationMemberCount</div>
                 </div>
             </div>
         </div>
 
         <div class="small text-muted mt-3">
-            Suspended businesses: <strong>@Model.BusinessSupport.SuspendedBusinessCount</strong>
+            @T.T("BusinessSupportSuspendedBusinessesLabel"): <strong>@Model.BusinessSupport.SuspendedBusinessCount</strong>
             <span class="mx-2">|</span>
-            Businesses missing an owner: <strong>@Model.BusinessSupport.MissingOwnerBusinessCount</strong>
+            @T.T("BusinessSupportMissingOwnerBusinessesLabel"): <strong>@Model.BusinessSupport.MissingOwnerBusinessCount</strong>
             <span class="mx-2">|</span>
-            Locked members: <strong>@Model.BusinessSupport.LockedMemberCount</strong>
+            @T.T("BusinessSupportLockedMembersLabel"): <strong>@Model.BusinessSupport.LockedMemberCount</strong>
         </div>
 
         @if (Model.SelectedBusinessId.HasValue)
         {
             <div class="border rounded p-3 mt-3">
-                <div class="text-muted small">Current Business Support Snapshot</div>
+                <div class="text-muted small">@T.T("BusinessSupportCurrentSnapshotLabel")</div>
                 <div class="fw-semibold mt-1">@Model.SelectedBusinessLabel</div>
                 <div class="small text-muted mt-2">
-                    Open invitations: <strong>@Model.BusinessSupport.SelectedBusinessOpenInvitationCount</strong>
+                    @T.T("BusinessSupportOpenInvitationsLabel"): <strong>@Model.BusinessSupport.SelectedBusinessOpenInvitationCount</strong>
                     <span class="mx-2">|</span>
-                    Pending activation: <strong>@Model.BusinessSupport.SelectedBusinessPendingActivationCount</strong>
+                    @T.T("BusinessSupportPendingActivationLabel"): <strong>@Model.BusinessSupport.SelectedBusinessPendingActivationCount</strong>
                     <span class="mx-2">|</span>
-                    Locked members: <strong>@Model.BusinessSupport.SelectedBusinessLockedMemberCount</strong>
+                    @T.T("BusinessSupportLockedMembersLabel"): <strong>@Model.BusinessSupport.SelectedBusinessLockedMemberCount</strong>
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="PendingActivation" class="btn btn-sm btn-outline-primary">Open Pending Activation</a>
-                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="Locked" class="btn btn-sm btn-outline-primary">Open Locked Members</a>
-                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="Open" class="btn btn-sm btn-outline-primary">Open Invitations</a>
+                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="PendingActivation" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenPendingActivationAction")</a>
+                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="Locked" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenLockedMembersAction")</a>
+                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="Open" class="btn btn-sm btn-outline-primary">@T.T("BusinessSetupOpenInvitationsAction")</a>
                 </div>
             </div>
         }
