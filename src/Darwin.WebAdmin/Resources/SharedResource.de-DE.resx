@@ -369,6 +369,204 @@
   <data name="UsersPlaybookMobileLinkedFollowUp" xml:space="preserve">
     <value>Pruefe Geraeteflotte und Loyalty-Aktivitaet gegen, bevor du annimmst, dass das Benutzerprofil selbst falsch ist.</value>
   </data>
+  <data name="OpenUserAction" xml:space="preserve">
+    <value>Benutzer öffnen</value>
+  </data>
+  <data name="EditMemberAction" xml:space="preserve">
+    <value>Mitglied bearbeiten</value>
+  </data>
+  <data name="BackToMembersAction" xml:space="preserve">
+    <value>Zurück zu Mitgliedern</value>
+  </data>
+  <data name="RefreshBadgeAction" xml:space="preserve">
+    <value>Badge aktualisieren</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeTitle" xml:space="preserve">
+    <value>Mitarbeiterzugangs-Badge</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeIntro" xml:space="preserve">
+    <value>Dieser QR-Code spiegelt das Phase-1-Verhalten des Mitarbeiter-Badges in Darwin.Mobile.Business wider. Er ist nur eine kurzlebige Support-Vorschau; serverseitige Autorisierung bleibt die Wahrheitsquelle.</value>
+  </data>
+  <data name="BusinessStaffAccessBadgePreviewTitle" xml:space="preserve">
+    <value>Badge-Vorschau</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeQrAlt" xml:space="preserve">
+    <value>QR-Code für Mitarbeiterzugang</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeMemberRoleLabel" xml:space="preserve">
+    <value>Mitgliedsrolle</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeContextTitle" xml:space="preserve">
+    <value>Badge-Kontext</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeIssuedAtLabel" xml:space="preserve">
+    <value>Ausgestellt am</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeExpiresAtLabel" xml:space="preserve">
+    <value>Läuft ab am</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeEmailStateLabel" xml:space="preserve">
+    <value>E-Mail-Status</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeAccessStateLabel" xml:space="preserve">
+    <value>Zugriffsstatus</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeConfirmed" xml:space="preserve">
+    <value>Bestätigt</value>
+  </data>
+  <data name="BusinessStaffAccessBadgePendingActivation" xml:space="preserve">
+    <value>Aktivierung ausstehend</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeMembershipActive" xml:space="preserve">
+    <value>Mitgliedschaft aktiv</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeMembershipInactive" xml:space="preserve">
+    <value>Mitgliedschaft inaktiv</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeConstraintWarning" xml:space="preserve">
+    <value>Dieses Badge kann zu Supportzwecken angezeigt werden, aber das Mitglied hat weiterhin eine Konto- oder Mitgliedschaftseinschränkung, die echte Geschäftsoperationen blockieren kann.</value>
+  </data>
+  <data name="BusinessStaffAccessBadgePayloadTitle" xml:space="preserve">
+    <value>Nutzlast</value>
+  </data>
+  <data name="BusinessStaffAccessBadgePayloadNote" xml:space="preserve">
+    <value>Nur für Diagnostik oder internen Support verwenden. Nonce und Ablaufzeit ändern sich bei jeder Aktualisierung.</value>
+  </data>
+  <data name="AssignBusinessMemberTitle" xml:space="preserve">
+    <value>Business-Mitglied zuweisen</value>
+  </data>
+  <data name="EditBusinessMemberTitle" xml:space="preserve">
+    <value>Business-Mitglied bearbeiten</value>
+  </data>
+  <data name="BusinessMemberLastActiveOwnerWarning" xml:space="preserve">
+    <value>Dieses Mitglied ist aktuell der letzte aktive Eigentümer des Businesses. Herabstufung, Deaktivierung oder Entfernen dieser Mitgliedschaft erfordert einen FullAdmin-Override mit Pflichtbegründung. Der Override wird revisionssicher protokolliert.</value>
+  </data>
+  <data name="BusinessMemberSupportActionsTitle" xml:space="preserve">
+    <value>Mitglieds-Supportaktionen</value>
+  </data>
+  <data name="BusinessMemberEmailConfirmedBadge" xml:space="preserve">
+    <value>E-Mail bestätigt</value>
+  </data>
+  <data name="BusinessMemberUnlockedBadge" xml:space="preserve">
+    <value>Entsperrt</value>
+  </data>
+  <data name="BusinessMemberSendActivationAction" xml:space="preserve">
+    <value>Aktivierung senden</value>
+  </data>
+  <data name="BusinessMemberConfirmEmailAction" xml:space="preserve">
+    <value>E-Mail bestätigen</value>
+  </data>
+  <data name="BusinessMemberSendResetAction" xml:space="preserve">
+    <value>Reset senden</value>
+  </data>
+  <data name="BusinessMemberControlledOwnerOverrideTitle" xml:space="preserve">
+    <value>Kontrollierter Eigentümer-Override</value>
+  </data>
+  <data name="BusinessMemberControlledOwnerOverrideNote" xml:space="preserve">
+    <value>Nur verwenden, wenn der Support den letzten aktiven Eigentümer entfernen muss und kein sichererer Wiederherstellungspfad mehr besteht.</value>
+  </data>
+  <data name="BusinessMemberOverrideReasonLabel" xml:space="preserve">
+    <value>Override-Begründung</value>
+  </data>
+  <data name="BusinessMemberOverrideReasonPlaceholder" xml:space="preserve">
+    <value>Erläutere, warum dieser Override für den letzten Eigentümer notwendig ist.</value>
+  </data>
+  <data name="BusinessMemberForceRemoveLastOwnerAction" xml:space="preserve">
+    <value>Letzten aktiven Eigentümer zwangsweise entfernen</value>
+  </data>
+  <data name="BusinessMemberAssignmentHelp" xml:space="preserve">
+    <value>Hier einen bestehenden Plattformbenutzer zuweisen. Wenn Eigentümer oder Mitarbeiter noch kein Konto haben, stattdessen den Einladungs-Workflow für Businesses verwenden.</value>
+  </data>
+  <data name="BusinessMemberIsActiveLabel" xml:space="preserve">
+    <value>Mitglied ist aktiv</value>
+  </data>
+  <data name="BusinessMemberAllowLastOwnerOverrideLabel" xml:space="preserve">
+    <value>Kontrollierten Override für die Regel zum letzten aktiven Eigentümer erlauben</value>
+  </data>
+  <data name="BusinessMemberLastOwnerOverrideRequiredPlaceholder" xml:space="preserve">
+    <value>Erforderlich, wenn der letzte aktive Eigentümer geändert wird.</value>
+  </data>
+  <data name="EditUserTitle" xml:space="preserve">
+    <value>Benutzer bearbeiten</value>
+  </data>
+  <data name="CreateUserTitle" xml:space="preserve">
+    <value>Benutzer anlegen</value>
+  </data>
+  <data name="CreateAction" xml:space="preserve">
+    <value>Anlegen</value>
+  </data>
+  <data name="UserAdministrativeActionsTitle" xml:space="preserve">
+    <value>Administrative Aktionen</value>
+  </data>
+  <data name="UserEmailConfirmedBadge" xml:space="preserve">
+    <value>E-Mail bestätigt</value>
+  </data>
+  <data name="UserEmailUnconfirmedBadge" xml:space="preserve">
+    <value>E-Mail unbestätigt</value>
+  </data>
+  <data name="UserUnlockedBadge" xml:space="preserve">
+    <value>Entsperrt</value>
+  </data>
+  <data name="UserLockoutEndsLabel" xml:space="preserve">
+    <value>Sperre endet</value>
+  </data>
+  <data name="ManageRolesAction" xml:space="preserve">
+    <value>Rollen verwalten</value>
+  </data>
+  <data name="UserSendActivationEmailAction" xml:space="preserve">
+    <value>Aktivierungs-E-Mail senden</value>
+  </data>
+  <data name="UserSendResetEmailAction" xml:space="preserve">
+    <value>Reset-E-Mail senden</value>
+  </data>
+  <data name="UserUnlockAccountAction" xml:space="preserve">
+    <value>Konto entsperren</value>
+  </data>
+  <data name="UserLockAccountAction" xml:space="preserve">
+    <value>Konto sperren</value>
+  </data>
+  <data name="AddressesTitle" xml:space="preserve">
+    <value>Adressen</value>
+  </data>
+  <data name="UserLocaleHelp" xml:space="preserve">
+    <value>UI-Sprache/Kultur auswählen</value>
+  </data>
+  <data name="UserCurrencyHelp" xml:space="preserve">
+    <value>Standardwährung auswählen</value>
+  </data>
+  <data name="UserTimezoneHelp" xml:space="preserve">
+    <value>Standardzeitzone auswählen</value>
+  </data>
+  <data name="UserChangeEmailWarning" xml:space="preserve">
+    <value>Das Ändern der E-Mail erfordert eine Bestätigung. Der Benutzer kann sich erst wieder anmelden, wenn die neue E-Mail bestätigt wurde.</value>
+  </data>
+  <data name="CurrentEmailLabel" xml:space="preserve">
+    <value>Aktuelle E-Mail</value>
+  </data>
+  <data name="CurrentEmailReadonlyHelp" xml:space="preserve">
+    <value>Dies ist die aktuelle Login-E-Mail und schreibgeschützt.</value>
+  </data>
+  <data name="NewEmailHelp" xml:space="preserve">
+    <value>Die neue Login-E-Mail-Adresse für diesen Benutzer.</value>
+  </data>
+  <data name="EditUserRolesTitle" xml:space="preserve">
+    <value>Benutzerrollen bearbeiten</value>
+  </data>
+  <data name="AssignRolesToUserTitle" xml:space="preserve">
+    <value>Rollen dem Benutzer zuweisen</value>
+  </data>
+  <data name="DelegatedSupportRoleTitle" xml:space="preserve">
+    <value>Delegierte Supportrolle:</value>
+  </data>
+  <data name="DelegatedSupportRoleNote" xml:space="preserve">
+    <value>die eingebaute Rolle business-support-admins ist nur für Einladungs- und Business-Member-Support gedacht. Freigabe, Sperrung, Owner-Overrides und Änderungen am Business-Lifecycle bleiben FullAdmin-only.</value>
+  </data>
+  <data name="DelegatedSupportBadge" xml:space="preserve">
+    <value>Delegierter Support</value>
+  </data>
+  <data name="NoRolesFound" xml:space="preserve">
+    <value>Keine Rollen gefunden.</value>
+  </data>
   <data name="MobilePlaybookMemberLifecycleTitle" xml:space="preserve">
     <value>Mitglieds-Lifecycle-Nachverfolgung</value>
   </data>
@@ -4335,6 +4533,93 @@
   <data name="AdminDashboardIntro" xml:space="preserve">
     <value>Nutze diese Uebersicht als operativen Startpunkt fuer das Backoffice.</value>
   </data>
+  <data name="DashboardProductsLabel" xml:space="preserve">
+    <value>Produkte</value>
+  </data>
+  <data name="DashboardPagesLabel" xml:space="preserve">
+    <value>Seiten</value>
+  </data>
+  <data name="DashboardOrdersLabel" xml:space="preserve">
+    <value>Bestellungen</value>
+  </data>
+  <data name="DashboardUsersLabel" xml:space="preserve">
+    <value>Benutzer</value>
+  </data>
+  <data name="DashboardOpenCatalogAction" xml:space="preserve">
+    <value>Katalog oeffnen</value>
+  </data>
+  <data name="DashboardOpenCmsAction" xml:space="preserve">
+    <value>CMS oeffnen</value>
+  </data>
+  <data name="DashboardOpenOrdersAction" xml:space="preserve">
+    <value>Bestellungen oeffnen</value>
+  </data>
+  <data name="DashboardOpenIdentityAction" xml:space="preserve">
+    <value>Identity oeffnen</value>
+  </data>
+  <data name="DashboardCrmTitle" xml:space="preserve">
+    <value>CRM-Snapshot</value>
+  </data>
+  <data name="DashboardCrmIntro" xml:space="preserve">
+    <value>Kunden, Leads und Pipeline-Gesundheit.</value>
+  </data>
+  <data name="DashboardOpenCrmAction" xml:space="preserve">
+    <value>CRM oeffnen</value>
+  </data>
+  <data name="DashboardCustomersLabel" xml:space="preserve">
+    <value>Kunden</value>
+  </data>
+  <data name="DashboardLeadsLabel" xml:space="preserve">
+    <value>Leads</value>
+  </data>
+  <data name="DashboardQualifiedLeadsLabel" xml:space="preserve">
+    <value>Qualifizierte Leads</value>
+  </data>
+  <data name="DashboardOpenOpportunitiesLabel" xml:space="preserve">
+    <value>Offene Opportunitaeten</value>
+  </data>
+  <data name="DashboardSegmentsLabel" xml:space="preserve">
+    <value>Segmente</value>
+  </data>
+  <data name="DashboardInteractions7dLabel" xml:space="preserve">
+    <value>Interaktionen (7 T)</value>
+  </data>
+  <data name="DashboardOpenPipelineLabel" xml:space="preserve">
+    <value>Offene Pipeline</value>
+  </data>
+  <data name="DashboardBusinessOperationsTitle" xml:space="preserve">
+    <value>Business-Operations</value>
+  </data>
+  <data name="DashboardCurrentBusinessLabel" xml:space="preserve">
+    <value>Aktuelles Business: {0}</value>
+  </data>
+  <data name="DashboardNoBusinessOperationsIntro" xml:space="preserve">
+    <value>Noch kein aktives Business verfuegbar.</value>
+  </data>
+  <data name="DashboardPaymentsLabel" xml:space="preserve">
+    <value>Zahlungen</value>
+  </data>
+  <data name="DashboardWarehousesLabel" xml:space="preserve">
+    <value>Lager</value>
+  </data>
+  <data name="DashboardSuppliersLabel" xml:space="preserve">
+    <value>Lieferanten</value>
+  </data>
+  <data name="DashboardPurchaseOrdersLabel" xml:space="preserve">
+    <value>Bestellungen an Lieferanten</value>
+  </data>
+  <data name="DashboardOpenPaymentsAction" xml:space="preserve">
+    <value>Zahlungen oeffnen</value>
+  </data>
+  <data name="DashboardOpenInventoryAction" xml:space="preserve">
+    <value>Inventar oeffnen</value>
+  </data>
+  <data name="DashboardOpenPurchaseOrdersAction" xml:space="preserve">
+    <value>Bestellungen an Lieferanten oeffnen</value>
+  </data>
+  <data name="DashboardBusinessOperationsEmptyState" xml:space="preserve">
+    <value>Lege mindestens ein aktives Business an, um Inventar- und Abrechnungszusammenfassungen freizuschalten.</value>
+  </data>
   <data name="BusinessContext" xml:space="preserve">
     <value>Business-Kontext</value>
   </data>
@@ -4365,6 +4650,9 @@
   <data name="OpenMobileOps" xml:space="preserve">
     <value>Mobile Ops oeffnen</value>
   </data>
+  <data name="DashboardOpenMobileLinkedUsersAction" xml:space="preserve">
+    <value>Mobil verknuepfte Benutzer oeffnen</value>
+  </data>
   <data name="StaleDevices" xml:space="preserve">
     <value>Veraltete Geraete</value>
   </data>
@@ -4388,6 +4676,174 @@
   </data>
   <data name="MobileOperationsSnapshotNote" xml:space="preserve">
     <value>Dieser Workspace ist ein Operations-Snapshot. Mitgliedsaktivierung, Einladungen, Loyalty-Remediation und Kommunikationstriage laufen weiterhin ueber Businesses, Loyalty, Business Communications und Site Settings.</value>
+  </data>
+  <data name="ChannelAuditChainTimelineLabel" xml:space="preserve">
+    <value>Ketten-Zeitachse:</value>
+  </data>
+  <data name="ChannelAuditLastSuccessfulSendLabel" xml:space="preserve">
+    <value>letzte erfolgreiche Zustellung</value>
+  </data>
+  <data name="ChannelAuditExactChainNote" xml:space="preserve">
+    <value>Diese Exact-Chain-Ansicht ist fuer Phone-Verification- und Diagnose-Incidents gedacht, bei denen ein einzelner Empfaenger-/Kanalpfad wichtiger ist als die ganze Queue.</value>
+  </data>
+  <data name="ChannelAuditRecommendedNextStepLabel" xml:space="preserve">
+    <value>Empfohlener naechster Schritt</value>
+  </data>
+  <data name="ChannelAuditEscalationRuleLabel" xml:space="preserve">
+    <value>Eskalationsregel</value>
+  </data>
+  <data name="VerificationTemplatesAction" xml:space="preserve">
+    <value>Verification-Templates</value>
+  </data>
+  <data name="VerificationTargetsAction" xml:space="preserve">
+    <value>Verification-Ziele</value>
+  </data>
+  <data name="TestTemplatesAction" xml:space="preserve">
+    <value>Test-Templates</value>
+  </data>
+  <data name="BusinessCommunicationTransactionalPolicyTitle" xml:space="preserve">
+    <value>Policy fuer transaktionale Kommunikation</value>
+  </data>
+  <data name="BusinessCommunicationSubjectPrefixLabel" xml:space="preserve">
+    <value>Betreff-Praefix</value>
+  </data>
+  <data name="BusinessCommunicationNoPrefixConfigured" xml:space="preserve">
+    <value>Kein Praefix konfiguriert</value>
+  </data>
+  <data name="BusinessCommunicationTestInboxLabel" xml:space="preserve">
+    <value>Test-Postfach</value>
+  </data>
+  <data name="BusinessCommunicationNoRerouteConfigured" xml:space="preserve">
+    <value>Keine Umleitung aktiv</value>
+  </data>
+  <data name="BusinessCommunicationTransactionalPolicyNote" xml:space="preserve">
+    <value>Aktuelle Einladungs-, Aktivierungs-, Passwort-Reset- und Phone-Verification-Flows haengen von dieser Policy-Flaeche und ihren Testzielen ab.</value>
+  </data>
+  <data name="BusinessCommunicationOpenPolicyAction" xml:space="preserve">
+    <value>Kommunikations-Policy oeffnen</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationsTitle" xml:space="preserve">
+    <value>Phase-1-Policy-Auswirkungen</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationSubjectPrefix" xml:space="preserve">
+    <value>Das Betreff-Praefix gilt fuer aktuelle SMTP-basierte Einladungs-, Aktivierungs- und Passwort-Reset-Betreffzeilen.</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationTestInbox" xml:space="preserve">
+    <value>Die Test-Postfach-Umleitung leitet diese E-Mails fuer kontrollierte Validierung um und stellt den urspruenglichen Empfaenger dem Inhalt voran.</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationVerificationTargets" xml:space="preserve">
+    <value>SMS- und WhatsApp-Testziele sind Transport-Validierungskontrollen, waehrend Phone Verification jetzt anpassbare Text-Templates nutzt.</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationOperationalControl" xml:space="preserve">
+    <value>Dies ist eine operative Kontrolle und kein wiederverwendbarer Template- oder Retry-Queue-Ersatz.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessIssuesTitle" xml:space="preserve">
+    <value>Readiness-Probleme</value>
+  </data>
+  <data name="BusinessCommunicationNoReadinessIssues" xml:space="preserve">
+    <value>Fuer dieses Business sind aktuell keine unmittelbaren Kommunikations-Readiness-Probleme sichtbar.</value>
+  </data>
+  <data name="BusinessCommunicationCurrentFlowsTitle" xml:space="preserve">
+    <value>Aktuell relevante Phase-1-Flows</value>
+  </data>
+  <data name="BusinessCommunicationNoCurrentFlows" xml:space="preserve">
+    <value>Fuer dieses Business wurden aktuell keine relevanten eingebauten Flows abgeleitet.</value>
+  </data>
+  <data name="BusinessCommunicationCurrentFlowsNote" xml:space="preserve">
+    <value>Dies ist nur eine Ansicht der operativen Auswirkungen. Sie beansprucht noch keine wiederverwendbare Template-Engine oder vollstaendige Communication-Core-Policy.</value>
+  </data>
+  <data name="BusinessCommunicationViewInvitationAuditsAction" xml:space="preserve">
+    <value>Einladungs-E-Mail-Audits anzeigen</value>
+  </data>
+  <data name="BusinessCommunicationOpenFullChannelAuditLogAction" xml:space="preserve">
+    <value>Vollstaendiges SMS-/WhatsApp-Auditprotokoll oeffnen</value>
+  </data>
+  <data name="BusinessCommunicationLiveChannelFamiliesTitle" xml:space="preserve">
+    <value>Live-SMS-/WhatsApp-Nachrichtenfamilien</value>
+  </data>
+  <data name="BusinessCommunicationLiveChannelFamiliesNote" xml:space="preserve">
+    <value>Dies sind die aktuell live geschalteten Nicht-E-Mail-Nachrichtenfamilien. Operatoren sehen wirksames Template, Token-Flaeche, Zielpfad und Policy-Grenze, ohne auf einen einzelnen Exact-Chain-Incident warten zu muessen.</value>
+  </data>
+  <data name="BusinessCommunicationFamilyColumn" xml:space="preserve">
+    <value>Familie</value>
+  </data>
+  <data name="BusinessCommunicationCurrentTemplateColumn" xml:space="preserve">
+    <value>Aktuelles Template</value>
+  </data>
+  <data name="BusinessCommunicationRenderedPreviewColumn" xml:space="preserve">
+    <value>Gerenderte Vorschau</value>
+  </data>
+  <data name="BusinessCommunicationTokensColumn" xml:space="preserve">
+    <value>Token</value>
+  </data>
+  <data name="BusinessCommunicationTargetPolicyColumn" xml:space="preserve">
+    <value>Ziel / Policy</value>
+  </data>
+  <data name="BusinessCommunicationUsageGuidanceColumn" xml:space="preserve">
+    <value>Nutzungshinweis</value>
+  </data>
+  <data name="BusinessCommunicationNoLiveChannelFamilies" xml:space="preserve">
+    <value>Aktuell sind keine live geschalteten SMS- oder WhatsApp-Nachrichtenfamilien verfuegbar.</value>
+  </data>
+  <data name="BusinessCommunicationOpenVerificationAuditsAction" xml:space="preserve">
+    <value>Verification-Audits oeffnen</value>
+  </data>
+  <data name="BusinessCommunicationOpenTestAuditsAction" xml:space="preserve">
+    <value>Test-Audits oeffnen</value>
+  </data>
+  <data name="BusinessCommunicationRerunSmsTestAction" xml:space="preserve">
+    <value>SMS-Test erneut ausfuehren</value>
+  </data>
+  <data name="BusinessCommunicationRerunWhatsAppTestAction" xml:space="preserve">
+    <value>WhatsApp-Test erneut ausfuehren</value>
+  </data>
+  <data name="DashboardQuickLinksTitle" xml:space="preserve">
+    <value>Schnellzugriffe</value>
+  </data>
+  <data name="DashboardQuickLinksIntro" xml:space="preserve">
+    <value>Springe direkt zu den am haeufigsten genutzten Backoffice-Bereichen.</value>
+  </data>
+  <data name="DashboardQuickLinkProductsAction" xml:space="preserve">
+    <value>Produkte</value>
+  </data>
+  <data name="DashboardQuickLinkPagesAction" xml:space="preserve">
+    <value>Seiten</value>
+  </data>
+  <data name="DashboardQuickLinkMediaAction" xml:space="preserve">
+    <value>Medien</value>
+  </data>
+  <data name="DashboardQuickLinkOrdersAction" xml:space="preserve">
+    <value>Bestellungen</value>
+  </data>
+  <data name="DashboardQuickLinkCustomersAction" xml:space="preserve">
+    <value>Kunden</value>
+  </data>
+  <data name="DashboardQuickLinkLeadsAction" xml:space="preserve">
+    <value>Leads</value>
+  </data>
+  <data name="DashboardQuickLinkLoyaltyAction" xml:space="preserve">
+    <value>Loyalty</value>
+  </data>
+  <data name="DashboardQuickLinkBusinessesAction" xml:space="preserve">
+    <value>Businesses</value>
+  </data>
+  <data name="DashboardQuickLinkMobileOpsAction" xml:space="preserve">
+    <value>Mobile Ops</value>
+  </data>
+  <data name="DashboardQuickLinkWarehousesAction" xml:space="preserve">
+    <value>Lager</value>
+  </data>
+  <data name="DashboardQuickLinkPaymentsAction" xml:space="preserve">
+    <value>Zahlungen</value>
+  </data>
+  <data name="DashboardQuickLinkUsersAction" xml:space="preserve">
+    <value>Benutzer</value>
+  </data>
+  <data name="DashboardQuickLinkMobileLinkedUsersAction" xml:space="preserve">
+    <value>Mobil verknuepfte Benutzer</value>
+  </data>
+  <data name="DashboardQuickLinkSettingsAction" xml:space="preserve">
+    <value>Einstellungen</value>
   </data>
   <data name="MobileDeviceDeactivateFailed" xml:space="preserve">
     <value>Geraet konnte nicht deaktiviert werden.</value>

@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Identity.UserRolesEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit User Roles";
+    ViewData["Title"] = T.T("EditUserRolesTitle");
 }
 
 <partial name="_UserRolesEditorShell" model="Model" />

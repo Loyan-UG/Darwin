@@ -291,35 +291,35 @@
                hx-get="@Url.Action("ChannelAudits", "BusinessCommunications")"
                hx-target="#business-communications-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">Open Full SMS / WhatsApp Audit Log</a>
+               hx-push-url="true">@T.T("BusinessCommunicationOpenFullChannelAuditLogAction")</a>
         </div>
     </div>
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">Live SMS / WhatsApp Message Families</div>
+    <div class="card-header">@T.T("BusinessCommunicationLiveChannelFamiliesTitle")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            These are the current live non-email message families. Operators can see the effective template, token surface, target path, and policy boundary without waiting for one exact-chain incident to reconstruct that context.
+            @T.T("BusinessCommunicationLiveChannelFamiliesNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Family</th>
-                        <th>Channel</th>
-                        <th>Current Template</th>
-                        <th>Rendered Preview</th>
-                        <th>Tokens</th>
-                        <th>Target / Policy</th>
-                        <th>Usage Guidance</th>
-                        <th>Action</th>
+                        <th>@T.T("BusinessCommunicationFamilyColumn")</th>
+                        <th>@T.T("Channel")</th>
+                        <th>@T.T("BusinessCommunicationCurrentTemplateColumn")</th>
+                        <th>@T.T("BusinessCommunicationRenderedPreviewColumn")</th>
+                        <th>@T.T("BusinessCommunicationTokensColumn")</th>
+                        <th>@T.T("BusinessCommunicationTargetPolicyColumn")</th>
+                        <th>@T.T("BusinessCommunicationUsageGuidanceColumn")</th>
+                        <th>@T.T("Actions")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.ChannelTemplateFamilies.Count == 0)
                 {
-                    <tr><td colspan="8" class="text-center text-muted py-3">No live SMS or WhatsApp message families are currently exposed.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-3">@T.T("BusinessCommunicationNoLiveChannelFamilies")</td></tr>
                 }
                 else
                 {
@@ -358,7 +358,22 @@
                                            hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, channel = family.Channel })"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">Open Verification Audits</a>
+                                           hx-push-url="true">@T.T("BusinessCommunicationOpenVerificationAuditsAction")</a>
+                                        <a asp-controller="MobileOperations"
+                                           asp-action="Index"
+                                           class="btn btn-sm btn-outline-dark"
+                                           hx-get="@Url.Action("Index", "MobileOperations")"
+                                           hx-target="#business-communications-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                        <a asp-controller="Users"
+                                           asp-action="Index"
+                                           asp-route-filter="MobileLinked"
+                                           class="btn btn-sm btn-outline-dark"
+                                           hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                                           hx-target="#business-communications-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
                                     }
                                     else if (string.Equals(family.FamilyName, "Admin Communication Test", StringComparison.OrdinalIgnoreCase))
                                     {
@@ -369,7 +384,7 @@
                                            hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, channel = family.Channel })"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">Open Test Audits</a>
+                                           hx-push-url="true">@T.T("BusinessCommunicationOpenTestAuditsAction")</a>
                                         @if (string.Equals(family.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.Transport.CanSendTestSms)
                                         {
                                             <form asp-action="SendTestSms" method="post" class="d-inline"
@@ -377,7 +392,7 @@
                                                   hx-target="#business-communications-workspace-shell"
                                                   hx-swap="outerHTML">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rerun SMS Test</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunSmsTestAction")</button>
                                             </form>
                                         }
                                         else if (string.Equals(family.Channel, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.Transport.CanSendTestWhatsApp)
@@ -387,7 +402,7 @@
                                                   hx-target="#business-communications-workspace-shell"
                                                   hx-swap="outerHTML">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rerun WhatsApp Test</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunWhatsAppTestAction")</button>
                                             </form>
                                         }
                                     }

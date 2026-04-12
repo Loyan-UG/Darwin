@@ -821,6 +821,11 @@
                                    hx-get="@Url.Action("Index", "Users", new { q = item.RecipientEmail })"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">Open Users</a>
+                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = item.RecipientEmail })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                                 @if (item.BusinessId.HasValue)
                                 {
                                     <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-query="@item.RecipientEmail" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"

@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Identity.UserEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit User";
+    ViewData["Title"] = T.T("EditUserTitle");
 }
 
 <partial name="_UserEditEditorShell" model="Model" />

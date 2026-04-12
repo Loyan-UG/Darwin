@@ -153,23 +153,28 @@
 <div class="row g-3 mb-4">
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Transactional Communication Policy</div>
+            <div class="card-header">@T.T("BusinessCommunicationTransactionalPolicyTitle")</div>
             <div class="card-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-4">Subject Prefix</dt>
-                    <dd class="col-sm-8">@(Model.TransactionalSubjectPrefixConfigured ? Model.TransactionalSubjectPrefix : "No prefix configured")</dd>
-                    <dt class="col-sm-4">Test Inbox</dt>
-                    <dd class="col-sm-8">@(Model.TestInboxConfigured ? Model.TestInboxEmail : "Not rerouting")</dd>
+                    <dt class="col-sm-4">@T.T("BusinessCommunicationSubjectPrefixLabel")</dt>
+                    <dd class="col-sm-8">@(Model.TransactionalSubjectPrefixConfigured ? Model.TransactionalSubjectPrefix : T.T("BusinessCommunicationNoPrefixConfigured"))</dd>
+                    <dt class="col-sm-4">@T.T("BusinessCommunicationTestInboxLabel")</dt>
+                    <dd class="col-sm-8">@(Model.TestInboxConfigured ? Model.TestInboxEmail : T.T("BusinessCommunicationNoRerouteConfigured"))</dd>
                 </dl>
                 <div class="small text-muted mt-3">
-                    Current invitation, activation, password-reset, and phone-verification flows depend on this policy surface and its test targets.
+                    @T.T("BusinessCommunicationTransactionalPolicyNote")
                 </div>
                 <div class="mt-3">
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Open Communication Policy</a>
+                       hx-push-url="true">@T.T("BusinessCommunicationOpenPolicyAction")</a>
+                    <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "MobileOperations")"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                     @if (Model.CanSendTestEmail)
                     {
                         <form asp-action="SendTestEmail" method="post" class="d-inline"
@@ -177,7 +182,7 @@
                               hx-target="#business-communication-profile-shell"
                               hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-primary">Send Test Email</button>
+                            <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("SendTestEmail")</button>
                         </form>
                     }
                     @if (Model.CanSendTestSms)
@@ -187,7 +192,7 @@
                               hx-target="#business-communication-profile-shell"
                               hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-primary">Send Test SMS</button>
+                            <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("SendTestSms")</button>
                         </form>
                     }
                     @if (Model.CanSendTestWhatsApp)
@@ -197,7 +202,7 @@
                               hx-target="#business-communication-profile-shell"
                               hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-primary">Send Test WhatsApp</button>
+                            <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("SendTestWhatsApp")</button>
                         </form>
                     }
                 </div>
@@ -206,13 +211,13 @@
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Phase-1 Policy Implications</div>
+            <div class="card-header">@T.T("BusinessCommunicationPhaseOneImplicationsTitle")</div>
             <div class="card-body">
                 <ul class="mb-0">
-                    <li>Subject prefix applies to current SMTP-based invitation, activation, and password-reset subjects.</li>
-                    <li>Test inbox reroute redirects those emails for controlled validation and prepends the original recipient to the body.</li>
-                    <li>SMS and WhatsApp test targets are transport-validation controls, while phone verification now uses customizable text templates.</li>
-                    <li>This is an operational control, not a reusable template-engine or retry-queue replacement.</li>
+                    <li>@T.T("BusinessCommunicationPhaseOneImplicationSubjectPrefix")</li>
+                    <li>@T.T("BusinessCommunicationPhaseOneImplicationTestInbox")</li>
+                    <li>@T.T("BusinessCommunicationPhaseOneImplicationVerificationTargets")</li>
+                    <li>@T.T("BusinessCommunicationPhaseOneImplicationOperationalControl")</li>
                 </ul>
             </div>
         </div>
@@ -222,11 +227,11 @@
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Readiness Issues</div>
+            <div class="card-header">@T.T("BusinessCommunicationReadinessIssuesTitle")</div>
             <div class="card-body">
                 @if (Model.ReadinessIssues.Count == 0)
                 {
-                    <div class="alert alert-success mb-0">No immediate communication readiness issues are visible for this business.</div>
+                    <div class="alert alert-success mb-0">@T.T("BusinessCommunicationNoReadinessIssues")</div>
                 }
                 else
                 {
@@ -242,11 +247,11 @@
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Currently Relevant Phase-1 Flows</div>
+            <div class="card-header">@T.T("BusinessCommunicationCurrentFlowsTitle")</div>
             <div class="card-body">
                 @if (Model.ActiveFlowNames.Count == 0)
                 {
-                    <div class="text-muted">No currently relevant built-in flows were inferred for this business.</div>
+                    <div class="text-muted">@T.T("BusinessCommunicationNoCurrentFlows")</div>
                 }
                 else
                 {
@@ -258,7 +263,7 @@
                     </ul>
                 }
                 <div class="small text-muted mt-3">
-                    This is an operational implication view only. It does not claim a reusable template engine or full Communication Core delivery policy yet.
+                    @T.T("BusinessCommunicationCurrentFlowsNote")
                 </div>
                 @if (Model.OpenInvitationCount > 0)
                 {
@@ -268,7 +273,7 @@
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
-                        View Invitation Email Audits
+                        @T.T("BusinessCommunicationViewInvitationAuditsAction")
                     </a>
                     </div>
                 }
@@ -411,6 +416,11 @@
                                                    hx-get="@Url.Action("Index", "Users", new { q = item.RecipientEmail })"
                                                    hx-target="#business-communication-profile-shell"
                                                    hx-swap="outerHTML">Open Users</a>
+                                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
+                                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = item.RecipientEmail })"
+                                                   hx-target="#business-communication-profile-shell"
+                                                   hx-swap="outerHTML"
+                                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                                             }
                                             else if (string.Equals(item.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestEmail)
                                             {

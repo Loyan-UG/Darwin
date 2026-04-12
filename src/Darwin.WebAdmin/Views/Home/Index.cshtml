@@ -38,27 +38,27 @@
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 shadow-sm">
             <div class="card-body">
-                <div class="text-muted small">Products</div>
+                <div class="text-muted small">@T.T("DashboardProductsLabel")</div>
                 <div class="fs-2 fw-semibold">@Model.ProductCount</div>
-                <a asp-controller="Products" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">Open Catalog</a>
+                <a asp-controller="Products" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">@T.T("DashboardOpenCatalogAction")</a>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 shadow-sm">
             <div class="card-body">
-                <div class="text-muted small">Pages</div>
+                <div class="text-muted small">@T.T("DashboardPagesLabel")</div>
                 <div class="fs-2 fw-semibold">@Model.PageCount</div>
-                <a asp-controller="Pages" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">Open CMS</a>
+                <a asp-controller="Pages" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">@T.T("DashboardOpenCmsAction")</a>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 shadow-sm">
             <div class="card-body">
-                <div class="text-muted small">Orders</div>
+                <div class="text-muted small">@T.T("DashboardOrdersLabel")</div>
                 <div class="fs-2 fw-semibold">@Model.OrderCount</div>
-                <a asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">Open Orders</a>
+                <a asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">@T.T("DashboardOpenOrdersAction")</a>
             </div>
         </div>
     </div>
@@ -67,9 +67,9 @@
         <div class="col-md-6 col-xl-3">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                    <div class="text-muted small">Users</div>
+                    <div class="text-muted small">@T.T("DashboardUsersLabel")</div>
                     <div class="fs-2 fw-semibold">@Model.UserCount</div>
-                    <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">Open Identity</a>
+                    <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">@T.T("DashboardOpenIdentityAction")</a>
                 </div>
             </div>
         </div>
@@ -89,54 +89,54 @@
             <div class="card-header bg-white">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="fw-semibold">CRM Snapshot</div>
-                        <div class="small text-muted">Customers, leads, and pipeline health.</div>
+                        <div class="fw-semibold">@T.T("DashboardCrmTitle")</div>
+                        <div class="small text-muted">@T.T("DashboardCrmIntro")</div>
                     </div>
-                    <a asp-controller="Crm" asp-action="Index" class="btn btn-sm btn-outline-secondary">Open CRM</a>
+                    <a asp-controller="Crm" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("DashboardOpenCrmAction")</a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-sm-6 col-xl-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="text-muted small">Customers</div>
+                            <div class="text-muted small">@T.T("DashboardCustomersLabel")</div>
                             <div class="fs-4 fw-semibold">@Model.Crm.CustomerCount</div>
                         </div>
                     </div>
                     <div class="col-sm-6 col-xl-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="text-muted small">Leads</div>
+                            <div class="text-muted small">@T.T("DashboardLeadsLabel")</div>
                             <div class="fs-4 fw-semibold">@Model.Crm.LeadCount</div>
                         </div>
                     </div>
                     <div class="col-sm-6 col-xl-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="text-muted small">Qualified Leads</div>
+                            <div class="text-muted small">@T.T("DashboardQualifiedLeadsLabel")</div>
                             <div class="fs-4 fw-semibold">@Model.Crm.QualifiedLeadCount</div>
                         </div>
                     </div>
                     <div class="col-sm-6 col-xl-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="text-muted small">Open Opportunities</div>
+                            <div class="text-muted small">@T.T("DashboardOpenOpportunitiesLabel")</div>
                             <div class="fs-4 fw-semibold">@Model.Crm.OpenOpportunityCount</div>
                         </div>
                     </div>
                     <div class="col-sm-6 col-xl-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="text-muted small">Segments</div>
+                            <div class="text-muted small">@T.T("DashboardSegmentsLabel")</div>
                             <div class="fs-4 fw-semibold">@Model.Crm.SegmentCount</div>
                         </div>
                     </div>
                     <div class="col-sm-6 col-xl-4">
                         <div class="border rounded p-3 h-100">
-                            <div class="text-muted small">Interactions (7d)</div>
+                            <div class="text-muted small">@T.T("DashboardInteractions7dLabel")</div>
                             <div class="fs-4 fw-semibold">@Model.Crm.RecentInteractionCount</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="border rounded p-3 mt-3">
-                    <div class="text-muted small">Open Pipeline</div>
+                    <div class="text-muted small">@T.T("DashboardOpenPipelineLabel")</div>
                     <div class="fs-4 fw-semibold">EUR @((Model.Crm.OpenPipelineMinor / 100.0M).ToString("0.00"))</div>
                 </div>
             </div>
@@ -146,15 +146,15 @@
     <div class="@(canManageBusinesses ? "col-lg-4" : "col-lg-6")">
         <div class="card h-100 shadow-sm">
             <div class="card-header bg-white">
-                <div class="fw-semibold">Business Operations</div>
+                <div class="fw-semibold">@T.T("DashboardBusinessOperationsTitle")</div>
                 <div class="small text-muted">
                     @if (Model.SelectedBusinessId.HasValue)
                     {
-                        <span>Current business: @Model.SelectedBusinessLabel</span>
+                        <span>@string.Format(T.T("DashboardCurrentBusinessLabel"), Model.SelectedBusinessLabel)</span>
                     }
                     else
                     {
-                        <span>No active business available yet.</span>
+                        <span>@T.T("DashboardNoBusinessOperationsIntro")</span>
                     }
                 </div>
             </div>
@@ -164,40 +164,40 @@
                     <div class="row g-3">
                         <div class="col-sm-6">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Payments</div>
+                                <div class="text-muted small">@T.T("DashboardPaymentsLabel")</div>
                                 <div class="fs-4 fw-semibold">@Model.PaymentCount</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Warehouses</div>
+                                <div class="text-muted small">@T.T("DashboardWarehousesLabel")</div>
                                 <div class="fs-4 fw-semibold">@Model.WarehouseCount</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Suppliers</div>
+                                <div class="text-muted small">@T.T("DashboardSuppliersLabel")</div>
                                 <div class="fs-4 fw-semibold">@Model.SupplierCount</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Purchase Orders</div>
+                                <div class="text-muted small">@T.T("DashboardPurchaseOrdersLabel")</div>
                                 <div class="fs-4 fw-semibold">@Model.PurchaseOrderCount</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex flex-wrap gap-2 mt-3">
-                        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Open Payments</a>
-                        <a asp-controller="Inventory" asp-action="Warehouses" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Open Inventory</a>
-                        <a asp-controller="Inventory" asp-action="PurchaseOrders" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">Open Purchase Orders</a>
+                        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("DashboardOpenPaymentsAction")</a>
+                        <a asp-controller="Inventory" asp-action="Warehouses" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("DashboardOpenInventoryAction")</a>
+                        <a asp-controller="Inventory" asp-action="PurchaseOrders" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("DashboardOpenPurchaseOrdersAction")</a>
                     </div>
                 }
                 else
                 {
                     <div class="alert alert-secondary mb-0">
-                        Seed or create at least one active business to unlock inventory and billing summaries.
+                        @T.T("DashboardBusinessOperationsEmptyState")
                     </div>
                 }
             </div>
@@ -295,6 +295,10 @@
 
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("DeviceDiagnostics")</a>
+                        @if (canManageIdentity)
+                        {
+                            <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-primary">@T.T("DashboardOpenMobileLinkedUsersAction")</a>
+                        }
                         <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("SupportQueue")</a>
                         <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("Communications")</a>
                     </div>
@@ -306,32 +310,33 @@
 
 <div class="card shadow-sm mt-4">
     <div class="card-header bg-white">
-        <div class="fw-semibold">Quick Links</div>
-        <div class="small text-muted">Jump directly to the most-used back-office areas.</div>
+        <div class="fw-semibold">@T.T("DashboardQuickLinksTitle")</div>
+        <div class="small text-muted">@T.T("DashboardQuickLinksIntro")</div>
     </div>
     <div class="card-body">
         <div class="d-flex flex-wrap gap-2">
-            <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">Products</a>
-            <a asp-controller="Pages" asp-action="Index" class="btn btn-outline-primary">Pages</a>
-            <a asp-controller="Media" asp-action="Index" class="btn btn-outline-primary">Media</a>
-            <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-primary">Orders</a>
-            <a asp-controller="Crm" asp-action="Customers" class="btn btn-outline-primary">Customers</a>
-            <a asp-controller="Crm" asp-action="Leads" class="btn btn-outline-primary">Leads</a>
-            <a asp-controller="Loyalty" asp-action="Accounts" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-outline-primary">Loyalty</a>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">@T.T("DashboardQuickLinkProductsAction")</a>
+            <a asp-controller="Pages" asp-action="Index" class="btn btn-outline-primary">@T.T("DashboardQuickLinkPagesAction")</a>
+            <a asp-controller="Media" asp-action="Index" class="btn btn-outline-primary">@T.T("DashboardQuickLinkMediaAction")</a>
+            <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-primary">@T.T("DashboardQuickLinkOrdersAction")</a>
+            <a asp-controller="Crm" asp-action="Customers" class="btn btn-outline-primary">@T.T("DashboardQuickLinkCustomersAction")</a>
+            <a asp-controller="Crm" asp-action="Leads" class="btn btn-outline-primary">@T.T("DashboardQuickLinkLeadsAction")</a>
+            <a asp-controller="Loyalty" asp-action="Accounts" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-outline-primary">@T.T("DashboardQuickLinkLoyaltyAction")</a>
             @if (canManageBusinesses)
             {
-                <a asp-controller="Businesses" asp-action="Index" class="btn btn-outline-primary">Businesses</a>
-                <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-outline-primary">Mobile Ops</a>
+                <a asp-controller="Businesses" asp-action="Index" class="btn btn-outline-primary">@T.T("DashboardQuickLinkBusinessesAction")</a>
+                <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-outline-primary">@T.T("DashboardQuickLinkMobileOpsAction")</a>
             }
             @if (Model.SelectedBusinessId.HasValue)
             {
-                <a asp-controller="Inventory" asp-action="Warehouses" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-outline-primary">Warehouses</a>
-                <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-outline-primary">Payments</a>
+                <a asp-controller="Inventory" asp-action="Warehouses" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-outline-primary">@T.T("DashboardQuickLinkWarehousesAction")</a>
+                <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-outline-primary">@T.T("DashboardQuickLinkPaymentsAction")</a>
             }
             @if (canManageIdentity)
             {
-                <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary">Users</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" class="btn btn-outline-primary">Settings</a>
+                <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary">@T.T("DashboardQuickLinkUsersAction")</a>
+                <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-outline-primary">@T.T("DashboardQuickLinkMobileLinkedUsersAction")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" class="btn btn-outline-primary">@T.T("DashboardQuickLinkSettingsAction")</a>
             }
         </div>
     </div>

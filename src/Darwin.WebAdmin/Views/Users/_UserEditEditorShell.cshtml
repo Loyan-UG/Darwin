@@ -1,40 +1,41 @@
 @model Darwin.WebAdmin.ViewModels.Identity.UserEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit User";
+    ViewData["Title"] = T.T("EditUserTitle");
     var addressesSection = ViewBag.AddressesSection as Darwin.WebAdmin.ViewModels.Identity.UserAddressesSectionVm;
 }
 
 <div id="user-edit-editor-shell">
-    <h2>Edit User</h2>
+    <h2>@T.T("EditUserTitle")</h2>
 
     <div class="card mb-4">
-        <div class="card-header">Administrative Actions</div>
+        <div class="card-header">@T.T("UserAdministrativeActionsTitle")</div>
         <div class="card-body">
             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                 <span class="me-auto text-muted">@Model.Email</span>
                 @if (Model.EmailConfirmed)
                 {
-                    <span class="badge text-bg-success">Email Confirmed</span>
+                    <span class="badge text-bg-success">@T.T("UserEmailConfirmedBadge")</span>
                 }
                 else
                 {
-                    <span class="badge text-bg-warning">Email Unconfirmed</span>
+                    <span class="badge text-bg-warning">@T.T("UserEmailUnconfirmedBadge")</span>
                 }
 
                 @if (Model.IsLockedOut)
                 {
-                    <span class="badge text-bg-danger">Locked</span>
+                    <span class="badge text-bg-danger">@T.T("UsersLifecycleLockedBadge")</span>
                 }
                 else
                 {
-                    <span class="badge text-bg-success">Unlocked</span>
+                    <span class="badge text-bg-success">@T.T("UserUnlockedBadge")</span>
                 }
             </div>
 
             @if (Model.IsLockedOut && Model.LockoutEndUtc.HasValue)
             {
                 <p class="small text-muted mb-3">
-                    Lockout ends: @Model.LockoutEndUtc.Value.ToString("u")
+                    @T.T("UserLockoutEndsLabel"): @Model.LockoutEndUtc.Value.ToString("u")
                 </p>
             }
 
@@ -47,7 +48,7 @@
                hx-get="@Url.Action("ChangeEmail", "Users", new { id = Model.Id, currentEmail = Model.Email })"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML">
-                <i class="fa fa-envelope"></i> Change Email
+                <i class="fa fa-envelope"></i> @T.T("ChangeEmail")
             </a>
             <a asp-controller="Users"
                asp-action="ChangePassword"
@@ -57,7 +58,7 @@
                hx-get="@Url.Action("ChangePassword", "Users", new { id = Model.Id, email = Model.Email })"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML">
-                <i class="fa fa-key"></i> Change Password
+                <i class="fa fa-key"></i> @T.T("ChangePassword")
             </a>
             <a asp-controller="Users"
                asp-action="Roles"
@@ -66,7 +67,27 @@
                hx-get="@Url.Action("Roles", "Users", new { id = Model.Id })"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML">
-                <i class="fa fa-users-cog"></i> Manage Roles
+                <i class="fa fa-users-cog"></i> @T.T("ManageRolesAction")
+            </a>
+            <a asp-controller="MobileOperations"
+               asp-action="Index"
+               asp-route-q="@Model.Email"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "MobileOperations", new { q = Model.Email })"
+               hx-target="#user-edit-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                <i class="fa fa-mobile-screen"></i> @T.T("MobileOperationsTitle")
+            </a>
+            <a asp-controller="Loyalty"
+               asp-action="Accounts"
+               asp-route-q="@Model.Email"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Accounts", "Loyalty", new { q = Model.Email })"
+               hx-target="#user-edit-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                <i class="fa fa-star"></i> @T.T("Loyalty")
             </a>
             @if (!Model.EmailConfirmed)
             {
@@ -80,7 +101,7 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
                     <button type="submit" class="btn btn-outline-primary">
-                        <i class="fa fa-paper-plane"></i> Send Activation Email
+                        <i class="fa fa-paper-plane"></i> @T.T("UserSendActivationEmailAction")
                     </button>
                 </form>
                 <form asp-controller="Users"
@@ -93,7 +114,7 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
                     <button type="submit" class="btn btn-outline-success">
-                        <i class="fa fa-check-circle"></i> Confirm Email
+                        <i class="fa fa-check-circle"></i> @T.T("BusinessMemberConfirmEmailAction")
                     </button>
                 </form>
             }
@@ -107,7 +128,7 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
                 <button type="submit" class="btn btn-outline-warning">
-                    <i class="fa fa-paper-plane"></i> Send Reset Email
+                    <i class="fa fa-paper-plane"></i> @T.T("UserSendResetEmailAction")
                 </button>
             </form>
             @if (Model.IsLockedOut)
@@ -122,7 +143,7 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
                     <button type="submit" class="btn btn-outline-success">
-                        <i class="fa fa-lock-open"></i> Unlock Account
+                        <i class="fa fa-lock-open"></i> @T.T("UserUnlockAccountAction")
                     </button>
                 </form>
             }
@@ -138,7 +159,7 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
                     <button type="submit" class="btn btn-outline-danger">
-                        <i class="fa fa-lock"></i> Lock Account
+                        <i class="fa fa-lock"></i> @T.T("UserLockAccountAction")
                     </button>
                 </form>
             }
@@ -169,18 +190,18 @@
         </div>
 
         <div class="col-12">
-            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Save</button>
+            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> @T.T("Save")</button>
             <a asp-controller="Users"
                asp-action="Index"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Index", "Users")"
                hx-target="#user-edit-editor-shell"
-               hx-swap="outerHTML">Back</a>
+               hx-swap="outerHTML">@T.T("Back")</a>
         </div>
     </form>
 
     <hr />
-    <h3 class="mt-4">Addresses</h3>
+    <h3 class="mt-4">@T.T("AddressesTitle")</h3>
 
     <div id="addresses-section">
         @await Html.PartialAsync("~/Views/Users/_AddressesSection.cshtml", addressesSection)

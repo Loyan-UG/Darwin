@@ -1,13 +1,14 @@
 @model Darwin.WebAdmin.ViewModels.Identity.UserChangeEmailVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Change Email";
+    ViewData["Title"] = T.T("ChangeEmail");
 }
 
 <div id="user-change-email-editor-shell">
-    <h1 class="mb-3"><i class="fa fa-envelope"></i> Change Email</h1>
+    <h1 class="mb-3"><i class="fa fa-envelope"></i> @T.T("ChangeEmail")</h1>
 
     <div class="alert alert-warning">
-        Changing the email requires confirmation. The user cannot sign in until the new email is confirmed.
+        @T.T("UserChangeEmailWarning")
     </div>
 
     <form asp-action="ChangeEmail"
@@ -24,15 +25,37 @@
 
         <div class="card mb-3">
             <div class="card-body">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <a asp-controller="MobileOperations"
+                       asp-action="Index"
+                       asp-route-q="@Model.CurrentEmail"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "MobileOperations", new { q = Model.CurrentEmail })"
+                       hx-target="#user-change-email-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa fa-mobile-screen"></i> @T.T("MobileOperationsTitle")
+                    </a>
+                    <a asp-controller="Loyalty"
+                       asp-action="Accounts"
+                       asp-route-q="@Model.CurrentEmail"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Accounts", "Loyalty", new { q = Model.CurrentEmail })"
+                       hx-target="#user-change-email-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa fa-star"></i> @T.T("Loyalty")
+                    </a>
+                </div>
                 <div class="mb-3">
-                    <label class="form-label">Current Email</label>
-                    <field-help for="NewEmail" text="This is the current login email. It is read-only."></field-help>
+                    <label class="form-label">@T.T("CurrentEmailLabel")</label>
+                    <field-help for="NewEmail" text="@T.T("CurrentEmailReadonlyHelp")"></field-help>
                     <input class="form-control" value="@Model.CurrentEmail" readonly />
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="NewEmail" class="form-label"></label>
-                    <field-help for="NewEmail" text="The new login email address for this user." placement="right"></field-help>
+                    <field-help for="NewEmail" text="@T.T("NewEmailHelp")" placement="right"></field-help>
                     <input asp-for="NewEmail" class="form-control" />
                     <span asp-validation-for="NewEmail" class="text-danger"></span>
                 </div>
@@ -46,10 +69,10 @@
                    hx-get="@Url.Action("Edit", "Users", new { id = Model.Id })"
                    hx-target="#user-change-email-editor-shell"
                    hx-swap="outerHTML">
-                    <i class="fa fa-arrow-left"></i> Back
+                    <i class="fa fa-arrow-left"></i> @T.T("Back")
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fa fa-check"></i> Save
+                    <i class="fa fa-check"></i> @T.T("Save")
                 </button>
             </div>
         </div>

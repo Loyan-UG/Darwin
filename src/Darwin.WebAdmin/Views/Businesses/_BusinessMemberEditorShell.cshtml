@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessMemberEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
 }
@@ -6,7 +7,7 @@
 <div id="business-member-editor-shell">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h1 class="mb-1">@(isCreate ? "Assign Business Member" : "Edit Business Member")</h1>
+            <h1 class="mb-1">@(isCreate ? T.T("AssignBusinessMemberTitle") : T.T("EditBusinessMemberTitle"))</h1>
             <p class="text-muted mb-0">@Model.Business.Name</p>
         </div>
         <a asp-action="Members"
@@ -14,39 +15,39 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
            hx-target="#business-member-editor-shell"
-           hx-swap="outerHTML">Back to members</a>
+           hx-swap="outerHTML">@T.T("BackToMembersAction")</a>
     </div>
 
     @if (!isCreate && Model.IsLastActiveOwner)
     {
         <div class="alert alert-danger">
-            This member is currently the last active owner for the business. Demoting, deactivating, or removing this membership requires a FullAdmin override with a mandatory reason. The override will be audit-logged.
+            @T.T("BusinessMemberLastActiveOwnerWarning")
         </div>
     }
 
     @if (!isCreate)
     {
         <div class="card mb-4">
-            <div class="card-header">Member Support Actions</div>
+            <div class="card-header">@T.T("BusinessMemberSupportActionsTitle")</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                     <span class="me-auto text-muted">@Model.UserEmail</span>
                     @if (Model.EmailConfirmed)
                     {
-                        <span class="badge text-bg-success">Email Confirmed</span>
+                        <span class="badge text-bg-success">@T.T("BusinessMemberEmailConfirmedBadge")</span>
                     }
                     else
                     {
-                        <span class="badge text-bg-warning">Pending Activation</span>
+                        <span class="badge text-bg-warning">@T.T("PendingActivation")</span>
                     }
 
                     @if (Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow)
                     {
-                        <span class="badge text-bg-danger">Locked</span>
+                        <span class="badge text-bg-danger">@T.T("UsersLifecycleLockedBadge")</span>
                     }
                     else
                     {
-                        <span class="badge text-bg-success">Unlocked</span>
+                        <span class="badge text-bg-success">@T.T("BusinessMemberUnlockedBadge")</span>
                     }
                 </div>
 
@@ -57,8 +58,29 @@
                        class="btn btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId })"
                        hx-target="#business-member-editor-shell"
-                       hx-swap="outerHTML">
-                        <i class="fa-solid fa-user"></i> Open User Profile
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa-solid fa-user"></i> @T.T("OpenUserAction")
+                    </a>
+                    <a asp-controller="MobileOperations"
+                       asp-action="Index"
+                       asp-route-q="@Model.UserEmail"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "MobileOperations", new { q = Model.UserEmail })"
+                       hx-target="#business-member-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa-solid fa-mobile-screen"></i> @T.T("MobileOperationsTitle")
+                    </a>
+                    <a asp-controller="Loyalty"
+                       asp-action="Accounts"
+                       asp-route-q="@Model.UserEmail"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("Accounts", "Loyalty", new { q = Model.UserEmail })"
+                       hx-target="#business-member-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa-solid fa-star"></i> @T.T("Loyalty")
                     </a>
                     <a asp-action="StaffAccessBadge"
                        asp-route-id="@Model.Id"
@@ -66,7 +88,7 @@
                        hx-get="@Url.Action("StaffAccessBadge", "Businesses", new { id = Model.Id })"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML">
-                        <i class="fa-solid fa-qrcode"></i> Staff Badge
+                        <i class="fa-solid fa-qrcode"></i> @T.T("BusinessStaffAccessBadgeTitle")
                     </a>
                     @if (!Model.EmailConfirmed)
                     {
@@ -81,7 +103,7 @@
                             <input type="hidden" name="businessId" value="@Model.BusinessId" />
                             <input type="hidden" name="returnToEdit" value="true" />
                             <button type="submit" class="btn btn-outline-primary">
-                                <i class="fa-solid fa-paper-plane"></i> Send Activation
+                                <i class="fa-solid fa-paper-plane"></i> @T.T("BusinessMemberSendActivationAction")
                             </button>
                         </form>
                         <form asp-action="ConfirmMemberEmail"
@@ -95,7 +117,7 @@
                             <input type="hidden" name="businessId" value="@Model.BusinessId" />
                             <input type="hidden" name="returnToEdit" value="true" />
                             <button type="submit" class="btn btn-outline-success">
-                                <i class="fa-solid fa-check"></i> Confirm Email
+                                <i class="fa-solid fa-check"></i> @T.T("BusinessMemberConfirmEmailAction")
                             </button>
                         </form>
                     }
@@ -110,7 +132,7 @@
                         <input type="hidden" name="businessId" value="@Model.BusinessId" />
                         <input type="hidden" name="returnToEdit" value="true" />
                         <button type="submit" class="btn btn-outline-warning">
-                            <i class="fa-solid fa-key"></i> Send Reset
+                            <i class="fa-solid fa-key"></i> @T.T("BusinessMemberSendResetAction")
                         </button>
                     </form>
                     @if (Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow)
@@ -126,7 +148,7 @@
                             <input type="hidden" name="businessId" value="@Model.BusinessId" />
                             <input type="hidden" name="returnToEdit" value="true" />
                             <button type="submit" class="btn btn-outline-success">
-                                <i class="fa-solid fa-lock-open"></i> Unlock
+                                <i class="fa-solid fa-lock-open"></i> @T.T("UsersUnlockAction")
                             </button>
                         </form>
                     }
@@ -143,7 +165,7 @@
                             <input type="hidden" name="businessId" value="@Model.BusinessId" />
                             <input type="hidden" name="returnToEdit" value="true" />
                             <button type="submit" class="btn btn-outline-danger">
-                                <i class="fa-solid fa-lock"></i> Lock
+                                <i class="fa-solid fa-lock"></i> @T.T("UsersLockAction")
                             </button>
                         </form>
                     }
@@ -172,10 +194,10 @@
     @if (!isCreate && Model.IsLastActiveOwner)
     {
         <div class="card border-danger mt-4">
-            <div class="card-header text-danger">Controlled Owner Override</div>
+            <div class="card-header text-danger">@T.T("BusinessMemberControlledOwnerOverrideTitle")</div>
             <div class="card-body">
                 <p class="text-muted">
-                    Use this only when support must remove the final active owner and there is no safer recovery path.
+                    @T.T("BusinessMemberControlledOwnerOverrideNote")
                 </p>
                 <form asp-action="ForceDeleteMember"
                       method="post"
@@ -187,12 +209,12 @@
                     <input type="hidden" name="businessId" value="@Model.BusinessId" />
                     <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
                     <div class="mb-3">
-                        <label asp-for="OverrideReason" class="form-label">Override reason</label>
-                        <textarea asp-for="OverrideReason" class="form-control" rows="3" placeholder="Explain why this last-owner override is necessary."></textarea>
+                        <label asp-for="OverrideReason" class="form-label">@T.T("BusinessMemberOverrideReasonLabel")</label>
+                        <textarea asp-for="OverrideReason" class="form-control" rows="3" placeholder="@T.T("BusinessMemberOverrideReasonPlaceholder")"></textarea>
                         <span asp-validation-for="OverrideReason" class="text-danger"></span>
                     </div>
                     <button type="submit" class="btn btn-danger">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Force Remove Last Active Owner
+                        <i class="fa-solid fa-triangle-exclamation"></i> @T.T("BusinessMemberForceRemoveLastOwnerAction")
                     </button>
                 </form>
             </div>

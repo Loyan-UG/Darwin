@@ -409,24 +409,24 @@
         </div>
 
         <div class="alert alert-secondary mb-4">
-            <strong>Chain timeline:</strong>
+            <strong>@T.T("ChannelAuditChainTimelineLabel")</strong>
             first attempt <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>,
             latest attempt <code>@Model.ChainSummary.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>.
             @if (Model.ChainSummary.LastSuccessfulAttemptAtUtc.HasValue)
             {
                 <span>
-                    last successful send <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code>.
+                    @T.T("ChannelAuditLastSuccessfulSendLabel") <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code>.
                 </span>
             }
             <div class="small text-muted mt-2">
-                This exact-chain view is meant for phone-verification and diagnostic incidents where one recipient/channel path matters more than the whole queue.
+                @T.T("ChannelAuditExactChainNote")
             </div>
             <div class="mt-3">
-                <div class="small text-muted">Recommended next step</div>
+                <div class="small text-muted">@T.T("ChannelAuditRecommendedNextStepLabel")</div>
                 <div class="fw-semibold">@Model.ChainSummary.RecommendedAction</div>
             </div>
             <div class="mt-2">
-                <div class="small text-muted">Escalation rule</div>
+                <div class="small text-muted">@T.T("ChannelAuditEscalationRuleLabel")</div>
                 <div class="small">@Model.ChainSummary.EscalationHint</div>
             </div>
             <div class="d-flex flex-wrap gap-2 mt-3">
@@ -436,27 +436,37 @@
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Open Verification Policy</a>
+                       hx-push-url="true">@T.T("OpenVerificationPolicy")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Verification Templates</a>
+                       hx-push-url="true">@T.T("VerificationTemplatesAction")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">SMS Settings</a>
+                       hx-push-url="true">@T.T("SmsSettings")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">WhatsApp Settings</a>
+                       hx-push-url="true">@T.T("WhatsAppSettings")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Verification Targets</a>
+                       hx-push-url="true">@T.T("VerificationTargetsAction")</a>
+                    <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@Model.RecipientAddress" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "MobileOperations", new { q = Model.RecipientAddress })"
+                       hx-target="#business-communication-channel-audits-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" asp-route-query="@Model.RecipientAddress" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked", query = Model.RecipientAddress })"
+                       hx-target="#business-communication-channel-audits-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
                 }
                 else if (string.Equals(Model.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
                 {
@@ -464,27 +474,27 @@
                        hx-get="@Url.Action("Index", "BusinessCommunications")"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Open Communication Workspace</a>
+                       hx-push-url="true">@T.T("OpenCommunicationsWorkspace")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Test Templates</a>
+                       hx-push-url="true">@T.T("TestTemplatesAction")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Test Targets</a>
+                       hx-push-url="true">@T.T("TestTargets")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">SMS Settings</a>
+                       hx-push-url="true">@T.T("SmsSettings")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">WhatsApp Settings</a>
+                       hx-push-url="true">@T.T("WhatsAppSettings")</a>
                     @if (Model.CanSendTestSms)
                     {
                         <form asp-action="SendTestSms" method="post" class="d-inline"

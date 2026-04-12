@@ -369,6 +369,204 @@
   <data name="UsersPlaybookMobileLinkedFollowUp" xml:space="preserve">
     <value>Cross-check device fleet health and loyalty activity before assuming the user profile itself is wrong.</value>
   </data>
+  <data name="OpenUserAction" xml:space="preserve">
+    <value>Open User</value>
+  </data>
+  <data name="EditMemberAction" xml:space="preserve">
+    <value>Edit Member</value>
+  </data>
+  <data name="BackToMembersAction" xml:space="preserve">
+    <value>Back to Members</value>
+  </data>
+  <data name="RefreshBadgeAction" xml:space="preserve">
+    <value>Refresh Badge</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeTitle" xml:space="preserve">
+    <value>Staff Access Badge</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeIntro" xml:space="preserve">
+    <value>This QR mirrors the phase-1 staff badge behavior in Darwin.Mobile.Business. It is a short-lived support preview only; server-side authorization remains the source of truth.</value>
+  </data>
+  <data name="BusinessStaffAccessBadgePreviewTitle" xml:space="preserve">
+    <value>Badge Preview</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeQrAlt" xml:space="preserve">
+    <value>Staff access badge QR</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeMemberRoleLabel" xml:space="preserve">
+    <value>Member Role</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeContextTitle" xml:space="preserve">
+    <value>Badge Context</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeIssuedAtLabel" xml:space="preserve">
+    <value>Issued At</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeExpiresAtLabel" xml:space="preserve">
+    <value>Expires At</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeEmailStateLabel" xml:space="preserve">
+    <value>Email State</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeAccessStateLabel" xml:space="preserve">
+    <value>Access State</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeConfirmed" xml:space="preserve">
+    <value>Confirmed</value>
+  </data>
+  <data name="BusinessStaffAccessBadgePendingActivation" xml:space="preserve">
+    <value>Pending activation</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeMembershipActive" xml:space="preserve">
+    <value>Membership active</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeMembershipInactive" xml:space="preserve">
+    <value>Membership inactive</value>
+  </data>
+  <data name="BusinessStaffAccessBadgeConstraintWarning" xml:space="preserve">
+    <value>This badge can be previewed for support purposes, but the member still has an account or membership constraint that may block real business operations.</value>
+  </data>
+  <data name="BusinessStaffAccessBadgePayloadTitle" xml:space="preserve">
+    <value>Payload</value>
+  </data>
+  <data name="BusinessStaffAccessBadgePayloadNote" xml:space="preserve">
+    <value>Use this only for diagnostics or internal support. The nonce and expiry change every refresh.</value>
+  </data>
+  <data name="AssignBusinessMemberTitle" xml:space="preserve">
+    <value>Assign Business Member</value>
+  </data>
+  <data name="EditBusinessMemberTitle" xml:space="preserve">
+    <value>Edit Business Member</value>
+  </data>
+  <data name="BusinessMemberLastActiveOwnerWarning" xml:space="preserve">
+    <value>This member is currently the last active owner for the business. Demoting, deactivating, or removing this membership requires a FullAdmin override with a mandatory reason. The override will be audit-logged.</value>
+  </data>
+  <data name="BusinessMemberSupportActionsTitle" xml:space="preserve">
+    <value>Member Support Actions</value>
+  </data>
+  <data name="BusinessMemberEmailConfirmedBadge" xml:space="preserve">
+    <value>Email Confirmed</value>
+  </data>
+  <data name="BusinessMemberUnlockedBadge" xml:space="preserve">
+    <value>Unlocked</value>
+  </data>
+  <data name="BusinessMemberSendActivationAction" xml:space="preserve">
+    <value>Send Activation</value>
+  </data>
+  <data name="BusinessMemberConfirmEmailAction" xml:space="preserve">
+    <value>Confirm Email</value>
+  </data>
+  <data name="BusinessMemberSendResetAction" xml:space="preserve">
+    <value>Send Reset</value>
+  </data>
+  <data name="BusinessMemberControlledOwnerOverrideTitle" xml:space="preserve">
+    <value>Controlled Owner Override</value>
+  </data>
+  <data name="BusinessMemberControlledOwnerOverrideNote" xml:space="preserve">
+    <value>Use this only when support must remove the final active owner and there is no safer recovery path.</value>
+  </data>
+  <data name="BusinessMemberOverrideReasonLabel" xml:space="preserve">
+    <value>Override reason</value>
+  </data>
+  <data name="BusinessMemberOverrideReasonPlaceholder" xml:space="preserve">
+    <value>Explain why this last-owner override is necessary.</value>
+  </data>
+  <data name="BusinessMemberForceRemoveLastOwnerAction" xml:space="preserve">
+    <value>Force Remove Last Active Owner</value>
+  </data>
+  <data name="BusinessMemberAssignmentHelp" xml:space="preserve">
+    <value>Assign an existing platform user here. If the owner or staff member does not yet have an account, use the business invitation workflow instead.</value>
+  </data>
+  <data name="BusinessMemberIsActiveLabel" xml:space="preserve">
+    <value>Member is active</value>
+  </data>
+  <data name="BusinessMemberAllowLastOwnerOverrideLabel" xml:space="preserve">
+    <value>Allow controlled override for last active owner rule</value>
+  </data>
+  <data name="BusinessMemberLastOwnerOverrideRequiredPlaceholder" xml:space="preserve">
+    <value>Required when changing the last active owner.</value>
+  </data>
+  <data name="EditUserTitle" xml:space="preserve">
+    <value>Edit User</value>
+  </data>
+  <data name="CreateUserTitle" xml:space="preserve">
+    <value>Create User</value>
+  </data>
+  <data name="CreateAction" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="UserAdministrativeActionsTitle" xml:space="preserve">
+    <value>Administrative Actions</value>
+  </data>
+  <data name="UserEmailConfirmedBadge" xml:space="preserve">
+    <value>Email Confirmed</value>
+  </data>
+  <data name="UserEmailUnconfirmedBadge" xml:space="preserve">
+    <value>Email Unconfirmed</value>
+  </data>
+  <data name="UserUnlockedBadge" xml:space="preserve">
+    <value>Unlocked</value>
+  </data>
+  <data name="UserLockoutEndsLabel" xml:space="preserve">
+    <value>Lockout ends</value>
+  </data>
+  <data name="ManageRolesAction" xml:space="preserve">
+    <value>Manage Roles</value>
+  </data>
+  <data name="UserSendActivationEmailAction" xml:space="preserve">
+    <value>Send Activation Email</value>
+  </data>
+  <data name="UserSendResetEmailAction" xml:space="preserve">
+    <value>Send Reset Email</value>
+  </data>
+  <data name="UserUnlockAccountAction" xml:space="preserve">
+    <value>Unlock Account</value>
+  </data>
+  <data name="UserLockAccountAction" xml:space="preserve">
+    <value>Lock Account</value>
+  </data>
+  <data name="AddressesTitle" xml:space="preserve">
+    <value>Addresses</value>
+  </data>
+  <data name="UserLocaleHelp" xml:space="preserve">
+    <value>Select UI language/culture</value>
+  </data>
+  <data name="UserCurrencyHelp" xml:space="preserve">
+    <value>Select default currency</value>
+  </data>
+  <data name="UserTimezoneHelp" xml:space="preserve">
+    <value>Select default timezone</value>
+  </data>
+  <data name="UserChangeEmailWarning" xml:space="preserve">
+    <value>Changing the email requires confirmation. The user cannot sign in until the new email is confirmed.</value>
+  </data>
+  <data name="CurrentEmailLabel" xml:space="preserve">
+    <value>Current Email</value>
+  </data>
+  <data name="CurrentEmailReadonlyHelp" xml:space="preserve">
+    <value>This is the current login email. It is read-only.</value>
+  </data>
+  <data name="NewEmailHelp" xml:space="preserve">
+    <value>The new login email address for this user.</value>
+  </data>
+  <data name="EditUserRolesTitle" xml:space="preserve">
+    <value>Edit User Roles</value>
+  </data>
+  <data name="AssignRolesToUserTitle" xml:space="preserve">
+    <value>Assign roles to user</value>
+  </data>
+  <data name="DelegatedSupportRoleTitle" xml:space="preserve">
+    <value>Delegated support role:</value>
+  </data>
+  <data name="DelegatedSupportRoleNote" xml:space="preserve">
+    <value>the built-in business-support-admins role is intended for invitation and business-member support actions only. Approval, suspension, owner overrides, and business lifecycle changes remain FullAdmin-only.</value>
+  </data>
+  <data name="DelegatedSupportBadge" xml:space="preserve">
+    <value>Delegated support</value>
+  </data>
+  <data name="NoRolesFound" xml:space="preserve">
+    <value>No roles found.</value>
+  </data>
   <data name="MobilePlaybookMemberLifecycleTitle" xml:space="preserve">
     <value>Member lifecycle follow-up</value>
   </data>
@@ -4335,6 +4533,93 @@
   <data name="AdminDashboardIntro" xml:space="preserve">
     <value>Use this overview as the operational starting point for the back-office.</value>
   </data>
+  <data name="DashboardProductsLabel" xml:space="preserve">
+    <value>Products</value>
+  </data>
+  <data name="DashboardPagesLabel" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="DashboardOrdersLabel" xml:space="preserve">
+    <value>Orders</value>
+  </data>
+  <data name="DashboardUsersLabel" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="DashboardOpenCatalogAction" xml:space="preserve">
+    <value>Open Catalog</value>
+  </data>
+  <data name="DashboardOpenCmsAction" xml:space="preserve">
+    <value>Open CMS</value>
+  </data>
+  <data name="DashboardOpenOrdersAction" xml:space="preserve">
+    <value>Open Orders</value>
+  </data>
+  <data name="DashboardOpenIdentityAction" xml:space="preserve">
+    <value>Open Identity</value>
+  </data>
+  <data name="DashboardCrmTitle" xml:space="preserve">
+    <value>CRM Snapshot</value>
+  </data>
+  <data name="DashboardCrmIntro" xml:space="preserve">
+    <value>Customers, leads, and pipeline health.</value>
+  </data>
+  <data name="DashboardOpenCrmAction" xml:space="preserve">
+    <value>Open CRM</value>
+  </data>
+  <data name="DashboardCustomersLabel" xml:space="preserve">
+    <value>Customers</value>
+  </data>
+  <data name="DashboardLeadsLabel" xml:space="preserve">
+    <value>Leads</value>
+  </data>
+  <data name="DashboardQualifiedLeadsLabel" xml:space="preserve">
+    <value>Qualified Leads</value>
+  </data>
+  <data name="DashboardOpenOpportunitiesLabel" xml:space="preserve">
+    <value>Open Opportunities</value>
+  </data>
+  <data name="DashboardSegmentsLabel" xml:space="preserve">
+    <value>Segments</value>
+  </data>
+  <data name="DashboardInteractions7dLabel" xml:space="preserve">
+    <value>Interactions (7d)</value>
+  </data>
+  <data name="DashboardOpenPipelineLabel" xml:space="preserve">
+    <value>Open Pipeline</value>
+  </data>
+  <data name="DashboardBusinessOperationsTitle" xml:space="preserve">
+    <value>Business Operations</value>
+  </data>
+  <data name="DashboardCurrentBusinessLabel" xml:space="preserve">
+    <value>Current business: {0}</value>
+  </data>
+  <data name="DashboardNoBusinessOperationsIntro" xml:space="preserve">
+    <value>No active business available yet.</value>
+  </data>
+  <data name="DashboardPaymentsLabel" xml:space="preserve">
+    <value>Payments</value>
+  </data>
+  <data name="DashboardWarehousesLabel" xml:space="preserve">
+    <value>Warehouses</value>
+  </data>
+  <data name="DashboardSuppliersLabel" xml:space="preserve">
+    <value>Suppliers</value>
+  </data>
+  <data name="DashboardPurchaseOrdersLabel" xml:space="preserve">
+    <value>Purchase Orders</value>
+  </data>
+  <data name="DashboardOpenPaymentsAction" xml:space="preserve">
+    <value>Open Payments</value>
+  </data>
+  <data name="DashboardOpenInventoryAction" xml:space="preserve">
+    <value>Open Inventory</value>
+  </data>
+  <data name="DashboardOpenPurchaseOrdersAction" xml:space="preserve">
+    <value>Open Purchase Orders</value>
+  </data>
+  <data name="DashboardBusinessOperationsEmptyState" xml:space="preserve">
+    <value>Seed or create at least one active business to unlock inventory and billing summaries.</value>
+  </data>
   <data name="BusinessContext" xml:space="preserve">
     <value>Business context</value>
   </data>
@@ -4365,6 +4650,9 @@
   <data name="OpenMobileOps" xml:space="preserve">
     <value>Open Mobile Ops</value>
   </data>
+  <data name="DashboardOpenMobileLinkedUsersAction" xml:space="preserve">
+    <value>Open Mobile-linked Users</value>
+  </data>
   <data name="StaleDevices" xml:space="preserve">
     <value>Stale Devices</value>
   </data>
@@ -4388,6 +4676,174 @@
   </data>
   <data name="MobileOperationsSnapshotNote" xml:space="preserve">
     <value>This workspace is an operations snapshot. Member activation, invitation handling, loyalty remediation, and communication triage still continue from Businesses, Loyalty, Business Communications, and Site Settings.</value>
+  </data>
+  <data name="ChannelAuditChainTimelineLabel" xml:space="preserve">
+    <value>Chain timeline:</value>
+  </data>
+  <data name="ChannelAuditLastSuccessfulSendLabel" xml:space="preserve">
+    <value>last successful send</value>
+  </data>
+  <data name="ChannelAuditExactChainNote" xml:space="preserve">
+    <value>This exact-chain view is meant for phone-verification and diagnostic incidents where one recipient/channel path matters more than the whole queue.</value>
+  </data>
+  <data name="ChannelAuditRecommendedNextStepLabel" xml:space="preserve">
+    <value>Recommended next step</value>
+  </data>
+  <data name="ChannelAuditEscalationRuleLabel" xml:space="preserve">
+    <value>Escalation rule</value>
+  </data>
+  <data name="VerificationTemplatesAction" xml:space="preserve">
+    <value>Verification Templates</value>
+  </data>
+  <data name="VerificationTargetsAction" xml:space="preserve">
+    <value>Verification Targets</value>
+  </data>
+  <data name="TestTemplatesAction" xml:space="preserve">
+    <value>Test Templates</value>
+  </data>
+  <data name="BusinessCommunicationTransactionalPolicyTitle" xml:space="preserve">
+    <value>Transactional Communication Policy</value>
+  </data>
+  <data name="BusinessCommunicationSubjectPrefixLabel" xml:space="preserve">
+    <value>Subject Prefix</value>
+  </data>
+  <data name="BusinessCommunicationNoPrefixConfigured" xml:space="preserve">
+    <value>No prefix configured</value>
+  </data>
+  <data name="BusinessCommunicationTestInboxLabel" xml:space="preserve">
+    <value>Test Inbox</value>
+  </data>
+  <data name="BusinessCommunicationNoRerouteConfigured" xml:space="preserve">
+    <value>Not rerouting</value>
+  </data>
+  <data name="BusinessCommunicationTransactionalPolicyNote" xml:space="preserve">
+    <value>Current invitation, activation, password-reset, and phone-verification flows depend on this policy surface and its test targets.</value>
+  </data>
+  <data name="BusinessCommunicationOpenPolicyAction" xml:space="preserve">
+    <value>Open Communication Policy</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationsTitle" xml:space="preserve">
+    <value>Phase-1 Policy Implications</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationSubjectPrefix" xml:space="preserve">
+    <value>Subject prefix applies to current SMTP-based invitation, activation, and password-reset subjects.</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationTestInbox" xml:space="preserve">
+    <value>Test inbox reroute redirects those emails for controlled validation and prepends the original recipient to the body.</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationVerificationTargets" xml:space="preserve">
+    <value>SMS and WhatsApp test targets are transport-validation controls, while phone verification now uses customizable text templates.</value>
+  </data>
+  <data name="BusinessCommunicationPhaseOneImplicationOperationalControl" xml:space="preserve">
+    <value>This is an operational control, not a reusable template-engine or retry-queue replacement.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessIssuesTitle" xml:space="preserve">
+    <value>Readiness Issues</value>
+  </data>
+  <data name="BusinessCommunicationNoReadinessIssues" xml:space="preserve">
+    <value>No immediate communication readiness issues are visible for this business.</value>
+  </data>
+  <data name="BusinessCommunicationCurrentFlowsTitle" xml:space="preserve">
+    <value>Currently Relevant Phase-1 Flows</value>
+  </data>
+  <data name="BusinessCommunicationNoCurrentFlows" xml:space="preserve">
+    <value>No currently relevant built-in flows were inferred for this business.</value>
+  </data>
+  <data name="BusinessCommunicationCurrentFlowsNote" xml:space="preserve">
+    <value>This is an operational implication view only. It does not claim a reusable template engine or full Communication Core delivery policy yet.</value>
+  </data>
+  <data name="BusinessCommunicationViewInvitationAuditsAction" xml:space="preserve">
+    <value>View Invitation Email Audits</value>
+  </data>
+  <data name="BusinessCommunicationOpenFullChannelAuditLogAction" xml:space="preserve">
+    <value>Open Full SMS / WhatsApp Audit Log</value>
+  </data>
+  <data name="BusinessCommunicationLiveChannelFamiliesTitle" xml:space="preserve">
+    <value>Live SMS / WhatsApp Message Families</value>
+  </data>
+  <data name="BusinessCommunicationLiveChannelFamiliesNote" xml:space="preserve">
+    <value>These are the current live non-email message families. Operators can see the effective template, token surface, target path, and policy boundary without waiting for one exact-chain incident to reconstruct that context.</value>
+  </data>
+  <data name="BusinessCommunicationFamilyColumn" xml:space="preserve">
+    <value>Family</value>
+  </data>
+  <data name="BusinessCommunicationCurrentTemplateColumn" xml:space="preserve">
+    <value>Current Template</value>
+  </data>
+  <data name="BusinessCommunicationRenderedPreviewColumn" xml:space="preserve">
+    <value>Rendered Preview</value>
+  </data>
+  <data name="BusinessCommunicationTokensColumn" xml:space="preserve">
+    <value>Tokens</value>
+  </data>
+  <data name="BusinessCommunicationTargetPolicyColumn" xml:space="preserve">
+    <value>Target / Policy</value>
+  </data>
+  <data name="BusinessCommunicationUsageGuidanceColumn" xml:space="preserve">
+    <value>Usage Guidance</value>
+  </data>
+  <data name="BusinessCommunicationNoLiveChannelFamilies" xml:space="preserve">
+    <value>No live SMS or WhatsApp message families are currently exposed.</value>
+  </data>
+  <data name="BusinessCommunicationOpenVerificationAuditsAction" xml:space="preserve">
+    <value>Open Verification Audits</value>
+  </data>
+  <data name="BusinessCommunicationOpenTestAuditsAction" xml:space="preserve">
+    <value>Open Test Audits</value>
+  </data>
+  <data name="BusinessCommunicationRerunSmsTestAction" xml:space="preserve">
+    <value>Rerun SMS Test</value>
+  </data>
+  <data name="BusinessCommunicationRerunWhatsAppTestAction" xml:space="preserve">
+    <value>Rerun WhatsApp Test</value>
+  </data>
+  <data name="DashboardQuickLinksTitle" xml:space="preserve">
+    <value>Quick Links</value>
+  </data>
+  <data name="DashboardQuickLinksIntro" xml:space="preserve">
+    <value>Jump directly to the most-used back-office areas.</value>
+  </data>
+  <data name="DashboardQuickLinkProductsAction" xml:space="preserve">
+    <value>Products</value>
+  </data>
+  <data name="DashboardQuickLinkPagesAction" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="DashboardQuickLinkMediaAction" xml:space="preserve">
+    <value>Media</value>
+  </data>
+  <data name="DashboardQuickLinkOrdersAction" xml:space="preserve">
+    <value>Orders</value>
+  </data>
+  <data name="DashboardQuickLinkCustomersAction" xml:space="preserve">
+    <value>Customers</value>
+  </data>
+  <data name="DashboardQuickLinkLeadsAction" xml:space="preserve">
+    <value>Leads</value>
+  </data>
+  <data name="DashboardQuickLinkLoyaltyAction" xml:space="preserve">
+    <value>Loyalty</value>
+  </data>
+  <data name="DashboardQuickLinkBusinessesAction" xml:space="preserve">
+    <value>Businesses</value>
+  </data>
+  <data name="DashboardQuickLinkMobileOpsAction" xml:space="preserve">
+    <value>Mobile Ops</value>
+  </data>
+  <data name="DashboardQuickLinkWarehousesAction" xml:space="preserve">
+    <value>Warehouses</value>
+  </data>
+  <data name="DashboardQuickLinkPaymentsAction" xml:space="preserve">
+    <value>Payments</value>
+  </data>
+  <data name="DashboardQuickLinkUsersAction" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="DashboardQuickLinkMobileLinkedUsersAction" xml:space="preserve">
+    <value>Mobile-linked Users</value>
+  </data>
+  <data name="DashboardQuickLinkSettingsAction" xml:space="preserve">
+    <value>Settings</value>
   </data>
   <data name="MobileDeviceDeactivateFailed" xml:space="preserve">
     <value>Device could not be deactivated.</value>

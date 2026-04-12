@@ -1,25 +1,44 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSetupMembersPreviewVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 @if (Model.AttentionCount == 0)
 {
     <div class="text-success">No members currently need activation or lockout support.</div>
-    <a asp-action="Members"
-       asp-route-businessId="@Model.BusinessId"
-       class="btn btn-sm btn-outline-secondary mt-3"
-       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
-       hx-target="#business-setup-shell"
-       hx-swap="outerHTML">Open Members</a>
-}
-else
-{
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="fw-semibold">@Model.AttentionCount member(s) need support action</div>
+    <div class="d-flex gap-2 flex-wrap mt-3">
         <a asp-action="Members"
            asp-route-businessId="@Model.BusinessId"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
            hx-target="#business-setup-shell"
            hx-swap="outerHTML">Open Members</a>
+        <a asp-controller="MobileOperations"
+           asp-action="Index"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Index", "MobileOperations")"
+           hx-target="#business-setup-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="fw-semibold">@Model.AttentionCount member(s) need support action</div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Members"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+               hx-target="#business-setup-shell"
+               hx-swap="outerHTML">Open Members</a>
+            <a asp-controller="MobileOperations"
+               asp-action="Index"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Index", "MobileOperations")"
+               hx-target="#business-setup-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+        </div>
     </div>
 
     <div class="table-responsive">
@@ -37,6 +56,24 @@ else
                     <td>
                         <div class="fw-semibold">@item.UserDisplayName</div>
                         <div class="small text-muted">@item.UserEmail</div>
+                        <div class="d-flex gap-2 flex-wrap mt-2">
+                            <a asp-controller="MobileOperations"
+                               asp-action="Index"
+                               asp-route-q="@item.UserEmail"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Index", "MobileOperations", new { q = item.UserEmail })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                            <a asp-controller="Loyalty"
+                               asp-action="Accounts"
+                               asp-route-q="@item.UserEmail"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Accounts", "Loyalty", new { q = item.UserEmail })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Loyalty")</a>
+                        </div>
                     </td>
                     <td>
                         @if (!item.EmailConfirmed)

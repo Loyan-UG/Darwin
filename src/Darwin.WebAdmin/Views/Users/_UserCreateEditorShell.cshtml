@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Identity.UserCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create User";
+    ViewData["Title"] = T.T("CreateUserTitle");
 }
 
 <div id="user-create-editor-shell">
-    <h2>Create User</h2>
+    <h2>@T.T("CreateUserTitle")</h2>
 
     <form asp-controller="Users"
           asp-action="Create"
@@ -31,13 +32,13 @@
         <partial name="_UserProfileFields" model="Model" />
 
         <div class="col-12">
-            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Create</button>
+            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> @T.T("CreateAction")</button>
             <a asp-controller="Users"
                asp-action="Index"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Index", "Users")"
                hx-target="#user-create-editor-shell"
-               hx-swap="outerHTML">Cancel</a>
+               hx-swap="outerHTML">@T.T("Cancel")</a>
         </div>
     </form>
 </div>
