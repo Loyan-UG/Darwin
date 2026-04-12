@@ -29,7 +29,7 @@
                             <DataTemplate x:DataType="vm:MemberCommerceOrderItemViewModel">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="{Binding OrderNumber}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                        <Label Text="{Binding OrderNumber}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -42,7 +42,7 @@
 
                     <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasSelectedOrder}">
                         <VerticalStackLayout Spacing="8">
-                            <Label Text="{Binding SelectedOrder.HeaderTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                            <Label Text="{Binding SelectedOrder.HeaderTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
                             <Label Text="{Binding SelectedOrder.StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                             <Label Text="{Binding SelectedOrder.CreatedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                             <Label Text="{Binding SelectedOrder.TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -74,8 +74,8 @@
                             <DataTemplate x:DataType="vm:MemberCommerceInvoiceItemViewModel">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="{Binding ReferenceNumber}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
-                                        <Label Text="{Binding BusinessName}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasBusinessName}" />
+                                        <Label Text="{Binding ReferenceNumber}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding BusinessName}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasBusinessName}" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding DueDateText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -89,7 +89,7 @@
 
                     <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasSelectedInvoice}">
                         <VerticalStackLayout Spacing="8">
-                            <Label Text="{Binding SelectedInvoice.HeaderTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                            <Label Text="{Binding SelectedInvoice.HeaderTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
                             <Label Text="{Binding SelectedInvoice.StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                             <Label Text="{Binding SelectedInvoice.DueDateText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                             <Label Text="{Binding SelectedInvoice.TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />

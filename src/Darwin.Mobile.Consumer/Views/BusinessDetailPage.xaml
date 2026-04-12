@@ -25,7 +25,8 @@
                             <Label Text="{Binding Business.Name}"
                                    FontSize="24"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource BrushOnSurface}" />
+                                   TextColor="{StaticResource BrushOnSurface}"
+                                   LineBreakMode="WordWrap" />
                             <Label Text="{Binding Business.ShortDescription}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"
                                    IsVisible="{Binding Business.ShortDescription, Converter={StaticResource NullCheckConverter}}" />
@@ -38,6 +39,7 @@
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding Business.LoyaltyProgramPublic.Name}"
                            Style="{StaticResource SectionHeadingLabelStyle}"
+                           LineBreakMode="WordWrap"
                            IsVisible="{Binding Business.LoyaltyProgramPublic, Converter={StaticResource NullCheckConverter}}" />
                     <Label Text="{Binding Business.LoyaltyProgramPublic.IsActive, StringFormat={x:Static res:AppResources.BusinessActiveFormat}}"
                            Style="{StaticResource SecondaryBodyLabelStyle}"

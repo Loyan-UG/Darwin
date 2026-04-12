@@ -158,6 +158,70 @@
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}" Style="{StaticResource SectionHeadingLabelStyle}" />
                     <Label Text="{Binding CampaignFilterSummary}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{x:Static res:AppResources.RewardsCampaignStateMixTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowDefinitions="Auto,Auto" RowSpacing="8">
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.RewardsCampaignStateFilterDraft}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Text="{Binding DraftCampaignCount}" Style="{StaticResource MetricValueLabelStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.RewardsCampaignStateFilterScheduled}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Text="{Binding ScheduledCampaignCount}" Style="{StaticResource MetricValueLabelStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.RewardsCampaignStateFilterActive}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Text="{Binding ActiveCampaignCount}" Style="{StaticResource MetricValueLabelStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.RewardsCampaignStateFilterExpired}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Text="{Binding ExpiredCampaignCount}" Style="{StaticResource MetricValueLabelStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{x:Static res:AppResources.RewardsCampaignAudienceMixTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowDefinitions="Auto,Auto" RowSpacing="8">
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.RewardsCampaignAudienceJoinedMembers}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Text="{Binding JoinedMembersCampaignCount}" Style="{StaticResource MetricValueLabelStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.RewardsCampaignAudienceTierSegment}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Text="{Binding TierSegmentCampaignCount}" Style="{StaticResource MetricValueLabelStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.RewardsCampaignAudiencePointsThreshold}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Text="{Binding PointsThresholdCampaignCount}" Style="{StaticResource MetricValueLabelStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.RewardsCampaignAudienceDateWindow}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Text="{Binding DateWindowCampaignCount}" Style="{StaticResource MetricValueLabelStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
                     <Border Style="{StaticResource FormFieldBorderStyle}">
                         <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignSearchPlaceholder}" Text="{Binding CampaignSearchQuery}" Style="{StaticResource FormEntryStyle}" />
                     </Border>
@@ -213,10 +277,10 @@
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="6">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                            <Label Text="{Binding Title}" Style="{StaticResource BodyLabelStyle}" />
+                                            <Label Text="{Binding Title}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="WordWrap" />
                                             <Label Grid.Column="1" Text="{Binding CampaignState, StringFormat='{x:Static res:AppResources.RewardsCampaignStateFormat}'}" Style="{StaticResource CaptionLabelStyle}" />
                                         </Grid>
-                                        <Label Text="{Binding Name}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding Name}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding AudienceSummary}" Style="{StaticResource CaptionLabelStyle}" />
                                         <Label Text="{Binding ChannelSummary}" Style="{StaticResource CaptionLabelStyle}" />
                                         <Label Text="{Binding StartsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignStartAtFormat}'}" Style="{StaticResource CaptionLabelStyle}" IsVisible="{Binding StartsAtUtc, Converter={StaticResource NullCheckConverter}}" />

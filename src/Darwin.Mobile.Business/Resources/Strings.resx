@@ -616,6 +616,12 @@
   <data name="RewardsCampaignsLabel" xml:space="preserve">
     <value>Campaigns</value>
   </data>
+  <data name="RewardsCampaignStateMixTitle" xml:space="preserve">
+    <value>Status mix</value>
+  </data>
+  <data name="RewardsCampaignAudienceMixTitle" xml:space="preserve">
+    <value>Audience mix</value>
+  </data>
   <data name="RewardsCampaignActivateButton" xml:space="preserve">
     <value>Activate campaign</value>
   </data>

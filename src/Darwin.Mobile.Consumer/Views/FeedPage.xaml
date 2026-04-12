@@ -57,11 +57,16 @@
                                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
                                     <VerticalStackLayout Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                            <Label Text="{Binding Kind}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                            <Label Text="{Binding Kind}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
                                             <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="10,8">
-                                                <Label Text="{Binding PointsDelta, StringFormat='{x:Static res:AppResources.FeedPointsDeltaFormat}'}"
-                                                       TextColor="{StaticResource BrushPrimaryPressed}"
-                                                       IsVisible="{Binding PointsDelta, Converter={StaticResource NullCheckConverter}}" />
+                                                <VerticalStackLayout Spacing="2" IsVisible="{Binding PointsDelta, Converter={StaticResource NullCheckConverter}}">
+                                                    <Label Text="{x:Static res:AppResources.PointsLabel}"
+                                                           Style="{StaticResource CaptionLabelStyle}"
+                                                           HorizontalTextAlignment="Center" />
+                                                    <Label Text="{Binding PointsDelta, StringFormat='{x:Static res:AppResources.FeedPointsDeltaFormat}'}"
+                                                           TextColor="{StaticResource BrushPrimaryPressed}"
+                                                           HorizontalTextAlignment="Center" />
+                                                </VerticalStackLayout>
                                             </Border>
                                         </Grid>
                                         <Label Text="{Binding Note}" Style="{StaticResource BodyLabelStyle}" IsVisible="{Binding Note, Converter={StaticResource NullCheckConverter}}" />
@@ -129,8 +134,8 @@
                             <DataTemplate x:DataType="contracts:PromotionFeedItem">
                                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
                                     <VerticalStackLayout Spacing="8">
-                                        <Label Text="{Binding BusinessName}" Style="{StaticResource SectionEyebrowLabelStyle}" />
-                                        <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                        <Label Text="{Binding BusinessName}" Style="{StaticResource SectionEyebrowLabelStyle}" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding Description}" Style="{StaticResource BodyLabelStyle}" />
                                         <Button Text="{x:Static res:AppResources.FeedOpenPromotionButton}"
                                                 Command="{Binding Source={x:Reference FeedRoot}, Path=BindingContext.OpenPromotionCommand}"

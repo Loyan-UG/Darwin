@@ -370,6 +370,9 @@
   <data name="ProfileAddressCountFormat" xml:space="preserve">
     <value>Saved addresses: {0}</value>
   </data>
+  <data name="ProfileSavedAddressesTitle" xml:space="preserve">
+    <value>Saved addresses</value>
+  </data>
   <data name="ProfileDefaultBillingAddressFormat" xml:space="preserve">
     <value>Default billing: {0}</value>
   </data>
@@ -1123,11 +1126,20 @@
   <data name="DiscoverJoinedBusinessesCountFormat" xml:space="preserve">
     <value>Joined businesses: {0}</value>
   </data>
+  <data name="DiscoverJoinedBusinessesTitle" xml:space="preserve">
+    <value>Joined businesses</value>
+  </data>
   <data name="DiscoverTotalPointsFormat" xml:space="preserve">
     <value>Total points: {0}</value>
   </data>
+  <data name="DiscoverTotalPointsTitle" xml:space="preserve">
+    <value>Total points</value>
+  </data>
   <data name="DiscoverTopBalanceBusinessFormat" xml:space="preserve">
     <value>Top balance at: {0}</value>
+  </data>
+  <data name="DiscoverTopBusinessTitle" xml:space="preserve">
+    <value>Top business</value>
   </data>
   <data name="AuthLegalSectionTitle" xml:space="preserve">
     <value>Rechtliches &amp; Datenschutz</value>

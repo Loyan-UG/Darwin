@@ -155,6 +155,7 @@ public static class AppResources
     public static string ProfilePushTokenAvailabilityUnknown => ResourceManager.GetString(nameof(ProfilePushTokenAvailabilityUnknown), Culture) ?? "Push token status: unknown";
     public static string ProfileAddressesSectionTitle => ResourceManager.GetString(nameof(ProfileAddressesSectionTitle), Culture) ?? "Saved addresses";
     public static string ProfileAddressCountFormat => ResourceManager.GetString(nameof(ProfileAddressCountFormat), Culture) ?? "Saved addresses: {0}";
+    public static string ProfileSavedAddressesTitle => ResourceManager.GetString(nameof(ProfileSavedAddressesTitle), Culture) ?? "Saved addresses";
     public static string ProfileDefaultBillingAddressFormat => ResourceManager.GetString(nameof(ProfileDefaultBillingAddressFormat), Culture) ?? "Default billing: {0}";
     public static string ProfileDefaultShippingAddressFormat => ResourceManager.GetString(nameof(ProfileDefaultShippingAddressFormat), Culture) ?? "Default shipping: {0}";
     public static string ProfileManageAddressesButton => ResourceManager.GetString(nameof(ProfileManageAddressesButton), Culture) ?? "Manage addresses";
@@ -345,8 +346,11 @@ public static class AppResources
     public static string DiscoverLoadingMessage => ResourceManager.GetString(nameof(DiscoverLoadingMessage), Culture) ?? "Loading your businesses and nearby discovery results...";
 
     public static string DiscoverJoinedBusinessesCountFormat => ResourceManager.GetString(nameof(DiscoverJoinedBusinessesCountFormat), Culture) ?? "Joined businesses: {0}";
+    public static string DiscoverJoinedBusinessesTitle => ResourceManager.GetString(nameof(DiscoverJoinedBusinessesTitle), Culture) ?? "Joined businesses";
     public static string DiscoverTotalPointsFormat => ResourceManager.GetString(nameof(DiscoverTotalPointsFormat), Culture) ?? "Total points: {0}";
+    public static string DiscoverTotalPointsTitle => ResourceManager.GetString(nameof(DiscoverTotalPointsTitle), Culture) ?? "Total points";
     public static string DiscoverTopBalanceBusinessFormat => ResourceManager.GetString(nameof(DiscoverTopBalanceBusinessFormat), Culture) ?? "Top balance at: {0}";
+    public static string DiscoverTopBusinessTitle => ResourceManager.GetString(nameof(DiscoverTopBusinessTitle), Culture) ?? "Top business";
     
     public static string DiscoverCategoryFilterLabel => ResourceManager.GetString(nameof(DiscoverCategoryFilterLabel), Culture) ?? "Category";
     public static string DiscoverSearchButton => ResourceManager.GetString(nameof(DiscoverSearchButton), Culture) ?? "Search";

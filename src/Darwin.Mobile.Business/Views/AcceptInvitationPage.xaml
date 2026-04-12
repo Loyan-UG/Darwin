@@ -48,7 +48,8 @@
                         <Label Grid.Row="0"
                                Grid.Column="1"
                                Text="{Binding BusinessName}"
-                               Style="{StaticResource BodyLabelStyle}" />
+                               Style="{StaticResource BodyLabelStyle}"
+                               LineBreakMode="WordWrap" />
 
                         <Label Grid.Row="1"
                                Grid.Column="0"
@@ -57,7 +58,8 @@
                         <Label Grid.Row="1"
                                Grid.Column="1"
                                Text="{Binding InvitedEmail}"
-                               Style="{StaticResource BodyLabelStyle}" />
+                               Style="{StaticResource BodyLabelStyle}"
+                               LineBreakMode="WordWrap" />
 
                         <Label Grid.Row="2"
                                Grid.Column="0"
@@ -66,7 +68,8 @@
                         <Label Grid.Row="2"
                                Grid.Column="1"
                                Text="{Binding InvitationRole}"
-                               Style="{StaticResource BodyLabelStyle}" />
+                               Style="{StaticResource BodyLabelStyle}"
+                               LineBreakMode="WordWrap" />
 
                         <Label Grid.Row="3"
                                Grid.Column="0"
@@ -75,13 +78,15 @@
                         <Label Grid.Row="3"
                                Grid.Column="1"
                                Text="{Binding InvitationExpiresAtDisplay}"
-                               Style="{StaticResource BodyLabelStyle}" />
+                               Style="{StaticResource BodyLabelStyle}"
+                               LineBreakMode="WordWrap" />
                     </Grid>
 
                     <Label Text="{x:Static res:AppResources.InvitationStatusLabel}"
                            Style="{StaticResource FormLabelStyle}" />
                     <Label Text="{Binding InvitationStatus}"
-                           Style="{StaticResource BodyLabelStyle}" />
+                           Style="{StaticResource BodyLabelStyle}"
+                           LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
             </Border>
 

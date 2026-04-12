@@ -44,20 +44,20 @@
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
                         <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
                             <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding JoinedBusinessCount, StringFormat='{x:Static res:AppResources.DiscoverJoinedBusinessesCountFormat}'}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Label Text="{x:Static res:AppResources.DiscoverJoinedBusinessesTitle}" Style="{StaticResource CaptionLabelStyle}" />
                                 <Label Text="{Binding JoinedBusinessCount}" Style="{StaticResource MetricValueLabelStyle}" />
                             </VerticalStackLayout>
                         </Border>
                         <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
                             <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding TotalJoinedPointsBalance, StringFormat='{x:Static res:AppResources.DiscoverTotalPointsFormat}'}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Label Text="{x:Static res:AppResources.DiscoverTotalPointsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                                 <Label Text="{Binding TotalJoinedPointsBalance}" Style="{StaticResource MetricValueLabelStyle}" />
                             </VerticalStackLayout>
                         </Border>
                         <Border Grid.Column="2" Style="{StaticResource MutedCardBorderStyle}">
                             <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding TopJoinedBusinessName, StringFormat='{x:Static res:AppResources.DiscoverTopBalanceBusinessFormat}'}" Style="{StaticResource CaptionLabelStyle}" />
-                                <Label Text="{Binding TopJoinedBusinessName}" FontAttributes="Bold" FontSize="15" LineBreakMode="TailTruncation" TextColor="{StaticResource BrushOnSurface}" />
+                                <Label Text="{x:Static res:AppResources.DiscoverTopBusinessTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                                <Label Text="{Binding TopJoinedBusinessName}" FontAttributes="Bold" FontSize="15" LineBreakMode="WordWrap" TextColor="{StaticResource BrushOnSurface}" />
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
@@ -140,7 +140,7 @@
                                     <VerticalStackLayout Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                             <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                                <Label Text="{Binding Business.Name}" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                                <Label Text="{Binding Business.Name}" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
                                                 <Label Text="{Binding Business.Category, StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding Business.Category, Converter={StaticResource InverseBoolConverter}}" />
                                                 <Label Text="{Binding Business.City}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding Business.City, Converter={StaticResource NullCheckConverter}}" />
                                             </VerticalStackLayout>

@@ -83,7 +83,7 @@
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
                                 <VerticalStackLayout Spacing="4">
-                                    <Label Text="{Binding AddressCount, StringFormat='{x:Static res:AppResources.ProfileAddressCountFormat}'}"
+                                    <Label Text="{x:Static res:AppResources.ProfileSavedAddressesTitle}"
                                            Style="{StaticResource CaptionLabelStyle}" />
                                     <Label Text="{Binding AddressCount}"
                                            Style="{StaticResource MetricValueLabelStyle}" />
@@ -170,7 +170,8 @@
 
                         <VerticalStackLayout Spacing="8" IsVisible="{Binding HasLinkedCustomerContext}">
                             <Label Text="{Binding LinkedCustomerDisplayName, StringFormat='{x:Static res:AppResources.ProfileCustomerDisplayNameFormat}'}"
-                                   Style="{StaticResource BodyLabelStyle}" />
+                                   Style="{StaticResource BodyLabelStyle}"
+                                   LineBreakMode="WordWrap" />
                             <Label Text="{Binding LinkedCustomerCompanyName, StringFormat='{x:Static res:AppResources.ProfileCustomerCompanyFormat}'}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"
                                    IsVisible="{Binding HasLinkedCustomerCompanyName}" />

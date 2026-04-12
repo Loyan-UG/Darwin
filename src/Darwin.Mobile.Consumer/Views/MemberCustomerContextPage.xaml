@@ -24,7 +24,7 @@
             <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasContext}">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static res:AppResources.MemberCustomerContextSummarySectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
-                    <Label Text="{Binding DisplayName}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                    <Label Text="{Binding DisplayName}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" LineBreakMode="WordWrap" />
                     <Label Text="{Binding EmailText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                     <Label Text="{Binding PhoneText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasPhone}" />
                     <Label Text="{Binding CompanyText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasCompany}" />
@@ -44,7 +44,7 @@
                             <DataTemplate x:DataType="vm:MemberCustomerSegmentItemViewModel">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding Name}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                                        <Label Text="{Binding Name}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding Description}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" IsVisible="{Binding HasDescription}" />
                                     </VerticalStackLayout>
                                 </Border>
@@ -63,7 +63,7 @@
                             <DataTemplate x:DataType="vm:MemberCustomerConsentItemViewModel">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding Type}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                                        <Label Text="{Binding Type}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding GrantedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding RevokedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasRevokedAt}" />
@@ -84,7 +84,7 @@
                             <DataTemplate x:DataType="vm:MemberCustomerInteractionItemViewModel">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding TypeChannelText}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                                        <Label Text="{Binding TypeChannelText}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding SubjectText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasSubject}" />
                                         <Label Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding PreviewText}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" IsVisible="{Binding HasPreview}" />

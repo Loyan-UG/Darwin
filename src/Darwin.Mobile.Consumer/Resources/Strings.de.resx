@@ -352,6 +352,9 @@
   <data name="ProfileAddressesSectionTitle" xml:space="preserve">
     <value>Gespeicherte Adressen</value>
   </data>
+  <data name="ProfileSavedAddressesTitle" xml:space="preserve">
+    <value>Gespeicherte Adressen</value>
+  </data>
   <data name="ProfileAddressCountFormat" xml:space="preserve">
     <value>Gespeicherte Adressen: {0}</value>
   </data>

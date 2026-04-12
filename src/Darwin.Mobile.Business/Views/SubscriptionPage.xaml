@@ -22,14 +22,17 @@
                            Style="{StaticResource SectionHeadingLabelStyle}" />
 
                     <Label Text="{Binding SubscriptionSummaryText}"
-                           Style="{StaticResource BodyLabelStyle}" />
+                           Style="{StaticResource BodyLabelStyle}"
+                           LineBreakMode="WordWrap" />
 
                     <Label Text="{Binding SubscriptionDatesText}"
                            Style="{StaticResource CaptionLabelStyle}"
+                           LineBreakMode="WordWrap"
                            IsVisible="{Binding HasSubscriptionStatus}" />
 
                     <Label Text="{Binding SubscriptionPolicyNotice}"
-                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                           Style="{StaticResource SecondaryBodyLabelStyle}"
+                           LineBreakMode="WordWrap" />
 
                     <Button Text="{x:Static res:AppResources.SubscriptionRefreshStatusButton}"
                             Style="{StaticResource PrimaryButtonStyle}"
@@ -43,10 +46,12 @@
                            Style="{StaticResource SectionHeadingLabelStyle}" />
 
                     <Label Text="{Binding ManagementWebsiteHint}"
-                           Style="{StaticResource BodyLabelStyle}" />
+                           Style="{StaticResource BodyLabelStyle}"
+                           LineBreakMode="WordWrap" />
 
                     <Label Text="{Binding ManagementWebsiteDetails}"
-                           Style="{StaticResource CaptionLabelStyle}" />
+                           Style="{StaticResource CaptionLabelStyle}"
+                           LineBreakMode="WordWrap" />
 
                     <Label Text="{x:Static res:AppResources.SubscriptionManagementWebsiteUrlLabel}"
                            Style="{StaticResource FormLabelStyle}"
@@ -54,6 +59,7 @@
 
                     <Label Text="{Binding ManagementWebsiteUrlText}"
                            Style="{StaticResource CaptionLabelStyle}"
+                           LineBreakMode="WordWrap"
                            IsVisible="{Binding IsManagementWebsiteConfigured}" />
 
                     <Label Text="{Binding ErrorMessage}"
