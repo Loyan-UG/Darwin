@@ -22,13 +22,15 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
            hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML">@T.T("Businesses")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Businesses")</a>
         <a asp-controller="BusinessCommunications"
            asp-action="Index"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML">@T.T("Communications")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Communications")</a>
         <a asp-controller="MobileOperations"
            asp-action="Index"
            class="btn btn-outline-secondary"
@@ -42,8 +44,9 @@
            class="btn btn-outline-danger"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed" })"
            hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML">@T.T("FailedEmails")</a>
-    </div>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("FailedEmails")</a>
+</div>
 </div>
 
 <partial name="~/Views/Businesses/_SupportQueueSummary.cshtml" model="Model.Summary" />

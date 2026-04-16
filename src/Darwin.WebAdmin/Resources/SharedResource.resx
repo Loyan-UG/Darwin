@@ -1233,6 +1233,30 @@
   <data name="CreateAccount" xml:space="preserve">
     <value>Create account</value>
   </data>
+  <data name="LoginTwoFactorTitle" xml:space="preserve">
+    <value>Two-factor authentication</value>
+  </data>
+  <data name="LoginTwoFactorHeading" xml:space="preserve">
+    <value>Confirm code</value>
+  </data>
+  <data name="LoginTwoFactorCodeLabel" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="LoginTwoFactorConfirmAction" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="LocaleGermanGermany" xml:space="preserve">
+    <value>German (Germany)</value>
+  </data>
+  <data name="LocaleEnglishUnitedStates" xml:space="preserve">
+    <value>English (United States)</value>
+  </data>
+  <data name="CurrencyEuro" xml:space="preserve">
+    <value>EUR (€)</value>
+  </data>
+  <data name="CurrencyUsd" xml:space="preserve">
+    <value>USD ($)</value>
+  </data>
   <data name="SiteSettingsTitle" xml:space="preserve">
     <value>Site Settings</value>
   </data>
@@ -1899,6 +1923,9 @@
   <data name="ArchiveReadiness" xml:space="preserve">
     <value>Archive Readiness</value>
   </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
   <data name="NeedsIssuerData" xml:space="preserve">
     <value>Needs issuer data</value>
   </data>
@@ -2558,6 +2585,15 @@
   </data>
   <data name="Close" xml:space="preserve">
     <value>Close</value>
+  </data>
+  <data name="ConfirmDeleteTitle" xml:space="preserve">
+    <value>Confirm deletion</value>
+  </data>
+  <data name="ConfirmDeleteWarning" xml:space="preserve">
+    <value>This action cannot be undone.</value>
+  </data>
+  <data name="ConfirmDeleteItemLabel" xml:space="preserve">
+    <value>Item</value>
   </data>
   <data name="TransferLines" xml:space="preserve">
     <value>Transfer Lines</value>
@@ -6926,6 +6962,66 @@
   </data>
   <data name="CreatedUtcValue" xml:space="preserve">
     <value>Created: {0} UTC</value>
+  </data>
+  <data name="CommonDate" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="CommonEdit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="ExpensesEmptyState" xml:space="preserve">
+    <value>No expenses found.</value>
+  </data>
+  <data name="ExpensesRecent30Days" xml:space="preserve">
+    <value>Recent (30d)</value>
+  </data>
+  <data name="ExpensesReviewPlaybooks" xml:space="preserve">
+    <value>Expense Review Playbooks</value>
+  </data>
+  <data name="ExpensesSupplierLinked" xml:space="preserve">
+    <value>Supplier Linked</value>
+  </data>
+  <data name="ExpensesTitle" xml:space="preserve">
+    <value>Expenses</value>
+  </data>
+  <data name="FinancialAccountsCodeMissing" xml:space="preserve">
+    <value>Code missing</value>
+  </data>
+  <data name="FinancialAccountsEmptyState" xml:space="preserve">
+    <value>No accounts found.</value>
+  </data>
+  <data name="FinancialAccountsMissingCode" xml:space="preserve">
+    <value>Missing Code</value>
+  </data>
+  <data name="FinancialAccountsPlaybooksTitle" xml:space="preserve">
+    <value>Financial Account Playbooks</value>
+  </data>
+  <data name="FinancialAccountsTitle" xml:space="preserve">
+    <value>Financial Accounts</value>
+  </data>
+  <data name="JournalEntriesEmptyState" xml:space="preserve">
+    <value>No journal entries found.</value>
+  </data>
+  <data name="JournalEntriesMultiLine" xml:space="preserve">
+    <value>Multi-Line</value>
+  </data>
+  <data name="JournalEntriesTitle" xml:space="preserve">
+    <value>Journal Entries</value>
+  </data>
+  <data name="JournalReviewPlaybooks" xml:space="preserve">
+    <value>Journal Review Playbooks</value>
+  </data>
+  <data name="Recent" xml:space="preserve">
+    <value>Recent</value>
+  </data>
+  <data name="SearchExpensesPlaceholder" xml:space="preserve">
+    <value>Search expenses</value>
+  </data>
+  <data name="SearchFinancialAccountsPlaceholder" xml:space="preserve">
+    <value>Search accounts</value>
+  </data>
+  <data name="SearchJournalEntriesPlaceholder" xml:space="preserve">
+    <value>Search journal entries</value>
   </data>
   <data name="LastCarrierEventAtUtc" xml:space="preserve">
     <value>Last carrier event: {0} UTC</value>

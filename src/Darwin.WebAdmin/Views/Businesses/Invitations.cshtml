@@ -25,7 +25,8 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-invitations-workspace-shell"
-           hx-swap="outerHTML">@T.T("Members")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Members")</a>
         @if (isFullAdmin)
         {
             <a asp-action="Edit"
@@ -33,20 +34,23 @@
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
                hx-target="#business-invitations-workspace-shell"
-               hx-swap="outerHTML">@T.T("BusinessMembersBackToBusinessAction")</a>
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessMembersBackToBusinessAction")</a>
             <a asp-action="Setup"
                asp-route-id="@Model.Business.Id"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
                hx-target="#business-invitations-workspace-shell"
-               hx-swap="outerHTML">@T.T("Setup")</a>
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Setup")</a>
         }
         <a asp-action="CreateInvitation"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-primary"
            hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-invitations-workspace-shell"
-           hx-swap="outerHTML">
+           hx-swap="outerHTML"
+           hx-push-url="true">
             <i class="fa-solid fa-plus"></i> @T.T("BusinessInvitationsInviteUserAction")
         </a>
     </div>
@@ -56,7 +60,8 @@
       class="row g-2 mb-3"
       hx-get="@Url.Action("Invitations", "Businesses")"
       hx-target="#business-invitations-workspace-shell"
-      hx-swap="outerHTML">
+      hx-swap="outerHTML"
+      hx-push-url="true">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessInvitationsSearchPlaceholder")" />
@@ -71,7 +76,8 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-invitations-workspace-shell"
-           hx-swap="outerHTML">@T.T("Reset")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Reset")</a>
     </div>
 </form>
 
@@ -174,6 +180,7 @@
        asp-route-query="@Model.Query"
        asp-route-filter="@Model.Filter"
        hx-target="#business-invitations-workspace-shell"
-       hx-swap="outerHTML">
+       hx-swap="outerHTML"
+       hx-push-url="true">
 </pager>
 </div>

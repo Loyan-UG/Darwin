@@ -1,67 +1,71 @@
 @model Darwin.WebAdmin.ViewModels.Billing.ExpensesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Expenses";
+    ViewData["Title"] = T.T("ExpensesTitle");
 }
 
 <div id="billing-expenses-workspace-shell">
-<h1 class="mb-3">Expenses</h1>
+<h1 class="mb-3">@T.T("ExpensesTitle")</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Expenses" method="get" class="d-flex gap-2"
           hx-get="@Url.Action("Expenses", "Billing")"
           hx-target="#billing-expenses-workspace-shell"
-          hx-swap="outerHTML">
+          hx-swap="outerHTML"
+          hx-push-url="true">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search expenses">
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchExpensesPlaceholder")">
+        <button class="btn btn-outline-secondary" type="submit">@T.T("CommonSearch")</button>
         <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
            hx-target="#billing-expenses-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("CommonReset")</a>
     </form>
     <a asp-action="CreateExpense" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
        hx-get="@Url.Action("CreateExpense", "Billing", new { businessId = Model.BusinessId })"
        hx-target="#billing-expenses-workspace-shell"
-       hx-swap="outerHTML">New Expense</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("CreateExpense")</a>
 </div>
 
 <div class="row g-3 mb-3">
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Total</div>
+            <div class="text-muted small">@T.T("CommonTotal")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Supplier Linked</div>
+            <div class="text-muted small">@T.T("ExpensesSupplierLinked")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.SupplierLinkedCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Recent (30d)</div>
+            <div class="text-muted small">@T.T("ExpensesRecent30Days")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.RecentCount</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">High Value</div>
+            <div class="text-muted small">@T.T("HighValue")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.HighValueCount</div>
         </div>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Expense Review Playbooks</div>
+    <div class="card-header">@T.T("ExpensesReviewPlaybooks")</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Queue</th>
-                        <th>Scope</th>
-                        <th>Operator Action</th>
+                        <th>@T.T("Queue")</th>
+                        <th>@T.T("Scope")</th>
+                        <th>@T.T("OperatorAction")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -81,11 +85,11 @@
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>@T.T("CommonDate")</th><th>@T.T("Category")</th><th>@T.T("Description")</th><th>@T.T("Amount")</th><th class="text-end">@T.T("CommonActions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="5" class="text-center text-muted">No expenses found.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted">@T.T("ExpensesEmptyState")</td></tr>
         }
         else
         {
@@ -100,13 +104,15 @@
                         <a asp-action="EditExpense" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditExpense", "Billing", new { id = item.Id })"
                            hx-target="#billing-expenses-workspace-shell"
-                           hx-swap="outerHTML">Edit</a>
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("CommonEdit")</a>
                         @if (item.SupplierId.HasValue)
                         {
                             <a asp-controller="Inventory" asp-action="EditSupplier" asp-route-id="@item.SupplierId.Value" class="btn btn-sm btn-outline-info"
                                hx-get="@Url.Action("EditSupplier", "Inventory", new { id = item.SupplierId.Value })"
                                hx-target="#billing-expenses-workspace-shell"
-                               hx-swap="outerHTML">Supplier</a>
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Supplier")</a>
                         }
                     </td>
                 </tr>
@@ -116,5 +122,5 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Expenses" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query"></pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Expenses" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" hx-target="#billing-expenses-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
 </div>

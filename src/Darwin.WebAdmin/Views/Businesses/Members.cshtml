@@ -25,7 +25,8 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-members-workspace-shell"
-           hx-swap="outerHTML">@T.T("Invitations")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Invitations")</a>
         @if (isFullAdmin)
         {
             <a asp-action="Edit"
@@ -33,25 +34,29 @@
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
                hx-target="#business-members-workspace-shell"
-               hx-swap="outerHTML">@T.T("BusinessMembersBackToBusinessAction")</a>
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessMembersBackToBusinessAction")</a>
             <a asp-action="Setup"
                asp-route-id="@Model.Business.Id"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
                hx-target="#business-members-workspace-shell"
-               hx-swap="outerHTML">@T.T("Setup")</a>
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Setup")</a>
             <a asp-action="OwnerOverrideAudits"
                asp-route-businessId="@Model.Business.Id"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.Business.Id })"
                hx-target="#business-members-workspace-shell"
-               hx-swap="outerHTML">@T.T("BusinessMembersOwnerOverrideAuditAction")</a>
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessMembersOwnerOverrideAuditAction")</a>
            <a asp-action="CreateMember"
                asp-route-businessId="@Model.Business.Id"
                class="btn btn-primary"
                hx-get="@Url.Action("CreateMember", "Businesses", new { businessId = Model.Business.Id })"
                hx-target="#business-members-workspace-shell"
-               hx-swap="outerHTML">
+               hx-swap="outerHTML"
+               hx-push-url="true">
                 <i class="fa-solid fa-plus"></i> @T.T("BusinessMembersAssignMemberAction")
             </a>
         }
@@ -93,7 +98,8 @@
       class="row g-2 mb-3"
       hx-get="@Url.Action("Members", "Businesses")"
       hx-target="#business-members-workspace-shell"
-      hx-swap="outerHTML">
+      hx-swap="outerHTML"
+      hx-push-url="true">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessMembersSearchPlaceholder")" />
@@ -108,7 +114,8 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-members-workspace-shell"
-           hx-swap="outerHTML">@T.T("Reset")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Reset")</a>
     </div>
 </form>
 
@@ -169,7 +176,8 @@
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("StaffAccessBadge", "Businesses", new { id = item.Id })"
                                hx-target="#business-members-workspace-shell"
-                               hx-swap="outerHTML">
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
                                 <i class="fa-solid fa-qrcode"></i> @T.T("BusinessMembersBadgeAction")
                             </a>
                             @if (isFullAdmin)
@@ -179,8 +187,9 @@
                                    class="btn btn-sm btn-outline-primary"
                                    hx-get="@Url.Action("EditMember", "Businesses", new { id = item.Id })"
                                    hx-target="#business-members-workspace-shell"
-                                   hx-swap="outerHTML">
-                                    <i class="fa-solid fa-pen"></i> Edit
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    <i class="fa-solid fa-pen"></i> @T.T("CommonEdit")
                                 </a>
                                 <a asp-controller="Users"
                                    asp-action="Edit"
@@ -188,7 +197,8 @@
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Edit", "Users", new { id = item.UserId })"
                                    hx-target="#business-members-workspace-shell"
-                                   hx-swap="outerHTML">
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
                                     <i class="fa-solid fa-user"></i> @T.T("OpenUserAction")
                                 </a>
                                 <a asp-controller="MobileOperations"
@@ -223,7 +233,7 @@
                                         data-hx-target="#business-members-workspace-shell"
                                         data-hx-swap="outerHTML"
                                         data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                                    <i class="fa-solid fa-user-minus"></i> Remove
+                                    <i class="fa-solid fa-user-minus"></i> @T.T("Remove")
                                 </button>
                             }
                         </div>
@@ -320,7 +330,8 @@
        asp-route-query="@Model.Query"
        asp-route-filter="@Model.Filter"
        hx-target="#business-members-workspace-shell"
-       hx-swap="outerHTML">
+       hx-swap="outerHTML"
+       hx-push-url="true">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

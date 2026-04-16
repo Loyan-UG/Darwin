@@ -22,7 +22,13 @@
         <partial name="_ExpenseForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">@T.T("Save")</button>
-            <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+            <a asp-action="Expenses"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+               hx-target="#billing-expense-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Back")</a>
         </div>
     </form>
 </div>

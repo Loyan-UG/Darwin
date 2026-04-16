@@ -27,7 +27,8 @@
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })"
                hx-target="#billing-payment-editor-shell"
-               hx-swap="outerHTML">@T.T("BackToPayments")</a>
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BackToPayments")</a>
         </div>
     </form>
 </div>

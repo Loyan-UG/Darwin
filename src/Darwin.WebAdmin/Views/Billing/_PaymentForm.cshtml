@@ -11,7 +11,11 @@
             {
                 <div class="col-md-6">
                     <strong>@T.T("Order"):</strong>
-                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" class="text-decoration-none">
+                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" class="text-decoration-none"
+                       hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value })"
+                       hx-target="#billing-payment-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
                         @(string.IsNullOrWhiteSpace(Model.OrderNumber) ? Model.OrderId.Value.ToString() : Model.OrderNumber)
                     </a>
                 </div>
@@ -30,7 +34,11 @@
             {
                 <div class="col-md-6">
                     <strong>@T.T("Customer"):</strong>
-                    <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="text-decoration-none">
+                    <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="text-decoration-none"
+                       hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                       hx-target="#billing-payment-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
                         @(string.IsNullOrWhiteSpace(Model.CustomerDisplayName) ? Model.CustomerId.Value.ToString() : Model.CustomerDisplayName)
                     </a>
                     @if (!string.IsNullOrWhiteSpace(Model.CustomerEmail))
@@ -43,7 +51,11 @@
             {
                 <div class="col-md-6">
                     <strong>@T.T("Users"):</strong>
-                    <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId.Value" class="text-decoration-none">
+                    <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId.Value" class="text-decoration-none"
+                       hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId.Value })"
+                       hx-target="#billing-payment-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
                         @(string.IsNullOrWhiteSpace(Model.UserDisplayName) ? Model.UserId.Value.ToString() : Model.UserDisplayName)
                     </a>
                     @if (!string.IsNullOrWhiteSpace(Model.UserEmail))
@@ -110,9 +122,21 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@T.T("ReconciliationAndDisputeSnapshot")</span>
         <div class="d-flex flex-wrap gap-2">
-            <a asp-controller="Settings" asp-action="PaymentSettings" class="btn btn-sm btn-outline-secondary">@T.T("PaymentSettings")</a>
-            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.NeedsReconciliation" class="btn btn-sm btn-outline-warning">@T.T("NeedsReconciliationQueue")</a>
-            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.DisputeFollowUp" class="btn btn-sm btn-outline-danger">@T.T("DisputeFollowUpQueue")</a>
+            <a asp-controller="Settings" asp-action="PaymentSettings" class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("PaymentSettings", "Settings")"
+               hx-target="#billing-payment-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("PaymentSettings")</a>
+            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.NeedsReconciliation" class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })"
+               hx-target="#billing-payment-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("NeedsReconciliationQueue")</a>
+            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.DisputeFollowUp" class="btn btn-sm btn-outline-danger"
+               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })"
+               hx-target="#billing-payment-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("DisputeFollowUpQueue")</a>
         </div>
     </div>
     <div class="card-body">
@@ -153,11 +177,23 @@
             </div>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-3">
-            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions" class="btn btn-sm btn-outline-warning">@T.T("PaymentExceptions")</a>
-            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals" class="btn btn-sm btn-outline-danger">@T.T("DisputeSignals")</a>
+            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions" class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+               hx-target="#billing-payment-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("PaymentExceptions")</a>
+            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals" class="btn btn-sm btn-outline-danger"
+               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+               hx-target="#billing-payment-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("DisputeSignals")</a>
             @if (Model.OrderId.HasValue)
             {
-                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-secondary">@T.T("OpenOrderPayments")</a>
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value })"
+                   hx-target="#billing-payment-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("OpenOrderPayments")</a>
             }
         </div>
     </div>
@@ -208,7 +244,11 @@
             <span>@T.T("RefundTimeline")</span>
             @if (Model.OrderId.HasValue)
             {
-                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary">@T.T("OpenOrderRefunds")</a>
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value })"
+                   hx-target="#billing-payment-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("OpenOrderRefunds")</a>
             }
         </div>
         <div class="card-body">
@@ -248,8 +288,16 @@
 @if (Model.OrderId.HasValue)
 {
     <div class="d-flex flex-wrap gap-2 mb-3">
-        <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId.Value" asp-route-paymentId="@Model.Id" class="btn btn-sm btn-outline-danger">@T.T("AddRefundForThisPayment")</a>
-        <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary">@T.T("OpenOrderRefunds")</a>
+        <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId.Value" asp-route-paymentId="@Model.Id" class="btn btn-sm btn-outline-danger"
+           hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId.Value, paymentId = Model.Id })"
+           hx-target="#billing-payment-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("AddRefundForThisPayment")</a>
+        <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value })"
+           hx-target="#billing-payment-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("OpenOrderRefunds")</a>
     </div>
 }
 

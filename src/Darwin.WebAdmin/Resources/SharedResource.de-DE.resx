@@ -1233,6 +1233,30 @@
   <data name="CreateAccount" xml:space="preserve">
     <value>Konto erstellen</value>
   </data>
+  <data name="LoginTwoFactorTitle" xml:space="preserve">
+    <value>Zwei-Faktor-Authentifizierung</value>
+  </data>
+  <data name="LoginTwoFactorHeading" xml:space="preserve">
+    <value>Code bestätigen</value>
+  </data>
+  <data name="LoginTwoFactorCodeLabel" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="LoginTwoFactorConfirmAction" xml:space="preserve">
+    <value>Bestätigen</value>
+  </data>
+  <data name="LocaleGermanGermany" xml:space="preserve">
+    <value>Deutsch (Deutschland)</value>
+  </data>
+  <data name="LocaleEnglishUnitedStates" xml:space="preserve">
+    <value>Englisch (Vereinigte Staaten)</value>
+  </data>
+  <data name="CurrencyEuro" xml:space="preserve">
+    <value>EUR (€)</value>
+  </data>
+  <data name="CurrencyUsd" xml:space="preserve">
+    <value>USD ($)</value>
+  </data>
   <data name="SiteSettingsTitle" xml:space="preserve">
     <value>Systemeinstellungen</value>
   </data>
@@ -1899,6 +1923,9 @@
   <data name="ArchiveReadiness" xml:space="preserve">
     <value>Archivbereitschaft</value>
   </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archivieren</value>
+  </data>
   <data name="NeedsIssuerData" xml:space="preserve">
     <value>Ausstellerdaten fehlen</value>
   </data>
@@ -2559,6 +2586,15 @@
   <data name="Close" xml:space="preserve">
     <value>Schliessen</value>
   </data>
+  <data name="ConfirmDeleteTitle" xml:space="preserve">
+    <value>Löschen bestätigen</value>
+  </data>
+  <data name="ConfirmDeleteWarning" xml:space="preserve">
+    <value>Diese Aktion kann nicht rückgängig gemacht werden.</value>
+  </data>
+  <data name="ConfirmDeleteItemLabel" xml:space="preserve">
+    <value>Element</value>
+  </data>
   <data name="TransferLines" xml:space="preserve">
     <value>Transferpositionen</value>
   </data>
@@ -3160,40 +3196,40 @@
     <value>JSON fuer Admin-UI-Textueberschreibungen</value>
   </data>
   <data name="BusinessAdminTextOverridesJson" xml:space="preserve">
-    <value>GeschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ftsspezifische Admin-Text-Overrides</value>
-    <comment>JSON fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r geschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ftsspezifische Admin-UI-TextÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼berschreibungen.</comment>
+    <value>Geschäftsspezifische Admin-Text-Overrides</value>
+    <comment>JSON für geschäftsspezifische Admin-UI-Textüberschreibungen.</comment>
   </data>
   <data name="BusinessCommunicationProfileNotFound" xml:space="preserve">
     <value>Das Kommunikationsprofil des Unternehmens wurde nicht gefunden.</value>
     <comment>Admin-Hinweis, wenn das Kommunikationsprofil eines Unternehmens fehlt.</comment>
   </data>
   <data name="EmailFlowRetriedSuccessfully" xml:space="preserve">
-    <value>Der E-Mail-Flow wurde erfolgreich mit dem aktuellen Live-Ziel erneut ausgelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶st.</value>
-    <comment>Erfolgsmeldung nach erneutem AuslÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶sen eines E-Mail-Flows.</comment>
+    <value>Der E-Mail-Flow wurde erfolgreich mit dem aktuellen Live-Ziel erneut ausgelöst.</value>
+    <comment>Erfolgsmeldung nach erneutem Auslösen eines E-Mail-Flows.</comment>
   </data>
   <data name="EmailTransportNotReadyForCommunicationTest" xml:space="preserve">
-    <value>Der SMTP-Transport ist nicht bereit. VervollstÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ndigen Sie die E-Mail-Einstellungen, bevor Sie einen Kommunikationstest senden.</value>
-    <comment>Fehlermeldung, wenn der E-Mail-Transport fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r einen Kommunikationstest nicht bereit ist.</comment>
+    <value>Der SMTP-Transport ist nicht bereit. Vervollständigen Sie die E-Mail-Einstellungen, bevor Sie einen Kommunikationstest senden.</value>
+    <comment>Fehlermeldung, wenn der E-Mail-Transport für einen Kommunikationstest nicht bereit ist.</comment>
   </data>
   <data name="CommunicationTestInboxNotConfigured" xml:space="preserve">
     <value>Das Kommunikationstest-Postfach ist nicht konfiguriert. Hinterlegen Sie es in den Site Settings, bevor Sie eine Test-E-Mail senden.</value>
     <comment>Fehlermeldung, wenn das Kommunikationstest-Postfach fehlt.</comment>
   </data>
   <data name="SmsTransportNotReadyForCommunicationTest" xml:space="preserve">
-    <value>Der SMS-Transport ist nicht bereit. VervollstÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ndigen Sie die SMS-Provider-Einstellungen, bevor Sie eine Test-SMS senden.</value>
-    <comment>Fehlermeldung, wenn der SMS-Transport fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r einen Kommunikationstest nicht bereit ist.</comment>
+    <value>Der SMS-Transport ist nicht bereit. Vervollständigen Sie die SMS-Provider-Einstellungen, bevor Sie eine Test-SMS senden.</value>
+    <comment>Fehlermeldung, wenn der SMS-Transport für einen Kommunikationstest nicht bereit ist.</comment>
   </data>
   <data name="CommunicationTestSmsRecipientNotConfigured" xml:space="preserve">
-    <value>Der EmpfÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤nger fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Kommunikationstest-SMS ist nicht konfiguriert.</value>
-    <comment>Fehlermeldung, wenn der EmpfÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤nger fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Kommunikationstest-SMS fehlt.</comment>
+    <value>Der Empfänger für die Kommunikationstest-SMS ist nicht konfiguriert.</value>
+    <comment>Fehlermeldung, wenn der Empfänger für die Kommunikationstest-SMS fehlt.</comment>
   </data>
   <data name="WhatsAppTransportNotReadyForCommunicationTest" xml:space="preserve">
-    <value>Der WhatsApp-Transport ist nicht bereit. VervollstÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ndigen Sie die WhatsApp-Provider-Einstellungen, bevor Sie eine Testnachricht senden.</value>
-    <comment>Fehlermeldung, wenn der WhatsApp-Transport fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r einen Kommunikationstest nicht bereit ist.</comment>
+    <value>Der WhatsApp-Transport ist nicht bereit. Vervollständigen Sie die WhatsApp-Provider-Einstellungen, bevor Sie eine Testnachricht senden.</value>
+    <comment>Fehlermeldung, wenn der WhatsApp-Transport für einen Kommunikationstest nicht bereit ist.</comment>
   </data>
   <data name="CommunicationTestWhatsAppRecipientNotConfigured" xml:space="preserve">
-    <value>Der EmpfÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤nger fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Kommunikationstest-WhatsApp-Nachricht ist nicht konfiguriert.</value>
-    <comment>Fehlermeldung, wenn der EmpfÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤nger fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Kommunikationstest-WhatsApp-Nachricht fehlt.</comment>
+    <value>Der Empfänger für die Kommunikationstest-WhatsApp-Nachricht ist nicht konfiguriert.</value>
+    <comment>Fehlermeldung, wenn der Empfänger für die Kommunikationstest-WhatsApp-Nachricht fehlt.</comment>
   </data>
   <data name="AddOnGroupCreated" xml:space="preserve">
     <value>Die Add-on-Gruppe wurde erstellt.</value>
@@ -3208,36 +3244,36 @@
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Add-on-Gruppe.</comment>
   </data>
   <data name="AddOnGroupDeleted" xml:space="preserve">
-    <value>Die Add-on-Gruppe wurde gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Add-on-Gruppe.</comment>
+    <value>Die Add-on-Gruppe wurde gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen einer Add-on-Gruppe.</comment>
   </data>
   <data name="AddOnGroupDeleteFailed" xml:space="preserve">
-    <value>Die Add-on-Gruppe konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Add-on-Gruppe fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Die Add-on-Gruppe konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen einer Add-on-Gruppe fehlschlägt.</comment>
   </data>
   <data name="AddOnGroupAttachProductsFailed" xml:space="preserve">
-    <value>Die VerknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfung mit Produkten ist fehlgeschlagen.</value>
-    <comment>Fehlermeldung, wenn das VerknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfen einer Add-on-Gruppe mit Produkten fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Die Verknüpfung mit Produkten ist fehlgeschlagen.</value>
+    <comment>Fehlermeldung, wenn das Verknüpfen einer Add-on-Gruppe mit Produkten fehlschlägt.</comment>
   </data>
   <data name="AddOnGroupAttachedToProducts" xml:space="preserve">
-    <value>Mit Produkten verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pft.</value>
-    <comment>Erfolgsmeldung nach dem VerknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfen einer Add-on-Gruppe mit Produkten.</comment>
+    <value>Mit Produkten verknüpft.</value>
+    <comment>Erfolgsmeldung nach dem Verknüpfen einer Add-on-Gruppe mit Produkten.</comment>
   </data>
   <data name="AddOnGroupAttachedToCategories" xml:space="preserve">
-    <value>Mit Kategorien verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pft.</value>
-    <comment>Erfolgsmeldung nach dem VerknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfen einer Add-on-Gruppe mit Kategorien.</comment>
+    <value>Mit Kategorien verknüpft.</value>
+    <comment>Erfolgsmeldung nach dem Verknüpfen einer Add-on-Gruppe mit Kategorien.</comment>
   </data>
   <data name="AddOnGroupAttachedToBrands" xml:space="preserve">
-    <value>Mit Marken verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pft.</value>
-    <comment>Erfolgsmeldung nach dem VerknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfen einer Add-on-Gruppe mit Marken.</comment>
+    <value>Mit Marken verknüpft.</value>
+    <comment>Erfolgsmeldung nach dem Verknüpfen einer Add-on-Gruppe mit Marken.</comment>
   </data>
   <data name="AddOnGroupAttachVariantsFailed" xml:space="preserve">
-    <value>Die VerknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfung mit Varianten ist fehlgeschlagen.</value>
-    <comment>Fehlermeldung, wenn das VerknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfen einer Add-on-Gruppe mit Varianten fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Die Verknüpfung mit Varianten ist fehlgeschlagen.</value>
+    <comment>Fehlermeldung, wenn das Verknüpfen einer Add-on-Gruppe mit Varianten fehlschlägt.</comment>
   </data>
   <data name="AddOnGroupAttachedToVariants" xml:space="preserve">
-    <value>Mit Varianten verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pft.</value>
-    <comment>Erfolgsmeldung nach dem VerknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfen einer Add-on-Gruppe mit Varianten.</comment>
+    <value>Mit Varianten verknüpft.</value>
+    <comment>Erfolgsmeldung nach dem Verknüpfen einer Add-on-Gruppe mit Varianten.</comment>
   </data>
   <data name="BrandCreated" xml:space="preserve">
     <value>Die Marke wurde erstellt.</value>
@@ -3252,16 +3288,16 @@
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Marke.</comment>
   </data>
   <data name="BrandConcurrencyConflict" xml:space="preserve">
-    <value>Gleichzeitigkeitskonflikt. Die Marke wurde von einem anderen Prozess geÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ndert. Laden Sie sie neu und versuchen Sie es erneut.</value>
-    <comment>Fehlermeldung bei einem Gleichzeitkeitskonflikt wÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤hrend der Markenbearbeitung.</comment>
+    <value>Gleichzeitigkeitskonflikt. Die Marke wurde von einem anderen Prozess geändert. Laden Sie sie neu und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt während der Markenbearbeitung.</comment>
   </data>
   <data name="BrandDeleted" xml:space="preserve">
-    <value>Die Marke wurde gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Marke.</comment>
+    <value>Die Marke wurde gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen einer Marke.</comment>
   </data>
   <data name="BrandDeleteFailed" xml:space="preserve">
-    <value>Die Marke konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Marke fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Die Marke konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen einer Marke fehlschlägt.</comment>
   </data>
   <data name="CategoryCreated" xml:space="preserve">
     <value>Die Kategorie wurde erfolgreich erstellt.</value>
@@ -3276,12 +3312,12 @@
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Kategorie.</comment>
   </data>
   <data name="CategoryDeleted" xml:space="preserve">
-    <value>Die Kategorie wurde gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Kategorie.</comment>
+    <value>Die Kategorie wurde gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen einer Kategorie.</comment>
   </data>
   <data name="CategoryDeleteFailed" xml:space="preserve">
-    <value>Die Kategorie konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Kategorie fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Die Kategorie konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen einer Kategorie fehlschlägt.</comment>
   </data>
   <data name="PageCreated" xml:space="preserve">
     <value>Die Seite wurde erfolgreich erstellt.</value>
@@ -3296,16 +3332,16 @@
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Seite.</comment>
   </data>
   <data name="PageDeleted" xml:space="preserve">
-    <value>Die Seite wurde gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Seite.</comment>
+    <value>Die Seite wurde gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen einer Seite.</comment>
   </data>
   <data name="PageDeleteFailed" xml:space="preserve">
-    <value>Die Seite konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Seite fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Die Seite konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen einer Seite fehlschlägt.</comment>
   </data>
   <data name="ValidationErrorsRetry" xml:space="preserve">
     <value>Bitte beheben Sie die Validierungsfehler und versuchen Sie es erneut.</value>
-    <comment>Warnung, wenn vor einem erneuten Versuch Validierungsfehler behoben werden mÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ssen.</comment>
+    <comment>Warnung, wenn vor einem erneuten Versuch Validierungsfehler behoben werden müssen.</comment>
   </data>
   <data name="PermissionsLoadFailed" xml:space="preserve">
     <value>Berechtigungen konnten nicht geladen werden.</value>
@@ -3313,7 +3349,7 @@
   </data>
   <data name="PermissionCreateFailed" xml:space="preserve">
     <value>Die Berechtigung konnte nicht erstellt werden.</value>
-    <comment>Fehlermeldung, wenn das Erstellen einer Berechtigung fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Erstellen einer Berechtigung fehlschlägt.</comment>
   </data>
   <data name="PermissionCreated" xml:space="preserve">
     <value>Die Berechtigung wurde erfolgreich erstellt.</value>
@@ -3325,23 +3361,23 @@
   </data>
   <data name="PermissionUpdateFailed" xml:space="preserve">
     <value>Die Berechtigung konnte nicht aktualisiert werden.</value>
-    <comment>Fehlermeldung, wenn das Aktualisieren einer Berechtigung fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Aktualisieren einer Berechtigung fehlschlägt.</comment>
   </data>
   <data name="PermissionUpdated" xml:space="preserve">
     <value>Die Berechtigung wurde erfolgreich aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Berechtigung.</comment>
   </data>
   <data name="PermissionDeleteFailed" xml:space="preserve">
-    <value>Die Berechtigung konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Berechtigung fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Die Berechtigung konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen einer Berechtigung fehlschlägt.</comment>
   </data>
   <data name="PermissionDeleted" xml:space="preserve">
-    <value>Die Berechtigung wurde erfolgreich gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Berechtigung.</comment>
+    <value>Die Berechtigung wurde erfolgreich gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen einer Berechtigung.</comment>
   </data>
   <data name="RoleCreateFailed" xml:space="preserve">
     <value>Die Rolle konnte nicht erstellt werden.</value>
-    <comment>Fehlermeldung, wenn das Erstellen einer Rolle fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Erstellen einer Rolle fehlschlägt.</comment>
   </data>
   <data name="RoleCreated" xml:space="preserve">
     <value>Die Rolle wurde erfolgreich erstellt.</value>
@@ -3353,31 +3389,31 @@
   </data>
   <data name="RoleUpdateFailed" xml:space="preserve">
     <value>Die Rolle konnte nicht aktualisiert werden.</value>
-    <comment>Fehlermeldung, wenn das Aktualisieren einer Rolle fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Aktualisieren einer Rolle fehlschlägt.</comment>
   </data>
   <data name="RoleUpdated" xml:space="preserve">
     <value>Die Rolle wurde erfolgreich aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Rolle.</comment>
   </data>
   <data name="RoleDeleted" xml:space="preserve">
-    <value>Die Rolle wurde erfolgreich gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Rolle.</comment>
+    <value>Die Rolle wurde erfolgreich gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen einer Rolle.</comment>
   </data>
   <data name="RoleSystemProtectedDelete" xml:space="preserve">
-    <value>Diese Rolle ist systemgeschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼tzt und kann nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Warnung beim Versuch, eine geschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼tzte Systemrolle zu lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen.</comment>
+    <value>Diese Rolle ist systemgeschützt und kann nicht gelöscht werden.</value>
+    <comment>Warnung beim Versuch, eine geschützte Systemrolle zu löschen.</comment>
   </data>
   <data name="RoleDeleteFailed" xml:space="preserve">
-    <value>Die Rolle konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer Rolle fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Die Rolle konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen einer Rolle fehlschlägt.</comment>
   </data>
   <data name="RolePermissionsLoadFailed" xml:space="preserve">
     <value>Die Rollenberechtigungen konnten nicht geladen werden.</value>
-    <comment>Fehlermeldung, wenn der Editor fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r Rollenberechtigungen nicht geladen werden kann.</comment>
+    <comment>Fehlermeldung, wenn der Editor für Rollenberechtigungen nicht geladen werden kann.</comment>
   </data>
   <data name="RolePermissionsUpdateFailed" xml:space="preserve">
     <value>Die Rollenberechtigungen konnten nicht aktualisiert werden.</value>
-    <comment>Fehlermeldung, wenn das Speichern von Rollenberechtigungen fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Speichern von Rollenberechtigungen fehlschlägt.</comment>
   </data>
   <data name="RolePermissionsUpdated" xml:space="preserve">
     <value>Berechtigungen wurden aktualisiert.</value>
@@ -3408,16 +3444,16 @@
     <comment>Fehlermeldung, wenn eine Bestellung nicht gefunden wird.</comment>
   </data>
   <data name="OrderPaymentAdded" xml:space="preserve">
-    <value>Zahlung hinzugefÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gt.</value>
-    <comment>Erfolgsmeldung nach dem HinzufÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gen einer Bestellzahlung.</comment>
+    <value>Zahlung hinzugefügt.</value>
+    <comment>Erfolgsmeldung nach dem Hinzufügen einer Bestellzahlung.</comment>
   </data>
   <data name="OrderShipmentAdded" xml:space="preserve">
-    <value>Sendung hinzugefÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gt.</value>
-    <comment>Erfolgsmeldung nach dem HinzufÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gen einer Bestellsendung.</comment>
+    <value>Sendung hinzugefügt.</value>
+    <comment>Erfolgsmeldung nach dem Hinzufügen einer Bestellsendung.</comment>
   </data>
   <data name="OrderRefundAdded" xml:space="preserve">
-    <value>Erstattung hinzugefÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gt.</value>
-    <comment>Erfolgsmeldung nach dem HinzufÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gen einer Bestellerstattung.</comment>
+    <value>Erstattung hinzugefügt.</value>
+    <comment>Erfolgsmeldung nach dem Hinzufügen einer Bestellerstattung.</comment>
   </data>
   <data name="OrderInvoiceCreated" xml:space="preserve">
     <value>Rechnung erstellt.</value>
@@ -3429,7 +3465,7 @@
   </data>
   <data name="OrderStatusUpdatedFormat" xml:space="preserve">
     <value>Bestellstatus wurde auf {0} aktualisiert.</value>
-    <comment>Erfolgsmeldung nach dem ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ndern eines Bestellstatus. Parameter 0 ist der neue Status.</comment>
+    <comment>Erfolgsmeldung nach dem Ändern eines Bestellstatus. Parameter 0 ist der neue Status.</comment>
   </data>
   <data name="LoyaltyProgramCreated" xml:space="preserve">
     <value>Treueprogramm erstellt.</value>
@@ -3444,32 +3480,32 @@
     <comment>Erfolgsmeldung nach dem Aktualisieren eines Treueprogramms.</comment>
   </data>
   <data name="LoyaltyProgramDeleted" xml:space="preserve">
-    <value>Treueprogramm gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen eines Treueprogramms.</comment>
+    <value>Treueprogramm gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen eines Treueprogramms.</comment>
   </data>
   <data name="LoyaltyProgramDeleteFailed" xml:space="preserve">
-    <value>Treueprogramm konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen eines Treueprogramms fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Treueprogramm konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen eines Treueprogramms fehlschlägt.</comment>
   </data>
   <data name="LoyaltyRewardTierCreated" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe erstellt.</value>
-    <comment>Erfolgsmeldung nach dem Erstellen einer TreueprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe.</comment>
+    <value>Prämienstufe erstellt.</value>
+    <comment>Erfolgsmeldung nach dem Erstellen einer Treueprämienstufe.</comment>
   </data>
   <data name="LoyaltyRewardTierNotFound" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe wurde nicht gefunden.</value>
-    <comment>Fehlermeldung, wenn eine TreueprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe nicht gefunden wird.</comment>
+    <value>Prämienstufe wurde nicht gefunden.</value>
+    <comment>Fehlermeldung, wenn eine Treueprämienstufe nicht gefunden wird.</comment>
   </data>
   <data name="LoyaltyRewardTierUpdated" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe aktualisiert.</value>
-    <comment>Erfolgsmeldung nach dem Aktualisieren einer TreueprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe.</comment>
+    <value>Prämienstufe aktualisiert.</value>
+    <comment>Erfolgsmeldung nach dem Aktualisieren einer Treueprämienstufe.</comment>
   </data>
   <data name="LoyaltyRewardTierDeleted" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer TreueprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe.</comment>
+    <value>Prämienstufe gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen einer Treueprämienstufe.</comment>
   </data>
   <data name="LoyaltyRewardTierDeleteFailed" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen einer TreueprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤mienstufe fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Prämienstufe konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen einer Treueprämienstufe fehlschlägt.</comment>
   </data>
   <data name="LoyaltyAccountCreated" xml:space="preserve">
     <value>Treuekonto erstellt.</value>
@@ -3477,7 +3513,7 @@
   </data>
   <data name="LoyaltyCampaignsLoadFailed" xml:space="preserve">
     <value>Treuekampagnen konnten nicht geladen werden.</value>
-    <comment>Fehlermeldung, wenn Treuekampagnen nicht geladen werden kÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶nnen.</comment>
+    <comment>Fehlermeldung, wenn Treuekampagnen nicht geladen werden können.</comment>
   </data>
   <data name="LoyaltyCampaignCreated" xml:space="preserve">
     <value>Treuekampagne erstellt.</value>
@@ -3501,7 +3537,7 @@
   </data>
   <data name="LoyaltyCampaignActivationFailed" xml:space="preserve">
     <value>Die Aktivierung der Treuekampagne konnte nicht aktualisiert werden.</value>
-    <comment>Fehlermeldung, wenn das Aktivieren oder Deaktivieren einer Treuekampagne fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Aktivieren oder Deaktivieren einer Treuekampagne fehlschlägt.</comment>
   </data>
   <data name="LoyaltyAccountNotFound" xml:space="preserve">
     <value>Treuekonto wurde nicht gefunden.</value>
@@ -3517,7 +3553,7 @@
   </data>
   <data name="LoyaltyAccountSuspendFailed" xml:space="preserve">
     <value>Treuekonto konnte nicht gesperrt werden.</value>
-    <comment>Fehlermeldung, wenn das Sperren eines Treuekontos fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Sperren eines Treuekontos fehlschlägt.</comment>
   </data>
   <data name="LoyaltyAccountActivated" xml:space="preserve">
     <value>Treuekonto aktiviert.</value>
@@ -3525,15 +3561,15 @@
   </data>
   <data name="LoyaltyAccountActivateFailed" xml:space="preserve">
     <value>Treuekonto konnte nicht aktiviert werden.</value>
-    <comment>Fehlermeldung, wenn das Aktivieren eines Treuekontos fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Aktivieren eines Treuekontos fehlschlägt.</comment>
   </data>
   <data name="LoyaltyRedemptionConfirmed" xml:space="preserve">
-    <value>EinlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶sung bestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigt.</value>
-    <comment>Erfolgsmeldung nach dem BestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigen einer TreueeinlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶sung.</comment>
+    <value>Einlösung bestätigt.</value>
+    <comment>Erfolgsmeldung nach dem Bestätigen einer Treueeinlösung.</comment>
   </data>
   <data name="LoyaltyRedemptionConfirmFailed" xml:space="preserve">
-    <value>EinlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶sung konnte nicht bestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigt werden.</value>
-    <comment>Fehlermeldung, wenn das BestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigen einer TreueeinlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶sung fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Einlösung konnte nicht bestätigt werden.</value>
+    <comment>Fehlermeldung, wenn das Bestätigen einer Treueeinlösung fehlschlägt.</comment>
   </data>
   <data name="ProductCreated" xml:space="preserve">
     <value>Das Produkt wurde erfolgreich erstellt.</value>
@@ -3548,16 +3584,16 @@
     <comment>Erfolgsmeldung nach dem Aktualisieren eines Produkts.</comment>
   </data>
   <data name="ProductConcurrencyConflict" xml:space="preserve">
-    <value>Gleichzeitigkeitskonflikt: Der Datensatz wurde von einem anderen Benutzer geÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ndert. Bitte laden Sie neu und versuchen Sie es erneut.</value>
-    <comment>Fehlermeldung bei einem Gleichzeitkeitskonflikt wÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤hrend der Produktbearbeitung.</comment>
+    <value>Gleichzeitigkeitskonflikt: Der Datensatz wurde von einem anderen Benutzer geändert. Bitte laden Sie neu und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt während der Produktbearbeitung.</comment>
   </data>
   <data name="ProductDeleted" xml:space="preserve">
-    <value>Produkt gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht.</value>
-    <comment>Erfolgsmeldung nach dem LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen eines Produkts.</comment>
+    <value>Produkt gelöscht.</value>
+    <comment>Erfolgsmeldung nach dem Löschen eines Produkts.</comment>
   </data>
   <data name="ProductDeleteFailed" xml:space="preserve">
-    <value>Das Produkt konnte nicht gelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶scht werden.</value>
-    <comment>Fehlermeldung, wenn das LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶schen eines Produkts fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>Das Produkt konnte nicht gelöscht werden.</value>
+    <comment>Fehlermeldung, wenn das Löschen eines Produkts fehlschlägt.</comment>
   </data>
   <data name="BusinessNotFound" xml:space="preserve">
     <value>Unternehmen nicht gefunden.</value>
@@ -3569,14 +3605,14 @@
   </data>
   <data name="BusinessConcurrencyConflict" xml:space="preserve">
     <value>Gleichzeitigkeitskonflikt. Laden Sie das Unternehmen neu und versuchen Sie es erneut.</value>
-    <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt wÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤hrend der Unternehmensbearbeitung.</comment>
+    <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt während der Unternehmensbearbeitung.</comment>
   </data>
   <data name="BusinessSetupSaved" xml:space="preserve">
     <value>Unternehmenskonfiguration gespeichert.</value>
     <comment>Erfolgsmeldung nach dem Speichern der Unternehmenskonfiguration.</comment>
   </data>
   <data name="BusinessApproved" xml:space="preserve">
-    <value>Unternehmen fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r den operativen Einsatz freigegeben.</value>
+    <value>Unternehmen für den operativen Einsatz freigegeben.</value>
     <comment>Erfolgsmeldung nach der Freigabe eines Unternehmens.</comment>
   </data>
   <data name="BusinessSuspended" xml:space="preserve">
@@ -3601,7 +3637,7 @@
   </data>
   <data name="BusinessLocationConcurrencyConflict" xml:space="preserve">
     <value>Gleichzeitigkeitskonflikt. Laden Sie den Standort neu und versuchen Sie es erneut.</value>
-    <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt wÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤hrend der Standortbearbeitung.</comment>
+    <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt während der Standortbearbeitung.</comment>
   </data>
   <data name="BusinessInvitationSent" xml:space="preserve">
     <value>Einladung gesendet.</value>
@@ -3629,7 +3665,7 @@
   </data>
   <data name="BusinessMemberConcurrencyConflict" xml:space="preserve">
     <value>Gleichzeitigkeitskonflikt. Laden Sie die Mitgliedschaft neu und versuchen Sie es erneut.</value>
-    <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt wÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤hrend der Bearbeitung einer Mitgliedschaft.</comment>
+    <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt während der Bearbeitung einer Mitgliedschaft.</comment>
   </data>
   <data name="BusinessMemberRemoved" xml:space="preserve">
     <value>Unternehmensmitglied entfernt.</value>
@@ -3645,23 +3681,23 @@
   </data>
   <data name="BusinessMemberActivationEmailFailed" xml:space="preserve">
     <value>Aktivierungs-E-Mail konnte nicht gesendet werden.</value>
-    <comment>Fehlermeldung, wenn das Senden einer Aktivierungs-E-Mail fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Senden einer Aktivierungs-E-Mail fehlschlägt.</comment>
   </data>
   <data name="BusinessMemberEmailConfirmed" xml:space="preserve">
-    <value>E-Mail als bestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigt markiert.</value>
-    <comment>Erfolgsmeldung nach dem BestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigen einer Mitglieds-E-Mail.</comment>
+    <value>E-Mail als bestätigt markiert.</value>
+    <comment>Erfolgsmeldung nach dem Bestätigen einer Mitglieds-E-Mail.</comment>
   </data>
   <data name="BusinessMemberEmailConfirmFailed" xml:space="preserve">
-    <value>E-Mail konnte nicht bestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigt werden.</value>
-    <comment>Fehlermeldung, wenn das BestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigen einer Mitglieds-E-Mail fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>E-Mail konnte nicht bestätigt werden.</value>
+    <comment>Fehlermeldung, wenn das Bestätigen einer Mitglieds-E-Mail fehlschlägt.</comment>
   </data>
   <data name="BusinessMemberPasswordResetSent" xml:space="preserve">
-    <value>E-Mail zum ZurÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼cksetzen des Passworts gesendet.</value>
-    <comment>Erfolgsmeldung nach dem Senden einer Passwort-ZurÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼cksetzen-E-Mail an ein Mitglied.</comment>
+    <value>E-Mail zum Zurücksetzen des Passworts gesendet.</value>
+    <comment>Erfolgsmeldung nach dem Senden einer Passwort-Zurücksetzen-E-Mail an ein Mitglied.</comment>
   </data>
   <data name="BusinessMemberPasswordResetFailed" xml:space="preserve">
-    <value>E-Mail zum ZurÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼cksetzen des Passworts konnte nicht gesendet werden.</value>
-    <comment>Fehlermeldung, wenn das Senden einer Passwort-ZurÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼cksetzen-E-Mail fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <value>E-Mail zum Zurücksetzen des Passworts konnte nicht gesendet werden.</value>
+    <comment>Fehlermeldung, wenn das Senden einer Passwort-Zurücksetzen-E-Mail fehlschlägt.</comment>
   </data>
   <data name="BusinessMemberAccountLocked" xml:space="preserve">
     <value>Konto gesperrt.</value>
@@ -3669,7 +3705,7 @@
   </data>
   <data name="BusinessMemberAccountLockFailed" xml:space="preserve">
     <value>Konto konnte nicht gesperrt werden.</value>
-    <comment>Fehlermeldung, wenn das Sperren eines Mitgliedskontos fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Sperren eines Mitgliedskontos fehlschlägt.</comment>
   </data>
   <data name="BusinessMemberAccountUnlocked" xml:space="preserve">
     <value>Konto entsperrt.</value>
@@ -3677,151 +3713,151 @@
   </data>
   <data name="BusinessMemberAccountUnlockFailed" xml:space="preserve">
     <value>Konto konnte nicht entsperrt werden.</value>
-    <comment>Fehlermeldung, wenn das Entsperren eines Mitgliedskontos fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Entsperren eines Mitgliedskontos fehlschlägt.</comment>
   </data>
   <data name="MobileOperationsSiteSettingsMissing" xml:space="preserve">
     <value>Die Systemeinstellungen fehlen. Konfigurieren Sie die Systemeinstellungen, bevor Sie sich auf die Mobile-Operations-Diagnose verlassen.</value>
-    <comment>Fehlermeldung, wenn Mobile-Operations-Diagnosen nicht ausgefÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼hrt werden kÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶nnen, weil Systemeinstellungen fehlen.</comment>
+    <comment>Fehlermeldung, wenn Mobile-Operations-Diagnosen nicht ausgeführt werden können, weil Systemeinstellungen fehlen.</comment>
   </data>
   <data name="CrmCustomersFootprintNote" xml:space="preserve">
     <value>Aktueller CRM-Kundenbestand.</value>
-    <comment>Hinweistext fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Gesamtkarte der CRM-Kunden.</comment>
+    <comment>Hinweistext für die Gesamtkarte der CRM-Kunden.</comment>
   </data>
   <data name="CrmCustomerSegmentsCoverageNote" xml:space="preserve">
-    <value>VerfÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gbare Segmentierungsgruppen im gesamten CRM-Betrieb.</value>
-    <comment>Hinweistext fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Segmentabdeckung im Kunden-Workspace.</comment>
+    <value>Verfügbare Segmentierungsgruppen im gesamten CRM-Betrieb.</value>
+    <comment>Hinweistext für die Segmentabdeckung im Kunden-Workspace.</comment>
   </data>
   <data name="CrmCustomerPipelineNote" xml:space="preserve">
-    <value>Aktive Opportunity-Pipeline, die mit den aktuellen CRM-Kunden verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pft ist.</value>
-    <comment>Hinweistext fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r den Pipeline-Kontext im Kunden-Workspace.</comment>
+    <value>Aktive Opportunity-Pipeline, die mit den aktuellen CRM-Kunden verknüpft ist.</value>
+    <comment>Hinweistext für den Pipeline-Kontext im Kunden-Workspace.</comment>
   </data>
   <data name="CrmCustomerRecentInteractionsNote" xml:space="preserve">
-    <value>Aktuelles Interaktionssignal ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ber Support- und Lifecycle-Arbeit hinweg.</value>
-    <comment>Hinweistext fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r aktuelle CRM-Interaktionen im Kunden-Workspace.</comment>
+    <value>Aktuelles Interaktionssignal über Support- und Lifecycle-Arbeit hinweg.</value>
+    <comment>Hinweistext für aktuelle CRM-Interaktionen im Kunden-Workspace.</comment>
   </data>
   <data name="CrmCustomerLinkedIdentityNote" xml:space="preserve">
-    <value>Sichtbare Kundenzeilen, die bereits mit einer PlattformidentitÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤t verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pft sind.</value>
-    <comment>Operativer Hinweis fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r Kunden mit verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pftem Benutzer.</comment>
+    <value>Sichtbare Kundenzeilen, die bereits mit einer Plattformidentität verknüpft sind.</value>
+    <comment>Operativer Hinweis für Kunden mit verknüpftem Benutzer.</comment>
   </data>
   <data name="CrmCustomerNeedsSegmentationNote" xml:space="preserve">
     <value>Zeilen auf der aktuellen Seite ohne jegliche CRM-Segmentzuordnung.</value>
-    <comment>Operativer Hinweis fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r Kunden, die segmentiert werden mÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ssen.</comment>
+    <comment>Operativer Hinweis für Kunden, die segmentiert werden müssen.</comment>
   </data>
   <data name="CrmCustomerOpportunityContextNote" xml:space="preserve">
     <value>Kunden, die bereits einen aktiven Opportunity-Kontext haben.</value>
-    <comment>Operativer Hinweis fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r Kunden mit Opportunities.</comment>
+    <comment>Operativer Hinweis für Kunden mit Opportunities.</comment>
   </data>
   <data name="CrmCustomerBusinessProfileNote" xml:space="preserve">
-    <value>Sichtbare Kunden mit GeschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ftsprofil in diesem Queue-Ausschnitt.</value>
-    <comment>Operativer Hinweis fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r GeschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ftskunden in der aktuellen Ansicht.</comment>
+    <value>Sichtbare Kunden mit Geschäftsprofil in diesem Queue-Ausschnitt.</value>
+    <comment>Operativer Hinweis für Geschäftskunden in der aktuellen Ansicht.</comment>
   </data>
   <data name="CrmCustomerMissingVatNote" xml:space="preserve">
-    <value>GeschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ftskunden, denen weiterhin USt-IdNr.-Daten fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r finanzsichere Nachverfolgung fehlen.</value>
-    <comment>Operativer Hinweis fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r GeschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ftskunden ohne USt-IdNr.</comment>
+    <value>Geschäftskunden, denen weiterhin USt-IdNr.-Daten für finanzsichere Nachverfolgung fehlen.</value>
+    <comment>Operativer Hinweis für Geschäftskunden ohne USt-IdNr.</comment>
   </data>
   <data name="CrmOperatorPlaybooks" xml:space="preserve">
     <value>Operator-Playbooks</value>
-    <comment>ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“berschrift fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r CRM-Operator-Playbooks.</comment>
+    <comment>Überschrift für CRM-Operator-Playbooks.</comment>
   </data>
   <data name="CrmNextStep" xml:space="preserve">
-    <value>NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤chster Schritt</value>
-    <comment>Beschriftung fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r den empfohlenen nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤chsten Schritt in CRM-Playbooks.</comment>
+    <value>Nächster Schritt</value>
+    <comment>Beschriftung für den empfohlenen nächsten Schritt in CRM-Playbooks.</comment>
   </data>
   <data name="CrmCustomerLocaleFallbackPlaybookTitle" xml:space="preserve">
     <value>Kunden mit Locale-Fallback</value>
-    <comment>Playbook-Titel fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r CRM-Kunden mit Sprachfallback.</comment>
+    <comment>Playbook-Titel für CRM-Kunden mit Sprachfallback.</comment>
   </data>
   <data name="CrmCustomerLocaleFallbackPlaybookScopeNote" xml:space="preserve">
-    <value>Zeilen mit Plattform-Fallback-Kultur benÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶tigen meist eine verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfte IdentitÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ts-Locale oder eine explizite CRM-Sprachentscheidung, bevor Nachverfolgung automatisiert wird.</value>
-    <comment>Kontextbeschreibung fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r das Playbook zu Kunden mit Sprachfallback.</comment>
+    <value>Zeilen mit Plattform-Fallback-Kultur benötigen meist eine verknüpfte Identitäts-Locale oder eine explizite CRM-Sprachentscheidung, bevor Nachverfolgung automatisiert wird.</value>
+    <comment>Kontextbeschreibung für das Playbook zu Kunden mit Sprachfallback.</comment>
   </data>
   <data name="CrmCustomerLocaleFallbackPlaybookAction" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen Sie zuerst die Abdeckung verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfter Benutzer und bereinigen Sie dann die Sprachannahmen des Kunden, bevor Support- und Lifecycle-Nachrichten darauf aufbauen.</value>
-    <comment>Operator-Aktion fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r das Playbook zu Kunden mit Sprachfallback.</comment>
+    <value>Prüfen Sie zuerst die Abdeckung verknüpfter Benutzer und bereinigen Sie dann die Sprachannahmen des Kunden, bevor Support- und Lifecycle-Nachrichten darauf aufbauen.</value>
+    <comment>Operator-Aktion für das Playbook zu Kunden mit Sprachfallback.</comment>
   </data>
   <data name="CrmCustomerMissingVatPlaybookTitle" xml:space="preserve">
     <value>B2B-Kunden ohne USt-IdNr.</value>
-    <comment>Playbook-Titel fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r GeschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ftskunden ohne USt-IdNr.</comment>
+    <comment>Playbook-Titel für Geschäftskunden ohne USt-IdNr.</comment>
   </data>
   <data name="CrmCustomerMissingVatPlaybookScopeNote" xml:space="preserve">
-    <value>GeschÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤fts-Steuerprofile ohne USt-IdNr. deuten meist auf unvollstÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ndige Rechnungs- und Compliance-Bereitschaft fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r CRM-Abrechnung nach.</value>
-    <comment>Kontextbeschreibung fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r das Playbook zu fehlender USt-IdNr.</comment>
+    <value>Geschäfts-Steuerprofile ohne USt-IdNr. deuten meist auf unvollständige Rechnungs- und Compliance-Bereitschaft für CRM-Abrechnung nach.</value>
+    <comment>Kontextbeschreibung für das Playbook zu fehlender USt-IdNr.</comment>
   </data>
   <data name="CrmCustomerMissingVatPlaybookAction" xml:space="preserve">
-    <value>BestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigen Sie das Steuerprofil, erfassen Sie die USt-IdNr. oder stufen Sie den Kunden auf Verbraucher herab, bevor Rechnungen und Finanzprozesse davon abhÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ngen.</value>
-    <comment>Operator-Aktion fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r das Playbook zu fehlender USt-IdNr.</comment>
+    <value>Bestätigen Sie das Steuerprofil, erfassen Sie die USt-IdNr. oder stufen Sie den Kunden auf Verbraucher herab, bevor Rechnungen und Finanzprozesse davon abhängen.</value>
+    <comment>Operator-Aktion für das Playbook zu fehlender USt-IdNr.</comment>
   </data>
   <data name="CrmCustomerUnsegmentedPlaybookTitle" xml:space="preserve">
     <value>Nicht segmentierte Kunden</value>
-    <comment>Playbook-Titel fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r Kunden ohne Segmentzuordnung.</comment>
+    <comment>Playbook-Titel für Kunden ohne Segmentzuordnung.</comment>
   </data>
   <data name="CrmCustomerUnsegmentedPlaybookScopeNote" xml:space="preserve">
     <value>Kunden ohne Segmentzuordnung sind in Lifecycle-, Support- und Retention-Workflows schwerer gezielt anzusprechen.</value>
-    <comment>Kontextbeschreibung fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r das Playbook zu nicht segmentierten Kunden.</comment>
+    <comment>Kontextbeschreibung für das Playbook zu nicht segmentierten Kunden.</comment>
   </data>
   <data name="CrmCustomerUnsegmentedPlaybookAction" xml:space="preserve">
-    <value>Ordnen Sie den Kunden einem bestehenden Segment zu oder prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen Sie, ob die CRM-Taxonomie ein neues Segment braucht, bevor Kampagnen und Support-Playbooks auf Segmentierung verzweigen.</value>
-    <comment>Operator-Aktion fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r das Playbook zu nicht segmentierten Kunden.</comment>
+    <value>Ordnen Sie den Kunden einem bestehenden Segment zu oder prüfen Sie, ob die CRM-Taxonomie ein neues Segment braucht, bevor Kampagnen und Support-Playbooks auf Segmentierung verzweigen.</value>
+    <comment>Operator-Aktion für das Playbook zu nicht segmentierten Kunden.</comment>
   </data>
   <data name="CustomerFollowUpWorkspace" xml:space="preserve">
     <value>Kunden-Follow-up-Workspace</value>
-    <comment>ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“berschrift fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Follow-up-Aktionskarte im CRM-Kundeneditor.</comment>
+    <comment>Überschrift für die Follow-up-Aktionskarte im CRM-Kundeneditor.</comment>
   </data>
   <data name="CustomerFollowUpWorkspaceNote" xml:space="preserve">
-    <value>ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ffnen Sie die hÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ufigsten CRM-Follow-up-Spuren fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r diesen Kunden, ohne den aktuellen Bearbeitungskontext zu verlassen.</value>
-    <comment>Hinweistext fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Follow-up-Aktionskarte im CRM-Kundeneditor.</comment>
+    <value>Öffnen Sie die häufigsten CRM-Follow-up-Spuren für diesen Kunden, ohne den aktuellen Bearbeitungskontext zu verlassen.</value>
+    <comment>Hinweistext für die Follow-up-Aktionskarte im CRM-Kundeneditor.</comment>
   </data>
   <data name="ReviewSegmentation" xml:space="preserve">
-    <value>Segmentierung prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen</value>
-    <comment>Aktionsbeschriftung zum PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen des Kundensegment-Kontexts.</comment>
+    <value>Segmentierung prüfen</value>
+    <comment>Aktionsbeschriftung zum Prüfen des Kundensegment-Kontexts.</comment>
   </data>
   <data name="CreateOpportunity" xml:space="preserve">
     <value>Opportunity erstellen</value>
     <comment>Aktionsbeschriftung zum Erstellen einer CRM-Opportunity aus dem Kundenkontext.</comment>
   </data>
   <data name="Loading" xml:space="preserve">
-    <value>LÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤dt</value>
-    <comment>Allgemeine Beschriftung fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r LadezustÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤nde.</comment>
+    <value>Lädt</value>
+    <comment>Allgemeine Beschriftung für Ladezustände.</comment>
   </data>
   <data name="LeadFollowUpWorkspace" xml:space="preserve">
     <value>Lead-Follow-up-Workspace</value>
-    <comment>ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“berschrift fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Follow-up-Aktionskarte im CRM-Lead-Editor.</comment>
+    <comment>Überschrift für die Follow-up-Aktionskarte im CRM-Lead-Editor.</comment>
   </data>
   <data name="LeadFollowUpWorkspaceNote" xml:space="preserve">
-    <value>ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ffnen Sie die nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤chsten Lead-Remediation- und Conversion-Spuren, ohne den aktuellen Lead-Editor zu verlassen.</value>
-    <comment>Hinweistext fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Follow-up-Aktionskarte im CRM-Lead-Editor.</comment>
+    <value>Öffnen Sie die nächsten Lead-Remediation- und Conversion-Spuren, ohne den aktuellen Lead-Editor zu verlassen.</value>
+    <comment>Hinweistext für die Follow-up-Aktionskarte im CRM-Lead-Editor.</comment>
   </data>
   <data name="OpportunityFollowUpWorkspace" xml:space="preserve">
     <value>Opportunity-Follow-up-Workspace</value>
-    <comment>ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“berschrift fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Follow-up-Aktionskarte im CRM-Opportunity-Editor.</comment>
+    <comment>Überschrift für die Follow-up-Aktionskarte im CRM-Opportunity-Editor.</comment>
   </data>
   <data name="OpportunityFollowUpWorkspaceNote" xml:space="preserve">
-    <value>ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ffnen Sie die verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pften Kunden- und Finanz-Follow-up-Spuren fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r diese Opportunity aus demselben Workspace.</value>
-    <comment>Hinweistext fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Follow-up-Aktionskarte im CRM-Opportunity-Editor.</comment>
+    <value>Öffnen Sie die verknüpften Kunden- und Finanz-Follow-up-Spuren für diese Opportunity aus demselben Workspace.</value>
+    <comment>Hinweistext für die Follow-up-Aktionskarte im CRM-Opportunity-Editor.</comment>
   </data>
   <data name="OpenCustomer" xml:space="preserve">
-    <value>Kunde ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶ffnen</value>
-    <comment>Aktionsbeschriftung zum ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ffnen eines verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pften CRM-Kunden.</comment>
+    <value>Kunde öffnen</value>
+    <comment>Aktionsbeschriftung zum Öffnen eines verknüpften CRM-Kunden.</comment>
   </data>
   <data name="InvoiceFollowUpWorkspace" xml:space="preserve">
     <value>Rechnungs-Follow-up-Workspace</value>
-    <comment>ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“berschrift fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Follow-up-Aktionskarte im CRM-Rechnungseditor.</comment>
+    <comment>Überschrift für die Follow-up-Aktionskarte im CRM-Rechnungseditor.</comment>
   </data>
   <data name="InvoiceFollowUpWorkspaceNote" xml:space="preserve">
-    <value>ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ffnen Sie die verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pften Kunden-, Bestell-, Zahlungs- und zugehÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶rigen Rechnungsspuren fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r diese Rechnung aus demselben Workspace.</value>
-    <comment>Hinweistext fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r die Follow-up-Aktionskarte im CRM-Rechnungseditor.</comment>
+    <value>Öffnen Sie die verknüpften Kunden-, Bestell-, Zahlungs- und zugehörigen Rechnungsspuren für diese Rechnung aus demselben Workspace.</value>
+    <comment>Hinweistext für die Follow-up-Aktionskarte im CRM-Rechnungseditor.</comment>
   </data>
   <data name="ReviewOrder" xml:space="preserve">
-    <value>Bestellung prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen</value>
-    <comment>Aktionsbeschriftung zum ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ffnen der verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pften BestellprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fung.</comment>
+    <value>Bestellung prüfen</value>
+    <comment>Aktionsbeschriftung zum Öffnen der verknüpften Bestellprüfung.</comment>
   </data>
   <data name="ReviewPaymentTrail" xml:space="preserve">
-    <value>Zahlungspfad prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen</value>
-    <comment>Aktionsbeschriftung zum PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen des verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pften Zahlungspfads.</comment>
+    <value>Zahlungspfad prüfen</value>
+    <comment>Aktionsbeschriftung zum Prüfen des verknüpften Zahlungspfads.</comment>
   </data>
   <data name="RelatedInvoices" xml:space="preserve">
-    <value>ZugehÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶rige Rechnungen</value>
-    <comment>Aktionsbeschriftung zum ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ffnen zugehÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶riger Rechnungen im CRM-Rechnungseditor.</comment>
+    <value>Zugehörige Rechnungen</value>
+    <comment>Aktionsbeschriftung zum Öffnen zugehöriger Rechnungen im CRM-Rechnungseditor.</comment>
   </data>
   <data name="InvoiceStatusUpdatedMessage" xml:space="preserve">
     <value>Rechnungsstatus aktualisiert.</value>
@@ -3829,7 +3865,7 @@
   </data>
   <data name="InvoiceStatusUpdateFailedMessage" xml:space="preserve">
     <value>Rechnungsstatus konnte nicht aktualisiert werden.</value>
-    <comment>Fehlermeldung, wenn das Aktualisieren des Rechnungsstatus fehlschlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤gt.</comment>
+    <comment>Fehlermeldung, wenn das Aktualisieren des Rechnungsstatus fehlschlägt.</comment>
   </data>
   <data name="Qualified leads visible in this queue slice." xml:space="preserve">
     <value>Qualifizierte Leads, die in diesem Queue-Ausschnitt sichtbar sind.</value>
@@ -6926,6 +6962,66 @@
   </data>
   <data name="CreatedUtcValue" xml:space="preserve">
     <value>Erstellt: {0} UTC</value>
+  </data>
+  <data name="CommonDate" xml:space="preserve">
+    <value>Datum</value>
+  </data>
+  <data name="CommonEdit" xml:space="preserve">
+    <value>Bearbeiten</value>
+  </data>
+  <data name="ExpensesEmptyState" xml:space="preserve">
+    <value>Keine Ausgaben gefunden.</value>
+  </data>
+  <data name="ExpensesRecent30Days" xml:space="preserve">
+    <value>Aktuell (30 T)</value>
+  </data>
+  <data name="ExpensesReviewPlaybooks" xml:space="preserve">
+    <value>Playbooks zur Ausgabenpruefung</value>
+  </data>
+  <data name="ExpensesSupplierLinked" xml:space="preserve">
+    <value>Mit Lieferant verknuepft</value>
+  </data>
+  <data name="ExpensesTitle" xml:space="preserve">
+    <value>Ausgaben</value>
+  </data>
+  <data name="FinancialAccountsCodeMissing" xml:space="preserve">
+    <value>Code fehlt</value>
+  </data>
+  <data name="FinancialAccountsEmptyState" xml:space="preserve">
+    <value>Keine Konten gefunden.</value>
+  </data>
+  <data name="FinancialAccountsMissingCode" xml:space="preserve">
+    <value>Fehlender Code</value>
+  </data>
+  <data name="FinancialAccountsPlaybooksTitle" xml:space="preserve">
+    <value>Playbooks fuer Finanzkonten</value>
+  </data>
+  <data name="FinancialAccountsTitle" xml:space="preserve">
+    <value>Finanzkonten</value>
+  </data>
+  <data name="JournalEntriesEmptyState" xml:space="preserve">
+    <value>Keine Journalbuchungen gefunden.</value>
+  </data>
+  <data name="JournalEntriesMultiLine" xml:space="preserve">
+    <value>Mehrzeilig</value>
+  </data>
+  <data name="JournalEntriesTitle" xml:space="preserve">
+    <value>Journalbuchungen</value>
+  </data>
+  <data name="JournalReviewPlaybooks" xml:space="preserve">
+    <value>Playbooks zur Journalpruefung</value>
+  </data>
+  <data name="Recent" xml:space="preserve">
+    <value>Aktuell</value>
+  </data>
+  <data name="SearchExpensesPlaceholder" xml:space="preserve">
+    <value>Ausgaben suchen</value>
+  </data>
+  <data name="SearchFinancialAccountsPlaceholder" xml:space="preserve">
+    <value>Konten suchen</value>
+  </data>
+  <data name="SearchJournalEntriesPlaceholder" xml:space="preserve">
+    <value>Journalbuchungen suchen</value>
   </data>
   <data name="LastCarrierEventAtUtc" xml:space="preserve">
     <value>Letztes Carrier-Ereignis: {0} UTC</value>

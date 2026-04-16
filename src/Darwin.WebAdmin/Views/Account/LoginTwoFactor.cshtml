@@ -1,12 +1,13 @@
-﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Zwei-Faktor-Authentifizierung";
+    ViewData["Title"] = T.T("LoginTwoFactorTitle");
     var returnUrl = (string?)ViewData["ReturnUrl"] ?? "";
     var rememberMe = (bool)(ViewData["RememberMe"] ?? false);
     var userId = (string?)ViewData["TwoFaUserId"] ?? "";
 }
 
-<h1 class="mb-3">Code bestätigen</h1>
+<h1 class="mb-3">@T.T("LoginTwoFactorHeading")</h1>
 
 <form asp-action="LoginTwoFactorPost" asp-controller="Account" method="post">
     @Html.AntiForgeryToken()
@@ -15,13 +16,13 @@
     <input type="hidden" name="returnUrl" value="@returnUrl" />
 
     <div class="mb-3">
-        <label for="code" class="form-label">Code</label>
+        <label for="code" class="form-label">@T.T("LoginTwoFactorCodeLabel")</label>
         <input id="code" name="code" type="number" class="form-control" inputmode="numeric" required />
         <span class="text-danger field-validation-valid" data-valmsg-for="code" data-valmsg-replace="true"></span>
     </div>
 
     <div class="text-end">
-        <button class="btn btn-primary" type="submit">Bestätigen</button>
+        <button class="btn btn-primary" type="submit">@T.T("LoginTwoFactorConfirmAction")</button>
     </div>
 </form>
 

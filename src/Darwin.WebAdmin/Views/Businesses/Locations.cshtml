@@ -16,19 +16,22 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
-           hx-swap="outerHTML">@T.T("BusinessMembersBackToBusinessAction")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BusinessMembersBackToBusinessAction")</a>
         <a asp-action="Invitations"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
-           hx-swap="outerHTML">@T.T("Invitations")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Invitations")</a>
         <a asp-action="CreateLocation"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-primary"
            hx-get="@Url.Action("CreateLocation", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
-           hx-swap="outerHTML">
+           hx-swap="outerHTML"
+           hx-push-url="true">
             <i class="fa-solid fa-plus"></i> @T.T("BusinessLocationsAddLocationAction")
         </a>
     </div>
@@ -38,7 +41,8 @@
       class="row g-2 mb-3"
       hx-get="@Url.Action("Locations", "Businesses")"
       hx-target="#business-locations-workspace-shell"
-      hx-swap="outerHTML">
+      hx-swap="outerHTML"
+      hx-push-url="true">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessLocationsSearchPlaceholder")" />
@@ -53,7 +57,8 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
-           hx-swap="outerHTML">@T.T("Reset")</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Reset")</a>
     </div>
 </form>
 
@@ -142,8 +147,9 @@
                            class="btn btn-sm btn-outline-primary"
                            hx-get="@Url.Action("EditLocation", "Businesses", new { id = item.Id })"
                            hx-target="#business-locations-workspace-shell"
-                           hx-swap="outerHTML">
-                            <i class="fa-solid fa-pen"></i> Edit
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa-solid fa-pen"></i> @T.T("CommonEdit")
                         </a>
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger"
@@ -157,7 +163,7 @@
                                 data-hx-target="#business-locations-workspace-shell"
                                 data-hx-swap="outerHTML"
                                 data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                            <i class="fa-solid fa-box-archive"></i> Archive
+                            <i class="fa-solid fa-box-archive"></i> @T.T("Archive")
                         </button>
                     </td>
                 </tr>
@@ -176,7 +182,8 @@
        asp-route-query="@Model.Query"
        asp-route-filter="@Model.Filter"
        hx-target="#business-locations-workspace-shell"
-       hx-swap="outerHTML">
+       hx-swap="outerHTML"
+       hx-push-url="true">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

@@ -22,7 +22,13 @@
         <partial name="_JournalEntryForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">@T.T("Save")</button>
-            <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+            <a asp-action="JournalEntries"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+               hx-target="#billing-journal-entry-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Back")</a>
         </div>
     </form>
 </div>

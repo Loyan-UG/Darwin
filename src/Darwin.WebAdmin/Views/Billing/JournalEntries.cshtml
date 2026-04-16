@@ -1,62 +1,66 @@
 @using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.JournalEntriesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Journal Entries";
+    ViewData["Title"] = T.T("JournalEntriesTitle");
 }
 
 <div id="billing-journal-entries-workspace-shell">
-<h1 class="mb-3">Journal Entries</h1>
+<h1 class="mb-3">@T.T("JournalEntriesTitle")</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="JournalEntries" method="get" class="d-flex gap-2"
           hx-get="@Url.Action("JournalEntries", "Billing")"
           hx-target="#billing-journal-entries-workspace-shell"
-          hx-swap="outerHTML">
+          hx-swap="outerHTML"
+          hx-push-url="true">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search journal entries">
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchJournalEntriesPlaceholder")">
+        <button class="btn btn-outline-secondary" type="submit">@T.T("CommonSearch")</button>
         <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
            hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
            hx-target="#billing-journal-entries-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("CommonReset")</a>
     </form>
     <a asp-action="CreateJournalEntry" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
        hx-get="@Url.Action("CreateJournalEntry", "Billing", new { businessId = Model.BusinessId })"
        hx-target="#billing-journal-entries-workspace-shell"
-       hx-swap="outerHTML">New Journal Entry</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("CreateJournalEntry")</a>
 </div>
 
 <div class="row g-3 mb-3">
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Total</div>
+            <div class="text-muted small">@T.T("CommonTotal")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Recent</div>
+            <div class="text-muted small">@T.T("Recent")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.RecentCount</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Multi-Line</div>
+            <div class="text-muted small">@T.T("JournalEntriesMultiLine")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MultiLineCount</div>
         </div>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Journal Review Playbooks</div>
+    <div class="card-header">@T.T("JournalReviewPlaybooks")</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Queue</th>
-                        <th>Scope</th>
-                        <th>Operator Action</th>
+                        <th>@T.T("Queue")</th>
+                        <th>@T.T("Scope")</th>
+                        <th>@T.T("OperatorAction")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -78,24 +82,27 @@
     <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-sm @(Model.QueueFilter is null ? "btn-dark" : "btn-outline-dark")"
        hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
        hx-target="#billing-journal-entries-workspace-shell"
-       hx-swap="outerHTML">All</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("All")</a>
     <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-queue="@JournalEntryQueueFilter.Recent" class="btn btn-sm @(Model.QueueFilter == JournalEntryQueueFilter.Recent ? "btn-primary" : "btn-outline-primary")"
        hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, queue = JournalEntryQueueFilter.Recent })"
        hx-target="#billing-journal-entries-workspace-shell"
-       hx-swap="outerHTML">Recent</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("Recent")</a>
     <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-queue="@JournalEntryQueueFilter.MultiLine" class="btn btn-sm @(Model.QueueFilter == JournalEntryQueueFilter.MultiLine ? "btn-secondary" : "btn-outline-secondary")"
        hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, queue = JournalEntryQueueFilter.MultiLine })"
        hx-target="#billing-journal-entries-workspace-shell"
-       hx-swap="outerHTML">Multi-Line</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("JournalEntriesMultiLine")</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>Date</th><th>Description</th><th>Lines</th><th>Debit</th><th>Credit</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>@T.T("CommonDate")</th><th>@T.T("Description")</th><th>@T.T("Lines")</th><th>@T.T("Debit")</th><th>@T.T("Credit")</th><th class="text-end">@T.T("CommonActions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">No journal entries found.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted">@T.T("JournalEntriesEmptyState")</td></tr>
         }
         else
         {
@@ -110,7 +117,8 @@
                     <td class="text-end"><a asp-action="EditJournalEntry" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("EditJournalEntry", "Billing", new { id = item.Id })"
                        hx-target="#billing-journal-entries-workspace-shell"
-                       hx-swap="outerHTML">Edit</a></td>
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("CommonEdit")</a></td>
                 </tr>
             }
         }
@@ -118,5 +126,5 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter"></pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter" hx-target="#billing-journal-entries-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
 </div>
