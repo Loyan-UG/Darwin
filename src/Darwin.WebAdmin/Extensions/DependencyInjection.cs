@@ -365,6 +365,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<TransitionInvoiceStatusHandler>();
             services.AddScoped<GetPaymentsPageHandler>();
             services.AddScoped<GetPaymentOpsSummaryHandler>();
+            services.AddScoped<GetTaxComplianceOverviewHandler>();
             services.AddScoped<GetBillingPlansAdminPageHandler>();
             services.AddScoped<GetBillingPlanOpsSummaryHandler>();
             services.AddScoped<GetBillingPlanForEditHandler>();

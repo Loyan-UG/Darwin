@@ -22,6 +22,15 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int Total { get; set; }
     }
 
+    public sealed class TaxComplianceListVm
+    {
+        public TaxOperationsVm Tax { get; set; } = new();
+        public TaxComplianceOpsSummaryVm Summary { get; set; } = new();
+        public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
+        public List<TaxComplianceInvoiceReviewItemVm> InvoiceItems { get; set; } = new();
+        public List<TaxComplianceCustomerReviewItemVm> CustomerItems { get; set; } = new();
+    }
+
     public sealed class BillingPlansListVm
     {
         public string Query { get; set; } = string.Empty;
@@ -82,6 +91,52 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string InvoiceIssuerLegalName { get; set; } = string.Empty;
         public string InvoiceIssuerCountry { get; set; } = string.Empty;
         public bool InvoiceIssuerTaxIdConfigured { get; set; }
+        public bool ArchiveReadinessComplete { get; set; }
+        public string ArchiveReadinessLabel { get; set; } = string.Empty;
+        public bool EInvoiceBaselineReady { get; set; }
+        public string EInvoiceBaselineLabel { get; set; } = string.Empty;
+        public string ComplianceScopeNote { get; set; } = string.Empty;
+    }
+
+    public sealed class TaxComplianceOpsSummaryVm
+    {
+        public int BusinessCustomersMissingVatIdCount { get; set; }
+        public int BusinessInvoicesMissingVatIdCount { get; set; }
+        public int DraftInvoiceCount { get; set; }
+        public int DueSoonInvoiceCount { get; set; }
+        public int OverdueInvoiceCount { get; set; }
+    }
+
+    public sealed class TaxComplianceInvoiceReviewItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CompanyName { get; set; }
+        public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
+        public string? CustomerVatId { get; set; }
+        public Guid? OrderId { get; set; }
+        public string? OrderNumber { get; set; }
+        public Guid? PaymentId { get; set; }
+        public InvoiceStatus Status { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public long TotalGrossMinor { get; set; }
+        public DateTime DueDateUtc { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+    }
+
+    public sealed class TaxComplianceCustomerReviewItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid? UserId { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? CompanyName { get; set; }
+        public string? VatId { get; set; }
+        public int OpportunityCount { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
     }
 
     public sealed class PaymentOpsSummaryVm

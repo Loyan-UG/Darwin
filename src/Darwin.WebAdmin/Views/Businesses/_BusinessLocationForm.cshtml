@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessLocationEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
 }
@@ -7,69 +8,70 @@
 
 <div class="row g-3">
     <div class="col-md-6">
-        <label asp-for="Name" class="form-label">Location name</label>
+        <label asp-for="Name" class="form-label">@T.T("BusinessLocationName")</label>
         <input asp-for="Name" class="form-control" />
     </div>
     <div class="col-md-6">
-        <label asp-for="PostalCode" class="form-label">Postal code</label>
+        <label asp-for="PostalCode" class="form-label">@T.T("BusinessLocationPostalCode")</label>
         <input asp-for="PostalCode" class="form-control" />
     </div>
     <div class="col-md-6">
-        <label asp-for="AddressLine1" class="form-label">Address line 1</label>
+        <label asp-for="AddressLine1" class="form-label">@T.T("BusinessLocationAddressLine1")</label>
         <input asp-for="AddressLine1" class="form-control" />
     </div>
     <div class="col-md-6">
-        <label asp-for="AddressLine2" class="form-label">Address line 2</label>
+        <label asp-for="AddressLine2" class="form-label">@T.T("BusinessLocationAddressLine2")</label>
         <input asp-for="AddressLine2" class="form-control" />
     </div>
     <div class="col-md-4">
-        <label asp-for="City" class="form-label">City</label>
+        <label asp-for="City" class="form-label">@T.T("BusinessLocationCity")</label>
         <input asp-for="City" class="form-control" />
     </div>
     <div class="col-md-4">
-        <label asp-for="Region" class="form-label">Region</label>
+        <label asp-for="Region" class="form-label">@T.T("BusinessLocationRegion")</label>
         <input asp-for="Region" class="form-control" />
     </div>
     <div class="col-md-4">
-        <label asp-for="CountryCode" class="form-label">Country code</label>
+        <label asp-for="CountryCode" class="form-label">@T.T("BusinessLocationCountryCode")</label>
         <input asp-for="CountryCode" class="form-control" maxlength="2" />
     </div>
     <div class="col-md-4">
-        <label asp-for="Latitude" class="form-label">Latitude</label>
+        <label asp-for="Latitude" class="form-label">@T.T("BusinessLocationLatitude")</label>
         <input asp-for="Latitude" class="form-control" />
     </div>
     <div class="col-md-4">
-        <label asp-for="Longitude" class="form-label">Longitude</label>
+        <label asp-for="Longitude" class="form-label">@T.T("BusinessLocationLongitude")</label>
         <input asp-for="Longitude" class="form-control" />
     </div>
     <div class="col-md-4">
-        <label asp-for="AltitudeMeters" class="form-label">Altitude (m)</label>
+        <label asp-for="AltitudeMeters" class="form-label">@T.T("BusinessLocationAltitudeMeters")</label>
         <input asp-for="AltitudeMeters" class="form-control" />
     </div>
     <div class="col-12">
-        <label asp-for="OpeningHoursJson" class="form-label">Opening hours JSON</label>
+        <label asp-for="OpeningHoursJson" class="form-label">@T.T("BusinessLocationOpeningHoursJson")</label>
         <textarea asp-for="OpeningHoursJson" class="form-control" rows="3"></textarea>
     </div>
     <div class="col-12">
-        <label asp-for="InternalNote" class="form-label">Internal note</label>
+        <label asp-for="InternalNote" class="form-label">@T.T("BusinessLocationInternalNote")</label>
         <textarea asp-for="InternalNote" class="form-control" rows="3"></textarea>
     </div>
     <div class="col-12">
         <div class="form-check">
             <input asp-for="IsPrimary" class="form-check-input" />
-            <label asp-for="IsPrimary" class="form-check-label">Primary location</label>
+            <label asp-for="IsPrimary" class="form-check-label">@T.T("BusinessLocationPrimary")</label>
         </div>
     </div>
 </div>
 
 <div class="d-flex gap-2 mt-4">
     <button type="submit" class="btn btn-primary">
-        <i class="fa-solid fa-floppy-disk"></i> Save
+        <i class="fa-solid fa-floppy-disk"></i> @T.T("Save")
     </button>
     <a asp-action="Locations"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-outline-secondary"
        hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.BusinessId })"
        hx-target="#business-location-editor-shell"
-       hx-swap="outerHTML">Cancel</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("Cancel")</a>
 </div>

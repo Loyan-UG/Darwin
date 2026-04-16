@@ -204,8 +204,9 @@ public sealed class ScannerViewModel : BaseViewModel
 
     public override async Task OnAppearingAsync()
     {
-        await RefreshAuthorizationAsync().ConfigureAwait(false);
-        await EnsureOperationsAllowedAsync().ConfigureAwait(false);
+        var authorizationTask = RefreshAuthorizationAsync();
+        var accessStateTask = EnsureOperationsAllowedAsync();
+        await Task.WhenAll(authorizationTask, accessStateTask).ConfigureAwait(false);
     }
 
     private async Task ScanAsync()

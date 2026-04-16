@@ -13,6 +13,14 @@
         <p class="text-muted mb-0">@T.T("BusinessesIntro")</p>
     </div>
     <div class="d-flex gap-2">
+        <a asp-action="MerchantReadiness"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+           hx-target="#businesses-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-store"></i> @T.T("MerchantReadinessTitle")
+        </a>
         <a asp-action="SupportQueue"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("SupportQueue", "Businesses")"

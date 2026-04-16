@@ -18,6 +18,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
     {
         private readonly GetPaymentsPageHandler _getPaymentsPage;
         private readonly GetPaymentOpsSummaryHandler _getPaymentOpsSummary;
+        private readonly GetTaxComplianceOverviewHandler _getTaxComplianceOverview;
         private readonly GetBillingPlansAdminPageHandler _getBillingPlansAdminPage;
         private readonly GetBillingPlanOpsSummaryHandler _getBillingPlanOpsSummary;
         private readonly GetBillingPlanForEditHandler _getBillingPlanForEdit;
@@ -49,6 +50,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public BillingController(
             GetPaymentsPageHandler getPaymentsPage,
             GetPaymentOpsSummaryHandler getPaymentOpsSummary,
+            GetTaxComplianceOverviewHandler getTaxComplianceOverview,
             GetBillingPlansAdminPageHandler getBillingPlansAdminPage,
             GetBillingPlanOpsSummaryHandler getBillingPlanOpsSummary,
             GetBillingPlanForEditHandler getBillingPlanForEdit,
@@ -79,6 +81,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         {
             _getPaymentsPage = getPaymentsPage;
             _getPaymentOpsSummary = getPaymentOpsSummary;
+            _getTaxComplianceOverview = getTaxComplianceOverview;
             _getBillingPlansAdminPage = getBillingPlansAdminPage;
             _getBillingPlanOpsSummary = getBillingPlanOpsSummary;
             _getBillingPlanForEdit = getBillingPlanForEdit;
@@ -339,6 +342,57 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         }
 
         [HttpGet]
+        public async Task<IActionResult> TaxCompliance(CancellationToken ct = default)
+        {
+            var overview = await _getTaxComplianceOverview.HandleAsync(ct: ct).ConfigureAwait(false);
+            var vm = new TaxComplianceListVm
+            {
+                Tax = await BuildTaxOperationsVmAsync(ct).ConfigureAwait(false),
+                Summary = new TaxComplianceOpsSummaryVm
+                {
+                    BusinessCustomersMissingVatIdCount = overview.Summary.BusinessCustomersMissingVatIdCount,
+                    BusinessInvoicesMissingVatIdCount = overview.Summary.BusinessInvoicesMissingVatIdCount,
+                    DraftInvoiceCount = overview.Summary.DraftInvoiceCount,
+                    DueSoonInvoiceCount = overview.Summary.DueSoonInvoiceCount,
+                    OverdueInvoiceCount = overview.Summary.OverdueInvoiceCount
+                },
+                Playbooks = BuildTaxCompliancePlaybooks(),
+                InvoiceItems = overview.InvoiceItems.Select(x => new TaxComplianceInvoiceReviewItemVm
+                {
+                    Id = x.Id,
+                    CustomerId = x.CustomerId,
+                    CustomerDisplayName = x.CustomerDisplayName,
+                    CompanyName = x.CompanyName,
+                    CustomerTaxProfileType = x.CustomerTaxProfileType,
+                    CustomerVatId = x.CustomerVatId,
+                    OrderId = x.OrderId,
+                    OrderNumber = x.OrderNumber,
+                    PaymentId = x.PaymentId,
+                    Status = x.Status,
+                    Currency = x.Currency,
+                    TotalGrossMinor = x.TotalGrossMinor,
+                    DueDateUtc = x.DueDateUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    ModifiedAtUtc = x.ModifiedAtUtc
+                }).ToList(),
+                CustomerItems = overview.CustomerItems.Select(x => new TaxComplianceCustomerReviewItemVm
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    DisplayName = x.DisplayName,
+                    Email = x.Email,
+                    CompanyName = x.CompanyName,
+                    VatId = x.VatId,
+                    OpportunityCount = x.OpportunityCount,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    ModifiedAtUtc = x.ModifiedAtUtc
+                }).ToList()
+            };
+
+            return RenderTaxComplianceWorkspace(vm);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Webhooks(int page = 1, int pageSize = 20, string? q = null, BillingWebhookDeliveryQueueFilter queue = BillingWebhookDeliveryQueueFilter.All, CancellationToken ct = default)
         {
             var subscriptions = await _getBillingWebhookSubscriptionsPage.HandleAsync(1, 10, q, ct).ConfigureAwait(false);
@@ -489,21 +543,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         private async Task<TaxOperationsVm> BuildTaxOperationsVmAsync(CancellationToken ct)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var issuerConfigured = !string.IsNullOrWhiteSpace(settings.InvoiceIssuerLegalName);
+            var issuerTaxIdConfigured = !string.IsNullOrWhiteSpace(settings.InvoiceIssuerTaxId);
+            var issuerAddressConfigured =
+                !string.IsNullOrWhiteSpace(settings.InvoiceIssuerAddressLine1) &&
+                !string.IsNullOrWhiteSpace(settings.InvoiceIssuerPostalCode) &&
+                !string.IsNullOrWhiteSpace(settings.InvoiceIssuerCity) &&
+                !string.IsNullOrWhiteSpace(settings.InvoiceIssuerCountry);
+            var archiveReady = issuerConfigured && issuerTaxIdConfigured && issuerAddressConfigured;
+            var eInvoiceBaselineReady = archiveReady && settings.VatEnabled;
+
             return new TaxOperationsVm
             {
                 VatEnabled = settings.VatEnabled,
                 DefaultVatRatePercent = settings.DefaultVatRatePercent,
                 PricesIncludeVat = settings.PricesIncludeVat,
                 AllowReverseCharge = settings.AllowReverseCharge,
-                IssuerConfigured =
-                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerLegalName) &&
-                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerAddressLine1) &&
-                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerPostalCode) &&
-                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerCity) &&
-                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerCountry),
+                IssuerConfigured = issuerConfigured && issuerAddressConfigured,
                 InvoiceIssuerLegalName = settings.InvoiceIssuerLegalName ?? string.Empty,
                 InvoiceIssuerCountry = settings.InvoiceIssuerCountry ?? string.Empty,
-                InvoiceIssuerTaxIdConfigured = !string.IsNullOrWhiteSpace(settings.InvoiceIssuerTaxId)
+                InvoiceIssuerTaxIdConfigured = issuerTaxIdConfigured,
+                ArchiveReadinessComplete = archiveReady,
+                ArchiveReadinessLabel = archiveReady ? T("TaxPolicyArchiveReady") : T("TaxPolicyArchiveIncomplete"),
+                EInvoiceBaselineReady = eInvoiceBaselineReady,
+                EInvoiceBaselineLabel = eInvoiceBaselineReady ? T("TaxPolicyBaselineReady") : T("TaxPolicyBaselineIncomplete"),
+                ComplianceScopeNote = T("TaxPolicyComplianceScopeNote")
             };
         }
 
@@ -1557,6 +1621,34 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
         }
 
+        private List<ProviderPlaybookVm> BuildTaxCompliancePlaybooks()
+        {
+            return new List<ProviderPlaybookVm>
+            {
+                new()
+                {
+                    Title = T("TaxCompliancePlaybookVatCleanupTitle"),
+                    ScopeNote = T("TaxCompliancePlaybookVatCleanupScope"),
+                    OperatorAction = T("TaxCompliancePlaybookVatCleanupAction"),
+                    SettingsDependency = T("TaxCompliancePlaybookVatCleanupDependency")
+                },
+                new()
+                {
+                    Title = T("TaxCompliancePlaybookIssuerTitle"),
+                    ScopeNote = T("TaxCompliancePlaybookIssuerScope"),
+                    OperatorAction = T("TaxCompliancePlaybookIssuerAction"),
+                    SettingsDependency = T("TaxCompliancePlaybookIssuerDependency")
+                },
+                new()
+                {
+                    Title = T("TaxCompliancePlaybookInvoiceReviewTitle"),
+                    ScopeNote = T("TaxCompliancePlaybookInvoiceReviewScope"),
+                    OperatorAction = T("TaxCompliancePlaybookInvoiceReviewAction"),
+                    SettingsDependency = T("TaxCompliancePlaybookInvoiceReviewDependency")
+                }
+            };
+        }
+
         private static void PopulateBillingPlanOptions(BillingPlanEditVm vm)
         {
             vm.IntervalItems = Enum.GetValues<BillingInterval>()
@@ -1582,6 +1674,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
 
             return View("Payments", vm);
+        }
+
+        private IActionResult RenderTaxComplianceWorkspace(TaxComplianceListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/TaxCompliance.cshtml", vm);
+            }
+
+            return View("TaxCompliance", vm);
         }
 
         private IActionResult RenderWebhooksWorkspace(BillingWebhooksListVm vm)

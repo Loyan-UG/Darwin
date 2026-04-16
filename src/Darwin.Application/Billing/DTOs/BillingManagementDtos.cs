@@ -81,6 +81,54 @@ namespace Darwin.Application.Billing.DTOs
         public int DisputeFollowUpCount { get; set; }
     }
 
+    public sealed class TaxComplianceOpsSummaryDto
+    {
+        public int BusinessCustomersMissingVatIdCount { get; set; }
+        public int BusinessInvoicesMissingVatIdCount { get; set; }
+        public int DraftInvoiceCount { get; set; }
+        public int DueSoonInvoiceCount { get; set; }
+        public int OverdueInvoiceCount { get; set; }
+    }
+
+    public sealed class TaxComplianceInvoiceReviewItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CompanyName { get; set; }
+        public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
+        public string? CustomerVatId { get; set; }
+        public Guid? OrderId { get; set; }
+        public string? OrderNumber { get; set; }
+        public Guid? PaymentId { get; set; }
+        public InvoiceStatus Status { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public long TotalGrossMinor { get; set; }
+        public DateTime DueDateUtc { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+    }
+
+    public sealed class TaxComplianceCustomerReviewItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid? UserId { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? CompanyName { get; set; }
+        public string? VatId { get; set; }
+        public int OpportunityCount { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+    }
+
+    public sealed class TaxComplianceOverviewDto
+    {
+        public TaxComplianceOpsSummaryDto Summary { get; set; } = new();
+        public List<TaxComplianceInvoiceReviewItemDto> InvoiceItems { get; set; } = new();
+        public List<TaxComplianceCustomerReviewItemDto> CustomerItems { get; set; } = new();
+    }
+
     public sealed class BillingRefundListItemDto
     {
         public Guid Id { get; set; }

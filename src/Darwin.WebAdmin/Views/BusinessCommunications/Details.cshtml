@@ -47,23 +47,23 @@
 <div class="row g-3 mb-4">
     <div class="col-lg-4">
         <div class="card h-100">
-            <div class="card-header">Business Profile</div>
+            <div class="card-header">@T.T("BusinessCommunicationProfileBusinessProfileTitle")</div>
             <div class="card-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-4">Legal Name</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.LegalName) ? "Missing" : Model.LegalName)</dd>
-                    <dt class="col-sm-4">Contact Email</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.ContactEmail) ? "Missing" : Model.ContactEmail)</dd>
-                    <dt class="col-sm-4">Culture</dt>
+                    <dt class="col-sm-4">@T.T("CommonLegalName")</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.LegalName) ? T.T("CommonMissingBadge") : Model.LegalName)</dd>
+                    <dt class="col-sm-4">@T.T("CommonContactEmail")</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.ContactEmail) ? T.T("CommonMissingBadge") : Model.ContactEmail)</dd>
+                    <dt class="col-sm-4">@T.T("CommonCulture")</dt>
                     <dd class="col-sm-8">@Model.DefaultCulture</dd>
-                    <dt class="col-sm-4">Time Zone</dt>
+                    <dt class="col-sm-4">@T.T("CommonTimeZone")</dt>
                     <dd class="col-sm-8">@Model.DefaultTimeZoneId</dd>
-                    <dt class="col-sm-4">Status</dt>
+                    <dt class="col-sm-4">@T.T("CommonStatus")</dt>
                     <dd class="col-sm-8">
                         <span class="badge text-bg-secondary">@Model.OperationalStatus</span>
                         @if (!Model.IsActive)
                         {
-                            <span class="badge text-bg-warning ms-1">Inactive</span>
+                            <span class="badge text-bg-warning ms-1">@T.T("CommonInactiveBadge")</span>
                         }
                     </dd>
                 </dl>
@@ -72,26 +72,26 @@
     </div>
     <div class="col-lg-4">
         <div class="card h-100">
-            <div class="card-header">Sender Defaults</div>
+            <div class="card-header">@T.T("BusinessCommunicationProfileSenderDefaultsTitle")</div>
             <div class="card-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-4">Support</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.SupportEmail) ? "Missing" : Model.SupportEmail)</dd>
-                    <dt class="col-sm-4">Sender</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.CommunicationSenderName) ? "Missing" : Model.CommunicationSenderName)</dd>
-                    <dt class="col-sm-4">Reply-To</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.CommunicationReplyToEmail) ? "Missing" : Model.CommunicationReplyToEmail)</dd>
+                    <dt class="col-sm-4">@T.T("BusinessCommunicationSupportShort")</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.SupportEmail) ? T.T("CommonMissingBadge") : Model.SupportEmail)</dd>
+                    <dt class="col-sm-4">@T.T("BusinessCommunicationSenderShort")</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.CommunicationSenderName) ? T.T("CommonMissingBadge") : Model.CommunicationSenderName)</dd>
+                    <dt class="col-sm-4">@T.T("BusinessCommunicationReplyToShort")</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.CommunicationReplyToEmail) ? T.T("CommonMissingBadge") : Model.CommunicationReplyToEmail)</dd>
                 </dl>
             </div>
         </div>
     </div>
     <div class="col-lg-4">
         <div class="card h-100">
-            <div class="card-header">Support Signals</div>
+            <div class="card-header">@T.T("BusinessCommunicationProfileSupportSignalsTitle")</div>
             <div class="card-body">
-                <div class="mb-2">Open Invitations: <strong>@Model.OpenInvitationCount</strong></div>
-                <div class="mb-2">Pending Activation Members: <strong>@Model.PendingActivationMemberCount</strong></div>
-                <div>Locked Members: <strong>@Model.LockedMemberCount</strong></div>
+                <div class="mb-2">@T.T("BusinessCommunicationOpenInvitationsLabel"): <strong>@Model.OpenInvitationCount</strong></div>
+                <div class="mb-2">@T.T("BusinessCommunicationPendingActivationMembersLabel"): <strong>@Model.PendingActivationMemberCount</strong></div>
+                <div>@T.T("BusinessCommunicationLockedMembersLabel"): <strong>@Model.LockedMemberCount</strong></div>
             </div>
         </div>
     </div>
@@ -100,50 +100,50 @@
 <div class="row g-3 mb-4">
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Policy Flags</div>
+            <div class="card-header">@T.T("BusinessCommunicationPolicyFlagsTitle")</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge @(Model.CustomerEmailNotificationsEnabled ? "text-bg-primary" : "text-bg-light")">Transactional Email</span>
-                    <span class="badge @(Model.CustomerMarketingEmailsEnabled ? "text-bg-info" : "text-bg-light")">Marketing Email</span>
-                    <span class="badge @(Model.OperationalAlertEmailsEnabled ? "text-bg-secondary" : "text-bg-light")">Operational Alerts</span>
+                    <span class="badge @(Model.CustomerEmailNotificationsEnabled ? "text-bg-primary" : "text-bg-light")">@T.T("BusinessCommunicationTransactionalEmailLabel")</span>
+                    <span class="badge @(Model.CustomerMarketingEmailsEnabled ? "text-bg-info" : "text-bg-light")">@T.T("BusinessCommunicationMarketingEmailLabel")</span>
+                    <span class="badge @(Model.OperationalAlertEmailsEnabled ? "text-bg-secondary" : "text-bg-light")">@T.T("BusinessCommunicationOperationalAlertsLabel")</span>
                 </div>
                 <div class="small text-muted mt-3">
-                    These toggles reflect business intent only. They still depend on global transport and alert-routing readiness.
+                    @T.T("BusinessCommunicationPolicyFlagsHelp")
                 </div>
             </div>
         </div>
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Global Dependency Readiness</div>
+            <div class="card-header">@T.T("BusinessCommunicationGlobalDependencyReadinessTitle")</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge @(Model.EmailTransportConfigured ? "text-bg-success" : "text-bg-warning")">SMTP @(Model.EmailTransportConfigured ? "Ready" : "Missing")</span>
-                    <span class="badge @(Model.SmsTransportConfigured ? "text-bg-success" : "text-bg-warning")">SMS @(Model.SmsTransportConfigured ? "Ready" : "Missing")</span>
-                    <span class="badge @(Model.WhatsAppTransportConfigured ? "text-bg-success" : "text-bg-warning")">WhatsApp @(Model.WhatsAppTransportConfigured ? "Ready" : "Missing")</span>
-                    <span class="badge @(Model.AdminAlertRoutingConfigured ? "text-bg-success" : "text-bg-warning")">Admin Alerts @(Model.AdminAlertRoutingConfigured ? "Ready" : "Missing")</span>
+                    <span class="badge @(Model.EmailTransportConfigured ? "text-bg-success" : "text-bg-warning")">SMTP @(Model.EmailTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
+                    <span class="badge @(Model.SmsTransportConfigured ? "text-bg-success" : "text-bg-warning")">SMS @(Model.SmsTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
+                    <span class="badge @(Model.WhatsAppTransportConfigured ? "text-bg-success" : "text-bg-warning")">WhatsApp @(Model.WhatsAppTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
+                    <span class="badge @(Model.AdminAlertRoutingConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("BusinessCommunicationAdminAlertsShort") @(Model.AdminAlertRoutingConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
                 </div>
                 <div class="mt-3">
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">SMTP</a>
+                       hx-push-url="true">@T.T("BusinessCommunicationSmtpShort")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">SMS</a>
+                       hx-push-url="true">@T.T("BusinessCommunicationSmsShort")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">WhatsApp</a>
+                       hx-push-url="true">@T.T("BusinessCommunicationWhatsAppShort")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Admin Alerts</a>
+                       hx-push-url="true">@T.T("BusinessCommunicationAdminAlertsShort")</a>
                 </div>
             </div>
         </div>
@@ -285,7 +285,7 @@
 <div class="row g-3 mt-1">
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Recommended Next Actions</div>
+            <div class="card-header">@T.T("BusinessCommunicationRecommendedNextActionsTitle")</div>
             <div class="card-body">
                 <ul class="mb-0">
                 @foreach (var action in Model.RecommendedActions)
@@ -297,39 +297,39 @@
                     <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary"
                        hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">Open Setup</a>
+                       hx-swap="outerHTML">@T.T("CommonOpenSetupAction")</a>
                     <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = "Attention" })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">Open Member Support</a>
+                       hx-swap="outerHTML">@T.T("BusinessCommunicationOpenMemberSupportAction")</a>
                     <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = "Open" })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">Open Invitations</a>
+                       hx-swap="outerHTML">@T.T("BusinessCommunicationOpenInvitationsAction")</a>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Recent Business Email Activity</div>
+            <div class="card-header">@T.T("BusinessCommunicationRecentBusinessEmailActivityTitle")</div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead>
                             <tr>
-                                <th>When (UTC)</th>
-                                <th>Flow</th>
-                                <th>Recipient</th>
-                                <th>Status</th>
-                                <th>Delivery Context</th>
-                                <th>Follow-up</th>
+                                <th>@T.T("WhenUtc")</th>
+                                <th>@T.T("Flow")</th>
+                                <th>@T.T("Recipient")</th>
+                                <th>@T.T("Status")</th>
+                                <th>@T.T("EmailAuditsDeliveryContextColumn")</th>
+                                <th>@T.T("FollowUp")</th>
                             </tr>
                         </thead>
                         <tbody>
                         @if (Model.RecentEmailAudits.Count == 0)
                         {
-                            <tr><td colspan="6" class="text-center text-muted py-3">No recent business-scoped email activity.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-3">@T.T("BusinessCommunicationNoRecentBusinessEmailActivity")</td></tr>
                         }
                         else
                         {
@@ -337,16 +337,16 @@
                             {
                                 <tr>
                                     <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                                    <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("CommonUnclassified") : item.FlowKey)</td>
                                     <td>@item.RecipientEmail</td>
                                     <td>
                                         @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge text-bg-success">Sent</span>
+                                            <span class="badge text-bg-success">@T.T("CommonSentBadge")</span>
                                         }
                                         else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge text-bg-danger">Failed</span>
+                                            <span class="badge text-bg-danger">@T.T("CommonFailedBadge")</span>
                                         }
                                         else
                                         {
@@ -356,40 +356,40 @@
                                     <td>
                                         @if (string.Equals(item.Severity, "High", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge text-bg-danger">High</span>
+                                            <span class="badge text-bg-danger">@T.T("CommonHighBadge")</span>
                                         }
                                         else if (string.Equals(item.Severity, "Medium", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge text-bg-warning">Medium</span>
+                                            <span class="badge text-bg-warning">@T.T("CommonMediumBadge")</span>
                                         }
                                         else if (string.Equals(item.Severity, "Watch", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge text-bg-secondary">Watch</span>
+                                            <span class="badge text-bg-secondary">@T.T("CommonWatchBadge")</span>
                                         }
                                         else if (string.Equals(item.Severity, "Slow", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge text-bg-info">Slow</span>
+                                            <span class="badge text-bg-info">@T.T("CommonSlowBadge")</span>
                                         }
                                         else
                                         {
-                                            <span class="badge text-bg-light">Normal</span>
+                                            <span class="badge text-bg-light">@T.T("CommonNormalBadge")</span>
                                         }
-                                        <div class="small text-muted mt-1">Open for @item.AttemptAgeMinutes min</div>
+                                        <div class="small text-muted mt-1">@string.Format(T.T("CommonOpenForMinutes"), item.AttemptAgeMinutes)</div>
                                         @if (item.CompletionLatencySeconds.HasValue)
                                         {
-                                            <div class="small text-muted">Latency @item.CompletionLatencySeconds.Value s</div>
+                                            <div class="small text-muted">@string.Format(T.T("CommonLatencySeconds"), item.CompletionLatencySeconds.Value)</div>
                                         }
                                         @if (item.PriorAttemptCount > 0)
                                         {
-                                            <div class="small text-muted">Prior attempts @item.PriorAttemptCount</div>
+                                            <div class="small text-muted">@string.Format(T.T("CommonPriorAttempts"), item.PriorAttemptCount)</div>
                                         }
                                         @if (item.PriorFailureCount > 0)
                                         {
-                                            <div class="small text-muted">Prior failures @item.PriorFailureCount</div>
+                                            <div class="small text-muted">@string.Format(T.T("CommonPriorFailures"), item.PriorFailureCount)</div>
                                         }
                                         @if (item.LastSuccessfulAttemptAtUtc.HasValue)
                                         {
-                                            <div class="small text-muted">Last success @item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                            <div class="small text-muted">@string.Format(T.T("CommonLastSuccessAt"), item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
                                         }
                                     </td>
                                     <td>
@@ -429,13 +429,13 @@
                                                       hx-target="#business-communication-profile-shell"
                                                       hx-swap="outerHTML">
                                                     @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Rerun Test</button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("CommonRerunTestAction")</button>
                                                 </form>
                                             }
                                             <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" asp-route-status="Failed" asp-route-flowKey="@item.FlowKey" class="btn btn-sm btn-outline-dark"
                                                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = item.FlowKey })"
                                                hx-target="#business-communication-profile-shell"
-                                               hx-swap="outerHTML">Failed Audits</a>
+                                               hx-swap="outerHTML">@T.T("FailedAuditsAction")</a>
                                         </div>
                                     </td>
                                 </tr>
@@ -449,7 +449,7 @@
                        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Open Business Email Audits</a>
+                       hx-push-url="true">@T.T("BusinessCommunicationOpenBusinessEmailAuditsAction")</a>
                 </div>
             </div>
         </div>
@@ -487,13 +487,13 @@
     </div>
     <div class="col-lg-4">
         <div class="card h-100">
-            <div class="card-header">Delivery Backlog Snapshot</div>
+            <div class="card-header">@T.T("BusinessCommunicationDeliveryBacklogSnapshotTitle")</div>
             <div class="card-body">
-                <div class="mb-2">Needs Follow-up: <strong>@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</strong></div>
-                <div class="mb-2">High Severity: <strong>@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "High", StringComparison.OrdinalIgnoreCase))</strong></div>
-                <div>Slow Deliveries: <strong>@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "Slow", StringComparison.OrdinalIgnoreCase))</strong></div>
-                <div class="mt-2">Retried Chains: <strong>@Model.RecentEmailAudits.Count(x => x.PriorAttemptCount > 0)</strong></div>
-                <div>Prior Success Context: <strong>@Model.RecentEmailAudits.Count(x => x.LastSuccessfulAttemptAtUtc.HasValue)</strong></div>
+                <div class="mb-2">@T.T("ChannelAuditNeedsFollowUpAction"): <strong>@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</strong></div>
+                <div class="mb-2">@T.T("BusinessCommunicationHighSeverityLabel"): <strong>@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "High", StringComparison.OrdinalIgnoreCase))</strong></div>
+                <div>@T.T("BusinessCommunicationSlowDeliveriesLabel"): <strong>@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "Slow", StringComparison.OrdinalIgnoreCase))</strong></div>
+                <div class="mt-2">@T.T("CommunicationRetriedDeliveryChainsLabel"): <strong>@Model.RecentEmailAudits.Count(x => x.PriorAttemptCount > 0)</strong></div>
+                <div>@T.T("CommunicationPriorSuccessContextLabel"): <strong>@Model.RecentEmailAudits.Count(x => x.LastSuccessfulAttemptAtUtc.HasValue)</strong></div>
             </div>
         </div>
     </div>
@@ -509,18 +509,18 @@
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>When (UTC)</th>
-                        <th>Channel</th>
-                        <th>Flow</th>
-                        <th>Recipient</th>
-                        <th>Status</th>
-                        <th>Preview</th>
+                        <th>@T.T("WhenUtc")</th>
+                        <th>@T.T("Channel")</th>
+                        <th>@T.T("Flow")</th>
+                        <th>@T.T("Recipient")</th>
+                        <th>@T.T("Status")</th>
+                        <th>@T.T("Preview")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.RecentChannelAudits.Count == 0)
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-3">No recent SMS or WhatsApp activity for this business scope.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-3">@T.T("BusinessCommunicationNoRecentChannelActivity")</td></tr>
                 }
                 else
                 {
@@ -534,11 +534,11 @@
                             <td>
                                 @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-success">Sent</span>
+                                    <span class="badge text-bg-success">@T.T("Sent")</span>
                                 }
                                 else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-danger">Failed</span>
+                                    <span class="badge text-bg-danger">@T.T("Failed")</span>
                                 }
                                 else
                                 {
@@ -577,29 +577,29 @@
 </div>
 
 <div class="card mt-4">
-    <div class="card-header">Live SMS / WhatsApp Message Families</div>
+    <div class="card-header">@T.T("BusinessCommunicationLiveChannelFamiliesTitle")</div>
     <div class="card-body">
         <div class="small text-muted mb-3">
-            This keeps the current non-email template and policy context visible while troubleshooting one business. Operators do not need to wait for a single incident chain to reconstruct which message family is live and what its allowed target path is.
+            @T.T("BusinessCommunicationLiveChannelFamiliesNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Family</th>
-                        <th>Channel</th>
-                        <th>Current Template</th>
-                        <th>Rendered Preview</th>
-                        <th>Tokens</th>
-                        <th>Target / Policy</th>
-                        <th>Usage Guidance</th>
-                        <th>Action</th>
+                        <th>@T.T("Family")</th>
+                        <th>@T.T("Channel")</th>
+                        <th>@T.T("ChannelAuditCurrentTemplateColumn")</th>
+                        <th>@T.T("ChannelAuditRenderedPreviewColumn")</th>
+                        <th>@T.T("Tokens")</th>
+                        <th>@T.T("ChannelAuditTargetPolicyColumn")</th>
+                        <th>@T.T("ChannelAuditUsageGuidanceColumn")</th>
+                        <th>@T.T("Action")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.ChannelTemplateFamilies.Count == 0)
                 {
-                    <tr><td colspan="8" class="text-center text-muted py-3">No live SMS or WhatsApp message families are currently exposed.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-3">@T.T("BusinessCommunicationNoLiveChannelFamilies")</td></tr>
                 }
                 else
                 {
@@ -639,7 +639,7 @@
                                            hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id, phoneVerificationOnly = true, channel = family.Channel })"
                                            hx-target="#business-communication-profile-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">Open Verification Audits</a>
+                                           hx-push-url="true">@T.T("BusinessCommunicationOpenVerificationAuditsAction")</a>
                                     }
                                     else if (string.Equals(family.FamilyName, "Admin Communication Test", StringComparison.OrdinalIgnoreCase))
                                     {
@@ -651,7 +651,7 @@
                                            hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id, adminTestOnly = true, channel = family.Channel })"
                                            hx-target="#business-communication-profile-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">Open Test Audits</a>
+                                           hx-push-url="true">@T.T("BusinessCommunicationOpenTestAuditsAction")</a>
                                         @if (string.Equals(family.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestSms)
                                         {
                                             <form asp-action="SendTestSms" method="post" class="d-inline"
@@ -659,7 +659,7 @@
                                                   hx-target="#business-communication-profile-shell"
                                                   hx-swap="outerHTML">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rerun SMS Test</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunSmsTestAction")</button>
                                             </form>
                                         }
                                         else if (string.Equals(family.Channel, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestWhatsApp)
@@ -669,7 +669,7 @@
                                                   hx-target="#business-communication-profile-shell"
                                                   hx-swap="outerHTML">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rerun WhatsApp Test</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunWhatsAppTestAction")</button>
                                             </form>
                                         }
                                     }
@@ -685,20 +685,20 @@
 </div>
 
 <div class="card mt-4">
-    <div class="card-header">Channel Truth Snapshot</div>
+    <div class="card-header">@T.T("BusinessCommunicationChannelTruthSnapshotTitle")</div>
     <div class="card-body">
         <div class="small text-muted mb-3">
-            This snapshot keeps channel reality visible while troubleshooting one business. It shows what is live today and where operators should stop before treating SMS or WhatsApp like a generic delivery bus.
+            @T.T("BusinessCommunicationChannelTruthSnapshotNote")
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Channel</th>
-                        <th>Current State</th>
-                        <th>Live Flows</th>
-                        <th>Safe Operator Actions</th>
-                        <th>Risk Boundary</th>
+                        <th>@T.T("Channel")</th>
+                        <th>@T.T("CurrentState")</th>
+                        <th>@T.T("CommunicationLiveFlowsColumn")</th>
+                        <th>@T.T("CommunicationSafeOperatorActionsColumn")</th>
+                        <th>@T.T("CommunicationRiskBoundaryColumn")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -721,21 +721,21 @@
 <div class="row g-3 mt-1">
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Template Inventory Snapshot</div>
+            <div class="card-header">@T.T("BusinessCommunicationTemplateInventorySnapshotTitle")</div>
             <div class="card-body">
                 <div class="small text-muted mb-3">
-                    This is the current template truth for phase-1 communication flows. It shows what is hard-coded today and what operators can really influence.
+                    @T.T("BusinessCommunicationTemplateInventorySnapshotNote")
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead>
                             <tr>
-                                <th>Flow</th>
-                                <th>Template Surface</th>
-                                <th>Current Template Preview</th>
-                                <th>Supported Tokens</th>
-                                <th>Operator Control</th>
-                                <th>Actions</th>
+                                <th>@T.T("Flow")</th>
+                                <th>@T.T("CommunicationTemplateSurfaceColumn")</th>
+                                <th>@T.T("CommunicationCurrentTemplatePreviewColumn")</th>
+                                <th>@T.T("SupportedTokens")</th>
+                                <th>@T.T("CommunicationOperatorControlColumn")</th>
+                                <th>@T.T("Actions")</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -745,8 +745,8 @@
                                 <td class="fw-semibold">@item.FlowName</td>
                                 <td>@item.TemplateSurface</td>
                                 <td>
-                                    <div class="small"><strong>Subject:</strong> @item.CurrentSubjectTemplate</div>
-                                    <div class="small text-muted mt-1"><strong>Body:</strong> @item.CurrentBodyTemplate</div>
+                                    <div class="small"><strong>@T.T("SubjectLabel"):</strong> @item.CurrentSubjectTemplate</div>
+                                    <div class="small text-muted mt-1"><strong>@T.T("BodyLabel"):</strong> @item.CurrentBodyTemplate</div>
                                 </td>
                                 <td><code>@item.SupportedTokens</code></td>
                                 <td>@item.OperatorControl</td>
@@ -761,7 +761,7 @@
                                                class="btn btn-sm btn-outline-secondary"
                                                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = item.AuditFlowKey })"
                                                hx-target="#business-communication-profile-shell"
-                                               hx-swap="outerHTML">Failed Audits</a>
+                                               hx-swap="outerHTML">@T.T("FailedAuditsAction")</a>
                                         }
                                         @if (item.OperatorActionTarget == "Invitations")
                                         {
@@ -796,7 +796,7 @@
                                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                                                hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                                                hx-target="#business-communication-profile-shell"
-                                               hx-swap="outerHTML">Open Policy</a>
+                                               hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
                                         }
                                     </div>
                                 </td>
@@ -810,19 +810,19 @@
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">Resend / Retry Policy Snapshot</div>
+            <div class="card-header">@T.T("BusinessCommunicationResendPolicySnapshotTitle")</div>
             <div class="card-body">
                 <div class="small text-muted mb-3">
-                    Failed rows are triage signals, not generic replay buttons. This matrix shows the safe entry point for each communication flow.
+                    @T.T("BusinessCommunicationResendPolicySnapshotNote")
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead>
                             <tr>
-                                <th>Flow</th>
-                                <th>Safe Action</th>
-                                <th>Retry Status</th>
-                                <th>Actions</th>
+                                <th>@T.T("Flow")</th>
+                                <th>@T.T("CommunicationCurrentSafeActionColumn")</th>
+                                <th>@T.T("CommunicationGenericRetryStatusColumn")</th>
+                                <th>@T.T("Actions")</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -843,7 +843,7 @@
                                                class="btn btn-sm btn-outline-secondary"
                                                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = item.AuditFlowKey })"
                                                hx-target="#business-communication-profile-shell"
-                                               hx-swap="outerHTML">Failed Audits</a>
+                                               hx-swap="outerHTML">@T.T("FailedAuditsAction")</a>
                                         }
                                         @if (item.OperatorActionTarget == "Invitations")
                                         {

@@ -53,6 +53,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             }
 
             var businesses = await EnsureBusinessesAsync(db, ct);
+            await EnsurePrimaryBusinessForBiz1Async(db, businesses, users, ct);
 
             if (!await db.Set<BusinessLocation>().AnyAsync(ct))
                 await SeedLocationsAsync(db, businesses, ct);
@@ -166,6 +167,133 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             await db.SaveChangesAsync(ct);
             return await db.Set<Business>().OrderBy(b => b.Name).ToListAsync(ct);
+        }
+
+        /// <summary>
+        /// Keeps the primary business test path usable for the default business operator account.
+        /// This self-heals approval, active owner membership, and primary location for legacy databases.
+        /// </summary>
+        private static async Task EnsurePrimaryBusinessForBiz1Async(
+            DarwinDbContext db,
+            IReadOnlyList<Business> businesses,
+            IReadOnlyList<User> users,
+            CancellationToken ct)
+        {
+            var primarySeed = GetBusinessSeeds()[0];
+            var primaryBusiness = businesses.FirstOrDefault(x => string.Equals(x.Name, primarySeed.Name, StringComparison.Ordinal))
+                ?? businesses.OrderBy(x => x.Name).FirstOrDefault();
+            if (primaryBusiness is null)
+            {
+                return;
+            }
+
+            var biz1User = users.FirstOrDefault(u => string.Equals(u.Email, "biz1@darwin.de", StringComparison.OrdinalIgnoreCase));
+            if (biz1User is null)
+            {
+                return;
+            }
+
+            var requiresSave = false;
+
+            if (!primaryBusiness.IsActive)
+            {
+                primaryBusiness.IsActive = true;
+                requiresSave = true;
+            }
+
+            if (primaryBusiness.OperationalStatus != BusinessOperationalStatus.Approved)
+            {
+                primaryBusiness.OperationalStatus = BusinessOperationalStatus.Approved;
+                requiresSave = true;
+            }
+
+            if (primaryBusiness.ApprovedAtUtc is null)
+            {
+                primaryBusiness.ApprovedAtUtc = DateTime.UtcNow;
+                requiresSave = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(primaryBusiness.LegalName))
+            {
+                primaryBusiness.LegalName = primarySeed.LegalName;
+                requiresSave = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(primaryBusiness.ContactEmail))
+            {
+                primaryBusiness.ContactEmail = primarySeed.Email;
+                requiresSave = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(primaryBusiness.ContactPhoneE164))
+            {
+                primaryBusiness.ContactPhoneE164 = primarySeed.Phone;
+                requiresSave = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(primaryBusiness.WebsiteUrl))
+            {
+                primaryBusiness.WebsiteUrl = primarySeed.Website;
+                requiresSave = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(primaryBusiness.ShortDescription))
+            {
+                primaryBusiness.ShortDescription = primarySeed.ShortDescription;
+                requiresSave = true;
+            }
+
+            if (requiresSave)
+            {
+                await db.SaveChangesAsync(ct);
+            }
+
+            var membership = await db.Set<BusinessMember>()
+                .FirstOrDefaultAsync(
+                    x => x.BusinessId == primaryBusiness.Id && x.UserId == biz1User.Id && !x.IsDeleted,
+                    ct);
+
+            if (membership is null)
+            {
+                db.Add(new BusinessMember
+                {
+                    BusinessId = primaryBusiness.Id,
+                    UserId = biz1User.Id,
+                    Role = BusinessMemberRole.Owner,
+                    IsActive = true
+                });
+                await db.SaveChangesAsync(ct);
+            }
+            else if (!membership.IsActive || membership.Role != BusinessMemberRole.Owner)
+            {
+                membership.IsActive = true;
+                membership.Role = BusinessMemberRole.Owner;
+                await db.SaveChangesAsync(ct);
+            }
+
+            var primaryLocation = await db.Set<BusinessLocation>()
+                .FirstOrDefaultAsync(
+                    x => x.BusinessId == primaryBusiness.Id && !x.IsDeleted && x.IsPrimary,
+                    ct);
+
+            if (primaryLocation is null)
+            {
+                db.Add(new BusinessLocation
+                {
+                    BusinessId = primaryBusiness.Id,
+                    Name = $"{primarySeed.City} Hauptfiliale",
+                    AddressLine1 = primarySeed.Street,
+                    City = primarySeed.City,
+                    Region = "DE",
+                    CountryCode = "DE",
+                    PostalCode = primarySeed.Postal,
+                    Coordinate = new GeoCoordinate(primarySeed.Lat, primarySeed.Lon),
+                    IsPrimary = true,
+                    OpeningHoursJson = "{\"Mon\":[{\"Open\":\"08:00\",\"Close\":\"18:00\"}],\"Sat\":[{\"Open\":\"09:00\",\"Close\":\"14:00\"}]}",
+                    InternalNote = "Self-healed primary location for the default business operator test account."
+                });
+                await db.SaveChangesAsync(ct);
+            }
         }
 
         private static async Task SeedLocationsAsync(DarwinDbContext db, IReadOnlyList<Business> businesses, CancellationToken ct)

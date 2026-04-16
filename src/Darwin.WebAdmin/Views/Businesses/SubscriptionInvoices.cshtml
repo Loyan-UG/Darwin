@@ -1,13 +1,14 @@
 @using Darwin.Application.Billing
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoicesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Subscription Invoices";
+    ViewData["Title"] = T.T("BusinessSubscriptionInvoicesTitle");
 }
 
 <div id="business-subscription-invoices-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1">Subscription Invoices</h1>
+        <h1 class="mb-1">@T.T("BusinessSubscriptionInvoicesTitle")</h1>
         <p class="text-muted mb-0">@Model.Business.Name</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
@@ -16,26 +17,30 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML">
-            <i class="fa-solid fa-credit-card"></i> Subscription
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-credit-card"></i> @T.T("BusinessSubscriptionShort")
         </a>
         <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id })"
            hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML">
-            <i class="fa-solid fa-money-bill-wave"></i> Payments
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-money-bill-wave"></i> @T.T("CommonPayments")
         </a>
         <a asp-controller="Billing" asp-action="Refunds" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-danger"
            hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.Business.Id })"
            hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML">
-            <i class="fa-solid fa-rotate-left"></i> Refund Queue
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-rotate-left"></i> @T.T("RefundQueue")
         </a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
            hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML">
-            <i class="fa-solid fa-sliders"></i> Payment Settings
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-sliders"></i> @T.T("PaymentSettings")
         </a>
     </div>
 </div>
@@ -43,63 +48,63 @@
 <div class="row g-3 mb-3">
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Total</div>
+            <div class="text-muted small">@T.T("CommonTotal")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Open</div>
+            <div class="text-muted small">@T.T("CommonOpen")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.OpenCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Paid</div>
+            <div class="text-muted small">@T.T("CommonPaid")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PaidCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Draft</div>
+            <div class="text-muted small">@T.T("CommonDraft")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.DraftCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Uncollectible</div>
+            <div class="text-muted small">@T.T("CommonUncollectible")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.UncollectibleCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Stripe</div>
+            <div class="text-muted small">@T.T("CommonStripe")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.StripeCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">Overdue</div>
+            <div class="text-muted small">@T.T("CommonOverdue")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.OverdueCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">PDF Missing</div>
+            <div class="text-muted small">@T.T("CommonPdfMissing")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PdfMissingCount</div>
         </div>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Subscription Billing Playbooks</div>
+    <div class="card-header">@T.T("BusinessSubscriptionBillingPlaybooksTitle")</div>
     <div class="card-body">
         <ul class="mb-0">
-            <li>Open invoices normally indicate a billing follow-up or payment failure path that finance support should verify before changing subscription lifecycle flags.</li>
-            <li>Uncollectible invoices usually require provider-side review, customer outreach, or cancel-at-period-end confirmation before manual escalation.</li>
-            <li>Missing hosted invoice links mean provider synchronization is incomplete, so operators should use payment settings and provider references before escalating.</li>
-            <li>Overdue invoices need customer follow-up or payment reconciliation before operators make subscription-lifecycle decisions.</li>
-            <li>Missing PDFs are a document-visibility gap; use hosted links and payment history first, then escalate if download artifacts are required.</li>
+            <li>@T.T("BusinessSubscriptionBillingPlaybookOpenInvoices")</li>
+            <li>@T.T("BusinessSubscriptionBillingPlaybookUncollectible")</li>
+            <li>@T.T("BusinessSubscriptionBillingPlaybookMissingHostedLink")</li>
+            <li>@T.T("BusinessSubscriptionBillingPlaybookOverdue")</li>
+            <li>@T.T("BusinessSubscriptionBillingPlaybookMissingPdf")</li>
         </ul>
     </div>
 </div>
@@ -110,17 +115,19 @@
           hx-get="@Url.Action("SubscriptionInvoices", "Businesses")"
           hx-target="#business-subscription-invoices-workspace-shell"
           hx-swap="outerHTML"
+          hx-push-url="true"
           class="d-flex gap-2">
         <input type="hidden" name="businessId" value="@Model.Business.Id" />
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search provider invoice, plan, or failure reason">
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessSubscriptionInvoicesSearchPlaceholder")">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> @T.T("CommonFilter")</button>
         <a asp-action="SubscriptionInvoices"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("CommonReset")</a>
     </form>
 </div>
 
@@ -130,60 +137,66 @@
        class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.All ? "btn-dark" : "btn-outline-dark")"
        hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
        hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML">All</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("CommonAll")</a>
     <a asp-action="SubscriptionInvoices"
        asp-route-businessId="@Model.Business.Id"
        asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Open"
        class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.Open ? "btn-warning" : "btn-outline-warning")"
        hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Open })"
        hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML">Open</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("CommonOpen")</a>
     <a asp-action="SubscriptionInvoices"
        asp-route-businessId="@Model.Business.Id"
        asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Overdue"
        class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.Overdue ? "btn-danger" : "btn-outline-danger")"
        hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Overdue })"
        hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML">Overdue</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("CommonOverdue")</a>
     <a asp-action="SubscriptionInvoices"
        asp-route-businessId="@Model.Business.Id"
        asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.PdfMissing"
        class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.PdfMissing ? "btn-warning" : "btn-outline-warning")"
        hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.PdfMissing })"
        hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML">PDF Missing</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("CommonPdfMissing")</a>
     <a asp-action="SubscriptionInvoices"
        asp-route-businessId="@Model.Business.Id"
        asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Stripe"
        class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.Stripe ? "btn-info text-dark" : "btn-outline-info")"
        hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Stripe })"
        hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML">Stripe</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("CommonStripe")</a>
     <a asp-action="SubscriptionInvoices"
        asp-route-businessId="@Model.Business.Id"
        asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Uncollectible"
        class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.Uncollectible ? "btn-danger" : "btn-outline-danger")"
        hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Uncollectible })"
        hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML">Uncollectible</a>
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("CommonUncollectible")</a>
 </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Provider</th>
-                <th>Plan</th>
-                <th>Status</th>
-                <th>Amount</th>
-                <th>Timeline</th>
-                <th class="text-end">Actions</th>
+                <th>@T.T("CommonProvider")</th>
+                <th>@T.T("CommonPlan")</th>
+                <th>@T.T("CommonStatus")</th>
+                <th>@T.T("CommonAmount")</th>
+                <th>@T.T("CommonTimeline")</th>
+                <th class="text-end">@T.T("CommonActions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">No subscription invoices found.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted">@T.T("BusinessSubscriptionInvoicesEmptyState")</td></tr>
         }
         else
         {
@@ -195,7 +208,7 @@
                         <div class="small text-muted">@item.ProviderInvoiceId</div>
                         @if (item.IsStripe)
                         {
-                            <div><span class="badge text-bg-info mt-1">Stripe</span></div>
+                            <div><span class="badge text-bg-info mt-1">@T.T("CommonStripe")</span></div>
                         }
                     </td>
                     <td>
@@ -212,33 +225,34 @@
                         }
                         @if (item.IsOverdue)
                         {
-                            <div><span class="badge bg-danger mt-1">Overdue</span></div>
+                            <div><span class="badge bg-danger mt-1">@T.T("CommonOverdue")</span></div>
                         }
                         @if (!item.HasPdfUrl)
                         {
-                            <div><span class="badge bg-warning text-dark mt-1">PDF missing</span></div>
+                            <div><span class="badge bg-warning text-dark mt-1">@T.T("CommonPdfMissing")</span></div>
                         }
                     </td>
                     <td>@item.Currency @((item.TotalMinor / 100M).ToString("0.00"))</td>
                     <td>
-                        <div>Issued: @item.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="small text-muted">Due: @(item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
-                        <div class="small text-muted">Paid: @(item.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                        <div>@string.Format(T.T("CommonIssuedAt"), item.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm"))</div>
+                        <div class="small text-muted">@string.Format(T.T("CommonDueAt"), item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                        <div class="small text-muted">@string.Format(T.T("CommonPaidAt"), item.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
                     </td>
                     <td class="text-end">
                         <div class="btn-group btn-group-sm">
                             @if (item.HasHostedInvoiceUrl)
                             {
-                                <a href="@item.HostedInvoiceUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">Hosted</a>
+                                <a href="@item.HostedInvoiceUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">@T.T("CommonHosted")</a>
                             }
                             @if (item.HasPdfUrl)
                             {
-                                <a href="@item.PdfUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">PDF</a>
+                                <a href="@item.PdfUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">@T.T("CommonPdf")</a>
                             }
                             <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" asp-route-q="@item.ProviderInvoiceId" class="btn btn-outline-secondary"
                                hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id, q = item.ProviderInvoiceId })"
                                hx-target="#business-subscription-invoices-workspace-shell"
-                               hx-swap="outerHTML">Payments</a>
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("CommonPayments")</a>
                         </div>
                     </td>
                 </tr>

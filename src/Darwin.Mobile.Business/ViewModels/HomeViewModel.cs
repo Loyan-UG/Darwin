@@ -246,26 +246,21 @@ namespace Darwin.Mobile.Business.ViewModels
                     OnPropertyChanged(nameof(HasBusinessContext));
                 });
 
-                var authSnapshotResult = await _businessAuthorizationService.GetSnapshotAsync(CancellationToken.None)
-                    .ConfigureAwait(false);
+                var authSnapshotTask = _businessAuthorizationService.GetSnapshotAsync(CancellationToken.None);
+                var accessStateTask = _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None);
+                await Task.WhenAll(authSnapshotTask, accessStateTask).ConfigureAwait(false);
+
+                var authSnapshotResult = await authSnapshotTask.ConfigureAwait(false);
+                var accessStateResult = await accessStateTask.ConfigureAwait(false);
 
                 RunOnMain(() =>
                 {
-                    if (authSnapshotResult.Succeeded && authSnapshotResult.Value is not null)
-                    {
-                        OperatorRole = authSnapshotResult.Value.RoleDisplayName;
-                    }
-                    else
-                    {
-                        OperatorRole = AppResources.HomeUnavailableValue;
-                    }
+                    OperatorRole = authSnapshotResult.Succeeded && authSnapshotResult.Value is not null
+                        ? authSnapshotResult.Value.RoleDisplayName
+                        : AppResources.HomeUnavailableValue;
+
+                    ApplyAccessState(accessStateResult.Succeeded ? accessStateResult.Value : null);
                 });
-
-                var accessStateResult = await _businessAccessService
-                    .GetCurrentAccessStateAsync(CancellationToken.None)
-                    .ConfigureAwait(false);
-
-                RunOnMain(() => ApplyAccessState(accessStateResult.Succeeded ? accessStateResult.Value : null));
             }
             catch (Exception)
             {

@@ -57,6 +57,38 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public List<BusinessSupportFailedEmailVm> FailedEmails { get; set; } = new();
     }
 
+    public sealed class MerchantReadinessWorkspaceVm
+    {
+        public BusinessSupportSummaryVm Summary { get; set; } = new();
+        public List<MerchantReadinessItemVm> Items { get; set; } = new();
+        public List<MerchantReadinessPlaybookVm> Playbooks { get; set; } = new();
+    }
+
+    public sealed class MerchantReadinessItemVm
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? LegalName { get; set; }
+        public BusinessOperationalStatus OperationalStatus { get; set; } = BusinessOperationalStatus.PendingApproval;
+        public bool HasContactEmailConfigured { get; set; }
+        public bool HasLegalNameConfigured { get; set; }
+        public int ActiveOwnerCount { get; set; }
+        public int PrimaryLocationCount { get; set; }
+        public int InvitationCount { get; set; }
+        public bool HasSubscription { get; set; }
+        public string SubscriptionStatus { get; set; } = string.Empty;
+        public string SubscriptionPlanName { get; set; } = string.Empty;
+        public bool CancelAtPeriodEnd { get; set; }
+        public DateTime? CurrentPeriodEndUtc { get; set; }
+    }
+
+    public sealed class MerchantReadinessPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
+    }
+
     public sealed class BusinessSupportSummaryVm
     {
         public int AttentionBusinessCount { get; set; }

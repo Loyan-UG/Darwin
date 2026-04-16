@@ -1,0 +1,200 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.MerchantReadinessWorkspaceVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("MerchantReadinessTitle");
+}
+
+<div id="merchant-readiness-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1"><i class="fa-solid fa-store me-2"></i>@T.T("MerchantReadinessTitle")</h1>
+        <p class="text-muted mb-0">@T.T("MerchantReadinessIntro")</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="SupportQueue"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("SupportQueue", "Businesses")"
+           hx-target="#merchant-readiness-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+        <a asp-action="Index"
+           asp-route-attentionOnly="true"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+           hx-target="#merchant-readiness-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("NeedsAttention")</div><div class="fs-4 fw-semibold">@Model.Summary.AttentionBusinessCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("PendingApproval")</div><div class="fs-4 fw-semibold">@Model.Summary.PendingApprovalBusinessCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("SuspendedBusinesses")</div><div class="fs-4 fw-semibold">@Model.Summary.SuspendedBusinessCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BusinessesMissingOwner")</div><div class="fs-4 fw-semibold">@Model.Summary.MissingOwnerBusinessCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("PendingActivation")</div><div class="fs-4 fw-semibold">@Model.Summary.PendingActivationMemberCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("LockedMembers")</div><div class="fs-4 fw-semibold">@Model.Summary.LockedMemberCount</div></div></div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">@T.T("MerchantReadinessPlaybooksTitle")</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@T.T("Playbook")</th>
+                        <th>@T.T("TaxComplianceScopeColumn")</th>
+                        <th>@T.T("OperatorAction")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@playbook.Title</td>
+                        <td>@playbook.ScopeNote</td>
+                        <td>@playbook.OperatorAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>@T.T("MerchantReadinessQueueTitle")</span>
+        <a asp-controller="BusinessCommunications"
+           asp-action="Index"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Index", "BusinessCommunications")"
+           hx-target="#merchant-readiness-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("CommunicationOps")</a>
+    </div>
+    <div class="card-body">
+        @if (Model.Items.Count == 0)
+        {
+            <div class="text-muted">@T.T("MerchantReadinessEmptyState")</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>@T.T("Business")</th>
+                            <th>@T.T("Status")</th>
+                            <th>@T.T("MerchantReadinessSetupColumn")</th>
+                            <th>@T.T("MerchantReadinessSubscriptionColumn")</th>
+                            <th>@T.T("Actions")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        var setupMissing = item.ActiveOwnerCount == 0 || item.PrimaryLocationCount == 0 || !item.HasContactEmailConfigured || !item.HasLegalNameConfigured;
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@item.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(item.LegalName))
+                                {
+                                    <div class="small text-muted">@item.LegalName</div>
+                                }
+                                @if (item.InvitationCount > 0)
+                                {
+                                    <div class="small text-muted">@item.InvitationCount @T.T("PendingInvites")</div>
+                                }
+                            </td>
+                            <td>
+                                @if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
+                                {
+                                    <span class="badge text-bg-warning">@T.T("PendingApproval")</span>
+                                }
+                                else if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
+                                {
+                                    <span class="badge text-bg-danger">@T.T("Suspended")</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-success">@T.T("Active")</span>
+                                }
+                            </td>
+                            <td>
+                                @if (setupMissing)
+                                {
+                                    <div class="small text-warning">@T.T("MerchantReadinessSetupMissing")</div>
+                                }
+                                @if (item.ActiveOwnerCount == 0)
+                                {
+                                    <div class="small text-muted">@T.T("MissingActiveOwner")</div>
+                                }
+                                @if (item.PrimaryLocationCount == 0)
+                                {
+                                    <div class="small text-muted">@T.T("MissingPrimaryLocation")</div>
+                                }
+                                @if (!item.HasContactEmailConfigured)
+                                {
+                                    <div class="small text-muted">@T.T("MissingContactEmail")</div>
+                                }
+                                @if (!item.HasLegalNameConfigured)
+                                {
+                                    <div class="small text-muted">@T.T("MissingLegalName")</div>
+                                }
+                            </td>
+                            <td>
+                                @if (item.HasSubscription)
+                                {
+                                    <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(item.SubscriptionPlanName) ? item.SubscriptionPlanName : item.SubscriptionStatus)</div>
+                                    <div class="small text-muted">@item.SubscriptionStatus</div>
+                                    @if (item.CancelAtPeriodEnd)
+                                    {
+                                        <div class="small text-warning">@T.T("BusinessSubscriptionCancelAtPeriodEnd")</div>
+                                    }
+                                    @if (item.CurrentPeriodEndUtc.HasValue)
+                                    {
+                                        <div class="small text-muted">@string.Format(T.T("BusinessSubscriptionCurrentPeriodEnd"), item.CurrentPeriodEndUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="small text-warning">@T.T("BusinessSubscriptionNoActivePlan")</div>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a asp-action="Setup"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("CommonSetup")</a>
+                                    <a asp-action="Subscription"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Subscription")</a>
+                                    <a asp-action="Members"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Members")</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+</div>

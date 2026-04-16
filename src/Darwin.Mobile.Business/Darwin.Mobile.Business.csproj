@@ -44,10 +44,10 @@
 
 	<ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#F4B223" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#F4B223" BaseSize="128,128" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
@@ -71,7 +71,6 @@
 		<PackageReference Include="UraniumUI" Version="2.14.0" />
 		<PackageReference Include="UraniumUI.Icons.FontAwesome" Version="2.14.0" />
 		<PackageReference Include="UraniumUI.Icons.MaterialIcons" Version="2.14.0" />
-		<PackageReference Include="UraniumUI.Material" Version="2.14.0" />
 		<PackageReference Include="ZXing.Net.Maui" Version="0.7.4" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.7.4" />
 	</ItemGroup>

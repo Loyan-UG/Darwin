@@ -1,38 +1,43 @@
 @model Darwin.WebAdmin.ViewModels.Billing.BillingPlansListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Billing Plans";
+    ViewData["Title"] = T.T("BillingPlansTitle");
 }
 
 <div id="billing-plans-workspace-shell">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h1 class="mb-1"><i class="fa-solid fa-layer-group me-2"></i>Billing Plans</h1>
-            <p class="text-muted mb-0">Manage the plan catalog that powers business subscription handoff and support triage.</p>
+            <h1 class="mb-1"><i class="fa-solid fa-layer-group me-2"></i>@T.T("BillingPlansTitle")</h1>
+            <p class="text-muted mb-0">@T.T("BillingPlansIntro")</p>
         </div>
-        <a asp-action="CreatePlan" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> Create Plan
+        <a asp-action="CreatePlan" class="btn btn-primary"
+           hx-get="@Url.Action("CreatePlan", "Billing")"
+           hx-target="#billing-plans-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-plus"></i> @T.T("BillingPlansCreatePlan")
         </a>
     </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Active</div><div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Inactive</div><div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Trial</div><div class="fs-4 fw-semibold">@Model.Summary.TrialCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Missing Features</div><div class="fs-4 fw-semibold">@Model.Summary.MissingFeaturesCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">In Use</div><div class="fs-4 fw-semibold">@Model.Summary.InUseCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("CommonTotal")</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BillingPlansActive")</div><div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BillingPlansInactive")</div><div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BillingPlansTrial")</div><div class="fs-4 fw-semibold">@Model.Summary.TrialCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BillingPlansMissingFeatures")</div><div class="fs-4 fw-semibold">@Model.Summary.MissingFeaturesCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BillingPlansInUse")</div><div class="fs-4 fw-semibold">@Model.Summary.InUseCount</div></div></div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">Billing Plan Playbooks</div>
+    <div class="card-header">@T.T("BillingPlansPlaybooksTitle")</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Queue</th>
-                        <th>Scope</th>
-                        <th>Operator Action</th>
+                        <th>@T.T("BillingPlansQueueColumn")</th>
+                        <th>@T.T("BillingPlansScopeColumn")</th>
+                        <th>@T.T("OperatorAction")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -54,30 +59,32 @@
           class="row g-2 mb-3"
           hx-get="@Url.Action("Plans", "Billing")"
           hx-target="#billing-plans-workspace-shell"
-          hx-swap="outerHTML">
+          hx-swap="outerHTML"
+          hx-push-url="true">
         <div class="col-md-4">
-            <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search by code, name, or description" />
+            <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("BillingPlansSearchPlaceholder")" />
         </div>
         <div class="col-md-3">
             <select name="queue" class="form-select">
-                <option value="All" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.All)">All plans</option>
-                <option value="Active" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Active)">Active</option>
-                <option value="Inactive" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive)">Inactive</option>
-                <option value="Trial" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial)">Trial</option>
-                <option value="MissingFeatures" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures)">Missing features</option>
-                <option value="InUse" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse)">In use</option>
+                <option value="All" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.All)">@T.T("BillingPlansAllPlans")</option>
+                <option value="Active" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Active)">@T.T("BillingPlansActive")</option>
+                <option value="Inactive" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive)">@T.T("BillingPlansInactive")</option>
+                <option value="Trial" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial)">@T.T("BillingPlansTrial")</option>
+                <option value="MissingFeatures" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures)">@T.T("BillingPlansMissingFeatures")</option>
+                <option value="InUse" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse)">@T.T("BillingPlansInUse")</option>
             </select>
         </div>
         <div class="col-md-2">
             <input type="number" min="1" name="pageSize" value="@Model.PageSize" class="form-control" />
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+            <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("CommonSearch")</button>
             <a asp-action="Plans"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Plans", "Billing")"
                hx-target="#billing-plans-workspace-shell"
-               hx-swap="outerHTML">Reset</a>
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("CommonReset")</a>
         </div>
     </form>
 
@@ -87,50 +94,55 @@
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive })"
            hx-target="#billing-plans-workspace-shell"
-           hx-swap="outerHTML">Inactive</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BillingPlansInactive")</a>
         <a asp-action="Plans"
            asp-route-queue="Trial"
            class="btn btn-sm btn-outline-info"
            hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial })"
            hx-target="#billing-plans-workspace-shell"
-           hx-swap="outerHTML">Trial</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BillingPlansTrial")</a>
         <a asp-action="Plans"
            asp-route-queue="MissingFeatures"
            class="btn btn-sm btn-outline-warning"
            hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures })"
            hx-target="#billing-plans-workspace-shell"
-           hx-swap="outerHTML">Missing Features</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BillingPlansMissingFeatures")</a>
         <a asp-action="Plans"
            asp-route-queue="InUse"
            class="btn btn-sm btn-outline-primary"
            hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse })"
            hx-target="#billing-plans-workspace-shell"
-           hx-swap="outerHTML">In Use</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BillingPlansInUse")</a>
         <a asp-action="Plans"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("Plans", "Billing")"
            hx-target="#billing-plans-workspace-shell"
-           hx-swap="outerHTML">Clear Queue Filters</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BillingPlansClearQueueFilters")</a>
     </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-hover align-middle">
         <thead>
             <tr>
-                <th>Plan</th>
-                <th>Price</th>
-                <th>Interval</th>
-                <th>Trial</th>
-                <th>Usage</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th class="text-end">Actions</th>
+                <th>@T.T("CommonPlan")</th>
+                <th>@T.T("BillingPlansPriceColumn")</th>
+                <th>@T.T("BillingPlansIntervalColumn")</th>
+                <th>@T.T("BillingPlansTrialColumn")</th>
+                <th>@T.T("BillingPlansUsageColumn")</th>
+                <th>@T.T("CommonStatus")</th>
+                <th>@T.T("BillingPlansUpdatedColumn")</th>
+                <th class="text-end">@T.T("CommonActions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="8" class="text-center text-muted py-4">No billing plans found.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted py-4">@T.T("BillingPlansEmptyState")</td></tr>
         }
         else
         {
@@ -146,22 +158,26 @@
                         }
                     </td>
                     <td>@item.Currency @((item.PriceMinor / 100M).ToString("0.00"))</td>
-                    <td>Every @item.IntervalCount @item.Interval</td>
-                    <td>@(item.TrialDays.HasValue ? $"{item.TrialDays} days" : "-")</td>
+                    <td>@string.Format(T.T("BillingPlansEveryInterval"), item.IntervalCount, item.Interval)</td>
+                    <td>@(item.TrialDays.HasValue ? string.Format(T.T("BillingPlansTrialDays"), item.TrialDays.Value) : "-")</td>
                     <td>
-                        <span class="badge @(item.ActiveSubscriptionCount > 0 ? "text-bg-primary" : "text-bg-secondary")">@item.ActiveSubscriptionCount active</span>
+                        <span class="badge @(item.ActiveSubscriptionCount > 0 ? "text-bg-primary" : "text-bg-secondary")">@string.Format(T.T("BillingPlansActiveSubscriptions"), item.ActiveSubscriptionCount)</span>
                     </td>
                     <td>
-                        <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "Active" : "Inactive")</span>
+                        <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? T.T("BillingPlansActive") : T.T("BillingPlansInactive"))</span>
                         @if (!item.HasFeatures)
                         {
-                            <div><span class="badge text-bg-warning mt-1">Missing features</span></div>
+                            <div><span class="badge text-bg-warning mt-1">@T.T("BillingPlansMissingFeatures")</span></div>
                         }
                     </td>
                     <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                     <td class="text-end">
-                        <a asp-action="EditPlan" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                            <i class="fa-solid fa-pen"></i> Edit
+                        <a asp-action="EditPlan" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("EditPlan", "Billing", new { id = item.Id })"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa-solid fa-pen"></i> @T.T("CommonEdit")
                         </a>
                     </td>
                 </tr>
@@ -179,6 +195,7 @@
            asp-route-q="@Model.Query"
            asp-route-queue="@Model.QueueFilter"
            hx-target="#billing-plans-workspace-shell"
-           hx-swap="outerHTML">
+           hx-swap="outerHTML"
+           hx-push-url="true">
     </pager>
 </div>

@@ -1,42 +1,47 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionWorkspaceVm
 @inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Business Subscription";
+    ViewData["Title"] = T.T("BusinessSubscriptionTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
 }
 
 <div id="business-subscription-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1">Business Subscription</h1>
+        <h1 class="mb-1">@T.T("BusinessSubscriptionTitle")</h1>
         <p class="text-muted mb-0">@Model.Business.Name</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Edit" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
            hx-target="#business-subscription-workspace-shell"
-           hx-swap="outerHTML">
-            <i class="fa-solid fa-pen"></i> Edit Business
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-pen"></i> @T.T("CommonEditBusiness")
         </a>
         <a asp-action="Setup" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
            hx-target="#business-subscription-workspace-shell"
-           hx-swap="outerHTML">
-            <i class="fa-solid fa-sliders"></i> Setup
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-sliders"></i> @T.T("CommonSetup")
         </a>
         <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id })"
            hx-target="#business-subscription-workspace-shell"
-           hx-swap="outerHTML">
-            <i class="fa-solid fa-money-bill-wave"></i> Payments
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-money-bill-wave"></i> @T.T("CommonPayments")
         </a>
         <a asp-action="SubscriptionInvoices"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-subscription-workspace-shell"
-           hx-swap="outerHTML">
-            <i class="fa-solid fa-file-invoice-dollar"></i> Subscription Invoices
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-file-invoice-dollar"></i> @T.T("BusinessSubscriptionInvoicesTitle")
         </a>
     </div>
 </div>
@@ -45,8 +50,8 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Subscription</div>
-                <div class="fw-semibold mt-1">@(Model.Subscription.HasSubscription ? Model.Subscription.PlanName : "No active plan")</div>
+                <div class="text-muted small text-uppercase">@T.T("BusinessSubscriptionShort")</div>
+                <div class="fw-semibold mt-1">@(Model.Subscription.HasSubscription ? Model.Subscription.PlanName : T.T("BusinessSubscriptionNoActivePlan"))</div>
                 <div class="small text-muted mt-2">@Model.Subscription.Status</div>
             </div>
         </div>
@@ -54,7 +59,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Provider</div>
+                <div class="text-muted small text-uppercase">@T.T("CommonProvider")</div>
                 <div class="fw-semibold mt-1">@(string.IsNullOrWhiteSpace(Model.Subscription.Provider) ? "-" : Model.Subscription.Provider)</div>
                 <div class="small text-muted mt-2">@Model.Subscription.PlanCode</div>
             </div>
@@ -63,82 +68,82 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Renewal</div>
-                <div class="fw-semibold mt-1">@(Model.Subscription.CancelAtPeriodEnd ? "Cancel at period end" : "Renews normally")</div>
-                <div class="small text-muted mt-2">Current period end: @(Model.Subscription.CurrentPeriodEndUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                <div class="text-muted small text-uppercase">@T.T("BusinessSubscriptionRenewal")</div>
+                <div class="fw-semibold mt-1">@(Model.Subscription.CancelAtPeriodEnd ? T.T("BusinessSubscriptionCancelAtPeriodEnd") : T.T("BusinessSubscriptionRenewsNormally"))</div>
+                <div class="small text-muted mt-2">@string.Format(T.T("BusinessSubscriptionCurrentPeriodEnd"), Model.Subscription.CurrentPeriodEndUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Billing Handoff</div>
-                <div class="fw-semibold mt-1">@(Model.ManagementWebsiteConfigured ? "Configured" : "Missing")</div>
-                <div class="small text-muted mt-2">Phase-1 billing changes are handled through the external management website.</div>
+                <div class="text-muted small text-uppercase">@T.T("BusinessSubscriptionBillingHandoff")</div>
+                <div class="fw-semibold mt-1">@(Model.ManagementWebsiteConfigured ? T.T("CommonConfigured") : T.T("CommonMissingBadge"))</div>
+                <div class="small text-muted mt-2">@T.T("BusinessSubscriptionBillingHandoffHelp")</div>
             </div>
         </div>
     </div>
 </div>
 
 <div class="card shadow-sm mb-3">
-    <div class="card-header">Billing Handoff Readiness</div>
+    <div class="card-header">@T.T("BusinessSubscriptionBillingHandoffReadinessTitle")</div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Plans</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonPlans")</div>
                     <div class="fw-semibold mt-1">@Model.HandoffSummary.TotalPlans</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Ready</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonReadyBadge")</div>
                     <div class="fw-semibold mt-1">@Model.HandoffSummary.ReadyPlanCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Blocked</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonBlocked")</div>
                     <div class="fw-semibold mt-1">@Model.HandoffSummary.BlockedPlanCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Current Match</div>
+                    <div class="text-muted small text-uppercase">@T.T("BusinessSubscriptionCurrentMatch")</div>
                     <div class="fw-semibold mt-1">@Model.HandoffSummary.CurrentPlanCount</div>
                 </div>
             </div>
         </div>
         <div class="small text-muted mt-3">
-            Ready plans can be handed off through the external billing website. Blocked plans still need prerequisite or configuration cleanup.
+            @T.T("BusinessSubscriptionBillingHandoffReadinessHelp")
         </div>
     </div>
 </div>
 
 <div class="card shadow-sm mb-3">
-    <div class="card-header">Current Subscription</div>
+    <div class="card-header">@T.T("BusinessSubscriptionCurrentTitle")</div>
     <div class="card-body">
         @if (Model.Subscription.HasSubscription)
         {
             <div class="row g-3">
                 <div class="col-md-4">
-                    <div class="small text-muted text-uppercase">Plan</div>
+                    <div class="small text-muted text-uppercase">@T.T("CommonPlan")</div>
                     <div class="fw-semibold">@Model.Subscription.PlanName</div>
                 </div>
                 <div class="col-md-4">
-                    <div class="small text-muted text-uppercase">Amount</div>
+                    <div class="small text-muted text-uppercase">@T.T("CommonAmount")</div>
                     <div class="fw-semibold">@Model.Subscription.Currency @((Model.Subscription.UnitPriceMinor / 100M).ToString("0.00"))</div>
                 </div>
                 <div class="col-md-4">
-                    <div class="small text-muted text-uppercase">Started</div>
+                    <div class="small text-muted text-uppercase">@T.T("CommonStarted")</div>
                     <div class="fw-semibold">@(Model.Subscription.StartedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
                 </div>
             </div>
 
             <div class="mt-3 small text-muted">
-                Trial ends: @(Model.Subscription.TrialEndsAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                @string.Format(T.T("BusinessSubscriptionTrialEnds"), Model.Subscription.TrialEndsAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
                 <span class="mx-2">|</span>
-                Canceled at: @(Model.Subscription.CanceledAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                @string.Format(T.T("BusinessSubscriptionCanceledAt"), Model.Subscription.CanceledAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
             </div>
 
             @if (isFullAdmin)
@@ -155,12 +160,12 @@
                     <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.Subscription.RowVersion)" />
                     <input type="hidden" name="cancelAtPeriodEnd" value="@((!Model.Subscription.CancelAtPeriodEnd).ToString().ToLowerInvariant())" />
                     <button type="submit" class="btn @(Model.Subscription.CancelAtPeriodEnd ? "btn-outline-success" : "btn-outline-danger")">
-                        @(Model.Subscription.CancelAtPeriodEnd ? "Restore Renewal" : "Cancel At Period End")
+                        @(Model.Subscription.CancelAtPeriodEnd ? T.T("BusinessSubscriptionRestoreRenewal") : T.T("BusinessSubscriptionCancelAtPeriodEndAction"))
                     </button>
                     @if (Model.ManagementWebsiteConfigured)
                     {
                         <a href="@Model.ManagementWebsiteUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">
-                            Open Billing Website
+                            @T.T("BusinessSubscriptionOpenBillingWebsite")
                         </a>
                     }
                 </form>
@@ -168,66 +173,66 @@
         }
         else
         {
-            <div class="alert alert-secondary mb-0">No active subscription snapshot is available for this business yet.</div>
+            <div class="alert alert-secondary mb-0">@T.T("BusinessSubscriptionNoActiveSnapshot")</div>
         }
     </div>
 </div>
 
 <div class="card shadow-sm mb-3">
-    <div class="card-header">Subscription Invoice Signals</div>
+    <div class="card-header">@T.T("BusinessSubscriptionInvoiceSignalsTitle")</div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Total</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonTotal")</div>
                     <div class="fw-semibold mt-1">@Model.InvoiceSummary.TotalCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Open</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonOpen")</div>
                     <div class="fw-semibold mt-1">@Model.InvoiceSummary.OpenCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Paid</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonPaid")</div>
                     <div class="fw-semibold mt-1">@Model.InvoiceSummary.PaidCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Draft</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonDraft")</div>
                     <div class="fw-semibold mt-1">@Model.InvoiceSummary.DraftCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Uncollectible</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonUncollectible")</div>
                     <div class="fw-semibold mt-1">@Model.InvoiceSummary.UncollectibleCount</div>
                 </div>
             </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">Hosted Link Missing</div>
+            <div class="text-muted small text-uppercase">@T.T("BusinessSubscriptionHostedLinkMissing")</div>
             <div class="fw-semibold mt-1">@Model.InvoiceSummary.HostedLinkMissingCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">Overdue</div>
+            <div class="text-muted small text-uppercase">@T.T("CommonOverdue")</div>
             <div class="fw-semibold mt-1">@Model.InvoiceSummary.OverdueCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">PDF Missing</div>
+            <div class="text-muted small text-uppercase">@T.T("CommonPdfMissing")</div>
             <div class="fw-semibold mt-1">@Model.InvoiceSummary.PdfMissingCount</div>
         </div>
     </div>
 </div>
         <div class="small text-muted mt-3">
-            These provider invoice signals help finance support distinguish open Stripe billing work from historical subscription snapshots.
+            @T.T("BusinessSubscriptionInvoiceSignalsHelp")
         </div>
         <div class="d-flex gap-2 flex-wrap mt-3">
             <a asp-action="SubscriptionInvoices"
@@ -236,8 +241,9 @@
                class="btn btn-sm btn-outline-warning"
                hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open })"
                hx-target="#business-subscription-workspace-shell"
-               hx-swap="outerHTML">
-                Review Open Invoices
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                @T.T("BusinessSubscriptionReviewOpenInvoices")
             </a>
             <a asp-action="SubscriptionInvoices"
                asp-route-businessId="@Model.Business.Id"
@@ -245,8 +251,9 @@
                class="btn btn-sm btn-outline-danger"
                hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue })"
                hx-target="#business-subscription-workspace-shell"
-               hx-swap="outerHTML">
-                Review Overdue
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                @T.T("BusinessSubscriptionReviewOverdue")
             </a>
             <a asp-action="SubscriptionInvoices"
                asp-route-businessId="@Model.Business.Id"
@@ -254,8 +261,9 @@
                class="btn btn-sm btn-outline-warning"
                hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing })"
                hx-target="#business-subscription-workspace-shell"
-               hx-swap="outerHTML">
-                Review PDF Missing
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                @T.T("BusinessSubscriptionReviewPdfMissing")
             </a>
             <a asp-action="SubscriptionInvoices"
                asp-route-businessId="@Model.Business.Id"
@@ -263,33 +271,34 @@
                class="btn btn-sm btn-outline-danger"
                hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible })"
                hx-target="#business-subscription-workspace-shell"
-               hx-swap="outerHTML">
-                Review Uncollectible
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                @T.T("BusinessSubscriptionReviewUncollectible")
             </a>
         </div>
     </div>
 </div>
 
 <div class="card shadow-sm mb-3">
-    <div class="card-header">Available Billing Plans</div>
+    <div class="card-header">@T.T("BusinessSubscriptionAvailablePlansTitle")</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Plan</th>
-                        <th>Price</th>
-                        <th>Interval</th>
-                        <th>Trial</th>
-                        <th>Checkout Readiness</th>
-                        <th class="text-end">Actions</th>
+                        <th>@T.T("CommonPlan")</th>
+                        <th>@T.T("BusinessSubscriptionPriceColumn")</th>
+                        <th>@T.T("BusinessSubscriptionIntervalColumn")</th>
+                        <th>@T.T("BusinessSubscriptionTrialColumn")</th>
+                        <th>@T.T("BusinessSubscriptionCheckoutReadinessColumn")</th>
+                        <th class="text-end">@T.T("CommonActions")</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Plans.Count == 0)
                     {
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">No active billing plans found.</td>
+                            <td colspan="6" class="text-center text-muted py-4">@T.T("BusinessSubscriptionNoActivePlans")</td>
                         </tr>
                     }
                     else
@@ -302,7 +311,7 @@
                                     <div class="small text-muted">@plan.Code</div>
                                     @if (plan.IsCurrentPlan)
                                     {
-                                        <div><span class="badge bg-primary mt-1">Current plan</span></div>
+                                        <div><span class="badge bg-primary mt-1">@T.T("BusinessSubscriptionCurrentPlanBadge")</span></div>
                                     }
                                     @if (!string.IsNullOrWhiteSpace(plan.Description))
                                     {
@@ -310,8 +319,8 @@
                                     }
                                 </td>
                                 <td>@plan.Currency @((plan.PriceMinor / 100M).ToString("0.00"))</td>
-                                <td>Every @plan.IntervalCount @plan.Interval</td>
-                                <td>@(plan.TrialDays.HasValue ? $"{plan.TrialDays} days" : "-")</td>
+                                <td>@string.Format(T.T("BusinessSubscriptionEveryInterval"), plan.IntervalCount, plan.Interval)</td>
+                                <td>@(plan.TrialDays.HasValue ? string.Format(T.T("BusinessSubscriptionTrialDays"), plan.TrialDays.Value) : "-")</td>
                                 <td>
                                     @if (plan.CheckoutReady)
                                     {
@@ -335,13 +344,14 @@
                                         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-warning"
                                            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
                                            hx-target="#business-subscription-workspace-shell"
-                                           hx-swap="outerHTML">
-                                            Configure Website
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">
+                                            @T.T("BusinessSubscriptionConfigureWebsite")
                                         </a>
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">Resolve prerequisites</span>
+                                        <span class="text-muted small">@T.T("BusinessSubscriptionResolvePrerequisites")</span>
                                     }
                                 </td>
                             </tr>
@@ -355,14 +365,15 @@
 
 <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Recent Subscription Invoices</span>
+        <span>@T.T("BusinessSubscriptionRecentInvoicesTitle")</span>
         <a asp-action="SubscriptionInvoices"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-subscription-workspace-shell"
-           hx-swap="outerHTML">
-            Open Invoice Queue
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            @T.T("BusinessSubscriptionOpenInvoiceQueue")
         </a>
     </div>
     <div class="card-body p-0">
@@ -370,19 +381,19 @@
             <table class="table mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Provider</th>
-                        <th>Plan</th>
-                        <th>Status</th>
-                        <th>Amount</th>
-                        <th>Timeline</th>
-                        <th class="text-end">Actions</th>
+                        <th>@T.T("CommonProvider")</th>
+                        <th>@T.T("CommonPlan")</th>
+                        <th>@T.T("CommonStatus")</th>
+                        <th>@T.T("CommonAmount")</th>
+                        <th>@T.T("CommonTimeline")</th>
+                        <th class="text-end">@T.T("CommonActions")</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.RecentInvoices.Count == 0)
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">No subscription invoices found for this business.</td>
+                        <td colspan="6" class="text-center text-muted py-4">@T.T("BusinessSubscriptionNoRecentInvoices")</td>
                     </tr>
                 }
                 else
@@ -395,7 +406,7 @@
                                 <div class="small text-muted">@invoice.ProviderInvoiceId</div>
                                 @if (invoice.IsStripe)
                                 {
-                                    <div><span class="badge bg-info text-dark mt-1">Stripe</span></div>
+                                    <div><span class="badge bg-info text-dark mt-1">@T.T("BusinessSubscriptionStripeBadge")</span></div>
                                 }
                             </td>
                             <td>
@@ -412,33 +423,34 @@
                                 }
                                 @if (invoice.IsOverdue)
                                 {
-                                    <div><span class="badge bg-danger mt-1">Overdue</span></div>
+                                    <div><span class="badge bg-danger mt-1">@T.T("CommonOverdue")</span></div>
                                 }
                                 @if (!invoice.HasPdfUrl)
                                 {
-                                    <div><span class="badge bg-warning text-dark mt-1">PDF missing</span></div>
+                                    <div><span class="badge bg-warning text-dark mt-1">@T.T("CommonPdfMissing")</span></div>
                                 }
                             </td>
                             <td>@invoice.Currency @((invoice.TotalMinor / 100M).ToString("0.00"))</td>
                             <td>
-                                <div>Issued: @invoice.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
-                                <div class="small text-muted">Due: @(invoice.DueAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
-                                <div class="small text-muted">Paid: @(invoice.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                                <div>@string.Format(T.T("CommonIssuedAt"), invoice.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm"))</div>
+                                <div class="small text-muted">@string.Format(T.T("CommonDueAt"), invoice.DueAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                                <div class="small text-muted">@string.Format(T.T("CommonPaidAt"), invoice.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
                             </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
                                     @if (invoice.HasHostedInvoiceUrl)
                                     {
-                                        <a href="@invoice.HostedInvoiceUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">Hosted</a>
+                                        <a href="@invoice.HostedInvoiceUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">@T.T("CommonHosted")</a>
                                     }
                                     @if (invoice.HasPdfUrl)
                                     {
-                                        <a href="@invoice.PdfUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">PDF</a>
+                                        <a href="@invoice.PdfUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">@T.T("CommonPdf")</a>
                                     }
                                     <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" asp-route-q="@invoice.ProviderInvoiceId" class="btn btn-outline-secondary"
                                        hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id, q = invoice.ProviderInvoiceId })"
                                        hx-target="#business-subscription-workspace-shell"
-                                       hx-swap="outerHTML">Payments</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("CommonPayments")</a>
                                 </div>
                             </td>
                         </tr>
@@ -451,15 +463,15 @@
 </div>
 
 <div class="card shadow-sm mt-3">
-    <div class="card-header">Subscription Operations Playbooks</div>
+    <div class="card-header">@T.T("BusinessSubscriptionBillingPlaybooksTitle")</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Queue</th>
-                        <th>Why It Matters</th>
-                        <th>Operator Action</th>
+                        <th>@T.T("BusinessSubscriptionQueueColumn")</th>
+                        <th>@T.T("WhyItMatters")</th>
+                        <th>@T.T("OperatorAction")</th>
                     </tr>
                 </thead>
                 <tbody>

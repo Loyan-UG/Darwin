@@ -932,7 +932,7 @@
                     <td>
                         @if (string.IsNullOrWhiteSpace(item.SupportEmail))
                         {
-                            <span class="badge text-bg-warning">Missing</span>
+                            <span class="badge text-bg-warning">@T.T("CommonMissingBadge")</span>
                         }
                         else
                         {
@@ -940,31 +940,31 @@
                         }
                     </td>
                     <td>
-                        <div>@(string.IsNullOrWhiteSpace(item.CommunicationSenderName) ? "Missing sender name" : item.CommunicationSenderName)</div>
-                        <div class="small text-muted">@(string.IsNullOrWhiteSpace(item.CommunicationReplyToEmail) ? "Missing reply-to" : item.CommunicationReplyToEmail)</div>
+                        <div>@(string.IsNullOrWhiteSpace(item.CommunicationSenderName) ? T.T("BusinessCommunicationMissingSenderName") : item.CommunicationSenderName)</div>
+                        <div class="small text-muted">@(string.IsNullOrWhiteSpace(item.CommunicationReplyToEmail) ? T.T("BusinessCommunicationMissingReplyTo") : item.CommunicationReplyToEmail)</div>
                     </td>
                     <td>
                         @if (item.CustomerEmailNotificationsEnabled)
                         {
-                            <span class="badge text-bg-primary">Transactional</span>
+                            <span class="badge text-bg-primary">@T.T("BusinessCommunicationTransactionalShort")</span>
                         }
                         @if (item.CustomerMarketingEmailsEnabled)
                         {
-                            <span class="badge text-bg-info">Marketing</span>
+                            <span class="badge text-bg-info">@T.T("BusinessCommunicationMarketingShort")</span>
                         }
                         @if (item.OperationalAlertEmailsEnabled)
                         {
-                            <span class="badge text-bg-secondary">Alerts</span>
+                            <span class="badge text-bg-secondary">@T.T("BusinessCommunicationAlertsShort")</span>
                         }
                     </td>
                     <td>
                         @if (item.MissingSupportEmail)
                         {
-                            <div class="small text-muted">Support email missing</div>
+                            <div class="small text-muted">@T.T("BusinessCommunicationSupportEmailMissing")</div>
                         }
                         @if (item.MissingSenderIdentity)
                         {
-                            <div class="small text-muted">Sender identity incomplete</div>
+                            <div class="small text-muted">@T.T("BusinessCommunicationSenderIdentityIncomplete")</div>
                         }
                     </td>
                     <td class="text-end">

@@ -14,6 +14,13 @@
        hx-swap="outerHTML"
        hx-push-url="true"
        class="btn btn-outline-secondary">@T.T("ShipmentsQueue")</a>
+    <a asp-controller="Orders"
+       asp-action="ReturnsQueue"
+       hx-get="@Url.Action("ReturnsQueue", "Orders")"
+       hx-target="#orders-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true"
+       class="btn btn-outline-secondary">@T.T("ReturnsQueueTitle")</a>
 </div>
 
 <partial name="~/Views/Shared/_Alerts.cshtml" />

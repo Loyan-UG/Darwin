@@ -163,6 +163,71 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             return RenderShipmentsQueueWorkspace(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ReturnsQueue(int page = 1, int pageSize = 20, string? query = null, ReturnQueueFilter filter = ReturnQueueFilter.All, CancellationToken ct = default)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var shipmentFilter = filter switch
+            {
+                ReturnQueueFilter.FollowUp => ShipmentQueueFilter.ReturnFollowUp,
+                ReturnQueueFilter.CarrierReview => ShipmentQueueFilter.CarrierReview,
+                _ => ShipmentQueueFilter.Returned
+            };
+
+            var (items, total) = await _getShipmentsPage.HandleAsync(
+                page,
+                pageSize,
+                query,
+                shipmentFilter,
+                settings.ShipmentAttentionDelayHours,
+                settings.ShipmentTrackingGraceHours,
+                ct).ConfigureAwait(false);
+
+            var vm = new ReturnsQueueVm
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = query ?? string.Empty,
+                Filter = filter,
+                Summary = await BuildShipmentOpsSummaryVmAsync(settings.ShipmentAttentionDelayHours, settings.ShipmentTrackingGraceHours, ct).ConfigureAwait(false),
+                Playbooks = BuildReturnPlaybooks(),
+                FilterItems = BuildReturnFilterItems(filter),
+                PageSizeItems = BuildPageSizeItems(pageSize),
+                Items = items.Select(x => new ShipmentListItemVm
+                {
+                    Id = x.Id,
+                    OrderId = x.OrderId,
+                    OrderNumber = x.OrderNumber,
+                    Carrier = x.Carrier,
+                    Service = x.Service,
+                    TrackingNumber = x.TrackingNumber,
+                    TotalWeight = x.TotalWeight,
+                    Status = x.Status,
+                    ShippedAtUtc = x.ShippedAtUtc,
+                    DeliveredAtUtc = x.DeliveredAtUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    IsDhl = x.IsDhl,
+                    NeedsCarrierReview = x.NeedsCarrierReview,
+                    NeedsReturnFollowUp = x.NeedsReturnFollowUp,
+                    AwaitingHandoff = x.AwaitingHandoff,
+                    TrackingOverdue = x.TrackingOverdue,
+                    OpenAgeHours = x.OpenAgeHours,
+                    InTransitAgeHours = x.InTransitAgeHours,
+                    LastCarrierEventAtUtc = x.LastCarrierEventAtUtc,
+                    TrackingState = x.TrackingState,
+                    ExceptionNote = x.ExceptionNote,
+                    AttentionDelayHours = x.AttentionDelayHours,
+                    TrackingGraceHours = x.TrackingGraceHours,
+                    DefaultRefundPaymentId = x.DefaultRefundPaymentId,
+                    HasRefundablePayment = x.HasRefundablePayment,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            };
+
+            return RenderReturnsQueueWorkspace(vm);
+        }
+
         private async Task<DhlOperationsVm> BuildDhlOperationsVmAsync(CancellationToken ct)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
@@ -297,6 +362,34 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ScopeNote = T("ShipmentPlaybookReturnFollowUpScope"),
                     OperatorAction = T("ShipmentPlaybookReturnFollowUpAction"),
                     SettingsDependency = T("ShipmentPlaybookReturnFollowUpDependency")
+                }
+            };
+        }
+
+        private List<ShipmentPlaybookVm> BuildReturnPlaybooks()
+        {
+            return new List<ShipmentPlaybookVm>
+            {
+                new()
+                {
+                    Title = T("ShipmentPlaybookReturnedTitle"),
+                    ScopeNote = T("ShipmentPlaybookReturnedScope"),
+                    OperatorAction = T("ShipmentPlaybookReturnedAction"),
+                    SettingsDependency = T("ShipmentPlaybookReturnedDependency")
+                },
+                new()
+                {
+                    Title = T("ShipmentPlaybookReturnFollowUpTitle"),
+                    ScopeNote = T("ShipmentPlaybookReturnFollowUpScope"),
+                    OperatorAction = T("ShipmentPlaybookReturnFollowUpAction"),
+                    SettingsDependency = T("ShipmentPlaybookReturnFollowUpDependency")
+                },
+                new()
+                {
+                    Title = T("ShipmentPlaybookCarrierReviewTitle"),
+                    ScopeNote = T("ShipmentPlaybookCarrierReviewScope"),
+                    OperatorAction = T("ShipmentPlaybookCarrierReviewAction"),
+                    SettingsDependency = T("ShipmentPlaybookCarrierReviewDependency")
                 }
             };
         }
@@ -850,6 +943,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem("Completed", RefundQueueFilter.Completed.ToString(), selectedFilter == RefundQueueFilter.Completed);
         }
 
+        private IEnumerable<SelectListItem> BuildReturnFilterItems(ReturnQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem(T("AllReturnCases"), ReturnQueueFilter.All.ToString(), selectedFilter == ReturnQueueFilter.All);
+            yield return new SelectListItem(T("ReturnFollowUp"), ReturnQueueFilter.FollowUp.ToString(), selectedFilter == ReturnQueueFilter.FollowUp);
+            yield return new SelectListItem(T("CarrierReview"), ReturnQueueFilter.CarrierReview.ToString(), selectedFilter == ReturnQueueFilter.CarrierReview);
+        }
+
         private static IEnumerable<SelectListItem> BuildInvoiceFilterItems(InvoiceQueueFilter selectedFilter)
         {
             yield return new SelectListItem("All invoices", InvoiceQueueFilter.All.ToString(), selectedFilter == InvoiceQueueFilter.All);
@@ -949,6 +1049,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
 
             return View("ShipmentsQueue", vm);
+        }
+
+        private IActionResult RenderReturnsQueueWorkspace(ReturnsQueueVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/ReturnsQueue.cshtml", vm);
+            }
+
+            return View("ReturnsQueue", vm);
         }
 
         private IActionResult RenderOrdersWorkspace(OrdersListVm vm)

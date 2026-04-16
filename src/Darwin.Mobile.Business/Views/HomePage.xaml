@@ -13,17 +13,11 @@
             <VerticalStackLayout Spacing="14" Padding="20,16,20,24">
                 <Border Style="{StaticResource CardBorderStyle}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                        <Border WidthRequest="60" HeightRequest="60" StrokeThickness="0" StrokeShape="RoundRectangle 30">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="{StaticResource BrandGold500}" Offset="0" />
-                                    <GradientStop Color="{StaticResource BrandGold600}" Offset="1" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <Grid Padding="12">
-                                <Image Source="loyan_logo.png" Aspect="AspectFit" />
-                            </Grid>
-                        </Border>
+                        <Image Source="loyan_logo.png"
+                               Aspect="AspectFit"
+                               WidthRequest="72"
+                               HeightRequest="72"
+                               VerticalOptions="Start" />
                         <VerticalStackLayout Grid.Column="1" Spacing="3">
                             <Label Text="{Binding Greeting}" Style="{StaticResource TitleLabelStyle}" />
                             <Label Text="{x:Static res:AppResources.HomeDashboardSubtitle}" Style="{StaticResource SecondaryBodyLabelStyle}" />

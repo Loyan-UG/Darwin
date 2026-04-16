@@ -489,17 +489,19 @@ Active entries:
 
 ### Returns and post-order operations
 
-- `Planned / Near-term`: introduce return requests / RMA baseline
+- `Completed foundation`: WebAdmin now exposes a dedicated `Returns Queue` / RMA baseline built on returned-shipment and refund-ready payment data, with return-follow-up and carrier-review subsets plus direct order/refund handoffs, so post-order return triage is no longer hidden inside the generic shipment queue
 - `Future / Later phase`: add full end-to-end returns workflow with inventory, refund, and support coupling
 
 ### Tax and compliance expansion
 
+- `Completed foundation`: billing now exposes a dedicated `Tax Compliance` workspace that combines VAT/issuer defaults, archive/e-invoice baseline indicators, business-customer VAT gaps, and invoice follow-up lanes with direct handoff into tax settings, CRM customer cleanup, and invoice/order review, so phase-1 compliance triage is no longer scattered across unrelated screens
 - `Future / Later phase`: add deeper EU tax handling such as OSS/IOSS-specific behavior where required
 - `Future / Later phase`: add compliance metadata foundations for products, packaging, and traceability-related needs
 - `Future / Later phase`: add e-invoice and archive workflows beyond initial readiness
 
 ### Merchant operations depth
 
+- `Completed foundation`: WebAdmin now exposes a dedicated `Merchant Readiness` workspace that combines attention businesses, setup gaps, lifecycle state, and subscription/billing follow-up handoffs, so merchant operations can triage onboarding-to-go-live readiness from one queue instead of stitching together support, setup, and subscription screens manually
 - `Future / Later phase`: add richer merchant operational settings and automation features after go-live-critical support is stable
 
 ## 5. Later Phase / Future Expansion
@@ -883,7 +885,7 @@ Active entries:
 
 - `Completed`: mobile-used route surfaces have been reorganized with canonical audience-first routing while preserving compatibility aliases
 - `Completed`: public/member loyalty, member commerce, profile, and storefront groundwork exists
-- `Planned / Near-term`: keep mobile-used endpoints stable while WebAdmin and backend operational flows are prioritized
+- `Completed foundation`: mobile-used WebApi routes now have explicit source-level compatibility guards for bootstrap, profile phone verification, profile addresses/customer context, notifications device registration, and member-business onboarding aliases so backend refactors are less likely to silently break current mobile/member contracts
 - `Planned / Near-term`: add admin/integration APIs only when WebAdmin and business/mobile scenarios demand them
 
 ### Mobile
@@ -891,13 +893,13 @@ Active entries:
 - `Completed`: mobile apps remain operational and use shared canonical service abstractions
 - `Completed`: `Darwin.Mobile.Business` is usable enough to influence delivery priorities
 - `Completed`: `Darwin.Mobile.Business` invitation acceptance now works end-to-end against canonical business-auth endpoints
-- `Planned / Near-term`: ensure onboarding/account lifecycle backend and admin support flows satisfy business mobile usage
+- `Completed foundation`: onboarding/account-lifecycle backend and admin support flows now satisfy current business-mobile usage through approval-aware auth, invitation acceptance, activation/reset/verification diagnostics, mobile operations triage, and business/member support handoffs
 - `Completed`: `Darwin.Mobile.Business` now keeps `Home` and `Settings` available during `PendingApproval`, while `Scanner`, `Session`, `Dashboard`, and `Rewards` are approval-gated
-- `Planned / Near-term`: keep mobile route and contract compatibility intact whenever backend changes touch mobile-used flows
+- `Completed foundation`: mobile-used bootstrap and profile phone-verification route/alias compatibility now has explicit WebApi source guards, reducing the chance that backend refactors silently break current mobile contract paths
 
 ### Security and performance
 
-- `Planned / Near-term`: harden authentication, tenant isolation, and sensitive-action protection
+- `Completed foundation`: WebApi pipeline order and auth endpoint throttling now have explicit source-level guard coverage, and WebAdmin admin lifecycle/destructive actions keep permission plus antiforgery protection under test-backed source guards
 - `Planned / Near-term`: ensure pagination/filtering/search for large operational datasets everywhere in admin
 - `Planned / Near-term`: use async/background handling for notifications, shipping callbacks, and payment callbacks
 - `Planned / Near-term`: improve retry-safe integration and failure diagnostics across provider boundaries
@@ -907,14 +909,15 @@ Active entries:
 ### Current state
 
 - `Completed`: mobile apps already support bilingual operation
-- `In Progress`: WebAdmin is being built in a way that should not block later multilingual enablement
+- `Completed foundation`: WebAdmin now runs on a `resx`-first localization architecture with shared UI resources, application validation resources, dedicated localization plumbing, centralized culture defaults, and platform/business override support
+- `In Progress`: remaining lower-traffic operator copy, communication content, and broader non-admin localization still need continued coverage
 
 ### Required next steps
 
-- `Planned / Near-term`: add WebAdmin localization infrastructure
-- `Planned / Near-term`: add shared localization strategy across admin, templates, and system messages
-- `Planned / Near-term`: add language settings and fallback policy
-- `Planned / Near-term`: translate core admin flows after initial operational completion
+- `Completed foundation`: add WebAdmin localization infrastructure
+- `Completed foundation`: add shared localization strategy across admin UI text and application validation/business-rule feedback, with override-aware admin text resolution
+- `Completed foundation`: add language settings and fallback policy
+- `Completed foundation`: core admin flows now have a real bilingual baseline across major WebAdmin workspaces, editors, HTMX shells, and operator feedback paths
 - `Planned / Near-term`: localize templates and communication content
 - `Completed foundation`: order details and order invoice tabs in WebAdmin now surface persisted tax snapshots, price mode, and customer VAT profile context so finance support can review net/tax/gross from order-bound workflows instead of only CRM invoice screens
 - `Completed foundation`: business locations now expose queue-style admin triage for primary, missing-address, and missing-coordinate states, with operational playbooks so location readiness can be reviewed before shipping, storefront, and mobile go-live

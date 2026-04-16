@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
     var canToggleActive = !isCreate && Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Approved;
@@ -20,68 +21,68 @@
 
 <div class="row g-3">
     <div class="col-md-6">
-        <label asp-for="Name" class="form-label">Business name</label>
+        <label asp-for="Name" class="form-label">@T.T("BusinessFormBusinessName")</label>
         <input asp-for="Name" class="form-control" />
     </div>
     <div class="col-md-6">
-        <label asp-for="LegalName" class="form-label">Legal name</label>
+        <label asp-for="LegalName" class="form-label">@T.T("BusinessFormLegalName")</label>
         <input asp-for="LegalName" class="form-control" />
     </div>
     <div class="col-md-4">
-        <label asp-for="Category" class="form-label">Category</label>
+        <label asp-for="Category" class="form-label">@T.T("BusinessFormCategory")</label>
         <select asp-for="Category" asp-items="Model.CategoryOptions" class="form-select"></select>
     </div>
     <div class="col-md-4">
-        <label asp-for="DefaultCurrency" class="form-label">Default currency</label>
+        <label asp-for="DefaultCurrency" class="form-label">@T.T("BusinessFormDefaultCurrency")</label>
         <input asp-for="DefaultCurrency" class="form-control" maxlength="3" />
     </div>
     <div class="col-md-4">
-        <label asp-for="DefaultCulture" class="form-label">Default culture</label>
+        <label asp-for="DefaultCulture" class="form-label">@T.T("BusinessFormDefaultCulture")</label>
         <input asp-for="DefaultCulture" class="form-control" />
     </div>
     <div class="col-md-6">
-        <label asp-for="TaxId" class="form-label">Tax / VAT ID</label>
+        <label asp-for="TaxId" class="form-label">@T.T("BusinessFormTaxId")</label>
         <input asp-for="TaxId" class="form-control" />
     </div>
     <div class="col-md-6">
-        <label asp-for="WebsiteUrl" class="form-label">Website</label>
+        <label asp-for="WebsiteUrl" class="form-label">@T.T("BusinessFormWebsite")</label>
         <input asp-for="WebsiteUrl" class="form-control" />
     </div>
     <div class="col-md-6">
-        <label asp-for="ContactEmail" class="form-label">Contact email</label>
+        <label asp-for="ContactEmail" class="form-label">@T.T("BusinessFormContactEmail")</label>
         <input asp-for="ContactEmail" class="form-control" />
     </div>
     <div class="col-md-6">
-        <label asp-for="ContactPhoneE164" class="form-label">Contact phone (E.164)</label>
+        <label asp-for="ContactPhoneE164" class="form-label">@T.T("BusinessFormContactPhone")</label>
         <input asp-for="ContactPhoneE164" class="form-control" />
     </div>
     <div class="col-12">
-        <label asp-for="ShortDescription" class="form-label">Short description</label>
+        <label asp-for="ShortDescription" class="form-label">@T.T("BusinessFormShortDescription")</label>
         <textarea asp-for="ShortDescription" class="form-control" rows="4"></textarea>
     </div>
     @if (isCreate)
     {
         <div class="col-md-6">
-            <label asp-for="OwnerUserId" class="form-label">Initial owner</label>
+            <label asp-for="OwnerUserId" class="form-label">@T.T("BusinessFormInitialOwner")</label>
             <select asp-for="OwnerUserId" asp-items="Model.OwnerUserOptions" class="form-select"></select>
-            <div class="form-text">Optional. Assigning an owner now reduces follow-up onboarding work.</div>
+            <div class="form-text">@T.T("BusinessFormInitialOwnerHelp")</div>
         </div>
     }
     <div class="col-12">
         <div class="form-check">
             <input asp-for="IsActive" class="form-check-input" disabled="@(!canToggleActive)" />
-            <label asp-for="IsActive" class="form-check-label">Business is active</label>
+            <label asp-for="IsActive" class="form-check-label">@T.T("BusinessFormBusinessIsActive")</label>
         </div>
         @if (!canToggleActive)
         {
-            <div class="form-text">Businesses can be activated only after approval. Suspension also forces the business inactive.</div>
+            <div class="form-text">@T.T("BusinessFormActiveHelp")</div>
         }
     </div>
 </div>
 
 <div class="d-flex gap-2 mt-4">
     <button type="submit" class="btn btn-primary">
-        <i class="fa-solid fa-floppy-disk"></i> Save
+        <i class="fa-solid fa-floppy-disk"></i> @T.T("Save")
     </button>
     @if (isCreate)
     {
@@ -89,7 +90,8 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "Businesses")"
            hx-target="#business-editor-shell"
-           hx-swap="outerHTML">Cancel</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Cancel")</a>
     }
     else
     {
@@ -97,24 +99,28 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "Businesses")"
            hx-target="#business-editor-shell"
-           hx-swap="outerHTML">Back to list</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BusinessFormBackToList")</a>
         <a asp-action="Members"
            asp-route-businessId="@Model.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-editor-shell"
-           hx-swap="outerHTML">Manage members</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BusinessFormManageMembers")</a>
         <a asp-action="Locations"
            asp-route-businessId="@Model.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-editor-shell"
-           hx-swap="outerHTML">Manage locations</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BusinessFormManageLocations")</a>
         <a asp-action="Invitations"
            asp-route-businessId="@Model.Id"
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-editor-shell"
-           hx-swap="outerHTML">Manage invitations</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BusinessFormManageInvitations")</a>
     }
 </div>

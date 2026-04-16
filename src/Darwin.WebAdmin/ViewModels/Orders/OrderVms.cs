@@ -441,6 +441,27 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public List<ShipmentListItemVm> Items { get; set; } = new();
     }
 
+    public enum ReturnQueueFilter
+    {
+        All = 0,
+        FollowUp = 1,
+        CarrierReview = 2
+    }
+
+    public sealed class ReturnsQueueVm
+    {
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public ReturnQueueFilter Filter { get; set; } = ReturnQueueFilter.All;
+        public ShipmentOpsSummaryVm Summary { get; set; } = new();
+        public List<ShipmentPlaybookVm> Playbooks { get; set; } = new();
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
+        public List<ShipmentListItemVm> Items { get; set; } = new();
+    }
+
     public sealed class DhlOperationsVm
     {
         public bool Enabled { get; set; }

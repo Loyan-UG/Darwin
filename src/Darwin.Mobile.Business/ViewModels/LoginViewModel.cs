@@ -53,14 +53,6 @@ public sealed partial class LoginViewModel : BaseViewModel
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
         _legalLinkService = legalLinkService ?? throw new ArgumentNullException(nameof(legalLinkService));
 
-#if DEBUG
-        Email = "biz1@darwin.de";
-        Password = "Business123!";
-#else
-        Email = string.Empty;
-        Password = string.Empty;
-#endif
-
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
         RequestActivationEmailCommand = new AsyncCommand(RequestActivationEmailAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(Email));
         OpenInvitationAcceptanceCommand = new AsyncCommand(OpenInvitationAcceptanceAsync, () => !IsBusy);
@@ -68,6 +60,14 @@ public sealed partial class LoginViewModel : BaseViewModel
         OpenPrivacyPolicyCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.PrivacyPolicy), () => !IsBusy);
         OpenTermsCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.BusinessTerms), () => !IsBusy);
         OpenLegalHubCommand = new AsyncCommand(OpenLegalHubAsync, () => !IsBusy);
+
+#if DEBUG
+        Email = "biz1@darwin.de";
+        Password = "Business123!";
+#else
+        Email = string.Empty;
+        Password = string.Empty;
+#endif
     }
 
     public string? Email
@@ -308,13 +308,13 @@ public sealed partial class LoginViewModel : BaseViewModel
 
     private void RaiseCommandStates()
     {
-        LoginCommand.RaiseCanExecuteChanged();
-        RequestActivationEmailCommand.RaiseCanExecuteChanged();
-        OpenInvitationAcceptanceCommand.RaiseCanExecuteChanged();
-        OpenImpressumCommand.RaiseCanExecuteChanged();
-        OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
-        OpenTermsCommand.RaiseCanExecuteChanged();
-        OpenLegalHubCommand.RaiseCanExecuteChanged();
+        LoginCommand?.RaiseCanExecuteChanged();
+        RequestActivationEmailCommand?.RaiseCanExecuteChanged();
+        OpenInvitationAcceptanceCommand?.RaiseCanExecuteChanged();
+        OpenImpressumCommand?.RaiseCanExecuteChanged();
+        OpenPrivacyPolicyCommand?.RaiseCanExecuteChanged();
+        OpenTermsCommand?.RaiseCanExecuteChanged();
+        OpenLegalHubCommand?.RaiseCanExecuteChanged();
     }
 
     private static string ResolveBusinessLoginErrorMessage(Exception ex, ApiOptions apiOptions)

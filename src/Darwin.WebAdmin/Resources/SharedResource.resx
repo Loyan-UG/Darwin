@@ -6279,4 +6279,1159 @@
   <data name="CommunicationAttemptRecorded" xml:space="preserve">
     <value>Attempt recorded</value>
   </data>
+  <data name="ChannelAuditWholeChainAction" xml:space="preserve">
+    <value>Whole chain</value>
+  </data>
+  <data name="ChannelAuditNeedsFollowUpAction" xml:space="preserve">
+    <value>Needs follow-up</value>
+  </data>
+  <data name="ChannelAuditResolvedHistoryAction" xml:space="preserve">
+    <value>Resolved history</value>
+  </data>
+  <data name="ChannelAuditChainAttemptsLabel" xml:space="preserve">
+    <value>Chain attempts</value>
+  </data>
+  <data name="ChannelAuditFollowUpLabel" xml:space="preserve">
+    <value>Follow-up</value>
+  </data>
+  <data name="ChannelAuditChainProfileLabel" xml:space="preserve">
+    <value>Chain profile</value>
+  </data>
+  <data name="ChannelAuditChainRecoveryLabel" xml:space="preserve">
+    <value>Chain recovery</value>
+  </data>
+  <data name="ChannelAuditHasRecoveryPath" xml:space="preserve">
+    <value>Has prior successful recovery path</value>
+  </data>
+  <data name="ChannelAuditNoRecoveryPath" xml:space="preserve">
+    <value>No successful recovery recorded yet</value>
+  </data>
+  <data name="ChannelAuditLiveMessageFamilyTitle" xml:space="preserve">
+    <value>Live message family</value>
+  </data>
+  <data name="ChannelAuditCurrentTemplateColumn" xml:space="preserve">
+    <value>Current template</value>
+  </data>
+  <data name="ChannelAuditRenderedPreviewColumn" xml:space="preserve">
+    <value>Rendered preview</value>
+  </data>
+  <data name="ChannelAuditTargetPolicyColumn" xml:space="preserve">
+    <value>Target / policy</value>
+  </data>
+  <data name="ChannelAuditUsageGuidanceColumn" xml:space="preserve">
+    <value>Usage guidance</value>
+  </data>
+  <data name="ChannelAuditRecentExactChainHistoryTitle" xml:space="preserve">
+    <value>Recent exact-chain history</value>
+  </data>
+  <data name="ChannelAuditTotalAttemptsLabel" xml:space="preserve">
+    <value>Total attempts</value>
+  </data>
+  <data name="ChannelAuditSmsWhatsAppLabel" xml:space="preserve">
+    <value>SMS / WhatsApp</value>
+  </data>
+  <data name="ChannelAuditVerificationAdminTestsLabel" xml:space="preserve">
+    <value>Verification / Admin tests</value>
+  </data>
+  <data name="ChannelAuditRecoveredProvidersLabel" xml:space="preserve">
+    <value>Recovered providers</value>
+  </data>
+  <data name="ChannelAuditNoResults" xml:space="preserve">
+    <value>No channel audits matched the selected filters.</value>
+  </data>
+  <data name="ChannelAuditAvailableAtUtc" xml:space="preserve">
+    <value>Available {0} UTC</value>
+  </data>
+  <data name="ChannelAuditEscalationCandidateLabel" xml:space="preserve">
+    <value>Escalation candidate</value>
+  </data>
+  <data name="BusinessCommunicationDeliveryBacklogSnapshotTitle" xml:space="preserve">
+    <value>Delivery backlog snapshot</value>
+  </data>
+  <data name="BusinessCommunicationHighSeverityLabel" xml:space="preserve">
+    <value>High severity</value>
+  </data>
+  <data name="BusinessCommunicationNoRecentChannelActivity" xml:space="preserve">
+    <value>No recent SMS or WhatsApp activity for this business scope.</value>
+  </data>
+  <data name="BusinessCommunicationChannelTruthSnapshotTitle" xml:space="preserve">
+    <value>Channel truth snapshot</value>
+  </data>
+  <data name="BusinessCommunicationChannelTruthSnapshotNote" xml:space="preserve">
+    <value>This snapshot keeps channel reality visible while troubleshooting one business. It shows what is live today and where operators should stop before treating SMS or WhatsApp like a generic delivery bus.</value>
+  </data>
+  <data name="BusinessCommunicationTemplateInventorySnapshotTitle" xml:space="preserve">
+    <value>Template inventory snapshot</value>
+  </data>
+  <data name="BusinessCommunicationTemplateInventorySnapshotNote" xml:space="preserve">
+    <value>This is the current template truth for phase-1 communication flows. It shows what is hard-coded today and what operators can really influence.</value>
+  </data>
+  <data name="BusinessCommunicationResendPolicySnapshotTitle" xml:space="preserve">
+    <value>Resend / retry policy snapshot</value>
+  </data>
+  <data name="BusinessCommunicationResendPolicySnapshotNote" xml:space="preserve">
+    <value>Failed rows are triage signals, not generic replay buttons. This matrix shows the safe entry point for each communication flow.</value>
+  </data>
+  <data name="EmailAuditChainTimelineLabel" xml:space="preserve">
+    <value>Chain timeline</value>
+  </data>
+  <data name="EmailAuditLastSuccessLabel" xml:space="preserve">
+    <value>Last success</value>
+  </data>
+  <data name="EmailAuditNoSuccessfulDeliveryYet" xml:space="preserve">
+    <value>no successful delivery recorded yet</value>
+  </data>
+  <data name="EmailAuditExactChainNote" xml:space="preserve">
+    <value>This exact-chain summary helps support distinguish one-off failures from unstable recipient-specific delivery patterns before retrying again.</value>
+  </data>
+  <data name="Outcome" xml:space="preserve">
+    <value>Outcome</value>
+  </data>
+  <data name="EmailAuditsStalePendingLabel" xml:space="preserve">
+    <value>Stale pending</value>
+  </data>
+  <data name="EmailAuditsLast24HoursLabel" xml:space="preserve">
+    <value>Last 24 h</value>
+  </data>
+  <data name="EmailAuditsBusinessLinkedFailuresLabel" xml:space="preserve">
+    <value>Business-linked failures</value>
+  </data>
+  <data name="EmailAuditsSlowCompletedLabel" xml:space="preserve">
+    <value>Slow completed</value>
+  </data>
+  <data name="EmailAuditsFailedInvitationsLabel" xml:space="preserve">
+    <value>Failed invitations</value>
+  </data>
+  <data name="EmailAuditsFailedActivationsLabel" xml:space="preserve">
+    <value>Failed activations</value>
+  </data>
+  <data name="EmailAuditsFailedAdminTestsLabel" xml:space="preserve">
+    <value>Failed admin tests</value>
+  </data>
+  <data name="EmailAuditsRetriedFlowChainsLabel" xml:space="preserve">
+    <value>Retried flow chains</value>
+  </data>
+  <data name="EmailAuditsPriorSuccessContextsLabel" xml:space="preserve">
+    <value>Prior success contexts</value>
+  </data>
+  <data name="EmailAuditsRetryReadyLabel" xml:space="preserve">
+    <value>Retry ready</value>
+  </data>
+  <data name="EmailAuditsRetryBlockedLabel" xml:space="preserve">
+    <value>Retry blocked</value>
+  </data>
+  <data name="BusinessSetupLoadingMemberStatus" xml:space="preserve">
+    <value>Loading member status...</value>
+  </data>
+  <data name="BusinessSetupLoadingInvitationStatus" xml:space="preserve">
+    <value>Loading invitation status...</value>
+  </data>
+  <data name="EmailAuditsPriorFailures" xml:space="preserve">
+    <value>Prior failures: {0}</value>
+  </data>
+  <data name="EmailAuditsRecentChainAttempts24h" xml:space="preserve">
+    <value>Recent chain attempts (24 h): {0}</value>
+  </data>
+  <data name="EmailAuditsChainProfile" xml:space="preserve">
+    <value>Chain profile: {0}</value>
+  </data>
+  <data name="EmailAuditsChainSpanHours" xml:space="preserve">
+    <value>Chain span: {0} h</value>
+  </data>
+  <data name="EmailAuditsRetryCooldownLabel" xml:space="preserve">
+    <value>Retry cooldown</value>
+  </data>
+  <data name="EmailAuditsRetryRateLimitedLabel" xml:space="preserve">
+    <value>Retry rate-limited</value>
+  </data>
+  <data name="EmailAuditsRetryAvailableAtUtc" xml:space="preserve">
+    <value>Retry available {0} UTC</value>
+  </data>
+  <data name="BusinessCommunicationRerunEmailTestAction" xml:space="preserve">
+    <value>Rerun test</value>
+  </data>
+  <data name="BusinessCommunicationRecentBusinessEmailActivityTitle" xml:space="preserve">
+    <value>Recent business email activity</value>
+  </data>
+  <data name="FollowUp" xml:space="preserve">
+    <value>Follow-up</value>
+  </data>
+  <data name="BusinessCommunicationNoRecentBusinessEmailActivity" xml:space="preserve">
+    <value>No recent business-scoped email activity.</value>
+  </data>
+  <data name="CommonMissingBadge" xml:space="preserve">
+    <value>Missing</value>
+  </data>
+  <data name="CommonReadyBadge" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="CommonInactiveBadge" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="CommonLegalName" xml:space="preserve">
+    <value>Legal Name</value>
+  </data>
+  <data name="CommonContactEmail" xml:space="preserve">
+    <value>Contact Email</value>
+  </data>
+  <data name="CommonCulture" xml:space="preserve">
+    <value>Culture</value>
+  </data>
+  <data name="CommonTimeZone" xml:space="preserve">
+    <value>Time Zone</value>
+  </data>
+  <data name="CommonStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="CommonUnclassified" xml:space="preserve">
+    <value>Unclassified</value>
+  </data>
+  <data name="CommonSentBadge" xml:space="preserve">
+    <value>Sent</value>
+  </data>
+  <data name="CommonFailedBadge" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="CommonHighBadge" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="CommonMediumBadge" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="CommonWatchBadge" xml:space="preserve">
+    <value>Watch</value>
+  </data>
+  <data name="CommonSlowBadge" xml:space="preserve">
+    <value>Slow</value>
+  </data>
+  <data name="CommonNormalBadge" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="CommonOpenForMinutes" xml:space="preserve">
+    <value>Open for {0} min</value>
+  </data>
+  <data name="CommonLatencySeconds" xml:space="preserve">
+    <value>Latency {0} s</value>
+  </data>
+  <data name="CommonPriorAttempts" xml:space="preserve">
+    <value>Prior attempts {0}</value>
+  </data>
+  <data name="CommonPriorFailures" xml:space="preserve">
+    <value>Prior failures {0}</value>
+  </data>
+  <data name="CommonLastSuccessAt" xml:space="preserve">
+    <value>Last success {0}</value>
+  </data>
+  <data name="CommonRerunTestAction" xml:space="preserve">
+    <value>Rerun Test</value>
+  </data>
+  <data name="CommonOpenSetupAction" xml:space="preserve">
+    <value>Open Setup</value>
+  </data>
+  <data name="BusinessCommunicationMissingSenderName" xml:space="preserve">
+    <value>Missing sender name</value>
+  </data>
+  <data name="BusinessCommunicationMissingReplyTo" xml:space="preserve">
+    <value>Missing reply-to</value>
+  </data>
+  <data name="BusinessCommunicationTransactionalShort" xml:space="preserve">
+    <value>Transactional</value>
+  </data>
+  <data name="BusinessCommunicationMarketingShort" xml:space="preserve">
+    <value>Marketing</value>
+  </data>
+  <data name="BusinessCommunicationAlertsShort" xml:space="preserve">
+    <value>Alerts</value>
+  </data>
+  <data name="BusinessCommunicationSupportEmailMissing" xml:space="preserve">
+    <value>Support email missing</value>
+  </data>
+  <data name="BusinessCommunicationSenderIdentityIncomplete" xml:space="preserve">
+    <value>Sender identity incomplete</value>
+  </data>
+  <data name="BusinessCommunicationProfileBusinessProfileTitle" xml:space="preserve">
+    <value>Business Profile</value>
+  </data>
+  <data name="BusinessCommunicationProfileSenderDefaultsTitle" xml:space="preserve">
+    <value>Sender Defaults</value>
+  </data>
+  <data name="BusinessCommunicationSupportShort" xml:space="preserve">
+    <value>Support</value>
+  </data>
+  <data name="BusinessCommunicationSenderShort" xml:space="preserve">
+    <value>Sender</value>
+  </data>
+  <data name="BusinessCommunicationReplyToShort" xml:space="preserve">
+    <value>Reply-To</value>
+  </data>
+  <data name="BusinessCommunicationProfileSupportSignalsTitle" xml:space="preserve">
+    <value>Support Signals</value>
+  </data>
+  <data name="BusinessCommunicationOpenInvitationsLabel" xml:space="preserve">
+    <value>Open Invitations</value>
+  </data>
+  <data name="BusinessCommunicationPendingActivationMembersLabel" xml:space="preserve">
+    <value>Pending Activation Members</value>
+  </data>
+  <data name="BusinessCommunicationLockedMembersLabel" xml:space="preserve">
+    <value>Locked Members</value>
+  </data>
+  <data name="BusinessCommunicationPolicyFlagsTitle" xml:space="preserve">
+    <value>Policy Flags</value>
+  </data>
+  <data name="BusinessCommunicationTransactionalEmailLabel" xml:space="preserve">
+    <value>Transactional Email</value>
+  </data>
+  <data name="BusinessCommunicationMarketingEmailLabel" xml:space="preserve">
+    <value>Marketing Email</value>
+  </data>
+  <data name="BusinessCommunicationOperationalAlertsLabel" xml:space="preserve">
+    <value>Operational Alerts</value>
+  </data>
+  <data name="BusinessCommunicationPolicyFlagsHelp" xml:space="preserve">
+    <value>These toggles reflect business intent only. They still depend on global transport and alert-routing readiness.</value>
+  </data>
+  <data name="BusinessCommunicationGlobalDependencyReadinessTitle" xml:space="preserve">
+    <value>Global Dependency Readiness</value>
+  </data>
+  <data name="BusinessCommunicationSmtpShort" xml:space="preserve">
+    <value>SMTP</value>
+  </data>
+  <data name="BusinessCommunicationSmsShort" xml:space="preserve">
+    <value>SMS</value>
+  </data>
+  <data name="BusinessCommunicationWhatsAppShort" xml:space="preserve">
+    <value>WhatsApp</value>
+  </data>
+  <data name="BusinessCommunicationAdminAlertsShort" xml:space="preserve">
+    <value>Admin Alerts</value>
+  </data>
+  <data name="BusinessCommunicationRecommendedNextActionsTitle" xml:space="preserve">
+    <value>Recommended Next Actions</value>
+  </data>
+  <data name="BusinessCommunicationOpenMemberSupportAction" xml:space="preserve">
+    <value>Open Member Support</value>
+  </data>
+  <data name="BusinessCommunicationOpenInvitationsAction" xml:space="preserve">
+    <value>Open Invitations</value>
+  </data>
+  <data name="CommonNeedsOperatorFollowUp" xml:space="preserve">
+    <value>Needs operator follow-up</value>
+  </data>
+  <data name="CommonPriorAttemptsColon" xml:space="preserve">
+    <value>Prior attempts: {0}</value>
+  </data>
+  <data name="CommonLastSuccessAtUtc" xml:space="preserve">
+    <value>Last success {0} UTC</value>
+  </data>
+  <data name="BusinessCommunicationOpenBusinessEmailAuditsAction" xml:space="preserve">
+    <value>Open Business Email Audits</value>
+  </data>
+  <data name="BusinessSubscriptionInvoicesTitle" xml:space="preserve">
+    <value>Subscription Invoices</value>
+  </data>
+  <data name="BusinessSubscriptionShort" xml:space="preserve">
+    <value>Subscription</value>
+  </data>
+  <data name="BusinessSubscriptionBillingPlaybooksTitle" xml:space="preserve">
+    <value>Subscription Billing Playbooks</value>
+  </data>
+  <data name="BusinessSubscriptionBillingPlaybookOpenInvoices" xml:space="preserve">
+    <value>Open invoices normally indicate a billing follow-up or payment failure path that finance support should verify before changing subscription lifecycle flags.</value>
+  </data>
+  <data name="BusinessSubscriptionBillingPlaybookUncollectible" xml:space="preserve">
+    <value>Uncollectible invoices usually require provider-side review, customer outreach, or cancel-at-period-end confirmation before manual escalation.</value>
+  </data>
+  <data name="BusinessSubscriptionBillingPlaybookMissingHostedLink" xml:space="preserve">
+    <value>Missing hosted invoice links mean provider synchronization is incomplete, so operators should use payment settings and provider references before escalating.</value>
+  </data>
+  <data name="BusinessSubscriptionBillingPlaybookOverdue" xml:space="preserve">
+    <value>Overdue invoices need customer follow-up or payment reconciliation before operators make subscription-lifecycle decisions.</value>
+  </data>
+  <data name="BusinessSubscriptionBillingPlaybookMissingPdf" xml:space="preserve">
+    <value>Missing PDFs are a document-visibility gap; use hosted links and payment history first, then escalate if download artifacts are required.</value>
+  </data>
+  <data name="BusinessSubscriptionInvoicesSearchPlaceholder" xml:space="preserve">
+    <value>Search provider invoice, plan, or failure reason</value>
+  </data>
+  <data name="BusinessSubscriptionInvoicesEmptyState" xml:space="preserve">
+    <value>No subscription invoices found.</value>
+  </data>
+  <data name="BusinessSubscriptionInvoiceSignalsTitle" xml:space="preserve">
+    <value>Subscription Invoice Signals</value>
+  </data>
+  <data name="BusinessSubscriptionInvoiceSignalsHelp" xml:space="preserve">
+    <value>These provider invoice signals help finance support distinguish open Stripe billing work from historical subscription snapshots.</value>
+  </data>
+  <data name="BusinessSubscriptionReviewOpenInvoices" xml:space="preserve">
+    <value>Review Open Invoices</value>
+  </data>
+  <data name="BusinessSubscriptionReviewOverdue" xml:space="preserve">
+    <value>Review Overdue</value>
+  </data>
+  <data name="BusinessSubscriptionReviewPdfMissing" xml:space="preserve">
+    <value>Review PDF Missing</value>
+  </data>
+  <data name="BusinessSubscriptionReviewUncollectible" xml:space="preserve">
+    <value>Review Uncollectible</value>
+  </data>
+  <data name="BusinessSubscriptionAvailablePlansTitle" xml:space="preserve">
+    <value>Available Billing Plans</value>
+  </data>
+  <data name="BusinessSubscriptionPriceColumn" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="BusinessSubscriptionIntervalColumn" xml:space="preserve">
+    <value>Interval</value>
+  </data>
+  <data name="BusinessSubscriptionTrialColumn" xml:space="preserve">
+    <value>Trial</value>
+  </data>
+  <data name="BusinessSubscriptionCheckoutReadinessColumn" xml:space="preserve">
+    <value>Checkout Readiness</value>
+  </data>
+  <data name="BusinessSubscriptionNoActivePlans" xml:space="preserve">
+    <value>No active billing plans found.</value>
+  </data>
+  <data name="BusinessSubscriptionCurrentPlanBadge" xml:space="preserve">
+    <value>Current plan</value>
+  </data>
+  <data name="BusinessSubscriptionEveryInterval" xml:space="preserve">
+    <value>Every {0} {1}</value>
+  </data>
+  <data name="BusinessSubscriptionTrialDays" xml:space="preserve">
+    <value>{0} days</value>
+  </data>
+  <data name="BusinessSubscriptionConfigureWebsite" xml:space="preserve">
+    <value>Configure Website</value>
+  </data>
+  <data name="BusinessSubscriptionResolvePrerequisites" xml:space="preserve">
+    <value>Resolve prerequisites</value>
+  </data>
+  <data name="BusinessSubscriptionRecentInvoicesTitle" xml:space="preserve">
+    <value>Recent Subscription Invoices</value>
+  </data>
+  <data name="BusinessSubscriptionOpenInvoiceQueue" xml:space="preserve">
+    <value>Open Invoice Queue</value>
+  </data>
+  <data name="BusinessSubscriptionNoRecentInvoices" xml:space="preserve">
+    <value>No subscription invoices found for this business.</value>
+  </data>
+  <data name="BusinessSubscriptionStripeBadge" xml:space="preserve">
+    <value>Stripe</value>
+  </data>
+  <data name="BusinessSubscriptionHostedLinkMissing" xml:space="preserve">
+    <value>Hosted Link Missing</value>
+  </data>
+  <data name="BusinessSubscriptionQueueColumn" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="CommonPayments" xml:space="preserve">
+    <value>Payments</value>
+  </data>
+  <data name="CommonTotal" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="CommonOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="CommonPaid" xml:space="preserve">
+    <value>Paid</value>
+  </data>
+  <data name="CommonDraft" xml:space="preserve">
+    <value>Draft</value>
+  </data>
+  <data name="CommonUncollectible" xml:space="preserve">
+    <value>Uncollectible</value>
+  </data>
+  <data name="CommonStripe" xml:space="preserve">
+    <value>Stripe</value>
+  </data>
+  <data name="CommonOverdue" xml:space="preserve">
+    <value>Overdue</value>
+  </data>
+  <data name="CommonPdfMissing" xml:space="preserve">
+    <value>PDF Missing</value>
+  </data>
+  <data name="CommonFilter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="CommonReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="CommonAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="CommonProvider" xml:space="preserve">
+    <value>Provider</value>
+  </data>
+  <data name="CommonPlan" xml:space="preserve">
+    <value>Plan</value>
+  </data>
+  <data name="CommonAmount" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="CommonTimeline" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="CommonActions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="CommonIssuedAt" xml:space="preserve">
+    <value>Issued: {0}</value>
+  </data>
+  <data name="CommonDueAt" xml:space="preserve">
+    <value>Due: {0}</value>
+  </data>
+  <data name="CommonPaidAt" xml:space="preserve">
+    <value>Paid: {0}</value>
+  </data>
+  <data name="CommonHosted" xml:space="preserve">
+    <value>Hosted</value>
+  </data>
+  <data name="CommonPdf" xml:space="preserve">
+    <value>PDF</value>
+  </data>
+  <data name="BusinessOwnerOverrideAuditsTitle" xml:space="preserve">
+    <value>Owner Override Audit</value>
+  </data>
+  <data name="BusinessOwnerOverrideAuditsIntro" xml:space="preserve">
+    <value>These records show exceptional actions where a FullAdmin bypassed the rule that the last active owner must remain assigned.</value>
+  </data>
+  <data name="BusinessOwnerOverrideAuditsSearchPlaceholder" xml:space="preserve">
+    <value>Search by actor, affected user, email, or reason</value>
+  </data>
+  <data name="BusinessOwnerOverrideAffectedUser" xml:space="preserve">
+    <value>Affected User</value>
+  </data>
+  <data name="BusinessOwnerOverrideAuditsEmptyState" xml:space="preserve">
+    <value>No override audit rows exist for this business.</value>
+  </data>
+  <data name="BusinessOwnerOverrideForceRemove" xml:space="preserve">
+    <value>Force remove</value>
+  </data>
+  <data name="BusinessOwnerOverrideDemoteDeactivate" xml:space="preserve">
+    <value>Demote / deactivate</value>
+  </data>
+  <data name="CommonSetup" xml:space="preserve">
+    <value>Setup</value>
+  </data>
+  <data name="CommonMembers" xml:space="preserve">
+    <value>Members</value>
+  </data>
+  <data name="CommonSearch" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="CommonWhen" xml:space="preserve">
+    <value>When</value>
+  </data>
+  <data name="CommonAction" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="CommonActor" xml:space="preserve">
+    <value>Actor</value>
+  </data>
+  <data name="CommonReason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="CommonSystemUnknown" xml:space="preserve">
+    <value>System / unknown</value>
+  </data>
+  <data name="BusinessSubscriptionTitle" xml:space="preserve">
+    <value>Business Subscription</value>
+  </data>
+  <data name="CommonEditBusiness" xml:space="preserve">
+    <value>Edit Business</value>
+  </data>
+  <data name="BusinessSubscriptionNoActivePlan" xml:space="preserve">
+    <value>No active plan</value>
+  </data>
+  <data name="BusinessSubscriptionRenewal" xml:space="preserve">
+    <value>Renewal</value>
+  </data>
+  <data name="BusinessSubscriptionCancelAtPeriodEnd" xml:space="preserve">
+    <value>Cancel at period end</value>
+  </data>
+  <data name="BusinessSubscriptionRenewsNormally" xml:space="preserve">
+    <value>Renews normally</value>
+  </data>
+  <data name="BusinessSubscriptionCurrentPeriodEnd" xml:space="preserve">
+    <value>Current period end: {0}</value>
+  </data>
+  <data name="BusinessSubscriptionBillingHandoff" xml:space="preserve">
+    <value>Billing Handoff</value>
+  </data>
+  <data name="CommonConfigured" xml:space="preserve">
+    <value>Configured</value>
+  </data>
+  <data name="BusinessSubscriptionBillingHandoffHelp" xml:space="preserve">
+    <value>Phase-1 billing changes are handled through the external management website.</value>
+  </data>
+  <data name="BusinessSubscriptionBillingHandoffReadinessTitle" xml:space="preserve">
+    <value>Billing Handoff Readiness</value>
+  </data>
+  <data name="CommonPlans" xml:space="preserve">
+    <value>Plans</value>
+  </data>
+  <data name="CommonBlocked" xml:space="preserve">
+    <value>Blocked</value>
+  </data>
+  <data name="BusinessSubscriptionCurrentMatch" xml:space="preserve">
+    <value>Current Match</value>
+  </data>
+  <data name="BusinessSubscriptionBillingHandoffReadinessHelp" xml:space="preserve">
+    <value>Ready plans can be handed off through the external billing website. Blocked plans still need prerequisite or configuration cleanup.</value>
+  </data>
+  <data name="BusinessSubscriptionCurrentTitle" xml:space="preserve">
+    <value>Current Subscription</value>
+  </data>
+  <data name="CommonStarted" xml:space="preserve">
+    <value>Started</value>
+  </data>
+  <data name="BusinessSubscriptionTrialEnds" xml:space="preserve">
+    <value>Trial ends: {0}</value>
+  </data>
+  <data name="BusinessSubscriptionCanceledAt" xml:space="preserve">
+    <value>Canceled at: {0}</value>
+  </data>
+  <data name="BusinessSubscriptionRestoreRenewal" xml:space="preserve">
+    <value>Restore Renewal</value>
+  </data>
+  <data name="BusinessSubscriptionCancelAtPeriodEndAction" xml:space="preserve">
+    <value>Cancel At Period End</value>
+  </data>
+  <data name="BusinessSubscriptionOpenBillingWebsite" xml:space="preserve">
+    <value>Open Billing Website</value>
+  </data>
+  <data name="BusinessSubscriptionNoActiveSnapshot" xml:space="preserve">
+    <value>No active subscription snapshot is available for this business yet.</value>
+  </data>
+  <data name="ReturnsQueueTitle" xml:space="preserve">
+    <value>Returns Queue</value>
+  </data>
+  <data name="ReturnsQueueIntro" xml:space="preserve">
+    <value>Phase-1 RMA support uses returned shipments and refund-ready payments as the operational baseline until a deeper end-to-end return workflow lands.</value>
+  </data>
+  <data name="ReturnsQueuePlaybooksTitle" xml:space="preserve">
+    <value>Returns Playbooks</value>
+  </data>
+  <data name="ReturnsQueueSearchPlaceholder" xml:space="preserve">
+    <value>Search order, tracking number, carrier, or exception note</value>
+  </data>
+  <data name="AllReturnCases" xml:space="preserve">
+    <value>All return cases</value>
+  </data>
+  <data name="NoReturnCases" xml:space="preserve">
+    <value>No return cases matched the current filter.</value>
+  </data>
+  <data name="CreatedUtcValue" xml:space="preserve">
+    <value>Created: {0} UTC</value>
+  </data>
+  <data name="LastCarrierEventAtUtc" xml:space="preserve">
+    <value>Last carrier event: {0} UTC</value>
+  </data>
+  <data name="OpenTaxCompliance" xml:space="preserve">
+    <value>Open Tax Compliance</value>
+  </data>
+  <data name="TaxComplianceTitle" xml:space="preserve">
+    <value>Tax Compliance</value>
+  </data>
+  <data name="TaxComplianceIntro" xml:space="preserve">
+    <value>This phase-1 workspace keeps VAT, issuer, archive-readiness, and invoice follow-up in one place until deeper country-aware compliance automation exists.</value>
+  </data>
+  <data name="BusinessCustomersMissingVatId" xml:space="preserve">
+    <value>Business customers missing VAT ID</value>
+  </data>
+  <data name="BusinessInvoicesMissingVatId" xml:space="preserve">
+    <value>Business invoices missing VAT ID</value>
+  </data>
+  <data name="DraftInvoices" xml:space="preserve">
+    <value>Draft invoices</value>
+  </data>
+  <data name="DueSoonInvoices" xml:space="preserve">
+    <value>Due soon invoices</value>
+  </data>
+  <data name="OverdueInvoices" xml:space="preserve">
+    <value>Overdue invoices</value>
+  </data>
+  <data name="TaxCompliancePlaybooksTitle" xml:space="preserve">
+    <value>Tax Compliance Playbooks</value>
+  </data>
+  <data name="TaxComplianceInvoiceReviewTitle" xml:space="preserve">
+    <value>Invoice Review Queue</value>
+  </data>
+  <data name="TaxComplianceCustomerReviewTitle" xml:space="preserve">
+    <value>Customer VAT Review Queue</value>
+  </data>
+  <data name="TaxComplianceNoInvoiceFollowUp" xml:space="preserve">
+    <value>No invoice rows currently require tax-compliance follow-up.</value>
+  </data>
+  <data name="TaxComplianceNoCustomerFollowUp" xml:space="preserve">
+    <value>No business customers are currently missing a VAT identifier.</value>
+  </data>
+  <data name="TaxComplianceScopeColumn" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="TaxComplianceCustomerColumn" xml:space="preserve">
+    <value>Customer</value>
+  </data>
+  <data name="TaxComplianceOrderColumn" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="TaxComplianceTotalColumn" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="TaxComplianceDueDateColumn" xml:space="preserve">
+    <value>Due date</value>
+  </data>
+  <data name="TaxComplianceEmailColumn" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="TaxComplianceOpportunitiesColumn" xml:space="preserve">
+    <value>Opportunities</value>
+  </data>
+  <data name="TaxComplianceUpdatedColumn" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="TaxComplianceOpenInvoiceAction" xml:space="preserve">
+    <value>Open Invoice</value>
+  </data>
+  <data name="TaxComplianceOpenCustomerAction" xml:space="preserve">
+    <value>Open Customer</value>
+  </data>
+  <data name="TaxComplianceOpenOrderAction" xml:space="preserve">
+    <value>Open Order</value>
+  </data>
+  <data name="TaxCompliancePlaybookVatCleanupTitle" xml:space="preserve">
+    <value>B2B VAT cleanup</value>
+  </data>
+  <data name="TaxCompliancePlaybookVatCleanupScope" xml:space="preserve">
+    <value>Business customers without a VAT identifier create finance and archive-readiness debt before invoices are settled or refunded.</value>
+  </data>
+  <data name="TaxCompliancePlaybookVatCleanupAction" xml:space="preserve">
+    <value>Open the customer profile, collect the VAT ID, or downgrade the tax profile before invoice follow-up depends on it.</value>
+  </data>
+  <data name="TaxCompliancePlaybookVatCleanupDependency" xml:space="preserve">
+    <value>Keep issuer and VAT defaults aligned in site settings so customer cleanup actually improves invoice readiness.</value>
+  </data>
+  <data name="TaxCompliancePlaybookIssuerTitle" xml:space="preserve">
+    <value>Issuer readiness review</value>
+  </data>
+  <data name="TaxCompliancePlaybookIssuerScope" xml:space="preserve">
+    <value>Archive and e-invoice baseline checks fail first when issuer legal name, tax ID, or address are incomplete.</value>
+  </data>
+  <data name="TaxCompliancePlaybookIssuerAction" xml:space="preserve">
+    <value>Complete issuer identity in site settings before treating tax review or finance exports as compliance-safe.</value>
+  </data>
+  <data name="TaxCompliancePlaybookIssuerDependency" xml:space="preserve">
+    <value>This queue depends on the global tax and invoicing defaults in site settings.</value>
+  </data>
+  <data name="TaxCompliancePlaybookInvoiceReviewTitle" xml:space="preserve">
+    <value>Draft and due invoice review</value>
+  </data>
+  <data name="TaxCompliancePlaybookInvoiceReviewScope" xml:space="preserve">
+    <value>Draft, due-soon, and overdue invoices are the fastest way to spot where tax and issuer debt will become operator pain.</value>
+  </data>
+  <data name="TaxCompliancePlaybookInvoiceReviewAction" xml:space="preserve">
+    <value>Review invoice status, customer VAT profile, and tax settings together before posting, collecting, or refunding.</value>
+  </data>
+  <data name="TaxCompliancePlaybookInvoiceReviewDependency" xml:space="preserve">
+    <value>Use alongside CRM invoices and order invoice details, not as a replacement for deeper compliance workflows.</value>
+  </data>
+  <data name="MerchantReadinessTitle" xml:space="preserve">
+    <value>Merchant Readiness</value>
+  </data>
+  <data name="MerchantReadinessIntro" xml:space="preserve">
+    <value>This workspace combines approval, setup, and subscription readiness so merchant operations do not have to reconstruct tenant go-live state across multiple queues.</value>
+  </data>
+  <data name="MerchantReadinessPlaybooksTitle" xml:space="preserve">
+    <value>Merchant Readiness Playbooks</value>
+  </data>
+  <data name="MerchantReadinessQueueTitle" xml:space="preserve">
+    <value>Merchant Readiness Queue</value>
+  </data>
+  <data name="MerchantReadinessEmptyState" xml:space="preserve">
+    <value>No merchant rows currently require readiness follow-up.</value>
+  </data>
+  <data name="MerchantReadinessSetupColumn" xml:space="preserve">
+    <value>Setup</value>
+  </data>
+  <data name="MerchantReadinessSubscriptionColumn" xml:space="preserve">
+    <value>Subscription</value>
+  </data>
+  <data name="MerchantReadinessSetupMissing" xml:space="preserve">
+    <value>Setup still incomplete</value>
+  </data>
+  <data name="MerchantReadinessPlaybookApprovalTitle" xml:space="preserve">
+    <value>Approval review</value>
+  </data>
+  <data name="MerchantReadinessPlaybookApprovalScope" xml:space="preserve">
+    <value>Pending-approval or suspended businesses should be reviewed with onboarding completeness and subscription state in mind, not only lifecycle status.</value>
+  </data>
+  <data name="MerchantReadinessPlaybookApprovalAction" xml:space="preserve">
+    <value>Confirm owner, primary location, legal name, contact email, and billing posture before moving a merchant into or out of live operations.</value>
+  </data>
+  <data name="MerchantReadinessPlaybookSetupTitle" xml:space="preserve">
+    <value>Setup debt review</value>
+  </data>
+  <data name="MerchantReadinessPlaybookSetupScope" xml:space="preserve">
+    <value>Missing owners, missing primary locations, and incomplete legal/contact identity usually indicate merchants that are not actually ready for support handoff or approval.</value>
+  </data>
+  <data name="MerchantReadinessPlaybookSetupAction" xml:space="preserve">
+    <value>Use setup and member surfaces to close identity and ownership debt before treating the merchant as operationally ready.</value>
+  </data>
+  <data name="MerchantReadinessPlaybookBillingTitle" xml:space="preserve">
+    <value>Billing posture review</value>
+  </data>
+  <data name="MerchantReadinessPlaybookBillingScope" xml:space="preserve">
+    <value>Merchants without an active plan or with renewal changes pending can look operationally ready while their subscription posture still blocks go-live expectations.</value>
+  </data>
+  <data name="MerchantReadinessPlaybookBillingAction" xml:space="preserve">
+    <value>Open the subscription workspace, confirm plan state and invoice signals, and only then hand off billing questions or approval decisions.</value>
+  </data>
+  <data name="BusinessEditorCreateTitle" xml:space="preserve">
+    <value>Create Business</value>
+  </data>
+  <data name="BusinessEditorEditTitle" xml:space="preserve">
+    <value>Edit Business</value>
+  </data>
+  <data name="BusinessEditorIntro" xml:space="preserve">
+    <value>Tenant setup starts here. After saving, continue with owner assignment and primary location.</value>
+  </data>
+  <data name="BusinessEditorSubscription" xml:space="preserve">
+    <value>Subscription</value>
+  </data>
+  <data name="BusinessEditorLocations" xml:space="preserve">
+    <value>Locations</value>
+  </data>
+  <data name="BusinessEditorInvitations" xml:space="preserve">
+    <value>Invitations</value>
+  </data>
+  <data name="BusinessEditorOwners" xml:space="preserve">
+    <value>Owners</value>
+  </data>
+  <data name="BusinessEditorPendingInvites" xml:space="preserve">
+    <value>Pending Invites</value>
+  </data>
+  <data name="BusinessEditorOperationalStatus" xml:space="preserve">
+    <value>Operational Status</value>
+  </data>
+  <data name="BusinessEditorPendingApproval" xml:space="preserve">
+    <value>Pending approval</value>
+  </data>
+  <data name="BusinessEditorApproved" xml:space="preserve">
+    <value>Approved</value>
+  </data>
+  <data name="BusinessEditorSuspended" xml:space="preserve">
+    <value>Suspended</value>
+  </data>
+  <data name="BusinessEditorApprovedAt" xml:space="preserve">
+    <value>Approved at {0} UTC</value>
+  </data>
+  <data name="BusinessEditorSuspendedAt" xml:space="preserve">
+    <value>Suspended at {0} UTC</value>
+  </data>
+  <data name="BusinessEditorReasonValue" xml:space="preserve">
+    <value>Reason: {0}</value>
+  </data>
+  <data name="BusinessEditorApprove" xml:space="preserve">
+    <value>Approve</value>
+  </data>
+  <data name="BusinessEditorReactivate" xml:space="preserve">
+    <value>Reactivate</value>
+  </data>
+  <data name="BusinessEditorSuspend" xml:space="preserve">
+    <value>Suspend</value>
+  </data>
+  <data name="BusinessEditorOptionalSuspensionReason" xml:space="preserve">
+    <value>Optional suspension reason</value>
+  </data>
+  <data name="BusinessEditorOnboardingChecklist" xml:space="preserve">
+    <value>Onboarding Checklist</value>
+  </data>
+  <data name="BusinessEditorReadyForGoLiveReview" xml:space="preserve">
+    <value>Ready for go-live review</value>
+  </data>
+  <data name="BusinessEditorSetupStillIncomplete" xml:space="preserve">
+    <value>Setup still incomplete</value>
+  </data>
+  <data name="BusinessEditorChecklistComplete" xml:space="preserve">
+    <value>Checklist complete</value>
+  </data>
+  <data name="BusinessEditorChecklistIncomplete" xml:space="preserve">
+    <value>Checklist incomplete</value>
+  </data>
+  <data name="BusinessEditorActiveOwnerAssigned" xml:space="preserve">
+    <value>Active owner assigned</value>
+  </data>
+  <data name="BusinessEditorPrimaryLocationConfigured" xml:space="preserve">
+    <value>Primary location configured</value>
+  </data>
+  <data name="BusinessEditorContactEmailConfigured" xml:space="preserve">
+    <value>Contact email configured</value>
+  </data>
+  <data name="BusinessEditorLegalBusinessNameConfigured" xml:space="preserve">
+    <value>Legal business name configured</value>
+  </data>
+  <data name="BusinessEditorNextActions" xml:space="preserve">
+    <value>Next Actions</value>
+  </data>
+  <data name="BusinessEditorNextActionsIntro" xml:space="preserve">
+    <value>Use these shortcuts to complete setup without leaving the onboarding workflow.</value>
+  </data>
+  <data name="BusinessEditorReadyForApprovalReview" xml:space="preserve">
+    <value>Ready for approval review</value>
+  </data>
+  <data name="BusinessEditorAssignOwner" xml:space="preserve">
+    <value>Assign Owner</value>
+  </data>
+  <data name="BusinessEditorAddPrimaryLocation" xml:space="preserve">
+    <value>Add Primary Location</value>
+  </data>
+  <data name="BusinessEditorCompleteBusinessProfile" xml:space="preserve">
+    <value>Complete Business Profile</value>
+  </data>
+  <data name="BusinessEditorInviteUser" xml:space="preserve">
+    <value>Invite User</value>
+  </data>
+  <data name="BusinessEditorReviewSubscription" xml:space="preserve">
+    <value>Review Subscription</value>
+  </data>
+  <data name="BusinessEditorOpenSetupWorkspace" xml:space="preserve">
+    <value>Open Setup Workspace</value>
+  </data>
+  <data name="BusinessEditorReviewInvitations" xml:space="preserve">
+    <value>Review Invitations</value>
+  </data>
+  <data name="BusinessEditorNotOnboardingCompleteYet" xml:space="preserve">
+    <value>This business is not onboarding-complete yet.</value>
+  </data>
+  <data name="BusinessEditorAddAtLeastOneActiveOwner" xml:space="preserve">
+    <value>Add at least one active owner.</value>
+  </data>
+  <data name="BusinessEditorAddPrimaryLocationSentence" xml:space="preserve">
+    <value>Add a primary location.</value>
+  </data>
+  <data name="BusinessEditorConfigureContactEmail" xml:space="preserve">
+    <value>configure a contact email.</value>
+  </data>
+  <data name="BusinessEditorCompleteLegalBusinessName" xml:space="preserve">
+    <value>complete the legal business name.</value>
+  </data>
+  <data name="BusinessFormBusinessName" xml:space="preserve">
+    <value>Business name</value>
+  </data>
+  <data name="BusinessFormLegalName" xml:space="preserve">
+    <value>Legal name</value>
+  </data>
+  <data name="BusinessFormCategory" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="BusinessFormDefaultCurrency" xml:space="preserve">
+    <value>Default currency</value>
+  </data>
+  <data name="BusinessFormDefaultCulture" xml:space="preserve">
+    <value>Default culture</value>
+  </data>
+  <data name="BusinessFormTaxId" xml:space="preserve">
+    <value>Tax / VAT ID</value>
+  </data>
+  <data name="BusinessFormWebsite" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="BusinessFormContactEmail" xml:space="preserve">
+    <value>Contact email</value>
+  </data>
+  <data name="BusinessFormContactPhone" xml:space="preserve">
+    <value>Contact phone (E.164)</value>
+  </data>
+  <data name="BusinessFormShortDescription" xml:space="preserve">
+    <value>Short description</value>
+  </data>
+  <data name="BusinessFormInitialOwner" xml:space="preserve">
+    <value>Initial owner</value>
+  </data>
+  <data name="BusinessFormInitialOwnerHelp" xml:space="preserve">
+    <value>Optional. Assigning an owner now reduces follow-up onboarding work.</value>
+  </data>
+  <data name="BusinessFormBusinessIsActive" xml:space="preserve">
+    <value>Business is active</value>
+  </data>
+  <data name="BusinessFormActiveHelp" xml:space="preserve">
+    <value>Businesses can be activated only after approval. Suspension also forces the business inactive.</value>
+  </data>
+  <data name="BusinessFormBackToList" xml:space="preserve">
+    <value>Back to list</value>
+  </data>
+  <data name="BusinessFormManageMembers" xml:space="preserve">
+    <value>Manage members</value>
+  </data>
+  <data name="BusinessFormManageLocations" xml:space="preserve">
+    <value>Manage locations</value>
+  </data>
+  <data name="BusinessFormManageInvitations" xml:space="preserve">
+    <value>Manage invitations</value>
+  </data>
+  <data name="BusinessInvitationCreateTitle" xml:space="preserve">
+    <value>Create Business Invitation</value>
+  </data>
+  <data name="BusinessInvitationBackToInvitations" xml:space="preserve">
+    <value>Back to invitations</value>
+  </data>
+  <data name="BusinessInvitationCreateHelp" xml:space="preserve">
+    <value>Use this flow when the intended owner or staff member does not yet have a platform account. A token email will be sent immediately.</value>
+  </data>
+  <data name="BusinessInvitationEmail" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="BusinessInvitationRole" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="BusinessInvitationExpiresInDays" xml:space="preserve">
+    <value>Expires in (days)</value>
+  </data>
+  <data name="BusinessInvitationInternalNote" xml:space="preserve">
+    <value>Internal note</value>
+  </data>
+  <data name="BusinessInvitationSend" xml:space="preserve">
+    <value>Send invitation</value>
+  </data>
+  <data name="BusinessLocationCreateTitle" xml:space="preserve">
+    <value>Create Business Location</value>
+  </data>
+  <data name="BusinessLocationEditTitle" xml:space="preserve">
+    <value>Edit Business Location</value>
+  </data>
+  <data name="BusinessLocationBackToLocations" xml:space="preserve">
+    <value>Back to locations</value>
+  </data>
+  <data name="BusinessLocationName" xml:space="preserve">
+    <value>Location name</value>
+  </data>
+  <data name="BusinessLocationPostalCode" xml:space="preserve">
+    <value>Postal code</value>
+  </data>
+  <data name="BusinessLocationAddressLine1" xml:space="preserve">
+    <value>Address line 1</value>
+  </data>
+  <data name="BusinessLocationAddressLine2" xml:space="preserve">
+    <value>Address line 2</value>
+  </data>
+  <data name="BusinessLocationCity" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="BusinessLocationRegion" xml:space="preserve">
+    <value>Region</value>
+  </data>
+  <data name="BusinessLocationCountryCode" xml:space="preserve">
+    <value>Country code</value>
+  </data>
+  <data name="BusinessLocationLatitude" xml:space="preserve">
+    <value>Latitude</value>
+  </data>
+  <data name="BusinessLocationLongitude" xml:space="preserve">
+    <value>Longitude</value>
+  </data>
+  <data name="BusinessLocationAltitudeMeters" xml:space="preserve">
+    <value>Altitude (m)</value>
+  </data>
+  <data name="BusinessLocationOpeningHoursJson" xml:space="preserve">
+    <value>Opening hours JSON</value>
+  </data>
+  <data name="BusinessLocationInternalNote" xml:space="preserve">
+    <value>Internal note</value>
+  </data>
+  <data name="BusinessLocationPrimary" xml:space="preserve">
+    <value>Primary location</value>
+  </data>
+  <data name="BillingPlansTitle" xml:space="preserve">
+    <value>Billing Plans</value>
+  </data>
+  <data name="BillingPlansIntro" xml:space="preserve">
+    <value>Manage the plan catalog that powers business subscription handoff and support triage.</value>
+  </data>
+  <data name="BillingPlansCreatePlan" xml:space="preserve">
+    <value>Create Plan</value>
+  </data>
+  <data name="BillingPlansActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="BillingPlansInactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="BillingPlansTrial" xml:space="preserve">
+    <value>Trial</value>
+  </data>
+  <data name="BillingPlansMissingFeatures" xml:space="preserve">
+    <value>Missing Features</value>
+  </data>
+  <data name="BillingPlansInUse" xml:space="preserve">
+    <value>In Use</value>
+  </data>
+  <data name="BillingPlansPlaybooksTitle" xml:space="preserve">
+    <value>Billing Plan Playbooks</value>
+  </data>
+  <data name="BillingPlansQueueColumn" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="BillingPlansScopeColumn" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="BillingPlansSearchPlaceholder" xml:space="preserve">
+    <value>Search by code, name, or description</value>
+  </data>
+  <data name="BillingPlansAllPlans" xml:space="preserve">
+    <value>All plans</value>
+  </data>
+  <data name="BillingPlansClearQueueFilters" xml:space="preserve">
+    <value>Clear Queue Filters</value>
+  </data>
+  <data name="BillingPlansPriceColumn" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="BillingPlansIntervalColumn" xml:space="preserve">
+    <value>Interval</value>
+  </data>
+  <data name="BillingPlansTrialColumn" xml:space="preserve">
+    <value>Trial</value>
+  </data>
+  <data name="BillingPlansUsageColumn" xml:space="preserve">
+    <value>Usage</value>
+  </data>
+  <data name="BillingPlansUpdatedColumn" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="BillingPlansEmptyState" xml:space="preserve">
+    <value>No billing plans found.</value>
+  </data>
+  <data name="BillingPlansEveryInterval" xml:space="preserve">
+    <value>Every {0} {1}</value>
+  </data>
+  <data name="BillingPlansTrialDays" xml:space="preserve">
+    <value>{0} days</value>
+  </data>
+  <data name="BillingPlansActiveSubscriptions" xml:space="preserve">
+    <value>{0} active</value>
+  </data>
+  <data name="BillingPlanEditorCreateTitle" xml:space="preserve">
+    <value>Create Billing Plan</value>
+  </data>
+  <data name="BillingPlanEditorEditTitle" xml:space="preserve">
+    <value>Edit Billing Plan</value>
+  </data>
+  <data name="BillingPlanEditorBackToPlans" xml:space="preserve">
+    <value>Back to Plans</value>
+  </data>
+  <data name="BillingPlanEditorActiveSubscriptions" xml:space="preserve">
+    <value>Active subscriptions</value>
+  </data>
+  <data name="BillingPlanEditorNoTrial" xml:space="preserve">
+    <value>No trial</value>
+  </data>
+  <data name="BillingPlanFormFeaturesHelp" xml:space="preserve">
+    <value>Store phase-1 plan capabilities as JSON metadata. Avoid secrets here.</value>
+  </data>
+  <data name="BillingPlanFormSaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
 </root>

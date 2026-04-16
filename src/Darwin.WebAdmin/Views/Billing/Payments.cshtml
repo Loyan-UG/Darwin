@@ -59,13 +59,21 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@T.T("TaxInvoicingReadiness")</span>
-        <a asp-controller="SiteSettings"
-           asp-action="Edit"
-           asp-fragment="site-settings-tax"
-           class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
-           hx-target="#billing-payments-workspace-shell"
-           hx-swap="outerHTML">@T.T("OpenTaxSettings")</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="TaxCompliance"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("TaxCompliance", "Billing")"
+               hx-target="#billing-payments-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenTaxCompliance")</a>
+            <a asp-controller="SiteSettings"
+               asp-action="Edit"
+               asp-fragment="site-settings-tax"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+               hx-target="#billing-payments-workspace-shell"
+               hx-swap="outerHTML">@T.T("OpenTaxSettings")</a>
+        </div>
     </div>
     <div class="card-body">
         <div class="row g-3">

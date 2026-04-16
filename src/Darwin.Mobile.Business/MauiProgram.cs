@@ -59,22 +59,22 @@ public static class MauiProgram
     private static void ConfigurePlatformControlColors()
     {
 #if ANDROID
-        var goldTint = ColorStateList.ValueOf(Color.ParseColor("#F4B223"));
-        var goldHighlight = Color.ParseColor("#F4B223");
+        var goldTint = ColorStateList.ValueOf(Android.Graphics.Color.ParseColor("#F4B223"));
+        var goldHighlight = Android.Graphics.Color.ParseColor("#F4B223");
 
-        EntryHandler.Mapper.AppendToMapping("BusinessGoldInputTint", static (handler, view) =>
+        EntryHandler.Mapper.AppendToMapping("BusinessGoldInputTint", (handler, view) =>
         {
             handler.PlatformView.BackgroundTintList = goldTint;
             handler.PlatformView.SetHighlightColor(goldHighlight);
         });
 
-        EditorHandler.Mapper.AppendToMapping("BusinessGoldInputTint", static (handler, view) =>
+        EditorHandler.Mapper.AppendToMapping("BusinessGoldInputTint", (handler, view) =>
         {
             handler.PlatformView.BackgroundTintList = goldTint;
             handler.PlatformView.SetHighlightColor(goldHighlight);
         });
 
-        PickerHandler.Mapper.AppendToMapping("BusinessGoldInputTint", static (handler, view) =>
+        PickerHandler.Mapper.AppendToMapping("BusinessGoldInputTint", (handler, view) =>
         {
             handler.PlatformView.BackgroundTintList = goldTint;
             handler.PlatformView.SetHighlightColor(goldHighlight);

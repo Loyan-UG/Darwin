@@ -1,14 +1,15 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
-    ViewData["Title"] = isCreate ? "Create Business" : "Edit Business";
+    ViewData["Title"] = isCreate ? T.T("BusinessEditorCreateTitle") : T.T("BusinessEditorEditTitle");
 }
 
 <div id="business-editor-shell">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h1 class="mb-1">@(isCreate ? "Create Business" : "Edit Business")</h1>
-            <p class="text-muted mb-0">Tenant setup starts here. After saving, continue with owner assignment and primary location.</p>
+            <h1 class="mb-1">@(isCreate ? T.T("BusinessEditorCreateTitle") : T.T("BusinessEditorEditTitle"))</h1>
+            <p class="text-muted mb-0">@T.T("BusinessEditorIntro")</p>
         </div>
         @if (!isCreate)
         {
@@ -18,40 +19,45 @@
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
                    hx-target="#business-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa-solid fa-user-group"></i> Members
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-user-group"></i> @T.T("CommonMembers")
                 </a>
                 <a asp-action="Subscription"
                    asp-route-businessId="@Model.Id"
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
                    hx-target="#business-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa-solid fa-credit-card"></i> Subscription
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-credit-card"></i> @T.T("BusinessEditorSubscription")
                 </a>
                 <a asp-action="Setup"
                    asp-route-id="@Model.Id"
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
                    hx-target="#business-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa-solid fa-sliders"></i> Setup
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-sliders"></i> @T.T("CommonSetup")
                 </a>
                 <a asp-action="Locations"
                    asp-route-businessId="@Model.Id"
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
                    hx-target="#business-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa-solid fa-location-dot"></i> Locations
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-location-dot"></i> @T.T("BusinessEditorLocations")
                 </a>
                 <a asp-action="Invitations"
                    asp-route-businessId="@Model.Id"
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
                    hx-target="#business-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa-solid fa-envelope"></i> Invitations
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-envelope"></i> @T.T("BusinessEditorInvitations")
                 </a>
             </div>
         }
@@ -67,25 +73,25 @@
         <div class="row g-3 mb-3">
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Owners</div>
+                    <div class="text-muted small text-uppercase">@T.T("BusinessEditorOwners")</div>
                     <div class="fs-4 fw-semibold">@Model.ActiveOwnerCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Members</div>
+                    <div class="text-muted small text-uppercase">@T.T("CommonMembers")</div>
                     <div class="fs-4 fw-semibold">@Model.MemberCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Locations</div>
+                    <div class="text-muted small text-uppercase">@T.T("BusinessEditorLocations")</div>
                     <div class="fs-4 fw-semibold">@Model.LocationCount</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Pending Invites</div>
+                    <div class="text-muted small text-uppercase">@T.T("BusinessEditorPendingInvites")</div>
                     <div class="fs-4 fw-semibold">@Model.InvitationCount</div>
                 </div>
             </div>
@@ -94,33 +100,33 @@
         <div class="border rounded p-3 mb-3">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>
-                    <div class="text-muted small text-uppercase mb-1">Operational Status</div>
+                    <div class="text-muted small text-uppercase mb-1">@T.T("BusinessEditorOperationalStatus")</div>
                     @if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
                     {
-                        <span class="badge text-bg-warning">Pending approval</span>
+                        <span class="badge text-bg-warning">@T.T("BusinessEditorPendingApproval")</span>
                     }
                     else if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Approved)
                     {
-                        <span class="badge text-bg-success">Approved</span>
+                        <span class="badge text-bg-success">@T.T("BusinessEditorApproved")</span>
                     }
                     else
                     {
-                        <span class="badge text-bg-danger">Suspended</span>
+                        <span class="badge text-bg-danger">@T.T("BusinessEditorSuspended")</span>
                     }
 
                     @if (Model.ApprovedAtUtc.HasValue)
                     {
-                        <div class="small text-muted mt-2">Approved at @Model.ApprovedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") UTC</div>
+                        <div class="small text-muted mt-2">@string.Format(T.T("BusinessEditorApprovedAt"), Model.ApprovedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
                     }
 
                     @if (Model.SuspendedAtUtc.HasValue)
                     {
-                        <div class="small text-muted mt-1">Suspended at @Model.SuspendedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") UTC</div>
+                        <div class="small text-muted mt-1">@string.Format(T.T("BusinessEditorSuspendedAt"), Model.SuspendedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
                     }
 
                     @if (!string.IsNullOrWhiteSpace(Model.SuspensionReason))
                     {
-                        <div class="small text-muted mt-1">Reason: @Model.SuspensionReason</div>
+                        <div class="small text-muted mt-1">@string.Format(T.T("BusinessEditorReasonValue"), Model.SuspensionReason)</div>
                     }
                 </div>
 
@@ -131,7 +137,7 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@Model.Id" />
                             <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
-                            <button type="submit" class="btn btn-success">Approve</button>
+                            <button type="submit" class="btn btn-success">@T.T("BusinessEditorApprove")</button>
                         </form>
                     }
                     else if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
@@ -140,7 +146,7 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@Model.Id" />
                             <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
-                            <button type="submit" class="btn btn-success">Reactivate</button>
+                            <button type="submit" class="btn btn-success">@T.T("BusinessEditorReactivate")</button>
                         </form>
                     }
 
@@ -150,8 +156,8 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@Model.Id" />
                             <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
-                            <input type="text" name="note" class="form-control" style="min-width: 240px;" placeholder="Optional suspension reason" />
-                            <button type="submit" class="btn btn-outline-danger">Suspend</button>
+                            <input type="text" name="note" class="form-control" style="min-width: 240px;" placeholder="@T.T("BusinessEditorOptionalSuspensionReason")" />
+                            <button type="submit" class="btn btn-outline-danger">@T.T("BusinessEditorSuspend")</button>
                         </form>
                     }
                 </div>
@@ -161,33 +167,33 @@
         <div class="border rounded p-3 mb-3">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>
-                    <div class="text-muted small text-uppercase mb-1">Onboarding Checklist</div>
-                    <div class="fw-semibold">@(checklistComplete ? "Ready for go-live review" : "Setup still incomplete")</div>
+                    <div class="text-muted small text-uppercase mb-1">@T.T("BusinessEditorOnboardingChecklist")</div>
+                    <div class="fw-semibold">@(checklistComplete ? T.T("BusinessEditorReadyForGoLiveReview") : T.T("BusinessEditorSetupStillIncomplete"))</div>
                 </div>
                 <div>
                     @if (checklistComplete)
                     {
-                        <span class="badge text-bg-success">Checklist complete</span>
+                        <span class="badge text-bg-success">@T.T("BusinessEditorChecklistComplete")</span>
                     }
                     else
                     {
-                        <span class="badge text-bg-warning">Checklist incomplete</span>
+                        <span class="badge text-bg-warning">@T.T("BusinessEditorChecklistIncomplete")</span>
                     }
                 </div>
             </div>
 
             <div class="row g-2 mt-2">
                 <div class="col-md-6">
-                    <div class="small">@((Model.ActiveOwnerCount > 0) ? "Yes" : "No") - Active owner assigned</div>
+                    <div class="small">@((Model.ActiveOwnerCount > 0) ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorActiveOwnerAssigned")</div>
                 </div>
                 <div class="col-md-6">
-                    <div class="small">@((Model.PrimaryLocationCount > 0) ? "Yes" : "No") - Primary location configured</div>
+                    <div class="small">@((Model.PrimaryLocationCount > 0) ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorPrimaryLocationConfigured")</div>
                 </div>
                 <div class="col-md-6">
-                    <div class="small">@(Model.HasContactEmailConfigured ? "Yes" : "No") - Contact email configured</div>
+                    <div class="small">@(Model.HasContactEmailConfigured ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorContactEmailConfigured")</div>
                 </div>
                 <div class="col-md-6">
-                    <div class="small">@(Model.HasLegalNameConfigured ? "Yes" : "No") - Legal business name configured</div>
+                    <div class="small">@(Model.HasLegalNameConfigured ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorLegalBusinessNameConfigured")</div>
                 </div>
             </div>
         </div>
@@ -195,12 +201,12 @@
         <div class="border rounded p-3 mb-3">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>
-                    <div class="text-muted small text-uppercase mb-1">Next Actions</div>
-                    <div class="fw-semibold">Use these shortcuts to complete setup without leaving the onboarding workflow.</div>
+                    <div class="text-muted small text-uppercase mb-1">@T.T("BusinessEditorNextActions")</div>
+                    <div class="fw-semibold">@T.T("BusinessEditorNextActionsIntro")</div>
                 </div>
                 @if (checklistComplete && Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
                 {
-                    <span class="badge text-bg-info">Ready for approval review</span>
+                    <span class="badge text-bg-info">@T.T("BusinessEditorReadyForApprovalReview")</span>
                 }
             </div>
 
@@ -212,8 +218,9 @@
                        class="btn btn-outline-primary"
                        hx-get="@Url.Action("CreateMember", "Businesses", new { businessId = Model.Id })"
                        hx-target="#business-editor-shell"
-                       hx-swap="outerHTML">
-                        <i class="fa-solid fa-user-plus"></i> Assign Owner
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa-solid fa-user-plus"></i> @T.T("BusinessEditorAssignOwner")
                     </a>
                 }
                 @if (Model.PrimaryLocationCount == 0)
@@ -223,14 +230,15 @@
                        class="btn btn-outline-primary"
                        hx-get="@Url.Action("CreateLocation", "Businesses", new { businessId = Model.Id })"
                        hx-target="#business-editor-shell"
-                       hx-swap="outerHTML">
-                        <i class="fa-solid fa-location-dot"></i> Add Primary Location
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa-solid fa-location-dot"></i> @T.T("BusinessEditorAddPrimaryLocation")
                     </a>
                 }
                 @if (!Model.HasContactEmailConfigured || !Model.HasLegalNameConfigured)
                 {
                     <a href="#business-core-fields" class="btn btn-outline-secondary">
-                        <i class="fa-solid fa-pen-to-square"></i> Complete Business Profile
+                        <i class="fa-solid fa-pen-to-square"></i> @T.T("BusinessEditorCompleteBusinessProfile")
                     </a>
                 }
                 <a asp-action="CreateInvitation"
@@ -238,24 +246,27 @@
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Id })"
                    hx-target="#business-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa-solid fa-envelope"></i> Invite User
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-envelope"></i> @T.T("BusinessEditorInviteUser")
                 </a>
                 <a asp-action="Subscription"
                    asp-route-businessId="@Model.Id"
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
                    hx-target="#business-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa-solid fa-credit-card"></i> Review Subscription
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-credit-card"></i> @T.T("BusinessEditorReviewSubscription")
                 </a>
                 <a asp-action="Setup"
                    asp-route-id="@Model.Id"
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
                    hx-target="#business-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa-solid fa-sliders"></i> Open Setup Workspace
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-sliders"></i> @T.T("BusinessEditorOpenSetupWorkspace")
                 </a>
                 @if (Model.InvitationCount > 0)
                 {
@@ -264,8 +275,9 @@
                        class="btn btn-outline-secondary"
                        hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
                        hx-target="#business-editor-shell"
-                       hx-swap="outerHTML">
-                        <i class="fa-solid fa-list-check"></i> Review Invitations
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa-solid fa-list-check"></i> @T.T("BusinessEditorReviewInvitations")
                     </a>
                 }
             </div>
@@ -274,10 +286,10 @@
         @if (!checklistComplete)
         {
             <div class="alert alert-warning">
-                This business is not onboarding-complete yet.
+                @T.T("BusinessEditorNotOnboardingCompleteYet")
                 @if (Model.ActiveOwnerCount == 0)
                 {
-                    <span>Add at least one active owner.</span>
+                    <span>@T.T("BusinessEditorAddAtLeastOneActiveOwner")</span>
                 }
                 @if (Model.ActiveOwnerCount == 0 && (Model.PrimaryLocationCount == 0 || !Model.HasContactEmailConfigured || !Model.HasLegalNameConfigured))
                 {
@@ -285,7 +297,7 @@
                 }
                 @if (Model.PrimaryLocationCount == 0)
                 {
-                    <span>Add a primary location.</span>
+                    <span>@T.T("BusinessEditorAddPrimaryLocationSentence")</span>
                 }
                 @if (Model.PrimaryLocationCount == 0 && (!Model.HasContactEmailConfigured || !Model.HasLegalNameConfigured))
                 {
@@ -293,7 +305,7 @@
                 }
                 @if (!Model.HasContactEmailConfigured)
                 {
-                    <span>configure a contact email.</span>
+                    <span>@T.T("BusinessEditorConfigureContactEmail")</span>
                 }
                 @if (!Model.HasContactEmailConfigured && !Model.HasLegalNameConfigured)
                 {
@@ -301,7 +313,7 @@
                 }
                 @if (!Model.HasLegalNameConfigured)
                 {
-                    <span>complete the legal business name.</span>
+                    <span>@T.T("BusinessEditorCompleteLegalBusinessName")</span>
                 }
             </div>
         }

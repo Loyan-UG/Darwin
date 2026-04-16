@@ -280,6 +280,46 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
+        public async Task<IActionResult> MerchantReadiness(CancellationToken ct = default)
+        {
+            var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
+            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 12, null, null, true, ct).ConfigureAwait(false);
+
+            var items = new List<MerchantReadinessItemVm>();
+            foreach (var business in attentionBusinesses)
+            {
+                var subscription = await BuildBusinessSubscriptionSnapshotAsync(business.Id, ct).ConfigureAwait(false);
+                items.Add(new MerchantReadinessItemVm
+                {
+                    Id = business.Id,
+                    Name = business.Name,
+                    LegalName = business.LegalName,
+                    OperationalStatus = business.OperationalStatus,
+                    HasContactEmailConfigured = business.HasContactEmailConfigured,
+                    HasLegalNameConfigured = business.HasLegalNameConfigured,
+                    ActiveOwnerCount = business.ActiveOwnerCount,
+                    PrimaryLocationCount = business.PrimaryLocationCount,
+                    InvitationCount = business.InvitationCount,
+                    HasSubscription = subscription.HasSubscription,
+                    SubscriptionStatus = subscription.Status,
+                    SubscriptionPlanName = subscription.PlanName,
+                    CancelAtPeriodEnd = subscription.CancelAtPeriodEnd,
+                    CurrentPeriodEndUtc = subscription.CurrentPeriodEndUtc
+                });
+            }
+
+            var vm = new MerchantReadinessWorkspaceVm
+            {
+                Summary = MapSupportSummaryVm(summary),
+                Items = items,
+                Playbooks = BuildMerchantReadinessPlaybooks()
+            };
+
+            return RenderMerchantReadinessWorkspace(vm);
+        }
+
+        [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> SupportQueueSummaryFragment(CancellationToken ct = default)
         {
             var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
@@ -1859,6 +1899,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return View("SupportQueue", vm);
         }
 
+        private IActionResult RenderMerchantReadinessWorkspace(MerchantReadinessWorkspaceVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("MerchantReadiness", vm);
+            }
+
+            return View("MerchantReadiness", vm);
+        }
+
         private IActionResult RenderLocationsWorkspace(BusinessLocationsListVm vm)
         {
             if (IsHtmxRequest())
@@ -2202,6 +2252,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return "Review the related workflow and communication readiness before manual intervention.";
+        }
+
+        private List<MerchantReadinessPlaybookVm> BuildMerchantReadinessPlaybooks()
+        {
+            return new List<MerchantReadinessPlaybookVm>
+            {
+                new()
+                {
+                    Title = T("MerchantReadinessPlaybookApprovalTitle"),
+                    ScopeNote = T("MerchantReadinessPlaybookApprovalScope"),
+                    OperatorAction = T("MerchantReadinessPlaybookApprovalAction")
+                },
+                new()
+                {
+                    Title = T("MerchantReadinessPlaybookSetupTitle"),
+                    ScopeNote = T("MerchantReadinessPlaybookSetupScope"),
+                    OperatorAction = T("MerchantReadinessPlaybookSetupAction")
+                },
+                new()
+                {
+                    Title = T("MerchantReadinessPlaybookBillingTitle"),
+                    ScopeNote = T("MerchantReadinessPlaybookBillingScope"),
+                    OperatorAction = T("MerchantReadinessPlaybookBillingAction")
+                }
+            };
         }
 
         private static BusinessSubscriptionInvoiceOpsSummaryVm MapBusinessSubscriptionInvoiceOpsSummaryVm(BusinessSubscriptionInvoiceOpsSummaryDto dto)

@@ -20,6 +20,18 @@ public sealed class WebApiRouteAliasSourceTests
     }
 
     [Fact]
+    public void MetaController_Should_KeepMobileBootstrapContractShape()
+    {
+        var source = ReadControllerSource("MetaController.cs");
+
+        source.Should().Contain("GetBootstrapAsync");
+        source.Should().Contain("AppBootstrapResponse");
+        source.Should().Contain("JwtAudience");
+        source.Should().Contain("QrTokenRefreshSeconds");
+        source.Should().Contain("MaxOutboxItems");
+    }
+
+    [Fact]
     public void AuthController_Should_ContainMemberAliases()
     {
         var source = ReadControllerSource("AuthController.cs");
@@ -118,6 +130,18 @@ public sealed class WebApiRouteAliasSourceTests
     }
 
     [Fact]
+    public void MemberBusinessesController_Should_KeepOnboardingContractShape()
+    {
+        var source = ReadControllerSource(Path.Combine("Member", "MemberBusinessesController.cs"));
+
+        source.Should().Contain("OnboardAsync");
+        source.Should().Contain("BusinessOnboardingRequest");
+        source.Should().Contain("BusinessOnboardingResponse");
+        source.Should().Contain("BusinessMemberRole.Owner");
+        source.Should().Contain("/api/v1/businesses/onboarding");
+    }
+
+    [Fact]
     public void MemberOrdersController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
     {
         var source = ReadControllerSource(Path.Combine("Member", "MemberOrdersController.cs"));
@@ -162,6 +186,19 @@ public sealed class WebApiRouteAliasSourceTests
     }
 
     [Fact]
+    public void ProfileController_Should_ContainPhoneVerificationRoutes_AndAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Profile", "ProfileController.cs"));
+
+        source.Should().Contain("me/phone/request-verification");
+        source.Should().Contain("/api/v1/profile/me/phone/request-verification");
+        source.Should().Contain("me/phone/confirm");
+        source.Should().Contain("/api/v1/profile/me/phone/confirm");
+        source.Should().Contain("RequestPhoneVerificationAsync");
+        source.Should().Contain("ConfirmPhoneVerificationAsync");
+    }
+
+    [Fact]
     public void ProfileAddressesController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
     {
         var source = ReadControllerSource(Path.Combine("Profile", "ProfileAddressesController.cs"));
@@ -171,6 +208,17 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("/api/v1/profile/me/addresses/{id:guid}");
         source.Should().Contain("/api/v1/profile/me/customer");
         source.Should().Contain("/api/v1/profile/me/customer/context");
+    }
+
+    [Fact]
+    public void ProfileAddressesController_Should_KeepCustomerContextContractShape()
+    {
+        var source = ReadControllerSource(Path.Combine("Profile", "ProfileAddressesController.cs"));
+
+        source.Should().Contain("GetLinkedCustomerAsync");
+        source.Should().Contain("GetLinkedCustomerContextAsync");
+        source.Should().Contain("LinkedCustomerProfile");
+        source.Should().Contain("MemberCustomerContext");
     }
 
     [Fact]
@@ -211,6 +259,18 @@ public sealed class WebApiRouteAliasSourceTests
 
         source.Should().Contain("api/v1/member/notifications");
         source.Should().Contain("/api/v1/notifications/devices/register");
+    }
+
+    [Fact]
+    public void NotificationsController_Should_KeepDeviceRegistrationContractShape()
+    {
+        var source = ReadControllerSource(Path.Combine("Notifications", "NotificationsController.cs"));
+
+        source.Should().Contain("RegisterDeviceAsync");
+        source.Should().Contain("RegisterPushDeviceRequest");
+        source.Should().Contain("RegisterPushDeviceResponse");
+        source.Should().Contain("MobileDevicePlatform.Android");
+        source.Should().Contain("MobileDevicePlatform.iOS");
     }
 
     [Fact]
