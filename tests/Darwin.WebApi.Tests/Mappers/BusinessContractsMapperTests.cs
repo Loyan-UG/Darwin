@@ -79,8 +79,13 @@ public sealed class BusinessContractsMapperTests
     ///     Ensures kilometer-to-meter conversion uses MidpointRounding.AwayFromZero
     ///     so half-meter boundaries stay deterministic across runtimes.
     /// </summary>
-    [Fact]
-    public void ToContract_DiscoveryItem_Should_RoundDistanceUsingAwayFromZero()
+    [Theory]
+    [InlineData(1.2344, 1234)]
+    [InlineData(1.2345, 1235)]
+    [InlineData(1.2346, 1235)]
+    public void ToContract_DiscoveryItem_Should_RoundDistanceUsingAwayFromZero(
+        double distanceKm,
+        int expectedDistanceMeters)
     {
         // Arrange
         var dto = new BusinessDiscoveryListItemDto
@@ -88,14 +93,14 @@ public sealed class BusinessContractsMapperTests
             Id = Guid.NewGuid(),
             Name = "Darwin Kiosk",
             Category = BusinessCategoryKind.Cafe,
-            DistanceKm = 1.2345
+            DistanceKm = distanceKm
         };
 
         // Act
         var contract = BusinessContractsMapper.ToContract(dto);
 
         // Assert
-        contract.DistanceMeters.Should().Be(1235);
+        contract.DistanceMeters.Should().Be(expectedDistanceMeters);
     }
 
     /// <summary>
@@ -192,6 +197,52 @@ public sealed class BusinessContractsMapperTests
             "https://cdn.example/gallery-a.jpg",
             "https://cdn.example/gallery-b.jpg");
         contract.ImageUrls.Should().HaveCount(3);
+    }
+
+    /// <summary>
+    ///     Ensures business-detail projection falls back to the first location when
+    ///     no location is marked as primary, keeping city/coordinate fields populated.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetail_Should_FallbackToFirstLocation_WhenPrimaryLocationMissing()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Darwin Bakery",
+            Category = BusinessCategoryKind.Cafe,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            Locations =
+            [
+                new BusinessPublicLocationDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "First Branch",
+                    IsPrimary = false,
+                    City = "Cologne",
+                    Coordinate = new GeoCoordinateDto { Latitude = 50.9375, Longitude = 6.9603, AltitudeMeters = 53 }
+                },
+                new BusinessPublicLocationDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Second Branch",
+                    IsPrimary = false,
+                    City = "Stuttgart",
+                    Coordinate = new GeoCoordinateDto { Latitude = 48.7758, Longitude = 9.1829, AltitudeMeters = 245 }
+                }
+            ]
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.City.Should().Be("Cologne");
+        contract.Coordinate.Should().NotBeNull();
+        contract.Coordinate!.Latitude.Should().Be(50.9375);
+        contract.Coordinate.Longitude.Should().Be(6.9603);
     }
 
     /// <summary>
@@ -340,6 +391,22 @@ public sealed class BusinessContractsMapperTests
     }
 
     /// <summary>
+    ///     Ensures location mapper guard clause rejects null DTO input.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessLocation_Should_Throw_WhenDtoIsNull()
+    {
+        // Arrange
+        BusinessPublicLocationDto? dto = null;
+
+        // Act
+        Action act = () => BusinessContractsMapper.ToContract(dto!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
     ///     Ensures loyalty program mapping preserves reward-tier value/type fields,
     ///     including self-redemption capability metadata.
     /// </summary>
@@ -380,6 +447,49 @@ public sealed class BusinessContractsMapperTests
         contract.RewardTiers[0].RewardType.Should().Be(Darwin.Domain.Enums.LoyaltyRewardType.PercentDiscount.ToString());
         contract.RewardTiers[0].RewardValue.Should().Be(10);
         contract.RewardTiers[0].AllowSelfRedemption.Should().BeTrue();
+    }
+
+    /// <summary>
+    ///     Ensures loyalty-program projection keeps contract lists non-null and
+    ///     applies stable string/name defaults when optional source data is absent.
+    /// </summary>
+    [Fact]
+    public void ToContract_LoyaltyProgramPublic_Should_ApplySafeDefaults_WhenOptionalFieldsAreMissing()
+    {
+        // Arrange
+        var dto = new LoyaltyProgramPublicDto
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = Guid.NewGuid(),
+            Name = null!,
+            IsActive = false,
+            RewardTiers = null!
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.Name.Should().BeEmpty();
+        contract.IsActive.Should().BeFalse();
+        contract.RewardTiers.Should().NotBeNull();
+        contract.RewardTiers.Should().BeEmpty();
+    }
+
+    /// <summary>
+    ///     Ensures loyalty-program mapper guard clause rejects null DTO input.
+    /// </summary>
+    [Fact]
+    public void ToContract_LoyaltyProgramPublic_Should_Throw_WhenDtoIsNull()
+    {
+        // Arrange
+        LoyaltyProgramPublicDto? dto = null;
+
+        // Act
+        Action act = () => BusinessContractsMapper.ToContract(dto!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
     }
 
 }
