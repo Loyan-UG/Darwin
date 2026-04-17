@@ -289,6 +289,61 @@ public sealed class ApiClientReliabilityTests
     }
 
     /// <summary>
+    ///     Verifies guard clause behavior for PUT command APIs: null request payload
+    ///     must return a failed result without issuing an HTTP request.
+    /// </summary>
+    [Fact]
+    public async Task PutResultAsync_Should_FailFast_WhenRequestPayloadIsNull()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var sendCount = 0;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            sendCount++;
+            return CreateJsonResponse(HttpStatusCode.OK, new { ok = true });
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.PutResultAsync<object, Dictionary<string, bool>>("/api/v1/test", request: null!, cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("Request payload is required.");
+        sendCount.Should().Be(0);
+    }
+
+    /// <summary>
+    ///     Verifies route normalization for GET calls trims leading slashes before request dispatch.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_NormalizeLeadingSlashRoute_BeforeDispatch()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        Uri? observedRequestUri = null;
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            observedRequestUri = request.RequestUri;
+            return CreateJsonResponse(HttpStatusCode.OK, new { ok = true });
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, bool>>("/api/v1/meta/health", cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+        observedRequestUri.Should().NotBeNull();
+        observedRequestUri!.AbsolutePath.Should().Be("/api/v1/meta/health");
+    }
+
+    /// <summary>
     ///     Verifies success-status responses with malformed JSON are converted to
     ///     a deterministic failure result instead of throwing to callers.
     /// </summary>
