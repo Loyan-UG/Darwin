@@ -123,9 +123,9 @@ namespace Darwin.Infrastructure.Persistence.Db
                 if (File.Exists(appsettings) || File.Exists(appsettingsEnv))
                 {
                     builder.SetBasePath(root);
-                    // Include environment-specific first to allow overriding
-                    builder.AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: false);
+                    // Load base first, then environment-specific so env values override base defaults.
                     builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
+                    builder.AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: false);
                     break;
                 }
             }
