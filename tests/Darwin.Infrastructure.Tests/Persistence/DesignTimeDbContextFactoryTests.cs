@@ -346,4 +346,68 @@ public sealed class DesignTimeDbContextFactoryTests
         }
     }
 
+    /// <summary>
+    ///     Ensures probe-path discovery also honors environment-specific overlays
+    ///     when appsettings files are resolved from sibling <c>Darwin.WebAdmin</c>.
+    /// </summary>
+    [Fact]
+    public void CreateDbContext_Should_ApplyEnvironmentOverlay_FromSiblingWebAdminProbePath()
+    {
+        // Arrange
+        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
+        const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
+        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
+        var previousCwd = Directory.GetCurrentDirectory();
+        var rootDir = Directory.CreateTempSubdirectory("darwin-design-time-probe-overlay-");
+        var runDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "runner"));
+        var webAdminDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "Darwin.WebAdmin"));
+        var baseConnection = "Server=127.0.0.1;Database=DarwinProbeBase;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var envConnection = "Server=127.0.0.1;Database=DarwinProbeStaging;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(webAdminDir.FullName, "appsettings.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{baseConnection}}"
+                    }
+                  }
+                  """);
+
+            File.WriteAllText(
+                Path.Combine(webAdminDir.FullName, "appsettings.Staging.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{envConnection}}"
+                    }
+                  }
+                  """);
+
+            Environment.SetEnvironmentVariable(connectionEnvName, null);
+            Environment.SetEnvironmentVariable(aspnetEnvName, "Staging");
+            Directory.SetCurrentDirectory(runDir.FullName);
+            var factory = new DesignTimeDbContextFactory();
+
+            // Act
+            using var context = factory.CreateDbContext([]);
+            var connectionString = context.Database.GetConnectionString();
+
+            // Assert
+            connectionString.Should().NotBeNullOrWhiteSpace();
+            connectionString.Should().ContainEquivalentOf("DarwinProbeStaging");
+            connectionString.Should().NotContainEquivalentOf("DarwinProbeBase");
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousCwd);
+            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
+            rootDir.Delete(recursive: true);
+        }
+    }
+
 }

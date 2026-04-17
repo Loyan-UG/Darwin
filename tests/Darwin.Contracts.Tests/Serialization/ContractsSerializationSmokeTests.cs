@@ -176,6 +176,40 @@ public sealed class ContractsSerializationSmokeTests
     }
 
     /// <summary>
+    ///     Verifies business summary serialization keeps canonical camelCase property
+    ///     names expected by mobile/public clients.
+    /// </summary>
+    [Fact]
+    public void BusinessSummary_Should_SerializeUsingCanonicalCamelCasePropertyNames()
+    {
+        // Arrange
+        var summary = new BusinessSummary
+        {
+            Id = Guid.Parse("f53f9f39-f2f3-43e3-b051-f5bc4179f45d"),
+            Name = "Darwin Cafe",
+            Category = "Cafe",
+            Location = new GeoCoordinateModel { Latitude = 52.52, Longitude = 13.40, AltitudeMeters = 34.2 },
+            Rating = 4.7,
+            RatingCount = 123,
+            DistanceMeters = 840
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(summary, JsonOptions);
+
+        // Assert
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        root.TryGetProperty("id", out _).Should().BeTrue();
+        root.TryGetProperty("name", out _).Should().BeTrue();
+        root.TryGetProperty("category", out _).Should().BeTrue();
+        root.TryGetProperty("location", out _).Should().BeTrue();
+        root.TryGetProperty("rating", out _).Should().BeTrue();
+        root.TryGetProperty("ratingCount", out _).Should().BeTrue();
+        root.TryGetProperty("distanceMeters", out _).Should().BeTrue();
+    }
+
+    /// <summary>
     ///     Verifies loyalty timeline page keeps paging cursors and entry payloads
     ///     stable across serialization.
     /// </summary>
