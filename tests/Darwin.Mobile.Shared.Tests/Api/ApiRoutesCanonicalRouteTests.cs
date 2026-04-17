@@ -10,6 +10,25 @@ namespace Darwin.Mobile.Shared.Tests.Api;
 public sealed class ApiRoutesCanonicalRouteTests
 {
     /// <summary>
+    /// Verifies Normalize trims whitespace/leading slashes while preserving relative route shape.
+    /// </summary>
+    [Theory]
+    [InlineData(null, "")]
+    [InlineData("", "")]
+    [InlineData("   ", "")]
+    [InlineData("/api/v1/member/profile/me", "api/v1/member/profile/me")]
+    [InlineData(" ///api/v1/meta/health ", "api/v1/meta/health")]
+    [InlineData("api/v1/member/orders", "api/v1/member/orders")]
+    public void Normalize_Should_ReturnExpectedRelativeRoute(string? input, string expected)
+    {
+        // Act
+        var normalized = ApiRoutes.Normalize(input!);
+
+        // Assert
+        normalized.Should().Be(expected);
+    }
+
+    /// <summary>
     /// Verifies that member-authenticated routes use the member audience prefix.
     /// </summary>
     [Fact]
@@ -41,5 +60,28 @@ public sealed class ApiRoutesCanonicalRouteTests
         ApiRoutes.Billing.GetCurrentBusinessSubscription.Should().Be("api/v1/business/billing/subscription/current");
         ApiRoutes.Loyalty.ProcessScanSessionForBusiness.Should().Be("api/v1/business/loyalty/scan/process");
         ApiRoutes.Loyalty.GetBusinessCampaigns.Should().Be("api/v1/business/loyalty/campaigns");
+    }
+
+    /// <summary>
+    /// Verifies dynamic route builders use deterministic lowercase <c>D</c>-format guids.
+    /// </summary>
+    [Fact]
+    public void DynamicRouteBuilders_Should_EmbedGuidUsingDeterministicDFormat()
+    {
+        // Arrange
+        var id = Guid.Parse("01234567-89AB-CDEF-0123-456789ABCDEF");
+        const string expected = "01234567-89ab-cdef-0123-456789abcdef";
+
+        // Act
+        var profileUpdateRoute = ApiRoutes.Profile.UpdateAddress(id);
+        var orderRoute = ApiRoutes.Orders.GetById(id);
+        var businessRoute = ApiRoutes.Businesses.GetById(id);
+        var loyaltyRoute = ApiRoutes.Loyalty.GetRewardsForBusiness(id);
+
+        // Assert
+        profileUpdateRoute.Should().EndWith(expected);
+        orderRoute.Should().EndWith(expected);
+        businessRoute.Should().EndWith(expected);
+        loyaltyRoute.Should().Contain($"/{expected}/");
     }
 }

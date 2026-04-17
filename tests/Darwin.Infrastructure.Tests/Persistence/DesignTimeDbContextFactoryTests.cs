@@ -129,4 +129,285 @@ public sealed class DesignTimeDbContextFactoryTests
         }
     }
 
+    /// <summary>
+    ///     Ensures environment-specific appsettings override base appsettings values
+    ///     so design-time migrations follow the active ASPNETCORE_ENVIRONMENT.
+    /// </summary>
+    [Fact]
+    public void CreateDbContext_Should_PreferEnvironmentSpecificAppsettings_WhenBothFilesExist()
+    {
+        // Arrange
+        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
+        const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
+        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
+        var previousCwd = Directory.GetCurrentDirectory();
+        var isolatedDir = Directory.CreateTempSubdirectory("darwin-design-time-env-specific-");
+        var baseConnection = "Server=127.0.0.1;Database=DarwinBaseConfig;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var envConnection = "Server=127.0.0.1;Database=DarwinTestingConfig;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(isolatedDir.FullName, "appsettings.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{baseConnection}}"
+                    }
+                  }
+                  """);
+
+            File.WriteAllText(
+                Path.Combine(isolatedDir.FullName, "appsettings.Testing.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{envConnection}}"
+                    }
+                  }
+                  """);
+
+            Environment.SetEnvironmentVariable(connectionEnvName, null);
+            Environment.SetEnvironmentVariable(aspnetEnvName, "Testing");
+            Directory.SetCurrentDirectory(isolatedDir.FullName);
+            var factory = new DesignTimeDbContextFactory();
+
+            // Act
+            using var context = factory.CreateDbContext([]);
+            var connectionString = context.Database.GetConnectionString();
+
+            // Assert
+            connectionString.Should().NotBeNullOrWhiteSpace();
+            connectionString.Should().ContainEquivalentOf("DarwinTestingConfig");
+            connectionString.Should().NotContainEquivalentOf("DarwinBaseConfig");
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousCwd);
+            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
+            isolatedDir.Delete(recursive: true);
+        }
+    }
+
+    /// <summary>
+    ///     Ensures whitespace environment connection strings do not shadow appsettings values.
+    /// </summary>
+    [Fact]
+    public void CreateDbContext_Should_IgnoreWhitespaceEnvironmentConnectionString_AndUseConfig()
+    {
+        // Arrange
+        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
+        const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
+        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
+        var previousCwd = Directory.GetCurrentDirectory();
+        var isolatedDir = Directory.CreateTempSubdirectory("darwin-design-time-whitespace-env-");
+        var expected = "Server=127.0.0.1;Database=DarwinConfigFallback;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(isolatedDir.FullName, "appsettings.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{expected}}"
+                    }
+                  }
+                  """);
+
+            Environment.SetEnvironmentVariable(connectionEnvName, "   ");
+            Environment.SetEnvironmentVariable(aspnetEnvName, "Development");
+            Directory.SetCurrentDirectory(isolatedDir.FullName);
+            var factory = new DesignTimeDbContextFactory();
+
+            // Act
+            using var context = factory.CreateDbContext([]);
+            var connectionString = context.Database.GetConnectionString();
+
+            // Assert
+            connectionString.Should().NotBeNullOrWhiteSpace();
+            connectionString.Should().ContainEquivalentOf("DarwinConfigFallback");
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousCwd);
+            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
+            isolatedDir.Delete(recursive: true);
+        }
+    }
+
+    /// <summary>
+    ///     Ensures appsettings discovery probes sibling <c>Darwin.WebAdmin</c> path
+    ///     so EF design-time commands still resolve configuration when executed from a nested folder.
+    /// </summary>
+    [Fact]
+    public void CreateDbContext_Should_ReadConnectionStringFromSiblingWebAdminProbePath()
+    {
+        // Arrange
+        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
+        const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
+        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
+        var previousCwd = Directory.GetCurrentDirectory();
+        var rootDir = Directory.CreateTempSubdirectory("darwin-design-time-probe-root-");
+        var runDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "runner"));
+        var webAdminDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "Darwin.WebAdmin"));
+        var expected = "Server=127.0.0.1;Database=DarwinProbeFromWebAdmin;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(webAdminDir.FullName, "appsettings.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{expected}}"
+                    }
+                  }
+                  """);
+
+            Environment.SetEnvironmentVariable(connectionEnvName, null);
+            Environment.SetEnvironmentVariable(aspnetEnvName, "Development");
+            Directory.SetCurrentDirectory(runDir.FullName);
+            var factory = new DesignTimeDbContextFactory();
+
+            // Act
+            using var context = factory.CreateDbContext([]);
+            var connectionString = context.Database.GetConnectionString();
+
+            // Assert
+            connectionString.Should().NotBeNullOrWhiteSpace();
+            connectionString.Should().ContainEquivalentOf("DarwinProbeFromWebAdmin");
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousCwd);
+            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
+            rootDir.Delete(recursive: true);
+        }
+    }
+
+    /// <summary>
+    ///     Ensures explicit environment variable keeps top precedence even when
+    ///     appsettings files are discoverable in probe paths.
+    /// </summary>
+    [Fact]
+    public void CreateDbContext_Should_PreferEnvironmentVariableOverDiscoveredConfigFiles()
+    {
+        // Arrange
+        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
+        const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
+        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
+        var previousCwd = Directory.GetCurrentDirectory();
+        var rootDir = Directory.CreateTempSubdirectory("darwin-design-time-env-precedence-");
+        var runDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "runner"));
+        var webAdminDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "Darwin.WebAdmin"));
+        var fromEnvironment = "Server=127.0.0.1;Database=DarwinEnvWins;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var fromConfig = "Server=127.0.0.1;Database=DarwinConfigLoses;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(webAdminDir.FullName, "appsettings.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{fromConfig}}"
+                    }
+                  }
+                  """);
+
+            Environment.SetEnvironmentVariable(connectionEnvName, fromEnvironment);
+            Environment.SetEnvironmentVariable(aspnetEnvName, "Development");
+            Directory.SetCurrentDirectory(runDir.FullName);
+            var factory = new DesignTimeDbContextFactory();
+
+            // Act
+            using var context = factory.CreateDbContext([]);
+            var connectionString = context.Database.GetConnectionString();
+
+            // Assert
+            connectionString.Should().NotBeNullOrWhiteSpace();
+            connectionString.Should().ContainEquivalentOf("DarwinEnvWins");
+            connectionString.Should().NotContainEquivalentOf("DarwinConfigLoses");
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousCwd);
+            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
+            rootDir.Delete(recursive: true);
+        }
+    }
+
+    /// <summary>
+    ///     Ensures probe-path discovery also honors environment-specific overlays
+    ///     when appsettings files are resolved from sibling <c>Darwin.WebAdmin</c>.
+    /// </summary>
+    [Fact]
+    public void CreateDbContext_Should_ApplyEnvironmentOverlay_FromSiblingWebAdminProbePath()
+    {
+        // Arrange
+        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
+        const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
+        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
+        var previousCwd = Directory.GetCurrentDirectory();
+        var rootDir = Directory.CreateTempSubdirectory("darwin-design-time-probe-overlay-");
+        var runDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "runner"));
+        var webAdminDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "Darwin.WebAdmin"));
+        var baseConnection = "Server=127.0.0.1;Database=DarwinProbeBase;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var envConnection = "Server=127.0.0.1;Database=DarwinProbeStaging;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(webAdminDir.FullName, "appsettings.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{baseConnection}}"
+                    }
+                  }
+                  """);
+
+            File.WriteAllText(
+                Path.Combine(webAdminDir.FullName, "appsettings.Staging.json"),
+                $$"""
+                  {
+                    "ConnectionStrings": {
+                      "DefaultConnection": "{{envConnection}}"
+                    }
+                  }
+                  """);
+
+            Environment.SetEnvironmentVariable(connectionEnvName, null);
+            Environment.SetEnvironmentVariable(aspnetEnvName, "Staging");
+            Directory.SetCurrentDirectory(runDir.FullName);
+            var factory = new DesignTimeDbContextFactory();
+
+            // Act
+            using var context = factory.CreateDbContext([]);
+            var connectionString = context.Database.GetConnectionString();
+
+            // Assert
+            connectionString.Should().NotBeNullOrWhiteSpace();
+            connectionString.Should().ContainEquivalentOf("DarwinProbeStaging");
+            connectionString.Should().NotContainEquivalentOf("DarwinProbeBase");
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousCwd);
+            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
+            rootDir.Delete(recursive: true);
+        }
+    }
+
 }
