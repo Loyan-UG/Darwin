@@ -10,6 +10,13 @@ namespace Darwin.Application.Settings.DTOs
     /// </summary>
     public sealed class SiteSettingDto
     {
+        public const string HomeSlugDefault = "home";
+        public const string DefaultCountryDefault = "DE";
+        public const string DefaultCurrencyDefault = "EUR";
+        public const string TimeZoneDefault = "Europe/Berlin";
+        public const string DateFormatDefault = "yyyy-MM-dd";
+        public const string TimeFormatDefault = "HH:mm";
+
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
@@ -19,16 +26,16 @@ namespace Darwin.Application.Settings.DTOs
         public string? ContactEmail { get; set; }
 
         // -------- Routing --------
-        public string? HomeSlug { get; set; } = "home";
+        public string? HomeSlug { get; set; } = HomeSlugDefault;
 
         // -------- Localization settings --------
         public string DefaultCulture { get; set; } = "de-DE";
         public string SupportedCulturesCsv { get; set; } = "de-DE,en-US";
-        public string? DefaultCountry { get; set; } = "DE";
-        public string DefaultCurrency { get; set; } = "EUR";
-        public string? TimeZone { get; set; } = "Europe/Berlin";
-        public string? DateFormat { get; set; } = "yyyy-MM-dd";
-        public string? TimeFormat { get; set; } = "HH:mm";
+        public string? DefaultCountry { get; set; } = DefaultCountryDefault;
+        public string DefaultCurrency { get; set; } = DefaultCurrencyDefault;
+        public string? TimeZone { get; set; } = TimeZoneDefault;
+        public string? DateFormat { get; set; } = DateFormatDefault;
+        public string? TimeFormat { get; set; } = TimeFormatDefault;
         public string? AdminTextOverridesJson { get; set; }
 
         // -------- JWT / Access-Refresh token settings --------
