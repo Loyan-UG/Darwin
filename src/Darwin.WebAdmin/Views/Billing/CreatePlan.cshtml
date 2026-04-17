@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Billing.BillingPlanEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Billing Plan";
+    ViewData["Title"] = T.T("CreateBillingPlan");
     ViewData["IsCreate"] = true;
 }
 

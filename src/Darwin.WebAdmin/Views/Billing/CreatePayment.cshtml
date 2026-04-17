@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Payment";
+    ViewData["Title"] = T.T("CreatePayment");
     ViewData["IsCreate"] = true;
 }
 

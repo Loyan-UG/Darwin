@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.WarehouseEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Warehouse";
+    ViewData["Title"] = T.T("CreateWarehouse");
     ViewData["IsCreate"] = true;
 }
 <partial name="~/Views/Inventory/_WarehouseEditorShell.cshtml" model="Model" />

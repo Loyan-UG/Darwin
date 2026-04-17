@@ -81,14 +81,14 @@
 {
     <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
         <div>
-            <strong>@T.T("ProviderReviewMode"):</strong> showing provider lane for <code>@Model.Provider</code>
+            <strong>@T.T("ProviderReviewMode"):</strong> @T.T("ShowingProviderLaneFor") <code>@Model.Provider</code>
             @if (!string.IsNullOrWhiteSpace(Model.Channel))
             {
-                <span> on channel <code>@Model.Channel</code></span>
+                <span> @T.T("OnChannel") <code>@Model.Channel</code></span>
             }
             @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
             {
-                <span> in flow <code>@Model.FlowKey</code></span>
+                <span> @T.T("InFlow") <code>@Model.FlowKey</code></span>
             }
         </div>
         <a asp-action="ChannelAudits"
@@ -268,10 +268,10 @@
 {
     <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
         <div>
-            <strong>@T.T("ExactChainMode"):</strong> showing the delivery chain for <code>@Model.RecipientAddress</code>
+            <strong>@T.T("ExactChainMode"):</strong> @T.T("ShowingDeliveryChainFor") <code>@Model.RecipientAddress</code>
             @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
             {
-                <span> in flow <code>@Model.FlowKey</code></span>
+                <span> @T.T("InFlow") <code>@Model.FlowKey</code></span>
             }
         </div>
         <a asp-action="ChannelAudits"
@@ -838,7 +838,7 @@
     <input type="hidden" name="chainFollowUpOnly" value="@Model.ChainFollowUpOnly" />
     <input type="hidden" name="chainResolvedOnly" value="@Model.ChainResolvedOnly" />
     <div class="col-md-4">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by phone, provider, preview, or flow" />
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("ChannelAuditsSearchPlaceholder")" />
     </div>
     <div class="col-md-2">
         <select name="provider" asp-items="Model.ProviderItems" class="form-select"></select>

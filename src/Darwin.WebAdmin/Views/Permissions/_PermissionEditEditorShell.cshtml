@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Identity.PermissionEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Permission";
+    ViewData["Title"] = T.T("EditPermission");
 }
 
 <div id="permission-editor-shell">
-    <h1 class="mb-3"><i class="fa fa-key"></i> Edit Permission</h1>
+    <h1 class="mb-3"><i class="fa fa-key"></i> @T.T("EditPermission")</h1>
 
     <partial name="~/Views/Shared/_Alerts.cshtml" />
 
@@ -23,13 +24,13 @@
         <div class="card mb-3">
             <div class="card-body">
                 <div class="mb-3">
-                    <label class="form-label">Key</label>
+                    <label class="form-label">@T.T("Key")</label>
                     <input class="form-control" value="@Model.Key" readonly />
-                    <small class="text-muted">Key cannot be changed.</small>
+                    <small class="text-muted">@T.T("ImmutableKeyHelp")</small>
                 </div>
                 <div class="mb-3">
                     <label asp-for="DisplayName" class="form-label"></label>
-                    <field-help title="Display name" content="Human-friendly name shown in the UI." placement="right"></field-help>
+                    <field-help title="@T.T("DisplayName")" content="@T.T("AdminDisplayNameHelp")" placement="right"></field-help>
                     <input asp-for="DisplayName" class="form-control" />
                     <span asp-validation-for="DisplayName" class="text-danger"></span>
                 </div>
@@ -39,14 +40,14 @@
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">System</label>
+                    <label class="form-label">@T.T("System")</label>
                     @if (Model.IsSystem)
                     {
-                        <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
+                        <span class="badge bg-secondary"><i class="fa fa-lock"></i> @T.T("System")</span>
                     }
                     else
                     {
-                        <span class="text-muted">No</span>
+                        <span class="text-muted">@T.T("No")</span>
                     }
                 </div>
             </div>
@@ -65,7 +66,7 @@
                                 data-hx-target="#permission-editor-shell"
                                 data-hx-swap="outerHTML"
                                 data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                            <i class="fa fa-trash"></i> Delete
+                            <i class="fa fa-trash"></i> @T.T("Delete")
                         </button>
                     }
                 </div>
@@ -74,8 +75,8 @@
                        class="btn btn-outline-secondary"
                        hx-get="@Url.Action("Index", "Permissions")"
                        hx-target="#permission-editor-shell"
-                       hx-swap="outerHTML"><i class="fa fa-arrow-left"></i> Back</a>
-                    <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+                       hx-swap="outerHTML"><i class="fa fa-arrow-left"></i> @T.T("Back")</a>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
                 </div>
             </div>
         </div>

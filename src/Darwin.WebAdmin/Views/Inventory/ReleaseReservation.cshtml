@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.InventoryReleaseReservationActionVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Release Reservation";
+    ViewData["Title"] = T.T("ReleaseReservation");
 }
 
 <partial name="_ReleaseReservationEditorShell" model="Model" />

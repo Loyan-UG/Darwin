@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.InventoryAdjustActionVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Adjust Stock";
+    ViewData["Title"] = T.T("AdjustStock");
 }
 
 <partial name="_AdjustStockEditorShell" model="Model" />

@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockTransferEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Stock Transfer";
+    ViewData["Title"] = T.T("CreateStockTransfer");
     ViewData["IsCreate"] = true;
 }
 <partial name="~/Views/Inventory/_StockTransferEditorShell.cshtml" model="Model" />

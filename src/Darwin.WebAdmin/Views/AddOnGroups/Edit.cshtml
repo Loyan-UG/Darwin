@@ -1,7 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 @{
-    ViewData["Title"] = "Edit Add-on Group";
+    ViewData["Title"] = T.T("EditAddOnGroup");
 }
 
 <partial name="_AddOnGroupEditEditorShell" model="Model" />

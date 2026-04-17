@@ -1,9 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.CRM.OpportunityEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Opportunity";
+    ViewData["Title"] = T.T("CreateOpportunity");
 }
 
-<h1 class="mb-3">Create Opportunity</h1>
+<h1 class="mb-3">@T.T("CreateOpportunity")</h1>
 
 <partial name="_OpportunityEditorShell" model="Model" />
 

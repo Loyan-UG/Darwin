@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Identity.UserAddressesSectionVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     // Defensive: ensure we have a model instance even if the controller returns null for Items.
     var items = Model?.Items ?? new List<Darwin.WebAdmin.ViewModels.Identity.UserAddressListItemVm>();
@@ -11,7 +12,7 @@
 </form>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
-    <h5 class="mb-0">User Addresses</h5>
+    <h5 class="mb-0">@T.T("UserAddressesTitle")</h5>
 
     <!-- Add Address: opens the modal in CREATE mode -->
     <button type="button"
@@ -21,7 +22,7 @@
             data-mode="create"
             data-action="@Url.Action("CreateAddress", "Users")"
             data-userid="@userId">
-        <i class="fa fa-plus"></i> Add Address
+        <i class="fa fa-plus"></i> @T.T("AddAddress")
     </button>
 </div>
 
@@ -29,14 +30,14 @@
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Full Name</th>
-                <th>Company</th>
-                <th>Street</th>
-                <th>Postal</th>
-                <th>City</th>
-                <th>Country</th>
-                <th class="text-center">Default</th>
-                <th class="text-end" style="width:380px">Actions</th>
+                <th>@T.T("FullName")</th>
+                <th>@T.T("Company")</th>
+                <th>@T.T("Street")</th>
+                <th>@T.T("Postal")</th>
+                <th>@T.T("City")</th>
+                <th>@T.T("Country")</th>
+                <th class="text-center">@T.T("Default")</th>
+                <th class="text-end" style="width:380px">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
@@ -52,8 +53,8 @@
                         <td>@a.City</td>
                         <td>@a.CountryCode</td>
                         <td class="text-center">
-                            <span class="badge @(a.IsDefaultBilling ? "text-bg-primary" : "text-bg-light")">B</span>
-                            <span class="badge @(a.IsDefaultShipping ? "text-bg-success" : "text-bg-light")">S</span>
+                            <span class="badge @(a.IsDefaultBilling ? "text-bg-primary" : "text-bg-light")">@T.T("BillingBadgeShort")</span>
+                            <span class="badge @(a.IsDefaultShipping ? "text-bg-success" : "text-bg-light")">@T.T("ShippingBadgeShort")</span>
                         </td>
                         <td class="text-end">
 
@@ -69,7 +70,7 @@
                                     hx-swap="innerHTML"
                                     hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Billing"}'
                                     hx-on::after-request="if(event.detail.successful){ window.darwinAdmin.refreshAlerts(); }">
-                                <i class="fa fa-credit-card"></i> Set Billing
+                                <i class="fa fa-credit-card"></i> @T.T("SetBilling")
                             </button>
 
                             <!-- Set default Shipping -->
@@ -84,7 +85,7 @@
                                     hx-swap="innerHTML"
                                     hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Shipping"}'
                                     hx-on::after-request="if(event.detail.successful){ window.darwinAdmin.refreshAlerts(); }">
-                                <i class="fa fa-truck"></i> Set Shipping
+                                <i class="fa fa-truck"></i> @T.T("SetShipping")
                             </button>
 
                             <!-- Edit (opens modal with populated data) -->
@@ -108,7 +109,7 @@
                                     data-phonee164="@a.PhoneE164"
                                     data-defaultbilling="@(a.IsDefaultBilling ? "true" : "false")"
                                     data-defaultshipping="@(a.IsDefaultShipping ? "true" : "false")">
-                                <i class="fa fa-pen"></i> Edit
+                                <i class="fa fa-pen"></i> @T.T("Edit")
                             </button>
 
                             <!-- Delete (shared confirm modal) -->
@@ -124,7 +125,7 @@
                                     data-hx-swap="innerHTML"
                                     data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');"
                                     data-name="@($"{a.FullName} / {a.City} / {a.Street1}")">
-                                <i class="fa fa-trash"></i> Delete
+                                <i class="fa fa-trash"></i> @T.T("Delete")
                             </button>
                         </td>
                     </tr>
@@ -132,7 +133,7 @@
             }
             else
             {
-                <tr><td colspan="8" class="text-center text-muted">No addresses.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted">@T.T("NoAddresses")</td></tr>
             }
         </tbody>
     </table>

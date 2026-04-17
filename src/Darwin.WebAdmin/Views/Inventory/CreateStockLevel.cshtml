@@ -1,7 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockLevelEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["IsCreate"] = true;
-    ViewData["Title"] = "Create Stock Level";
+    ViewData["Title"] = T.T("CreateStockLevel");
 }
 <partial name="_StockLevelEditorShell" model="Model" />
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

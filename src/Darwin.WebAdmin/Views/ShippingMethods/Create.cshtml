@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Shipping.ShippingMethodEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Shipping Method";
+    ViewData["Title"] = T.T("CreateShippingMethod");
     ViewData["IsCreate"] = true;
 }
 

@@ -1,17 +1,18 @@
 @model Darwin.WebAdmin.ViewModels.Orders.PaymentCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var header = ViewData["OrderHeader"] as Darwin.WebAdmin.ViewModels.Orders.OrderHeaderVm;
 }
 
 <div id="order-payment-shell" class="card mb-3">
     <div class="card-body">
-        <h2 class="h4 mb-3"><i class="fa fa-credit-card"></i> Add Payment</h2>
+        <h2 class="h4 mb-3"><i class="fa fa-credit-card"></i> @T.T("AddPayment")</h2>
         <partial name="~/Views/Shared/_Alerts.cshtml" />
 
         @if (header is not null)
         {
             <div class="alert alert-info">
-                <strong>Order:</strong> @header.OrderNumber | <strong>Total:</strong> @header.Currency @((header.GrandTotalGrossMinor / 100.0M).ToString("0.00"))
+                <strong>@T.T("Order"):</strong> @header.OrderNumber | <strong>@T.T("Total"):</strong> @header.Currency @((header.GrandTotalGrossMinor / 100.0M).ToString("0.00"))
             </div>
         }
 
@@ -47,9 +48,9 @@
             <div class="col-md-4">
                 <label asp-for="Status" class="form-label"></label>
                 <select asp-for="Status" class="form-select">
-                    <option value="Captured">Captured</option>
-                    <option value="Authorized">Authorized</option>
-                    <option value="Failed">Failed</option>
+                    <option value="Captured">@T.T("Captured")</option>
+                    <option value="Authorized">@T.T("Authorized")</option>
+                    <option value="Failed">@T.T("Failed")</option>
                 </select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>
@@ -60,9 +61,9 @@
             </div>
             <div class="col-12">
                 <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId })" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">
-                    <i class="fa fa-arrow-left"></i> Back
+                    <i class="fa fa-arrow-left"></i> @T.T("Back")
                 </a>
-                <button class="btn btn-primary" type="submit"><i class="fa fa-check"></i> Save</button>
+                <button class="btn btn-primary" type="submit"><i class="fa fa-check"></i> @T.T("Save")</button>
             </div>
         </form>
     </div>

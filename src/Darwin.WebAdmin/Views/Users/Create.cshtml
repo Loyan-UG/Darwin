@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Identity.UserCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create User";
+    ViewData["Title"] = T.T("CreateUser");
 }
 
 <partial name="_UserCreateEditorShell" model="Model" />

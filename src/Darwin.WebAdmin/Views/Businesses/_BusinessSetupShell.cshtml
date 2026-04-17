@@ -124,34 +124,34 @@
         </div>
         <div class="card-body">
             <div class="small text-muted mb-3">
-                This setup page owns business-specific defaults and customer-facing identity. Platform credentials, global templates, carrier/provider thresholds, and VAT issuer defaults still live in site settings.
+                @T.T("BusinessSetupOwnershipIntro")
             </div>
             <div class="row g-3">
                 <div class="col-lg-4">
                     <div class="border rounded p-3 h-100">
-                        <div class="fw-semibold mb-2">Business-owned here</div>
+                        <div class="fw-semibold mb-2">@T.T("BusinessOwnedHere")</div>
                         <ul class="small mb-0">
-                            <li>Brand display name and logo</li>
-                            <li>Default culture, currency, and time zone</li>
-                            <li>Support email, sender name, reply-to</li>
-                            <li>Email/marketing/alert enablement flags</li>
+                            <li>@T.T("BusinessOwnedBranding")</li>
+                            <li>@T.T("BusinessOwnedLocaleDefaults")</li>
+                            <li>@T.T("BusinessOwnedSupportIdentity")</li>
+                            <li>@T.T("BusinessOwnedCommunicationFlags")</li>
                         </ul>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="border rounded p-3 h-100">
-                        <div class="fw-semibold mb-2">Global dependencies</div>
+                        <div class="fw-semibold mb-2">@T.T("GlobalDependencies")</div>
                         <ul class="small mb-0">
-                            <li>SMTP, SMS, and WhatsApp providers</li>
-                            <li>Invitation, activation, and reset templates</li>
-                            <li>Stripe and DHL credentials and thresholds</li>
-                            <li>VAT defaults and invoice issuer identity</li>
+                            <li>@T.T("GlobalDependenciesProviders")</li>
+                            <li>@T.T("GlobalDependenciesTemplates")</li>
+                            <li>@T.T("GlobalDependenciesPaymentsShipping")</li>
+                            <li>@T.T("GlobalDependenciesTaxIssuer")</li>
                         </ul>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="border rounded p-3 h-100">
-                        <div class="fw-semibold mb-2">Direct handoff</div>
+                        <div class="fw-semibold mb-2">@T.T("DirectHandoff")</div>
                         <div class="d-flex flex-wrap gap-2">
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
@@ -281,26 +281,26 @@
                 </div>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label asp-for="DefaultCulture" class="form-label">Default culture</label>
+                        <label asp-for="DefaultCulture" class="form-label">@T.T("DefaultCulture")</label>
                         <input asp-for="DefaultCulture" class="form-control" />
                     </div>
                     <div class="col-md-4">
-                        <label asp-for="DefaultCurrency" class="form-label">Default currency</label>
+                        <label asp-for="DefaultCurrency" class="form-label">@T.T("DefaultCurrency")</label>
                         <input asp-for="DefaultCurrency" class="form-control" maxlength="3" />
                     </div>
                     <div class="col-md-4">
-                        <label asp-for="DefaultTimeZoneId" class="form-label">Default time zone</label>
+                        <label asp-for="DefaultTimeZoneId" class="form-label">@T.T("DefaultTimeZone")</label>
                         <input asp-for="DefaultTimeZoneId" class="form-control" />
-                        <div class="form-text">Use an IANA time zone such as <code>Europe/Berlin</code>.</div>
+                        <div class="form-text">@T.T("DefaultTimeZoneHelp")</div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-check mt-4 pt-2">
                             <input asp-for="IsActive" class="form-check-input" disabled="@(Model.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Approved)" />
-                            <label asp-for="IsActive" class="form-check-label">Business is active</label>
+                            <label asp-for="IsActive" class="form-check-label">@T.T("BusinessIsActive")</label>
                         </div>
                         @if (Model.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Approved)
                         {
-                            <div class="form-text">Activation remains blocked until the business is approved.</div>
+                            <div class="form-text">@T.T("BusinessActivationBlockedUntilApproved")</div>
                         }
                     </div>
                     <div class="col-12">
@@ -308,7 +308,7 @@
                         <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="5" placeholder='{"de-DE":{"BusinessSetupTitle":"Betriebs-Setup"},"en-US":{"BusinessSetupTitle":"Business setup"}}'></textarea>
                         <span asp-validation-for="AdminTextOverridesJson" class="text-danger"></span>
                         <div class="form-text">
-                            Business-scoped admin wording overrides apply only when operators work inside this business context. Precedence is business override, then platform site-setting override, then shared resource text.
+                            @T.T("BusinessAdminTextOverridesHelp")
                         </div>
                     </div>
                 </div>
@@ -316,24 +316,24 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">Branding</div>
+            <div class="card-header">@T.T("Branding")</div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label asp-for="BrandDisplayName" class="form-label">Brand display name</label>
+                        <label asp-for="BrandDisplayName" class="form-label">@T.T("BrandDisplayName")</label>
                         <input asp-for="BrandDisplayName" class="form-control" />
-                        <div class="form-text">Use when customer-facing branding should differ from the legal or internal business name.</div>
+                        <div class="form-text">@T.T("BrandDisplayNameHelp")</div>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="BrandLogoUrl" class="form-label">Brand logo URL</label>
+                        <label asp-for="BrandLogoUrl" class="form-label">@T.T("BrandLogoUrl")</label>
                         <input asp-for="BrandLogoUrl" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="BrandPrimaryColorHex" class="form-label">Primary brand color</label>
+                        <label asp-for="BrandPrimaryColorHex" class="form-label">@T.T("PrimaryBrandColor")</label>
                         <input asp-for="BrandPrimaryColorHex" class="form-control" placeholder="#0055AA" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="BrandSecondaryColorHex" class="form-label">Secondary brand color</label>
+                        <label asp-for="BrandSecondaryColorHex" class="form-label">@T.T("SecondaryBrandColor")</label>
                         <input asp-for="BrandSecondaryColorHex" class="form-control" placeholder="#FFCC00" />
                     </div>
                 </div>
@@ -341,56 +341,56 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">Business Communication Defaults</div>
+            <div class="card-header">@T.T("BusinessCommunicationDefaults")</div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label asp-for="SupportEmail" class="form-label">Support email</label>
+                        <label asp-for="SupportEmail" class="form-label">@T.T("SupportEmail")</label>
                         <input asp-for="SupportEmail" class="form-control" />
                     </div>
                     <div class="col-md-4">
-                        <label asp-for="CommunicationSenderName" class="form-label">Sender display name</label>
+                        <label asp-for="CommunicationSenderName" class="form-label">@T.T("SenderDisplayName")</label>
                         <input asp-for="CommunicationSenderName" class="form-control" />
                     </div>
                     <div class="col-md-4">
-                        <label asp-for="CommunicationReplyToEmail" class="form-label">Reply-to email</label>
+                        <label asp-for="CommunicationReplyToEmail" class="form-label">@T.T("ReplyToEmail")</label>
                         <input asp-for="CommunicationReplyToEmail" class="form-control" />
                     </div>
                     <div class="col-md-4">
                         <div class="form-check mt-4 pt-2">
                             <input asp-for="CustomerEmailNotificationsEnabled" class="form-check-input" />
-                            <label asp-for="CustomerEmailNotificationsEnabled" class="form-check-label">Customer transactional emails enabled</label>
+                            <label asp-for="CustomerEmailNotificationsEnabled" class="form-check-label">@T.T("CustomerTransactionalEmailsEnabled")</label>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-check mt-4 pt-2">
                             <input asp-for="CustomerMarketingEmailsEnabled" class="form-check-input" />
-                            <label asp-for="CustomerMarketingEmailsEnabled" class="form-check-label">Customer marketing emails enabled</label>
+                            <label asp-for="CustomerMarketingEmailsEnabled" class="form-check-label">@T.T("CustomerMarketingEmailsEnabled")</label>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-check mt-4 pt-2">
                             <input asp-for="OperationalAlertEmailsEnabled" class="form-check-input" />
-                            <label asp-for="OperationalAlertEmailsEnabled" class="form-check-label">Operational alert emails enabled</label>
+                            <label asp-for="OperationalAlertEmailsEnabled" class="form-check-label">@T.T("OperationalAlertEmailsEnabled")</label>
                         </div>
                     </div>
                 </div>
                 <div class="form-text mt-2">
-                    These are business-level communication preferences. SMTP transport and provider credentials remain global in phase 1, but enablement and sender defaults are now business-scoped.
+                    @T.T("BusinessCommunicationDefaultsHelp")
                 </div>
             </div>
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">Communication Readiness</div>
+            <div class="card-header">@T.T("CommunicationReadiness")</div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-lg-6 col-xl-3">
                         <div class="border rounded p-3 h-100">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="fw-semibold">Email delivery</div>
+                                <div class="fw-semibold">@T.T("EmailDelivery")</div>
                                 <span class="badge @(Model.CommunicationReadiness.EmailTransportConfigured ? "bg-success" : "bg-warning text-dark")">
-                                    @(Model.CommunicationReadiness.EmailTransportConfigured ? "Ready" : "Needs setup")
+                                    @(Model.CommunicationReadiness.EmailTransportConfigured ? T.T("Ready") : T.T("NeedsSetup"))
                                 </span>
                             </div>
                             <div class="small text-muted">@Model.CommunicationReadiness.EmailTransportSummary</div>
@@ -399,9 +399,9 @@
                     <div class="col-lg-6 col-xl-3">
                         <div class="border rounded p-3 h-100">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="fw-semibold">SMS delivery</div>
+                                <div class="fw-semibold">@T.T("SmsDelivery")</div>
                                 <span class="badge @(Model.CommunicationReadiness.SmsTransportConfigured ? "bg-success" : "bg-secondary")">
-                                    @(Model.CommunicationReadiness.SmsTransportConfigured ? "Ready" : "Not ready")
+                                    @(Model.CommunicationReadiness.SmsTransportConfigured ? T.T("Ready") : T.T("NotReady"))
                                 </span>
                             </div>
                             <div class="small text-muted">@Model.CommunicationReadiness.SmsTransportSummary</div>
@@ -410,9 +410,9 @@
                     <div class="col-lg-6 col-xl-3">
                         <div class="border rounded p-3 h-100">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="fw-semibold">WhatsApp delivery</div>
+                                <div class="fw-semibold">@T.T("WhatsAppDelivery")</div>
                                 <span class="badge @(Model.CommunicationReadiness.WhatsAppTransportConfigured ? "bg-success" : "bg-secondary")">
-                                    @(Model.CommunicationReadiness.WhatsAppTransportConfigured ? "Ready" : "Not ready")
+                                    @(Model.CommunicationReadiness.WhatsAppTransportConfigured ? T.T("Ready") : T.T("NotReady"))
                                 </span>
                             </div>
                             <div class="small text-muted">@Model.CommunicationReadiness.WhatsAppTransportSummary</div>
@@ -421,9 +421,9 @@
                     <div class="col-lg-6 col-xl-3">
                         <div class="border rounded p-3 h-100">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="fw-semibold">Admin alert routing</div>
+                                <div class="fw-semibold">@T.T("AdminAlertRouting")</div>
                                 <span class="badge @((Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured) ? "bg-success" : "bg-warning text-dark")">
-                                    @((Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured) ? "Configured" : "Missing")
+                                    @((Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured) ? T.T("Configured") : T.T("Missing"))
                                 </span>
                             </div>
                             <div class="small text-muted">@Model.CommunicationReadiness.AdminRoutingSummary</div>
@@ -434,54 +434,54 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">Business Subscription Snapshot</div>
+            <div class="card-header">@T.T("BusinessSubscriptionSnapshot")</div>
             <div class="card-body">
                 @if (Model.Subscription.HasSubscription)
                 {
                     <div class="row g-3">
                         <div class="col-md-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small text-uppercase">Plan</div>
+                                <div class="text-muted small text-uppercase">@T.T("Plan")</div>
                                 <div class="fw-semibold mt-1">@Model.Subscription.PlanName</div>
                                 <div class="small text-muted mt-2">@Model.Subscription.Provider</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small text-uppercase">Status</div>
+                                <div class="text-muted small text-uppercase">@T.T("Status")</div>
                                 <div class="fw-semibold mt-1">@Model.Subscription.Status</div>
                                 <div class="small text-muted mt-2">
                                     @if (Model.Subscription.CancelAtPeriodEnd)
                                     {
-                                        <span>Cancels at period end</span>
+                                        <span>@T.T("CancelsAtPeriodEnd")</span>
                                     }
                                     else
                                     {
-                                        <span>Renews normally</span>
+                                        <span>@T.T("RenewsNormally")</span>
                                     }
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small text-uppercase">Amount</div>
+                                <div class="text-muted small text-uppercase">@T.T("Amount")</div>
                                 <div class="fw-semibold mt-1">@Model.Subscription.Currency @((Model.Subscription.UnitPriceMinor / 100M).ToString("0.00"))</div>
-                                <div class="small text-muted mt-2">Current period end: @(Model.Subscription.CurrentPeriodEndUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                                <div class="small text-muted mt-2">@T.T("CurrentPeriodEnd"): @(Model.Subscription.CurrentPeriodEndUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
                             </div>
                         </div>
                     </div>
                     <div class="small text-muted mt-3">
-                        Started: @(Model.Subscription.StartedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                        @T.T("Started"): @(Model.Subscription.StartedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
                         @if (Model.Subscription.TrialEndsAtUtc.HasValue)
                         {
-                            <span> | Trial ends: @Model.Subscription.TrialEndsAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                            <span> | @T.T("TrialEnds"): @Model.Subscription.TrialEndsAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</span>
                         }
                     </div>
                 }
                 else
                 {
                     <div class="alert alert-secondary mb-0">
-                        No active subscription snapshot is available for this business yet.
+                        @T.T("NoActiveSubscriptionSnapshot")
                     </div>
                 }
                 <div class="d-flex gap-2 mt-3 flex-wrap">
@@ -520,7 +520,7 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">Operational Setup Actions</div>
+            <div class="card-header">@T.T("OperationalSetupActions")</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
                     <a asp-action="CreateMember"

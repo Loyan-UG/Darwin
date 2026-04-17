@@ -163,14 +163,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             string? query = null,
             BusinessOperationalStatus? operationalStatus = null,
             bool attentionOnly = false,
+            BusinessReadinessQueueFilter? readinessFilter = null,
             CancellationToken ct = default)
         {
+            var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
             var (items, total) = await _getBusinessesPage.HandleAsync(
                 page,
                 pageSize,
                 query,
                 operationalStatus,
                 attentionOnly,
+                readinessFilter,
                 ct);
 
             var vm = new BusinessesListVm
@@ -181,6 +184,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Query = query ?? string.Empty,
                 OperationalStatus = operationalStatus,
                 AttentionOnly = attentionOnly,
+                ReadinessFilter = readinessFilter,
+                Summary = MapSupportSummaryVm(summary),
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 OperationalStatusItems = BuildBusinessStatusItems(operationalStatus),
                 Items = items.Select(x => new BusinessListItemVm
@@ -212,7 +217,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         public async Task<IActionResult> SupportQueue(CancellationToken ct = default)
         {
             var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
-            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, ct).ConfigureAwait(false);
+            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, readinessFilter: null, ct).ConfigureAwait(false);
             var (failedEmails, _, _) = await _getEmailDispatchAuditsPage
                 .HandleAsync(
                     page: 1,
@@ -237,7 +242,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AttentionBusinessCount = summary.AttentionBusinessCount,
                     PendingApprovalBusinessCount = summary.PendingApprovalBusinessCount,
                     SuspendedBusinessCount = summary.SuspendedBusinessCount,
+                    ApprovedInactiveBusinessCount = summary.ApprovedInactiveBusinessCount,
                     MissingOwnerBusinessCount = summary.MissingOwnerBusinessCount,
+                    MissingPrimaryLocationBusinessCount = summary.MissingPrimaryLocationBusinessCount,
+                    MissingContactEmailBusinessCount = summary.MissingContactEmailBusinessCount,
+                    MissingLegalNameBusinessCount = summary.MissingLegalNameBusinessCount,
                     OpenInvitationCount = summary.OpenInvitationCount,
                     PendingActivationMemberCount = summary.PendingActivationMemberCount,
                     LockedMemberCount = summary.LockedMemberCount
@@ -283,7 +292,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         public async Task<IActionResult> MerchantReadiness(CancellationToken ct = default)
         {
             var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
-            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 12, null, null, true, ct).ConfigureAwait(false);
+            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 12, null, null, true, readinessFilter: null, ct).ConfigureAwait(false);
 
             var items = new List<MerchantReadinessItemVm>();
             foreach (var business in attentionBusinesses)
@@ -294,6 +303,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Id = business.Id,
                     Name = business.Name,
                     LegalName = business.LegalName,
+                    IsActive = business.IsActive,
                     OperationalStatus = business.OperationalStatus,
                     HasContactEmailConfigured = business.HasContactEmailConfigured,
                     HasLegalNameConfigured = business.HasLegalNameConfigured,
@@ -330,7 +340,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> SupportQueueAttentionFragment(CancellationToken ct = default)
         {
-            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, ct).ConfigureAwait(false);
+            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, readinessFilter: null, ct).ConfigureAwait(false);
             var vm = attentionBusinesses.Select(x => new BusinessListItemVm
             {
                 Id = x.Id,
@@ -2223,7 +2233,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 AttentionBusinessCount = summary.AttentionBusinessCount,
                 PendingApprovalBusinessCount = summary.PendingApprovalBusinessCount,
                 SuspendedBusinessCount = summary.SuspendedBusinessCount,
+                ApprovedInactiveBusinessCount = summary.ApprovedInactiveBusinessCount,
                 MissingOwnerBusinessCount = summary.MissingOwnerBusinessCount,
+                MissingPrimaryLocationBusinessCount = summary.MissingPrimaryLocationBusinessCount,
+                MissingContactEmailBusinessCount = summary.MissingContactEmailBusinessCount,
+                MissingLegalNameBusinessCount = summary.MissingLegalNameBusinessCount,
                 OpenInvitationCount = summary.OpenInvitationCount,
                 PendingActivationMemberCount = summary.PendingActivationMemberCount,
                 LockedMemberCount = summary.LockedMemberCount

@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.CRM.CustomerMembershipsVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <partial name="~/Views/Shared/_Alerts.cshtml" />
 
@@ -6,15 +7,15 @@
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Description</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("Description")</th>
                 <th class="text-end"></th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="3" class="text-center text-muted">No assigned segments.</td></tr>
+                <tr><td colspan="3" class="text-center text-muted">@T.T("NoAssignedSegments")</td></tr>
             }
             else
             {
@@ -34,7 +35,7 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="customerId" value="@Model.CustomerId" />
                                 <input type="hidden" name="membershipId" value="@item.MembershipId" />
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("Remove")</button>
                             </form>
                         </td>
                     </tr>

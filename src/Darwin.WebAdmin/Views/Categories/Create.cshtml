@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.CategoryCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Category";
+    ViewData["Title"] = T.T("CreateCategory");
 }
 
 <partial name="_CategoryCreateEditorShell" model="Model" />

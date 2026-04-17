@@ -310,7 +310,7 @@
            class="btn btn-outline-secondary"
            hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })"
            hx-target="#billing-payments-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML">@T.T("Reset")</a>
     </form>
     <div class="d-flex gap-2">
         <a asp-action="Webhooks"

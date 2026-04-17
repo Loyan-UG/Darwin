@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Billing.ExpenseEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Expense";
+    ViewData["Title"] = T.T("CreateExpense");
     ViewData["IsCreate"] = true;
 }
 <partial name="~/Views/Billing/_ExpenseEditorShell.cshtml" model="Model" />

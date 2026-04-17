@@ -1,14 +1,15 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockLevelEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = ViewData["IsCreate"] as bool? == true;
-    ViewData["Title"] = isCreate ? "Create Stock Level" : "Edit Stock Level";
+    ViewData["Title"] = isCreate ? T.T("InventoryCreateStockLevelTitle") : T.T("InventoryEditStockLevelTitle");
 }
 
 <div id="inventory-stock-level-editor-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1 class="mb-1">@(isCreate ? "Create Stock Level" : "Edit Stock Level")</h1>
-        <div class="text-muted">Maintain warehouse stock baselines before adjustment, reservation, and replenishment workflows depend on them.</div>
+        <h1 class="mb-1">@(isCreate ? T.T("InventoryCreateStockLevelTitle") : T.T("InventoryEditStockLevelTitle"))</h1>
+        <div class="text-muted">@T.T("InventoryStockLevelEditorIntro")</div>
     </div>
 </div>
 
@@ -24,12 +25,12 @@
     }
     <partial name="_StockLevelForm" model="Model" />
     <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">@(isCreate ? "Create" : "Save")</button>
+        <button type="submit" class="btn btn-primary">@(isCreate ? T.T("Create") : T.T("Save"))</button>
         <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
            hx-get="@Url.Action("StockLevels", "Inventory", new { warehouseId = Model.WarehouseId })"
            hx-target="#inventory-stock-level-editor-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">Back</a>
+           hx-push-url="true">@T.T("Back")</a>
     </div>
 </form>
 </div>

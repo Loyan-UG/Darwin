@@ -4,6 +4,16 @@ using Darwin.Domain.Enums;
 
 namespace Darwin.Application.Businesses.DTOs
 {
+    public enum BusinessReadinessQueueFilter : short
+    {
+        MissingOwner = 1,
+        MissingPrimaryLocation = 2,
+        MissingContactEmail = 3,
+        MissingLegalName = 4,
+        PendingInvites = 5,
+        ApprovedInactive = 6
+    }
+
     /// <summary>
     /// DTO for creating a new business (merchant tenant).
     /// </summary>

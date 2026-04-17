@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Identity.PermissionCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Permission";
+    ViewData["Title"] = T.T("CreatePermission");
 }
 
 <partial name="_PermissionCreateEditorShell" model="Model" />

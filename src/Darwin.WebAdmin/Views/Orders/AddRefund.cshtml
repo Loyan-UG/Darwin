@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Orders.RefundCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Add Refund";
+    ViewData["Title"] = T.T("AddRefund");
 }
 
 <partial name="~/Views/Orders/_RefundCreateShell.cshtml" model="Model" />

@@ -42,6 +42,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string Query { get; set; } = string.Empty;
         public BusinessOperationalStatus? OperationalStatus { get; set; }
         public bool AttentionOnly { get; set; }
+        public BusinessReadinessQueueFilter? ReadinessFilter { get; set; }
+        public BusinessSupportSummaryVm Summary { get; set; } = new();
         public List<BusinessListItemVm> Items { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> OperationalStatusItems { get; set; } = Array.Empty<SelectListItem>();
@@ -69,6 +71,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? LegalName { get; set; }
+        public bool IsActive { get; set; }
         public BusinessOperationalStatus OperationalStatus { get; set; } = BusinessOperationalStatus.PendingApproval;
         public bool HasContactEmailConfigured { get; set; }
         public bool HasLegalNameConfigured { get; set; }
@@ -94,7 +97,11 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int AttentionBusinessCount { get; set; }
         public int PendingApprovalBusinessCount { get; set; }
         public int SuspendedBusinessCount { get; set; }
+        public int ApprovedInactiveBusinessCount { get; set; }
         public int MissingOwnerBusinessCount { get; set; }
+        public int MissingPrimaryLocationBusinessCount { get; set; }
+        public int MissingContactEmailBusinessCount { get; set; }
+        public int MissingLegalNameBusinessCount { get; set; }
         public int OpenInvitationCount { get; set; }
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }

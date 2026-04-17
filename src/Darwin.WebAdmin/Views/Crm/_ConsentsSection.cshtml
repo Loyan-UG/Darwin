@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.CRM.ConsentsPageVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div hx-boost="true"
      hx-target="this"
@@ -9,16 +10,16 @@
         <table class="table table-sm table-striped align-middle">
             <thead>
                 <tr>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Granted (UTC)</th>
-                    <th>Revoked (UTC)</th>
+                    <th>@T.T("Type")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("GrantedAtUtcShort")</th>
+                    <th>@T.T("RevokedAtUtcShort")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="4" class="text-center text-muted">No consent history.</td></tr>
+                    <tr><td colspan="4" class="text-center text-muted">@T.T("NoConsentHistory")</td></tr>
                 }
                 else
                 {
@@ -26,7 +27,7 @@
                     {
                         <tr>
                             <td>@item.Type</td>
-                            <td>@(item.Granted ? "Granted" : "Revoked")</td>
+                            <td>@(item.Granted ? T.T("Granted") : T.T("Revoked"))</td>
                             <td>@item.GrantedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
                             <td>@(item.RevokedAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
                         </tr>

@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InteractionsPageVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div hx-boost="true"
      hx-target="this"
@@ -9,17 +10,17 @@
         <table class="table table-sm table-striped align-middle">
             <thead>
                 <tr>
-                    <th>Type</th>
-                    <th>Channel</th>
-                    <th>Subject</th>
-                    <th>Content</th>
-                    <th>Created (UTC)</th>
+                    <th>@T.T("Type")</th>
+                    <th>@T.T("Channel")</th>
+                    <th>@T.T("Subject")</th>
+                    <th>@T.T("Content")</th>
+                    <th>@T.T("CreatedAtUtc")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="5" class="text-center text-muted">No interactions yet.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted">@T.T("NoInteractionsYet")</td></tr>
                 }
                 else
                 {

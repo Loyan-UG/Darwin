@@ -274,7 +274,7 @@
                         }
                         @if (item.ResponseCode.HasValue)
                         {
-                            <div class="small text-muted mt-1">HTTP @item.ResponseCode</div>
+                            <div class="small text-muted mt-1">@T.T("HttpStatusLabel") @item.ResponseCode</div>
                         }
                     </td>
                     <td>
@@ -289,7 +289,7 @@
                             <div>@T.T("WebhookLastAttemptLabel") @(item.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
                     </td>
                     <td>
-                        <div class="small text-muted">Subscription @item.SubscriptionId</div>
+                        <div class="small text-muted">@T.T("SubscriptionLabel") @item.SubscriptionId</div>
                         <div class="small text-muted">@item.IdempotencyKey</div>
                         @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
                         {

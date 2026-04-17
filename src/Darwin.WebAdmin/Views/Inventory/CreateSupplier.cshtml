@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.SupplierEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Supplier";
+    ViewData["Title"] = T.T("CreateSupplier");
     ViewData["IsCreate"] = true;
 }
 <partial name="~/Views/Inventory/_SupplierEditorShell.cshtml" model="Model" />

@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Billing.JournalEntryEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Journal Entry";
+    ViewData["Title"] = T.T("EditJournalEntry");
     ViewData["IsCreate"] = false;
 }
 <partial name="~/Views/Billing/_JournalEntryEditorShell.cshtml" model="Model" />

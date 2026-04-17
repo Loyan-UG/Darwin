@@ -1,9 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.Identity.RoleCreateVm
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @addTagHelper *, Darwin.WebAdmin
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="role-editor-shell">
-    <h1 class="mb-3"><i class="fa fa-plus"></i> Create Role</h1>
+    <h1 class="mb-3"><i class="fa fa-plus"></i> @T.T("CreateRole")</h1>
 
     <partial name="~/Views/Shared/_Alerts.cshtml" />
 
@@ -21,21 +22,21 @@
             <div class="card-body">
                 <div class="mb-3">
                     <label asp-for="Key" class="form-label"></label>
-                    <field-help title="Key" content="Stable role key (e.g., 'Members', 'Administrators')." placement="right"></field-help>
+                    <field-help title="@T.T("Key")" content="@T.T("RoleKeyHelp")" placement="right"></field-help>
                     <input asp-for="Key" class="form-control" />
                     <span asp-validation-for="Key" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="DisplayName" class="form-label"></label>
-                    <field-help title="Display Name" content="Human-friendly name shown in the Admin UI." placement="right"></field-help>
+                    <field-help title="@T.T("DisplayName")" content="@T.T("AdminDisplayNameHelp")" placement="right"></field-help>
                     <input asp-for="DisplayName" class="form-control" />
                     <span asp-validation-for="DisplayName" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Description" class="form-label"></label>
-                    <field-help title="Description" content="Optional context about this role's purpose." placement="right"></field-help>
+                    <field-help title="@T.T("Description")" content="@T.T("RoleDescriptionHelp")" placement="right"></field-help>
                     <textarea asp-for="Description" rows="3" class="form-control"></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
@@ -47,8 +48,8 @@
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Index", "Roles")"
                hx-target="#role-editor-shell"
-               hx-swap="outerHTML"><i class="fa fa-arrow-left"></i> Back</a>
-            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+               hx-swap="outerHTML"><i class="fa fa-arrow-left"></i> @T.T("Back")</a>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
         </div>
     </form>
 </div>

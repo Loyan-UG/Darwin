@@ -180,7 +180,7 @@
         <div class="card-body">
             <div class="mb-3">
                 <label asp-for="Title" class="form-label"></label>
-                <field-help title="Title" content="Displayed in the browser title and UI headers. Max 200 characters." placement="right"></field-help>
+                <field-help title="@T.T("SiteSettingsTitleHelpTitle")" content="@T.T("SiteSettingsTitleHelpContent")" placement="right"></field-help>
                 <input asp-for="Title" class="form-control" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
@@ -188,13 +188,13 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="LogoUrl" class="form-label"></label>
-                    <field-help title="Logo URL" content="Absolute or app-relative URL for logo (e.g., /img/logo.svg)." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsLogoUrlHelpTitle")" content="@T.T("SiteSettingsLogoUrlHelpContent")" placement="right"></field-help>
                     <input asp-for="LogoUrl" class="form-control" />
                     <span asp-validation-for="LogoUrl" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="ContactEmail" class="form-label"></label>
-                    <field-help title="Contact email" content="Primary contact email displayed publicly in footer/contact page." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsContactEmailHelpTitle")" content="@T.T("SiteSettingsContactEmailHelpContent")" placement="right"></field-help>
                     <input asp-for="ContactEmail" class="form-control" />
                     <span asp-validation-for="ContactEmail" class="text-danger"></span>
                 </div>
@@ -247,16 +247,16 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="DefaultCulture" class="form-label"></label>
-                    <field-help title="Default culture" content="Format: ll-CC (e.g., de-DE). Used as fallback culture." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsDefaultCultureHelpTitle")" content="@T.T("SiteSettingsDefaultCultureHelpContent")" placement="right"></field-help>
                     <select asp-for="DefaultCulture" class="form-select">
-                        <option value="de-DE">de-DE</option>
-                        <option value="en-US">en-US</option>
+                        <option value="de-DE">@T.T("LocaleGermanGermany")</option>
+                        <option value="en-US">@T.T("LocaleEnglishUnitedStates")</option>
                     </select>
                     <span asp-validation-for="DefaultCulture" class="text-danger"></span>
                 </div>
                 <div class="col-md-8 mb-3">
                     <label asp-for="SupportedCulturesCsv" class="form-label"></label>
-                    <field-help title="Supported cultures" content="Comma-separated cultures (e.g., de-DE,en-US). Drives Admin dropdowns and hreflang." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsSupportedCulturesHelpTitle")" content="@T.T("SiteSettingsSupportedCulturesHelpContent")" placement="right"></field-help>
                     <input asp-for="SupportedCulturesCsv" class="form-control" value="@Model.SupportedCulturesCsv" />
                     <span asp-validation-for="SupportedCulturesCsv" class="text-danger"></span>
                 </div>
@@ -265,31 +265,31 @@
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label asp-for="DefaultCountry" class="form-label"></label>
-                    <field-help title="Default country" content="ISO 3166-1 alpha-2 (e.g., DE)." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsDefaultCountryHelpTitle")" content="@T.T("SiteSettingsDefaultCountryHelpContent")" placement="right"></field-help>
                     <select asp-for="DefaultCountry" class="form-select">
-                        <option value="DE">DE</option>
-                        <option value="US">US</option>
+                        <option value="DE">@T.T("CountryGermany")</option>
+                        <option value="US">@T.T("CountryUnitedStates")</option>
                     </select>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="DefaultCurrency" class="form-label"></label>
-                    <field-help title="Currency" content="ISO 4217 currency code. Default EUR." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsDefaultCurrencyHelpTitle")" content="@T.T("SiteSettingsDefaultCurrencyHelpContent")" placement="right"></field-help>
                     <select asp-for="DefaultCurrency" class="form-select">
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
+                        <option value="EUR">@T.T("CurrencyEuro")</option>
+                        <option value="USD">@T.T("CurrencyUsd")</option>
                     </select>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="TimeZone" class="form-label"></label>
-                    <field-help title="Time zone" content="IANA name (e.g., Europe/Berlin)." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsTimeZoneHelpTitle")" content="@T.T("SiteSettingsTimeZoneHelpContent")" placement="right"></field-help>
                     <select asp-for="TimeZone" class="form-select">
-                        <option value="Europe/Berlin">Europe/Berlin</option>
-                        <option value="UTC">UTC</option>
+                        <option value="Europe/Berlin">@T.T("TimeZoneEuropeBerlin")</option>
+                        <option value="UTC">@T.T("Utc")</option>
                     </select>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="HomeSlug" class="form-label"></label>
-                    <field-help title="Home slug" content="Slug of the homepage when building localized routes." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsHomeSlugHelpTitle")" content="@T.T("SiteSettingsHomeSlugHelpContent")" placement="right"></field-help>
                     <input asp-for="HomeSlug" class="form-control" />
                 </div>
             </div>
@@ -302,7 +302,7 @@
                 <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="6" placeholder='{"de-DE":{"Logout":"Abmelden"},"en-US":{"Logout":"Sign out"}}'></textarea>
                 <span asp-validation-for="AdminTextOverridesJson" class="text-danger"></span>
                 <div class="form-text">
-                    Optional platform-level wording overrides layered on top of shared admin resources. Use JSON in the form
+                    @T.T("SiteSettingsAdminTextOverridesHelpPrefix")
                     <code>{"de-DE":{"Key":"Value"},"en-US":{"Key":"Value"}}</code>.
                 </div>
             </div>
@@ -310,12 +310,12 @@
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label asp-for="DateFormat" class="form-label"></label>
-                    <field-help title="Date format" content="Default date format string (e.g., yyyy-MM-dd)." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsDateFormatHelpTitle")" content="@T.T("SiteSettingsDateFormatHelpContent")" placement="right"></field-help>
                     <input asp-for="DateFormat" class="form-control" />
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="TimeFormat" class="form-label"></label>
-                    <field-help title="Time format" content="Default time format string (e.g., HH:mm)." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsTimeFormatHelpTitle")" content="@T.T("SiteSettingsTimeFormatHelpContent")" placement="right"></field-help>
                     <input asp-for="TimeFormat" class="form-control" />
                 </div>
             </div>
@@ -324,16 +324,16 @@
 
     <!-- Security -->
     <div id="site-settings-security" class="card mb-4">
-        <div class="card-header">Security & JWT</div>
+        <div class="card-header">@T.T("SiteSettingsSecurityJwtTitle")</div>
         <div class="card-body">
             <div class="alert alert-warning mb-3" role="alert">
-                Treat signing keys and token lifetimes as production-sensitive settings. Changes here affect public APIs and mobile authentication.
+                @T.T("SiteSettingsSecurityJwtAlert")
             </div>
 
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="JwtEnabled" />
                 <label class="form-check-label" asp-for="JwtEnabled"></label>
-                <field-help title="JWT enabled" content="Disables issuing and accepting JWT access/refresh tokens when turned off." placement="right"></field-help>
+                <field-help title="@T.T("SiteSettingsJwtEnabledTitle")" content="@T.T("SiteSettingsJwtEnabledHelp")" placement="right"></field-help>
             </div>
 
             <div class="row">
@@ -387,13 +387,13 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="JwtSigningKey" class="form-label"></label>
-                    <field-help title="Signing key" content="Use a long high-entropy secret in production. Rotating this key affects active tokens." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsSigningKeyTitle")" content="@T.T("SiteSettingsSigningKeyHelp")" placement="right"></field-help>
                     <input asp-for="JwtSigningKey" class="form-control" autocomplete="new-password" />
                     <span asp-validation-for="JwtSigningKey" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="JwtPreviousSigningKey" class="form-label"></label>
-                    <field-help title="Previous signing key" content="Optional rotation slot so validators can accept tokens signed before a key change." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsPreviousSigningKeyTitle")" content="@T.T("SiteSettingsPreviousSigningKeyHelp")" placement="right"></field-help>
                     <input asp-for="JwtPreviousSigningKey" class="form-control" autocomplete="new-password" />
                     <span asp-validation-for="JwtPreviousSigningKey" class="text-danger"></span>
                 </div>
@@ -435,13 +435,13 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="MobileQrTokenRefreshSeconds" class="form-label"></label>
-                    <field-help title="QR token refresh" content="Refresh cadence for mobile QR/session tokens. Lower values improve security but increase refresh traffic." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsMobileQrTokenRefreshHelpTitle")" content="@T.T("SiteSettingsMobileQrTokenRefreshHelpContent")" placement="right"></field-help>
                     <input asp-for="MobileQrTokenRefreshSeconds" class="form-control" type="number" min="0" />
                     <span asp-validation-for="MobileQrTokenRefreshSeconds" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="MobileMaxOutboxItems" class="form-label"></label>
-                    <field-help title="Max outbox items" content="Upper bound for offline/mobile outbox buffering before the client must flush or block." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsMobileMaxOutboxItemsHelpTitle")" content="@T.T("SiteSettingsMobileMaxOutboxItemsHelpContent")" placement="right"></field-help>
                     <input asp-for="MobileMaxOutboxItems" class="form-control" type="number" min="0" />
                     <span asp-validation-for="MobileMaxOutboxItems" class="text-danger"></span>
                 </div>
@@ -477,29 +477,29 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="BusinessManagementWebsiteUrl" class="form-label"></label>
-                    <input asp-for="BusinessManagementWebsiteUrl" class="form-control" placeholder="https://www.loyan.de" />
+                    <input asp-for="BusinessManagementWebsiteUrl" class="form-control" placeholder="@T.T("SiteSettingsBusinessManagementWebsitePlaceholder")" />
                     <span asp-validation-for="BusinessManagementWebsiteUrl" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsBusinessAppManagementWebsiteHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="AccountDeletionUrl" class="form-label"></label>
-                    <input asp-for="AccountDeletionUrl" class="form-control" placeholder="https://www.loyan.de/account-deletion" />
+                    <input asp-for="AccountDeletionUrl" class="form-control" placeholder="@T.T("SiteSettingsAccountDeletionUrlPlaceholder")" />
                     <span asp-validation-for="AccountDeletionUrl" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsBusinessAppDeletionHelp")</div>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="ImpressumUrl" class="form-label"></label>
-                    <input asp-for="ImpressumUrl" class="form-control" placeholder="https://www.loyan.de/impressum" />
+                    <input asp-for="ImpressumUrl" class="form-control" placeholder="@T.T("SiteSettingsImpressumUrlPlaceholder")" />
                     <span asp-validation-for="ImpressumUrl" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="PrivacyPolicyUrl" class="form-label"></label>
-                    <input asp-for="PrivacyPolicyUrl" class="form-control" placeholder="https://www.loyan.de/datenschutz" />
+                    <input asp-for="PrivacyPolicyUrl" class="form-control" placeholder="@T.T("SiteSettingsPrivacyPolicyUrlPlaceholder")" />
                     <span asp-validation-for="PrivacyPolicyUrl" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="BusinessTermsUrl" class="form-label"></label>
-                    <input asp-for="BusinessTermsUrl" class="form-control" placeholder="https://www.loyan.de/agb-business" />
+                    <input asp-for="BusinessTermsUrl" class="form-control" placeholder="@T.T("SiteSettingsBusinessTermsUrlPlaceholder")" />
                     <span asp-validation-for="BusinessTermsUrl" class="text-danger"></span>
                 </div>
             </div>
@@ -507,10 +507,10 @@
     </div>
 
     <div id="site-settings-payments" class="card mb-4">
-        <div class="card-header">Payments (Stripe-first)</div>
+        <div class="card-header">@T.T("SiteSettingsPaymentsStripeTitle")</div>
         <div class="card-body">
             <div class="alert alert-secondary mb-3">
-                Stripe is the phase-1 payment provider. Keep the abstraction generic in code, but manage the near-term operational credentials and webhook verification here.
+                @T.T("SiteSettingsPaymentsStripeAlert")
             </div>
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="StripeEnabled" />
@@ -542,10 +542,10 @@
     </div>
 
     <div id="site-settings-tax" class="card mb-4">
-        <div class="card-header">Tax & Invoicing (Phase-1 VAT)</div>
+        <div class="card-header">@T.T("SiteSettingsTaxVatTitle")</div>
         <div class="card-body">
             <div class="alert alert-secondary mb-3">
-                These settings define the global VAT and invoice-issuer defaults used by phase-1 billing and invoice support surfaces until deeper business-specific tax policies are introduced.
+                @T.T("SiteSettingsTaxVatAlert")
             </div>
             <div class="row g-3">
                 <div class="col-md-3 d-flex align-items-center">
@@ -574,7 +574,7 @@
             </div>
 
             <hr class="my-4" />
-            <div class="fw-semibold mb-3">Invoice Issuer Defaults</div>
+            <div class="fw-semibold mb-3">@T.T("SiteSettingsInvoiceIssuerDefaultsTitle")</div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="InvoiceIssuerLegalName" class="form-label"></label>
@@ -611,10 +611,10 @@
     </div>
 
     <div id="site-settings-shipping" class="card mb-4">
-        <div class="card-header">Shipping (DHL-first)</div>
+        <div class="card-header">@T.T("SiteSettingsShippingDhlTitle")</div>
         <div class="card-body">
             <div class="alert alert-secondary mb-3">
-                DHL is the phase-1 carrier. This section keeps carrier access, environment, and default shipper identity centrally manageable from the admin UI.
+                @T.T("SiteSettingsShippingDhlAlert")
             </div>
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="DhlEnabled" />
@@ -624,15 +624,15 @@
                 <div class="col-md-4">
                     <label asp-for="DhlEnvironment" class="form-label"></label>
                     <select asp-for="DhlEnvironment" class="form-select">
-                        <option value="">Unspecified</option>
-                        <option value="Sandbox">Sandbox</option>
-                        <option value="Production">Production</option>
+                        <option value="">@T.T("Unspecified")</option>
+                        <option value="Sandbox">@T.T("Sandbox")</option>
+                        <option value="Production">@T.T("Production")</option>
                     </select>
                     <span asp-validation-for="DhlEnvironment" class="text-danger"></span>
                 </div>
                 <div class="col-md-8">
                     <label asp-for="DhlApiBaseUrl" class="form-label"></label>
-                    <input asp-for="DhlApiBaseUrl" class="form-control" placeholder="https://..." />
+                    <input asp-for="DhlApiBaseUrl" class="form-control" placeholder="@T.T("SiteSettingsDhlApiBaseUrlPlaceholder")" />
                     <span asp-validation-for="DhlApiBaseUrl" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
@@ -653,7 +653,7 @@
             </div>
 
             <hr class="my-4" />
-            <div class="fw-semibold mb-3">Default Shipper Identity</div>
+            <div class="fw-semibold mb-3">@T.T("SiteSettingsDefaultShipperIdentityTitle")</div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="DhlShipperName" class="form-label"></label>
@@ -694,13 +694,13 @@
                     <label asp-for="ShipmentAttentionDelayHours" class="form-label"></label>
                     <input asp-for="ShipmentAttentionDelayHours" class="form-control" type="number" min="1" />
                     <span asp-validation-for="ShipmentAttentionDelayHours" class="text-danger"></span>
-                    <div class="form-text">After this many hours, pending or packed shipments should be treated as awaiting carrier handoff.</div>
+                    <div class="form-text">@T.T("SiteSettingsShipmentAttentionDelayHelp")</div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="ShipmentTrackingGraceHours" class="form-label"></label>
                     <input asp-for="ShipmentTrackingGraceHours" class="form-control" type="number" min="1" />
                     <span asp-validation-for="ShipmentTrackingGraceHours" class="text-danger"></span>
-                    <div class="form-text">After this many hours, shipped DHL records without tracking appear as overdue in support queues.</div>
+                    <div class="form-text">@T.T("SiteSettingsShipmentTrackingGraceHelp")</div>
                 </div>
             </div>
         </div>
@@ -708,12 +708,12 @@
 
     <!-- Operational -->
     <div id="site-settings-retention" class="card mb-4">
-        <div class="card-header">Operational Retention</div>
+        <div class="card-header">@T.T("SiteSettingsOperationalRetentionTitle")</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="SoftDeleteCleanupEnabled" />
                 <label class="form-check-label" asp-for="SoftDeleteCleanupEnabled"></label>
-                <field-help title="Cleanup enabled" content="Allows background cleanup of soft-deleted records after the retention window has elapsed." placement="right"></field-help>
+                <field-help title="@T.T("SiteSettingsCleanupEnabledTitle")" content="@T.T("SiteSettingsCleanupEnabledHelp")" placement="right"></field-help>
             </div>
 
             <div class="row">
@@ -733,15 +733,15 @@
 
     <!-- Measurement -->
     <div id="site-settings-measurement" class="card mb-4">
-        <div class="card-header">Measurement & Units</div>
+        <div class="card-header">@T.T("SiteSettingsMeasurementUnitsTitle")</div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="MeasurementSystem" class="form-label"></label>
-                    <field-help title="Measurement system" content="Affects weight/length display units." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsMeasurementSystemTitle")" content="@T.T("SiteSettingsMeasurementSystemHelp")" placement="right"></field-help>
                     <select asp-for="MeasurementSystem" class="form-select">
-                        <option value="Metric">Metric</option>
-                        <option value="Imperial">Imperial</option>
+                        <option value="Metric">@T.T("Metric")</option>
+                        <option value="Imperial">@T.T("Imperial")</option>
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
@@ -767,7 +767,7 @@
 
     <!-- SEO -->
     <div id="site-settings-seo" class="card mb-4">
-        <div class="card-header">SEO</div>
+        <div class="card-header">@T.T("Seo")</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="EnableCanonical" />
@@ -795,7 +795,7 @@
 
     <!-- Analytics -->
     <div id="site-settings-analytics" class="card mb-4">
-        <div class="card-header">Analytics</div>
+        <div class="card-header">@T.T("Analytics")</div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4 mb-3">
@@ -821,12 +821,12 @@
 
     <!-- WhatsApp -->
     <div id="site-settings-whatsapp" class="card mb-4">
-        <div class="card-header">WhatsApp</div>
+        <div class="card-header">@T.T("WhatsApp")</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="WhatsAppEnabled" />
                 <label class="form-check-label" asp-for="WhatsAppEnabled"></label>
-                <field-help title="WhatsApp" content="Enable WhatsApp integration to send notifications via the WhatsApp Business Cloud API." placement="right"></field-help>
+                <field-help title="@T.T("WhatsApp")" content="@T.T("SiteSettingsWhatsAppEnabledHelp")" placement="right"></field-help>
             </div>
 
             <div class="row">
@@ -855,12 +855,12 @@
 
     <!-- WebAuthn -->
     <div id="site-settings-webauthn" class="card mb-4">
-        <div class="card-header">WebAuthn (Passkeys)</div>
+        <div class="card-header">@T.T("SiteSettingsWebAuthnPasskeysTitle")</div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="WebAuthnRelyingPartyId" class="form-label"></label>
-                    <field-help title="RP ID" content="Registrable domain (e.g., example.com) or 'localhost' for dev." placement="right"></field-help>
+                    <field-help title="@T.T("SiteSettingsWebAuthnRpIdTitle")" content="@T.T("SiteSettingsWebAuthnRpIdHelp")" placement="right"></field-help>
                     <input asp-for="WebAuthnRelyingPartyId" class="form-control" />
                 </div>
                 <div class="col-md-4 mb-3">
@@ -876,14 +876,14 @@
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="WebAuthnRequireUserVerification" />
                 <label class="form-check-label" asp-for="WebAuthnRequireUserVerification"></label>
-                <field-help title="User verification" content="When enabled, requires biometric/PIN verification on authenticators." placement="right"></field-help>
+                <field-help title="@T.T("SiteSettingsWebAuthnUserVerificationTitle")" content="@T.T("SiteSettingsWebAuthnUserVerificationHelp")" placement="right"></field-help>
             </div>
         </div>
     </div>
 
     <!-- SMTP -->
     <div id="site-settings-smtp" class="card mb-4">
-        <div class="card-header">Email (SMTP)</div>
+        <div class="card-header">@T.T("SiteSettingsEmailSmtpTitle")</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="SmtpEnabled" />
@@ -930,7 +930,7 @@
 
     <!-- SMS -->
     <div id="site-settings-sms" class="card mb-4">
-        <div class="card-header">SMS</div>
+        <div class="card-header">@T.T("SMS")</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="SmsEnabled" />
@@ -967,7 +967,7 @@
 
     <!-- Admin Routing -->
     <div id="site-settings-admin-routing" class="card mb-4">
-        <div class="card-header">Admin Alert Routing</div>
+        <div class="card-header">@T.T("AdminAlertRouting")</div>
         <div class="card-body">
             <div class="mb-3">
                 <label asp-for="AdminAlertEmailsCsv" class="form-label"></label>
@@ -975,51 +975,51 @@
             </div>
             <div class="mb-3">
                 <label asp-for="AdminAlertSmsRecipientsCsv" class="form-label"></label>
-                <field-help title="Admin SMS recipients" content="Comma-separated E.164 phone numbers (e.g., +49123456789)." placement="right"></field-help>
+                <field-help title="@T.T("SiteSettingsAdminSmsRecipientsTitle")" content="@T.T("SiteSettingsAdminSmsRecipientsHelp")" placement="right"></field-help>
                 <input asp-for="AdminAlertSmsRecipientsCsv" class="form-control" />
             </div>
         </div>
     </div>
 
     <div id="site-settings-communications-policy" class="card mb-4">
-        <div class="card-header">Transactional Communication Policy</div>
+        <div class="card-header">@T.T("BusinessCommunicationTransactionalPolicyTitle")</div>
         <div class="card-body">
             <div class="alert alert-secondary mb-3">
-                These controls affect the currently implemented invitation, activation, password-reset, and phone-verification communication flows.
+                @T.T("SiteSettingsTransactionalPolicyIntro")
             </div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="TransactionalEmailSubjectPrefix" class="form-label"></label>
                     <input asp-for="TransactionalEmailSubjectPrefix" class="form-control" placeholder="[Darwin]" />
                     <span asp-validation-for="TransactionalEmailSubjectPrefix" class="text-danger"></span>
-                    <div class="form-text">Prepended to current transactional email subjects for environment or ops signaling.</div>
+                    <div class="form-text">@T.T("BusinessCommunicationPhaseOneImplicationSubjectPrefix")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="CommunicationTestInboxEmail" class="form-label"></label>
-                    <input asp-for="CommunicationTestInboxEmail" class="form-control" placeholder="qa-inbox@example.com" />
+                    <input asp-for="CommunicationTestInboxEmail" class="form-control" placeholder="@T.T("SiteSettingsCommunicationTestInboxPlaceholder")" />
                     <span asp-validation-for="CommunicationTestInboxEmail" class="text-danger"></span>
-                    <div class="form-text">When set, phase-1 transactional emails are rerouted here and include the original recipient in the body.</div>
+                    <div class="form-text">@T.T("BusinessCommunicationPhaseOneImplicationTestInbox")</div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="CommunicationTestSmsRecipientE164" class="form-label"></label>
-                    <input asp-for="CommunicationTestSmsRecipientE164" class="form-control" placeholder="+4915112345678" />
+                    <input asp-for="CommunicationTestSmsRecipientE164" class="form-control" placeholder="@T.T("SiteSettingsCommunicationTestPhonePlaceholder")" />
                     <span asp-validation-for="CommunicationTestSmsRecipientE164" class="text-danger"></span>
-                    <div class="form-text">Reserved test target for SMS rollout and staged provider validation.</div>
+                    <div class="form-text">@T.T("SiteSettingsCommunicationTestSmsTargetHelp")</div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="CommunicationTestWhatsAppRecipientE164" class="form-label"></label>
-                    <input asp-for="CommunicationTestWhatsAppRecipientE164" class="form-control" placeholder="+4915112345678" />
+                    <input asp-for="CommunicationTestWhatsAppRecipientE164" class="form-control" placeholder="@T.T("SiteSettingsCommunicationTestPhonePlaceholder")" />
                     <span asp-validation-for="CommunicationTestWhatsAppRecipientE164" class="text-danger"></span>
-                    <div class="form-text">Used by operator-side WhatsApp transport tests before go-live.</div>
+                    <div class="form-text">@T.T("SiteSettingsWhatsAppTransportTestHelp")</div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="PhoneVerificationPreferredChannel" class="form-label"></label>
                     <select asp-for="PhoneVerificationPreferredChannel" class="form-select">
-                        <option value="Sms">SMS</option>
-                        <option value="WhatsApp">WhatsApp</option>
+                        <option value="Sms">@T.T("SMS")</option>
+                        <option value="WhatsApp">@T.T("WhatsApp")</option>
                     </select>
                     <span asp-validation-for="PhoneVerificationPreferredChannel" class="text-danger"></span>
-                    <div class="form-text">Default channel when Web or Mobile does not explicitly request one.</div>
+                    <div class="form-text">@T.T("SiteSettingsPhoneVerificationPreferredChannelHelp")</div>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <div class="form-check form-switch mb-3">
@@ -1029,12 +1029,10 @@
                 </div>
             </div>
             <div class="alert alert-light border mt-3 mb-3 small">
-                Phone verification policy:
-                if the client does not specify a channel, the platform uses the preferred channel above.
-                If fallback is enabled, the system may switch between SMS and WhatsApp when the preferred or requested channel is unavailable.
+                @T.T("SiteSettingsPhoneVerificationPolicyNote")
             </div>
             <div class="alert alert-light border mt-3 mb-3 small">
-                Supported placeholders:
+                @T.T("SiteSettingsSupportedPlaceholdersTitle"):
                 <code>{business_name}</code>,
                 <code>{role}</code>,
                 <code>{token}</code>,
@@ -1054,36 +1052,36 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="CommunicationTestEmailSubjectTemplate" class="form-label"></label>
-                    <input asp-for="CommunicationTestEmailSubjectTemplate" class="form-control" placeholder="Darwin communication test for {channel}" />
+                    <input asp-for="CommunicationTestEmailSubjectTemplate" class="form-control" placeholder="@T.T("SiteSettingsCommunicationTestEmailSubjectPlaceholder")" />
                     <span asp-validation-for="CommunicationTestEmailSubjectTemplate" class="text-danger"></span>
-                    <div class="form-text">Subject used for operator-side diagnostic email tests.</div>
+                    <div class="form-text">@T.T("SiteSettingsCommunicationTestEmailSubjectHelp")</div>
                 </div>
                 <div class="col-md-12">
                     <label asp-for="CommunicationTestEmailBodyTemplate" class="form-label"></label>
-                    <textarea asp-for="CommunicationTestEmailBodyTemplate" class="form-control" rows="5" placeholder="&lt;p&gt;This is a Darwin {channel} communication test.&lt;/p&gt;"></textarea>
+                    <textarea asp-for="CommunicationTestEmailBodyTemplate" class="form-control" rows="5" placeholder="@T.T("SiteSettingsCommunicationTestEmailBodyPlaceholder")"></textarea>
                     <span asp-validation-for="CommunicationTestEmailBodyTemplate" class="text-danger"></span>
-                    <div class="form-text">HTML body used for diagnostic email tests to the configured test inbox.</div>
+                    <div class="form-text">@T.T("SiteSettingsCommunicationTestEmailBodyHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="CommunicationTestSmsTemplate" class="form-label"></label>
-                    <textarea asp-for="CommunicationTestSmsTemplate" class="form-control" rows="3" placeholder="Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}."></textarea>
+                    <textarea asp-for="CommunicationTestSmsTemplate" class="form-control" rows="3" placeholder="@T.T("SiteSettingsCommunicationTestSmsTemplatePlaceholder")"></textarea>
                     <span asp-validation-for="CommunicationTestSmsTemplate" class="text-danger"></span>
-                    <div class="form-text">Plain-text SMS used for operator-side SMS provider validation.</div>
+                    <div class="form-text">@T.T("SiteSettingsCommunicationTestSmsTemplateHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="CommunicationTestWhatsAppTemplate" class="form-label"></label>
-                    <textarea asp-for="CommunicationTestWhatsAppTemplate" class="form-control" rows="3" placeholder="Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}."></textarea>
+                    <textarea asp-for="CommunicationTestWhatsAppTemplate" class="form-control" rows="3" placeholder="@T.T("SiteSettingsCommunicationTestWhatsAppTemplatePlaceholder")"></textarea>
                     <span asp-validation-for="CommunicationTestWhatsAppTemplate" class="text-danger"></span>
-                    <div class="form-text">Plain-text WhatsApp message used for operator-side WhatsApp validation.</div>
+                    <div class="form-text">@T.T("SiteSettingsCommunicationTestWhatsAppTemplateHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="BusinessInvitationEmailSubjectTemplate" class="form-label"></label>
-                    <input asp-for="BusinessInvitationEmailSubjectTemplate" class="form-control" placeholder="Invitation to join {business_name} on Darwin" />
+                    <input asp-for="BusinessInvitationEmailSubjectTemplate" class="form-control" placeholder="@T.T("SiteSettingsBusinessInvitationEmailSubjectPlaceholder")" />
                     <span asp-validation-for="BusinessInvitationEmailSubjectTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="AccountActivationEmailSubjectTemplate" class="form-label"></label>
-                    <input asp-for="AccountActivationEmailSubjectTemplate" class="form-control" placeholder="Confirm your Darwin account email" />
+                    <input asp-for="AccountActivationEmailSubjectTemplate" class="form-control" placeholder="@T.T("SiteSettingsAccountActivationEmailSubjectPlaceholder")" />
                     <span asp-validation-for="AccountActivationEmailSubjectTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-12">
@@ -1098,7 +1096,7 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="PasswordResetEmailSubjectTemplate" class="form-label"></label>
-                    <input asp-for="PasswordResetEmailSubjectTemplate" class="form-control" placeholder="Reset your Darwin account password" />
+                    <input asp-for="PasswordResetEmailSubjectTemplate" class="form-control" placeholder="@T.T("SiteSettingsPasswordResetEmailSubjectPlaceholder")" />
                     <span asp-validation-for="PasswordResetEmailSubjectTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-12">
@@ -1108,22 +1106,22 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="PhoneVerificationSmsTemplate" class="form-label"></label>
-                    <textarea asp-for="PhoneVerificationSmsTemplate" class="form-control" rows="3" placeholder="Your Darwin verification code is {token}. It expires at {expires_at_utc} UTC."></textarea>
+                    <textarea asp-for="PhoneVerificationSmsTemplate" class="form-control" rows="3" placeholder="@T.T("SiteSettingsPhoneVerificationSmsTemplatePlaceholder")"></textarea>
                     <span asp-validation-for="PhoneVerificationSmsTemplate" class="text-danger"></span>
-                    <div class="form-text">Plain-text SMS template for current-user mobile verification.</div>
+                    <div class="form-text">@T.T("SiteSettingsPhoneVerificationSmsTemplateHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="PhoneVerificationWhatsAppTemplate" class="form-label"></label>
-                    <textarea asp-for="PhoneVerificationWhatsAppTemplate" class="form-control" rows="3" placeholder="Confirm your Darwin mobile number with code {token}. It expires at {expires_at_utc} UTC."></textarea>
+                    <textarea asp-for="PhoneVerificationWhatsAppTemplate" class="form-control" rows="3" placeholder="@T.T("SiteSettingsPhoneVerificationWhatsAppTemplatePlaceholder")"></textarea>
                     <span asp-validation-for="PhoneVerificationWhatsAppTemplate" class="text-danger"></span>
-                    <div class="form-text">Plain-text WhatsApp template for current-user mobile verification.</div>
+                    <div class="form-text">@T.T("SiteSettingsPhoneVerificationWhatsAppTemplateHelp")</div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="text-end">
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary">@T.T("Save")</button>
     </div>
 </form>
 </div>

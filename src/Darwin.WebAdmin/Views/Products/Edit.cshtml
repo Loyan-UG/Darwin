@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.ProductEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Product";
+    ViewData["Title"] = T.T("EditProduct");
 }
 
 <partial name="_ProductEditEditorShell" model="Model" />

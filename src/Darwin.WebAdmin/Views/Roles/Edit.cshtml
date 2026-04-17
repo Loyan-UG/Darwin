@@ -1,9 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.Identity.RoleEditVm
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @addTagHelper *, Darwin.WebAdmin
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 @{
-    ViewData["Title"] = "Edit Role";
+    ViewData["Title"] = T.T("EditRole");
 }
 
 <partial name="_RoleEditEditorShell" model="Model" />

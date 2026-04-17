@@ -1,14 +1,15 @@
 @model Darwin.WebAdmin.ViewModels.CRM.CustomerSegmentEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var actionName = ViewData["FormAction"] as string ?? "EditSegment";
     var isCreate = string.Equals(actionName, "CreateSegment", StringComparison.Ordinal);
-    ViewData["Title"] = isCreate ? "Create Segment" : "Edit Segment";
+    ViewData["Title"] = isCreate ? T.T("CreateSegment") : T.T("EditSegment");
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1 class="mb-1">@(isCreate ? "Create Segment" : "Edit Segment")</h1>
-        <div class="text-muted">Customer segmentation taxonomy and targeting hygiene.</div>
+        <h1 class="mb-1">@(isCreate ? T.T("CreateSegment") : T.T("EditSegment"))</h1>
+        <div class="text-muted">@T.T("CustomerSegmentationTaxonomyHelp")</div>
     </div>
 </div>
 

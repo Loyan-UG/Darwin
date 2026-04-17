@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Business";
+    ViewData["Title"] = T.T("CreateBusiness");
 }
 
 <partial name="_BusinessEditorShell" model="Model" />

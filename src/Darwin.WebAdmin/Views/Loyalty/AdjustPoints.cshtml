@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Loyalty.AdjustLoyaltyPointsVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Adjust Loyalty Points";
+    ViewData["Title"] = T.T("AdjustLoyaltyPoints");
 }
 
 <partial name="_AdjustPointsEditorShell" model="Model" />

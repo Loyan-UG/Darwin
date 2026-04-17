@@ -199,10 +199,10 @@
 {
     <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
         <div>
-            <strong>@T.T("ExactChainMode"):</strong> showing the delivery chain for <code>@Model.RecipientEmail</code>
+            <strong>@T.T("ExactChainMode"):</strong> @T.T("ShowingDeliveryChainFor") <code>@Model.RecipientEmail</code>
             @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
             {
-                <span> in flow <code>@Model.FlowKey</code></span>
+                <span> @T.T("InFlow") <code>@Model.FlowKey</code></span>
             }
         </div>
         <a asp-action="EmailAudits"

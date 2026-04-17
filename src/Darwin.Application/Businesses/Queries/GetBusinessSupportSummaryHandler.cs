@@ -46,8 +46,24 @@ namespace Darwin.Application.Businesses.Queries
                 .CountAsync(x => x.OperationalStatus == BusinessOperationalStatus.Suspended, ct)
                 .ConfigureAwait(false);
 
+            var approvedInactiveCount = await _db.Set<Business>().AsNoTracking()
+                .CountAsync(x => x.OperationalStatus == BusinessOperationalStatus.Approved && !x.IsActive, ct)
+                .ConfigureAwait(false);
+
             var missingOwnerCount = await _db.Set<Business>().AsNoTracking()
                 .CountAsync(x => !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner), ct)
+                .ConfigureAwait(false);
+
+            var missingPrimaryLocationCount = await _db.Set<Business>().AsNoTracking()
+                .CountAsync(x => !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary), ct)
+                .ConfigureAwait(false);
+
+            var missingContactEmailCount = await _db.Set<Business>().AsNoTracking()
+                .CountAsync(x => string.IsNullOrWhiteSpace(x.ContactEmail), ct)
+                .ConfigureAwait(false);
+
+            var missingLegalNameCount = await _db.Set<Business>().AsNoTracking()
+                .CountAsync(x => string.IsNullOrWhiteSpace(x.LegalName), ct)
                 .ConfigureAwait(false);
 
             var attentionCount = await attentionBusinessQuery.CountAsync(ct).ConfigureAwait(false);
@@ -76,7 +92,11 @@ namespace Darwin.Application.Businesses.Queries
             {
                 PendingApprovalBusinessCount = pendingApprovalCount,
                 SuspendedBusinessCount = suspendedCount,
+                ApprovedInactiveBusinessCount = approvedInactiveCount,
                 MissingOwnerBusinessCount = missingOwnerCount,
+                MissingPrimaryLocationBusinessCount = missingPrimaryLocationCount,
+                MissingContactEmailBusinessCount = missingContactEmailCount,
+                MissingLegalNameBusinessCount = missingLegalNameCount,
                 AttentionBusinessCount = attentionCount,
                 OpenInvitationCount = openInvitationsCount,
                 PendingActivationMemberCount = pendingActivationCount,

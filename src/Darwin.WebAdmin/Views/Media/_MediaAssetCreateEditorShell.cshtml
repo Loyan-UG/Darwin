@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.CMS.MediaAssetCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Upload Media";
+    ViewData["Title"] = T.T("UploadMedia");
 }
 
 <div id="media-create-editor-shell">
-    <h1 class="mb-3">Upload Media</h1>
+    <h1 class="mb-3">@T.T("UploadMedia")</h1>
 
     <form asp-action="Create"
           method="post"
@@ -16,10 +17,10 @@
         @Html.AntiForgeryToken()
 
         <div class="mb-3">
-            <label asp-for="File" class="form-label">File</label>
+            <label asp-for="File" class="form-label">@T.T("File")</label>
             <input asp-for="File" class="form-control" accept=".png,.jpg,.jpeg,.webp,.gif" />
             <span asp-validation-for="File" class="text-danger"></span>
-            <div class="form-text">Supported formats: PNG, JPG, WEBP, GIF. Max 5 MB.</div>
+            <div class="form-text">@T.T("MediaSupportedFormatsHelp")</div>
         </div>
 
         <partial name="_MediaAssetUploadForm" model="Model" />
@@ -28,14 +29,14 @@
 
         <div class="d-flex gap-2 mt-4">
             <button type="submit" class="btn btn-primary">
-                <i class="fa fa-upload"></i> Upload
+                <i class="fa fa-upload"></i> @T.T("Upload")
             </button>
             <a asp-action="Index"
                class="btn btn-outline-secondary"
                hx-get="@Url.Action("Index", "Media")"
                hx-target="#media-create-editor-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">Cancel</a>
+               hx-push-url="true">@T.T("Cancel")</a>
         </div>
     </form>
 </div>

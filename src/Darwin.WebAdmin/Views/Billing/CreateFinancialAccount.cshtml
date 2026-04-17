@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Billing.FinancialAccountEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Financial Account";
+    ViewData["Title"] = T.T("CreateFinancialAccount");
     ViewData["IsCreate"] = true;
 }
 <partial name="~/Views/Billing/_FinancialAccountEditorShell.cshtml" model="Model" />

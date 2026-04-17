@@ -1,7 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyCampaignEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["IsCreate"] = true;
-    ViewData["Title"] = "Create Loyalty Campaign";
+    ViewData["Title"] = T.T("CreateLoyaltyCampaign");
 }
 
 <partial name="_CampaignEditorShell" model="Model" />

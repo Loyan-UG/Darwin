@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.CMS.MediaAssetEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Media";
+    ViewData["Title"] = T.T("EditMedia");
 }
 
 <partial name="_MediaAssetEditEditorShell" model="Model" />

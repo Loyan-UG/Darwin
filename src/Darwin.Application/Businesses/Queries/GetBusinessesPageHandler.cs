@@ -26,6 +26,7 @@ namespace Darwin.Application.Businesses.Queries
             string? query = null,
             BusinessOperationalStatus? operationalStatus = null,
             bool attentionOnly = false,
+            BusinessReadinessQueueFilter? readinessFilter = null,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -55,6 +56,36 @@ namespace Darwin.Application.Businesses.Queries
                     !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary) ||
                     string.IsNullOrWhiteSpace(x.ContactEmail) ||
                     string.IsNullOrWhiteSpace(x.LegalName));
+            }
+
+            if (readinessFilter == BusinessReadinessQueueFilter.MissingOwner)
+            {
+                baseQuery = baseQuery.Where(x =>
+                    !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner));
+            }
+            else if (readinessFilter == BusinessReadinessQueueFilter.MissingPrimaryLocation)
+            {
+                baseQuery = baseQuery.Where(x =>
+                    !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary));
+            }
+            else if (readinessFilter == BusinessReadinessQueueFilter.MissingContactEmail)
+            {
+                baseQuery = baseQuery.Where(x => string.IsNullOrWhiteSpace(x.ContactEmail));
+            }
+            else if (readinessFilter == BusinessReadinessQueueFilter.MissingLegalName)
+            {
+                baseQuery = baseQuery.Where(x => string.IsNullOrWhiteSpace(x.LegalName));
+            }
+            else if (readinessFilter == BusinessReadinessQueueFilter.PendingInvites)
+            {
+                baseQuery = baseQuery.Where(x =>
+                    _db.Set<BusinessInvitation>().Any(i => i.BusinessId == x.Id && i.Status == BusinessInvitationStatus.Pending));
+            }
+            else if (readinessFilter == BusinessReadinessQueueFilter.ApprovedInactive)
+            {
+                baseQuery = baseQuery.Where(x =>
+                    x.OperationalStatus == BusinessOperationalStatus.Approved &&
+                    !x.IsActive);
             }
 
             var total = await baseQuery.CountAsync(ct);

@@ -1,9 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.CRM.LeadEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Lead";
+    ViewData["Title"] = T.T("EditLead");
 }
 
-<h1 class="mb-3">Edit Lead</h1>
+<h1 class="mb-3">@T.T("EditLead")</h1>
 
 <partial name="_LeadEditorShell" model="Model" />
 
@@ -12,13 +13,13 @@
 <div class="row g-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header"><strong>Lead Conversion</strong></div>
+            <div class="card-header"><strong>@T.T("LeadConversion")</strong></div>
             <div class="card-body">
                 @if (Model.CustomerId.HasValue)
                 {
-                    <p class="mb-3">This lead is already linked to a customer record.</p>
+                    <p class="mb-3">@T.T("LeadAlreadyLinkedToCustomer")</p>
                     <a asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="btn btn-outline-success">
-                        <i class="fa fa-user"></i> Open Customer
+                        <i class="fa fa-user"></i> @T.T("OpenCustomer")
                     </a>
                 }
                 else
@@ -28,18 +29,18 @@
                         <input type="hidden" name="LeadId" value="@Model.Id" />
                         <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
                         <div class="col-md-6">
-                            <label class="form-label">Link to Existing User</label>
+                            <label class="form-label">@T.T("LinkToExistingUser")</label>
                             <select name="UserId" class="form-select" asp-items="Model.Conversion.UserOptions"></select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <div class="form-check">
                                 <input type="checkbox" name="CopyNotesToCustomer" value="true" checked="checked" class="form-check-input" id="copyNotesToCustomer" />
-                                <label class="form-check-label" for="copyNotesToCustomer">Copy notes</label>
+                                <label class="form-check-label" for="copyNotesToCustomer">@T.T("CopyNotes")</label>
                             </div>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="submit" class="btn btn-success">
-                                <i class="fa fa-arrow-right"></i> Convert to Customer
+                                <i class="fa fa-arrow-right"></i> @T.T("ConvertToCustomer")
                             </button>
                         </div>
                     </form>
@@ -50,7 +51,7 @@
 
     <div class="col-lg-5">
         <div class="card">
-            <div class="card-header"><strong>Add Interaction</strong></div>
+            <div class="card-header"><strong>@T.T("AddInteraction")</strong></div>
             <div class="card-body">
                 <form asp-controller="Crm"
                       asp-action="LeadInteractions"
@@ -62,27 +63,27 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="LeadId" value="@Model.Id" />
                     <div class="col-md-6">
-                        <label class="form-label">Type</label>
+                        <label class="form-label">@T.T("Type")</label>
                         <select name="Type" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()"></select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Channel</label>
+                        <label class="form-label">@T.T("Channel")</label>
                         <select name="Channel" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()"></select>
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Subject</label>
+                        <label class="form-label">@T.T("Subject")</label>
                         <input name="Subject" class="form-control" />
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Content</label>
+                        <label class="form-label">@T.T("Content")</label>
                         <textarea name="Content" class="form-control" rows="3"></textarea>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Owner</label>
+                        <label class="form-label">@T.T("Owner")</label>
                         <select name="UserId" class="form-select" asp-items="Model.NewInteraction.UserOptions"></select>
                     </div>
                     <div class="col-12">
-                        <button type="submit" class="btn btn-outline-primary">Add Interaction</button>
+                        <button type="submit" class="btn btn-outline-primary">@T.T("AddInteraction")</button>
                     </div>
                 </form>
             </div>
@@ -90,7 +91,7 @@
     </div>
     <div class="col-lg-7">
         <div class="card">
-            <div class="card-header"><strong>Interactions</strong></div>
+            <div class="card-header"><strong>@T.T("Interactions")</strong></div>
             <div class="card-body" id="lead-interactions-grid"
                  hx-get="@Url.Action("LeadInteractions", "Crm", new { leadId = Model.Id })"
                  hx-trigger="load"

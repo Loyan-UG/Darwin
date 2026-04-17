@@ -27,6 +27,33 @@
   <data name="ChangePassword" xml:space="preserve">
     <value>Passwort aendern</value>
   </data>
+  <data name="BillingBadgeShort" xml:space="preserve">
+    <value>R</value>
+  </data>
+  <data name="ShippingBadgeShort" xml:space="preserve">
+    <value>V</value>
+  </data>
+  <data name="ShippingMethodCountriesPlaceholder" xml:space="preserve">
+    <value>DE,AT,CH</value>
+  </data>
+  <data name="ShippingMethodCurrencyPlaceholder" xml:space="preserve">
+    <value>EUR</value>
+  </data>
+  <data name="CreateUser" xml:space="preserve">
+    <value>Benutzer anlegen</value>
+  </data>
+  <data name="TimeZoneEuropeBerlin" xml:space="preserve">
+    <value>Europa/Berlin</value>
+  </data>
+  <data name="CountryGermany" xml:space="preserve">
+    <value>Deutschland (DE)</value>
+  </data>
+  <data name="CountryUnitedStates" xml:space="preserve">
+    <value>Vereinigte Staaten (US)</value>
+  </data>
+  <data name="Utc" xml:space="preserve">
+    <value>UTC</value>
+  </data>
   <data name="User" xml:space="preserve">
     <value>Benutzer</value>
   </data>
@@ -120,6 +147,24 @@
   <data name="CreateExpense" xml:space="preserve">
     <value>Ausgabe anlegen</value>
   </data>
+  <data name="CreateAddOnGroup" xml:space="preserve">
+    <value>Add-on-Gruppe anlegen</value>
+  </data>
+  <data name="EditAddOnGroup" xml:space="preserve">
+    <value>Add-on-Gruppe bearbeiten</value>
+  </data>
+  <data name="CreateBusinessInvitation" xml:space="preserve">
+    <value>Unternehmens-Einladung anlegen</value>
+  </data>
+  <data name="CreateBusinessLocation" xml:space="preserve">
+    <value>Unternehmensstandort anlegen</value>
+  </data>
+  <data name="EditBusinessLocation" xml:space="preserve">
+    <value>Unternehmensstandort bearbeiten</value>
+  </data>
+  <data name="CreateCategory" xml:space="preserve">
+    <value>Kategorie anlegen</value>
+  </data>
   <data name="EditExpense" xml:space="preserve">
     <value>Ausgabe bearbeiten</value>
   </data>
@@ -128,6 +173,33 @@
   </data>
   <data name="EditFinancialAccount" xml:space="preserve">
     <value>Finanzkonto bearbeiten</value>
+  </data>
+  <data name="CreateBillingPlan" xml:space="preserve">
+    <value>Abrechnungsplan anlegen</value>
+  </data>
+  <data name="EditBillingPlan" xml:space="preserve">
+    <value>Abrechnungsplan bearbeiten</value>
+  </data>
+  <data name="AdjustStock" xml:space="preserve">
+    <value>Bestand anpassen</value>
+  </data>
+  <data name="CreateStockLevel" xml:space="preserve">
+    <value>Bestandsniveau anlegen</value>
+  </data>
+  <data name="EditStockLevel" xml:space="preserve">
+    <value>Bestandsniveau bearbeiten</value>
+  </data>
+  <data name="ReserveStock" xml:space="preserve">
+    <value>Bestand reservieren</value>
+  </data>
+  <data name="ReleaseReservation" xml:space="preserve">
+    <value>Reservierung freigeben</value>
+  </data>
+  <data name="ProcessReturnReceipt" xml:space="preserve">
+    <value>Retoureneingang verarbeiten</value>
+  </data>
+  <data name="EditMedia" xml:space="preserve">
+    <value>Medienobjekt bearbeiten</value>
   </data>
   <data name="CreatePurchaseOrder" xml:space="preserve">
     <value>Bestellauftrag anlegen</value>
@@ -564,9 +636,6 @@
   <data name="DelegatedSupportBadge" xml:space="preserve">
     <value>Delegierter Support</value>
   </data>
-  <data name="NoRolesFound" xml:space="preserve">
-    <value>Keine Rollen gefunden.</value>
-  </data>
   <data name="MobilePlaybookMemberLifecycleTitle" xml:space="preserve">
     <value>Mitglieds-Lifecycle-Nachverfolgung</value>
   </data>
@@ -587,6 +656,21 @@
   </data>
   <data name="SiteSettingsBusinessAppHandoffsNote" xml:space="preserve">
     <value>Pflege hier nur plattformweite Handoff-URLs. Validiere finale Marke, Sender und lokale Business-Defaults in Business Setup, bevor du einen Tenant als go-live-ready behandelst.</value>
+  </data>
+  <data name="SiteSettingsBusinessManagementWebsitePlaceholder" xml:space="preserve">
+    <value>https://www.loyan.de</value>
+  </data>
+  <data name="SiteSettingsAccountDeletionUrlPlaceholder" xml:space="preserve">
+    <value>https://www.loyan.de/account-deletion</value>
+  </data>
+  <data name="SiteSettingsImpressumUrlPlaceholder" xml:space="preserve">
+    <value>https://www.loyan.de/impressum</value>
+  </data>
+  <data name="SiteSettingsPrivacyPolicyUrlPlaceholder" xml:space="preserve">
+    <value>https://www.loyan.de/datenschutz</value>
+  </data>
+  <data name="SiteSettingsBusinessTermsUrlPlaceholder" xml:space="preserve">
+    <value>https://www.loyan.de/agb-business</value>
   </data>
   <data name="SiteSettingsBusinessAppManagementWebsiteHelp" xml:space="preserve">
     <value>Wird vom Subscription-Screen der Business-App fuer Plan- und Billing-Handoffs genutzt.</value>
@@ -671,6 +755,66 @@
   </data>
   <data name="DefaultShippingAddressSetMessage" xml:space="preserve">
     <value>Standard-Versandadresse gesetzt.</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>Vollständiger Name</value>
+  </data>
+  <data name="Street" xml:space="preserve">
+    <value>Straße</value>
+  </data>
+  <data name="Street1" xml:space="preserve">
+    <value>Straße 1</value>
+  </data>
+  <data name="Street2" xml:space="preserve">
+    <value>Straße 2</value>
+  </data>
+  <data name="Postal" xml:space="preserve">
+    <value>Postleitzahl</value>
+  </data>
+  <data name="StateProvince" xml:space="preserve">
+    <value>Bundesland/Provinz</value>
+  </data>
+  <data name="PhoneE164" xml:space="preserve">
+    <value>Telefon (E.164)</value>
+  </data>
+  <data name="UserAddressesTitle" xml:space="preserve">
+    <value>Benutzeradressen</value>
+  </data>
+  <data name="SetBilling" xml:space="preserve">
+    <value>Als Rechnungsadresse setzen</value>
+  </data>
+  <data name="SetShipping" xml:space="preserve">
+    <value>Als Versandadresse setzen</value>
+  </data>
+  <data name="NoAddresses" xml:space="preserve">
+    <value>Keine Adressen vorhanden.</value>
+  </data>
+  <data name="AddressFullNameHelp" xml:space="preserve">
+    <value>Erforderlich. Maximale Länge 200.</value>
+  </data>
+  <data name="AddressCompanyHelp" xml:space="preserve">
+    <value>Optional. Maximale Länge 200.</value>
+  </data>
+  <data name="AddressStreet1Help" xml:space="preserve">
+    <value>Erforderlich. Maximale Länge 300.</value>
+  </data>
+  <data name="AddressStreet2Help" xml:space="preserve">
+    <value>Optional. Maximale Länge 300.</value>
+  </data>
+  <data name="AddressPostalCodeHelp" xml:space="preserve">
+    <value>Erforderlich. Maximale Länge 32.</value>
+  </data>
+  <data name="AddressCityHelp" xml:space="preserve">
+    <value>Erforderlich. Maximale Länge 150.</value>
+  </data>
+  <data name="AddressStateHelp" xml:space="preserve">
+    <value>Optional. Maximale Länge 150.</value>
+  </data>
+  <data name="AddressCountryHelp" xml:space="preserve">
+    <value>Erforderlich. ISO 3166-1 Alpha-2, z. B. DE.</value>
+  </data>
+  <data name="AddressPhoneHelp" xml:space="preserve">
+    <value>Optional. Maximale Länge 20.</value>
   </data>
   <data name="UserRolesLoadFailedMessage" xml:space="preserve">
     <value>Benutzerrollen konnten nicht geladen werden.</value>
@@ -1437,6 +1581,21 @@
   <data name="Reset" xml:space="preserve">
     <value>Zuruecksetzen</value>
   </data>
+  <data name="ShowingDeliveryChainFor" xml:space="preserve">
+    <value>zeigt die Zustellkette fuer</value>
+  </data>
+  <data name="ShowingProviderLaneFor" xml:space="preserve">
+    <value>zeigt den Provider-Pfad fuer</value>
+  </data>
+  <data name="ChannelAuditsSearchPlaceholder" xml:space="preserve">
+    <value>Nach Telefon, Provider, Vorschau oder Ablauf suchen</value>
+  </data>
+  <data name="OnChannel" xml:space="preserve">
+    <value>im Kanal</value>
+  </data>
+  <data name="InFlow" xml:space="preserve">
+    <value>im Ablauf</value>
+  </data>
   <data name="OpenQueue" xml:space="preserve">
     <value>Offen</value>
   </data>
@@ -1511,6 +1670,27 @@
   </data>
   <data name="CreateInvoice" xml:space="preserve">
     <value>Rechnung erstellen</value>
+  </data>
+  <data name="AdjustLoyaltyPoints" xml:space="preserve">
+    <value>Treuepunkte anpassen</value>
+  </data>
+  <data name="CreateLoyaltyAccount" xml:space="preserve">
+    <value>Treuekonto anlegen</value>
+  </data>
+  <data name="CreateLoyaltyCampaign" xml:space="preserve">
+    <value>Treuekampagne anlegen</value>
+  </data>
+  <data name="EditLoyaltyCampaign" xml:space="preserve">
+    <value>Treuekampagne bearbeiten</value>
+  </data>
+  <data name="CreateCustomer" xml:space="preserve">
+    <value>Kunden anlegen</value>
+  </data>
+  <data name="EditInvoice" xml:space="preserve">
+    <value>Rechnung bearbeiten</value>
+  </data>
+  <data name="EditPage" xml:space="preserve">
+    <value>Seite bearbeiten</value>
   </data>
   <data name="TaxPriceSnapshot" xml:space="preserve">
     <value>Steuer- und Preis-Snapshot</value>
@@ -1602,6 +1782,9 @@
   <data name="Refund" xml:space="preserve">
     <value>Rueckerstatten</value>
   </data>
+  <data name="Refunds" xml:space="preserve">
+    <value>Rueckerstattungen</value>
+  </data>
   <data name="ReturnedShipmentFollowUpOpen" xml:space="preserve">
     <value>Ruecksendungs-Follow-up ist fuer diese Bestellung offen.</value>
   </data>
@@ -1619,6 +1802,21 @@
   </data>
   <data name="Paid" xml:space="preserve">
     <value>Bezahlt</value>
+  </data>
+  <data name="Cancelled" xml:space="preserve">
+    <value>Storniert</value>
+  </data>
+  <data name="Shipped" xml:space="preserve">
+    <value>Versandt</value>
+  </data>
+  <data name="Unspecified" xml:space="preserve">
+    <value>Nicht angegeben</value>
+  </data>
+  <data name="Sandbox" xml:space="preserve">
+    <value>Sandbox</value>
+  </data>
+  <data name="Production" xml:space="preserve">
+    <value>Produktion</value>
   </data>
   <data name="IssuedUtc" xml:space="preserve">
     <value>Ausgestellt (UTC)</value>
@@ -1806,6 +2004,15 @@
   <data name="VisibleLinkedUserLocales" xml:space="preserve">
     <value>Sichtbare Benutzer-Locales</value>
   </data>
+  <data name="CrmPlatformFallbackCultureNote" xml:space="preserve">
+    <value>Wird verwendet, wenn fuer die Kunden-Nachverfolgung kein verknuepftes Benutzer-Gebietsschema verfuegbar ist.</value>
+  </data>
+  <data name="CrmVisibleLocaleFallbacksNote" xml:space="preserve">
+    <value>Zeilen auf der aktuellen Seite, die statt eines verknuepften Benutzer-Gebietsschemas auf das Plattform-Fallback angewiesen sind.</value>
+  </data>
+  <data name="CrmVisibleLinkedUserLocalesNote" xml:space="preserve">
+    <value>Zeilen auf der aktuellen Seite, bei denen das Gebietsschema aus dem verknuepften Identitaetsprofil stammt.</value>
+  </data>
   <data name="LinkedUser" xml:space="preserve">
     <value>Verknuepfter Benutzer</value>
   </data>
@@ -1817,6 +2024,15 @@
   </data>
   <data name="LocaleFallback" xml:space="preserve">
     <value>Locale-Fallback</value>
+  </data>
+  <data name="B2B" xml:space="preserve">
+    <value>B2B</value>
+  </data>
+  <data name="B2BMissingVatId" xml:space="preserve">
+    <value>B2B ohne USt-IdNr.</value>
+  </data>
+  <data name="And" xml:space="preserve">
+    <value>und</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
@@ -3049,7 +3265,7 @@
     <value>Segment konnte nicht aktualisiert werden.</value>
   </data>
   <data name="InteractionAddFailedMessage" xml:space="preserve">
-    <value>Interaktion konnte nicht hinzugefÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gt werden.</value>
+    <value>Interaktion konnte nicht hinzugefügt werden.</value>
   </data>
   <data name="ConsentAddFailedMessage" xml:space="preserve">
     <value>Einwilligung konnte nicht erfasst werden.</value>
@@ -3877,34 +4093,34 @@
     <value>Leads, die noch keinem CRM-Kundendatensatz zugeordnet sind.</value>
   </data>
   <data name="Leads already carrying linked customer context." xml:space="preserve">
-    <value>Leads, die bereits verknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pften Kundenkontext tragen.</value>
+    <value>Leads, die bereits verknüpften Kundenkontext tragen.</value>
   </data>
   <data name="Visible leads with heavier interaction history needing review." xml:space="preserve">
-    <value>Sichtbare Leads mit intensiverer Interaktionshistorie, die geprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ft werden sollten.</value>
+    <value>Sichtbare Leads mit intensiverer Interaktionshistorie, die geprüft werden sollten.</value>
   </data>
   <data name="CrmLeadQualifiedPlaybookTitle" xml:space="preserve">
     <value>Qualifizierte Leads</value>
   </data>
   <data name="CrmLeadQualifiedPlaybookScopeNote" xml:space="preserve">
-    <value>Qualifizierte Leads sollten zÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gig in Kunden ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼berfÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼hrt oder explizit neu eingestuft werden, bevor die Queue veraltet.</value>
+    <value>Qualifizierte Leads sollten zügig in Kunden überführt oder explizit neu eingestuft werden, bevor die Queue veraltet.</value>
   </data>
   <data name="CrmLeadQualifiedPlaybookAction" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen Sie zuerst Ownership und KundenverknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfung und konvertieren Sie den Lead dann oder setzen Sie ihn auf einen realistischeren Status zurÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ck.</value>
+    <value>Prüfen Sie zuerst Ownership und Kundenverknüpfung und konvertieren Sie den Lead dann oder setzen Sie ihn auf einen realistischeren Status zurück.</value>
   </data>
   <data name="CrmLeadUnassignedPlaybookTitle" xml:space="preserve">
     <value>Unzugewiesene Leads</value>
   </data>
   <data name="CrmLeadUnassignedPlaybookScopeNote" xml:space="preserve">
-    <value>Leads ohne Owner treiben meist ab, weil niemand klar fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r den nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤chsten Kontakt und die Conversion-Folge verantwortlich ist.</value>
+    <value>Leads ohne Owner treiben meist ab, weil niemand klar für den nächsten Kontakt und die Conversion-Folge verantwortlich ist.</value>
   </data>
   <data name="CrmLeadUnassignedPlaybookAction" xml:space="preserve">
-    <value>Weisen Sie einen Owner zu, bevor weiterer InteraktionslÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤rm entsteht, damit der nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤chste Follow-up klar ist.</value>
+    <value>Weisen Sie einen Owner zu, bevor weiterer Interaktionslärm entsteht, damit der nächste Follow-up klar ist.</value>
   </data>
   <data name="CrmLeadUnconvertedPlaybookTitle" xml:space="preserve">
     <value>Nicht konvertierte Leads</value>
   </data>
   <data name="CrmLeadUnconvertedPlaybookScopeNote" xml:space="preserve">
-    <value>Leads ohne KundenverknÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼pfung blockieren nachgelagerte Opportunity-, Rechnungs- und Retention-Workflows.</value>
+    <value>Leads ohne Kundenverknüpfung blockieren nachgelagerte Opportunity-, Rechnungs- und Retention-Workflows.</value>
   </data>
   <data name="CrmLeadUnconvertedPlaybookAction" xml:space="preserve">
     <value>Konvertieren Sie den Lead bei echter Beziehung oder bereinigen Sie die Qualifizierungsannahmen, bevor Pipeline-Arbeit darauf aufbaut.</value>
@@ -3913,7 +4129,7 @@
     <value>Opportunity-Zeilen, die noch aktiv in der Pipeline sind.</value>
   </data>
   <data name="Visible opportunities requiring near-term close-date review." xml:space="preserve">
-    <value>Sichtbare Opportunities, deren Abschlussdatum kurzfristig geprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ft werden muss.</value>
+    <value>Sichtbare Opportunities, deren Abschlussdatum kurzfristig geprüft werden muss.</value>
   </data>
   <data name="High-value pipeline rows visible in the current slice." xml:space="preserve">
     <value>Hochwertige Pipeline-Zeilen, die im aktuellen Ausschnitt sichtbar sind.</value>
@@ -3922,22 +4138,22 @@
     <value>Opportunities, denen weiterhin ein expliziter Owner fehlt.</value>
   </data>
   <data name="Rows with heavier interaction trails that may need operator review." xml:space="preserve">
-    <value>Zeilen mit intensiveren Interaktionsspuren, die eine Operator-PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fung brauchen kÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶nnten.</value>
+    <value>Zeilen mit intensiveren Interaktionsspuren, die eine Operator-Prüfung brauchen könnten.</value>
   </data>
   <data name="CrmOpportunityClosingSoonPlaybookTitle" xml:space="preserve">
     <value>Opportunities mit nahem Abschlussdatum</value>
   </data>
   <data name="CrmOpportunityClosingSoonPlaybookScopeNote" xml:space="preserve">
-    <value>Nahe Abschlussdaten brauchen eine explizite PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fung, damit die Pipeline nicht still in verpasste Chancen driftet.</value>
+    <value>Nahe Abschlussdaten brauchen eine explizite Prüfung, damit die Pipeline nicht still in verpasste Chancen driftet.</value>
   </data>
   <data name="CrmOpportunityClosingSoonPlaybookAction" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen Sie Owner, letzte Interaktion und Realismus des Abschlussdatums, bevor die Opportunity ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ber das erwartete Zeitfenster hinaus altert.</value>
+    <value>Prüfen Sie Owner, letzte Interaktion und Realismus des Abschlussdatums, bevor die Opportunity über das erwartete Zeitfenster hinaus altert.</value>
   </data>
   <data name="CrmOpportunityUnassignedPlaybookTitle" xml:space="preserve">
     <value>Unzugewiesene Opportunities</value>
   </data>
   <data name="CrmOpportunityUnassignedPlaybookScopeNote" xml:space="preserve">
-    <value>Pipeline-Zeilen ohne Owner bedeuten meist, dass niemand dafÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r verantwortlich ist, den Deal voranzubringen.</value>
+    <value>Pipeline-Zeilen ohne Owner bedeuten meist, dass niemand dafür verantwortlich ist, den Deal voranzubringen.</value>
   </data>
   <data name="CrmOpportunityUnassignedPlaybookAction" xml:space="preserve">
     <value>Weisen Sie einen Owner zu, bevor Sie Stage oder Abschlussdatum anpassen, damit die Verantwortung klar ist.</value>
@@ -3946,10 +4162,10 @@
     <value>Opportunities mit vielen Interaktionen</value>
   </data>
   <data name="CrmOpportunityHighInteractionPlaybookScopeNote" xml:space="preserve">
-    <value>Intensive Interaktionsspuren signalisieren oft stockende Verhandlungen, Support-Verwirrung oder unklare nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤chste Schritte.</value>
+    <value>Intensive Interaktionsspuren signalisieren oft stockende Verhandlungen, Support-Verwirrung oder unklare nächste Schritte.</value>
   </data>
   <data name="CrmOpportunityHighInteractionPlaybookAction" xml:space="preserve">
-    <value>Lesen Sie die aktuelle Interaktionsspur, bevor Sie weitere Outreach-Schritte hinzufÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼gen, und schÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤rfen Sie dann die nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤chste Operator-Aktion.</value>
+    <value>Lesen Sie die aktuelle Interaktionsspur, bevor Sie weitere Outreach-Schritte hinzufügen, und schärfen Sie dann die nächste Operator-Aktion.</value>
   </data>
   <data name="LoyaltyAccountCreateFailed" xml:space="preserve">
     <value>Treuekonto konnte nicht angelegt werden.</value>
@@ -3979,22 +4195,22 @@
     <value>Gesamter Produktbestand, der derzeit im Admin-Katalog verwaltet wird.</value>
   </data>
   <data name="ProductsOpsInactiveNote" xml:space="preserve">
-    <value>Produkte, die noch nicht live sind und weiterhin eine FreigabeprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fung benÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶tigen.</value>
+    <value>Produkte, die noch nicht live sind und weiterhin eine Freigabeprüfung benötigen.</value>
   </data>
   <data name="ProductsOpsHiddenNote" xml:space="preserve">
-    <value>Produkte, die in Merchandising-FlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤chen verborgen sind und eine SichtbarkeitsprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fung benÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶tigen.</value>
+    <value>Produkte, die in Merchandising-Flächen verborgen sind und eine Sichtbarkeitsprüfung benötigen.</value>
   </data>
   <data name="ProductsOpsScheduledNote" xml:space="preserve">
-    <value>Produkte mit Startfenstern, die Timing, Bestand und Content aufeinander abstimmen mÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ssen.</value>
+    <value>Produkte mit Startfenstern, die Timing, Bestand und Content aufeinander abstimmen müssen.</value>
   </data>
   <data name="ProductsOpsSingleVariantNote" xml:space="preserve">
-    <value>Produkte mit nur einer verkaufbaren Variante, die hÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ufig Preis- oder BestandsprÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fung brauchen.</value>
+    <value>Produkte mit nur einer verkaufbaren Variante, die häufig Preis- oder Bestandsprüfung brauchen.</value>
   </data>
   <data name="ActiveCatalogWindow" xml:space="preserve">
     <value>Sichtbares Katalogfenster</value>
   </data>
   <data name="ProductsOpsVisibilityWindowNote" xml:space="preserve">
-    <value>Schnelles Signal dafÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r, wie viel des Katalogs derzeit fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r Storefront-Operatoren sichtbar ist.</value>
+    <value>Schnelles Signal dafür, wie viel des Katalogs derzeit für Storefront-Operatoren sichtbar ist.</value>
   </data>
   <data name="TotalProductsLabel" xml:space="preserve">
     <value>Produkte gesamt</value>
@@ -4009,43 +4225,43 @@
     <value>Keine Produkte gefunden.</value>
   </data>
   <data name="ProductAtLeastOneTranslationRequired" xml:space="preserve">
-    <value>Mindestens eine ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“bersetzung ist erforderlich.</value>
+    <value>Mindestens eine Übersetzung ist erforderlich.</value>
   </data>
   <data name="ProductAtLeastOneVariantRequired" xml:space="preserve">
     <value>Mindestens eine Variante ist erforderlich.</value>
   </data>
   <data name="ProductPlaybookInactiveScope" xml:space="preserve">
-    <value>Inaktive Produkte bleiben aus Live-VerkaufsflÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ssen heraus, auch wenn Content und Bestand bereits vorliegen.</value>
+    <value>Inaktive Produkte bleiben aus Live-Verkaufsflüssen heraus, auch wenn Content und Bestand bereits vorliegen.</value>
   </data>
   <data name="ProductPlaybookInactiveAction" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen Sie Preise, rechtliche Inhalte und Bestandsbereitschaft und aktivieren Sie dann wieder, wenn der Artikel bereit ist.</value>
+    <value>Prüfen Sie Preise, rechtliche Inhalte und Bestandsbereitschaft und aktivieren Sie dann wieder, wenn der Artikel bereit ist.</value>
   </data>
   <data name="ProductPlaybookHiddenScope" xml:space="preserve">
     <value>Verborgene Produkte deuten oft auf Merchandising-Sperren, Starttiming oder versehentlichen Sichtbarkeitsverlust hin.</value>
   </data>
   <data name="ProductPlaybookHiddenAction" xml:space="preserve">
-    <value>BestÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤tigen Sie, ob das Produkt verborgen bleiben soll, und stellen Sie die Sichtbarkeit wieder her, wenn es erscheinen soll.</value>
+    <value>Bestätigen Sie, ob das Produkt verborgen bleiben soll, und stellen Sie die Sichtbarkeit wieder her, wenn es erscheinen soll.</value>
   </data>
   <data name="ProductPlaybookScheduledScope" xml:space="preserve">
-    <value>VerÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶ffentlichungsfenster erzeugen timing-sensitive Kataloglogik rund um Launches, Kampagnen und saisonalen Bestand.</value>
+    <value>Veröffentlichungsfenster erzeugen timing-sensitive Kataloglogik rund um Launches, Kampagnen und saisonalen Bestand.</value>
   </data>
   <data name="ProductPlaybookScheduledAction" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen Sie, ob das VerÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶ffentlichungsfenster noch zum Kampagnenzeitpunkt passt und Bestand sowie Content ausgerichtet sind.</value>
+    <value>Prüfen Sie, ob das Veröffentlichungsfenster noch zum Kampagnenzeitpunkt passt und Bestand sowie Content ausgerichtet sind.</value>
   </data>
   <data name="ProductCreateIntro" xml:space="preserve">
-    <value>Definieren Sie ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“bersetzungen, Varianten und grundlegende Merchandising-Daten, bevor das Produkt verÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶ffentlicht wird.</value>
+    <value>Definieren Sie Übersetzungen, Varianten und grundlegende Merchandising-Daten, bevor das Produkt veröffentlicht wird.</value>
   </data>
   <data name="ProductEditIntro" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen Sie ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“bersetzungen, Varianten und Bereitschaft, bevor Sie Live-Katalogdaten ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ndern.</value>
+    <value>Prüfen Sie Übersetzungen, Varianten und Bereitschaft, bevor Sie Live-Katalogdaten ändern.</value>
   </data>
   <data name="ProductIdentifier" xml:space="preserve">
     <value>Produkt-ID</value>
   </data>
   <data name="ProductEditorTranslationsNote" xml:space="preserve">
-    <value>PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼fen Sie Benennung, Slug-QualitÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤t und SEO-Felder ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ber die unterstÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼tzten Storefront-Kulturen hinweg.</value>
+    <value>Prüfen Sie Benennung, Slug-Qualität und SEO-Felder über die unterstützten Storefront-Kulturen hinweg.</value>
   </data>
   <data name="ProductEditorVariantsNote" xml:space="preserve">
-    <value>Validieren Sie SKU, Preislogik und Bestandsannahmen, bevor das Produkt in VerkaufsflÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼ssen erscheint.</value>
+    <value>Validieren Sie SKU, Preislogik und Bestandsannahmen, bevor das Produkt in Verkaufsflüssen erscheint.</value>
   </data>
   <data name="CatalogReadiness" xml:space="preserve">
     <value>Katalogbereitschaft</value>
@@ -4054,10 +4270,10 @@
     <value>Variantenreich</value>
   </data>
   <data name="ProductEditorReadinessNote" xml:space="preserve">
-    <value>Nutzen Sie dies als schnelles Signal, ob das Produkt vor der Freigabe noch Katalogarbeit benÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶tigt.</value>
+    <value>Nutzen Sie dies als schnelles Signal, ob das Produkt vor der Freigabe noch Katalogarbeit benötigt.</value>
   </data>
   <data name="PrimaryCategory" xml:space="preserve">
-    <value>PrimÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤rkategorie</value>
+    <value>Primärkategorie</value>
   </data>
   <data name="ProductSlugHelp" xml:space="preserve">
     <value>URL-freundlicher Bezeichner. Kleinbuchstaben, Ziffern, Bindestriche. Beispiel: &lt;code&gt;organic-apple-1kg&lt;/code&gt;.</value>
@@ -4066,13 +4282,13 @@
     <value>Kurze SEO-Beschreibung, meist rund 155 Zeichen.</value>
   </data>
   <data name="FullDescriptionHtml" xml:space="preserve">
-    <value>VollstÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤ndige Beschreibung (HTML)</value>
+    <value>Vollständige Beschreibung (HTML)</value>
   </data>
   <data name="Sku" xml:space="preserve">
     <value>SKU</value>
   </data>
   <data name="ProductSkuHelp" xml:space="preserve">
-    <value>Interne Artikelnummer fÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼r Katalog-, Bestands- und Fulfillment-Abstimmung.</value>
+    <value>Interne Artikelnummer für Katalog-, Bestands- und Fulfillment-Abstimmung.</value>
   </data>
   <data name="TaxCategory" xml:space="preserve">
     <value>Steuerkategorie</value>
@@ -4081,7 +4297,7 @@
     <value>Grundpreis (netto, Untereinheiten)</value>
   </data>
   <data name="MinorUnitsHelp" xml:space="preserve">
-    <value>Speichern Sie Preise als ganzzahlige Untereinheiten, z. B. Cent, um FlieÃƒÆ’Ã†â€™Ãƒâ€¦Ã‚Â¸kommafehler zu vermeiden.</value>
+    <value>Speichern Sie Preise als ganzzahlige Untereinheiten, z. B. Cent, um Fließkommafehler zu vermeiden.</value>
   </data>
   <data name="CompareAtNetMinor" xml:space="preserve">
     <value>Vergleichspreis (netto, Untereinheiten)</value>
@@ -4740,6 +4956,9 @@
   <data name="BusinessCommunicationTransactionalPolicyTitle" xml:space="preserve">
     <value>Policy fuer transaktionale Kommunikation</value>
   </data>
+  <data name="SiteSettingsTransactionalPolicyIntro" xml:space="preserve">
+    <value>Diese Einstellungen beeinflussen die aktuell implementierten Kommunikationsflüsse für Einladung, Aktivierung, Passwort-Reset und Telefonverifikation.</value>
+  </data>
   <data name="BusinessCommunicationSubjectPrefixLabel" xml:space="preserve">
     <value>Betreff-Praefix</value>
   </data>
@@ -4766,6 +4985,39 @@
   </data>
   <data name="BusinessCommunicationPhaseOneImplicationTestInbox" xml:space="preserve">
     <value>Die Test-Postfach-Umleitung leitet diese E-Mails fuer kontrollierte Validierung um und stellt den urspruenglichen Empfaenger dem Inhalt voran.</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestInboxPlaceholder" xml:space="preserve">
+    <value>qa-inbox@example.com</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestPhonePlaceholder" xml:space="preserve">
+    <value>+4915112345678</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestEmailSubjectPlaceholder" xml:space="preserve">
+    <value>Darwin-Kommunikationstest fuer {channel}</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestEmailBodyPlaceholder" xml:space="preserve">
+    <value>&lt;p&gt;Dies ist ein Darwin-{channel}-Kommunikationstest.&lt;/p&gt;</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestSmsTemplatePlaceholder" xml:space="preserve">
+    <value>Darwin-SMS-Transporttest angefordert von {requested_by} um {attempted_at_utc} UTC fuer {test_target}.</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestWhatsAppTemplatePlaceholder" xml:space="preserve">
+    <value>Darwin-WhatsApp-Transporttest angefordert von {requested_by} um {attempted_at_utc} UTC fuer {test_target}.</value>
+  </data>
+  <data name="SiteSettingsBusinessInvitationEmailSubjectPlaceholder" xml:space="preserve">
+    <value>Einladung, {business_name} auf Darwin beizutreten</value>
+  </data>
+  <data name="SiteSettingsAccountActivationEmailSubjectPlaceholder" xml:space="preserve">
+    <value>Bestätigen Sie Ihre Darwin-Konto-E-Mail</value>
+  </data>
+  <data name="SiteSettingsPasswordResetEmailSubjectPlaceholder" xml:space="preserve">
+    <value>Setzen Sie Ihr Darwin-Kontopasswort zurück</value>
+  </data>
+  <data name="SiteSettingsPhoneVerificationSmsTemplatePlaceholder" xml:space="preserve">
+    <value>Ihr Darwin-Bestätigungscode lautet {token}. Er läuft um {expires_at_utc} UTC ab.</value>
+  </data>
+  <data name="SiteSettingsPhoneVerificationWhatsAppTemplatePlaceholder" xml:space="preserve">
+    <value>Bestätigen Sie Ihre Darwin-Mobilnummer mit dem Code {token}. Er läuft um {expires_at_utc} UTC ab.</value>
   </data>
   <data name="BusinessCommunicationPhaseOneImplicationVerificationTargets" xml:space="preserve">
     <value>SMS- und WhatsApp-Testziele sind Transport-Validierungskontrollen, waehrend Phone Verification jetzt anpassbare Text-Templates nutzt.</value>
@@ -6014,6 +6266,63 @@
   </data>
   <data name="CommunicationTestWhatsAppReadyNote" xml:space="preserve">
     <value>Ein sicherer operatorseitiger WhatsApp-Test ist verfügbar, weil Transport und Testziel konfiguriert sind.</value>
+  </data>
+  <data name="SiteSettingsWhatsAppEnabledHelp" xml:space="preserve">
+    <value>Aktiviert die WhatsApp-Integration, um Benachrichtigungen über die WhatsApp Business Cloud API zu senden.</value>
+  </data>
+  <data name="SiteSettingsWebAuthnPasskeysTitle" xml:space="preserve">
+    <value>WebAuthn (Passkeys)</value>
+  </data>
+  <data name="SiteSettingsWebAuthnRpIdTitle" xml:space="preserve">
+    <value>RP-ID</value>
+  </data>
+  <data name="SiteSettingsWebAuthnRpIdHelp" xml:space="preserve">
+    <value>Registrierbare Domain, z. B. example.com, oder „localhost“ für die Entwicklung.</value>
+  </data>
+  <data name="SiteSettingsWebAuthnUserVerificationTitle" xml:space="preserve">
+    <value>Benutzerverifikation</value>
+  </data>
+  <data name="SiteSettingsWebAuthnUserVerificationHelp" xml:space="preserve">
+    <value>Wenn aktiviert, wird auf Authenticatoren biometrische Prüfung oder PIN verlangt.</value>
+  </data>
+  <data name="SiteSettingsEmailSmtpTitle" xml:space="preserve">
+    <value>E-Mail (SMTP)</value>
+  </data>
+  <data name="SiteSettingsAdminSmsRecipientsTitle" xml:space="preserve">
+    <value>Admin-SMS-Empfänger</value>
+  </data>
+  <data name="SiteSettingsAdminSmsRecipientsHelp" xml:space="preserve">
+    <value>Kommagetrennte E.164-Telefonnummern, z. B. +49123456789.</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestSmsTargetHelp" xml:space="preserve">
+    <value>Reserviertes Testziel für den SMS-Rollout und die gestufte Providervalidierung.</value>
+  </data>
+  <data name="SiteSettingsPhoneVerificationPreferredChannelHelp" xml:space="preserve">
+    <value>Standardkanal, wenn Web oder Mobile keinen expliziten Kanal anfordert.</value>
+  </data>
+  <data name="SiteSettingsPhoneVerificationPolicyNote" xml:space="preserve">
+    <value>Richtlinie zur Telefonverifikation: Wenn der Client keinen Kanal angibt, verwendet die Plattform den bevorzugten Kanal oben. Wenn Fallback aktiviert ist, kann das System zwischen SMS und WhatsApp wechseln, wenn der bevorzugte oder angeforderte Kanal nicht verfügbar ist.</value>
+  </data>
+  <data name="SiteSettingsSupportedPlaceholdersTitle" xml:space="preserve">
+    <value>Unterstützte Platzhalter</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestEmailSubjectHelp" xml:space="preserve">
+    <value>Betreff für operatorseitige diagnostische E-Mail-Tests.</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestEmailBodyHelp" xml:space="preserve">
+    <value>HTML-Text für diagnostische E-Mail-Tests an die konfigurierte Test-Inbox.</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestSmsTemplateHelp" xml:space="preserve">
+    <value>Klartext-SMS für operatorseitige SMS-Provider-Validierung.</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestWhatsAppTemplateHelp" xml:space="preserve">
+    <value>Klartext-WhatsApp-Nachricht für operatorseitige WhatsApp-Validierung.</value>
+  </data>
+  <data name="SiteSettingsPhoneVerificationSmsTemplateHelp" xml:space="preserve">
+    <value>Klartext-SMS-Vorlage für die Mobile-Verifikation des aktuellen Benutzers.</value>
+  </data>
+  <data name="SiteSettingsPhoneVerificationWhatsAppTemplateHelp" xml:space="preserve">
+    <value>Klartext-WhatsApp-Vorlage für die Mobile-Verifikation des aktuellen Benutzers.</value>
   </data>
   <data name="BusinessesRequiringEmailSetupNote" xml:space="preserve">
     <value>Businesses mit aktivierten E-Mail-bezogenen Toggles, aber fehlenden Support- oder Absender-Defaults.</value>
@@ -7529,5 +7838,659 @@
   </data>
   <data name="BillingPlanFormSaveChanges" xml:space="preserve">
     <value>Aenderungen speichern</value>
+  </data>
+  <data name="MediaLibraryTitle" xml:space="preserve">
+    <value>Medienbibliothek</value>
+  </data>
+  <data name="MediaLibraryIntro" xml:space="preserve">
+    <value>Verwalten Sie hochgeladene Editor-Assets und wiederverwendbare Mediendateien.</value>
+  </data>
+  <data name="UploadMedia" xml:space="preserve">
+    <value>Medien hochladen</value>
+  </data>
+  <data name="MediaMissingAlt" xml:space="preserve">
+    <value>Alt fehlt</value>
+  </data>
+  <data name="MediaMissingTitle" xml:space="preserve">
+    <value>Titel fehlt</value>
+  </data>
+  <data name="MediaEditorAssets" xml:space="preserve">
+    <value>Editor-Assets</value>
+  </data>
+  <data name="MediaLibraryAssets" xml:space="preserve">
+    <value>Bibliotheks-Assets</value>
+  </data>
+  <data name="MediaOpsPlaybooksTitle" xml:space="preserve">
+    <value>Media-Ops-Playbooks</value>
+  </data>
+  <data name="MediaSearchPlaceholder" xml:space="preserve">
+    <value>Nach Titel, Alt-Text, Dateiname, Rolle oder URL suchen</value>
+  </data>
+  <data name="MediaNoAssetsFound" xml:space="preserve">
+    <value>Keine Medien-Assets gefunden.</value>
+  </data>
+  <data name="MediaEditorAsset" xml:space="preserve">
+    <value>Editor-Asset</value>
+  </data>
+  <data name="MediaLibraryAsset" xml:space="preserve">
+    <value>Bibliotheks-Asset</value>
+  </data>
+  <data name="AltLabel" xml:space="preserve">
+    <value>Alt</value>
+  </data>
+  <data name="MediaNotSet" xml:space="preserve">
+    <value>Nicht gesetzt</value>
+  </data>
+  <data name="MediaGeneralRole" xml:space="preserve">
+    <value>Allgemein</value>
+  </data>
+  <data name="MediaUnknownValue" xml:space="preserve">
+    <value>k. A.</value>
+  </data>
+  <data name="MediaSetAlt" xml:space="preserve">
+    <value>Alt setzen</value>
+  </data>
+  <data name="MediaSetTitle" xml:space="preserve">
+    <value>Titel setzen</value>
+  </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Kopiert</value>
+  </data>
+  <data name="File" xml:space="preserve">
+    <value>Datei</value>
+  </data>
+  <data name="MediaSupportedFormatsHelp" xml:space="preserve">
+    <value>Unterstützte Formate: PNG, JPG, WEBP, GIF. Maximal 5 MB.</value>
+  </data>
+  <data name="Upload" xml:space="preserve">
+    <value>Hochladen</value>
+  </data>
+  <data name="MediaEditTitle" xml:space="preserve">
+    <value>Medium bearbeiten</value>
+  </data>
+  <data name="MediaOpenFile" xml:space="preserve">
+    <value>Datei öffnen</value>
+  </data>
+  <data name="Url" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="Dimensions" xml:space="preserve">
+    <value>Abmessungen</value>
+  </data>
+  <data name="InventoryAdjustStockTitle" xml:space="preserve">
+    <value>Bestand anpassen</value>
+  </data>
+  <data name="InventoryReserveStockTitle" xml:space="preserve">
+    <value>Bestand reservieren</value>
+  </data>
+  <data name="InventoryReleaseReservationTitle" xml:space="preserve">
+    <value>Reservierung freigeben</value>
+  </data>
+  <data name="InventoryProcessReturnReceiptTitle" xml:space="preserve">
+    <value>Retoureneingang verarbeiten</value>
+  </data>
+  <data name="InventoryProcessReturn" xml:space="preserve">
+    <value>Retoure verarbeiten</value>
+  </data>
+  <data name="InventoryVariantLabel" xml:space="preserve">
+    <value>Variante</value>
+  </data>
+  <data name="InventoryAvailableLabel" xml:space="preserve">
+    <value>Verfuegbar</value>
+  </data>
+  <data name="InventoryAdjustQuantityHelp" xml:space="preserve">
+    <value>Verwenden Sie positive Werte fuer Wareneingaenge und negative Werte fuer Abschreibungen.</value>
+  </data>
+  <data name="InventoryReferenceIdAuditHelp" xml:space="preserve">
+    <value>Optionale Korrelations-ID fuer die Nachvollziehbarkeit.</value>
+  </data>
+  <data name="InventoryApplyAdjustment" xml:space="preserve">
+    <value>Anpassung anwenden</value>
+  </data>
+  <data name="InventoryBackToStockLevels" xml:space="preserve">
+    <value>Zurueck zu den Bestaenden</value>
+  </data>
+  <data name="InventoryCurrentReservedQuantity" xml:space="preserve">
+    <value>Aktuell reservierte Menge</value>
+  </data>
+  <data name="InventoryReturnReferenceHelp" xml:space="preserve">
+    <value>Optionale Retouren-/Vorgangs-ID fuer Idempotenz.</value>
+  </data>
+  <data name="InventoryCreateStockLevelTitle" xml:space="preserve">
+    <value>Bestand anlegen</value>
+  </data>
+  <data name="InventoryEditStockLevelTitle" xml:space="preserve">
+    <value>Bestand bearbeiten</value>
+  </data>
+  <data name="InventoryStockLevelEditorIntro" xml:space="preserve">
+    <value>Pflegen Sie Lagerbestaende, bevor Anpassungs-, Reservierungs- und Nachschub-Workflows darauf aufbauen.</value>
+  </data>
+  <data name="Captured" xml:space="preserve">
+    <value>Erfasst</value>
+  </data>
+  <data name="Authorized" xml:space="preserve">
+    <value>Autorisiert</value>
+  </data>
+  <data name="ShipmentLines" xml:space="preserve">
+    <value>Sendungspositionen</value>
+  </data>
+  <data name="OrderLine" xml:space="preserve">
+    <value>Bestellposition</value>
+  </data>
+  <data name="CreateRole" xml:space="preserve">
+    <value>Rolle erstellen</value>
+  </data>
+  <data name="EditRole" xml:space="preserve">
+    <value>Rolle bearbeiten</value>
+  </data>
+  <data name="RoleKeyHelp" xml:space="preserve">
+    <value>Stabiler Rollenschluessel, zum Beispiel Members oder Administrators.</value>
+  </data>
+  <data name="AdminDisplayNameHelp" xml:space="preserve">
+    <value>Lesbarer Name, der in der Admin-Oberflaeche angezeigt wird.</value>
+  </data>
+  <data name="RoleDescriptionHelp" xml:space="preserve">
+    <value>Optionaler Kontext zum Zweck dieser Rolle.</value>
+  </data>
+  <data name="ImmutableKeyHelp" xml:space="preserve">
+    <value>Der Schluessel kann nicht geaendert werden.</value>
+  </data>
+  <data name="SystemRole" xml:space="preserve">
+    <value>Systemrolle</value>
+  </data>
+  <data name="CreatePermission" xml:space="preserve">
+    <value>Berechtigung erstellen</value>
+  </data>
+  <data name="EditPermission" xml:space="preserve">
+    <value>Berechtigung bearbeiten</value>
+  </data>
+  <data name="PermissionKeyHelp" xml:space="preserve">
+    <value>Eindeutiger Berechtigungsschluessel, zum Beispiel Admin.Users.View.</value>
+  </data>
+  <data name="AddInteraction" xml:space="preserve">
+    <value>Interaktion hinzufügen</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>Typ</value>
+  </data>
+  <data name="Subject" xml:space="preserve">
+    <value>Betreff</value>
+  </data>
+  <data name="Content" xml:space="preserve">
+    <value>Inhalt</value>
+  </data>
+  <data name="RecordConsent" xml:space="preserve">
+    <value>Einwilligung erfassen</value>
+  </data>
+  <data name="ConsentType" xml:space="preserve">
+    <value>Einwilligungstyp</value>
+  </data>
+  <data name="Granted" xml:space="preserve">
+    <value>Erteilt</value>
+  </data>
+  <data name="Revoked" xml:space="preserve">
+    <value>Widerrufen</value>
+  </data>
+  <data name="GrantedAtUtc" xml:space="preserve">
+    <value>Erteilt am (UTC)</value>
+  </data>
+  <data name="RevokedAtUtc" xml:space="preserve">
+    <value>Widerrufen am (UTC)</value>
+  </data>
+  <data name="ConsentHistory" xml:space="preserve">
+    <value>Einwilligungsverlauf</value>
+  </data>
+  <data name="SegmentMemberships" xml:space="preserve">
+    <value>Segmentzuordnungen</value>
+  </data>
+  <data name="Segment" xml:space="preserve">
+    <value>Segment</value>
+  </data>
+  <data name="AssignSegment" xml:space="preserve">
+    <value>Segment zuweisen</value>
+  </data>
+  <data name="LeadConversion" xml:space="preserve">
+    <value>Lead-Konvertierung</value>
+  </data>
+  <data name="LeadAlreadyLinkedToCustomer" xml:space="preserve">
+    <value>Dieser Lead ist bereits mit einem Kundendatensatz verknüpft.</value>
+  </data>
+  <data name="LinkToExistingUser" xml:space="preserve">
+    <value>Mit bestehendem Benutzer verknüpfen</value>
+  </data>
+  <data name="CopyNotes" xml:space="preserve">
+    <value>Notizen kopieren</value>
+  </data>
+  <data name="ConvertToCustomer" xml:space="preserve">
+    <value>In Kunden umwandeln</value>
+  </data>
+  <data name="NoAssignedSegments" xml:space="preserve">
+    <value>Keine zugewiesenen Segmente.</value>
+  </data>
+  <data name="CreateLead" xml:space="preserve">
+    <value>Lead erstellen</value>
+  </data>
+  <data name="CreatedAtUtc" xml:space="preserve">
+    <value>Erstellt (UTC)</value>
+  </data>
+  <data name="GrantedAtUtcShort" xml:space="preserve">
+    <value>Erteilt (UTC)</value>
+  </data>
+  <data name="RevokedAtUtcShort" xml:space="preserve">
+    <value>Widerrufen (UTC)</value>
+  </data>
+  <data name="NoInteractionsYet" xml:space="preserve">
+    <value>Noch keine Interaktionen.</value>
+  </data>
+  <data name="NoConsentHistory" xml:space="preserve">
+    <value>Kein Einwilligungsverlauf.</value>
+  </data>
+  <data name="Custom" xml:space="preserve">
+    <value>Benutzerdefiniert</value>
+  </data>
+  <data name="DelegatedSupport" xml:space="preserve">
+    <value>Delegierter Support</value>
+  </data>
+  <data name="RoleOpsPlaybook" xml:space="preserve">
+    <value>Rollen-Ops-Playbook</value>
+  </data>
+  <data name="RoleOpsPlaybookSystem" xml:space="preserve">
+    <value>Verwenden Sie System, um geschützte Rollen vor Berechtigungs-Refactorings zu prüfen.</value>
+  </data>
+  <data name="RoleOpsPlaybookDelegatedSupport" xml:space="preserve">
+    <value>Verwenden Sie Delegierten Support, wenn Business-Support-Operatoren zugewiesen werden.</value>
+  </data>
+  <data name="RoleOpsPlaybookCustom" xml:space="preserve">
+    <value>Verwenden Sie Benutzerdefiniert, um veraltete Rollen vor dem Go-live-Audit zu bereinigen.</value>
+  </data>
+  <data name="RoleSearchHelp" xml:space="preserve">
+    <value>Durchsucht Anzeigename und Beschreibung.</value>
+  </data>
+  <data name="PageSize" xml:space="preserve">
+    <value>Seitengröße</value>
+  </data>
+  <data name="NewRole" xml:space="preserve">
+    <value>Neue Rolle</value>
+  </data>
+  <data name="NoRolesFound" xml:space="preserve">
+    <value>Keine Rollen gefunden.</value>
+  </data>
+  <data name="PermissionOpsPlaybook" xml:space="preserve">
+    <value>Berechtigungs-Ops-Playbook</value>
+  </data>
+  <data name="PermissionOpsPlaybookSystem" xml:space="preserve">
+    <value>Prüfen Sie System-Berechtigungen, bevor Rollenbindungen geändert werden.</value>
+  </data>
+  <data name="PermissionOpsPlaybookDelegatedSupport" xml:space="preserve">
+    <value>Verwenden Sie Delegierten Support, um zu prüfen, dass der Business-Support-Umfang enger bleibt als FullAdminAccess.</value>
+  </data>
+  <data name="PermissionOpsPlaybookCustom" xml:space="preserve">
+    <value>Verwenden Sie Benutzerdefiniert, um ältere Berechtigungsexperimente vor dem Abschluss-Audit zu bereinigen.</value>
+  </data>
+  <data name="DelegatedBusinessSupport" xml:space="preserve">
+    <value>Delegierter Business-Support</value>
+  </data>
+  <data name="PermissionDelegatedSupportNote" xml:space="preserve">
+    <value>Die integrierte Berechtigung ManageBusinessSupport gilt nur für Einladungs- und Mitgliedersupport-Workflows. Freigabe, Sperrung, Owner-Overrides und Business-Lifecycle-Aktionen bleiben bei FullAdminAccess.</value>
+  </data>
+  <data name="SearchTerm" xml:space="preserve">
+    <value>Suchbegriff</value>
+  </data>
+  <data name="PermissionSearchHelp" xml:space="preserve">
+    <value>Durchsucht Schlüssel und Anzeigename.</value>
+  </data>
+  <data name="NewPermission" xml:space="preserve">
+    <value>Neue Berechtigung</value>
+  </data>
+  <data name="NoPermissionsFound" xml:space="preserve">
+    <value>Keine Berechtigungen gefunden.</value>
+  </data>
+  <data name="AllocationAvailableAfterPayment" xml:space="preserve">
+    <value>Die Zuweisung ist verfügbar, sobald die Bestellung bezahlt ist.</value>
+  </data>
+  <data name="Qty" xml:space="preserve">
+    <value>Menge</value>
+  </data>
+  <data name="Available" xml:space="preserve">
+    <value>Verfügbar</value>
+  </data>
+  <data name="AllocateNow" xml:space="preserve">
+    <value>Jetzt zuweisen</value>
+  </data>
+  <data name="Dhl" xml:space="preserve">
+    <value>DHL</value>
+  </data>
+  <data name="Stripe" xml:space="preserve">
+    <value>Stripe</value>
+  </data>
+  <data name="Unit" xml:space="preserve">
+    <value>Einheit</value>
+  </data>
+  <data name="HttpStatusLabel" xml:space="preserve">
+    <value>HTTP</value>
+  </data>
+  <data name="SubscriptionLabel" xml:space="preserve">
+    <value>Abonnement</value>
+  </data>
+  <data name="Line" xml:space="preserve">
+    <value>Zeile</value>
+  </data>
+  <data name="BusinessSetupOwnershipIntro" xml:space="preserve">
+    <value>Diese Setup-Seite verwaltet business-spezifische Standards und die kundenorientierte Identität. Plattform-Zugangsdaten, globale Vorlagen, Carrier-/Provider-Schwellenwerte und VAT-Ausstellerstandards verbleiben in den Site Settings.</value>
+  </data>
+  <data name="BusinessOwnedHere" xml:space="preserve">
+    <value>Business-eigen hier</value>
+  </data>
+  <data name="BusinessOwnedBranding" xml:space="preserve">
+    <value>Markenanzeigename und Logo</value>
+  </data>
+  <data name="BusinessOwnedLocaleDefaults" xml:space="preserve">
+    <value>Standardkultur, Währung und Zeitzone</value>
+  </data>
+  <data name="BusinessOwnedSupportIdentity" xml:space="preserve">
+    <value>Support-E-Mail, Absendername, Reply-to</value>
+  </data>
+  <data name="BusinessOwnedCommunicationFlags" xml:space="preserve">
+    <value>Schalter für E-Mail/Marketing/Alerts</value>
+  </data>
+  <data name="GlobalDependencies" xml:space="preserve">
+    <value>Globale Abhängigkeiten</value>
+  </data>
+  <data name="GlobalDependenciesProviders" xml:space="preserve">
+    <value>SMTP-, SMS- und WhatsApp-Provider</value>
+  </data>
+  <data name="GlobalDependenciesTemplates" xml:space="preserve">
+    <value>Einladungs-, Aktivierungs- und Reset-Vorlagen</value>
+  </data>
+  <data name="GlobalDependenciesPaymentsShipping" xml:space="preserve">
+    <value>Stripe- und DHL-Zugangsdaten sowie Schwellenwerte</value>
+  </data>
+  <data name="GlobalDependenciesTaxIssuer" xml:space="preserve">
+    <value>VAT-Standards und Rechnungssteller-Identität</value>
+  </data>
+  <data name="DirectHandoff" xml:space="preserve">
+    <value>Direkte Übergabe</value>
+  </data>
+  <data name="DefaultCulture" xml:space="preserve">
+    <value>Standardkultur</value>
+  </data>
+  <data name="DefaultCurrency" xml:space="preserve">
+    <value>Standardwährung</value>
+  </data>
+  <data name="DefaultTimeZone" xml:space="preserve">
+    <value>Standardzeitzone</value>
+  </data>
+  <data name="DefaultTimeZoneHelp" xml:space="preserve">
+    <value>Verwenden Sie eine IANA-Zeitzone wie Europe/Berlin.</value>
+  </data>
+  <data name="BusinessActivationBlockedUntilApproved" xml:space="preserve">
+    <value>Die Aktivierung bleibt blockiert, bis das Business freigegeben ist.</value>
+  </data>
+  <data name="BusinessAdminTextOverridesHelp" xml:space="preserve">
+    <value>Business-spezifische Admin-Textüberschreibungen gelten nur, wenn Operatoren in diesem Business-Kontext arbeiten. Priorität: Business-Override, dann Plattform-Site-Setting-Override, dann Shared-Resource-Text.</value>
+  </data>
+  <data name="Branding" xml:space="preserve">
+    <value>Branding</value>
+  </data>
+  <data name="BrandDisplayName" xml:space="preserve">
+    <value>Markenanzeigename</value>
+  </data>
+  <data name="BrandDisplayNameHelp" xml:space="preserve">
+    <value>Verwenden Sie dies, wenn das kundenorientierte Branding vom rechtlichen oder internen Business-Namen abweichen soll.</value>
+  </data>
+  <data name="BrandLogoUrl" xml:space="preserve">
+    <value>Markenlogo-URL</value>
+  </data>
+  <data name="PrimaryBrandColor" xml:space="preserve">
+    <value>Primäre Markenfarbe</value>
+  </data>
+  <data name="SecondaryBrandColor" xml:space="preserve">
+    <value>Sekundäre Markenfarbe</value>
+  </data>
+  <data name="BusinessCommunicationDefaults" xml:space="preserve">
+    <value>Business-Kommunikationsstandards</value>
+  </data>
+  <data name="SupportEmail" xml:space="preserve">
+    <value>Support-E-Mail</value>
+  </data>
+  <data name="SenderDisplayName" xml:space="preserve">
+    <value>Anzeigename des Absenders</value>
+  </data>
+  <data name="ReplyToEmail" xml:space="preserve">
+    <value>Reply-to-E-Mail</value>
+  </data>
+  <data name="CustomerTransactionalEmailsEnabled" xml:space="preserve">
+    <value>Transaktionale Kunden-E-Mails aktiviert</value>
+  </data>
+  <data name="CustomerMarketingEmailsEnabled" xml:space="preserve">
+    <value>Kunden-Marketing-E-Mails aktiviert</value>
+  </data>
+  <data name="OperationalAlertEmailsEnabled" xml:space="preserve">
+    <value>Operative Alert-E-Mails aktiviert</value>
+  </data>
+  <data name="BusinessCommunicationDefaultsHelp" xml:space="preserve">
+    <value>Dies sind Kommunikationspräferenzen auf Business-Ebene. SMTP-Transport und Provider-Zugangsdaten bleiben in Phase 1 global, aber Aktivierung und Absenderstandards sind jetzt business-spezifisch.</value>
+  </data>
+  <data name="CommunicationReadiness" xml:space="preserve">
+    <value>Kommunikationsbereitschaft</value>
+  </data>
+  <data name="EmailDelivery" xml:space="preserve">
+    <value>E-Mail-Zustellung</value>
+  </data>
+  <data name="SmsDelivery" xml:space="preserve">
+    <value>SMS-Zustellung</value>
+  </data>
+  <data name="WhatsAppDelivery" xml:space="preserve">
+    <value>WhatsApp-Zustellung</value>
+  </data>
+  <data name="BusinessSubscriptionSnapshot" xml:space="preserve">
+    <value>Business-Abonnement-Snapshot</value>
+  </data>
+  <data name="CancelsAtPeriodEnd" xml:space="preserve">
+    <value>Kündigt zum Periodenende</value>
+  </data>
+  <data name="RenewsNormally" xml:space="preserve">
+    <value>Verlängert sich regulär</value>
+  </data>
+  <data name="CurrentPeriodEnd" xml:space="preserve">
+    <value>Aktuelles Periodenende</value>
+  </data>
+  <data name="Started" xml:space="preserve">
+    <value>Gestartet</value>
+  </data>
+  <data name="TrialEnds" xml:space="preserve">
+    <value>Testphase endet</value>
+  </data>
+  <data name="NoActiveSubscriptionSnapshot" xml:space="preserve">
+    <value>Für dieses Business ist noch kein aktiver Abonnement-Snapshot verfügbar.</value>
+  </data>
+  <data name="CreateSegment" xml:space="preserve">
+    <value>Segment erstellen</value>
+  </data>
+  <data name="EditSegment" xml:space="preserve">
+    <value>Segment bearbeiten</value>
+  </data>
+  <data name="CustomerSegmentationTaxonomyHelp" xml:space="preserve">
+    <value>Kundensegmentierungs-Taxonomie und Targeting-Hygiene.</value>
+  </data>
+  <data name="OperationalSetupActions" xml:space="preserve">
+    <value>Operative Setup-Aktionen</value>
+  </data>
+  <data name="SiteSettingsSecurityJwtTitle" xml:space="preserve">
+    <value>Sicherheit &amp; JWT</value>
+  </data>
+  <data name="SiteSettingsSecurityJwtAlert" xml:space="preserve">
+    <value>Behandeln Sie Signaturschlüssel und Token-Laufzeiten als produktionskritische Einstellungen. Änderungen hier betreffen öffentliche APIs und die mobile Authentifizierung.</value>
+  </data>
+  <data name="SiteSettingsJwtEnabledTitle" xml:space="preserve">
+    <value>JWT aktiviert</value>
+  </data>
+  <data name="SiteSettingsJwtEnabledHelp" xml:space="preserve">
+    <value>Deaktiviert das Ausstellen und Akzeptieren von JWT Access-/Refresh-Tokens, wenn es ausgeschaltet wird.</value>
+  </data>
+  <data name="SiteSettingsSigningKeyTitle" xml:space="preserve">
+    <value>Signaturschlüssel</value>
+  </data>
+  <data name="SiteSettingsSigningKeyHelp" xml:space="preserve">
+    <value>Verwenden Sie in Produktion ein langes Secret mit hoher Entropie. Eine Rotation dieses Schlüssels betrifft aktive Tokens.</value>
+  </data>
+  <data name="SiteSettingsPreviousSigningKeyTitle" xml:space="preserve">
+    <value>Vorheriger Signaturschlüssel</value>
+  </data>
+  <data name="SiteSettingsPreviousSigningKeyHelp" xml:space="preserve">
+    <value>Optionaler Rotations-Slot, damit Validatoren Tokens akzeptieren können, die vor einem Schlüsselwechsel signiert wurden.</value>
+  </data>
+  <data name="SiteSettingsPaymentsStripeTitle" xml:space="preserve">
+    <value>Zahlungen (Stripe-first)</value>
+  </data>
+  <data name="SiteSettingsPaymentsStripeAlert" xml:space="preserve">
+    <value>Stripe ist der Phase-1-Zahlungsprovider. Halten Sie die Abstraktion im Code generisch, verwalten Sie aber die operativen Zugangsdaten und die Webhook-Verifikation hier.</value>
+  </data>
+  <data name="SiteSettingsTaxVatTitle" xml:space="preserve">
+    <value>Steuern &amp; Rechnungen (Phase-1 VAT)</value>
+  </data>
+  <data name="SiteSettingsTaxVatAlert" xml:space="preserve">
+    <value>Diese Einstellungen definieren die globalen VAT- und Rechnungssteller-Standards, die von Phase-1-Billing- und Invoice-Support-Surfaces verwendet werden, bis tiefere business-spezifische Steuerregeln eingeführt werden.</value>
+  </data>
+  <data name="SiteSettingsInvoiceIssuerDefaultsTitle" xml:space="preserve">
+    <value>Standards für Rechnungssteller</value>
+  </data>
+  <data name="SiteSettingsShippingDhlTitle" xml:space="preserve">
+    <value>Versand (DHL-first)</value>
+  </data>
+  <data name="SiteSettingsShippingDhlAlert" xml:space="preserve">
+    <value>DHL ist der Phase-1-Carrier. Dieser Bereich hält Carrier-Zugang, Umgebung und Standard-Absenderidentität zentral über die Admin-Oberfläche verwaltbar.</value>
+  </data>
+  <data name="SiteSettingsDhlApiBaseUrlPlaceholder" xml:space="preserve">
+    <value>https://...</value>
+  </data>
+  <data name="SiteSettingsDefaultShipperIdentityTitle" xml:space="preserve">
+    <value>Standard-Absenderidentität</value>
+  </data>
+  <data name="SiteSettingsShipmentAttentionDelayHelp" xml:space="preserve">
+    <value>Nach so vielen Stunden sollten ausstehende oder gepackte Sendungen als auf die Übergabe an den Carrier wartend behandelt werden.</value>
+  </data>
+  <data name="SiteSettingsShipmentTrackingGraceHelp" xml:space="preserve">
+    <value>Nach so vielen Stunden erscheinen versendete DHL-Datensätze ohne Tracking in Support-Queues als überfällig.</value>
+  </data>
+  <data name="SiteSettingsOperationalRetentionTitle" xml:space="preserve">
+    <value>Operative Aufbewahrung</value>
+  </data>
+  <data name="SiteSettingsCleanupEnabledTitle" xml:space="preserve">
+    <value>Cleanup aktiviert</value>
+  </data>
+  <data name="SiteSettingsCleanupEnabledHelp" xml:space="preserve">
+    <value>Erlaubt die Hintergrundbereinigung von soft-gelöschten Datensätzen, nachdem das Aufbewahrungsfenster abgelaufen ist.</value>
+  </data>
+  <data name="SiteSettingsMeasurementUnitsTitle" xml:space="preserve">
+    <value>Maße &amp; Einheiten</value>
+  </data>
+  <data name="SiteSettingsTitleHelpTitle" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="SiteSettingsTitleHelpContent" xml:space="preserve">
+    <value>Wird im Browser-Titel und in UI-Ueberschriften angezeigt. Maximal 200 Zeichen.</value>
+  </data>
+  <data name="SiteSettingsLogoUrlHelpTitle" xml:space="preserve">
+    <value>Logo-URL</value>
+  </data>
+  <data name="SiteSettingsLogoUrlHelpContent" xml:space="preserve">
+    <value>Absolute oder app-relative URL fuer das Logo (z. B. /img/logo.svg).</value>
+  </data>
+  <data name="SiteSettingsContactEmailHelpTitle" xml:space="preserve">
+    <value>Kontakt-E-Mail</value>
+  </data>
+  <data name="SiteSettingsContactEmailHelpContent" xml:space="preserve">
+    <value>Primaere Kontakt-E-Mail, die oeffentlich im Footer oder auf der Kontaktseite angezeigt wird.</value>
+  </data>
+  <data name="SiteSettingsDateFormatHelpTitle" xml:space="preserve">
+    <value>Datumsformat</value>
+  </data>
+  <data name="SiteSettingsDateFormatHelpContent" xml:space="preserve">
+    <value>Standardformat fuer Datumswerte (z. B. yyyy-MM-dd).</value>
+  </data>
+  <data name="SiteSettingsTimeFormatHelpTitle" xml:space="preserve">
+    <value>Zeitformat</value>
+  </data>
+  <data name="SiteSettingsTimeFormatHelpContent" xml:space="preserve">
+    <value>Standardformat fuer Zeitwerte (z. B. HH:mm).</value>
+  </data>
+  <data name="SiteSettingsMobileQrTokenRefreshHelpTitle" xml:space="preserve">
+    <value>QR-Token-Aktualisierung</value>
+  </data>
+  <data name="SiteSettingsMobileQrTokenRefreshHelpContent" xml:space="preserve">
+    <value>Aktualisierungsintervall fuer mobile QR-/Sitzungs-Token. Niedrigere Werte verbessern die Sicherheit, erhoehen aber den Aktualisierungsverkehr.</value>
+  </data>
+  <data name="SiteSettingsMobileMaxOutboxItemsHelpTitle" xml:space="preserve">
+    <value>Maximale Outbox-Eintraege</value>
+  </data>
+  <data name="SiteSettingsMobileMaxOutboxItemsHelpContent" xml:space="preserve">
+    <value>Obergrenze fuer offline/mobile Outbox-Pufferung, bevor der Client flushen oder blockieren muss.</value>
+  </data>
+  <data name="SiteSettingsDefaultCultureHelpTitle" xml:space="preserve">
+    <value>Standard-Gebietsschema</value>
+  </data>
+  <data name="SiteSettingsDefaultCultureHelpContent" xml:space="preserve">
+    <value>Format: ll-CC (z. B. de-DE). Wird als Fallback-Gebietsschema verwendet.</value>
+  </data>
+  <data name="SiteSettingsSupportedCulturesHelpTitle" xml:space="preserve">
+    <value>Unterstuetzte Gebietsschemata</value>
+  </data>
+  <data name="SiteSettingsSupportedCulturesHelpContent" xml:space="preserve">
+    <value>Kommagetrennte Gebietsschemata (z. B. de-DE,en-US). Steuert Admin-Dropdowns und hreflang.</value>
+  </data>
+  <data name="SiteSettingsAdminTextOverridesHelpPrefix" xml:space="preserve">
+    <value>Optionale plattformweite Text-Ueberschreibungen ueber gemeinsamen Admin-Ressourcen. Verwenden Sie JSON in der Form</value>
+  </data>
+  <data name="SiteSettingsDefaultCountryHelpTitle" xml:space="preserve">
+    <value>Standardland</value>
+  </data>
+  <data name="SiteSettingsDefaultCountryHelpContent" xml:space="preserve">
+    <value>ISO 3166-1 Alpha-2 (z. B. DE).</value>
+  </data>
+  <data name="SiteSettingsDefaultCurrencyHelpTitle" xml:space="preserve">
+    <value>Waehrung</value>
+  </data>
+  <data name="SiteSettingsDefaultCurrencyHelpContent" xml:space="preserve">
+    <value>ISO-4217-Waehrungscode. Standard ist EUR.</value>
+  </data>
+  <data name="SiteSettingsTimeZoneHelpTitle" xml:space="preserve">
+    <value>Zeitzone</value>
+  </data>
+  <data name="SiteSettingsTimeZoneHelpContent" xml:space="preserve">
+    <value>IANA-Name (z. B. Europe/Berlin).</value>
+  </data>
+  <data name="SiteSettingsHomeSlugHelpTitle" xml:space="preserve">
+    <value>Home-Slug</value>
+  </data>
+  <data name="SiteSettingsHomeSlugHelpContent" xml:space="preserve">
+    <value>Slug der Startseite beim Aufbau lokalisierter Routen.</value>
+  </data>
+  <data name="SiteSettingsWhatsAppTransportTestHelp" xml:space="preserve">
+    <value>Wird vor dem Go-live für operatorseitige WhatsApp-Transporttests verwendet.</value>
+  </data>
+  <data name="SiteSettingsMeasurementSystemTitle" xml:space="preserve">
+    <value>Maßsystem</value>
+  </data>
+  <data name="SiteSettingsMeasurementSystemHelp" xml:space="preserve">
+    <value>Beeinflusst Anzeigeeinheiten für Gewicht und Länge.</value>
+  </data>
+  <data name="Metric" xml:space="preserve">
+    <value>Metrisch</value>
+  </data>
+  <data name="Imperial" xml:space="preserve">
+    <value>Imperial</value>
+  </data>
+  <data name="EditRolePermissions" xml:space="preserve">
+    <value>Rollenberechtigungen bearbeiten</value>
+  </data>
+  <data name="PermissionsForRole" xml:space="preserve">
+    <value>Berechtigungen für Rolle</value>
+  </data>
+  <data name="AltText" xml:space="preserve">
+    <value>Alt-Text</value>
+  </data>
+  <data name="MediaRolePlaceholder" xml:space="preserve">
+    <value>Allgemein, Galerie, Editor-Asset...</value>
   </data>
 </root>

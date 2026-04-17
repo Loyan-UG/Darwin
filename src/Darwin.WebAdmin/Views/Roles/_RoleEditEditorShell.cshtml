@@ -1,9 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.Identity.RoleEditVm
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @addTagHelper *, Darwin.WebAdmin
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div id="role-editor-shell">
-    <h1 class="mb-3"><i class="fa fa-pen"></i> Edit Role</h1>
+    <h1 class="mb-3"><i class="fa fa-pen"></i> @T.T("EditRole")</h1>
 
     <form asp-action="Edit"
           method="post"
@@ -23,34 +24,34 @@
         <div class="card mb-3">
             <div class="card-body">
                 <div class="mb-3">
-                    <label class="form-label">Key</label>
+                    <label class="form-label">@T.T("Key")</label>
                     <input class="form-control" value="@Model.Key" readonly />
-                    <small class="text-muted">Key cannot be changed.</small>
+                    <small class="text-muted">@T.T("ImmutableKeyHelp")</small>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="DisplayName" class="form-label"></label>
-                    <field-help title="Display Name" content="Human-friendly name shown in the Admin UI." placement="right"></field-help>
+                    <field-help title="@T.T("DisplayName")" content="@T.T("AdminDisplayNameHelp")" placement="right"></field-help>
                     <input asp-for="DisplayName" class="form-control" />
                     <span asp-validation-for="DisplayName" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Description" class="form-label"></label>
-                    <field-help title="Description" content="Optional context about this role's purpose." placement="right"></field-help>
+                    <field-help title="@T.T("Description")" content="@T.T("RoleDescriptionHelp")" placement="right"></field-help>
                     <textarea asp-for="Description" rows="3" class="form-control"></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">System role</label>
+                    <label class="form-label">@T.T("SystemRole")</label>
                     @if (Model.IsSystem)
                     {
-                        <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
+                        <span class="badge bg-secondary"><i class="fa fa-lock"></i> @T.T("System")</span>
                     }
                     else
                     {
-                        <span class="text-muted">No</span>
+                        <span class="text-muted">@T.T("No")</span>
                     }
                 </div>
             </div>
@@ -71,7 +72,7 @@
                             data-hx-target="#role-editor-shell"
                             data-hx-swap="outerHTML"
                             data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                        <i class="fa fa-trash"></i> Delete
+                        <i class="fa fa-trash"></i> @T.T("Delete")
                     </button>
                 }
             </div>
@@ -80,8 +81,8 @@
                    class="btn btn-outline-secondary"
                    hx-get="@Url.Action("Index", "Roles")"
                    hx-target="#role-editor-shell"
-                   hx-swap="outerHTML"><i class="fa fa-arrow-left"></i> Back</a>
-                <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+                   hx-swap="outerHTML"><i class="fa fa-arrow-left"></i> @T.T("Back")</a>
+                <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
             </div>
         </div>
     </form>

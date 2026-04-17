@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.CMS.PageCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Page";
+    ViewData["Title"] = T.T("CreatePage");
 }
 
 <partial name="_PageCreateEditorShell" model="Model" />

@@ -1,10 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.InventoryReleaseReservationActionVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Release Reservation";
+    ViewData["Title"] = T.T("InventoryReleaseReservationTitle");
 }
 
 <div id="inventory-release-reservation-editor-shell">
-<h1 class="mb-3">Release Reservation</h1>
+<h1 class="mb-3">@T.T("InventoryReleaseReservationTitle")</h1>
 
 <div class="card shadow-sm">
     <div class="card-body">
@@ -12,19 +13,19 @@
 
         <div class="row g-3 mb-4">
             <div class="col-md-6">
-                <label class="form-label">Warehouse</label>
+                <label class="form-label">@T.T("Warehouse")</label>
                 <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select" disabled></select>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Variant</label>
+                <label class="form-label">@T.T("InventoryVariantLabel")</label>
                 <select asp-for="ProductVariantId" asp-items="Model.VariantOptions" class="form-select" disabled></select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Available</label>
+                <label class="form-label">@T.T("InventoryAvailableLabel")</label>
                 <input value="@Model.AvailableQuantity" class="form-control" disabled />
             </div>
             <div class="col-md-3">
-                <label class="form-label">Reserved</label>
+                <label class="form-label">@T.T("Reserved")</label>
                 <input value="@Model.ReservedQuantity" class="form-control" disabled />
             </div>
         </div>
@@ -45,7 +46,7 @@
                 <div class="col-md-4">
                     <label asp-for="Quantity" class="form-label"></label>
                     <input asp-for="Quantity" class="form-control" />
-                    <div class="form-text">Current reserved quantity: @Model.ReservedQuantity</div>
+                    <div class="form-text">@T.T("InventoryCurrentReservedQuantity"): @Model.ReservedQuantity</div>
                     <span asp-validation-for="Quantity" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
@@ -56,18 +57,18 @@
                 <div class="col-md-4">
                     <label asp-for="ReferenceId" class="form-label"></label>
                     <input asp-for="ReferenceId" class="form-control" />
-                    <div class="form-text">Optional correlation id for auditability.</div>
+                    <div class="form-text">@T.T("InventoryReferenceIdAuditHelp")</div>
                     <span asp-validation-for="ReferenceId" class="text-danger"></span>
                 </div>
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-info">Release Reservation</button>
+                <button type="submit" class="btn btn-info">@T.T("InventoryReleaseReservationTitle")</button>
                 <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
                    hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })"
                    hx-target="#inventory-release-reservation-editor-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">Back to Stock Levels</a>
+                   hx-push-url="true">@T.T("InventoryBackToStockLevels")</a>
             </div>
         </form>
     </div>

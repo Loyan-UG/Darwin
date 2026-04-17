@@ -118,9 +118,9 @@
             <div class="card-header">@T.T("BusinessCommunicationGlobalDependencyReadinessTitle")</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge @(Model.EmailTransportConfigured ? "text-bg-success" : "text-bg-warning")">SMTP @(Model.EmailTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
-                    <span class="badge @(Model.SmsTransportConfigured ? "text-bg-success" : "text-bg-warning")">SMS @(Model.SmsTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
-                    <span class="badge @(Model.WhatsAppTransportConfigured ? "text-bg-success" : "text-bg-warning")">WhatsApp @(Model.WhatsAppTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
+                    <span class="badge @(Model.EmailTransportConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("SMTP") @(Model.EmailTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
+                    <span class="badge @(Model.SmsTransportConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("SMS") @(Model.SmsTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
+                    <span class="badge @(Model.WhatsAppTransportConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("WhatsApp") @(Model.WhatsAppTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
                     <span class="badge @(Model.AdminAlertRoutingConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("BusinessCommunicationAdminAlertsShort") @(Model.AdminAlertRoutingConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
                 </div>
                 <div class="mt-3">

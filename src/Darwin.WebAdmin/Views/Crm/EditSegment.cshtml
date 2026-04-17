@@ -1,7 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.CRM.CustomerSegmentEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["FormAction"] = "EditSegment";
-    ViewData["Title"] = "Edit Segment";
+    ViewData["Title"] = T.T("EditSegment");
 }
 
 <partial name="_SegmentEditorShell" model="Model" />

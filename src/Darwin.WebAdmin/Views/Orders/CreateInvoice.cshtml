@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderInvoiceCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Invoice";
+    ViewData["Title"] = T.T("CreateInvoice");
 }
 
 <partial name="~/Views/Orders/_InvoiceCreateShell.cshtml" model="Model" />

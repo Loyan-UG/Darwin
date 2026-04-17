@@ -1,21 +1,22 @@
 @model Darwin.WebAdmin.ViewModels.CMS.MediaAssetEditorVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 <div class="row g-3">
     <div class="col-12">
-        <label asp-for="Alt" class="form-label">Alt Text</label>
+        <label asp-for="Alt" class="form-label">@T.T("AltText")</label>
         <input asp-for="Alt" class="form-control" />
         <span asp-validation-for="Alt" class="text-danger"></span>
     </div>
 
     <div class="col-md-6">
-        <label asp-for="Title" class="form-label">Title</label>
+        <label asp-for="Title" class="form-label">@T.T("Title")</label>
         <input asp-for="Title" class="form-control" />
         <span asp-validation-for="Title" class="text-danger"></span>
     </div>
 
     <div class="col-md-6">
-        <label asp-for="Role" class="form-label">Role</label>
-        <input asp-for="Role" class="form-control" placeholder="General, Gallery, EditorAsset..." />
+        <label asp-for="Role" class="form-label">@T.T("Role")</label>
+        <input asp-for="Role" class="form-control" placeholder="@T.T("MediaRolePlaceholder")" />
         <span asp-validation-for="Role" class="text-danger"></span>
     </div>
 </div>

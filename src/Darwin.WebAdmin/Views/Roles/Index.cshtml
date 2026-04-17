@@ -1,28 +1,29 @@
 @model Darwin.WebAdmin.ViewModels.Identity.RolesListItemVm
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @addTagHelper *, Darwin.WebAdmin
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 @{
-    ViewData["Title"] = "Roles";
+    ViewData["Title"] = T.T("Roles");
 }
 
 <div id="roles-workspace-shell">
-    <h1 class="mb-3"><i class="fa fa-user-shield"></i> Roles</h1>
+    <h1 class="mb-3"><i class="fa fa-user-shield"></i> @T.T("Roles")</h1>
 
     <div class="row g-3 mb-3">
-        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
-        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">System</div><div class="fs-4 fw-semibold">@Model.Summary.SystemCount</div></div></div></div>
-        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Custom</div><div class="fs-4 fw-semibold">@Model.Summary.CustomCount</div></div></div></div>
-        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Delegated support</div><div class="fs-4 fw-semibold">@Model.Summary.DelegatedSupportCount</div></div></div></div>
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Total")</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("System")</div><div class="fs-4 fw-semibold">@Model.Summary.SystemCount</div></div></div></div>
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Custom")</div><div class="fs-4 fw-semibold">@Model.Summary.CustomCount</div></div></div></div>
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("DelegatedSupport")</div><div class="fs-4 fw-semibold">@Model.Summary.DelegatedSupportCount</div></div></div></div>
     </div>
 
     <div class="card mb-3 border-info-subtle">
         <div class="card-body">
-            <h2 class="h6 mb-2">Role Ops Playbook</h2>
+            <h2 class="h6 mb-2">@T.T("RoleOpsPlaybook")</h2>
             <ul class="mb-0">
-                <li>Use `System` to review protected roles before permission refactors.</li>
-                <li>Use `Delegated Support` when assigning business-support operators.</li>
-                <li>Use `Custom` to clean up obsolete roles before go-live audit.</li>
+                <li>@T.T("RoleOpsPlaybookSystem")</li>
+                <li>@T.T("RoleOpsPlaybookDelegatedSupport")</li>
+                <li>@T.T("RoleOpsPlaybookCustom")</li>
             </ul>
         </div>
     </div>
@@ -35,33 +36,33 @@
                   hx-target="#roles-workspace-shell"
                   hx-swap="outerHTML">
                 <div class="col-md-4">
-                    <label class="form-label" for="q">Search</label>
-                    <field-help title="Search" content="Searches in display name and description." placement="right"></field-help>
+                    <label class="form-label" for="q">@T.T("Search")</label>
+                    <field-help title="@T.T("Search")" content="@T.T("RoleSearchHelp")" placement="right"></field-help>
                     <input type="text" id="q" name="q" value="@Model.Query" class="form-control" />
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label" for="pageSize">Page size</label>
+                    <label class="form-label" for="pageSize">@T.T("PageSize")</label>
                     <select id="pageSize" name="pageSize" class="form-select" asp-items="Model.PageSizeItems"></select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label" for="filter">Queue</label>
+                    <label class="form-label" for="filter">@T.T("Queue")</label>
                     <select id="filter" name="filter" class="form-select" asp-items="Model.FilterItems"></select>
                 </div>
                 <div class="col-md-3 d-flex justify-content-end gap-2">
                     <button type="submit" class="btn btn-outline-secondary">
-                        <i class="fa fa-search"></i> Search
+                        <i class="fa fa-search"></i> @T.T("Search")
                     </button>
                     <a asp-action="Index"
                        class="btn btn-outline-secondary"
                        hx-get="@Url.Action("Index", "Roles")"
                        hx-target="#roles-workspace-shell"
-                       hx-swap="outerHTML">Reset</a>
+                       hx-swap="outerHTML">@T.T("Reset")</a>
                     <a asp-action="Create"
                        class="btn btn-primary"
                        hx-get="@Url.Action("Create", "Roles")"
                        hx-target="#roles-workspace-shell"
                        hx-swap="outerHTML">
-                        <i class="fa fa-plus"></i> New Role
+                        <i class="fa fa-plus"></i> @T.T("NewRole")
                     </a>
                 </div>
             </form>
@@ -74,17 +75,17 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Display Name</th>
-                            <th>Description</th>
-                            <th style="width:120px;">System</th>
-                            <th class="text-end" style="width:290px;">Actions</th>
+                            <th>@T.T("DisplayName")</th>
+                            <th>@T.T("Description")</th>
+                            <th style="width:120px;">@T.T("System")</th>
+                            <th class="text-end" style="width:290px;">@T.T("Actions")</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (Model.Items.Count == 0)
                         {
                             <tr>
-                                <td colspan="4" class="text-center text-muted p-4">No roles found.</td>
+                                <td colspan="4" class="text-center text-muted p-4">@T.T("NoRolesFound")</td>
                             </tr>
                         }
                         else
@@ -97,17 +98,17 @@
                                     <td>
                                         @if (r.IsSystem)
                                         {
-                                            <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
+                                            <span class="badge bg-secondary"><i class="fa fa-lock"></i> @T.T("System")</span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted">No</span>
+                                            <span class="text-muted">@T.T("No")</span>
                                         }
                                     </td>
                                     <td class="text-end">
                                         @if (string.Equals(r.Key, "business-support-admins", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge bg-info text-dark me-2">Delegated support</span>
+                                            <span class="badge bg-info text-dark me-2">@T.T("DelegatedSupport")</span>
                                         }
                                         <a asp-action="Edit"
                                            asp-route-id="@r.Id"
@@ -115,7 +116,7 @@
                                            hx-get="@Url.Action("Edit", "Roles", new { id = r.Id })"
                                            hx-target="#roles-workspace-shell"
                                            hx-swap="outerHTML">
-                                            <i class="fa fa-pen"></i> Edit
+                                            <i class="fa fa-pen"></i> @T.T("Edit")
                                         </a>
 
                                         <a asp-controller="Roles"
@@ -125,7 +126,7 @@
                                            hx-get="@Url.Action("Permissions", "Roles", new { id = r.Id })"
                                            hx-target="#roles-workspace-shell"
                                            hx-swap="outerHTML">
-                                            <i class="fa fa-shield-alt"></i> Permissions
+                                            <i class="fa fa-shield-alt"></i> @T.T("Permissions")
                                         </a>
 
                                         @if (!r.IsSystem)
@@ -141,7 +142,7 @@
                                                     data-hx-target="#roles-workspace-shell"
                                                     data-hx-swap="outerHTML"
                                                     data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
-                                                <i class="fa fa-trash"></i> Delete
+                                                <i class="fa fa-trash"></i> @T.T("Delete")
                                             </button>
                                         }
                                     </td>
@@ -162,7 +163,8 @@
            asp-route-q="@Model.Query"
            asp-route-filter="@Model.Filter"
            hx-target="#roles-workspace-shell"
-           hx-swap="outerHTML">
+           hx-swap="outerHTML"
+           hx-push-url="true">
     </pager>
 </div>
 

@@ -293,7 +293,7 @@
                 }
                 @if (Model.ActiveOwnerCount == 0 && (Model.PrimaryLocationCount == 0 || !Model.HasContactEmailConfigured || !Model.HasLegalNameConfigured))
                 {
-                    <span class="mx-1">and</span>
+                    <span class="mx-1">@T.T("And")</span>
                 }
                 @if (Model.PrimaryLocationCount == 0)
                 {
@@ -301,7 +301,7 @@
                 }
                 @if (Model.PrimaryLocationCount == 0 && (!Model.HasContactEmailConfigured || !Model.HasLegalNameConfigured))
                 {
-                    <span class="mx-1">and</span>
+                    <span class="mx-1">@T.T("And")</span>
                 }
                 @if (!Model.HasContactEmailConfigured)
                 {
@@ -309,7 +309,7 @@
                 }
                 @if (!Model.HasContactEmailConfigured && !Model.HasLegalNameConfigured)
                 {
-                    <span class="mx-1">and</span>
+                    <span class="mx-1">@T.T("And")</span>
                 }
                 @if (!Model.HasLegalNameConfigured)
                 {

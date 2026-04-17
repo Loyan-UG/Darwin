@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Loyalty.CreateLoyaltyAccountVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Create Loyalty Account";
+    ViewData["Title"] = T.T("CreateLoyaltyAccount");
 }
 
 <partial name="_AccountCreateEditorShell" model="Model" />

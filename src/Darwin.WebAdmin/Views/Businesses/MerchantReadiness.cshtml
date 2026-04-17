@@ -25,16 +25,172 @@
            hx-target="#merchant-readiness-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        <a asp-controller="Billing"
+           asp-action="Payments"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Payments", "Billing")"
+           hx-target="#merchant-readiness-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Payments")</a>
+        <a asp-controller="Billing"
+           asp-action="TaxCompliance"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("TaxCompliance", "Billing")"
+           hx-target="#merchant-readiness-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("TaxComplianceTitle")</a>
     </div>
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("NeedsAttention")</div><div class="fs-4 fw-semibold">@Model.Summary.AttentionBusinessCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("PendingApproval")</div><div class="fs-4 fw-semibold">@Model.Summary.PendingApprovalBusinessCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("SuspendedBusinesses")</div><div class="fs-4 fw-semibold">@Model.Summary.SuspendedBusinessCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BusinessesMissingOwner")</div><div class="fs-4 fw-semibold">@Model.Summary.MissingOwnerBusinessCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("PendingActivation")</div><div class="fs-4 fw-semibold">@Model.Summary.PendingActivationMemberCount</div></div></div>
-    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("LockedMembers")</div><div class="fs-4 fw-semibold">@Model.Summary.LockedMemberCount</div></div></div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("NeedsAttention")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.AttentionBusinessCount</div>
+            <a asp-action="Index"
+               asp-route-attentionOnly="true"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("PendingApproval")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PendingApprovalBusinessCount</div>
+            <a asp-action="Index"
+               asp-route-operationalStatus="PendingApproval"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "PendingApproval" })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("SuspendedBusinesses")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.SuspendedBusinessCount</div>
+            <a asp-action="Index"
+               asp-route-operationalStatus="Suspended"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "Suspended" })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("BusinessesMissingOwner")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingOwnerBusinessCount</div>
+            <a asp-action="Index"
+               asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("PendingActivation")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PendingActivationMemberCount</div>
+            <a asp-controller="Users"
+               asp-action="Index"
+               asp-route-filter="Unconfirmed"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("LockedMembers")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.LockedMemberCount</div>
+            <a asp-controller="Users"
+               asp-action="Index"
+               asp-route-filter="Locked"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("UsersFilterLocked")</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg col-md-4">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("ApprovedInactive")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.ApprovedInactiveBusinessCount</div>
+            <a asp-action="Index"
+               asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
+    <div class="col-lg col-md-4">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("MissingPrimaryLocation")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingPrimaryLocationBusinessCount</div>
+            <a asp-action="Index"
+               asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
+    <div class="col-lg col-md-4">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("MissingContactEmail")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingContactEmailBusinessCount</div>
+            <a asp-action="Index"
+               asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
+    <div class="col-lg col-md-4">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("MissingLegalName")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingLegalNameBusinessCount</div>
+            <a asp-action="Index"
+               asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
+    <div class="col-lg col-md-4">
+        <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+            <div class="text-muted small">@T.T("PendingInvites")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.OpenInvitationCount</div>
+            <a asp-action="Index"
+               asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites"
+               class="btn btn-sm btn-outline-secondary mt-auto"
+               hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+        </div>
+    </div>
 </div>
 
 <div class="card mb-3">
@@ -99,73 +255,211 @@
                         var setupMissing = item.ActiveOwnerCount == 0 || item.PrimaryLocationCount == 0 || !item.HasContactEmailConfigured || !item.HasLegalNameConfigured;
                         <tr>
                             <td>
-                                <div class="fw-semibold">@item.Name</div>
+                                <div class="fw-semibold">
+                                    <a asp-action="Edit"
+                                       asp-route-id="@item.Id"
+                                       class="text-decoration-none"
+                                       hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@item.Name</a>
+                                </div>
                                 @if (!string.IsNullOrWhiteSpace(item.LegalName))
                                 {
-                                    <div class="small text-muted">@item.LegalName</div>
+                                    <div class="small text-muted">
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.Id"
+                                           class="text-muted text-decoration-none"
+                                           hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@item.LegalName</a>
+                                    </div>
                                 }
                                 @if (item.InvitationCount > 0)
                                 {
-                                    <div class="small text-muted">@item.InvitationCount @T.T("PendingInvites")</div>
+                                    <div class="small">
+                                        <a asp-action="Invitations"
+                                           asp-route-businessId="@item.Id"
+                                           class="text-decoration-none"
+                                           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@item.InvitationCount @T.T("PendingInvites")</a>
+                                    </div>
                                 }
                             </td>
                             <td>
                                 @if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
                                 {
-                                    <span class="badge text-bg-warning">@T.T("PendingApproval")</span>
+                                    <a asp-action="Index"
+                                       asp-route-operationalStatus="PendingApproval"
+                                       class="badge text-bg-warning text-decoration-none"
+                                       hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "PendingApproval" })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("PendingApproval")</a>
                                 }
                                 else if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
                                 {
-                                    <span class="badge text-bg-danger">@T.T("Suspended")</span>
+                                    <a asp-action="Index"
+                                       asp-route-operationalStatus="Suspended"
+                                       class="badge text-bg-danger text-decoration-none"
+                                       hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "Suspended" })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Suspended")</a>
+                                }
+                                else if (!item.IsActive)
+                                {
+                                    <a asp-action="Index"
+                                       asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive"
+                                       class="badge text-bg-secondary text-decoration-none"
+                                       hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("ApprovedInactive")</a>
                                 }
                                 else
                                 {
-                                    <span class="badge text-bg-success">@T.T("Active")</span>
+                                    <a asp-action="Index"
+                                       class="badge text-bg-success text-decoration-none"
+                                       hx-get="@Url.Action("Index", "Businesses")"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Active")</a>
                                 }
                             </td>
                             <td>
                                 @if (setupMissing)
                                 {
-                                    <div class="small text-warning">@T.T("MerchantReadinessSetupMissing")</div>
+                                    <div class="small">
+                                        <a asp-action="Setup"
+                                           asp-route-id="@item.Id"
+                                           class="text-warning text-decoration-none"
+                                           hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("MerchantReadinessSetupMissing")</a>
+                                    </div>
                                 }
                                 @if (item.ActiveOwnerCount == 0)
                                 {
-                                    <div class="small text-muted">@T.T("MissingActiveOwner")</div>
+                                    <div class="small">
+                                        <a asp-action="Members"
+                                           asp-route-businessId="@item.Id"
+                                           class="text-decoration-none"
+                                           hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("MissingActiveOwner")</a>
+                                    </div>
                                 }
                                 @if (item.PrimaryLocationCount == 0)
                                 {
-                                    <div class="small text-muted">@T.T("MissingPrimaryLocation")</div>
+                                    <div class="small">
+                                        <a asp-action="Locations"
+                                           asp-route-businessId="@item.Id"
+                                           class="text-decoration-none"
+                                           hx-get="@Url.Action("Locations", "Businesses", new { businessId = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("MissingPrimaryLocation")</a>
+                                    </div>
                                 }
                                 @if (!item.HasContactEmailConfigured)
                                 {
-                                    <div class="small text-muted">@T.T("MissingContactEmail")</div>
+                                    <div class="small">
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.Id"
+                                           class="text-decoration-none"
+                                           hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("MissingContactEmail")</a>
+                                    </div>
                                 }
                                 @if (!item.HasLegalNameConfigured)
                                 {
-                                    <div class="small text-muted">@T.T("MissingLegalName")</div>
+                                    <div class="small">
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.Id"
+                                           class="text-decoration-none"
+                                           hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("MissingLegalName")</a>
+                                    </div>
                                 }
                             </td>
                             <td>
                                 @if (item.HasSubscription)
                                 {
-                                    <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(item.SubscriptionPlanName) ? item.SubscriptionPlanName : item.SubscriptionStatus)</div>
-                                    <div class="small text-muted">@item.SubscriptionStatus</div>
+                                    <div class="fw-semibold">
+                                        <a asp-action="Subscription"
+                                           asp-route-businessId="@item.Id"
+                                           class="text-decoration-none"
+                                           hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@(!string.IsNullOrWhiteSpace(item.SubscriptionPlanName) ? item.SubscriptionPlanName : item.SubscriptionStatus)</a>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <a asp-action="Subscription"
+                                           asp-route-businessId="@item.Id"
+                                           class="text-muted text-decoration-none"
+                                           hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@item.SubscriptionStatus</a>
+                                    </div>
                                     @if (item.CancelAtPeriodEnd)
                                     {
-                                        <div class="small text-warning">@T.T("BusinessSubscriptionCancelAtPeriodEnd")</div>
+                                        <div class="small">
+                                            <a asp-action="Subscription"
+                                               asp-route-businessId="@item.Id"
+                                               class="text-warning text-decoration-none"
+                                               hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
+                                               hx-target="#merchant-readiness-workspace-shell"
+                                               hx-swap="outerHTML"
+                                               hx-push-url="true">@T.T("BusinessSubscriptionCancelAtPeriodEnd")</a>
+                                        </div>
                                     }
                                     @if (item.CurrentPeriodEndUtc.HasValue)
                                     {
-                                        <div class="small text-muted">@string.Format(T.T("BusinessSubscriptionCurrentPeriodEnd"), item.CurrentPeriodEndUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                                        <div class="small">
+                                            <a asp-action="SubscriptionInvoices"
+                                               asp-route-businessId="@item.Id"
+                                               class="text-muted text-decoration-none"
+                                               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = item.Id })"
+                                               hx-target="#merchant-readiness-workspace-shell"
+                                               hx-swap="outerHTML"
+                                               hx-push-url="true">@string.Format(T.T("BusinessSubscriptionCurrentPeriodEnd"), item.CurrentPeriodEndUtc.Value.ToString("yyyy-MM-dd HH:mm"))</a>
+                                        </div>
                                     }
                                 }
                                 else
                                 {
-                                    <div class="small text-warning">@T.T("BusinessSubscriptionNoActivePlan")</div>
+                                    <div class="small">
+                                        <a asp-action="Subscription"
+                                           asp-route-businessId="@item.Id"
+                                           class="text-warning text-decoration-none"
+                                           hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
+                                           hx-target="#merchant-readiness-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("BusinessSubscriptionNoActivePlan")</a>
+                                    </div>
                                 }
                             </td>
                             <td>
                                 <div class="d-flex gap-2 flex-wrap">
+                                    <a asp-action="Edit"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Edit")</a>
                                     <a asp-action="Setup"
                                        asp-route-id="@item.Id"
                                        class="btn btn-sm btn-outline-secondary"
@@ -180,6 +474,13 @@
                                        hx-target="#merchant-readiness-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("Subscription")</a>
+                                    <a asp-action="SubscriptionInvoices"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("SubscriptionInvoicesTitle")</a>
                                     <a asp-action="Members"
                                        asp-route-businessId="@item.Id"
                                        class="btn btn-sm btn-outline-secondary"
@@ -187,6 +488,104 @@
                                        hx-target="#merchant-readiness-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("Members")</a>
+                                    <a asp-action="Invitations"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Invitations")</a>
+                                    <a asp-action="OwnerOverrideAudits"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("OwnerOverrideAuditTitle")</a>
+                                    <a asp-action="Locations"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Locations", "Businesses", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Locations")</a>
+                                    <a asp-controller="BusinessCommunications"
+                                       asp-action="Details"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("CommunicationOps")</a>
+                                    <a asp-controller="BusinessCommunications"
+                                       asp-action="EmailAudits"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("EmailDeliveryAudits")</a>
+                                    <a asp-controller="BusinessCommunications"
+                                       asp-action="ChannelAudits"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
+                                    <a asp-controller="Billing"
+                                       asp-action="Payments"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Payments", "Billing", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Payments")</a>
+                                    <a asp-controller="Billing"
+                                       asp-action="Refunds"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Refunds", "Billing", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Refunds")</a>
+                                    <a asp-controller="Billing"
+                                       asp-action="FinancialAccounts"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
+                                    <a asp-controller="Billing"
+                                       asp-action="Expenses"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Expenses", "Billing", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("ExpensesTitle")</a>
+                                    <a asp-controller="Billing"
+                                       asp-action="JournalEntries"
+                                       asp-route-businessId="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = item.Id })"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("JournalEntriesTitle")</a>
+                                    <a asp-controller="Billing"
+                                       asp-action="TaxCompliance"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("TaxCompliance", "Billing")"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("TaxComplianceTitle")</a>
+                                    <a asp-action="SupportQueue"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
                                 </div>
                             </td>
                         </tr>

@@ -1,10 +1,11 @@
-@model Darwin.WebAdmin.ViewModels.Identity.RolePermissionsEditVm
+ï»¿@model Darwin.WebAdmin.ViewModels.Identity.RolePermissionsEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Role Permissions";
+    ViewData["Title"] = T.T("EditRolePermissions");
 }
 
 <h1 class="mb-3">
-    <i class="fa fa-lock"></i> Permissions for Role — @Model.RoleDisplayName
+    <i class="fa fa-lock"></i> @T.T("PermissionsForRole") - @Model.RoleDisplayName
 </h1>
 
 <div id="alerts-container">
@@ -18,7 +19,7 @@
 
     <div class="col-12">
         <div class="card">
-            <div class="card-header">Permissions</div>
+            <div class="card-header">@T.T("Permissions")</div>
             <div class="card-body">
                 @if (Model.AllPermissions?.Count > 0)
                 {
@@ -35,7 +36,7 @@
                                            @(isChecked ? "checked" : "") />
                                     <label class="form-check-label">
                                         <strong>@p.DisplayName</strong>
-                                        <small class="text-muted d-block">@p.Key — @p.Description</small>
+                                        <small class="text-muted d-block">@p.Key - @p.Description</small>
                                     </label>
                                 </div>
                             </div>
@@ -44,15 +45,15 @@
                 }
                 else
                 {
-                    <div class="text-muted">No permissions found.</div>
+                    <div class="text-muted">@T.T("NoPermissionsFound")</div>
                 }
             </div>
             <div class="card-footer text-end">
                 <a asp-controller="Roles" asp-action="Index" class="btn btn-outline-secondary">
-                    <i class="fa fa-arrow-left"></i> Back
+                    <i class="fa fa-arrow-left"></i> @T.T("Back")
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fa fa-check"></i> Save
+                    <i class="fa fa-check"></i> @T.T("Save")
                 </button>
             </div>
         </div>

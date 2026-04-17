@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.InventoryReturnReceiptActionVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Process Return Receipt";
+    ViewData["Title"] = T.T("ProcessReturnReceipt");
 }
 
 <partial name="_ReturnReceiptEditorShell" model="Model" />

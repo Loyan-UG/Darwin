@@ -56,9 +56,9 @@
                     <select name="NewStatus" class="form-select form-select-sm d-inline w-auto me-2">
                         <!-- Use only valid statuses or only allowed transitions -->
                         @* <option value="Pending">Pending</option> *@
-                        <option value="Paid">Paid</option>
-                        <option value="Cancelled">Cancelled</option>
-                        <option value="Shipped">Shipped</option>
+                        <option value="Paid">@T.T("Paid")</option>
+                        <option value="Cancelled">@T.T("Cancelled")</option>
+                        <option value="Shipped">@T.T("Shipped")</option>
                     </select>
                     <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fa fa-sync"></i> @T.T("ChangeStatus")</button>
                 </form>
@@ -325,29 +325,29 @@
                 }
             </select>
             <button type="submit" class="btn btn-outline-primary">
-                <i class="fa fa-dolly"></i> Allocate Now
+                <i class="fa fa-dolly"></i> @T.T("AllocateNow")
             </button>
         </form>
 
     @* Note: If we want to display a condition (for example, only when Status = Paid), we can activate the following condition:
     @if (Model.Status != OrderStatus.Paid) {
-       <div class="alert alert-info mt-3 mb-0">Allocation is available once the order is Paid.</div>
+       <div class="alert alert-info mt-3 mb-0">@T.T("AllocationAvailableAfterPayment")</div>
     }
     *@
     </div>
 </div>
 
-<h5>Lines</h5>
+<h5>@T.T("Lines")</h5>
 <div class="table-responsive mb-3">
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th>SKU</th>
-                <th>Name</th>
-                <th>Warehouse</th>
-                <th class="text-end">Qty</th>
-                <th class="text-end">Unit</th>
-                <th class="text-end">Line</th>
+                <th>@T.T("Sku")</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("Warehouse")</th>
+                <th class="text-end">@T.T("Qty")</th>
+                <th class="text-end">@T.T("Unit")</th>
+                <th class="text-end">@T.T("Line")</th>
             </tr>
         </thead>
         <tbody>
@@ -368,16 +368,16 @@
 
 <ul class="nav nav-tabs" id="orderTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">Payments</button>
+        <button class="nav-link active" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">@T.T("Payments")</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="shipments-tab" data-bs-toggle="tab" data-bs-target="#shipments" type="button" role="tab">Shipments</button>
+        <button class="nav-link" id="shipments-tab" data-bs-toggle="tab" data-bs-target="#shipments" type="button" role="tab">@T.T("Shipments")</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="refunds-tab" data-bs-toggle="tab" data-bs-target="#refunds" type="button" role="tab">Refunds</button>
+        <button class="nav-link" id="refunds-tab" data-bs-toggle="tab" data-bs-target="#refunds" type="button" role="tab">@T.T("Refunds")</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices" type="button" role="tab">Invoices</button>
+        <button class="nav-link" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices" type="button" role="tab">@T.T("Invoices")</button>
     </li>
 </ul>
 <div class="tab-content border border-top-0 p-3">

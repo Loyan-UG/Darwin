@@ -69,21 +69,21 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("PlatformFallbackCulture")</div>
             <div class="fw-semibold mt-1">@Model.PlatformDefaultCulture</div>
-            <div class="small text-muted mt-2">Used when no linked-user locale is available for customer-level follow-up.</div>
+            <div class="small text-muted mt-2">@T.T("CrmPlatformFallbackCultureNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("VisibleLocaleFallbacks")</div>
             <div class="fw-semibold mt-1">@Model.Items.Count(x => x.UsesPlatformLocaleFallback)</div>
-            <div class="small text-muted mt-2">Current page rows relying on platform locale fallback instead of a linked-user locale.</div>
+            <div class="small text-muted mt-2">@T.T("CrmVisibleLocaleFallbacksNote")</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("VisibleLinkedUserLocales")</div>
             <div class="fw-semibold mt-1">@Model.Items.Count(x => !x.UsesPlatformLocaleFallback)</div>
-            <div class="small text-muted mt-2">Current page rows where locale comes from the linked identity profile.</div>
+            <div class="small text-muted mt-2">@T.T("CrmVisibleLinkedUserLocalesNote")</div>
         </div>
     </div>
 </div>
@@ -114,7 +114,7 @@
             </div>
             <div class="col-md-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">B2B</div>
+                    <div class="text-muted small">@T.T("B2B")</div>
                     <div class="fw-semibold mt-1">@Model.OpsSummary.BusinessCount</div>
                     <div class="small text-muted mt-2">@T.T("CrmCustomerBusinessProfileNote")</div>
                 </div>
@@ -165,12 +165,12 @@
        hx-get="@Url.Action("Customers", "Crm", new { filter = "Business" })"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">B2B</a>
+       hx-push-url="true">@T.T("B2B")</a>
     <a asp-action="Customers" asp-route-filter="MissingVatId" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")"
        hx-get="@Url.Action("Customers", "Crm", new { filter = "MissingVatId" })"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
-       hx-push-url="true">B2B Missing VAT ID</a>
+       hx-push-url="true">@T.T("B2BMissingVatId")</a>
     <a asp-action="Customers" asp-route-filter="UsesPlatformLocaleFallback" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.UsesPlatformLocaleFallback ? "btn-secondary" : "btn-outline-secondary")"
        hx-get="@Url.Action("Customers", "Crm", new { filter = "UsesPlatformLocaleFallback" })"
        hx-target="#crm-customers-workspace-shell"

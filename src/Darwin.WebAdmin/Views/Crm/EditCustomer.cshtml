@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.CRM.CustomerEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Customer";
+    ViewData["Title"] = T.T("EditCustomer");
 }
 
 @{
@@ -13,7 +14,7 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card">
-            <div class="card-header"><strong>Add Interaction</strong></div>
+            <div class="card-header"><strong>@T.T("AddInteraction")</strong></div>
             <div class="card-body">
                 <form asp-controller="Crm"
                       asp-action="CustomerInteractions"
@@ -25,33 +26,33 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="CustomerId" value="@Model.Id" />
                     <div class="col-md-6">
-                        <label class="form-label">Type</label>
+                        <label class="form-label">@T.T("Type")</label>
                         <select name="Type" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()"></select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Channel</label>
+                        <label class="form-label">@T.T("Channel")</label>
                         <select name="Channel" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()"></select>
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Subject</label>
+                        <label class="form-label">@T.T("Subject")</label>
                         <input name="Subject" class="form-control" />
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Content</label>
+                        <label class="form-label">@T.T("Content")</label>
                         <textarea name="Content" class="form-control" rows="3"></textarea>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Owner</label>
+                        <label class="form-label">@T.T("Owner")</label>
                         <select name="UserId" class="form-select" asp-items="Model.NewInteraction.UserOptions"></select>
                     </div>
                     <div class="col-12">
-                        <button type="submit" class="btn btn-outline-primary">Add Interaction</button>
+                        <button type="submit" class="btn btn-outline-primary">@T.T("AddInteraction")</button>
                     </div>
                 </form>
             </div>
         </div>
         <div class="card mt-3" id="customer-interactions-section">
-            <div class="card-header"><strong>Interactions</strong></div>
+            <div class="card-header"><strong>@T.T("Interactions")</strong></div>
             <div class="card-body" id="customer-interactions-grid"
                  hx-get="@Url.Action("CustomerInteractions", "Crm", new { customerId = Model.Id })"
                  hx-trigger="load"
@@ -61,7 +62,7 @@
 
     <div class="col-lg-6">
         <div class="card">
-            <div class="card-header"><strong>Record Consent</strong></div>
+            <div class="card-header"><strong>@T.T("RecordConsent")</strong></div>
             <div class="card-body">
                 <form asp-controller="Crm"
                       asp-action="CustomerConsents"
@@ -73,32 +74,32 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="CustomerId" value="@Model.Id" />
                     <div class="col-md-6">
-                        <label class="form-label">Consent Type</label>
+                        <label class="form-label">@T.T("ConsentType")</label>
                         <select name="Type" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.ConsentType>()"></select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Status</label>
+                        <label class="form-label">@T.T("Status")</label>
                         <select name="Granted" class="form-select">
-                            <option value="true">Granted</option>
-                            <option value="false">Revoked</option>
+                            <option value="true">@T.T("Granted")</option>
+                            <option value="false">@T.T("Revoked")</option>
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Granted At (UTC)</label>
+                        <label class="form-label">@T.T("GrantedAtUtc")</label>
                         <input name="GrantedAtUtc" type="datetime-local" class="form-control" value="@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm")" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Revoked At (UTC)</label>
+                        <label class="form-label">@T.T("RevokedAtUtc")</label>
                         <input name="RevokedAtUtc" type="datetime-local" class="form-control" />
                     </div>
                     <div class="col-12">
-                        <button type="submit" class="btn btn-outline-primary">Record Consent</button>
+                        <button type="submit" class="btn btn-outline-primary">@T.T("RecordConsent")</button>
                     </div>
                 </form>
             </div>
         </div>
         <div class="card mt-3" id="customer-consents-section">
-            <div class="card-header"><strong>Consent History</strong></div>
+            <div class="card-header"><strong>@T.T("ConsentHistory")</strong></div>
             <div class="card-body" id="customer-consents-grid"
                  hx-get="@Url.Action("CustomerConsents", "Crm", new { customerId = Model.Id })"
                  hx-trigger="load"
@@ -108,7 +109,7 @@
 
     <div class="col-12">
         <div class="card" id="customer-segments-section">
-            <div class="card-header"><strong>Segment Memberships</strong></div>
+            <div class="card-header"><strong>@T.T("SegmentMemberships")</strong></div>
             <div class="card-body">
                 <form asp-controller="Crm"
                       asp-action="CustomerSegmentMemberships"
@@ -120,11 +121,11 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="CustomerId" value="@Model.Id" />
                     <div class="col-md-6">
-                        <label class="form-label">Segment</label>
+                        <label class="form-label">@T.T("Segment")</label>
                         <select name="CustomerSegmentId" class="form-select" asp-items="Model.SegmentOptions"></select>
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-outline-primary">Assign Segment</button>
+                        <button type="submit" class="btn btn-outline-primary">@T.T("AssignSegment")</button>
                     </div>
                 </form>
                 <div id="customer-segments-grid"

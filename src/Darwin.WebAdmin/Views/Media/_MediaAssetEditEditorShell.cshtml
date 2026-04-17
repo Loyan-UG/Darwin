@@ -1,16 +1,17 @@
 @model Darwin.WebAdmin.ViewModels.CMS.MediaAssetEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = "Edit Media";
+    ViewData["Title"] = T.T("MediaEditTitle");
 }
 
 <div id="media-edit-editor-shell">
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
         <div>
-            <h1 class="mb-1">Edit Media</h1>
+            <h1 class="mb-1">@T.T("MediaEditTitle")</h1>
             <div class="text-muted small">@Model.OriginalFileName</div>
         </div>
         <a href="@Model.Url" target="_blank" rel="noreferrer" class="btn btn-outline-secondary">
-            <i class="fa fa-up-right-from-square"></i> Open File
+            <i class="fa fa-up-right-from-square"></i> @T.T("MediaOpenFile")
         </a>
     </div>
 
@@ -21,10 +22,10 @@
                     <img src="@Model.Url" alt="@Model.Alt" class="w-100 h-100 object-fit-cover" />
                 </div>
                 <div class="card-body small">
-                    <div><span class="text-muted">URL:</span> @Model.Url</div>
-                    <div><span class="text-muted">Size:</span> @((Model.SizeBytes / 1024.0).ToString("0.0")) KB</div>
-                    <div><span class="text-muted">Dimensions:</span> @(Model.Width.HasValue && Model.Height.HasValue ? $"{Model.Width} × {Model.Height}" : "Unknown")</div>
-                    <div><span class="text-muted">Updated:</span> @(Model.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "n/a")</div>
+                    <div><span class="text-muted">@T.T("Url"):</span> @Model.Url</div>
+                    <div><span class="text-muted">@T.T("Size"):</span> @((Model.SizeBytes / 1024.0).ToString("0.0")) KB</div>
+                    <div><span class="text-muted">@T.T("Dimensions"):</span> @(Model.Width.HasValue && Model.Height.HasValue ? $"{Model.Width} x {Model.Height}" : T.T("MediaUnknownValue"))</div>
+                    <div><span class="text-muted">@T.T("Updated"):</span> @(Model.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? T.T("MediaUnknownValue"))</div>
                 </div>
             </div>
         </div>
@@ -45,14 +46,14 @@
 
                 <div class="d-flex gap-2 mt-4">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save"></i> Save
+                        <i class="fa fa-save"></i> @T.T("Save")
                     </button>
                     <a asp-action="Index"
                        class="btn btn-outline-secondary"
                        hx-get="@Url.Action("Index", "Media")"
                        hx-target="#media-edit-editor-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">Back</a>
+                       hx-push-url="true">@T.T("Back")</a>
                 </div>
             </form>
         </div>

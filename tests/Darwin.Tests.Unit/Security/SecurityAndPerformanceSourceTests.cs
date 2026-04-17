@@ -46,6 +46,25 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void AuthController_Should_KeepAuthenticationAndLogoutAliasesStable()
+    {
+        var source = ReadWebApiFile(Path.Combine("Controllers", "AuthController.cs"));
+
+        source.Should().Contain("[Route(\"api/v1/member/auth\")]");
+        source.Should().Contain("[HttpPost(\"login\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/auth/login\")]");
+        source.Should().Contain("[HttpPost(\"refresh\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/auth/refresh\")]");
+        source.Should().Contain("public async Task<IActionResult> LogoutAsync(");
+        source.Should().Contain("[Authorize]");
+        source.Should().Contain("[HttpPost(\"logout\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/auth/logout\")]");
+        source.Should().Contain("public async Task<IActionResult> LogoutAllAsync(");
+        source.Should().Contain("[HttpPost(\"logout-all\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/auth/logout-all\")]");
+    }
+
+    [Fact]
     public void PublicAndBootstrapControllers_Should_RemainAnonymous()
     {
         ReadWebApiFile(Path.Combine("Controllers", "MetaController.cs"))
@@ -81,6 +100,41 @@ public sealed class SecurityAndPerformanceSourceTests
             .Should().Contain("[Authorize]");
         ReadWebApiFile(Path.Combine("Controllers", "Profile", "ProfileController.cs"))
             .Should().Contain("[Authorize]");
+    }
+
+    [Fact]
+    public void NotificationsController_Should_KeepAuthenticatedDeviceRegistrationAliases()
+    {
+        var source = ReadWebApiFile(Path.Combine("Controllers", "Notifications", "NotificationsController.cs"));
+
+        source.Should().Contain("[Authorize]");
+        source.Should().Contain("[Route(\"api/v1/member/notifications\")]");
+        source.Should().Contain("public async Task<IActionResult> RegisterDeviceAsync(");
+        source.Should().Contain("[HttpPost(\"devices/register\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/notifications/devices/register\")]");
+        source.Should().Contain("MobileDevicePlatform.Android");
+        source.Should().Contain("MobileDevicePlatform.iOS");
+    }
+
+    [Fact]
+    public void ProfileController_Should_KeepAuthenticatedLifecycleAndPreferencesAliases()
+    {
+        var source = ReadWebApiFile(Path.Combine("Controllers", "Profile", "ProfileController.cs"));
+
+        source.Should().Contain("[Authorize]");
+        source.Should().Contain("[Route(\"api/v1/member/profile\")]");
+        source.Should().Contain("public async Task<IActionResult> UpdatePreferencesAsync(");
+        source.Should().Contain("[HttpPut(\"preferences\")]");
+        source.Should().Contain("[HttpPut(\"/api/v1/profile/me/preferences\")]");
+        source.Should().Contain("public async Task<IActionResult> RequestPhoneVerificationAsync(");
+        source.Should().Contain("[HttpPost(\"me/phone/request-verification\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/profile/me/phone/request-verification\")]");
+        source.Should().Contain("public async Task<IActionResult> ConfirmPhoneVerificationAsync(");
+        source.Should().Contain("[HttpPost(\"me/phone/confirm\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/profile/me/phone/confirm\")]");
+        source.Should().Contain("public async Task<IActionResult> RequestAccountDeletionAsync(");
+        source.Should().Contain("[HttpPost(\"me/deletion-request\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/profile/me/deletion-request\")]");
     }
 
     [Fact]
@@ -166,6 +220,23 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void PublicCheckoutController_Should_KeepAnonymousIntentAndOrderPlacementEndpoints()
+    {
+        var source = ReadWebApiFile(Path.Combine("Controllers", "Public", "PublicCheckoutController.cs"));
+
+        source.Should().Contain("[AllowAnonymous]");
+        source.Should().Contain("[Route(\"api/v1/public/checkout\")]");
+        source.Should().Contain("public async Task<IActionResult> CreateIntentAsync(");
+        source.Should().Contain("[HttpPost(\"intent\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/checkout/intent\")]");
+        source.Should().Contain("CreateStorefrontCheckoutIntentHandler");
+        source.Should().Contain("public async Task<IActionResult> PlaceOrderAsync(");
+        source.Should().Contain("[HttpPost(\"orders\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/checkout/orders\")]");
+        source.Should().Contain("PlaceOrderFromCartHandler");
+    }
+
+    [Fact]
     public void MemberOrderAndInvoiceControllers_Should_KeepAuthenticatedPaymentIntentAliases()
     {
         var ordersSource = ReadWebApiFile(Path.Combine("Controllers", "Member", "MemberOrdersController.cs"));
@@ -182,6 +253,37 @@ public sealed class SecurityAndPerformanceSourceTests
         invoicesSource.Should().Contain("public async Task<IActionResult> CreatePaymentIntentAsync(");
         invoicesSource.Should().Contain("[HttpPost(\"{id:guid}/payment-intent\")]");
         invoicesSource.Should().Contain("[HttpPost(\"/api/v1/invoices/{id:guid}/payment-intent\")]");
+    }
+
+    [Fact]
+    public void MemberOrderAndInvoiceControllers_Should_KeepAuthenticatedReadAndDocumentAliases()
+    {
+        var ordersSource = ReadWebApiFile(Path.Combine("Controllers", "Member", "MemberOrdersController.cs"));
+        var invoicesSource = ReadWebApiFile(Path.Combine("Controllers", "Member", "MemberInvoicesController.cs"));
+
+        ordersSource.Should().Contain("[Authorize]");
+        ordersSource.Should().Contain("[Route(\"api/v1/member/orders\")]");
+        ordersSource.Should().Contain("public async Task<IActionResult> GetMyOrdersAsync(");
+        ordersSource.Should().Contain("[HttpGet]");
+        ordersSource.Should().Contain("[HttpGet(\"/api/v1/orders\")]");
+        ordersSource.Should().Contain("public async Task<IActionResult> GetMyOrderAsync(");
+        ordersSource.Should().Contain("[HttpGet(\"{id:guid}\")]");
+        ordersSource.Should().Contain("[HttpGet(\"/api/v1/orders/{id:guid}\")]");
+        ordersSource.Should().Contain("public async Task<IActionResult> DownloadDocumentAsync(");
+        ordersSource.Should().Contain("[HttpGet(\"{id:guid}/document\")]");
+        ordersSource.Should().Contain("[HttpGet(\"/api/v1/orders/{id:guid}/document\")]");
+
+        invoicesSource.Should().Contain("[Authorize]");
+        invoicesSource.Should().Contain("[Route(\"api/v1/member/invoices\")]");
+        invoicesSource.Should().Contain("public async Task<IActionResult> GetMyInvoicesAsync(");
+        invoicesSource.Should().Contain("[HttpGet]");
+        invoicesSource.Should().Contain("[HttpGet(\"/api/v1/invoices\")]");
+        invoicesSource.Should().Contain("public async Task<IActionResult> GetMyInvoiceAsync(");
+        invoicesSource.Should().Contain("[HttpGet(\"{id:guid}\")]");
+        invoicesSource.Should().Contain("[HttpGet(\"/api/v1/invoices/{id:guid}\")]");
+        invoicesSource.Should().Contain("public async Task<IActionResult> DownloadDocumentAsync(");
+        invoicesSource.Should().Contain("[HttpGet(\"{id:guid}/document\")]");
+        invoicesSource.Should().Contain("[HttpGet(\"/api/v1/invoices/{id:guid}/document\")]");
     }
 
     [Fact]
@@ -275,6 +377,27 @@ public sealed class SecurityAndPerformanceSourceTests
         shippingSource.Should().Contain("public async Task<IActionResult> GetRatesAsync(");
         shippingSource.Should().Contain("[HttpPost(\"rates\")]");
         shippingSource.Should().Contain("[HttpPost(\"/api/v1/shipping/rates\")]");
+    }
+
+    [Fact]
+    public void PublicCartController_Should_KeepAnonymousMutationAliases()
+    {
+        var source = ReadWebApiFile(Path.Combine("Controllers", "Public", "PublicCartController.cs"));
+
+        source.Should().Contain("[AllowAnonymous]");
+        source.Should().Contain("[Route(\"api/v1/public/cart\")]");
+        source.Should().Contain("public async Task<IActionResult> AddItemAsync(");
+        source.Should().Contain("[HttpPost(\"items\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/cart/items\")]");
+        source.Should().Contain("public async Task<IActionResult> UpdateItemAsync(");
+        source.Should().Contain("[HttpPut(\"items\")]");
+        source.Should().Contain("[HttpPut(\"/api/v1/cart/items\")]");
+        source.Should().Contain("public async Task<IActionResult> RemoveItemAsync(");
+        source.Should().Contain("[HttpDelete(\"items\")]");
+        source.Should().Contain("[HttpDelete(\"/api/v1/cart/items\")]");
+        source.Should().Contain("public async Task<IActionResult> ApplyCouponAsync(");
+        source.Should().Contain("[HttpPost(\"coupon\")]");
+        source.Should().Contain("[HttpPost(\"/api/v1/cart/coupon\")]");
     }
 
     [Fact]
@@ -416,6 +539,189 @@ public sealed class SecurityAndPerformanceSourceTests
         source.Should().Contain("public async Task<IActionResult> SendMemberPasswordReset(");
         source.Should().Contain("public async Task<IActionResult> LockMemberUser(");
         source.Should().Contain("public async Task<IActionResult> UnlockMemberUser(");
+    }
+
+    [Fact]
+    public void UsersController_Should_KeepIdentityAndAddressMutationsProtected()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
+
+        source.Should().Contain("[ValidateAntiForgeryToken]");
+        source.Should().Contain("public async Task<IActionResult> Create(UserCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> Edit(UserEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> ChangeEmail(UserChangeEmailVm vm");
+        source.Should().Contain("public async Task<IActionResult> ConfirmEmail(");
+        source.Should().Contain("public async Task<IActionResult> SendActivationEmail(");
+        source.Should().Contain("public async Task<IActionResult> SendPasswordReset(");
+        source.Should().Contain("public async Task<IActionResult> ChangePassword(UserChangePasswordVm vm");
+        source.Should().Contain("public async Task<IActionResult> Lock(");
+        source.Should().Contain("public async Task<IActionResult> Unlock(");
+        source.Should().Contain("public async Task<IActionResult> Delete(");
+        source.Should().Contain("public async Task<IActionResult> Roles(UserRolesEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateAddress(");
+        source.Should().Contain("public async Task<IActionResult> EditAddress(");
+        source.Should().Contain("public async Task<IActionResult> DeleteAddress(");
+        source.Should().Contain("public async Task<IActionResult> SetDefaultAddress(");
+    }
+
+    [Fact]
+    public void OrdersController_Should_KeepOperationalMutationsProtected()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+
+        source.Should().Contain("[ValidateAntiForgeryToken]");
+        source.Should().Contain("public async Task<IActionResult> AddPayment(PaymentCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> AddShipment(ShipmentCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> AddRefund(RefundCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateInvoice(OrderInvoiceCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> ChangeStatus(OrderStatusChangeVm vm");
+    }
+
+    [Fact]
+    public void InventoryController_Should_KeepOperationalMutationsProtected()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Inventory", "InventoryController.cs"));
+
+        source.Should().Contain("[ValidateAntiForgeryToken]");
+        source.Should().Contain("public async Task<IActionResult> CreateWarehouse(WarehouseEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditWarehouse(WarehouseEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateSupplier(SupplierEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditSupplier(SupplierEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> AdjustStock(InventoryAdjustActionVm vm");
+        source.Should().Contain("public async Task<IActionResult> ReserveStock(InventoryReserveActionVm vm");
+        source.Should().Contain("public async Task<IActionResult> ReleaseReservation(InventoryReleaseReservationActionVm vm");
+        source.Should().Contain("public async Task<IActionResult> ReturnReceipt(InventoryReturnReceiptActionVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateStockLevel(StockLevelEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditStockLevel(StockLevelEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateStockTransfer(StockTransferEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditStockTransfer(StockTransferEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreatePurchaseOrder(PurchaseOrderEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditPurchaseOrder(PurchaseOrderEditVm vm");
+    }
+
+    [Fact]
+    public void CrmController_Should_KeepOperationalMutationsProtected()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+
+        source.Should().Contain("[ValidateAntiForgeryToken]");
+        source.Should().Contain("public async Task<IActionResult> CreateCustomer(CustomerEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditCustomer(CustomerEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditInvoice(InvoiceEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> TransitionInvoiceStatus(InvoiceStatusTransitionVm vm");
+        source.Should().Contain("public async Task<IActionResult> RefundInvoice(InvoiceRefundCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateLead(LeadEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditLead(LeadEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateOpportunity(OpportunityEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditOpportunity(OpportunityEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> ConvertLead(ConvertLeadVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateSegment(CustomerSegmentEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditSegment(CustomerSegmentEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> CustomerInteractions(InteractionCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> LeadInteractions(InteractionCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> OpportunityInteractions(InteractionCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> CustomerConsents(ConsentCreateVm vm");
+        source.Should().Contain("public async Task<IActionResult> CustomerSegmentMemberships(AssignCustomerSegmentVm vm");
+        source.Should().Contain("public async Task<IActionResult> RemoveCustomerSegmentMembership(");
+    }
+
+    [Fact]
+    public void LoyaltyController_Should_KeepOperationalMutationsProtected()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Loyalty", "LoyaltyController.cs"));
+
+        source.Should().Contain("[ValidateAntiForgeryToken]");
+        source.Should().Contain("public async Task<IActionResult> CreateProgram(LoyaltyProgramEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditProgram(LoyaltyProgramEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> DeleteProgram(");
+        source.Should().Contain("public async Task<IActionResult> CreateRewardTier(LoyaltyRewardTierEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditRewardTier(LoyaltyRewardTierEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> DeleteRewardTier(");
+        source.Should().Contain("public async Task<IActionResult> CreateAccount(CreateLoyaltyAccountVm vm");
+        source.Should().Contain("public async Task<IActionResult> CreateCampaign(LoyaltyCampaignEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> EditCampaign(LoyaltyCampaignEditVm vm");
+        source.Should().Contain("public async Task<IActionResult> SetCampaignActivation(");
+        source.Should().Contain("public async Task<IActionResult> AdjustPoints(AdjustLoyaltyPointsVm vm");
+        source.Should().Contain("public async Task<IActionResult> SuspendAccount(");
+        source.Should().Contain("public async Task<IActionResult> ActivateAccount(");
+        source.Should().Contain("public async Task<IActionResult> ConfirmRedemption(");
+    }
+
+    [Fact]
+    public void CatalogAndContentControllers_Should_KeepMutationsProtected()
+    {
+        var productsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "ProductsController.cs"));
+        var categoriesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "CategoriesController.cs"));
+        var pagesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CMS", "PagesController.cs"));
+        var mediaSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
+        var shippingMethodsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Shipping", "ShippingMethodsController.cs"));
+
+        productsSource.Should().Contain("[ValidateAntiForgeryToken]");
+        productsSource.Should().Contain("public async Task<IActionResult> Create(ProductCreateVm vm");
+        productsSource.Should().Contain("public async Task<IActionResult> Edit(ProductEditVm vm");
+        productsSource.Should().Contain("public async Task<IActionResult> Delete(");
+
+        categoriesSource.Should().Contain("[ValidateAntiForgeryToken]");
+        categoriesSource.Should().Contain("public async Task<IActionResult> Create(CategoryCreateVm vm");
+        categoriesSource.Should().Contain("public async Task<IActionResult> Edit(CategoryEditVm vm");
+        categoriesSource.Should().Contain("public async Task<IActionResult> Delete(");
+
+        pagesSource.Should().Contain("[ValidateAntiForgeryToken]");
+        pagesSource.Should().Contain("public async Task<IActionResult> Create(PageCreateVm vm");
+        pagesSource.Should().Contain("public async Task<IActionResult> Edit(PageEditVm vm");
+        pagesSource.Should().Contain("public async Task<IActionResult> Delete(");
+
+        mediaSource.Should().Contain("[ValidateAntiForgeryToken]");
+        mediaSource.Should().Contain("public async Task<IActionResult> Create(MediaAssetCreateVm vm");
+        mediaSource.Should().Contain("public async Task<IActionResult> Edit(MediaAssetEditVm vm");
+        mediaSource.Should().Contain("public async Task<IActionResult> Delete(");
+
+        shippingMethodsSource.Should().Contain("ValidateAntiForgeryToken");
+        shippingMethodsSource.Should().Contain("public async Task<IActionResult> Create(ShippingMethodEditVm vm");
+        shippingMethodsSource.Should().Contain("public async Task<IActionResult> Edit(ShippingMethodEditVm vm");
+    }
+
+    [Fact]
+    public void RemainingAdminControllers_Should_KeepOperationalMutationsProtected()
+    {
+        var rolesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "RolesController.cs"));
+        var permissionsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "PermissionsController.cs"));
+        var siteSettingsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Settings", "SiteSettingsController.cs"));
+        var mobileOpsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Mobile", "MobileOperationsController.cs"));
+        var addOnGroupsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "AddOnGroupsController.cs"));
+        var brandsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "BrandsController.cs"));
+
+        rolesSource.Should().Contain("[ValidateAntiForgeryToken]");
+        rolesSource.Should().Contain("public async Task<IActionResult> Create(RoleCreateVm model");
+        rolesSource.Should().Contain("public async Task<IActionResult> Edit(RoleEditVm model");
+        rolesSource.Should().Contain("public async Task<IActionResult> Delete(");
+        rolesSource.Should().Contain("public async Task<IActionResult> Permissions(RolePermissionsEditVm vm");
+
+        permissionsSource.Should().Contain("[ValidateAntiForgeryToken]");
+        permissionsSource.Should().Contain("public async Task<IActionResult> Create(PermissionCreateVm vm");
+        permissionsSource.Should().Contain("public async Task<IActionResult> Edit(PermissionEditVm vm");
+        permissionsSource.Should().Contain("public async Task<IActionResult> Delete(");
+
+        siteSettingsSource.Should().Contain("[ValidateAntiForgeryToken]");
+        siteSettingsSource.Should().Contain("public async Task<IActionResult> Edit(SiteSettingVm vm");
+
+        mobileOpsSource.Should().Contain("[ValidateAntiForgeryToken]");
+        mobileOpsSource.Should().Contain("public async Task<IActionResult> ClearPushToken(");
+        mobileOpsSource.Should().Contain("public async Task<IActionResult> DeactivateDevice(");
+
+        addOnGroupsSource.Should().Contain("ValidateAntiForgeryToken");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> Create(AddOnGroupCreateVm vm");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> Edit(AddOnGroupEditVm vm");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> Delete(");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToProducts(AddOnGroupAttachToProductsVm vm");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToCategories(AddOnGroupAttachToCategoriesVm vm");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToBrands(AddOnGroupAttachToBrandsVm vm");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToVariants(AddOnGroupAttachToVariantsVm vm");
+
+        brandsSource.Should().Contain("ValidateAntiForgeryToken");
+        brandsSource.Should().Contain("public async Task<IActionResult> Create(BrandEditVm vm");
+        brandsSource.Should().Contain("public async Task<IActionResult> Edit(BrandEditVm vm");
+        brandsSource.Should().Contain("public async Task<IActionResult> Delete(");
     }
 
     private static string ReadWebApiFile(string relativePath)
