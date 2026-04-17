@@ -2,10 +2,10 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Register");
-    var defaultCurrency = (string?)ViewData["DefaultCurrency"] ?? "EUR";
-    var defaultLocale = (string?)ViewData["DefaultLocale"] ?? "de-DE";
-    var defaultTimeZone = (string?)ViewData["DefaultTimeZone"] ?? "Europe/Berlin";
-    var supportedCulturesCsv = (string?)ViewData["SupportedCulturesCsv"] ?? "de-DE,en-US";
+    var defaultCurrency = (string?)ViewData["DefaultCurrency"] ?? Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
+    var defaultLocale = (string?)ViewData["DefaultLocale"] ?? Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture;
+    var defaultTimeZone = (string?)ViewData["DefaultTimeZone"] ?? Darwin.Application.Settings.DTOs.SiteSettingDto.TimeZoneDefault;
+    var supportedCulturesCsv = (string?)ViewData["SupportedCulturesCsv"] ?? Darwin.WebAdmin.Localization.AdminCultureCatalog.SupportedCulturesCsvDefault;
 }
 
 <h1 class="mb-3">@T.T("Register")</h1>
