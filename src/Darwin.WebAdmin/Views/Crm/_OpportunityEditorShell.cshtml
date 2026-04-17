@@ -23,7 +23,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="text-muted">@T.T("Estimated")</div>
-                        <div class="fw-semibold">EUR @((Model.EstimatedValueMinor / 100.0M).ToString("0.00"))</div>
+                        <div class="fw-semibold">@Model.Currency @((Model.EstimatedValueMinor / 100.0M).ToString("0.00"))</div>
                     </div>
                     <div class="col-md-3">
                         <div class="text-muted">@T.T("Items")</div>

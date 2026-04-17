@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Register");
+    var defaultCurrency = (string?)ViewData["DefaultCurrency"] ?? "EUR";
 }
 
 <h1 class="mb-3">@T.T("Register")</h1>
@@ -35,8 +36,8 @@
             <div class="col-md-4 mb-3">
                 <label for="currency" class="form-label">@T.T("Currency")</label>
                 <select id="currency" name="currency" class="form-select">
-                    <option value="EUR" selected>@T.T("CurrencyEuro")</option>
-                    <option value="USD">@T.T("CurrencyUsd")</option>
+                    <option value="EUR" selected="@(defaultCurrency == "EUR")">@T.T("CurrencyEuro")</option>
+                    <option value="USD" selected="@(defaultCurrency == "USD")">@T.T("CurrencyUsd")</option>
                 </select>
             </div>
             <div class="col-md-4 mb-3">

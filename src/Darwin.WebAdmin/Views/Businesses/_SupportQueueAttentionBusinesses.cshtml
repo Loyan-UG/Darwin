@@ -179,6 +179,12 @@
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Setup")</a>
+                                <a asp-action="MerchantReadiness"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                                 <a asp-action="Members"
                                    asp-route-businessId="@item.Id"
                                    asp-route-filter="Attention"

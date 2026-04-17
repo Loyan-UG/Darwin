@@ -8,6 +8,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Application.Identity.Services;
 using Darwin.WebAdmin.Localization;
+using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +31,7 @@ namespace Darwin.WebAdmin.Controllers
         private readonly GetRoleIdByKeyHandler _getRoleIdByKey;
         private readonly IPermissionService _permissions;
         private readonly IAdminTextLocalizer _text;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         /// <summary>
         /// Initializes the controller with required Application services.
@@ -43,7 +45,8 @@ namespace Darwin.WebAdmin.Controllers
             GetSecurityStampHandler getSecurityStamp,
             GetRoleIdByKeyHandler getRoleIdByKey,
             IPermissionService permissions,
-            IAdminTextLocalizer text)
+            IAdminTextLocalizer text,
+            ISiteSettingCache siteSettingCache)
         {
             _signIn = signIn;
             _register = register;
@@ -54,6 +57,7 @@ namespace Darwin.WebAdmin.Controllers
             _getRoleIdByKey = getRoleIdByKey;
             _permissions = permissions;
             _text = text;
+            _siteSettingCache = siteSettingCache;
         }
 
         /// <summary>Renders the login page.</summary>
@@ -223,6 +227,7 @@ namespace Darwin.WebAdmin.Controllers
         public IActionResult Register(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+            ViewData["DefaultCurrency"] = _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCurrency;
             return View();
         }
 
@@ -241,10 +246,12 @@ namespace Darwin.WebAdmin.Controllers
             [FromForm] string? returnUrl = null,
             CancellationToken ct = default)
         {
+            var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
                 ModelState.AddModelError(string.Empty, _text.T("EmailPasswordRequiredMessage"));
                 ViewData["ReturnUrl"] = returnUrl;
+                ViewData["DefaultCurrency"] = defaultCurrency;
                 return View("Register");
             }
 
@@ -254,7 +261,7 @@ namespace Darwin.WebAdmin.Controllers
                 Password = password,
                 Locale = string.IsNullOrWhiteSpace(locale) ? AdminCultureCatalog.DefaultCulture : AdminCultureCatalog.NormalizeUiCulture(locale),
                 Timezone = string.IsNullOrWhiteSpace(timezone) ? "Europe/Berlin" : timezone,
-                Currency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency
+                Currency = string.IsNullOrWhiteSpace(currency) ? defaultCurrency : currency
             };
 
             // Resolve default role "Members" by key if present.

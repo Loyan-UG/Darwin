@@ -126,7 +126,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public async Task<IActionResult> Index(CancellationToken ct = default)
         {
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
-            return RenderOverviewWorkspace(MapSummary(summary));
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            return RenderOverviewWorkspace(MapSummary(summary, settings.DefaultCurrency));
         }
 
         [HttpGet]
@@ -138,7 +139,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var customerItems = items.ToList();
             var vm = new CustomersListVm
             {
-                Summary = MapSummary(summary),
+                Summary = MapSummary(summary, settings.DefaultCurrency),
                 OpsSummary = BuildCustomerOpsSummary(customerItems),
                 Playbooks = BuildCustomerPlaybooks(),
                 Page = page,
@@ -382,7 +383,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
             return RenderInvoicesWorkspace(new InvoicesListVm
             {
-                Summary = MapSummary(summary),
+                Summary = MapSummary(summary, settings.DefaultCurrency),
                 OpsSummary = BuildInvoiceOpsSummary(invoiceItems),
                 Playbooks = BuildInvoicePlaybooks(),
                 TaxPolicy = MapTaxPolicy(settings),
@@ -550,10 +551,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             var (items, total) = await _getLeadsPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var leadItems = items.ToList();
             var vm = new LeadsListVm
             {
-                Summary = MapSummary(summary),
+                Summary = MapSummary(summary, settings.DefaultCurrency),
                 OpsSummary = BuildLeadOpsSummary(leadItems),
                 Playbooks = BuildLeadPlaybooks(),
                 Page = page,
@@ -716,10 +718,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             var (items, total) = await _getOpportunitiesPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var opportunityItems = items.ToList();
             var vm = new OpportunitiesListVm
             {
-                Summary = MapSummary(summary),
+                Summary = MapSummary(summary, settings.DefaultCurrency),
                 OpsSummary = BuildOpportunityOpsSummary(opportunityItems),
                 Playbooks = BuildOpportunityPlaybooks(),
                 Page = page,
@@ -734,6 +737,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     CustomerId = x.CustomerId,
                     CustomerDisplayName = x.CustomerDisplayName,
                     Title = x.Title,
+                    Currency = settings.DefaultCurrency,
                     EstimatedValueMinor = x.EstimatedValueMinor,
                     Stage = x.Stage,
                     ExpectedCloseDateUtc = x.ExpectedCloseDateUtc,
@@ -819,6 +823,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 RowVersion = dto.RowVersion,
                 CustomerId = dto.CustomerId,
                 Title = dto.Title,
+                Currency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency,
                 EstimatedValueMinor = dto.EstimatedValueMinor,
                 Stage = dto.Stage,
                 ExpectedCloseDateUtc = dto.ExpectedCloseDateUtc,
@@ -895,10 +900,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             var (items, total) = await _getCustomerSegmentsPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var segmentSummary = await _getCustomerSegmentsPage.GetSummaryAsync(ct).ConfigureAwait(false);
             var vm = new CustomerSegmentsListVm
             {
-                Summary = MapSummary(summary),
+                Summary = MapSummary(summary, settings.DefaultCurrency),
                 SegmentSummary = new CustomerSegmentOpsSummaryVm
                 {
                     TotalCount = segmentSummary.TotalCount,
@@ -1345,7 +1351,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
         }
 
-        private static CrmSummaryVm MapSummary(CrmSummaryDto dto)
+        private static CrmSummaryVm MapSummary(CrmSummaryDto dto, string currency)
         {
             return new CrmSummaryVm
             {
@@ -1353,6 +1359,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 LeadCount = dto.LeadCount,
                 QualifiedLeadCount = dto.QualifiedLeadCount,
                 OpenOpportunityCount = dto.OpenOpportunityCount,
+                Currency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency,
                 OpenPipelineMinor = dto.OpenPipelineMinor,
                 SegmentCount = dto.SegmentCount,
                 RecentInteractionCount = dto.RecentInteractionCount

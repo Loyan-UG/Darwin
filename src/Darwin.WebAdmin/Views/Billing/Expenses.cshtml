@@ -99,7 +99,7 @@
                     <td>@item.ExpenseDateUtc.ToString("yyyy-MM-dd")</td>
                     <td>@item.Category</td>
                     <td>@item.Description</td>
-                    <td>EUR @((item.AmountMinor / 100M).ToString("0.00"))</td>
+                    <td>@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
                     <td class="text-end">
                         <a asp-action="EditExpense" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditExpense", "Billing", new { id = item.Id })"

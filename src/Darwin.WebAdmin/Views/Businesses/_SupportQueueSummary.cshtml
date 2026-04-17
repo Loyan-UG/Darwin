@@ -74,6 +74,13 @@
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("PendingInvites")</a>
+                <span class="mx-1">|</span>
+                <a asp-action="MerchantReadiness"
+                   class="small"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
         <div class="col-md-3">

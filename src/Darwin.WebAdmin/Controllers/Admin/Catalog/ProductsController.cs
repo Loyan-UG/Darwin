@@ -2,6 +2,7 @@ using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
 using Darwin.Application.Settings.Queries;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private readonly GetCatalogLookupsHandler _getLookups;
         private readonly GetCulturesHandler _getCultures;
         private readonly SoftDeleteProductHandler _softDeleteProduct;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         public ProductsController(
             CreateProductHandler createProduct,
@@ -54,7 +56,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             GetProductForEditHandler getProductForEdit,
             GetCatalogLookupsHandler getLookups,
             GetCulturesHandler getCultures,
-            SoftDeleteProductHandler softDeleteProduct)
+            SoftDeleteProductHandler softDeleteProduct,
+            ISiteSettingCache siteSettingCache)
         {
             _createProduct = createProduct;
             _updateProduct = updateProduct;
@@ -64,6 +67,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             _getLookups = getLookups;
             _getCultures = getCultures;
             _softDeleteProduct = softDeleteProduct;
+            _siteSettingCache = siteSettingCache;
         }
 
         [HttpGet]
@@ -98,12 +102,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public async Task<IActionResult> Create(CancellationToken ct)
         {
             await LoadLookupsAsync(ct);
+            var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
             var vm = new ProductCreateVm();
             vm.Translations ??= new();
             if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
 
             vm.Variants ??= new();
-            if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
+            if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = defaultCurrency });
 
             return RenderCreateEditor(vm);
         }
@@ -123,7 +128,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                EnsureProductDefaults(vm);
+                await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCreateEditor(vm);
             }
 
@@ -179,7 +184,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                EnsureProductDefaults(vm);
+                await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCreateEditor(vm);
             }
         }
@@ -250,7 +255,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                EnsureProductDefaults(vm);
+                await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
 
@@ -306,7 +311,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 ModelState.AddModelError(string.Empty, T("ProductConcurrencyConflict"));
                 await LoadLookupsAsync(ct);
-                EnsureProductDefaults(vm);
+                await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
@@ -315,7 +320,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                EnsureProductDefaults(vm);
+                await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
         }
@@ -388,7 +393,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static void EnsureProductDefaults(ProductEditorVm vm)
+        private async Task EnsureProductDefaultsAsync(ProductEditorVm vm, CancellationToken ct)
         {
             if (vm.Translations.Count == 0)
             {
@@ -397,7 +402,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             if (vm.Variants.Count == 0)
             {
-                vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
+                var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
+                vm.Variants.Add(new ProductVariantCreateVm { Currency = defaultCurrency });
             }
         }
 

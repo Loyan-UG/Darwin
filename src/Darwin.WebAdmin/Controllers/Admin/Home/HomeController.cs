@@ -133,7 +133,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 PageCount = pages.Total,
                 OrderCount = orders.Total,
                 UserCount = users.Total,
-                Crm = MapCrmSummary(crmSummary),
+                Crm = MapCrmSummary(crmSummary, siteSettings.DefaultCurrency),
                 BusinessSupport = MapBusinessSupportSummary(businessSupport),
                 CommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings),
                 PaymentCount = paymentCount,
@@ -208,7 +208,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             };
         }
 
-        private static CrmSummaryVm MapCrmSummary(CrmSummaryDto dto)
+        private static CrmSummaryVm MapCrmSummary(CrmSummaryDto dto, string currency)
         {
             return new CrmSummaryVm
             {
@@ -216,6 +216,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 LeadCount = dto.LeadCount,
                 QualifiedLeadCount = dto.QualifiedLeadCount,
                 OpenOpportunityCount = dto.OpenOpportunityCount,
+                Currency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency,
                 OpenPipelineMinor = dto.OpenPipelineMinor,
                 SegmentCount = dto.SegmentCount,
                 RecentInteractionCount = dto.RecentInteractionCount

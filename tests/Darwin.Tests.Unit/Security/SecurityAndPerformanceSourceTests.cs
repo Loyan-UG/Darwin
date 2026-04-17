@@ -507,14 +507,50 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void BillingController_Should_KeepAdminFinanceWorkspacesAndEditorsReachable()
+    {
+        var billingSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        billingSource.Should().Contain("public sealed class BillingController : AdminBaseController");
+        billingSource.Should().Contain("public IActionResult Index() => RedirectOrHtmx(nameof(Payments), new { });");
+        billingSource.Should().Contain("public async Task<IActionResult> Plans(");
+        billingSource.Should().Contain("public async Task<IActionResult> Payments(");
+        billingSource.Should().Contain("public async Task<IActionResult> TaxCompliance(");
+        billingSource.Should().Contain("public async Task<IActionResult> Webhooks(");
+        billingSource.Should().Contain("public async Task<IActionResult> Refunds(");
+        billingSource.Should().Contain("public async Task<IActionResult> FinancialAccounts(");
+        billingSource.Should().Contain("public async Task<IActionResult> Expenses(");
+        billingSource.Should().Contain("public async Task<IActionResult> JournalEntries(");
+        billingSource.Should().Contain("public IActionResult CreatePlan()");
+        billingSource.Should().Contain("public async Task<IActionResult> EditPlan(Guid id");
+        billingSource.Should().Contain("public async Task<IActionResult> CreatePayment(Guid? businessId = null");
+        billingSource.Should().Contain("public async Task<IActionResult> EditPayment(Guid id");
+        billingSource.Should().Contain("public async Task<IActionResult> CreateFinancialAccount(Guid? businessId = null");
+        billingSource.Should().Contain("public async Task<IActionResult> EditFinancialAccount(Guid id");
+        billingSource.Should().Contain("public async Task<IActionResult> CreateExpense(Guid? businessId = null");
+        billingSource.Should().Contain("public async Task<IActionResult> EditExpense(Guid id");
+        billingSource.Should().Contain("public async Task<IActionResult> CreateJournalEntry(Guid? businessId = null");
+        billingSource.Should().Contain("public async Task<IActionResult> EditJournalEntry(Guid id");
+    }
+
+    [Fact]
     public void BusinessCommunicationsController_Should_KeepTestSendPostsProtected()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessCommunicationsController.cs"));
 
+        source.Should().Contain("public sealed class BusinessCommunicationsController : AdminBaseController");
+        source.Should().Contain("[PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]");
         source.Should().Contain("[ValidateAntiForgeryToken]");
+        source.Should().Contain("public async Task<IActionResult> RetryEmailAudit(");
         source.Should().Contain("public async Task<IActionResult> SendTestEmail(");
         source.Should().Contain("public async Task<IActionResult> SendTestSms(");
         source.Should().Contain("public async Task<IActionResult> SendTestWhatsApp(");
+        source.Should().Contain("public async Task<IActionResult> Index(");
+        source.Should().Contain("public async Task<IActionResult> Details(");
+        source.Should().Contain("public async Task<IActionResult> EmailAudits(");
+        source.Should().Contain("public async Task<IActionResult> ChannelAudits(");
     }
 
     [Fact]
@@ -542,6 +578,20 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void BusinessesController_Should_KeepSupportQueueAndMerchantReadinessEndpointsProtected()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+
+        source.Should().Contain("public sealed class BusinessesController : AdminBaseController");
+        source.Should().Contain("[PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]");
+        source.Should().Contain("public async Task<IActionResult> SupportQueue(");
+        source.Should().Contain("public async Task<IActionResult> MerchantReadiness(");
+        source.Should().Contain("public async Task<IActionResult> SupportQueueSummaryFragment(");
+        source.Should().Contain("public async Task<IActionResult> SupportQueueAttentionFragment(");
+        source.Should().Contain("public async Task<IActionResult> SupportQueueFailedEmailsFragment(");
+    }
+
+    [Fact]
     public void UsersController_Should_KeepIdentityAndAddressMutationsProtected()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
@@ -565,6 +615,83 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void UsersController_Should_KeepAdminWorkspacesAndEditorGetsReachable()
+    {
+        var usersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        usersSource.Should().Contain("public sealed class UsersController : AdminBaseController");
+        usersSource.Should().Contain("public async Task<IActionResult> Index(");
+        usersSource.Should().Contain("public IActionResult Create() => RenderCreateEditor(new UserCreateVm())");
+        usersSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
+        usersSource.Should().Contain("public IActionResult ChangeEmail([FromRoute] Guid id, [FromQuery] string? currentEmail = null)");
+        usersSource.Should().Contain("public IActionResult ChangePassword(Guid id, string? email = null)");
+        usersSource.Should().Contain("public async Task<IActionResult> AddressesSection(Guid userId, CancellationToken ct = default)");
+        usersSource.Should().Contain("public async Task<IActionResult> Roles(Guid id, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20, CancellationToken ct = default)");
+    }
+
+    [Fact]
+    public void AccountController_Should_KeepAnonymousAuthEntryPointsAndProtectedLogout()
+    {
+        var accountSource = ReadWebAdminFile(Path.Combine("Controllers", "AccountController.cs"));
+
+        accountSource.Should().Contain("public sealed class AccountController : Controller");
+        accountSource.Should().Contain("[AllowAnonymous]");
+        accountSource.Should().Contain("[HttpGet(\"/account/login\")]");
+        accountSource.Should().Contain("public IActionResult Login(string? returnUrl = null)");
+        accountSource.Should().Contain("[HttpPost(\"/account/login\")]");
+        accountSource.Should().Contain("public async Task<IActionResult> LoginPost(");
+        accountSource.Should().Contain("[HttpGet(\"/account/login-2fa\")]");
+        accountSource.Should().Contain("public IActionResult LoginTwoFactor()");
+        accountSource.Should().Contain("[HttpPost(\"/account/login-2fa\")]");
+        accountSource.Should().Contain("public async Task<IActionResult> LoginTwoFactorPost(");
+        accountSource.Should().Contain("[HttpPost(\"/account/webauthn/begin-login\")]");
+        accountSource.Should().Contain("public async Task<IActionResult> WebAuthnBeginLogin(");
+        accountSource.Should().Contain("[HttpPost(\"/account/webauthn/finish-login\")]");
+        accountSource.Should().Contain("public async Task<IActionResult> WebAuthnFinishLogin(");
+        accountSource.Should().Contain("[HttpGet(\"/account/register\")]");
+        accountSource.Should().Contain("public IActionResult Register(string? returnUrl = null)");
+        accountSource.Should().Contain("[HttpPost(\"/account/register\")]");
+        accountSource.Should().Contain("public async Task<IActionResult> RegisterPost(");
+        accountSource.Should().Contain("[Authorize]");
+        accountSource.Should().Contain("public async Task<IActionResult> Logout(CancellationToken ct = default)");
+        accountSource.Should().Contain("[ValidateAntiForgeryToken]");
+    }
+
+    [Fact]
+    public void HomeDashboardAndCultureControllers_Should_KeepAdminAndLocalizationBoundaries()
+    {
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+        var homeSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Home", "HomeController.cs"));
+        var dashboardSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Home", "DashboardController.cs"));
+        var cultureSource = ReadWebAdminFile(Path.Combine("Controllers", "CultureController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+
+        homeSource.Should().Contain("public sealed class HomeController : AdminBaseController");
+        homeSource.Should().Contain("public async Task<IActionResult> Index(Guid? businessId = null, CancellationToken ct = default)");
+        homeSource.Should().Contain("public async Task<IActionResult> CommunicationOpsFragment(Guid? businessId = null, CancellationToken ct = default)");
+        homeSource.Should().Contain("public async Task<IActionResult> BusinessSupportQueueFragment(Guid? businessId = null, CancellationToken ct = default)");
+        homeSource.Should().Contain("public IActionResult AlertsFragment()");
+
+        dashboardSource.Should().Contain("public sealed class DashboardController : AdminBaseController");
+        dashboardSource.Should().Contain("[HttpGet(\"/admin\")]");
+        dashboardSource.Should().Contain("[HttpGet(\"/dashboard\")]");
+        dashboardSource.Should().Contain("public IActionResult Index()");
+
+        cultureSource.Should().Contain("public sealed class CultureController : Controller");
+        cultureSource.Should().Contain("[HttpPost]");
+        cultureSource.Should().Contain("[ValidateAntiForgeryToken]");
+        cultureSource.Should().Contain("public IActionResult SetCulture(string culture, string? returnUrl = null)");
+        cultureSource.Should().Contain("AdminCultureCatalog.NormalizeUiCulture(culture)");
+        cultureSource.Should().Contain("CookieRequestCultureProvider.DefaultCookieName");
+        cultureSource.Should().Contain("Url.IsLocalUrl(returnUrl)");
+        cultureSource.Should().Contain("return LocalRedirect(returnUrl);");
+        cultureSource.Should().Contain("return RedirectToAction(\"Index\", \"Home\");");
+    }
+
+    [Fact]
     public void OrdersController_Should_KeepOperationalMutationsProtected()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
@@ -575,6 +702,28 @@ public sealed class SecurityAndPerformanceSourceTests
         source.Should().Contain("public async Task<IActionResult> AddRefund(RefundCreateVm vm");
         source.Should().Contain("public async Task<IActionResult> CreateInvoice(OrderInvoiceCreateVm vm");
         source.Should().Contain("public async Task<IActionResult> ChangeStatus(OrderStatusChangeVm vm");
+    }
+
+    [Fact]
+    public void OrdersController_Should_KeepAdminOrderWorkspacesAndReviewEndpointsReachable()
+    {
+        var ordersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        ordersSource.Should().Contain("public sealed class OrdersController : AdminBaseController");
+        ordersSource.Should().Contain("public async Task<IActionResult> Index(");
+        ordersSource.Should().Contain("public async Task<IActionResult> ShipmentsQueue(");
+        ordersSource.Should().Contain("public async Task<IActionResult> ReturnsQueue(");
+        ordersSource.Should().Contain("public async Task<IActionResult> Details(Guid id");
+        ordersSource.Should().Contain("public async Task<IActionResult> Payments(Guid orderId");
+        ordersSource.Should().Contain("public async Task<IActionResult> Shipments(Guid orderId");
+        ordersSource.Should().Contain("public async Task<IActionResult> Refunds(Guid orderId");
+        ordersSource.Should().Contain("public async Task<IActionResult> Invoices(Guid orderId");
+        ordersSource.Should().Contain("public async Task<IActionResult> AddPayment(Guid orderId");
+        ordersSource.Should().Contain("public async Task<IActionResult> AddShipment(Guid orderId");
+        ordersSource.Should().Contain("public async Task<IActionResult> AddRefund(Guid orderId");
+        ordersSource.Should().Contain("public async Task<IActionResult> CreateInvoice(Guid orderId");
     }
 
     [Fact]
@@ -597,6 +746,37 @@ public sealed class SecurityAndPerformanceSourceTests
         source.Should().Contain("public async Task<IActionResult> EditStockTransfer(StockTransferEditVm vm");
         source.Should().Contain("public async Task<IActionResult> CreatePurchaseOrder(PurchaseOrderEditVm vm");
         source.Should().Contain("public async Task<IActionResult> EditPurchaseOrder(PurchaseOrderEditVm vm");
+    }
+
+    [Fact]
+    public void InventoryController_Should_KeepAdminWorkspacesAndEditorGetsReachable()
+    {
+        var inventorySource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Inventory", "InventoryController.cs"));
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        inventorySource.Should().Contain("public sealed class InventoryController : AdminBaseController");
+        inventorySource.Should().Contain("public IActionResult Index() => RedirectOrHtmx(nameof(Warehouses), new { });");
+        inventorySource.Should().Contain("public async Task<IActionResult> Warehouses(");
+        inventorySource.Should().Contain("public async Task<IActionResult> Suppliers(");
+        inventorySource.Should().Contain("public async Task<IActionResult> StockLevels(");
+        inventorySource.Should().Contain("public async Task<IActionResult> StockTransfers(");
+        inventorySource.Should().Contain("public async Task<IActionResult> PurchaseOrders(");
+        inventorySource.Should().Contain("public async Task<IActionResult> VariantLedger(");
+        inventorySource.Should().Contain("public async Task<IActionResult> CreateWarehouse(Guid? businessId = null");
+        inventorySource.Should().Contain("public async Task<IActionResult> EditWarehouse(Guid id");
+        inventorySource.Should().Contain("public async Task<IActionResult> CreateSupplier(Guid? businessId = null");
+        inventorySource.Should().Contain("public async Task<IActionResult> EditSupplier(Guid id");
+        inventorySource.Should().Contain("public async Task<IActionResult> AdjustStock(Guid stockLevelId");
+        inventorySource.Should().Contain("public async Task<IActionResult> ReserveStock(Guid stockLevelId");
+        inventorySource.Should().Contain("public async Task<IActionResult> ReleaseReservation(Guid stockLevelId");
+        inventorySource.Should().Contain("public async Task<IActionResult> ReturnReceipt(Guid stockLevelId");
+        inventorySource.Should().Contain("public async Task<IActionResult> CreateStockLevel(Guid? businessId = null, Guid? warehouseId = null");
+        inventorySource.Should().Contain("public async Task<IActionResult> EditStockLevel(Guid id");
+        inventorySource.Should().Contain("public async Task<IActionResult> CreateStockTransfer(Guid? businessId = null, Guid? warehouseId = null");
+        inventorySource.Should().Contain("public async Task<IActionResult> EditStockTransfer(Guid id");
+        inventorySource.Should().Contain("public async Task<IActionResult> CreatePurchaseOrder(Guid? businessId = null");
+        inventorySource.Should().Contain("public async Task<IActionResult> EditPurchaseOrder(Guid id");
     }
 
     [Fact]
@@ -626,6 +806,36 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void CrmController_Should_KeepAdminWorkspacesAndReviewGetsReachable()
+    {
+        var crmSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        crmSource.Should().Contain("public sealed class CrmController : AdminBaseController");
+        crmSource.Should().Contain("public async Task<IActionResult> Index(");
+        crmSource.Should().Contain("public async Task<IActionResult> Customers(");
+        crmSource.Should().Contain("public async Task<IActionResult> Invoices(");
+        crmSource.Should().Contain("public async Task<IActionResult> Leads(");
+        crmSource.Should().Contain("public async Task<IActionResult> Opportunities(");
+        crmSource.Should().Contain("public async Task<IActionResult> Segments(");
+        crmSource.Should().Contain("public async Task<IActionResult> CreateCustomer(CancellationToken ct = default)");
+        crmSource.Should().Contain("public async Task<IActionResult> EditCustomer(Guid id");
+        crmSource.Should().Contain("public async Task<IActionResult> EditInvoice(Guid id");
+        crmSource.Should().Contain("public async Task<IActionResult> CreateLead(CancellationToken ct = default)");
+        crmSource.Should().Contain("public async Task<IActionResult> EditLead(Guid id");
+        crmSource.Should().Contain("public async Task<IActionResult> CreateOpportunity(Guid? customerId = null");
+        crmSource.Should().Contain("public async Task<IActionResult> EditOpportunity(Guid id");
+        crmSource.Should().Contain("public IActionResult CreateSegment() => RenderSegmentEditor(new CustomerSegmentEditVm(), nameof(CreateSegment));");
+        crmSource.Should().Contain("public async Task<IActionResult> EditSegment(Guid id");
+        crmSource.Should().Contain("public async Task<IActionResult> CustomerInteractions(Guid customerId");
+        crmSource.Should().Contain("public async Task<IActionResult> LeadInteractions(Guid leadId");
+        crmSource.Should().Contain("public async Task<IActionResult> OpportunityInteractions(Guid opportunityId");
+        crmSource.Should().Contain("public async Task<IActionResult> CustomerConsents(Guid customerId");
+        crmSource.Should().Contain("public async Task<IActionResult> CustomerSegmentMemberships(Guid customerId");
+    }
+
+    [Fact]
     public void LoyaltyController_Should_KeepOperationalMutationsProtected()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Loyalty", "LoyaltyController.cs"));
@@ -645,6 +855,32 @@ public sealed class SecurityAndPerformanceSourceTests
         source.Should().Contain("public async Task<IActionResult> SuspendAccount(");
         source.Should().Contain("public async Task<IActionResult> ActivateAccount(");
         source.Should().Contain("public async Task<IActionResult> ConfirmRedemption(");
+    }
+
+    [Fact]
+    public void LoyaltyController_Should_KeepAdminWorkspacesAndEditorGetsReachable()
+    {
+        var loyaltySource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Loyalty", "LoyaltyController.cs"));
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        loyaltySource.Should().Contain("public sealed class LoyaltyController : AdminBaseController");
+        loyaltySource.Should().Contain("public IActionResult Index() => RedirectOrHtmx(nameof(Programs), new { });");
+        loyaltySource.Should().Contain("public async Task<IActionResult> Programs(");
+        loyaltySource.Should().Contain("public async Task<IActionResult> RewardTiers(Guid loyaltyProgramId");
+        loyaltySource.Should().Contain("public async Task<IActionResult> Accounts(");
+        loyaltySource.Should().Contain("public async Task<IActionResult> Campaigns(");
+        loyaltySource.Should().Contain("public async Task<IActionResult> ScanSessions(");
+        loyaltySource.Should().Contain("public async Task<IActionResult> Redemptions(");
+        loyaltySource.Should().Contain("public async Task<IActionResult> AccountDetails(Guid id");
+        loyaltySource.Should().Contain("public async Task<IActionResult> CreateProgram(Guid? businessId = null");
+        loyaltySource.Should().Contain("public async Task<IActionResult> EditProgram(Guid id");
+        loyaltySource.Should().Contain("public async Task<IActionResult> CreateRewardTier(Guid loyaltyProgramId");
+        loyaltySource.Should().Contain("public async Task<IActionResult> EditRewardTier(Guid id, Guid loyaltyProgramId");
+        loyaltySource.Should().Contain("public async Task<IActionResult> CreateAccount(Guid? businessId = null");
+        loyaltySource.Should().Contain("public async Task<IActionResult> CreateCampaign(Guid? businessId = null");
+        loyaltySource.Should().Contain("public async Task<IActionResult> EditCampaign(Guid id, Guid businessId");
+        loyaltySource.Should().Contain("public async Task<IActionResult> AdjustPoints(Guid loyaltyAccountId");
     }
 
     [Fact]
@@ -682,6 +918,45 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void CatalogAndContentControllers_Should_KeepAdminWorkspacesAndEditorGetsReachable()
+    {
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+        var productsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "ProductsController.cs"));
+        var categoriesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "CategoriesController.cs"));
+        var pagesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CMS", "PagesController.cs"));
+        var mediaSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
+        var shippingMethodsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Shipping", "ShippingMethodsController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        productsSource.Should().Contain("public sealed class ProductsController : AdminBaseController");
+        categoriesSource.Should().Contain("public sealed class CategoriesController : AdminBaseController");
+        pagesSource.Should().Contain("public sealed class PagesController : AdminBaseController");
+        mediaSource.Should().Contain("public sealed class MediaController : AdminBaseController");
+        shippingMethodsSource.Should().Contain("public sealed class ShippingMethodsController : AdminBaseController");
+
+        productsSource.Should().Contain("public async Task<IActionResult> Index(");
+        productsSource.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct)");
+        productsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct)");
+
+        categoriesSource.Should().Contain("public async Task<IActionResult> Index(");
+        categoriesSource.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct)");
+        categoriesSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct)");
+
+        pagesSource.Should().Contain("public async Task<IActionResult> Index(");
+        pagesSource.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct)");
+        pagesSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct)");
+
+        mediaSource.Should().Contain("public async Task<IActionResult> Index(");
+        mediaSource.Should().Contain("public IActionResult Create()");
+        mediaSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
+        mediaSource.Should().Contain("public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)");
+
+        shippingMethodsSource.Should().Contain("public async Task<IActionResult> Index(");
+        shippingMethodsSource.Should().Contain("public IActionResult Create()");
+        shippingMethodsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
+    }
+
+    [Fact]
     public void RemainingAdminControllers_Should_KeepOperationalMutationsProtected()
     {
         var rolesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "RolesController.cs"));
@@ -705,6 +980,7 @@ public sealed class SecurityAndPerformanceSourceTests
         siteSettingsSource.Should().Contain("[ValidateAntiForgeryToken]");
         siteSettingsSource.Should().Contain("public async Task<IActionResult> Edit(SiteSettingVm vm");
 
+        mobileOpsSource.Should().Contain("public async Task<IActionResult> Index(");
         mobileOpsSource.Should().Contain("[ValidateAntiForgeryToken]");
         mobileOpsSource.Should().Contain("public async Task<IActionResult> ClearPushToken(");
         mobileOpsSource.Should().Contain("public async Task<IActionResult> DeactivateDevice(");
@@ -722,6 +998,51 @@ public sealed class SecurityAndPerformanceSourceTests
         brandsSource.Should().Contain("public async Task<IActionResult> Create(BrandEditVm vm");
         brandsSource.Should().Contain("public async Task<IActionResult> Edit(BrandEditVm vm");
         brandsSource.Should().Contain("public async Task<IActionResult> Delete(");
+    }
+
+    [Fact]
+    public void RemainingAdminControllers_Should_KeepWorkspacesAndEditorGetsReachable()
+    {
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+        var rolesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "RolesController.cs"));
+        var permissionsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "PermissionsController.cs"));
+        var siteSettingsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Settings", "SiteSettingsController.cs"));
+        var mobileOpsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Mobile", "MobileOperationsController.cs"));
+        var addOnGroupsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "AddOnGroupsController.cs"));
+        var brandsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "BrandsController.cs"));
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        rolesSource.Should().Contain("public sealed class RolesController : AdminBaseController");
+        permissionsSource.Should().Contain("public sealed class PermissionsController : AdminBaseController");
+        siteSettingsSource.Should().Contain("public sealed class SiteSettingsController : AdminBaseController");
+        mobileOpsSource.Should().Contain("public sealed class MobileOperationsController : AdminBaseController");
+        addOnGroupsSource.Should().Contain("public sealed class AddOnGroupsController : AdminBaseController");
+        brandsSource.Should().Contain("public sealed class BrandsController : AdminBaseController");
+
+        rolesSource.Should().Contain("public async Task<IActionResult> Index(");
+        rolesSource.Should().Contain("public IActionResult Create()");
+        rolesSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
+        rolesSource.Should().Contain("public async Task<IActionResult> Permissions(Guid id, CancellationToken ct = default)");
+
+        permissionsSource.Should().Contain("public async Task<IActionResult> Index(");
+        permissionsSource.Should().Contain("public IActionResult Create()");
+        permissionsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
+
+        siteSettingsSource.Should().Contain("public async Task<IActionResult> Edit(CancellationToken ct)");
+
+        mobileOpsSource.Should().Contain("public async Task<IActionResult> Index(");
+
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> Index(");
+        addOnGroupsSource.Should().Contain("public IActionResult Create()");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToProducts(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToCategories(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToBrands(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToVariants(");
+
+        brandsSource.Should().Contain("public async Task<IActionResult> Index(int page = 1, int pageSize = 20,");
+        brandsSource.Should().Contain("public IActionResult Create() => RenderBrandEditor(new BrandEditVm");
+        brandsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
     }
 
     private static string ReadWebApiFile(string relativePath)

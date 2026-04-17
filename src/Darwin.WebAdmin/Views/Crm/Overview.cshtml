@@ -31,7 +31,7 @@
         <div class="card h-100">
             <div class="card-body">
                 <div class="text-muted small">@T.T("OpenPipeline")</div>
-                <div class="fs-2 fw-semibold">EUR @((Model.OpenPipelineMinor / 100.0M).ToString("0.00"))</div>
+                <div class="fs-2 fw-semibold">@Model.Currency @((Model.OpenPipelineMinor / 100.0M).ToString("0.00"))</div>
                 <div class="small text-muted mt-2">@T.T("CrmOverviewPipelineNote")</div>
             </div>
         </div>

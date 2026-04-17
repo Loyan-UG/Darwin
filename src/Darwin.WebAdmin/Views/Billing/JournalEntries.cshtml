@@ -112,8 +112,8 @@
                     <td>@item.EntryDateUtc.ToString("yyyy-MM-dd")</td>
                     <td>@item.Description</td>
                     <td>@item.LineCount</td>
-                    <td>EUR @((item.TotalDebitMinor / 100M).ToString("0.00"))</td>
-                    <td>EUR @((item.TotalCreditMinor / 100M).ToString("0.00"))</td>
+                    <td>@item.Currency @((item.TotalDebitMinor / 100M).ToString("0.00"))</td>
+                    <td>@item.Currency @((item.TotalCreditMinor / 100M).ToString("0.00"))</td>
                     <td class="text-end"><a asp-action="EditJournalEntry" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("EditJournalEntry", "Billing", new { id = item.Id })"
                        hx-target="#billing-journal-entries-workspace-shell"

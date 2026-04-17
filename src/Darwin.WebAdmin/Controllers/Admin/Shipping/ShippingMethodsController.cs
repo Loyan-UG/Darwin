@@ -3,6 +3,7 @@ using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Queries;
 using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Security;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Shipping;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -23,19 +24,22 @@ public sealed class ShippingMethodsController : AdminBaseController
     private readonly GetShippingMethodForEditHandler _getForEdit;
     private readonly CreateShippingMethodHandler _create;
     private readonly UpdateShippingMethodHandler _update;
+    private readonly ISiteSettingCache _siteSettingCache;
 
     public ShippingMethodsController(
         GetShippingMethodsPageHandler getPage,
         GetShippingMethodOpsSummaryHandler getSummary,
         GetShippingMethodForEditHandler getForEdit,
         CreateShippingMethodHandler create,
-        UpdateShippingMethodHandler update)
+        UpdateShippingMethodHandler update,
+        ISiteSettingCache siteSettingCache)
     {
         _getPage = getPage;
         _getSummary = getSummary;
         _getForEdit = getForEdit;
         _create = create;
         _update = update;
+        _siteSettingCache = siteSettingCache;
     }
 
     [HttpGet]
@@ -92,9 +96,10 @@ public sealed class ShippingMethodsController : AdminBaseController
     [HttpGet]
     public IActionResult Create()
     {
+        var defaultCurrency = _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCurrency;
         var vm = new ShippingMethodEditVm
         {
-            Currency = "EUR",
+            Currency = defaultCurrency,
             Rates = new List<ShippingRateEditVm> { new() { SortOrder = 0 } }
         };
         return RenderEditor(vm, true);

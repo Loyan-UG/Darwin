@@ -757,11 +757,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public async Task<IActionResult> CreatePayment(Guid? businessId = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
             var vm = new PaymentEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,
                 CreatedAtUtc = DateTime.UtcNow,
-                Currency = "EUR",
+                Currency = defaultCurrency,
                 Status = PaymentStatus.Pending,
                 LastFinancialEventAtUtc = DateTime.UtcNow,
                 ProviderReferenceState = "Reference missing",
@@ -769,7 +770,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SupportPlaybooks = BuildPaymentSupportPlaybooks(new PaymentEditDto
                 {
                     CreatedAtUtc = DateTime.UtcNow,
-                    Currency = "EUR",
+                    Currency = defaultCurrency,
                     Status = PaymentStatus.Pending,
                     LastFinancialEventAtUtc = DateTime.UtcNow,
                     ProviderReferenceState = "Reference missing",
@@ -1117,6 +1118,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public async Task<IActionResult> Expenses(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
             var items = new List<ExpenseListItemVm>();
             var total = 0;
             if (businessId.HasValue)
@@ -1128,6 +1130,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     SupplierId = x.SupplierId,
                     Category = x.Category,
                     Description = x.Description,
+                    Currency = defaultCurrency,
                     AmountMinor = x.AmountMinor,
                     ExpenseDateUtc = x.ExpenseDateUtc,
                     RowVersion = x.RowVersion
@@ -1269,6 +1272,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public async Task<IActionResult> JournalEntries(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, JournalEntryQueueFilter? queue = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
             var items = new List<JournalEntryListItemVm>();
             var total = 0;
             if (businessId.HasValue)
@@ -1280,6 +1284,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     EntryDateUtc = x.EntryDateUtc,
                     Description = x.Description,
                     LineCount = x.LineCount,
+                    Currency = defaultCurrency,
                     TotalDebitMinor = x.TotalDebitMinor,
                     TotalCreditMinor = x.TotalCreditMinor,
                     RowVersion = x.RowVersion

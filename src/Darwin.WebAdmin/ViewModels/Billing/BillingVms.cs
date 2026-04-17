@@ -485,6 +485,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public Guid? SupplierId { get; set; }
         public string Category { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string Currency { get; set; } = "EUR";
         public long AmountMinor { get; set; }
         public DateTime ExpenseDateUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -551,6 +552,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime EntryDateUtc { get; set; }
         public string Description { get; set; } = string.Empty;
         public int LineCount { get; set; }
+        public string Currency { get; set; } = "EUR";
         public long TotalDebitMinor { get; set; }
         public long TotalCreditMinor { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
