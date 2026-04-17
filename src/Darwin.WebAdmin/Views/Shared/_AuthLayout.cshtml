@@ -1,7 +1,7 @@
 @using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    var currentCulture = CultureInfo.CurrentUICulture?.Name ?? "de-DE";
+    var currentCulture = CultureInfo.CurrentUICulture?.Name ?? Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture;
     var languageOptions = T.GetSupportedLanguageOptions();
     var returnUrl = $"{Context?.Request?.Path}{Context?.Request?.QueryString}";
 }
