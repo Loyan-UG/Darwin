@@ -94,13 +94,13 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         /// <summary>Preferred time zone.</summary>
         [Required(ErrorMessage = "The {0} field is required.")]
         [Display(Name = "TimeZone")]
-        public string Timezone { get; set; } = "Europe/Berlin";
+        public string Timezone { get; set; } = string.Empty;
 
         /// <summary>Preferred currency code (ISO 4217).</summary>
         [Required(ErrorMessage = "The {0} field is required.")]
         [Display(Name = "Currency")]
         [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         /// <summary>Phone number in E.164 format; optional.</summary>
         [Display(Name = "Phone")]
@@ -182,12 +182,12 @@ namespace Darwin.WebAdmin.ViewModels.Identity
 
         [Required(ErrorMessage = "The {0} field is required.")]
         [Display(Name = "TimeZone")]
-        public string Timezone { get; set; } = "Europe/Berlin";
+        public string Timezone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "The {0} field is required.")]
         [Display(Name = "Currency")]
         [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         [Display(Name = "Phone")]
         [Phone]

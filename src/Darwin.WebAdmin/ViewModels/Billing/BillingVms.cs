@@ -119,7 +119,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string? OrderNumber { get; set; }
         public Guid? PaymentId { get; set; }
         public InvoiceStatus Status { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long TotalGrossMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -181,7 +181,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public long PriceMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public BillingInterval Interval { get; set; } = BillingInterval.Month;
         public int IntervalCount { get; set; }
         public int? TrialDays { get; set; }
@@ -251,7 +251,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string UserDisplayName { get; set; } = string.Empty;
         public string? UserEmail { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public PaymentStatus Status { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
@@ -283,7 +283,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string? CustomerEmail { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -334,7 +334,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
 
         [Required]
         [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
@@ -376,7 +376,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
 
         [Required]
         [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         public BillingInterval Interval { get; set; } = BillingInterval.Month;
 
@@ -400,7 +400,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     {
         public Guid Id { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -485,7 +485,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public Guid? SupplierId { get; set; }
         public string Category { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long AmountMinor { get; set; }
         public DateTime ExpenseDateUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -552,7 +552,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime EntryDateUtc { get; set; }
         public string Description { get; set; } = string.Empty;
         public int LineCount { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long TotalDebitMinor { get; set; }
         public long TotalCreditMinor { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();

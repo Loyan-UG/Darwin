@@ -3,6 +3,7 @@ using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
 using Darwin.WebAdmin.Controllers.Admin;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -47,6 +48,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private readonly GetAddOnGroupAttachedVariantIdsHandler _getAttachedVariants;
         private readonly GetAddOnGroupAttachedCategoryIdsHandler _getAttachedCategories;
         private readonly GetAddOnGroupAttachedBrandIdsHandler _getAttachedBrands;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         public AddOnGroupsController(
             GetAddOnGroupsPageHandler getPage,
@@ -66,7 +68,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             GetAddOnGroupAttachedProductIdsHandler getAttachedProducts,
             GetAddOnGroupAttachedVariantIdsHandler getAttachedVariants,
             GetAddOnGroupAttachedCategoryIdsHandler getAttachedCategories,
-            GetAddOnGroupAttachedBrandIdsHandler getAttachedBrands
+            GetAddOnGroupAttachedBrandIdsHandler getAttachedBrands,
+            ISiteSettingCache siteSettingCache
             )
         {
             _getPage = getPage;
@@ -90,6 +93,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             _getAttachedVariants = getAttachedVariants;
             _getAttachedCategories = getAttachedCategories;
             _getAttachedBrands = getAttachedBrands;
+            _siteSettingCache = siteSettingCache;
         }
 
         // ---------------- List ----------------
@@ -143,9 +147,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public IActionResult Create()
         {
+            var defaultCurrency = _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCurrency;
+
             // A simple example for user convenience (Option + a Value)
             return RenderCreateEditor(new AddOnGroupCreateVm
             {
+                Currency = defaultCurrency,
                 Options = { new AddOnOptionVm { Label = "Option", Values = { new AddOnOptionValueVm { Label = "Value" } } } }
             });
         }
@@ -155,13 +162,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             vm.Options ??= new();
             foreach (var o in vm.Options) o.Values ??= new();
+            var defaultCurrency = (await _siteSettingCache.GetAsync(ct)).DefaultCurrency;
 
             if (!ModelState.IsValid) return RenderCreateEditor(vm);
 
             var dto = new AddOnGroupCreateDto
             {
                 Name = vm.Name?.Trim() ?? string.Empty,
-                Currency = vm.Currency?.Trim().ToUpperInvariant() ?? "EUR",
+                Currency = string.IsNullOrWhiteSpace(vm.Currency)
+                    ? defaultCurrency
+                    : vm.Currency.Trim().ToUpperInvariant(),
                 IsGlobal = vm.IsGlobal,
                 SelectionMode = vm.SelectionMode,
                 MinSelections = vm.MinSelections,
@@ -245,6 +255,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             vm.Options ??= new();
             foreach (var o in vm.Options) o.Values ??= new();
+            var defaultCurrency = (await _siteSettingCache.GetAsync(ct)).DefaultCurrency;
 
             if (!ModelState.IsValid) return RenderEditEditor(vm);
 
@@ -253,7 +264,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 Id = vm.Id,
                 RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
                 Name = vm.Name?.Trim() ?? string.Empty,
-                Currency = vm.Currency?.Trim().ToUpperInvariant() ?? "EUR",
+                Currency = string.IsNullOrWhiteSpace(vm.Currency)
+                    ? defaultCurrency
+                    : vm.Currency.Trim().ToUpperInvariant(),
                 IsGlobal = vm.IsGlobal,
                 SelectionMode = vm.SelectionMode,
                 MinSelections = vm.MinSelections,
@@ -334,7 +347,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct); // culture-based list
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct)).DefaultCulture;
+            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, defaultCulture, query, filter: null, ct); // culture-based list
 
             // Load attached ids
             var attached = await _getAttachedProducts.HandleAsync(id, ct);
@@ -392,7 +406,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct)).DefaultCulture;
+            var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, defaultCulture, query, filter: null, ct);
 
             var attached = await _getAttachedCategories.HandleAsync(id, ct);
             var attachedSet = attached.ToHashSet();
@@ -448,7 +463,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var (items, total) = await _getBrandsPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct)).DefaultCulture;
+            var (items, total) = await _getBrandsPage.HandleAsync(page, pageSize, defaultCulture, query, filter: null, ct);
 
             var attached = await _getAttachedBrands.HandleAsync(id, ct);
             var attachedSet = attached.ToHashSet();
@@ -513,8 +529,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RedirectOrHtmx(nameof(Index), new { });
             }
             
-            // Determine culture (fallback to "de-DE" if not resolved from site/user)
-            var culture = CultureInfo.CurrentUICulture?.Name ?? "de-DE";
+            var culture = (await _siteSettingCache.GetAsync(ct)).DefaultCulture;
 
             var (items, total) = await _getVariantsPage.HandleAsync(page, pageSize, q, culture, ct);
 
@@ -535,7 +550,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     .Select(v => new SelectableItemVm
                     {
                         Id = v.Id,
-                        Display = $"{v.Sku} — {v.ProductName ?? "(no name)"}",
+                        Display = $"{v.Sku} - {v.ProductName ?? "(no name)"}",
                         Selected = attachedSet.Contains(v.Id) /* isSelected: handled client-side via hidden inputs to persist across pages */
                     }).ToList(),
                 SelectedVariantIds = attached.ToList()

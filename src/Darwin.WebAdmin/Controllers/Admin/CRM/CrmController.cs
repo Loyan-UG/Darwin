@@ -1359,7 +1359,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 LeadCount = dto.LeadCount,
                 QualifiedLeadCount = dto.QualifiedLeadCount,
                 OpenOpportunityCount = dto.OpenOpportunityCount,
-                Currency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency,
+                Currency = string.IsNullOrWhiteSpace(currency) ? string.Empty : currency.Trim().ToUpperInvariant(),
                 OpenPipelineMinor = dto.OpenPipelineMinor,
                 SegmentCount = dto.SegmentCount,
                 RecentInteractionCount = dto.RecentInteractionCount

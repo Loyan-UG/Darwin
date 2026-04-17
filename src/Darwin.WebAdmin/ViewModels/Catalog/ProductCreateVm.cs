@@ -5,7 +5,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
 {
     public sealed class ProductTranslationVm
     {
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? ShortDescription { get; set; }
@@ -22,7 +22,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public string? ManufacturerPartNumber { get; set; }
         public long BasePriceNetMinor { get; set; }
         public long? CompareAtPriceNetMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public Guid TaxCategoryId { get; set; }
         public int StockOnHand { get; set; }
         public int StockReserved { get; set; }
@@ -51,8 +51,8 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     {
         public ProductCreateVm()
         {
-            Translations = new List<ProductTranslationVm> { new() { Culture = "de-DE" } };
-            Variants = new List<ProductVariantCreateVm> { new() { Currency = "EUR" } };
+            Translations = new List<ProductTranslationVm>();
+            Variants = new List<ProductVariantCreateVm> { new() };
         }
     }
 }

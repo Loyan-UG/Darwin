@@ -24,7 +24,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
     {
         public Guid Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long GrandTotalGrossMinor { get; set; }
         public OrderStatus Status { get; set; }
         public int PaymentCount { get; set; }
@@ -39,7 +39,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
     {
         public Guid Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public bool PricesIncludeTax { get; set; }
         public long SubtotalNetMinor { get; set; }
         public long TaxTotalMinor { get; set; }
@@ -77,7 +77,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
     {
         public Guid Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long GrandTotalGrossMinor { get; set; }
     }
 
@@ -99,7 +99,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public long AmountMinor { get; set; }
 
         /// <summary>Currency ISO-4217 (must match order currency, enforced in handler).</summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         /// <summary>Initial status. Admin may directly record captured payments.</summary>
         public PaymentStatus Status { get; set; }
@@ -141,7 +141,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string? ProviderReference { get; set; }
 
         /// <summary>Payment currency (ISO 4217), typically same as the order's currency.</summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         /// <summary>Amount in minor units (e.g., cents).</summary>
         public long AmountMinor { get; set; }
@@ -268,7 +268,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
 
         [Required]
         [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         [Required]
         [StringLength(256)]
@@ -307,7 +307,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string? PaymentProviderReference { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -348,7 +348,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string CustomerDisplayName { get; set; } = string.Empty;
         public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
         public string? CustomerVatId { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long TotalNetMinor { get; set; }
         public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }

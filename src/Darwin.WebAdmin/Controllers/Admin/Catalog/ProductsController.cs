@@ -7,6 +7,7 @@ using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -73,7 +74,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, string? filter = null, CancellationToken ct = default)
         {
-            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", query, filter, ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
+            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, defaultCulture, query, filter, ct);
             var summary = await _getProductOpsSummary.HandleAsync(ct);
 
             var vm = new ProductsIndexVm
@@ -102,10 +104,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public async Task<IActionResult> Create(CancellationToken ct)
         {
             await LoadLookupsAsync(ct);
-            var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
+            var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var defaultCurrency = siteSettings.DefaultCurrency;
+            var defaultCulture = siteSettings.DefaultCulture;
             var vm = new ProductCreateVm();
             vm.Translations ??= new();
-            if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
+            if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = defaultCulture });
 
             vm.Variants ??= new();
             if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = defaultCurrency });
@@ -336,7 +340,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         private async Task LoadLookupsAsync(CancellationToken ct)
         {
-            var lookups = await _getLookups.HandleAsync("de-DE", ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
+            var lookups = await _getLookups.HandleAsync(defaultCulture, ct);
             ViewBag.Brands = lookups.Brands;
             ViewBag.Categories = lookups.Categories;
             ViewBag.TaxCategories = lookups.TaxCategories;
@@ -344,7 +349,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var (_, cultures) = await _getCultures.HandleAsync(ct);
             ViewBag.Cultures = cultures;
 
-            ViewBag.Currencies = new[] { "EUR", "USD", "GBP" }; // TODO: will move to SiteSetting/table later
+            ViewBag.Currencies = BuildCurrencyOptions((await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency);
+        }
+
+        private static IReadOnlyList<string> BuildCurrencyOptions(string defaultCurrency)
+        {
+            var items = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(defaultCurrency))
+            {
+                items.Add(defaultCurrency.Trim().ToUpperInvariant());
+            }
+
+            foreach (var currency in new[] { "USD", "GBP", "EUR" })
+            {
+                if (!items.Contains(currency, StringComparer.OrdinalIgnoreCase))
+                {
+                    items.Add(currency);
+                }
+            }
+
+            return items;
         }
 
         private IActionResult RenderIndexWorkspace(ProductsIndexVm vm)
@@ -395,15 +420,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         private async Task EnsureProductDefaultsAsync(ProductEditorVm vm, CancellationToken ct)
         {
+            var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var defaultCulture = siteSettings.DefaultCulture;
+
             if (vm.Translations.Count == 0)
             {
-                vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
+                vm.Translations.Add(new ProductTranslationVm { Culture = defaultCulture });
             }
 
             if (vm.Variants.Count == 0)
             {
-                var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
-                vm.Variants.Add(new ProductVariantCreateVm { Currency = defaultCurrency });
+                vm.Variants.Add(new ProductVariantCreateVm { Currency = siteSettings.DefaultCurrency });
             }
         }
 

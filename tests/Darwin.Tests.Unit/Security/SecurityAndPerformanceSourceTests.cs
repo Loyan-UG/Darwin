@@ -979,6 +979,8 @@ public sealed class SecurityAndPerformanceSourceTests
 
         siteSettingsSource.Should().Contain("[ValidateAntiForgeryToken]");
         siteSettingsSource.Should().Contain("public async Task<IActionResult> Edit(SiteSettingVm vm");
+        siteSettingsSource.Should().Contain("await _update.HandleAsync(dto, ct);");
+        siteSettingsSource.Should().Contain("_cache.Invalidate();");
 
         mobileOpsSource.Should().Contain("public async Task<IActionResult> Index(");
         mobileOpsSource.Should().Contain("[ValidateAntiForgeryToken]");
@@ -1029,6 +1031,9 @@ public sealed class SecurityAndPerformanceSourceTests
         permissionsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
 
         siteSettingsSource.Should().Contain("public async Task<IActionResult> Edit(CancellationToken ct)");
+        siteSettingsSource.Should().Contain("var dto = await _cache.GetAsync(ct);");
+        siteSettingsSource.Should().Contain("return PartialView(\"~/Views/SiteSettings/_SiteSettingsEditorShell.cshtml\", vm);");
+        siteSettingsSource.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName) ?? string.Empty;");
 
         mobileOpsSource.Should().Contain("public async Task<IActionResult> Index(");
 

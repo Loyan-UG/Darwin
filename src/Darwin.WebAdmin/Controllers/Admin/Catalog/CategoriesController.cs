@@ -2,6 +2,7 @@ using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
 using Darwin.Application.Settings.Queries;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -40,6 +41,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private readonly GetCatalogLookupsHandler _getLookups;
         private readonly GetCulturesHandler _getCultures;
         private readonly SoftDeleteCategoryHandler _softDelete;
+        private readonly ISiteSettingCache _siteSettingCache;
 
 
         public CategoriesController(
@@ -50,7 +52,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             GetCategoryForEditHandler getForEdit,
             GetCatalogLookupsHandler getLookups,
             GetCulturesHandler getCultures,
-            SoftDeleteCategoryHandler softDelete)
+            SoftDeleteCategoryHandler softDelete,
+            ISiteSettingCache siteSettingCache)
         {
             _create = create;
             _update = update;
@@ -60,12 +63,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             _getLookups = getLookups;
             _getCultures = getCultures;
             _softDelete = softDelete;
+            _siteSettingCache = siteSettingCache;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, string? filter = null, CancellationToken ct = default)
         {
-            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", query, filter, ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
+            var (items, total) = await _list.HandleAsync(page, pageSize, defaultCulture, query, filter, ct);
             var summary = await _getCategoryOpsSummary.HandleAsync(ct);
 
             var vm = new CategoriesIndexVm
@@ -94,9 +99,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public async Task<IActionResult> Create(CancellationToken ct)
         {
             await LoadLookupsAsync(ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
             var vm = new CategoryCreateVm();
             vm.Translations ??= new();
-            if (vm.Translations.Count == 0) vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
+            if (vm.Translations.Count == 0) vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });
             return RenderCreateEditor(vm);
         }
 
@@ -111,7 +117,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                EnsureCreateTranslations(vm);
+                await EnsureCreateTranslationsAsync(vm, ct);
                 return RenderCreateEditor(vm);
             }
 
@@ -141,7 +147,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                EnsureCreateTranslations(vm);
+                await EnsureCreateTranslationsAsync(vm, ct);
                 return RenderCreateEditor(vm);
             }
         }
@@ -185,7 +191,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                EnsureEditTranslations(vm);
+                await EnsureEditTranslationsAsync(vm, ct);
                 return RenderEditEditor(vm);
             }
 
@@ -215,7 +221,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 ModelState.AddModelError(string.Empty, T("CategoryConcurrencyConflict"));
                 await LoadLookupsAsync(ct);
-                EnsureEditTranslations(vm);
+                await EnsureEditTranslationsAsync(vm, ct);
                 return RenderEditEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
@@ -224,7 +230,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                EnsureEditTranslations(vm);
+                await EnsureEditTranslationsAsync(vm, ct);
                 return RenderEditEditor(vm);
             }
         }
@@ -255,7 +261,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         private async Task LoadLookupsAsync(CancellationToken ct)
         {
-            var lookups = await _getLookups.HandleAsync("de-DE", ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
+            var lookups = await _getLookups.HandleAsync(defaultCulture, ct);
             ViewBag.Categories = lookups.Categories;
 
             var (_, cultures) = await _getCultures.HandleAsync(ct);
@@ -308,19 +315,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static void EnsureCreateTranslations(CategoryCreateVm vm)
+        private async Task EnsureCreateTranslationsAsync(CategoryCreateVm vm, CancellationToken ct)
         {
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
             if (vm.Translations.Count == 0)
             {
-                vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
+                vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });
             }
         }
 
-        private static void EnsureEditTranslations(CategoryEditVm vm)
+        private async Task EnsureEditTranslationsAsync(CategoryEditVm vm, CancellationToken ct)
         {
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
             if (vm.Translations.Count == 0)
             {
-                vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
+                vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });
             }
         }
 

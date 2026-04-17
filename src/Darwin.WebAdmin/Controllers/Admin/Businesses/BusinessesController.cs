@@ -1700,6 +1700,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private async Task PopulateBusinessFormOptionsAsync(BusinessEditVm vm, CancellationToken ct)
         {
+            var settings = await _siteSettingCache.GetAsync(ct);
+            vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? settings.DefaultCurrency : vm.DefaultCurrency;
+            vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? settings.DefaultCulture : vm.DefaultCulture;
+            vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;
+
             vm.CategoryOptions = Enum.GetValues<BusinessCategoryKind>()
                 .Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Category == x))
                 .ToList();

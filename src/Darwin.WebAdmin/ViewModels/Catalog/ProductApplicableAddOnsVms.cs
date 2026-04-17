@@ -35,7 +35,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public string Name { get; set; } = string.Empty;
 
         /// <summary>ISO 4217 currency code (e.g., "EUR").</summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         /// <summary>Selection mode representation (e.g., "Single", "Multiple"). Bind to the enum in the view.</summary>
         public AddOnSelectionMode SelectionMode { get; set; } = AddOnSelectionMode.Single;

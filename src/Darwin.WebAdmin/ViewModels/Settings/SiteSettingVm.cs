@@ -44,10 +44,10 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         public string? DefaultCountry { get; set; } = "DE";
 
         [Display(Name = "SiteSettingDefaultCurrency"), Required, MaxLength(3)]
-        public string DefaultCurrency { get; set; } = "EUR";
+        public string DefaultCurrency { get; set; } = string.Empty;
 
         [Display(Name = "SiteSettingTimeZone")]
-        public string? TimeZone { get; set; } = "Europe/Berlin";
+        public string? TimeZone { get; set; }
 
         [Display(Name = "SiteSettingDateFormat")]
         public string? DateFormat { get; set; } = "yyyy-MM-dd";

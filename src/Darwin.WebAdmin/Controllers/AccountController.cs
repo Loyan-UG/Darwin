@@ -226,8 +226,12 @@ namespace Darwin.WebAdmin.Controllers
         [HttpGet("/account/register")]
         public IActionResult Register(string? returnUrl = null)
         {
+            var siteSettings = _siteSettingCache.GetAsync().GetAwaiter().GetResult();
             ViewData["ReturnUrl"] = returnUrl;
-            ViewData["DefaultCurrency"] = _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCurrency;
+            ViewData["DefaultCurrency"] = siteSettings.DefaultCurrency;
+            ViewData["DefaultLocale"] = siteSettings.DefaultCulture;
+            ViewData["DefaultTimeZone"] = siteSettings.TimeZone ?? string.Empty;
+            ViewData["SupportedCulturesCsv"] = siteSettings.SupportedCulturesCsv;
             return View();
         }
 
@@ -241,17 +245,25 @@ namespace Darwin.WebAdmin.Controllers
             [FromForm] string email,
             [FromForm] string password,
             [FromForm] string locale = AdminCultureCatalog.DefaultCulture,
-            [FromForm] string timezone = "Europe/Berlin",
-            [FromForm] string currency = "EUR",
+            [FromForm] string timezone = "",
+            [FromForm] string currency = "",
             [FromForm] string? returnUrl = null,
             CancellationToken ct = default)
         {
-            var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
+            var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var defaultCurrency = siteSettings.DefaultCurrency;
+            var defaultLocale = string.IsNullOrWhiteSpace(siteSettings.DefaultCulture)
+                ? AdminCultureCatalog.DefaultCulture
+                : AdminCultureCatalog.NormalizeUiCulture(siteSettings.DefaultCulture);
+            var defaultTimeZone = siteSettings.TimeZone ?? string.Empty;
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
                 ModelState.AddModelError(string.Empty, _text.T("EmailPasswordRequiredMessage"));
                 ViewData["ReturnUrl"] = returnUrl;
                 ViewData["DefaultCurrency"] = defaultCurrency;
+                ViewData["DefaultLocale"] = defaultLocale;
+                ViewData["DefaultTimeZone"] = defaultTimeZone;
+                ViewData["SupportedCulturesCsv"] = siteSettings.SupportedCulturesCsv;
                 return View("Register");
             }
 
@@ -259,8 +271,8 @@ namespace Darwin.WebAdmin.Controllers
             {
                 Email = email.Trim(),
                 Password = password,
-                Locale = string.IsNullOrWhiteSpace(locale) ? AdminCultureCatalog.DefaultCulture : AdminCultureCatalog.NormalizeUiCulture(locale),
-                Timezone = string.IsNullOrWhiteSpace(timezone) ? "Europe/Berlin" : timezone,
+                Locale = string.IsNullOrWhiteSpace(locale) ? defaultLocale : AdminCultureCatalog.NormalizeUiCulture(locale),
+                Timezone = string.IsNullOrWhiteSpace(timezone) ? defaultTimeZone : timezone,
                 Currency = string.IsNullOrWhiteSpace(currency) ? defaultCurrency : currency
             };
 
@@ -274,6 +286,10 @@ namespace Darwin.WebAdmin.Controllers
             {
                 ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.Error) ? _text.T("RegistrationFailedMessage") : result.Error!);
                 ViewData["ReturnUrl"] = returnUrl;
+                ViewData["DefaultCurrency"] = defaultCurrency;
+                ViewData["DefaultLocale"] = defaultLocale;
+                ViewData["DefaultTimeZone"] = defaultTimeZone;
+                ViewData["SupportedCulturesCsv"] = siteSettings.SupportedCulturesCsv;
                 return View("Register");
             }
 

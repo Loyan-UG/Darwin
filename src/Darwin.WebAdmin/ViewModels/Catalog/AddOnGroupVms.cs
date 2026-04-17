@@ -35,7 +35,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public bool IsGlobal { get; set; }
         public bool IsActive { get; set; }
         public int OptionsCount { get; set; }
@@ -103,7 +103,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public string Name { get; set; } = string.Empty;
 
         [Required, StringLength(3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         public bool IsGlobal { get; set; } = false;
 

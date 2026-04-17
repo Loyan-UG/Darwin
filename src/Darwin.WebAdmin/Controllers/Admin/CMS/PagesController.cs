@@ -6,6 +6,7 @@ using Darwin.Application.CMS.Commands;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Queries;
 using Darwin.Application.Settings.Queries;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.CMS;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         private readonly GetPageForEditHandler _get;
         private readonly GetCulturesHandler _getCultures;
         private readonly SoftDeletePageHandler _softDeletePage;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         public PagesController(
             CreatePageHandler create,
@@ -47,7 +49,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             GetPageOpsSummaryHandler getPageOpsSummary,
             GetPageForEditHandler get,
             GetCulturesHandler getCultures,
-            SoftDeletePageHandler softDeletePage)
+            SoftDeletePageHandler softDeletePage,
+            ISiteSettingCache siteSettingCache)
         {
             _create = create;
             _update = update;
@@ -56,12 +59,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             _get = get;
             _getCultures = getCultures;
             _softDeletePage = softDeletePage;
+            _siteSettingCache = siteSettingCache;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, string? filter = null, CancellationToken ct = default)
         {
-            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", query, filter, ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
+            var (items, total) = await _list.HandleAsync(page, pageSize, defaultCulture, query, filter, ct);
             var summary = await _getPageOpsSummary.HandleAsync(ct);
 
             var vm = new PagesIndexVm
@@ -90,7 +95,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         public async Task<IActionResult> Create(CancellationToken ct)
         {
             await LoadCulturesAsync(ct).ConfigureAwait(false);
-            return RenderCreateEditor(new PageCreateVm());
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
+            return RenderCreateEditor(new PageCreateVm
+            {
+                Translations = new() { new PageTranslationVm { Culture = defaultCulture } }
+            });
         }
 
         [ValidateAntiForgeryToken]
@@ -104,7 +113,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             if (!ModelState.IsValid)
             {
                 await LoadCulturesAsync(ct).ConfigureAwait(false);
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCreateEditor(vm);
             }
 
@@ -136,7 +145,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadCulturesAsync(ct).ConfigureAwait(false);
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCreateEditor(vm);
             }
         }
@@ -183,7 +192,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             if (!ModelState.IsValid)
             {
                 await LoadCulturesAsync(ct).ConfigureAwait(false);
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
 
@@ -215,7 +224,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             {
                 ModelState.AddModelError(string.Empty, T("PageConcurrencyConflict"));
                 await LoadCulturesAsync(ct).ConfigureAwait(false);
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
@@ -224,7 +233,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadCulturesAsync(ct).ConfigureAwait(false);
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
         }
@@ -297,11 +306,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static void EnsureTranslations(PageEditorVm vm)
+        private async Task EnsureTranslationsAsync(PageEditorVm vm, CancellationToken ct)
         {
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
             if (vm.Translations.Count == 0)
             {
-                vm.Translations.Add(new PageTranslationVm());
+                vm.Translations.Add(new PageTranslationVm { Culture = defaultCulture });
             }
         }
 

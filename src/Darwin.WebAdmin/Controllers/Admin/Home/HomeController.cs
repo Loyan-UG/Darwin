@@ -94,15 +94,15 @@ namespace Darwin.WebAdmin.Controllers.Admin
 
             businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
 
+            var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var crmSummary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
-            var products = await _getProductsPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct).ConfigureAwait(false);
-            var pages = await _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct: ct).ConfigureAwait(false);
+            var products = await _getProductsPage.HandleAsync(page: 1, pageSize: 1, culture: siteSettings.DefaultCulture, ct).ConfigureAwait(false);
+            var pages = await _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: siteSettings.DefaultCulture, ct: ct).ConfigureAwait(false);
             var orders = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct).ConfigureAwait(false);
             var users = await _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, filter: Darwin.Application.Identity.DTOs.UserQueueFilter.All, ct: ct).ConfigureAwait(false);
             var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
             var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);
             var mobileDeviceOps = await _getMobileDeviceOpsSummary.HandleAsync(ct).ConfigureAwait(false);
-            var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
 
             int? paymentCount = null;
             int? warehouseCount = null;
@@ -216,7 +216,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 LeadCount = dto.LeadCount,
                 QualifiedLeadCount = dto.QualifiedLeadCount,
                 OpenOpportunityCount = dto.OpenOpportunityCount,
-                Currency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency,
+                Currency = string.IsNullOrWhiteSpace(currency) ? string.Empty : currency.Trim().ToUpperInvariant(),
                 OpenPipelineMinor = dto.OpenPipelineMinor,
                 SegmentCount = dto.SegmentCount,
                 RecentInteractionCount = dto.RecentInteractionCount

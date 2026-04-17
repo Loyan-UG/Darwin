@@ -6,7 +6,7 @@ namespace Darwin.WebAdmin.ViewModels.CMS
 {
     public sealed class PageTranslationVm
     {
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? MetaTitle { get; set; }
@@ -19,7 +19,7 @@ namespace Darwin.WebAdmin.ViewModels.CMS
         public PageStatus Status { get; set; } = PageStatus.Draft;
         public DateTime? PublishStartUtc { get; set; }
         public DateTime? PublishEndUtc { get; set; }
-        public List<PageTranslationVm> Translations { get; set; } = new() { new PageTranslationVm() };
+        public List<PageTranslationVm> Translations { get; set; } = new();
     }
 
     public sealed class PageCreateVm : PageEditorVm

@@ -273,7 +273,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public Guid CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long EstimatedValueMinor { get; set; }
         public OpportunityStage Stage { get; set; }
         public DateTime? ExpectedCloseDateUtc { get; set; }
@@ -313,7 +313,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
         [Required]
         [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         [Range(0, long.MaxValue)]
         public long EstimatedValueMinor { get; set; }
@@ -505,7 +505,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public Guid? PaymentId { get; set; }
         public string PaymentSummary { get; set; } = string.Empty;
         public InvoiceStatus Status { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long TotalNetMinor { get; set; }
         public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }
@@ -535,7 +535,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
         [Required]
         [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         [Range(0, long.MaxValue)]
         public long TotalNetMinor { get; set; }
@@ -591,7 +591,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
         [Required]
         [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
 
         [Required]
         [StringLength(256)]
@@ -604,7 +604,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public int LeadCount { get; set; }
         public int QualifiedLeadCount { get; set; }
         public int OpenOpportunityCount { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long OpenPipelineMinor { get; set; }
         public int SegmentCount { get; set; }
         public int RecentInteractionCount { get; set; }

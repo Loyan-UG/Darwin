@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = T.T("Register");
     var defaultCurrency = (string?)ViewData["DefaultCurrency"] ?? "EUR";
+    var defaultLocale = (string?)ViewData["DefaultLocale"] ?? "de-DE";
+    var defaultTimeZone = (string?)ViewData["DefaultTimeZone"] ?? "Europe/Berlin";
+    var supportedCulturesCsv = (string?)ViewData["SupportedCulturesCsv"] ?? "de-DE,en-US";
 }
 
 <h1 class="mb-3">@T.T("Register")</h1>
@@ -29,8 +32,8 @@
             <div class="col-md-4 mb-3">
                 <label for="locale" class="form-label">@T.T("Locale")</label>
                 <select id="locale" name="locale" class="form-select">
-                    <option value="de-DE" selected>@T.T("LocaleGermanGermany")</option>
-                    <option value="en-US">@T.T("LocaleEnglishUnitedStates")</option>
+                    <option value="de-DE" selected="@(defaultLocale == "de-DE")">@T.T("LocaleGermanGermany")</option>
+                    <option value="en-US" selected="@(defaultLocale == "en-US")">@T.T("LocaleEnglishUnitedStates")</option>
                 </select>
             </div>
             <div class="col-md-4 mb-3">
@@ -43,12 +46,12 @@
             <div class="col-md-4 mb-3">
                 <label for="timezone" class="form-label">@T.T("TimeZone")</label>
                 <select id="timezone" name="timezone" class="form-select">
-                    <option value="Europe/Berlin" selected>@T.T("TimeZoneEuropeBerlin")</option>
-                    <option value="UTC">@T.T("Utc")</option>
+                    <option value="Europe/Berlin" selected="@(defaultTimeZone == "Europe/Berlin")">@T.T("TimeZoneEuropeBerlin")</option>
+                    <option value="UTC" selected="@(defaultTimeZone == "UTC")">@T.T("Utc")</option>
                 </select>
             </div>
         </div>
-        <input type="hidden" name="supportedCulturesCsv" value="de-DE,en-US" />
+        <input type="hidden" name="supportedCulturesCsv" value="@supportedCulturesCsv" />
     </fieldset>
 
     <div class="text-end">

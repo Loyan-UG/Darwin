@@ -2,6 +2,7 @@ using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
 using Darwin.Shared.Results;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private readonly CreateBrandHandler _create;
         private readonly UpdateBrandHandler _update;
         private readonly SoftDeleteBrandHandler _softDelete;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         public BrandsController(
             GetBrandsPageHandler getPage,
@@ -32,7 +34,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             GetBrandForEditHandler getForEdit,
             CreateBrandHandler create,
             UpdateBrandHandler update,
-            SoftDeleteBrandHandler softDelete)
+            SoftDeleteBrandHandler softDelete,
+            ISiteSettingCache siteSettingCache)
         {
             _getPage = getPage;
             _getBrandOpsSummary = getBrandOpsSummary;
@@ -40,6 +43,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             _create = create;
             _update = update;
             _softDelete = softDelete;
+            _siteSettingCache = siteSettingCache;
         }
 
         /// <summary>
@@ -49,7 +53,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20,
             string? query = null, string? filter = null, CancellationToken ct = default)
         {
-            var (items, total) = await _getPage.HandleAsync(page, pageSize, "de-DE", query, filter, ct);
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
+            var (items, total) = await _getPage.HandleAsync(page, pageSize, defaultCulture, query, filter, ct);
             var summary = await _getBrandOpsSummary.HandleAsync(ct);
 
             var vm = new BrandsListVm
@@ -83,7 +88,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public IActionResult Create() => RenderBrandEditor(new BrandEditVm
         {
-            Translations = { new BrandTranslationVm { Culture = "de-DE" } }
+            Translations = { new BrandTranslationVm { Culture = GetDefaultCulture() } }
         }, isCreate: true);
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -91,7 +96,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             if (!ModelState.IsValid)
             {
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct);
                 return RenderBrandEditor(vm, isCreate: true);
             }
 
@@ -116,7 +121,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct);
                 return RenderBrandEditor(vm, isCreate: true);
             }
         }
@@ -153,7 +158,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             if (!ModelState.IsValid)
             {
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct);
                 return RenderBrandEditor(vm, isCreate: false);
             }
 
@@ -185,7 +190,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                EnsureTranslations(vm);
+                await EnsureTranslationsAsync(vm, ct);
                 return RenderBrandEditor(vm, isCreate: false);
             }
         }
@@ -243,11 +248,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static void EnsureTranslations(BrandEditVm vm)
+        private string GetDefaultCulture()
         {
+            return _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCulture;
+        }
+
+        private async Task EnsureTranslationsAsync(BrandEditVm vm, CancellationToken ct)
+        {
+            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
             if (vm.Translations.Count == 0)
             {
-                vm.Translations.Add(new BrandTranslationVm { Culture = "de-DE" });
+                vm.Translations.Add(new BrandTranslationVm { Culture = defaultCulture });
             }
         }
 

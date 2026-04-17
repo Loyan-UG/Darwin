@@ -78,7 +78,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     public sealed class BrandTranslationVm
     {
         /// <summary>Culture code (e.g., "de-DE"). Required.</summary>
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = string.Empty;
 
         /// <summary>Localized brand name. Required.</summary>
         public string Name { get; set; } = string.Empty;

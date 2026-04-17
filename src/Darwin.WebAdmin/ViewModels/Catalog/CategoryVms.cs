@@ -26,7 +26,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
 
     public sealed class CategoryTranslationVm
     {
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? Description { get; set; }

@@ -6,6 +6,7 @@ using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Shared.Results;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -42,6 +43,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         // Users Roles Handler
         private readonly GetUserWithRolesForEditHandler _getUserRoles;
         private readonly UpdateUserRolesHandler _updateUserRoles;
+        private readonly ISiteSettingCache _siteSettingCache;
 
 
         /// <summary>
@@ -66,7 +68,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             SoftDeleteUserAddressHandler softDeleteAddress,
             SetDefaultUserAddressHandler setDefaultAddress,
             GetUserWithRolesForEditHandler getUserRoles,
-            UpdateUserRolesHandler updateUserRoles)
+            UpdateUserRolesHandler updateUserRoles,
+            ISiteSettingCache siteSettingCache)
         {
             _registerUser = registerUser;
             _getUsersPage = getUsersPage;
@@ -87,6 +90,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             _setDefaultAddress = setDefaultAddress;
             _getUserRoles = getUserRoles;
             _updateUserRoles = updateUserRoles;
+            _siteSettingCache = siteSettingCache;
         }
 
         /// <summary>
@@ -695,6 +699,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
         private IActionResult RenderCreateEditor(UserCreateVm vm)
         {
+            if (string.IsNullOrWhiteSpace(vm.Locale) ||
+                string.IsNullOrWhiteSpace(vm.Currency) ||
+                string.IsNullOrWhiteSpace(vm.Timezone))
+            {
+                var settings = _siteSettingCache.GetAsync().GetAwaiter().GetResult();
+                vm.Locale = string.IsNullOrWhiteSpace(vm.Locale) ? settings.DefaultCulture : vm.Locale;
+                vm.Currency = string.IsNullOrWhiteSpace(vm.Currency) ? settings.DefaultCurrency : vm.Currency;
+                vm.Timezone = string.IsNullOrWhiteSpace(vm.Timezone)
+                    ? (settings.TimeZone ?? string.Empty)
+                    : vm.Timezone;
+            }
+
             if (IsHtmxRequest())
             {
                 return PartialView("~/Views/Users/_UserCreateEditorShell.cshtml", vm);
@@ -735,6 +751,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
         private async Task<IActionResult> RenderEditEditorAsync(UserEditVm vm, CancellationToken ct)
         {
+            if (string.IsNullOrWhiteSpace(vm.Locale) ||
+                string.IsNullOrWhiteSpace(vm.Currency) ||
+                string.IsNullOrWhiteSpace(vm.Timezone))
+            {
+                var settings = await _siteSettingCache.GetAsync(ct);
+                vm.Locale = string.IsNullOrWhiteSpace(vm.Locale) ? settings.DefaultCulture : vm.Locale;
+                vm.Currency = string.IsNullOrWhiteSpace(vm.Currency) ? settings.DefaultCurrency : vm.Currency;
+                vm.Timezone = string.IsNullOrWhiteSpace(vm.Timezone) ? (settings.TimeZone ?? string.Empty) : vm.Timezone;
+            }
+
             ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);
 
             if (IsHtmxRequest())

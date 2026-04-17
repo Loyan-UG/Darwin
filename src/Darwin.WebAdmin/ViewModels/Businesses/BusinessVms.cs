@@ -135,9 +135,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string? ContactEmail { get; set; }
         public string? ContactPhoneE164 { get; set; }
         public BusinessCategoryKind Category { get; set; } = BusinessCategoryKind.Unknown;
-        public string DefaultCurrency { get; set; } = "EUR";
+        public string DefaultCurrency { get; set; } = string.Empty;
         public string DefaultCulture { get; set; } = AdminCultureCatalog.DefaultCulture;
-        public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
+        public string DefaultTimeZoneId { get; set; } = string.Empty;
         public string? AdminTextOverridesJson { get; set; }
         public string? BrandDisplayName { get; set; }
         public string? BrandLogoUrl { get; set; }
@@ -177,7 +177,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string Provider { get; set; } = string.Empty;
         public string PlanCode { get; set; } = string.Empty;
         public string PlanName { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public long UnitPriceMinor { get; set; }
         public DateTime? StartedAtUtc { get; set; }
         public DateTime? CurrentPeriodEndUtc { get; set; }
@@ -214,7 +214,7 @@ public sealed class BusinessSubscriptionHandoffSummaryVm
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public long PriceMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = string.Empty;
         public string Interval { get; set; } = string.Empty;
         public int IntervalCount { get; set; }
         public int? TrialDays { get; set; }
@@ -257,7 +257,7 @@ public sealed class BusinessSubscriptionInvoiceListItemVm
     public string? ProviderInvoiceId { get; set; }
     public SubscriptionInvoiceStatus Status { get; set; }
     public long TotalMinor { get; set; }
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = string.Empty;
     public DateTime IssuedAtUtc { get; set; }
     public DateTime? DueAtUtc { get; set; }
     public DateTime? PaidAtUtc { get; set; }
