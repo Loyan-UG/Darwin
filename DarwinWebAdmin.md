@@ -715,6 +715,7 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: the business support queue header now exposes a direct `PendingApproval` shortcut in the same HTMX-safe lifecycle lane set as approved-inactive and suspended business slices, so approval triage can start from the workspace entry without detouring through summary cards first.
 - `Completed foundation`: the support-queue summary now gives `NeedsAttention` a direct `Merchant Readiness` handoff and lets the invitations card pivot either into failed invitation audits or the `PendingInvites` business subset, so summary-driven support triage is less single-entry and closer to the remediation lane the operator actually needs.
 - `Completed foundation`: the support-queue summary now also gives `PendingApproval` and `SuspendedBusinesses` direct `Merchant Readiness` handoffs in addition to their queue-specific paths, so lifecycle triage can pivot from raw subset review into the richer merchant-remediation workspace without leaving the summary layer.
+- `Completed foundation`: the support-queue summary now gives the `BusinessesMissingOwner` card a direct remediation handoff toward the merchant/member lane instead of only a raw subset jump, so owner-gap triage can move from detection to the next operational workspace without leaving the summary layer.
 
 
 
