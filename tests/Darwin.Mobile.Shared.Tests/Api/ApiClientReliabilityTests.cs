@@ -28,7 +28,7 @@ public sealed class ApiClientReliabilityTests
         // Arrange
         var tokenStore = new FakeTokenStore(
             accessToken: "valid-access-token",
-            accessExpiresUtc: DateTime.UtcNow.AddMinutes(20));
+            accessExpiresUtc: DateTime.UtcNow.AddYears(1));
 
         AuthenticationHeaderValue? observedAuthorization = null;
         var handler = new StubHttpMessageHandler(_ =>
@@ -61,7 +61,7 @@ public sealed class ApiClientReliabilityTests
         // Arrange
         var tokenStore = new FakeTokenStore(
             accessToken: "expired-access-token",
-            accessExpiresUtc: DateTime.UtcNow.AddMinutes(-1));
+            accessExpiresUtc: DateTime.UtcNow.AddYears(-1));
 
         AuthenticationHeaderValue? observedAuthorization = new("Bearer", "placeholder");
         var handler = new StubHttpMessageHandler(request =>

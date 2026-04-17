@@ -32,9 +32,9 @@ public sealed class ContractsSerializationSmokeTests
         {
             AccessToken = "access-token",
             RefreshToken = "refresh-token",
-            AccessTokenExpiresAtUtc = DateTime.UtcNow.AddMinutes(10),
-            RefreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7),
-            UserId = Guid.NewGuid(),
+            AccessTokenExpiresAtUtc = new DateTime(2030, 01, 01, 12, 00, 00, DateTimeKind.Utc),
+            RefreshTokenExpiresAtUtc = new DateTime(2030, 01, 08, 12, 00, 00, DateTimeKind.Utc),
+            UserId = Guid.Parse("2eb05a57-3577-4745-a2a5-c7691ce5317c"),
             Email = "user@example.test",
             Scopes = ["member.read", "member.write"]
         };
