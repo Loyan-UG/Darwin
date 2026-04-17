@@ -124,6 +124,12 @@
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
+                                <a asp-action="MerchantReadiness"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                                 <a asp-controller="Billing"
                                    asp-action="Payments"
                                    asp-route-businessId="@item.BusinessId"
@@ -166,6 +172,12 @@
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("OpenInvitations")</a>
+                                <a asp-action="MerchantReadiness"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                             }
                             else if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase))
                             {
@@ -185,6 +197,19 @@
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                                <a asp-controller="MobileOperations"
+                                   asp-action="Index"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations")"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                <a asp-action="MerchantReadiness"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                             }
                             else if (string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
                             {
@@ -205,6 +230,19 @@
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("UsersFilterLocked")</a>
+                                <a asp-controller="MobileOperations"
+                                   asp-action="Index"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations")"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                <a asp-action="MerchantReadiness"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                             }
                         </div>
                     </div>

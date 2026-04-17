@@ -23,7 +23,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("NeedsAttention")</a>
                 <span class="mx-1">|</span>
                 <a asp-action="MerchantReadiness"
                    class="small"
@@ -43,7 +43,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenPendingApprovals")</a>
+                   hx-push-url="true">@T.T("PendingApproval")</a>
                 <span class="mx-1">|</span>
                 <a asp-action="MerchantReadiness"
                    class="small"
@@ -73,7 +73,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("PendingInvites")</a>
             </div>
         </div>
         <div class="col-md-3">
@@ -106,6 +106,13 @@
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                <span class="mx-1">|</span>
+                <a asp-action="MerchantReadiness"
+                   class="small"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
     </div>
@@ -121,7 +128,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("ApprovedInactive")</a>
                 <span class="mx-1">|</span>
                 <a asp-controller="Billing"
                    asp-action="Payments"
@@ -130,6 +137,13 @@
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("Payments")</a>
+                <span class="mx-1">|</span>
+                <a asp-action="MerchantReadiness"
+                   class="small"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
         <div class="col-lg-3 col-md-6">
@@ -142,7 +156,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("MissingPrimaryLocation")</a>
                 <span class="mx-1">|</span>
                 <a asp-action="Index"
                    asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation"
@@ -151,6 +165,13 @@
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("Locations")</a>
+                <span class="mx-1">|</span>
+                <a asp-action="MerchantReadiness"
+                   class="small"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
         <div class="col-lg-3 col-md-6">
@@ -163,7 +184,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("MissingContactEmail")</a>
                 <span class="mx-1">|</span>
                 <a asp-action="Index"
                    asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail"
@@ -172,6 +193,13 @@
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("Edit")</a>
+                <span class="mx-1">|</span>
+                <a asp-action="MerchantReadiness"
+                   class="small"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
         <div class="col-lg-3 col-md-6">
@@ -184,7 +212,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("MissingLegalName")</a>
                 <span class="mx-1">|</span>
                 <a asp-action="Index"
                    asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName"
@@ -193,6 +221,13 @@
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("Edit")</a>
+                <span class="mx-1">|</span>
+                <a asp-action="MerchantReadiness"
+                   class="small"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
     </div>
@@ -208,7 +243,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "Suspended" })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("SuspendedBusinesses")</a>
                 <span class="mx-1">|</span>
                 <a asp-controller="BusinessCommunications"
                    asp-action="EmailAudits"
@@ -237,14 +272,14 @@
                    hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("BusinessesMissingOwner")</a>
                 <span class="mx-1">|</span>
                 <a asp-action="MerchantReadiness"
                    class="small"
                    hx-get="@Url.Action("MerchantReadiness", "Businesses")"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("Members")</a>
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
         <div class="col-lg-4 col-md-6">
@@ -257,7 +292,7 @@
                    hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites })"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                   hx-push-url="true">@T.T("PendingInvites")</a>
                 <span class="mx-1">|</span>
                 <a asp-controller="BusinessCommunications"
                    asp-action="EmailAudits"
@@ -268,6 +303,13 @@
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("OpenFailedInvitationEmails")</a>
+                <span class="mx-1">|</span>
+                <a asp-action="MerchantReadiness"
+                   class="small"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
         <div class="col-lg-4 col-md-6">
@@ -292,33 +334,23 @@
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
+                <span class="mx-1">|</span>
+                <a asp-controller="MobileOperations"
+                   asp-action="Index"
+                   class="small"
+                   hx-get="@Url.Action("Index", "MobileOperations")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                <span class="mx-1">|</span>
+                <a asp-action="MerchantReadiness"
+                   class="small"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-support-queue-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
     </div>
 
-    <div class="small text-muted mb-4">
-        <a asp-controller="Users"
-           asp-action="Index"
-           asp-route-filter="Locked"
-           hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
-           hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">@T.T("UsersFilterLocked")</a>
-        <span class="mx-2">|</span>
-        <a asp-controller="MobileOperations"
-           asp-action="Index"
-           hx-get="@Url.Action("Index", "MobileOperations")"
-           hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">@T.T("MobileOperationsTitle")</a>
-        <span class="mx-2">|</span>
-        <a asp-controller="BusinessCommunications"
-           asp-action="EmailAudits"
-           asp-route-status="Failed"
-           asp-route-flowKey="PasswordReset"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset" })"
-           hx-target="#business-support-queue-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
-    </div>
 </div>
