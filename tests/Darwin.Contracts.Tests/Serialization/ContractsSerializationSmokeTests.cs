@@ -53,6 +53,40 @@ public sealed class ContractsSerializationSmokeTests
     }
 
     /// <summary>
+    ///     Verifies auth token payload keeps canonical camelCase JSON field names
+    ///     so mobile clients remain backward compatible with existing transport contracts.
+    /// </summary>
+    [Fact]
+    public void TokenResponse_Should_SerializeUsingCanonicalCamelCasePropertyNames()
+    {
+        // Arrange
+        var model = new TokenResponse
+        {
+            AccessToken = "access-token",
+            RefreshToken = "refresh-token",
+            AccessTokenExpiresAtUtc = new DateTime(2030, 01, 01, 12, 00, 00, DateTimeKind.Utc),
+            RefreshTokenExpiresAtUtc = new DateTime(2030, 01, 08, 12, 00, 00, DateTimeKind.Utc),
+            UserId = Guid.Parse("0f5f7fd2-e064-4d9e-a9d7-b2a3d7f83a55"),
+            Email = "user@example.test",
+            Scopes = ["member.read"]
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(model, JsonOptions);
+
+        // Assert
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        root.TryGetProperty("accessToken", out _).Should().BeTrue();
+        root.TryGetProperty("refreshToken", out _).Should().BeTrue();
+        root.TryGetProperty("accessTokenExpiresAtUtc", out _).Should().BeTrue();
+        root.TryGetProperty("refreshTokenExpiresAtUtc", out _).Should().BeTrue();
+        root.TryGetProperty("userId", out _).Should().BeTrue();
+        root.TryGetProperty("email", out _).Should().BeTrue();
+        root.TryGetProperty("scopes", out _).Should().BeTrue();
+    }
+
+    /// <summary>
     ///     Verifies map discovery request and business summary contracts keep
     ///     viewport, paging, and location/rating fields stable across JSON boundaries.
     /// </summary>
@@ -108,6 +142,37 @@ public sealed class ContractsSerializationSmokeTests
         summaryRoundTrip.Location!.Longitude.Should().Be(13.40);
         summaryRoundTrip.Rating.Should().Be(4.8);
         summaryRoundTrip.DistanceMeters.Should().Be(740);
+    }
+
+    /// <summary>
+    ///     Verifies business summary contract preserves nullability for optional
+    ///     geo/rating fields so degraded public discovery responses remain transport-safe.
+    /// </summary>
+    [Fact]
+    public void BusinessSummary_Should_RoundTrip_WhenOptionalGeoAndRatingFieldsAreNull()
+    {
+        // Arrange
+        var summary = new BusinessSummary
+        {
+            Id = Guid.Parse("54219804-e5f0-41f3-9dd0-9f407d3495f7"),
+            Name = "Fallback listing",
+            Category = "Cafe",
+            Location = null,
+            Rating = null,
+            RatingCount = null,
+            DistanceMeters = null
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(summary, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<BusinessSummary>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.Location.Should().BeNull();
+        roundTrip.Rating.Should().BeNull();
+        roundTrip.RatingCount.Should().BeNull();
+        roundTrip.DistanceMeters.Should().BeNull();
     }
 
     /// <summary>
