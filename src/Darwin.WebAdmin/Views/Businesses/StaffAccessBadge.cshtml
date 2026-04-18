@@ -70,7 +70,44 @@
 </div>
 
 <div class="alert alert-info">
-    @T.T("BusinessStaffAccessBadgeIntro")
+    <div>@T.T("BusinessStaffAccessBadgeIntro")</div>
+    <div class="d-flex gap-2 flex-wrap mt-3">
+        <a asp-action="EditMember"
+           asp-route-id="@Model.MembershipId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("EditMember", "Businesses", new { id = Model.MembershipId })"
+           hx-target="#business-staff-access-badge-shell"
+           hx-swap="outerHTML">
+            <i class="fa-solid fa-user-pen"></i> @T.T("EditMemberAction")
+        </a>
+        <a asp-controller="Users"
+           asp-action="Edit"
+           asp-route-id="@Model.UserId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId })"
+           hx-target="#business-staff-access-badge-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-user"></i> @T.T("OpenUserAction")
+        </a>
+        <a asp-action="Members"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-staff-access-badge-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-users"></i> @T.T("CommonMembers")
+        </a>
+        <a asp-action="MerchantReadiness"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+           hx-target="#business-staff-access-badge-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa-solid fa-list-check"></i> @T.T("MerchantReadinessTitle")
+        </a>
+    </div>
 </div>
 
 <div class="row g-3 mb-3">

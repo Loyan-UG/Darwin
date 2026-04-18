@@ -634,6 +634,10 @@ public sealed class SecurityAndPerformanceSourceTests
         locationsViewSource.Should().Contain("BusinessLocationQueueFilter.Primary");
         locationsViewSource.Should().Contain("BusinessLocationQueueFilter.MissingAddress");
         locationsViewSource.Should().Contain("BusinessLocationQueueFilter.MissingCoordinates");
+        locationsViewSource.Should().Contain("@T.T(\"BusinessLocationsEmptyState\")");
+        locationsViewSource.Should().Contain("@Url.Action(\"CreateLocation\", \"Businesses\", new { businessId = Model.Business.Id })");
+        locationsViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })");
+        locationsViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
 
         subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionBillingPlaybooksTitle");
         subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.Open");
@@ -668,6 +672,16 @@ public sealed class SecurityAndPerformanceSourceTests
         subscriptionViewSource.Should().Contain("playbook.QueueActionUrl");
         subscriptionViewSource.Should().Contain("playbook.FollowUpUrl");
         subscriptionViewSource.Should().Contain("hx-target=\"#business-subscription-workspace-shell\"");
+        subscriptionViewSource.Should().Contain("@T.T(\"BusinessSubscriptionNoActiveSnapshot\")");
+        subscriptionViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })");
+        subscriptionViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        subscriptionViewSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        subscriptionViewSource.Should().Contain("@T.T(\"BusinessSubscriptionNoRecentInvoices\")");
+        subscriptionViewSource.Should().Contain("@T.T(\"BusinessSubscriptionOpenInvoiceQueue\")");
+        subscriptionViewSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id })");
+        subscriptionViewSource.Should().Contain("@T.T(\"BusinessSubscriptionNoActivePlans\")");
+        subscriptionViewSource.Should().Contain("@T.T(\"BusinessSubscriptionResolvePrerequisites\")");
+        subscriptionViewSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
     }
 
     [Fact]
@@ -700,6 +714,14 @@ public sealed class SecurityAndPerformanceSourceTests
         membersViewSource.Should().Contain("BusinessMemberSupportFilter.PendingActivation");
         membersViewSource.Should().Contain("BusinessMemberSupportFilter.Locked");
         membersViewSource.Should().Contain("BusinessMemberSupportFilter.Attention");
+        membersViewSource.Should().Contain("@T.T(\"BusinessMembersNoActiveOwnerWarning\")");
+        membersViewSource.Should().Contain("@Url.Action(\"OwnerOverrideAudits\", \"Businesses\", new { businessId = Model.Business.Id })");
+        membersViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        membersViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })");
+        membersViewSource.Should().Contain("@T.T(\"BusinessMembersPendingActivationNote\")");
+        membersViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })");
+        membersViewSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AccountActivation\" })");
+        membersViewSource.Should().Contain("@T.T(\"OpenFailedActivationEmails\")");
     }
 
     [Fact]
@@ -732,6 +754,10 @@ public sealed class SecurityAndPerformanceSourceTests
         invitationsViewSource.Should().Contain("BusinessInvitationQueueFilter.Open");
         invitationsViewSource.Should().Contain("BusinessInvitationQueueFilter.Pending");
         invitationsViewSource.Should().Contain("BusinessInvitationQueueFilter.Expired");
+        invitationsViewSource.Should().Contain("@T.T(\"BusinessInvitationsEmptyState\")");
+        invitationsViewSource.Should().Contain("@Url.Action(\"CreateInvitation\", \"Businesses\", new { businessId = Model.Business.Id })");
+        invitationsViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })");
+        invitationsViewSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
     }
 
     [Fact]
@@ -755,6 +781,11 @@ public sealed class SecurityAndPerformanceSourceTests
         auditsViewSource.Should().Contain("hx-target=\"#business-owner-override-audits-workspace-shell\"");
         auditsViewSource.Should().Contain("OpenUserAction");
         auditsViewSource.Should().Contain("CommonMembers");
+        auditsViewSource.Should().Contain("@T.T(\"BusinessOwnerOverrideAuditsIntro\")");
+        auditsViewSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        auditsViewSource.Should().Contain("@T.T(\"BusinessOwnerOverrideAuditsEmptyState\")");
+        auditsViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })");
+        auditsViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
     }
 
     [Fact]
@@ -1245,10 +1276,17 @@ public sealed class SecurityAndPerformanceSourceTests
         businessesSource.Should().Contain("return RenderStaffAccessBadgeWorkspace(vm);");
 
         badgeViewSource.Should().Contain("@Model.Business.Name | @Model.UserDisplayName");
+        badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgeIntro\")");
+        badgeViewSource.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = Model.MembershipId })");
+        badgeViewSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = Model.UserId })");
+        badgeViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id })");
+        badgeViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
         badgeViewSource.Should().Contain("@if (!Model.EmailConfirmed || !Model.IsActive || isLocked)");
         badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgeConstraintWarning\")");
         badgeViewSource.Should().Contain("@T.T(\"OpenUserAction\")");
         badgeViewSource.Should().Contain("@T.T(\"EditMemberAction\")");
+        badgeViewSource.Should().Contain("@T.T(\"CommonMembers\")");
+        badgeViewSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
         badgeViewSource.Should().Contain("@T.T(\"UsersFilterLocked\")");
         badgeViewSource.Should().Contain("@T.T(\"MobileOperationsTitle\")");
     }
@@ -1256,12 +1294,21 @@ public sealed class SecurityAndPerformanceSourceTests
     [Fact]
     public void BusinessSetupPreviewWorkspaces_Should_KeepMemberAndInvitationRemediationContractsWired()
     {
-        var businessesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var businessesSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
         var membersPreviewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupMembersPreview.cshtml"));
         var invitationsPreviewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupInvitationsPreview.cshtml"));
 
-        businessesSource.Should().Contain("public async Task<IActionResult> SetupMembersPreview(Guid businessId, CancellationToken ct = default)");
-        businessesSource.Should().Contain("public async Task<IActionResult> SetupInvitationsPreview(Guid businessId, CancellationToken ct = default)");
+        businessesSource.Should().Contain("@T.T(\"BusinessSetupMembersRequiringAttentionTitle\")");
+        businessesSource.Should().Contain("@Url.Action(\"SetupMembersPreview\", \"Businesses\", new { businessId = Model.Id })");
+        businessesSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })");
+        businessesSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        businessesSource.Should().Contain("@T.T(\"OpenInvitations\")");
+        businessesSource.Should().Contain("@Url.Action(\"SetupInvitationsPreview\", \"Businesses\", new { businessId = Model.Id })");
+        businessesSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id })");
+        businessesSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        businessesSource.Should().Contain("@T.T(\"Members\")");
+        businessesSource.Should().Contain("@T.T(\"Invitations\")");
+        businessesSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
 
         membersPreviewSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = item.UserId })");
         membersPreviewSource.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = item.Id })");
@@ -1311,11 +1358,14 @@ public sealed class SecurityAndPerformanceSourceTests
         var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
 
         setupShellSource.Should().Contain("@T.T(\"BusinessSubscriptionSnapshot\")");
+        setupShellSource.Should().Contain("@T.T(\"NoActiveSubscriptionSnapshot\")");
         setupShellSource.Should().Contain("@Url.Action(\"Subscription\", \"Businesses\", new { businessId = Model.Id })");
         setupShellSource.Should().Contain("@Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Id })");
         setupShellSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSubscriptionInvoicesTitle\")");
         setupShellSource.Should().Contain("@T.T(\"OpenPayments\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
     }
 
     [Fact]
@@ -1371,10 +1421,56 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void BusinessSetupWorkspace_Should_KeepBrandingFollowUpContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"Branding\")");
+        setupShellSource.Should().Contain("@T.T(\"BrandDisplayName\")");
+        setupShellSource.Should().Contain("@T.T(\"BrandLogoUrl\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-business-app\" })");
+        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessApp\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationProfileTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepOperationalSetupActionPlaybookContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"OperationalSetupActions\")");
+        setupShellSource.Should().Contain("@Url.Action(\"CreateMember\", \"Businesses\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"CreateLocation\", \"Businesses\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"CreateInvitation\", \"Businesses\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"OwnerOverrideAudits\", \"Businesses\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })");
+        setupShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked })");
+        setupShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
+        setupShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired })");
+        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@T.T(\"PendingActivation\")");
+        setupShellSource.Should().Contain("@T.T(\"UsersFilterLocked\")");
+        setupShellSource.Should().Contain("@T.T(\"Pending\")");
+        setupShellSource.Should().Contain("@T.T(\"Expired\")");
+    }
+
+    [Fact]
     public void BusinessSetupWorkspace_Should_KeepCommunicationDefaultsAndPlatformDependencyContractsWired()
     {
         var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
 
+        setupShellSource.Should().Contain("@T.T(\"BusinessSetupPlatformDependenciesIntro\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSetupPlatformDependenciesRule\")");
+        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        setupShellSource.Should().Contain("fragment = \"site-settings-communications-policy\"");
+        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"Businesses\", new { id = Model.Id })");
+        setupShellSource.Should().Contain("@T.T(\"OpenGlobalSettings\")");
+        setupShellSource.Should().Contain("@T.T(\"EditBusiness\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaults\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaultsHelp\")");
         setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
@@ -1399,6 +1495,142 @@ public sealed class SecurityAndPerformanceSourceTests
         setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
         setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
         setupShellSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepFooterFollowUpContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"BusinessSetupSaveAction\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"Businesses\", new { id = Model.Id })");
+        setupShellSource.Should().Contain("@T.T(\"BusinessMembersBackToBusinessAction\")");
+        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        setupShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+    }
+
+    [Fact]
+    public void BusinessEditorWorkspace_Should_KeepSummaryAndOnboardingRemediationContractsWired()
+    {
+        var editorShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessEditorShell.cshtml"));
+
+        editorShellSource.Should().Contain("@T.T(\"BusinessEditorOwners\")");
+        editorShellSource.Should().Contain("@T.T(\"BusinessEditorPendingInvites\")");
+        editorShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })");
+        editorShellSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.Id })");
+        editorShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id })");
+        editorShellSource.Should().Contain("@T.T(\"BusinessEditorOperationalStatus\")");
+        editorShellSource.Should().Contain("@T.T(\"BusinessEditorOnboardingChecklist\")");
+        editorShellSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Id })");
+        editorShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        editorShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        editorShellSource.Should().Contain("@T.T(\"BusinessEditorNextActions\")");
+        editorShellSource.Should().Contain("@T.T(\"BusinessEditorNotOnboardingCompleteYet\")");
+        editorShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+    }
+
+    [Fact]
+    public void BusinessLocationAndInvitationEditorShells_Should_KeepWorkspacePivotContractsWired()
+    {
+        var locationShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessLocationEditorShell.cshtml"));
+        var invitationShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessInvitationEditorShell.cshtml"));
+
+        locationShellSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.BusinessId })");
+        locationShellSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.BusinessId })");
+        locationShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        locationShellSource.Should().Contain("@T.T(\"BusinessLocationBackToLocations\")");
+        locationShellSource.Should().Contain("@T.T(\"Setup\")");
+        locationShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+
+        invitationShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId })");
+        invitationShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        invitationShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        invitationShellSource.Should().Contain("@T.T(\"BusinessInvitationBackToInvitations\")");
+        invitationShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+        invitationShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+    }
+
+    [Fact]
+    public void BusinessInvitationForm_Should_KeepCreationGuidanceRemediationContractsWired()
+    {
+        var invitationFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessInvitationForm.cshtml"));
+
+        invitationFormSource.Should().Contain("@T.T(\"BusinessInvitationCreateHelp\")");
+        invitationFormSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId })");
+        invitationFormSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.BusinessId })");
+        invitationFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        invitationFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        invitationFormSource.Should().Contain("@T.T(\"OpenInvitations\")");
+        invitationFormSource.Should().Contain("@T.T(\"Setup\")");
+        invitationFormSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+        invitationFormSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+    }
+
+    [Fact]
+    public void BusinessMemberForm_Should_KeepAssignmentGuidanceRemediationContractsWired()
+    {
+        var memberFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessMemberForm.cshtml"));
+
+        memberFormSource.Should().Contain("@T.T(\"BusinessMemberAssignmentHelp\")");
+        memberFormSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId })");
+        memberFormSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })");
+        memberFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        memberFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        memberFormSource.Should().Contain("@T.T(\"CommonMembers\")");
+        memberFormSource.Should().Contain("@T.T(\"PendingActivation\")");
+        memberFormSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+        memberFormSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+    }
+
+    [Fact]
+    public void BusinessLocationForm_Should_KeepFooterRemediationContractsWired()
+    {
+        var locationFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessLocationForm.cshtml"));
+
+        locationFormSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.BusinessId })");
+        locationFormSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.BusinessId })");
+        locationFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        locationFormSource.Should().Contain("@T.T(\"Cancel\")");
+        locationFormSource.Should().Contain("@T.T(\"Setup\")");
+        locationFormSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+    }
+
+    [Fact]
+    public void BusinessForm_Should_KeepInitialOwnerGuidanceRemediationContractsWired()
+    {
+        var businessFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessForm.cshtml"));
+
+        businessFormSource.Should().Contain("@T.T(\"BusinessFormInitialOwnerHelp\")");
+        businessFormSource.Should().Contain("@T.T(\"BusinessFormActiveHelp\")");
+        businessFormSource.Should().Contain("@Url.Action(\"Index\", \"Users\")");
+        businessFormSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })");
+        businessFormSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.Id })");
+        businessFormSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id })");
+        businessFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        businessFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        businessFormSource.Should().Contain("@T.T(\"Users\")");
+        businessFormSource.Should().Contain("@T.T(\"BusinessFormManageMembers\")");
+        businessFormSource.Should().Contain("@T.T(\"BusinessFormManageLocations\")");
+        businessFormSource.Should().Contain("@T.T(\"BusinessFormManageInvitations\")");
+        businessFormSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+        businessFormSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+    }
+
+    [Fact]
+    public void BusinessMemberEditorShell_Should_KeepOwnerOverrideRemediationContractsWired()
+    {
+        var memberShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessMemberEditorShell.cshtml"));
+
+        memberShellSource.Should().Contain("@T.T(\"BusinessMemberLastActiveOwnerWarning\")");
+        memberShellSource.Should().Contain("@T.T(\"BusinessMemberControlledOwnerOverrideTitle\")");
+        memberShellSource.Should().Contain("@Url.Action(\"OwnerOverrideAudits\", \"Businesses\", new { businessId = Model.BusinessId })");
+        memberShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        memberShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        memberShellSource.Should().Contain("@T.T(\"BusinessMembersOwnerOverrideAuditAction\")");
+        memberShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+        memberShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
     }
 
     private static string ReadWebApiFile(string relativePath)

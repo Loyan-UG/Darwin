@@ -10,13 +10,28 @@
             <h1 class="mb-1">@(isCreate ? T.T("BusinessLocationCreateTitle") : T.T("BusinessLocationEditTitle"))</h1>
             <p class="text-muted mb-0">@Model.Business.Name</p>
         </div>
-        <a asp-action="Locations"
-           asp-route-businessId="@Model.BusinessId"
-           class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.BusinessId })"
-           hx-target="#business-location-editor-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">@T.T("BusinessLocationBackToLocations")</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Locations"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.BusinessId })"
+               hx-target="#business-location-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessLocationBackToLocations")</a>
+            <a asp-action="Setup"
+               asp-route-id="@Model.BusinessId"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Setup", "Businesses", new { id = Model.BusinessId })"
+               hx-target="#business-location-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Setup")</a>
+            <a asp-action="MerchantReadiness"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+               hx-target="#business-location-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+        </div>
     </div>
 
     <form asp-action="@(isCreate ? "CreateLocation" : "EditLocation")"

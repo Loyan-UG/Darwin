@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
@@ -30,10 +30,10 @@
 
 	<ItemGroup>
 		<PackageReference Include="HtmlSanitizer" Version="9.0.892" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.50" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.6" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.51" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
 	</ItemGroup>
 
 	<ItemGroup>

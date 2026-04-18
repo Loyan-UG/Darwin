@@ -65,7 +65,30 @@
         <div class="col-md-6">
             <label asp-for="OwnerUserId" class="form-label">@T.T("BusinessFormInitialOwner")</label>
             <select asp-for="OwnerUserId" asp-items="Model.OwnerUserOptions" class="form-select"></select>
-            <div class="form-text">@T.T("BusinessFormInitialOwnerHelp")</div>
+            <div class="form-text">
+                <div>@T.T("BusinessFormInitialOwnerHelp")</div>
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("Users")</a>
+                    <a asp-action="SupportQueue"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                    <a asp-action="MerchantReadiness"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                </div>
+            </div>
         </div>
     }
     <div class="col-12">
@@ -75,7 +98,23 @@
         </div>
         @if (!canToggleActive)
         {
-            <div class="form-text">@T.T("BusinessFormActiveHelp")</div>
+            <div class="form-text">
+                <div>@T.T("BusinessFormActiveHelp")</div>
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                    <a asp-action="SupportQueue"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                    <a asp-action="MerchantReadiness"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                </div>
+            </div>
         }
     </div>
 </div>
@@ -122,5 +161,17 @@
            hx-target="#business-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BusinessFormManageInvitations")</a>
+        <a asp-action="SupportQueue"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("SupportQueue", "Businesses")"
+           hx-target="#business-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+        <a asp-action="MerchantReadiness"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+           hx-target="#business-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
     }
 </div>

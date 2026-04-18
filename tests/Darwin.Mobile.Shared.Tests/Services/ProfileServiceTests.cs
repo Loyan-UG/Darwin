@@ -4,7 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Profile;
 using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Caching;
 using Darwin.Mobile.Shared.Services.Profile;
+using Darwin.Mobile.Shared.Security;
 using Darwin.Shared.Results;
 using FluentAssertions;
 
@@ -37,7 +39,7 @@ public sealed class ProfileServiceTests
                 };
             }
         };
-        var service = new ProfileService(api);
+        var service = new ProfileService(api, new FakeMobileCacheService(), new FakeTokenStore());
 
         var result = await service.GetAddressesAsync(TestContext.Current.CancellationToken);
 
@@ -66,7 +68,7 @@ public sealed class ProfileServiceTests
                 });
             }
         };
-        var service = new ProfileService(api);
+        var service = new ProfileService(api, new FakeMobileCacheService(), new FakeTokenStore());
 
         var result = await service.UpdateAddressAsync(
             Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
@@ -89,7 +91,7 @@ public sealed class ProfileServiceTests
     [Fact]
     public async Task DeleteAddressAsync_Should_Fail_WhenAddressIdIsEmpty()
     {
-        var service = new ProfileService(new FakeApiClient());
+        var service = new ProfileService(new FakeApiClient(), new FakeMobileCacheService(), new FakeTokenStore());
 
         var result = await service.DeleteAddressAsync(
             Guid.Empty,
@@ -156,5 +158,29 @@ public sealed class ProfileServiceTests
 
         public Task<Result> PostNoContentAsync<TRequest>(string route, TRequest request, CancellationToken ct)
             => throw new NotSupportedException();
+    }
+
+    private sealed class FakeMobileCacheService : IMobileCacheService
+    {
+        public Task ClearAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task<T?> GetFreshAsync<T>(string cacheKey, CancellationToken ct) => Task.FromResult<T?>(default);
+
+        public Task<T?> GetUsableAsync<T>(string cacheKey, TimeSpan maxAge, CancellationToken ct) => Task.FromResult<T?>(default);
+
+        public Task RemoveAsync(string cacheKey, CancellationToken ct) => Task.CompletedTask;
+
+        public Task SetAsync<T>(string cacheKey, T value, TimeSpan ttl, CancellationToken ct) => Task.CompletedTask;
+    }
+
+    private sealed class FakeTokenStore : ITokenStore
+    {
+        public Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc) => Task.CompletedTask;
+
+        public Task<(string? AccessToken, DateTime? AccessExpiresUtc)> GetAccessAsync() => Task.FromResult<(string?, DateTime?)>((null, null));
+
+        public Task<(string? RefreshToken, DateTime? RefreshExpiresUtc)> GetRefreshAsync() => Task.FromResult<(string?, DateTime?)>((null, null));
+
+        public Task ClearAsync() => Task.CompletedTask;
     }
 }

@@ -173,7 +173,30 @@
         }
         else
         {
-            <div class="alert alert-secondary mb-0">@T.T("BusinessSubscriptionNoActiveSnapshot")</div>
+            <div class="alert alert-secondary mb-0">
+                <div>@T.T("BusinessSubscriptionNoActiveSnapshot")</div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <a asp-action="Setup"
+                       asp-route-id="@Model.Business.Id"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
+                       hx-target="#business-subscription-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("CommonSetup")</a>
+                    <a asp-action="MerchantReadiness"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-target="#business-subscription-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                    <a asp-action="SupportQueue"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-target="#business-subscription-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                </div>
+            </div>
         }
     </div>
 </div>
@@ -298,7 +321,30 @@
                     @if (Model.Plans.Count == 0)
                     {
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">@T.T("BusinessSubscriptionNoActivePlans")</td>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <div>@T.T("BusinessSubscriptionNoActivePlans")</div>
+                                <div class="d-flex gap-2 flex-wrap justify-content-center mt-3">
+                                    <a asp-action="Setup"
+                                       asp-route-id="@Model.Business.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
+                                       hx-target="#business-subscription-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("CommonSetup")</a>
+                                    <a asp-action="MerchantReadiness"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                       hx-target="#business-subscription-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                                    <a asp-action="SupportQueue"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-target="#business-subscription-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                                </div>
+                            </td>
                         </tr>
                     }
                     else
@@ -351,7 +397,28 @@
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">@T.T("BusinessSubscriptionResolvePrerequisites")</span>
+                                        <div class="d-flex gap-2 flex-wrap justify-content-end">
+                                            <span class="text-muted small align-self-center">@T.T("BusinessSubscriptionResolvePrerequisites")</span>
+                                            <a asp-action="Setup"
+                                               asp-route-id="@Model.Business.Id"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
+                                               hx-target="#business-subscription-workspace-shell"
+                                               hx-swap="outerHTML"
+                                               hx-push-url="true">@T.T("CommonSetup")</a>
+                                            <a asp-action="MerchantReadiness"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                               hx-target="#business-subscription-workspace-shell"
+                                               hx-swap="outerHTML"
+                                               hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                                            <a asp-action="SupportQueue"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                               hx-target="#business-subscription-workspace-shell"
+                                               hx-swap="outerHTML"
+                                               hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                                        </div>
                                     }
                                 </td>
                             </tr>
@@ -393,7 +460,32 @@
                 @if (Model.RecentInvoices.Count == 0)
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">@T.T("BusinessSubscriptionNoRecentInvoices")</td>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <div>@T.T("BusinessSubscriptionNoRecentInvoices")</div>
+                            <div class="d-flex gap-2 flex-wrap justify-content-center mt-3">
+                                <a asp-action="SubscriptionInvoices"
+                                   asp-route-businessId="@Model.Business.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
+                                   hx-target="#business-subscription-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("BusinessSubscriptionOpenInvoiceQueue")</a>
+                                <a asp-controller="Billing"
+                                   asp-action="Payments"
+                                   asp-route-businessId="@Model.Business.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id })"
+                                   hx-target="#business-subscription-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("CommonPayments")</a>
+                                <a asp-action="MerchantReadiness"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                   hx-target="#business-subscription-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                            </div>
+                        </td>
                     </tr>
                 }
                 else

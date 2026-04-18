@@ -8,6 +8,7 @@ using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Identity;
 using Darwin.Contracts.Meta;
 using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Caching;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
@@ -125,7 +126,7 @@ public sealed class AuthServiceInvitationTests
 
         var api = new FakeApiClient
         {
-            OnPostAsync = (route, request) =>
+            OnPostResultAsync = (route, request) =>
             {
                 route.Should().Be(ApiRoutes.Auth.Refresh);
                 request.Should().BeOfType<RefreshTokenRequest>();
@@ -135,7 +136,7 @@ public sealed class AuthServiceInvitationTests
                 payload.DeviceId.Should().Be("device-42");
                 payload.BusinessId.Should().Be(currentBusinessId);
 
-                return new TokenResponse
+                return Result<TokenResponse>.Ok(new TokenResponse
                 {
                     AccessToken = refreshedAccessToken,
                     AccessTokenExpiresAtUtc = DateTime.UtcNow.AddMinutes(30),
@@ -143,7 +144,7 @@ public sealed class AuthServiceInvitationTests
                     RefreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7),
                     UserId = Guid.NewGuid(),
                     Email = "operator@example.de"
-                };
+                });
             }
         };
 
@@ -184,6 +185,7 @@ public sealed class AuthServiceInvitationTests
     {
         return new AuthService(
             api,
+            new FakeMobileCacheService(),
             tokenStore ?? new FakeTokenStore(),
             new ApiOptions
             {
@@ -242,6 +244,19 @@ public sealed class AuthServiceInvitationTests
             RefreshExpiresUtc = null;
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FakeMobileCacheService : IMobileCacheService
+    {
+        public Task ClearAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task<T?> GetFreshAsync<T>(string cacheKey, CancellationToken ct) => Task.FromResult<T?>(default);
+
+        public Task<T?> GetUsableAsync<T>(string cacheKey, TimeSpan maxAge, CancellationToken ct) => Task.FromResult<T?>(default);
+
+        public Task RemoveAsync(string cacheKey, CancellationToken ct) => Task.CompletedTask;
+
+        public Task SetAsync<T>(string cacheKey, T value, TimeSpan ttl, CancellationToken ct) => Task.CompletedTask;
     }
 
     private sealed class FakeApiClient : IApiClient

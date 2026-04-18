@@ -75,24 +75,60 @@
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small text-uppercase">@T.T("BusinessEditorOwners")</div>
                     <div class="fs-4 fw-semibold">@Model.ActiveOwnerCount</div>
+                    <div class="mt-2">
+                        <a asp-action="Members"
+                           asp-route-businessId="@Model.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                           hx-target="#business-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Members")</a>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small text-uppercase">@T.T("CommonMembers")</div>
                     <div class="fs-4 fw-semibold">@Model.MemberCount</div>
+                    <div class="mt-2">
+                        <a asp-action="Members"
+                           asp-route-businessId="@Model.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                           hx-target="#business-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("CommonMembers")</a>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small text-uppercase">@T.T("BusinessEditorLocations")</div>
                     <div class="fs-4 fw-semibold">@Model.LocationCount</div>
+                    <div class="mt-2">
+                        <a asp-action="Locations"
+                           asp-route-businessId="@Model.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
+                           hx-target="#business-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Locations")</a>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small text-uppercase">@T.T("BusinessEditorPendingInvites")</div>
                     <div class="fs-4 fw-semibold">@Model.InvitationCount</div>
+                    <div class="mt-2">
+                        <a asp-action="Invitations"
+                           asp-route-businessId="@Model.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                           hx-target="#business-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Invitations")</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -160,6 +196,19 @@
                             <button type="submit" class="btn btn-outline-danger">@T.T("BusinessEditorSuspend")</button>
                         </form>
                     }
+
+                    <a asp-action="MerchantReadiness"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                    <a asp-action="SupportQueue"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
                 </div>
             </div>
         </div>
@@ -195,6 +244,21 @@
                 <div class="col-md-6">
                     <div class="small">@(Model.HasLegalNameConfigured ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorLegalBusinessNameConfigured")</div>
                 </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap mt-3">
+                <a asp-action="Setup"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Setup")</a>
+                <a asp-action="MerchantReadiness"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             </div>
         </div>
 
@@ -280,13 +344,29 @@
                         <i class="fa-solid fa-list-check"></i> @T.T("BusinessEditorReviewInvitations")
                     </a>
                 }
+                <a asp-action="MerchantReadiness"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-list-check"></i> @T.T("MerchantReadinessTitle")
+                </a>
+                <a asp-action="SupportQueue"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-life-ring"></i> @T.T("BusinessSupportQueueTitle")
+                </a>
             </div>
         </div>
 
         @if (!checklistComplete)
         {
             <div class="alert alert-warning">
-                @T.T("BusinessEditorNotOnboardingCompleteYet")
+                <div>@T.T("BusinessEditorNotOnboardingCompleteYet")
                 @if (Model.ActiveOwnerCount == 0)
                 {
                     <span>@T.T("BusinessEditorAddAtLeastOneActiveOwner")</span>
@@ -315,6 +395,28 @@
                 {
                     <span>@T.T("BusinessEditorCompleteLegalBusinessName")</span>
                 }
+                </div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <a asp-action="Setup"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("Setup")</a>
+                    <a asp-action="MerchantReadiness"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                    <a asp-action="SupportQueue"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                </div>
             </div>
         }
     }

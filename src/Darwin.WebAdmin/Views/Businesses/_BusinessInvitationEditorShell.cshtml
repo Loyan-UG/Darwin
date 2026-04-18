@@ -7,13 +7,27 @@
             <h1 class="mb-1">@T.T("BusinessInvitationCreateTitle")</h1>
             <p class="text-muted mb-0">@Model.Business.Name</p>
         </div>
-        <a asp-action="Invitations"
-           asp-route-businessId="@Model.BusinessId"
-           class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
-           hx-target="#business-invitation-editor-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">@T.T("BusinessInvitationBackToInvitations")</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Invitations"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
+               hx-target="#business-invitation-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessInvitationBackToInvitations")</a>
+            <a asp-action="SupportQueue"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("SupportQueue", "Businesses")"
+               hx-target="#business-invitation-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+            <a asp-action="MerchantReadiness"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+               hx-target="#business-invitation-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+        </div>
     </div>
 
     <form asp-action="CreateInvitation"

@@ -2,6 +2,7 @@ using Darwin.Mobile.Shared.Api;
 using Darwin.Mobile.Shared.Resilience;
 using Darwin.Mobile.Shared.Security;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -570,7 +571,8 @@ public sealed class ApiClientReliabilityTests
         return new ApiClient(
             httpClient,
             retryPolicy ?? new ExponentialBackoffRetryPolicy(maxAttempts: 1, baseDelay: TimeSpan.FromMilliseconds(1)),
-            tokenStore ?? new FakeTokenStore());
+            tokenStore ?? new FakeTokenStore(),
+            new ServiceCollection().BuildServiceProvider());
     }
 
     /// <summary>

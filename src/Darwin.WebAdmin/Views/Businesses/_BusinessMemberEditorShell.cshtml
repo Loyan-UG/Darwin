@@ -21,7 +21,28 @@
     @if (!isCreate && Model.IsLastActiveOwner)
     {
         <div class="alert alert-danger">
-            @T.T("BusinessMemberLastActiveOwnerWarning")
+            <div>@T.T("BusinessMemberLastActiveOwnerWarning")</div>
+            <div class="d-flex gap-2 flex-wrap mt-3">
+                <a asp-action="OwnerOverrideAudits"
+                   asp-route-businessId="@Model.BusinessId"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.BusinessId })"
+                   hx-target="#business-member-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("BusinessMembersOwnerOverrideAuditAction")</a>
+                <a asp-action="MerchantReadiness"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-target="#business-member-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                <a asp-action="SupportQueue"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-target="#business-member-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+            </div>
         </div>
     }
 
@@ -199,6 +220,27 @@
                 <p class="text-muted">
                     @T.T("BusinessMemberControlledOwnerOverrideNote")
                 </p>
+                <div class="d-flex gap-2 flex-wrap mb-3">
+                    <a asp-action="OwnerOverrideAudits"
+                       asp-route-businessId="@Model.BusinessId"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.BusinessId })"
+                       hx-target="#business-member-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessMembersOwnerOverrideAuditAction")</a>
+                    <a asp-action="SupportQueue"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-target="#business-member-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                    <a asp-action="MerchantReadiness"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-target="#business-member-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                </div>
                 <form asp-action="ForceDeleteMember"
                       method="post"
                       hx-post="@Url.Action("ForceDeleteMember", "Businesses")"
