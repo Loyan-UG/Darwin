@@ -24,7 +24,7 @@
            hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
            hx-target="#merchant-readiness-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+           hx-push-url="true">@T.T("NeedsAttention")</a>
         <a asp-controller="Billing"
            asp-action="Payments"
            class="btn btn-outline-secondary"
@@ -53,7 +53,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("NeedsAttention")</a>
         </div>
     </div>
     <div class="col-md-2">
@@ -66,7 +66,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "PendingApproval" })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("PendingApproval")</a>
         </div>
     </div>
     <div class="col-md-2">
@@ -79,7 +79,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "Suspended" })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("SuspendedBusinesses")</a>
         </div>
     </div>
     <div class="col-md-2">
@@ -92,7 +92,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("BusinessesMissingOwner")</a>
         </div>
     </div>
     <div class="col-md-2">
@@ -136,7 +136,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("ApprovedInactive")</a>
         </div>
     </div>
     <div class="col-lg col-md-4">
@@ -149,7 +149,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("MissingPrimaryLocation")</a>
         </div>
     </div>
     <div class="col-lg col-md-4">
@@ -162,7 +162,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("MissingContactEmail")</a>
         </div>
     </div>
     <div class="col-lg col-md-4">
@@ -175,7 +175,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("MissingLegalName")</a>
         </div>
     </div>
     <div class="col-lg col-md-4">
@@ -188,13 +188,30 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("PendingInvites")</a>
         </div>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header">@T.T("MerchantReadinessPlaybooksTitle")</div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>@T.T("MerchantReadinessPlaybooksTitle")</span>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="SupportQueue"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("SupportQueue", "Businesses")"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+            <a asp-controller="Billing"
+               asp-action="Payments"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Payments", "Billing")"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Payments")</a>
+        </div>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
@@ -210,10 +227,52 @@
                 @foreach (var playbook in Model.Playbooks)
                 {
                     <tr>
-                        <td class="fw-semibold">@playbook.Title</td>
-                        <td>@playbook.ScopeNote</td>
+                        <td class="fw-semibold">
+                            @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))
+                            {
+                                <a href="@playbook.QueueActionUrl"
+                                   class="text-decoration-none"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#merchant-readiness-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.Title</a>
+                            }
+                            else
+                            {
+                                @playbook.Title
+                            }
+                        </td>
                         <td>
-                            <div class="mb-2">@playbook.OperatorAction</div>
+                            @if (!string.IsNullOrWhiteSpace(playbook.FollowUpUrl))
+                            {
+                                <a href="@playbook.FollowUpUrl"
+                                   class="text-decoration-none"
+                                   hx-get="@playbook.FollowUpUrl"
+                                   hx-target="#merchant-readiness-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.ScopeNote</a>
+                            }
+                            else
+                            {
+                                @playbook.ScopeNote
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))
+                            {
+                                <div class="mb-2">
+                                    <a href="@playbook.QueueActionUrl"
+                                       class="text-decoration-none"
+                                       hx-get="@playbook.QueueActionUrl"
+                                       hx-target="#merchant-readiness-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@playbook.OperatorAction</a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="mb-2">@playbook.OperatorAction</div>
+                            }
                             @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))
                             {
                                 <a href="@playbook.QueueActionUrl"
@@ -240,6 +299,28 @@
                 </tbody>
             </table>
         </div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+            <a asp-action="SupportQueue"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("SupportQueue", "Businesses")"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+            <a asp-action="Index"
+               asp-route-attentionOnly="true"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("NeedsAttention")</a>
+            <a asp-controller="Billing"
+               asp-action="Payments"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Payments", "Billing")"
+               hx-target="#merchant-readiness-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Payments")</a>
+        </div>
     </div>
 </div>
 
@@ -257,7 +338,35 @@
     <div class="card-body">
         @if (Model.Items.Count == 0)
         {
-            <div class="text-muted">@T.T("MerchantReadinessEmptyState")</div>
+            <div class="text-muted mb-3">@T.T("MerchantReadinessEmptyState")</div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-action="Index"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Index", "Businesses")"
+                   hx-target="#merchant-readiness-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+                <a asp-action="SupportQueue"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-target="#merchant-readiness-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                <a asp-controller="Billing"
+                   asp-action="Payments"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Payments", "Billing")"
+                   hx-target="#merchant-readiness-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Payments")</a>
+                <a asp-controller="BusinessCommunications"
+                   asp-action="Index"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Index", "BusinessCommunications")"
+                   hx-target="#merchant-readiness-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommunicationOps")</a>
+            </div>
         }
         else
         {

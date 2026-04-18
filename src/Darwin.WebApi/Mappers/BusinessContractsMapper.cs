@@ -4,6 +4,7 @@ using System.Linq;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common.DTOs;
 using Darwin.Application.Loyalty.DTOs;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
@@ -99,8 +100,8 @@ namespace Darwin.WebApi.Mappers
                 // For backward compatibility: keep PhoneE164 populated, but also keep ContactPhoneE164 below.
                 PhoneE164 = dto.ContactPhoneE164,
 
-                DefaultCurrency = string.IsNullOrWhiteSpace(dto.DefaultCurrency) ? "EUR" : dto.DefaultCurrency,
-                DefaultCulture = string.IsNullOrWhiteSpace(dto.DefaultCulture) ? "de-DE" : dto.DefaultCulture,
+                DefaultCurrency = string.IsNullOrWhiteSpace(dto.DefaultCurrency) ? SiteSettingDto.DefaultCurrencyDefault : dto.DefaultCurrency,
+                DefaultCulture = string.IsNullOrWhiteSpace(dto.DefaultCulture) ? SiteSettingDto.DefaultCultureDefault : dto.DefaultCulture,
                 WebsiteUrl = dto.WebsiteUrl,
                 ContactEmail = dto.ContactEmail,
                 ContactPhoneE164 = dto.ContactPhoneE164,

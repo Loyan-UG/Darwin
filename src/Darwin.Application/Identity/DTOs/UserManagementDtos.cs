@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Darwin.Application.Settings.DTOs;
+
 namespace Darwin.Application.Identity.DTOs
 {
     /// <summary>
@@ -24,13 +26,13 @@ namespace Darwin.Application.Identity.DTOs
         public string? LastName { get; set; }
 
         /// <summary>The preferred culture code (IETF tag), e.g. "de-DE".</summary>
-        public string Locale { get; set; } = "de-DE";
+        public string Locale { get; set; } = SiteSettingDto.DefaultCultureDefault;
 
         /// <summary>The preferred time zone identifier, e.g. "Europe/Berlin".</summary>
-        public string Timezone { get; set; } = "Europe/Berlin";
+        public string Timezone { get; set; } = SiteSettingDto.TimeZoneDefault;
 
         /// <summary>The preferred currency code (ISO 4217), e.g. "EUR".</summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
 
         /// <summary>The user's email address.</summary>
         public string Email { get; set; } = string.Empty;

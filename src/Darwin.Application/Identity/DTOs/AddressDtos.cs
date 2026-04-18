@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Darwin.Application.Settings.DTOs;
+
 namespace Darwin.Application.Identity.DTOs
 {
     /// <summary>
@@ -16,7 +18,7 @@ namespace Darwin.Application.Identity.DTOs
         public string PostalCode { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string? State { get; set; }
-        public string CountryCode { get; set; } = "DE";
+        public string CountryCode { get; set; } = SiteSettingDto.DefaultCountryDefault;
         public string? PhoneE164 { get; set; }
         public bool IsDefaultBilling { get; set; }
         public bool IsDefaultShipping { get; set; }
@@ -36,7 +38,7 @@ namespace Darwin.Application.Identity.DTOs
         public string PostalCode { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string? State { get; set; }
-        public string CountryCode { get; set; } = "DE";
+        public string CountryCode { get; set; } = SiteSettingDto.DefaultCountryDefault;
         public string? PhoneE164 { get; set; }
 
         /// <summary>
@@ -65,7 +67,7 @@ namespace Darwin.Application.Identity.DTOs
         public string PostalCode { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string? State { get; set; }
-        public string CountryCode { get; set; } = "DE";
+        public string CountryCode { get; set; } = SiteSettingDto.DefaultCountryDefault;
         public string? PhoneE164 { get; set; }
         public bool IsDefaultBilling { get; set; }
         public bool IsDefaultShipping { get; set; }
@@ -93,9 +95,9 @@ namespace Darwin.Application.Identity.DTOs
         public DateTime? LockoutEndUtc { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
-        public string Locale { get; set; } = "de-DE";
-        public string Timezone { get; set; } = "Europe/Berlin";
-        public string Currency { get; set; } = "EUR";
+        public string Locale { get; set; } = SiteSettingDto.DefaultCultureDefault;
+        public string Timezone { get; set; } = SiteSettingDto.TimeZoneDefault;
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; }
 

@@ -5,6 +5,8 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Settings;
 using Microsoft.EntityFrameworkCore;
 
+using Darwin.Application.Settings.DTOs;
+
 namespace Darwin.Application.Settings.Queries
 {
     /// <summary>
@@ -19,7 +21,10 @@ namespace Darwin.Application.Settings.Queries
         {
             var setting = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
             if (setting == null)
-                return ("de-DE", new[] { "de-DE", "en-US" });
+                return (
+                    SiteSettingDto.DefaultCultureDefault,
+                    SiteSettingDto.SupportedCulturesCsvDefault
+                        .Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries));
 
             var list = (setting.SupportedCulturesCsv ?? "")
                 .Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries)
@@ -27,9 +32,12 @@ namespace Darwin.Application.Settings.Queries
                 .ToArray();
 
             if (list.Length == 0)
-                list = new[] { setting.DefaultCulture ?? "de-DE" };
+                list = (setting.SupportedCulturesCsv ?? SiteSettingDto.SupportedCulturesCsvDefault)
+                    .Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries)
+                    .Distinct()
+                    .ToArray();
 
-            var def = string.IsNullOrWhiteSpace(setting.DefaultCulture) ? "de-DE" : setting.DefaultCulture;
+            var def = string.IsNullOrWhiteSpace(setting.DefaultCulture) ? SiteSettingDto.DefaultCultureDefault : setting.DefaultCulture;
             return (def, list);
         }
     }

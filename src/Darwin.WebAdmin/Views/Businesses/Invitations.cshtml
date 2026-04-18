@@ -230,6 +230,12 @@
                            hx-target="#business-invitations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                        <a asp-action="MerchantReadiness"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                           hx-target="#business-invitations-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                     </div>
                 </td>
             </tr>
@@ -299,6 +305,22 @@
                                 </button>
                             </form>
                         }
+                        <a asp-action="SupportQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("SupportQueue", "Businesses")"
+                           hx-target="#business-invitations-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa-solid fa-life-ring"></i> @T.T("BusinessSupportQueueTitle")
+                        </a>
+                        <a asp-action="MerchantReadiness"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                           hx-target="#business-invitations-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa-solid fa-list-check"></i> @T.T("MerchantReadinessTitle")
+                        </a>
                     </td>
                 </tr>
             }

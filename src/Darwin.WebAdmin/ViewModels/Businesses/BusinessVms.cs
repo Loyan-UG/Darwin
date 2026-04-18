@@ -402,7 +402,7 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public string? AddressLine2 { get; set; }
         public string? City { get; set; }
         public string? Region { get; set; }
-        public string? CountryCode { get; set; } = "DE";
+        public string? CountryCode { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault;
         public string? PostalCode { get; set; }
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }

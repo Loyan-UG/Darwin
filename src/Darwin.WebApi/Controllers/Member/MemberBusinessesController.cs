@@ -2,6 +2,7 @@ using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Contracts.Businesses;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Enums;
 using Darwin.WebApi.Controllers.Businesses;
 using Darwin.WebApi.Mappers;
@@ -87,8 +88,8 @@ public sealed class MemberBusinessesController : ApiControllerBase
             ContactEmail = BusinessControllerConventions.NormalizeNullable(request.ContactEmail),
             ContactPhoneE164 = BusinessControllerConventions.NormalizeNullable(request.ContactPhoneE164),
             Category = categoryKind ?? BusinessCategoryKind.Unknown,
-            DefaultCurrency = BusinessControllerConventions.NormalizeNullable(request.DefaultCurrency) ?? "EUR",
-            DefaultCulture = BusinessControllerConventions.NormalizeNullable(request.DefaultCulture) ?? "de-DE",
+            DefaultCurrency = BusinessControllerConventions.NormalizeNullable(request.DefaultCurrency) ?? SiteSettingDto.DefaultCurrencyDefault,
+            DefaultCulture = BusinessControllerConventions.NormalizeNullable(request.DefaultCulture) ?? SiteSettingDto.DefaultCultureDefault,
             IsActive = true
         };
 

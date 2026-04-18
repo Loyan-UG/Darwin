@@ -11,6 +11,8 @@ namespace Darwin.Application.Settings.DTOs
     public sealed class SiteSettingDto
     {
         public const string HomeSlugDefault = "home";
+        public const string DefaultCultureDefault = "de-DE";
+        public const string SupportedCulturesCsvDefault = "de-DE,en-US";
         public const string DefaultCountryDefault = "DE";
         public const string DefaultCurrencyDefault = "EUR";
         public const string TimeZoneDefault = "Europe/Berlin";
@@ -29,8 +31,8 @@ namespace Darwin.Application.Settings.DTOs
         public string? HomeSlug { get; set; } = HomeSlugDefault;
 
         // -------- Localization settings --------
-        public string DefaultCulture { get; set; } = "de-DE";
-        public string SupportedCulturesCsv { get; set; } = "de-DE,en-US";
+        public string DefaultCulture { get; set; } = DefaultCultureDefault;
+        public string SupportedCulturesCsv { get; set; } = SupportedCulturesCsvDefault;
         public string? DefaultCountry { get; set; } = DefaultCountryDefault;
         public string DefaultCurrency { get; set; } = DefaultCurrencyDefault;
         public string? TimeZone { get; set; } = TimeZoneDefault;

@@ -1,5 +1,6 @@
 using Darwin.Domain.Enums;
 using Darwin.Application.CRM.DTOs;
+using Darwin.Application.Settings.DTOs;
 using Darwin.WebAdmin.Localization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
@@ -78,7 +79,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
         [Required]
         [StringLength(8)]
-        public string Country { get; set; } = "DE";
+        public string Country { get; set; } = SiteSettingDto.DefaultCountryDefault;
 
         public bool IsDefaultShipping { get; set; }
         public bool IsDefaultBilling { get; set; }
@@ -92,7 +93,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public string PostalCode { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string? State { get; set; }
-        public string CountryCode { get; set; } = "DE";
+        public string CountryCode { get; set; } = SiteSettingDto.DefaultCountryDefault;
         public string? PhoneE164 { get; set; }
     }
 

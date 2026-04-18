@@ -361,7 +361,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 items.Add(defaultCurrency.Trim().ToUpperInvariant());
             }
 
-            foreach (var currency in new[] { "USD", "GBP", "EUR" })
+            foreach (var currency in new[] { "USD", "GBP", Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault })
             {
                 if (!items.Contains(currency, StringComparer.OrdinalIgnoreCase))
                 {

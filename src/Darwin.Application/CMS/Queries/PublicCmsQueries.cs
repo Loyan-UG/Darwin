@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CMS.DTOs;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,7 @@ public sealed class GetPublishedPagesPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
-        culture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
 
         var nowUtc = DateTime.UtcNow;
         var baseQuery = _db.Set<Page>()
@@ -78,7 +79,7 @@ public sealed class GetPublishedPageBySlugHandler
             return null;
         }
 
-        culture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var normalizedSlug = slug.Trim();
         var nowUtc = DateTime.UtcNow;
 
@@ -126,7 +127,7 @@ public sealed class GetPublicMenuByNameHandler
             return null;
         }
 
-        culture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var normalizedName = name.Trim();
 
         return await _db.Set<Menu>()

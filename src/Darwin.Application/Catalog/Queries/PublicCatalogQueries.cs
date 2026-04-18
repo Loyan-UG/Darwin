@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Catalog.DTOs;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,7 @@ public sealed class GetPublishedCategoriesHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
-        culture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
 
         var baseQuery = _db.Set<Category>()
             .AsNoTracking()
@@ -77,7 +78,7 @@ public sealed class GetPublishedProductsPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
-        culture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         categorySlug = string.IsNullOrWhiteSpace(categorySlug) ? null : categorySlug.Trim();
 
         var nowUtc = DateTime.UtcNow;
@@ -109,7 +110,7 @@ public sealed class GetPublishedProductsPageHandler
                 Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault() ?? string.Empty,
                 Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault() ?? string.Empty,
                 ShortDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault(),
-                Currency = x.Variants.OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? "EUR",
+                Currency = x.Variants.OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? SiteSettingDto.DefaultCurrencyDefault,
                 PriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.BasePriceNetMinor).FirstOrDefault(),
                 CompareAtPriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.CompareAtPriceNetMinor).FirstOrDefault(),
                 PrimaryImageUrl = (
@@ -148,7 +149,7 @@ public sealed class GetPublishedProductBySlugHandler
             return null;
         }
 
-        culture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var normalizedSlug = slug.Trim();
         var nowUtc = DateTime.UtcNow;
 
@@ -169,7 +170,7 @@ public sealed class GetPublishedProductBySlugHandler
                 FullDescriptionHtml = x.Translations.Where(t => t.Culture == culture).Select(t => t.FullDescriptionHtml).FirstOrDefault(),
                 MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault(),
                 MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault(),
-                Currency = x.Variants.OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? "EUR",
+                Currency = x.Variants.OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? SiteSettingDto.DefaultCurrencyDefault,
                 PriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.BasePriceNetMinor).FirstOrDefault(),
                 CompareAtPriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.CompareAtPriceNetMinor).FirstOrDefault(),
                 PrimaryCategoryId = x.PrimaryCategoryId,

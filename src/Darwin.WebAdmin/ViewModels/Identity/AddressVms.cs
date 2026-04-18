@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Darwin.Application.Settings.DTOs;
 
 namespace Darwin.WebAdmin.ViewModels.Identity
 {
@@ -55,7 +56,7 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public string? State { get; set; }
 
         /// <summary>ISO 3166-1 alpha-2 country code (required), e.g., "DE".</summary>
-        public string CountryCode { get; set; } = "DE";
+        public string CountryCode { get; set; } = SiteSettingDto.DefaultCountryDefault;
 
         /// <summary>Phone number in E.164 format (optional).</summary>
         public string? PhoneE164 { get; set; }
@@ -87,7 +88,7 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public string PostalCode { get; set; } = string.Empty;         // Required, Max length 32
         public string City { get; set; } = string.Empty;               // Required, Max length 150
         public string? State { get; set; }                             // Max length 150
-        public string CountryCode { get; set; } = "DE";                // Required, Length 2
+        public string CountryCode { get; set; } = SiteSettingDto.DefaultCountryDefault;                // Required, Length 2
         public string? PhoneE164 { get; set; }                         // Max length 20
 
         /// <summary>
@@ -121,7 +122,7 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public string PostalCode { get; set; } = string.Empty;         // Required, Max length 32
         public string City { get; set; } = string.Empty;               // Required, Max length 150
         public string? State { get; set; }                             // Max length 150
-        public string CountryCode { get; set; } = "DE";                // Required, Length 2
+        public string CountryCode { get; set; } = SiteSettingDto.DefaultCountryDefault;                // Required, Length 2
         public string? PhoneE164 { get; set; }                         // Max length 20
         
         public bool IsDefaultBilling { get; set; }

@@ -5,8 +5,10 @@ using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using FluentValidation;
@@ -101,13 +103,43 @@ namespace Darwin.Application.Businesses.Commands
                     return Result<BusinessInvitationAcceptanceDto>.Fail("First name, last name, and password are required for a new invited user.");
                 }
 
+                object? siteSetting = null;
+                try
+                {
+                    siteSetting = await _db.Set<SiteSetting>()
+                        .AsNoTracking()
+                        .OrderBy(x => x.Id)
+                        .Select(x => new
+                        {
+                            x.DefaultCulture,
+                            x.TimeZone,
+                            x.DefaultCurrency
+                        })
+                        .FirstOrDefaultAsync(ct)
+                        .ConfigureAwait(false);
+                }
+                catch (InvalidOperationException)
+                {
+                    // Some lightweight test contexts do not include SiteSetting in the model.
+                }
+
+                var defaultCulture = string.IsNullOrWhiteSpace((string?)siteSetting?.GetType().GetProperty("DefaultCulture")?.GetValue(siteSetting))
+                    ? SiteSettingDto.DefaultCultureDefault
+                    : ((string?)siteSetting?.GetType().GetProperty("DefaultCulture")?.GetValue(siteSetting))!.Trim();
+                var defaultTimeZone = string.IsNullOrWhiteSpace((string?)siteSetting?.GetType().GetProperty("TimeZone")?.GetValue(siteSetting))
+                    ? SiteSettingDto.TimeZoneDefault
+                    : ((string?)siteSetting?.GetType().GetProperty("TimeZone")?.GetValue(siteSetting))!.Trim();
+                var defaultCurrency = string.IsNullOrWhiteSpace((string?)siteSetting?.GetType().GetProperty("DefaultCurrency")?.GetValue(siteSetting))
+                    ? SiteSettingDto.DefaultCurrencyDefault
+                    : ((string?)siteSetting?.GetType().GetProperty("DefaultCurrency")?.GetValue(siteSetting))!.Trim();
+
                 user = new User(invitation.Email, _hasher.Hash(dto.Password.Trim()), _stamps.NewStamp())
                 {
                     FirstName = dto.FirstName.Trim(),
                     LastName = dto.LastName.Trim(),
-                    Locale = "de-DE",
-                    Timezone = "Europe/Berlin",
-                    Currency = "EUR",
+                    Locale = defaultCulture,
+                    Timezone = defaultTimeZone,
+                    Currency = defaultCurrency,
                     IsActive = true,
                     EmailConfirmed = true
                 };

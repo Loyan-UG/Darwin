@@ -201,6 +201,18 @@
                                hx-target="#business-owner-override-audits-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CommonMembers")</a>
+                            <a asp-action="SupportQueue"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("SupportQueue", "Businesses")"
+                               hx-target="#business-owner-override-audits-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                            <a asp-action="MerchantReadiness"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                               hx-target="#business-owner-override-audits-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                         </div>
                     </td>
                 </tr>

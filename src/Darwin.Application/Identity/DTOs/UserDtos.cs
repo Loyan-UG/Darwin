@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Darwin.Application.Settings.DTOs;
+
 namespace Darwin.Application.Identity.DTOs
 {
     public enum UserQueueFilter : short
@@ -43,9 +45,9 @@ namespace Darwin.Application.Identity.DTOs
         public string Password { get; set; } = string.Empty;      // Plain text; will be hashed in handler
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
-        public string Locale { get; set; } = "de-DE";
-        public string Timezone { get; set; } = "Europe/Berlin";
-        public string Currency { get; set; } = "EUR";
+        public string Locale { get; set; } = SiteSettingDto.DefaultCultureDefault;
+        public string Timezone { get; set; } = SiteSettingDto.TimeZoneDefault;
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsSystem { get; set; } = false;               // If true, protected from destructive ops
@@ -60,9 +62,9 @@ namespace Darwin.Application.Identity.DTOs
         public string Email { get; set; } = string.Empty;
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
-        public string Locale { get; set; } = "de-DE";
-        public string Timezone { get; set; } = "Europe/Berlin";
-        public string Currency { get; set; } = "EUR";
+        public string Locale { get; set; } = SiteSettingDto.DefaultCultureDefault;
+        public string Timezone { get; set; } = SiteSettingDto.TimeZoneDefault;
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; } = true;
     }

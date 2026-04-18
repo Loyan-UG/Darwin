@@ -212,6 +212,28 @@
         <partial name="_BusinessMemberForm" model="Model" />
     </form>
 
+    <div class="d-flex gap-2 flex-wrap mt-4">
+        <a asp-action="Members"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+           hx-target="#business-member-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("CommonMembers")</a>
+        <a asp-action="SupportQueue"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("SupportQueue", "Businesses")"
+           hx-target="#business-member-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+        <a asp-action="MerchantReadiness"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+           hx-target="#business-member-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+    </div>
+
     @if (!isCreate && Model.IsLastActiveOwner)
     {
         <div class="card border-danger mt-4">

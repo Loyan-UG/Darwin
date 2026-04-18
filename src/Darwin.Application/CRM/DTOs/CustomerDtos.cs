@@ -1,4 +1,5 @@
 using Darwin.Domain.Enums;
+using Darwin.Application.Settings.DTOs;
 
 namespace Darwin.Application.CRM.DTOs
 {
@@ -49,7 +50,7 @@ namespace Darwin.Application.CRM.DTOs
         public string City { get; set; } = string.Empty;
         public string? State { get; set; }
         public string PostalCode { get; set; } = string.Empty;
-        public string Country { get; set; } = "DE";
+        public string Country { get; set; } = SiteSettingDto.DefaultCountryDefault;
         public bool IsDefaultShipping { get; set; }
         public bool IsDefaultBilling { get; set; }
     }
@@ -63,7 +64,7 @@ namespace Darwin.Application.CRM.DTOs
         public string PostalCode { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string? State { get; set; }
-        public string CountryCode { get; set; } = "DE";
+        public string CountryCode { get; set; } = SiteSettingDto.DefaultCountryDefault;
         public string? PhoneE164 { get; set; }
         public bool IsDefaultBilling { get; set; }
         public bool IsDefaultShipping { get; set; }

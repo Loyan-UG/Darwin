@@ -1,4 +1,5 @@
 using Darwin.Domain.Enums;
+using Darwin.Application.Settings.DTOs;
 
 namespace Darwin.Application.Billing.DTOs
 {
@@ -48,7 +49,7 @@ namespace Darwin.Application.Billing.DTOs
         public string UserDisplayName { get; set; } = string.Empty;
         public string? UserEmail { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public PaymentStatus Status { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
@@ -102,7 +103,7 @@ namespace Darwin.Application.Billing.DTOs
         public string? OrderNumber { get; set; }
         public Guid? PaymentId { get; set; }
         public InvoiceStatus Status { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public long TotalGrossMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -142,7 +143,7 @@ namespace Darwin.Application.Billing.DTOs
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string? CustomerEmail { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public string Reason { get; set; } = string.Empty;
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -172,7 +173,7 @@ namespace Darwin.Application.Billing.DTOs
         public Guid? CustomerId { get; set; }
         public Guid? UserId { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
@@ -208,7 +209,7 @@ namespace Darwin.Application.Billing.DTOs
     {
         public Guid Id { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public string Reason { get; set; } = string.Empty;
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }

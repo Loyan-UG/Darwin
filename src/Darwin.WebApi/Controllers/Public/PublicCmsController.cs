@@ -1,5 +1,6 @@
 using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Queries;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Cms;
 using Darwin.Contracts.Common;
 using Microsoft.AspNetCore.Mvc;
@@ -51,7 +52,7 @@ public sealed class PublicCmsController : ApiControllerBase
             return BadRequestProblem("PageSize must be between 1 and 200.");
         }
 
-        var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var (items, total) = await _getPublishedPagesPageHandler
             .HandleAsync(normalizedPage, normalizedPageSize, normalizedCulture, ct)
             .ConfigureAwait(false);
@@ -79,7 +80,7 @@ public sealed class PublicCmsController : ApiControllerBase
     public async Task<IActionResult> GetPageBySlugAsync([FromRoute] string slug, [FromQuery] string? culture, CancellationToken ct = default)
     {
         var dto = await _getPublishedPageBySlugHandler
-            .HandleAsync(slug, string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim(), ct)
+            .HandleAsync(slug, string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim(), ct)
             .ConfigureAwait(false);
 
         return dto is null
@@ -97,7 +98,7 @@ public sealed class PublicCmsController : ApiControllerBase
     public async Task<IActionResult> GetMenuByNameAsync([FromRoute] string name, [FromQuery] string? culture, CancellationToken ct = default)
     {
         var dto = await _getPublicMenuByNameHandler
-            .HandleAsync(name, string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim(), ct)
+            .HandleAsync(name, string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim(), ct)
             .ConfigureAwait(false);
 
         return dto is null

@@ -32,7 +32,7 @@ public sealed class BusinessSubscriptionInvoiceListItemDto
     public string? ProviderInvoiceId { get; init; }
     public SubscriptionInvoiceStatus Status { get; init; }
     public long TotalMinor { get; init; }
-    public string Currency { get; init; } = "EUR";
+    public string Currency { get; init; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
     public DateTime IssuedAtUtc { get; init; }
     public DateTime? DueAtUtc { get; init; }
     public DateTime? PaidAtUtc { get; init; }

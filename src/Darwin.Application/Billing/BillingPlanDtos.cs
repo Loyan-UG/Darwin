@@ -13,7 +13,7 @@ public sealed class BillingPlanSummaryDto
     public string Name { get; init; } = string.Empty;
     public string? Description { get; init; }
     public long PriceMinor { get; init; }
-    public string Currency { get; init; } = "EUR";
+    public string Currency { get; init; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
     public string Interval { get; init; } = string.Empty;
     public int IntervalCount { get; init; }
     public int? TrialDays { get; init; }

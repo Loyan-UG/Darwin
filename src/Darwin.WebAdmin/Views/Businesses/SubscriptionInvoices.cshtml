@@ -310,7 +310,40 @@
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">@T.T("BusinessSubscriptionInvoicesEmptyState")</td></tr>
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <div>@T.T("BusinessSubscriptionInvoicesEmptyState")</div>
+                    <div class="d-flex gap-2 flex-wrap justify-content-center mt-3">
+                        <a asp-action="Subscription"
+                           asp-route-businessId="@Model.Business.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Business.Id })"
+                           hx-target="#business-subscription-invoices-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BusinessSubscriptionShort")</a>
+                        <a asp-controller="Billing"
+                           asp-action="Payments"
+                           asp-route-businessId="@Model.Business.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id })"
+                           hx-target="#business-subscription-invoices-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("CommonPayments")</a>
+                        <a asp-action="SupportQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("SupportQueue", "Businesses")"
+                           hx-target="#business-subscription-invoices-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                        <a asp-action="MerchantReadiness"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                           hx-target="#business-subscription-invoices-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                    </div>
+                </td>
+            </tr>
         }
         else
         {
@@ -367,6 +400,18 @@
                                hx-target="#business-subscription-invoices-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CommonPayments")</a>
+                            <a asp-action="SupportQueue"
+                               class="btn btn-outline-secondary"
+                               hx-get="@Url.Action("SupportQueue", "Businesses")"
+                               hx-target="#business-subscription-invoices-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                            <a asp-action="MerchantReadiness"
+                               class="btn btn-outline-secondary"
+                               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                               hx-target="#business-subscription-invoices-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                         </div>
                     </td>
                 </tr>

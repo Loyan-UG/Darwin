@@ -32,21 +32,21 @@
             <div class="col-md-4 mb-3">
                 <label for="locale" class="form-label">@T.T("Locale")</label>
                 <select id="locale" name="locale" class="form-select">
-                    <option value="de-DE" selected="@(defaultLocale == "de-DE")">@T.T("LocaleGermanGermany")</option>
-                    <option value="en-US" selected="@(defaultLocale == "en-US")">@T.T("LocaleEnglishUnitedStates")</option>
+                    <option value="@Darwin.WebAdmin.Localization.AdminCultureCatalog.German" selected="@(defaultLocale == Darwin.WebAdmin.Localization.AdminCultureCatalog.German)">@T.T("LocaleGermanGermany")</option>
+                    <option value="@Darwin.WebAdmin.Localization.AdminCultureCatalog.English" selected="@(defaultLocale == Darwin.WebAdmin.Localization.AdminCultureCatalog.English)">@T.T("LocaleEnglishUnitedStates")</option>
                 </select>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="currency" class="form-label">@T.T("Currency")</label>
                 <select id="currency" name="currency" class="form-select">
-                    <option value="EUR" selected="@(defaultCurrency == "EUR")">@T.T("CurrencyEuro")</option>
+                    <option value="@Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault" selected="@(defaultCurrency == Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault)">@T.T("CurrencyEuro")</option>
                     <option value="USD" selected="@(defaultCurrency == "USD")">@T.T("CurrencyUsd")</option>
                 </select>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="timezone" class="form-label">@T.T("TimeZone")</label>
                 <select id="timezone" name="timezone" class="form-select">
-                    <option value="Europe/Berlin" selected="@(defaultTimeZone == "Europe/Berlin")">@T.T("TimeZoneEuropeBerlin")</option>
+                    <option value="@Darwin.Application.Settings.DTOs.SiteSettingDto.TimeZoneDefault" selected="@(defaultTimeZone == Darwin.Application.Settings.DTOs.SiteSettingDto.TimeZoneDefault)">@T.T("TimeZoneEuropeBerlin")</option>
                     <option value="UTC" selected="@(defaultTimeZone == "UTC")">@T.T("Utc")</option>
                 </select>
             </div>

@@ -52,7 +52,7 @@ namespace Darwin.Application.Settings.Commands
             s.ContactEmail = dto.ContactEmail ?? string.Empty;
 
             // -------- Routing --------
-            s.HomeSlug = dto.HomeSlug ?? "home";
+            s.HomeSlug = dto.HomeSlug ?? SiteSettingDto.HomeSlugDefault;
 
             // -------- Localization --------
             s.DefaultCulture = dto.DefaultCulture.Trim();
@@ -60,11 +60,11 @@ namespace Darwin.Application.Settings.Commands
                 (dto.SupportedCulturesCsv ?? string.Empty)
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Distinct());
-            s.DefaultCountry = dto.DefaultCountry ?? "DE";
+            s.DefaultCountry = dto.DefaultCountry ?? SiteSettingDto.DefaultCountryDefault;
             s.DefaultCurrency = dto.DefaultCurrency;
-            s.TimeZone = dto.TimeZone ?? "Europe/Berlin";
-            s.DateFormat = dto.DateFormat ?? "yyyy-MM-dd";
-            s.TimeFormat = dto.TimeFormat ?? "HH:mm";
+            s.TimeZone = dto.TimeZone ?? SiteSettingDto.TimeZoneDefault;
+            s.DateFormat = dto.DateFormat ?? SiteSettingDto.DateFormatDefault;
+            s.TimeFormat = dto.TimeFormat ?? SiteSettingDto.TimeFormatDefault;
             s.AdminTextOverridesJson = string.IsNullOrWhiteSpace(dto.AdminTextOverridesJson)
                 ? null
                 : dto.AdminTextOverridesJson.Trim();

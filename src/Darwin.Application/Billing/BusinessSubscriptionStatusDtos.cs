@@ -15,7 +15,7 @@ public sealed class BusinessSubscriptionStatusDto
     public string PlanCode { get; init; } = string.Empty;
     public string PlanName { get; init; } = string.Empty;
     public long UnitPriceMinor { get; init; }
-    public string Currency { get; init; } = "EUR";
+    public string Currency { get; init; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
     public DateTime? StartedAtUtc { get; init; }
     public DateTime? CurrentPeriodEndUtc { get; init; }
     public DateTime? TrialEndsAtUtc { get; init; }

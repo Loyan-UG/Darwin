@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Darwin.Application.Settings.DTOs;
 using Darwin.WebAdmin.Localization;
 
 namespace Darwin.WebAdmin.ViewModels.Settings
@@ -41,7 +42,7 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         public string SupportedCulturesCsv { get; set; } = AdminCultureCatalog.SupportedCulturesCsvDefault;
 
         [Display(Name = "SiteSettingDefaultCountry"), MaxLength(2)]
-        public string? DefaultCountry { get; set; } = "DE";
+        public string? DefaultCountry { get; set; } = SiteSettingDto.DefaultCountryDefault;
 
         [Display(Name = "SiteSettingDefaultCurrency"), Required, MaxLength(3)]
         public string DefaultCurrency { get; set; } = string.Empty;

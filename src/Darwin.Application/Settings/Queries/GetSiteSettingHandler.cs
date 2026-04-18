@@ -42,17 +42,17 @@ namespace Darwin.Application.Settings.Queries
                 ContactEmail = s.ContactEmail,
 
                 // Routing
-                HomeSlug = s.HomeSlug,
+                HomeSlug = s.HomeSlug ?? SiteSettingDto.HomeSlugDefault,
 
                 // Localization
-                DefaultCulture = s.DefaultCulture ?? "de-DE",
-                SupportedCulturesCsv = s.SupportedCulturesCsv ?? "de-DE,en-US",
-                DefaultCountry = s.DefaultCountry,
-                DefaultCurrency = s.DefaultCurrency ?? "EUR",
-                TimeZone = s.TimeZone,
-                DateFormat = s.DateFormat,
-                TimeFormat = s.TimeFormat,
-            AdminTextOverridesJson = s.AdminTextOverridesJson,
+                DefaultCulture = s.DefaultCulture ?? SiteSettingDto.DefaultCultureDefault,
+                SupportedCulturesCsv = s.SupportedCulturesCsv ?? SiteSettingDto.SupportedCulturesCsvDefault,
+                DefaultCountry = s.DefaultCountry ?? SiteSettingDto.DefaultCountryDefault,
+                DefaultCurrency = s.DefaultCurrency ?? SiteSettingDto.DefaultCurrencyDefault,
+                TimeZone = s.TimeZone ?? SiteSettingDto.TimeZoneDefault,
+                DateFormat = s.DateFormat ?? SiteSettingDto.DateFormatDefault,
+                TimeFormat = s.TimeFormat ?? SiteSettingDto.TimeFormatDefault,
+                AdminTextOverridesJson = s.AdminTextOverridesJson,
 
                 // JWT
                 JwtEnabled = s.JwtEnabled,

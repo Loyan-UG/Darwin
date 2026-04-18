@@ -1,5 +1,6 @@
 using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Queries;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Shipping;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +47,7 @@ public sealed class PublicShippingController : ApiControllerBase
                 SubtotalNetMinor = request.SubtotalNetMinor,
                 ShipmentMass = request.ShipmentMass,
                 Currency = request.Currency
-            }, request.Currency ?? "EUR", ct).ConfigureAwait(false);
+            }, request.Currency ?? SiteSettingDto.DefaultCurrencyDefault, ct).ConfigureAwait(false);
 
             return Ok(items.Select(MapOption).ToList());
         }

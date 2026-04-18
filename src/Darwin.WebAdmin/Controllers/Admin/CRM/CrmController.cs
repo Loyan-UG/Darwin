@@ -178,7 +178,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var vm = new CustomerEditVm();
             vm.Addresses.Add(new CustomerAddressVm
             {
-                Country = "DE",
+                Country = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault,
                 IsDefaultBilling = true,
                 IsDefaultShipping = true
             });
@@ -1290,7 +1290,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 vm.Addresses.Add(new CustomerAddressVm
                 {
-                    Country = "DE",
+                    Country = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault,
                     IsDefaultBilling = true,
                     IsDefaultShipping = true
                 });

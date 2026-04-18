@@ -242,6 +242,23 @@
                            hx-push-url="true">
                             <i class="fa-solid fa-pen"></i> @T.T("CommonEdit")
                         </a>
+                        <a asp-action="Setup"
+                           asp-route-id="@Model.Business.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
+                           hx-target="#business-locations-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa-solid fa-list-check"></i> @T.T("Setup")
+                        </a>
+                        <a asp-action="MerchantReadiness"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                           hx-target="#business-locations-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa-solid fa-clipboard-check"></i> @T.T("MerchantReadinessTitle")
+                        </a>
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger"
                                 data-bs-toggle="modal"

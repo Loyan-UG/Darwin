@@ -249,8 +249,8 @@
                     <label asp-for="DefaultCulture" class="form-label"></label>
                     <field-help title="@T.T("SiteSettingsDefaultCultureHelpTitle")" content="@T.T("SiteSettingsDefaultCultureHelpContent")" placement="right"></field-help>
                     <select asp-for="DefaultCulture" class="form-select">
-                        <option value="de-DE">@T.T("LocaleGermanGermany")</option>
-                        <option value="en-US">@T.T("LocaleEnglishUnitedStates")</option>
+                        <option value="@Darwin.WebAdmin.Localization.AdminCultureCatalog.German">@T.T("LocaleGermanGermany")</option>
+                        <option value="@Darwin.WebAdmin.Localization.AdminCultureCatalog.English">@T.T("LocaleEnglishUnitedStates")</option>
                     </select>
                     <span asp-validation-for="DefaultCulture" class="text-danger"></span>
                 </div>
@@ -267,7 +267,7 @@
                     <label asp-for="DefaultCountry" class="form-label"></label>
                     <field-help title="@T.T("SiteSettingsDefaultCountryHelpTitle")" content="@T.T("SiteSettingsDefaultCountryHelpContent")" placement="right"></field-help>
                     <select asp-for="DefaultCountry" class="form-select">
-                        <option value="DE">@T.T("CountryGermany")</option>
+                        <option value="@Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault">@T.T("CountryGermany")</option>
                         <option value="US">@T.T("CountryUnitedStates")</option>
                     </select>
                 </div>
@@ -275,7 +275,7 @@
                     <label asp-for="DefaultCurrency" class="form-label"></label>
                     <field-help title="@T.T("SiteSettingsDefaultCurrencyHelpTitle")" content="@T.T("SiteSettingsDefaultCurrencyHelpContent")" placement="right"></field-help>
                     <select asp-for="DefaultCurrency" class="form-select">
-                        <option value="EUR">@T.T("CurrencyEuro")</option>
+                        <option value="@Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault">@T.T("CurrencyEuro")</option>
                         <option value="USD">@T.T("CurrencyUsd")</option>
                     </select>
                 </div>
@@ -283,7 +283,7 @@
                     <label asp-for="TimeZone" class="form-label"></label>
                     <field-help title="@T.T("SiteSettingsTimeZoneHelpTitle")" content="@T.T("SiteSettingsTimeZoneHelpContent")" placement="right"></field-help>
                     <select asp-for="TimeZone" class="form-select">
-                        <option value="Europe/Berlin">@T.T("TimeZoneEuropeBerlin")</option>
+                        <option value="@Darwin.Application.Settings.DTOs.SiteSettingDto.TimeZoneDefault">@T.T("TimeZoneEuropeBerlin")</option>
                         <option value="UTC">@T.T("Utc")</option>
                     </select>
                 </div>

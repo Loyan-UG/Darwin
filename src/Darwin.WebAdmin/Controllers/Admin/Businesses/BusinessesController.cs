@@ -953,7 +953,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return RenderLocationEditor(new BusinessLocationEditVm
             {
                 BusinessId = businessId,
-                CountryCode = "DE",
+                CountryCode = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault,
                 Business = business
             }, isCreate: true);
         }

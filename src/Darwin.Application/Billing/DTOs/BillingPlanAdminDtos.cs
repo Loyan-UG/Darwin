@@ -1,4 +1,5 @@
 using Darwin.Domain.Enums;
+using Darwin.Application.Settings.DTOs;
 
 namespace Darwin.Application.Billing.DTOs;
 
@@ -8,7 +9,7 @@ public class BillingPlanCreateDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public long PriceMinor { get; set; }
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
     public BillingInterval Interval { get; set; } = BillingInterval.Month;
     public int IntervalCount { get; set; } = 1;
     public int? TrialDays { get; set; }
@@ -29,7 +30,7 @@ public sealed class BillingPlanListItemDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public long PriceMinor { get; set; }
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
     public BillingInterval Interval { get; set; } = BillingInterval.Month;
     public int IntervalCount { get; set; }
     public int? TrialDays { get; set; }

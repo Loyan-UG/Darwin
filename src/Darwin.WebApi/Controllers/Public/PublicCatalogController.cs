@@ -1,5 +1,6 @@
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Catalog;
 using Darwin.Contracts.Common;
 using Microsoft.AspNetCore.Mvc;
@@ -51,7 +52,7 @@ public sealed class PublicCatalogController : ApiControllerBase
             return BadRequestProblem("PageSize must be between 1 and 200.");
         }
 
-        var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var (items, total) = await _getPublishedCategoriesHandler
             .HandleAsync(normalizedPage, normalizedPageSize, normalizedCulture, ct)
             .ConfigureAwait(false);
@@ -95,7 +96,7 @@ public sealed class PublicCatalogController : ApiControllerBase
             return BadRequestProblem("PageSize must be between 1 and 200.");
         }
 
-        var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim();
+        var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var (items, total) = await _getPublishedProductsPageHandler
             .HandleAsync(normalizedPage, normalizedPageSize, normalizedCulture, categorySlug, ct)
             .ConfigureAwait(false);
@@ -123,7 +124,7 @@ public sealed class PublicCatalogController : ApiControllerBase
     public async Task<IActionResult> GetProductBySlugAsync([FromRoute] string slug, [FromQuery] string? culture, CancellationToken ct = default)
     {
         var dto = await _getPublishedProductBySlugHandler
-            .HandleAsync(slug, string.IsNullOrWhiteSpace(culture) ? "de-DE" : culture.Trim(), ct)
+            .HandleAsync(slug, string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim(), ct)
             .ConfigureAwait(false);
 
         return dto is null

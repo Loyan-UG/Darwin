@@ -1,6 +1,7 @@
 using Darwin.Application.Orders.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Orders;
 using Darwin.Contracts.Shipping;
 using Microsoft.AspNetCore.Authorization;
@@ -154,7 +155,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
                         PhoneE164 = request.ShippingAddress.PhoneE164
                     },
                 ShippingTotalMinor = request.ShippingTotalMinor,
-                Culture = string.IsNullOrWhiteSpace(request.Culture) ? "de-DE" : request.Culture.Trim()
+                Culture = string.IsNullOrWhiteSpace(request.Culture) ? SiteSettingDto.DefaultCultureDefault : request.Culture.Trim()
             }, ct).ConfigureAwait(false);
 
             return Ok(new PlaceOrderFromCartResponse

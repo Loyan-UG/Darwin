@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Enums;
 
 namespace Darwin.Application.Businesses.DTOs
@@ -27,9 +28,9 @@ namespace Darwin.Application.Businesses.DTOs
         public string? ContactEmail { get; set; }
         public string? ContactPhoneE164 { get; set; }
         public BusinessCategoryKind Category { get; set; } = BusinessCategoryKind.Unknown;
-        public string DefaultCurrency { get; set; } = "EUR";
-        public string DefaultCulture { get; set; } = "de-DE";
-        public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
+        public string DefaultCurrency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
+        public string DefaultCulture { get; set; } = SiteSettingDto.DefaultCultureDefault;
+        public string DefaultTimeZoneId { get; set; } = SiteSettingDto.TimeZoneDefault;
         public string? AdminTextOverridesJson { get; set; }
         public string? BrandDisplayName { get; set; }
         public string? BrandLogoUrl { get; set; }
@@ -59,9 +60,9 @@ namespace Darwin.Application.Businesses.DTOs
         public string? ContactEmail { get; set; }
         public string? ContactPhoneE164 { get; set; }
         public BusinessCategoryKind Category { get; set; } = BusinessCategoryKind.Unknown;
-        public string DefaultCurrency { get; set; } = "EUR";
-        public string DefaultCulture { get; set; } = "de-DE";
-        public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
+        public string DefaultCurrency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
+        public string DefaultCulture { get; set; } = SiteSettingDto.DefaultCultureDefault;
+        public string DefaultTimeZoneId { get; set; } = SiteSettingDto.TimeZoneDefault;
         public string? AdminTextOverridesJson { get; set; }
         public string? BrandDisplayName { get; set; }
         public string? BrandLogoUrl { get; set; }
