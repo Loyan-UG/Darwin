@@ -2676,6 +2676,9 @@
   <data name="LocalizationOperationalDefaults" xml:space="preserve">
     <value>Lokalisierung und operative Standards</value>
   </data>
+  <data name="BusinessSetupLocalizationOwnershipIntro" xml:space="preserve">
+    <value>Das Business-Setup besitzt den mandantenbezogenen Override fuer Kultur, Waehrung und Zeitzone. Aendere diese Werte nur, wenn dieses Business bewusst von der Plattform-Basis abweichen muss. Wenn alle Mandanten einen neuen Standard erben sollen, aendere stattdessen die Site Settings.</value>
+  </data>
   <data name="OpenGlobalLocalization" xml:space="preserve">
     <value>Globale Lokalisierung oeffnen</value>
   </data>

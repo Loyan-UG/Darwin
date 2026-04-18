@@ -414,6 +414,30 @@
                         <textarea asp-for="ShortDescription" class="form-control" rows="3"></textarea>
                     </div>
                 </div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="Details"
+                       asp-route-businessId="@Model.Id"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-target="#business-setup-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
+                    <a asp-controller="Billing"
+                       asp-action="TaxCompliance"
+                       asp-route-businessId="@Model.Id"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("TaxCompliance", "Billing", new { businessId = Model.Id })"
+                       hx-target="#business-setup-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("TaxComplianceTitle")</a>
+                    <a asp-action="MerchantReadiness"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-target="#business-setup-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                </div>
             </div>
         </div>
 
@@ -421,7 +445,7 @@
             <div class="card-header">@T.T("LocalizationOperationalDefaults")</div>
             <div class="card-body">
                 <div class="alert alert-light border small">
-                    Business setup owns the tenant-facing override for culture, currency, and time zone. Change these only when this business must differ from the platform fallback. If every tenant should inherit a new baseline, change Site Settings instead.
+                    @T.T("BusinessSetupLocalizationOwnershipIntro")
                     <div class="d-flex flex-wrap gap-2 mt-2">
                         <a asp-controller="SiteSettings"
                            asp-action="Edit"
@@ -438,6 +462,18 @@
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CustomerLocaleReview")</a>
+                        <a asp-action="MerchantReadiness"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                           hx-target="#business-setup-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                        <a asp-action="SupportQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("SupportQueue", "Businesses")"
+                           hx-target="#business-setup-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
                     </div>
                 </div>
                 <div class="row g-3">
@@ -538,6 +574,32 @@
                 </div>
                 <div class="form-text mt-2">
                     @T.T("BusinessCommunicationDefaultsHelp")
+                </div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="Details"
+                       asp-route-businessId="@Model.Id"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-target="#business-setup-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-businessId="@Model.Id"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-target="#business-setup-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("EmailAudits")</a>
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="ChannelAudits"
+                       asp-route-businessId="@Model.Id"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-target="#business-setup-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
                 </div>
             </div>
         </div>
@@ -922,6 +984,21 @@
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Mobile")</a>
+                                <a asp-controller="MobileOperations"
+                                   asp-action="Index"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations")"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                <a asp-controller="Users"
+                                   asp-action="Index"
+                                   asp-route-filter="Locked"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("UsersFilterLocked")</a>
                             </div>
                         </div>
                     </div>
@@ -962,6 +1039,30 @@
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("AdminAlerts")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="Details"
+                                   asp-route-businessId="@Model.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="EmailAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("EmailAudits")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="ChannelAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
                             </div>
                         </div>
                     </div>
@@ -969,13 +1070,32 @@
                         <div class="border rounded p-3 h-100">
                             <div class="fw-semibold">@T.T("BusinessSetupPaymentsShippingTitle")</div>
                             <div class="small text-muted mt-2">@T.T("BusinessSetupPaymentsShippingNote")</div>
-                            <a asp-controller="SiteSettings"
-                               asp-action="Edit"
-                               class="btn btn-sm btn-outline-secondary mt-3"
-                               hx-get="@Url.Action("Edit", "SiteSettings")"
-                               hx-target="#business-setup-shell"
-                               hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("OpenSiteSettingsAction")</a>
+                            <div class="d-flex gap-2 mt-3 flex-wrap">
+                                <a asp-controller="SiteSettings"
+                                   asp-action="Edit"
+                                   asp-fragment="site-settings-payments"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("Payments")</a>
+                                <a asp-controller="SiteSettings"
+                                   asp-action="Edit"
+                                   asp-fragment="site-settings-shipping"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("Shipping")</a>
+                                <a asp-controller="Billing"
+                                   asp-action="Payments"
+                                   asp-route-businessId="@Model.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Id })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("OpenPayments")</a>
+                            </div>
                         </div>
                     </div>
                 </div>

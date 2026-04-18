@@ -1352,6 +1352,55 @@ public sealed class SecurityAndPerformanceSourceTests
         setupShellSource.Should().Contain("@T.T(\"Tax\")");
     }
 
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepProfileAndLocalizationDefaultContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"BusinessProfile\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"TaxCompliance\", \"Billing\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@T.T(\"LocalizationOperationalDefaults\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSetupLocalizationOwnershipIntro\")");
+        setupShellSource.Should().Contain("fragment = \"site-settings-localization\"");
+        setupShellSource.Should().Contain("@Url.Action(\"Customers\", \"Crm\")");
+        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        setupShellSource.Should().Contain("@T.T(\"CustomerLocaleReview\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepCommunicationDefaultsAndPlatformDependencyContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaults\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaultsHelp\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSetupPaymentsShippingTitle\")");
+        setupShellSource.Should().Contain("fragment = \"site-settings-payments\"");
+        setupShellSource.Should().Contain("fragment = \"site-settings-shipping\"");
+        setupShellSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@T.T(\"OpenPayments\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSetupSecurityMobileAccessTitle\")");
+        setupShellSource.Should().Contain("fragment = \"site-settings-security\"");
+        setupShellSource.Should().Contain("fragment = \"site-settings-mobile\"");
+        setupShellSource.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = \"Locked\" })");
+        setupShellSource.Should().Contain("@T.T(\"MobileOperationsTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"UsersFilterLocked\")");
+        setupShellSource.Should().Contain("@T.T(\"Communications\")");
+        setupShellSource.Should().Contain("fragment = \"site-settings-smtp\"");
+        setupShellSource.Should().Contain("fragment = \"site-settings-sms\"");
+        setupShellSource.Should().Contain("fragment = \"site-settings-whatsapp\"");
+        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+    }
+
     private static string ReadWebApiFile(string relativePath)
     {
         var path = Path.GetFullPath(Path.Combine(
