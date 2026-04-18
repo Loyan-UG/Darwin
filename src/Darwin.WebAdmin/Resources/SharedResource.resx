@@ -7452,6 +7452,9 @@
   <data name="MerchantReadinessPlaybooksTitle" xml:space="preserve">
     <value>Merchant Readiness Playbooks</value>
   </data>
+  <data name="BusinessesOperationsPlaybooksTitle" xml:space="preserve">
+    <value>Business Operations Playbooks</value>
+  </data>
   <data name="MerchantReadinessQueueTitle" xml:space="preserve">
     <value>Merchant Readiness Queue</value>
   </data>

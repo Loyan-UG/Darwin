@@ -186,6 +186,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 AttentionOnly = attentionOnly,
                 ReadinessFilter = readinessFilter,
                 Summary = MapSupportSummaryVm(summary),
+                Playbooks = BuildMerchantReadinessPlaybooks(),
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 OperationalStatusItems = BuildBusinessStatusItems(operationalStatus),
                 Items = items.Select(x => new BusinessListItemVm
@@ -281,7 +282,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     FailureMessage = x.FailureMessage,
                     RecommendedAction = BuildSupportAuditRecommendedAction(x)
-                }).ToList()
+                }).ToList(),
+                Playbooks = BuildMerchantReadinessPlaybooks()
             };
 
             return RenderSupportQueueWorkspace(vm);
@@ -917,7 +919,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     MissingAddressCount = summary.MissingAddressCount,
                     MissingCoordinatesCount = summary.MissingCoordinatesCount
                 },
-                Playbooks = BuildBusinessLocationPlaybooks(),
+                Playbooks = BuildBusinessLocationPlaybooks(businessId),
                 Items = items.Select(x => new BusinessLocationListItemVm
                 {
                     Id = x.Id,
@@ -1127,6 +1129,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Query = query ?? string.Empty,
                 Filter = filter,
                 FilterItems = BuildBusinessMemberFilterItems(filter),
+                Summary = await BuildBusinessMemberOpsSummaryAsync(businessId, ct).ConfigureAwait(false),
+                Playbooks = BuildBusinessMemberPlaybooks(businessId),
                 Items = items.Select(x => new BusinessMemberListItemVm
                 {
                     Id = x.Id,
@@ -1174,6 +1178,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Query = query ?? string.Empty,
                 Filter = filter,
                 FilterItems = BuildBusinessInvitationFilterItems(filter),
+                Summary = await BuildBusinessInvitationOpsSummaryAsync(businessId, ct).ConfigureAwait(false),
+                Playbooks = BuildBusinessInvitationPlaybooks(businessId),
                 Items = items.Select(x => new BusinessInvitationListItemVm
                 {
                     Id = x.Id,
@@ -1213,6 +1219,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                Playbooks = BuildBusinessOwnerOverrideAuditPlaybooks(businessId),
                 Items = items.Select(x => new BusinessOwnerOverrideAuditListItemVm
                 {
                     Id = x.Id,
@@ -1999,6 +2006,59 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             yield return new SelectListItem("Locked", BusinessMemberSupportFilter.Locked.ToString(), selectedFilter == BusinessMemberSupportFilter.Locked);
         }
 
+        private async Task<BusinessMemberOpsSummaryVm> BuildBusinessMemberOpsSummaryAsync(Guid businessId, CancellationToken ct)
+        {
+            var (_, totalCount) = await _getBusinessMembersPage.HandleAsync(businessId, 1, 1, null, BusinessMemberSupportFilter.All, ct).ConfigureAwait(false);
+            var (_, pendingActivationCount) = await _getBusinessMembersPage.HandleAsync(businessId, 1, 1, null, BusinessMemberSupportFilter.PendingActivation, ct).ConfigureAwait(false);
+            var (_, lockedCount) = await _getBusinessMembersPage.HandleAsync(businessId, 1, 1, null, BusinessMemberSupportFilter.Locked, ct).ConfigureAwait(false);
+            var (_, attentionCount) = await _getBusinessMembersPage.HandleAsync(businessId, 1, 1, null, BusinessMemberSupportFilter.Attention, ct).ConfigureAwait(false);
+
+            return new BusinessMemberOpsSummaryVm
+            {
+                TotalCount = totalCount,
+                PendingActivationCount = pendingActivationCount,
+                LockedCount = lockedCount,
+                AttentionCount = attentionCount
+            };
+        }
+
+        private List<BusinessMemberPlaybookVm> BuildBusinessMemberPlaybooks(Guid businessId)
+        {
+            return new List<BusinessMemberPlaybookVm>
+            {
+                new()
+                {
+                    QueueLabel = T("PendingActivation"),
+                    WhyItMatters = T("BusinessMembersPendingActivationNote"),
+                    OperatorAction = T("BusinessMemberSendActivationAction"),
+                    QueueActionLabel = T("PendingActivation"),
+                    QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.PendingActivation }) ?? string.Empty,
+                    FollowUpLabel = T("MobileOperationsTitle"),
+                    FollowUpUrl = Url.Action("Index", "MobileOperations") ?? string.Empty
+                },
+                new()
+                {
+                    QueueLabel = T("Locked"),
+                    WhyItMatters = T("UsersPlaybookLockedScope"),
+                    OperatorAction = T("UsersPlaybookLockedAction"),
+                    QueueActionLabel = T("UsersFilterLocked"),
+                    QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.Locked }) ?? string.Empty,
+                    FollowUpLabel = T("UsersFilterLocked"),
+                    FollowUpUrl = Url.Action("Index", "Users", new { filter = "Locked" }) ?? string.Empty
+                },
+                new()
+                {
+                    QueueLabel = T("MissingActiveOwner"),
+                    WhyItMatters = T("BusinessMembersNoActiveOwnerWarning"),
+                    OperatorAction = T("BusinessMembersAssignMemberAction"),
+                    QueueActionLabel = T("NeedsAttention"),
+                    QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.Attention }) ?? string.Empty,
+                    FollowUpLabel = T("OwnerOverrideAuditTitle"),
+                    FollowUpUrl = Url.Action("OwnerOverrideAudits", "Businesses", new { businessId }) ?? string.Empty
+                }
+            };
+        }
+
         private static IEnumerable<SelectListItem> BuildBusinessInvitationFilterItems(BusinessInvitationQueueFilter selectedFilter)
         {
             yield return new SelectListItem("All invitations", BusinessInvitationQueueFilter.All.ToString(), selectedFilter == BusinessInvitationQueueFilter.All);
@@ -2007,6 +2067,96 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             yield return new SelectListItem("Expired", BusinessInvitationQueueFilter.Expired.ToString(), selectedFilter == BusinessInvitationQueueFilter.Expired);
             yield return new SelectListItem("Accepted", BusinessInvitationQueueFilter.Accepted.ToString(), selectedFilter == BusinessInvitationQueueFilter.Accepted);
             yield return new SelectListItem("Revoked", BusinessInvitationQueueFilter.Revoked.ToString(), selectedFilter == BusinessInvitationQueueFilter.Revoked);
+        }
+
+        private async Task<BusinessInvitationOpsSummaryVm> BuildBusinessInvitationOpsSummaryAsync(Guid businessId, CancellationToken ct)
+        {
+            var (_, totalCount) = await _getBusinessInvitationsPage.HandleAsync(businessId, 1, 1, null, BusinessInvitationQueueFilter.All, ct).ConfigureAwait(false);
+            var (_, openCount) = await _getBusinessInvitationsPage.HandleAsync(businessId, 1, 1, null, BusinessInvitationQueueFilter.Open, ct).ConfigureAwait(false);
+            var (_, pendingCount) = await _getBusinessInvitationsPage.HandleAsync(businessId, 1, 1, null, BusinessInvitationQueueFilter.Pending, ct).ConfigureAwait(false);
+            var (_, expiredCount) = await _getBusinessInvitationsPage.HandleAsync(businessId, 1, 1, null, BusinessInvitationQueueFilter.Expired, ct).ConfigureAwait(false);
+
+            return new BusinessInvitationOpsSummaryVm
+            {
+                TotalCount = totalCount,
+                OpenCount = openCount,
+                PendingCount = pendingCount,
+                ExpiredCount = expiredCount
+            };
+        }
+
+        private List<BusinessInvitationPlaybookVm> BuildBusinessInvitationPlaybooks(Guid businessId)
+        {
+            return new List<BusinessInvitationPlaybookVm>
+            {
+                new()
+                {
+                    QueueLabel = T("OpenInvitations"),
+                    WhyItMatters = "Open invitation rows are the first place to review onboarding friction before member activation or business-access support drifts wider.",
+                    OperatorAction = "Review pending and expired invitation rows first, then resend or revoke only after confirming the latest onboarding state.",
+                    QueueActionLabel = T("OpenInvitations"),
+                    QueueActionUrl = Url.Action("Invitations", "Businesses", new { businessId, filter = BusinessInvitationQueueFilter.Open }) ?? string.Empty,
+                    FollowUpLabel = T("FailedInvitations"),
+                    FollowUpUrl = Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "BusinessInvitation", status = "Failed" }) ?? string.Empty
+                },
+                new()
+                {
+                    QueueLabel = T("Pending"),
+                    WhyItMatters = "Pending invitations often need support follow-up before they silently turn into account-activation or owner-coverage gaps.",
+                    OperatorAction = "Start with still-pending invitations when onboarding progress is unclear, especially before escalating to broader merchant support.",
+                    QueueActionLabel = T("Pending"),
+                    QueueActionUrl = Url.Action("Invitations", "Businesses", new { businessId, filter = BusinessInvitationQueueFilter.Pending }) ?? string.Empty,
+                    FollowUpLabel = T("BusinessSupportQueueTitle"),
+                    FollowUpUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty
+                },
+                new()
+                {
+                    QueueLabel = T("Expired"),
+                    WhyItMatters = "Expired invitations usually indicate onboarding drift, stale recipient details, or unresolved operator follow-up.",
+                    OperatorAction = "Review expired rows before creating fresh invites so the same recipient does not accumulate conflicting invitation history.",
+                    QueueActionLabel = T("Expired"),
+                    QueueActionUrl = Url.Action("Invitations", "Businesses", new { businessId, filter = BusinessInvitationQueueFilter.Expired }) ?? string.Empty,
+                    FollowUpLabel = T("BusinessInvitationsInviteUserAction"),
+                    FollowUpUrl = Url.Action("CreateInvitation", "Businesses", new { businessId }) ?? string.Empty
+                }
+            };
+        }
+
+        private List<BusinessOwnerOverrideAuditPlaybookVm> BuildBusinessOwnerOverrideAuditPlaybooks(Guid businessId)
+        {
+            return new List<BusinessOwnerOverrideAuditPlaybookVm>
+            {
+                new()
+                {
+                    QueueLabel = T("BusinessOwnerOverrideForceRemove"),
+                    WhyItMatters = "Forced removal of the last active owner is a governance-level intervention and should not become a silent substitute for normal membership cleanup.",
+                    OperatorAction = "Review the affected membership and current owner coverage before repeating a forced removal path.",
+                    QueueActionLabel = T("CommonMembers"),
+                    QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.Attention }) ?? string.Empty,
+                    FollowUpLabel = T("BusinessSupportQueueTitle"),
+                    FollowUpUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty
+                },
+                new()
+                {
+                    QueueLabel = T("BusinessOwnerOverrideDemoteDeactivate"),
+                    WhyItMatters = "Demotion or deactivation of an owner can leave approval, setup, and member escalation paths without a clear accountable operator.",
+                    OperatorAction = "Re-check active-owner coverage and membership state before approving further lifecycle changes on the business.",
+                    QueueActionLabel = T("NeedsAttention"),
+                    QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.Attention }) ?? string.Empty,
+                    FollowUpLabel = T("MerchantReadinessTitle"),
+                    FollowUpUrl = Url.Action("MerchantReadiness", "Businesses") ?? string.Empty
+                },
+                new()
+                {
+                    QueueLabel = T("MissingActiveOwner"),
+                    WhyItMatters = "Owner-gap drift usually surfaces first as an audit or support anomaly before it becomes a broader merchant-readiness or escalation problem.",
+                    OperatorAction = "Use the audit trail together with members and merchant-readiness signals before assigning a replacement owner or escalating support.",
+                    QueueActionLabel = T("CommonMembers"),
+                    QueueActionUrl = Url.Action("Members", "Businesses", new { businessId }) ?? string.Empty,
+                    FollowUpLabel = T("CommonSetup"),
+                    FollowUpUrl = Url.Action("Setup", "Businesses", new { id = businessId }) ?? string.Empty
+                }
+            };
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)
@@ -2188,7 +2338,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Plans = planVms,
                 InvoiceSummary = MapBusinessSubscriptionInvoiceOpsSummaryVm(invoiceSummary),
                 RecentInvoices = recentInvoices.Items.Select(MapBusinessSubscriptionInvoiceListItemVm).ToList(),
-                Playbooks = BuildSubscriptionPlaybooks(subscription, managementWebsiteConfigured)
+                Playbooks = BuildSubscriptionPlaybooks(business.Id, subscription, managementWebsiteConfigured)
             };
         }
 
@@ -2281,19 +2431,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 {
                     Title = T("MerchantReadinessPlaybookApprovalTitle"),
                     ScopeNote = T("MerchantReadinessPlaybookApprovalScope"),
-                    OperatorAction = T("MerchantReadinessPlaybookApprovalAction")
+                    OperatorAction = T("MerchantReadinessPlaybookApprovalAction"),
+                    QueueActionLabel = T("PendingApproval"),
+                    QueueActionUrl = Url.Action("Index", "Businesses", new { operationalStatus = BusinessOperationalStatus.PendingApproval }) ?? string.Empty,
+                    FollowUpLabel = T("BusinessSupportQueueTitle"),
+                    FollowUpUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty
                 },
                 new()
                 {
                     Title = T("MerchantReadinessPlaybookSetupTitle"),
                     ScopeNote = T("MerchantReadinessPlaybookSetupScope"),
-                    OperatorAction = T("MerchantReadinessPlaybookSetupAction")
+                    OperatorAction = T("MerchantReadinessPlaybookSetupAction"),
+                    QueueActionLabel = T("NeedsAttention"),
+                    QueueActionUrl = Url.Action("Index", "Businesses", new { attentionOnly = true }) ?? string.Empty,
+                    FollowUpLabel = T("CommonSetup"),
+                    FollowUpUrl = Url.Action("MerchantReadiness", "Businesses") ?? string.Empty
                 },
                 new()
                 {
                     Title = T("MerchantReadinessPlaybookBillingTitle"),
                     ScopeNote = T("MerchantReadinessPlaybookBillingScope"),
-                    OperatorAction = T("MerchantReadinessPlaybookBillingAction")
+                    OperatorAction = T("MerchantReadinessPlaybookBillingAction"),
+                    QueueActionLabel = T("ApprovedInactive"),
+                    QueueActionUrl = Url.Action("Index", "Businesses", new { readinessFilter = BusinessReadinessQueueFilter.ApprovedInactive }) ?? string.Empty,
+                    FollowUpLabel = T("Payments"),
+                    FollowUpUrl = Url.Action("Payments", "Billing") ?? string.Empty
                 }
             };
         }
@@ -2341,7 +2503,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
         }
 
-        private static List<BusinessSubscriptionPlaybookVm> BuildSubscriptionPlaybooks(BusinessSubscriptionSnapshotVm subscription, bool managementWebsiteConfigured)
+        private List<BusinessSubscriptionPlaybookVm> BuildSubscriptionPlaybooks(Guid businessId, BusinessSubscriptionSnapshotVm subscription, bool managementWebsiteConfigured)
         {
             var items = new List<BusinessSubscriptionPlaybookVm>
             {
@@ -2351,7 +2513,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     WhyItMatters = "Business app subscription changes rely on the external management website handoff in phase 1.",
                     OperatorAction = managementWebsiteConfigured
                         ? "Use the configured management website for upgrade, checkout, and billing handoff."
-                        : "Configure the business management website in site settings before handing operators off to external billing management."
+                        : "Configure the business management website in site settings before handing operators off to external billing management.",
+                    QueueActionLabel = T("CommonSetup"),
+                    QueueActionUrl = Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" }) ?? string.Empty,
+                    FollowUpLabel = T("CommonPayments"),
+                    FollowUpUrl = Url.Action("Payments", "Billing", new { businessId }) ?? string.Empty
                 },
                 new()
                 {
@@ -2359,7 +2525,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     WhyItMatters = "Cancel-at-period-end changes directly affect business continuity and renewal expectations.",
                     OperatorAction = subscription.HasSubscription
                         ? "Review renewal intent and toggle cancel-at-period-end only after confirming the business wants to stop renewal."
-                        : "No active subscription exists yet, so cancellation control is not applicable."
+                        : "No active subscription exists yet, so cancellation control is not applicable.",
+                    QueueActionLabel = T("BusinessSubscriptionOpenInvoiceQueue"),
+                    QueueActionUrl = Url.Action("SubscriptionInvoices", "Businesses", new { businessId, filter = BusinessSubscriptionInvoiceQueueFilter.Open }) ?? string.Empty,
+                    FollowUpLabel = T("CommonPayments"),
+                    FollowUpUrl = Url.Action("Payments", "Billing", new { businessId }) ?? string.Empty
                 }
             };
 
@@ -2369,7 +2539,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 {
                     QueueLabel = "No Active Plan",
                     WhyItMatters = "Businesses without an active subscription may still expect access or billing support from admin.",
-                    OperatorAction = "Review available plans and use the external billing-management handoff when the business is ready to start or upgrade."
+                    OperatorAction = "Review available plans and use the external billing-management handoff when the business is ready to start or upgrade.",
+                    QueueActionLabel = T("BusinessSubscriptionOpenInvoiceQueue"),
+                    QueueActionUrl = Url.Action("SubscriptionInvoices", "Businesses", new { businessId, filter = BusinessSubscriptionInvoiceQueueFilter.All }) ?? string.Empty,
+                    FollowUpLabel = T("BusinessSupportQueueTitle"),
+                    FollowUpUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty
                 });
             }
 
@@ -2397,7 +2571,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             yield return new SelectListItem("Missing coordinates", BusinessLocationQueueFilter.MissingCoordinates.ToString(), selectedFilter == BusinessLocationQueueFilter.MissingCoordinates);
         }
 
-        private static List<BusinessLocationPlaybookVm> BuildBusinessLocationPlaybooks()
+        private List<BusinessLocationPlaybookVm> BuildBusinessLocationPlaybooks(Guid businessId)
         {
             return new List<BusinessLocationPlaybookVm>
             {
@@ -2405,19 +2579,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 {
                     QueueLabel = "Primary location",
                     WhyItMatters = "Business-facing operational flows usually assume one clear primary location for default fulfillment and storefront context.",
-                    OperatorAction = "Review whether the current primary location still represents the live business entry point before onboarding or go-live approval."
+                    OperatorAction = "Review whether the current primary location still represents the live business entry point before onboarding or go-live approval.",
+                    QueueActionUrl = Url.Action("Locations", "Businesses", new { businessId, filter = BusinessLocationQueueFilter.Primary }) ?? string.Empty
                 },
                 new()
                 {
                     QueueLabel = "Missing address",
                     WhyItMatters = "Incomplete address data weakens shipping, invoicing, and public business visibility across admin and mobile workflows.",
-                    OperatorAction = "Open the location and complete street, city, and country before relying on the location for live operations."
+                    OperatorAction = "Open the location and complete street, city, and country before relying on the location for live operations.",
+                    QueueActionUrl = Url.Action("Locations", "Businesses", new { businessId, filter = BusinessLocationQueueFilter.MissingAddress }) ?? string.Empty
                 },
                 new()
                 {
                     QueueLabel = "Missing coordinates",
                     WhyItMatters = "Geo-dependent discovery, mapping, and future nearby-business experiences depend on a stored coordinate.",
-                    OperatorAction = "Open the location and add coordinates when the business expects map-aware or proximity-aware experiences."
+                    OperatorAction = "Open the location and add coordinates when the business expects map-aware or proximity-aware experiences.",
+                    QueueActionUrl = Url.Action("Locations", "Businesses", new { businessId, filter = BusinessLocationQueueFilter.MissingCoordinates }) ?? string.Empty
                 }
             };
         }

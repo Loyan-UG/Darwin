@@ -45,6 +45,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public BusinessReadinessQueueFilter? ReadinessFilter { get; set; }
         public BusinessSupportSummaryVm Summary { get; set; } = new();
         public List<BusinessListItemVm> Items { get; set; } = new();
+        public List<MerchantReadinessPlaybookVm> Playbooks { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> OperationalStatusItems { get; set; } = Array.Empty<SelectListItem>();
     }
@@ -57,6 +58,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public BusinessSupportSummaryVm Summary { get; set; } = new();
         public List<BusinessListItemVm> AttentionBusinesses { get; set; } = new();
         public List<BusinessSupportFailedEmailVm> FailedEmails { get; set; } = new();
+        public List<MerchantReadinessPlaybookVm> Playbooks { get; set; } = new();
     }
 
     public sealed class MerchantReadinessWorkspaceVm
@@ -85,12 +87,16 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public DateTime? CurrentPeriodEndUtc { get; set; }
     }
 
-    public sealed class MerchantReadinessPlaybookVm
-    {
-        public string Title { get; set; } = string.Empty;
-        public string ScopeNote { get; set; } = string.Empty;
-        public string OperatorAction { get; set; } = string.Empty;
-    }
+public sealed class MerchantReadinessPlaybookVm
+{
+    public string Title { get; set; } = string.Empty;
+    public string ScopeNote { get; set; } = string.Empty;
+    public string OperatorAction { get; set; } = string.Empty;
+    public string QueueActionLabel { get; set; } = string.Empty;
+    public string QueueActionUrl { get; set; } = string.Empty;
+    public string FollowUpLabel { get; set; } = string.Empty;
+    public string FollowUpUrl { get; set; } = string.Empty;
+}
 
     public sealed class BusinessSupportSummaryVm
     {
@@ -233,6 +239,10 @@ public sealed class BusinessSubscriptionPlaybookVm
     public string QueueLabel { get; set; } = string.Empty;
     public string WhyItMatters { get; set; } = string.Empty;
     public string OperatorAction { get; set; } = string.Empty;
+    public string QueueActionLabel { get; set; } = string.Empty;
+    public string QueueActionUrl { get; set; } = string.Empty;
+    public string FollowUpLabel { get; set; } = string.Empty;
+    public string FollowUpUrl { get; set; } = string.Empty;
 }
 
 public sealed class BusinessSubscriptionInvoiceOpsSummaryVm
@@ -376,6 +386,7 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public string QueueLabel { get; set; } = string.Empty;
         public string WhyItMatters { get; set; } = string.Empty;
         public string OperatorAction { get; set; } = string.Empty;
+        public string QueueActionUrl { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -432,7 +443,28 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public string Query { get; set; } = string.Empty;
         public BusinessMemberSupportFilter Filter { get; set; } = BusinessMemberSupportFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+        public BusinessMemberOpsSummaryVm Summary { get; set; } = new();
+        public List<BusinessMemberPlaybookVm> Playbooks { get; set; } = new();
         public List<BusinessMemberListItemVm> Items { get; set; } = new();
+    }
+
+    public sealed class BusinessMemberOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int PendingActivationCount { get; set; }
+        public int LockedCount { get; set; }
+        public int AttentionCount { get; set; }
+    }
+
+    public sealed class BusinessMemberPlaybookVm
+    {
+        public string QueueLabel { get; set; } = string.Empty;
+        public string WhyItMatters { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
+        public string QueueActionLabel { get; set; } = string.Empty;
+        public string QueueActionUrl { get; set; } = string.Empty;
+        public string FollowUpLabel { get; set; } = string.Empty;
+        public string FollowUpUrl { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -508,7 +540,28 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public string Query { get; set; } = string.Empty;
         public BusinessInvitationQueueFilter Filter { get; set; } = BusinessInvitationQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+        public BusinessInvitationOpsSummaryVm Summary { get; set; } = new();
+        public List<BusinessInvitationPlaybookVm> Playbooks { get; set; } = new();
         public List<BusinessInvitationListItemVm> Items { get; set; } = new();
+    }
+
+    public sealed class BusinessInvitationOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int OpenCount { get; set; }
+        public int PendingCount { get; set; }
+        public int ExpiredCount { get; set; }
+    }
+
+    public sealed class BusinessInvitationPlaybookVm
+    {
+        public string QueueLabel { get; set; } = string.Empty;
+        public string WhyItMatters { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
+        public string QueueActionLabel { get; set; } = string.Empty;
+        public string QueueActionUrl { get; set; } = string.Empty;
+        public string FollowUpLabel { get; set; } = string.Empty;
+        public string FollowUpUrl { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -572,6 +625,18 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public List<BusinessOwnerOverrideAuditPlaybookVm> Playbooks { get; set; } = new();
         public List<BusinessOwnerOverrideAuditListItemVm> Items { get; set; } = new();
+    }
+
+    public sealed class BusinessOwnerOverrideAuditPlaybookVm
+    {
+        public string QueueLabel { get; set; } = string.Empty;
+        public string WhyItMatters { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
+        public string QueueActionLabel { get; set; } = string.Empty;
+        public string QueueActionUrl { get; set; } = string.Empty;
+        public string FollowUpLabel { get; set; } = string.Empty;
+        public string FollowUpUrl { get; set; } = string.Empty;
     }
 }

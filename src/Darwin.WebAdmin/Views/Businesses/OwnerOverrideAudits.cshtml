@@ -54,6 +54,50 @@
     </div>
 </form>
 
+<div class="card mb-3">
+    <div class="card-header">@T.T("BusinessesOperationsPlaybooksTitle")</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>@T.T("BusinessSubscriptionQueueColumn")</th>
+                        <th>@T.T("WhyItMatters")</th>
+                        <th>@T.T("OperatorAction")</th>
+                        <th>@T.T("CommonActions")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@playbook.QueueLabel</td>
+                        <td>@playbook.WhyItMatters</td>
+                        <td>@playbook.OperatorAction</td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="@playbook.QueueActionUrl"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#business-owner-override-audits-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.QueueActionLabel</a>
+                                <a href="@playbook.FollowUpUrl"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@playbook.FollowUpUrl"
+                                   hx-target="#business-owner-override-audits-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.FollowUpLabel</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="table-responsive">
     <table class="table table-sm table-hover align-middle">
         <thead>
@@ -63,13 +107,14 @@
                 <th>@T.T("CommonAction")</th>
                 <th>@T.T("CommonActor")</th>
                 <th>@T.T("CommonReason")</th>
+                <th class="text-end">@T.T("CommonActions")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
             <tr>
-                <td colspan="5" class="text-center text-muted py-4">@T.T("BusinessOwnerOverrideAuditsEmptyState")</td>
+                <td colspan="6" class="text-center text-muted py-4">@T.T("BusinessOwnerOverrideAuditsEmptyState")</td>
             </tr>
         }
         else
@@ -94,6 +139,25 @@
                     </td>
                     <td>@(string.IsNullOrWhiteSpace(item.ActorDisplayName) ? T.T("CommonSystemUnknown") : item.ActorDisplayName)</td>
                     <td>@item.Reason</td>
+                    <td class="text-end">
+                        <div class="d-flex flex-wrap justify-content-end gap-2">
+                            <a asp-controller="Users"
+                               asp-action="Edit"
+                               asp-route-id="@item.AffectedUserId"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "Users", new { id = item.AffectedUserId })"
+                               hx-target="#business-owner-override-audits-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("OpenUserAction")</a>
+                            <a asp-action="Members"
+                               asp-route-businessId="@Model.Business.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+                               hx-target="#business-owner-override-audits-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("CommonMembers")</a>
+                        </div>
+                    </td>
                 </tr>
             }
         }

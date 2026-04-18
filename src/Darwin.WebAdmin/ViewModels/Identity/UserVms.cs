@@ -65,6 +65,8 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public int LockedCount { get; set; }
         public int InactiveCount { get; set; }
         public int MobileLinkedCount { get; set; }
+        public int FailedActivationEmailCount { get; set; }
+        public int FailedPasswordResetEmailCount { get; set; }
     }
 
     public sealed class UserSupportPlaybookVm
@@ -73,6 +75,9 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public string ScopeNote { get; set; } = string.Empty;
         public string OperatorAction { get; set; } = string.Empty;
         public string FollowUp { get; set; } = string.Empty;
+        public UserQueueFilter QueueFilter { get; set; } = UserQueueFilter.All;
+        public string? AuditFlowKey { get; set; }
+        public bool OpensMobileOperations { get; set; }
     }
 
     /// <summary>

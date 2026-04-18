@@ -67,24 +67,63 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small text-uppercase">@T.T("Total")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+            <div class="mt-2">
+                <a asp-action="Locations"
+                   asp-route-businessId="@Model.Business.Id"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Business.Id })"
+                   hx-target="#business-locations-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Total")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small text-uppercase">@T.T("Primary")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PrimaryCount</div>
+            <div class="mt-2">
+                <a asp-action="Locations"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessLocationQueueFilter.Primary"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessLocationQueueFilter.Primary })"
+                   hx-target="#business-locations-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Primary")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small text-uppercase">@T.T("MissingAddress")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingAddressCount</div>
+            <div class="mt-2">
+                <a asp-action="Locations"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessLocationQueueFilter.MissingAddress"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessLocationQueueFilter.MissingAddress })"
+                   hx-target="#business-locations-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("MissingAddress")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small text-uppercase">@T.T("BusinessLocationsMissingCoordinatesLabel")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingCoordinatesCount</div>
+            <div class="mt-2">
+                <a asp-action="Locations"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessLocationQueueFilter.MissingCoordinates"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessLocationQueueFilter.MissingCoordinates })"
+                   hx-target="#business-locations-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("BusinessLocationsMissingCoordinatesLabel")</a>
+            </div>
         </div>
     </div>
 </div>
@@ -92,12 +131,38 @@
 <div class="card mb-3">
     <div class="card-header">@T.T("BusinessLocationsPlaybooksTitle")</div>
     <div class="card-body">
-        <ul class="mb-0">
-            @foreach (var playbook in Model.Playbooks)
-            {
-                <li><strong>@playbook.QueueLabel:</strong> @playbook.OperatorAction <span class="text-muted">@playbook.WhyItMatters</span></li>
-            }
-        </ul>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@T.T("Playbook")</th>
+                        <th>@T.T("WhyItMatters")</th>
+                        <th>@T.T("OperatorAction")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@playbook.QueueLabel</td>
+                        <td>@playbook.WhyItMatters</td>
+                        <td>
+                            <div class="mb-2">@playbook.OperatorAction</div>
+                            @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))
+                            {
+                                <a href="@playbook.QueueActionUrl"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#business-locations-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.QueueLabel</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

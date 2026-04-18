@@ -55,17 +55,65 @@ else
             {
                 <tr>
                     <td>
-                        <div class="fw-semibold">@item.Email</div>
+                        <div class="fw-semibold">
+                            <a asp-controller="BusinessCommunications"
+                               asp-action="EmailAudits"
+                               asp-route-status="Failed"
+                               asp-route-flowKey="BusinessInvitation"
+                               asp-route-recipientEmail="@item.Email"
+                               class="link-body-emphasis text-decoration-none"
+                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", recipientEmail = item.Email })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@item.Email</a>
+                        </div>
                         <div class="small text-muted">@string.Format(T.T("BusinessSetupInvitationsPreviewExpiresAt"), item.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm"))</div>
+                        <div class="d-flex gap-2 flex-wrap mt-2">
+                            <a asp-action="Invitations"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-filter="Open"
+                               asp-route-q="@item.Email"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = "Open", q = item.Email })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("BusinessSetupOpenInvitationsAction")</a>
+                            <a asp-controller="BusinessCommunications"
+                               asp-action="EmailAudits"
+                               asp-route-status="Failed"
+                               asp-route-flowKey="BusinessInvitation"
+                               asp-route-recipientEmail="@item.Email"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", recipientEmail = item.Email })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("OpenFailedInvitationEmails")</a>
+                        </div>
                     </td>
                     <td>
                         @if (item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Pending)
                         {
-                            <span class="badge text-bg-primary">@T.T("Pending")</span>
+                            <a asp-action="Invitations"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-filter="Pending"
+                               asp-route-q="@item.Email"
+                               class="badge text-bg-primary text-decoration-none"
+                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = "Pending", q = item.Email })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Pending")</a>
                         }
                         else
                         {
-                            <span class="badge text-bg-warning">@T.T("Expired")</span>
+                            <a asp-action="Invitations"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-filter="Expired"
+                               asp-route-q="@item.Email"
+                               class="badge text-bg-warning text-decoration-none"
+                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = "Expired", q = item.Email })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Expired")</a>
                         }
                     </td>
                     <td>@item.Role</td>

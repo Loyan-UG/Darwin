@@ -198,6 +198,56 @@
 
 <partial name="~/Views/Businesses/_SupportQueueSummary.cshtml" model="Model.Summary" />
 
+<div class="card mb-3">
+    <div class="card-header">@T.T("BusinessesOperationsPlaybooksTitle")</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@T.T("Playbook")</th>
+                        <th>@T.T("TaxComplianceScopeColumn")</th>
+                        <th>@T.T("OperatorAction")</th>
+                        <th>@T.T("UsersPlaybooksFollowUpColumn")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@playbook.Title</td>
+                        <td>@playbook.ScopeNote</td>
+                        <td>
+                            <div class="mb-2">@playbook.OperatorAction</div>
+                            @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))
+                            {
+                                <a href="@playbook.QueueActionUrl"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.QueueActionLabel</a>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(playbook.FollowUpUrl))
+                            {
+                                <a href="@playbook.FollowUpUrl"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@playbook.FollowUpUrl"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.FollowUpLabel</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <div class="col-xl-7">
         <partial name="~/Views/Businesses/_SupportQueueAttentionBusinesses.cshtml" model="Model.AttentionBusinesses" />

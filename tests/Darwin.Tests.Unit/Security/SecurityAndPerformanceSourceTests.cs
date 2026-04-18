@@ -592,6 +592,172 @@ public sealed class SecurityAndPerformanceSourceTests
     }
 
     [Fact]
+    public void BusinessesWorkspaces_Should_KeepMerchantPlaybookContractsWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var indexViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Index.cshtml"));
+        var supportQueueViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "SupportQueue.cshtml"));
+
+        controllerSource.Should().Contain("Playbooks = BuildMerchantReadinessPlaybooks()");
+        controllerSource.Should().Contain("private List<MerchantReadinessPlaybookVm> BuildMerchantReadinessPlaybooks()");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"PendingApproval\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"BusinessSupportQueueTitle\")");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"NeedsAttention\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"CommonSetup\")");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"ApprovedInactive\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"Payments\")");
+
+        indexViewSource.Should().Contain("BusinessesOperationsPlaybooksTitle");
+        indexViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
+        indexViewSource.Should().Contain("hx-target=\"#businesses-workspace-shell\"");
+        supportQueueViewSource.Should().Contain("BusinessesOperationsPlaybooksTitle");
+        supportQueueViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
+        supportQueueViewSource.Should().Contain("hx-target=\"#business-support-queue-workspace-shell\"");
+    }
+
+    [Fact]
+    public void BusinessLocationsAndSubscriptionInvoiceWorkspaces_Should_KeepFilteredOpsContractsWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var locationsViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Locations.cshtml"));
+        var subscriptionInvoicesViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "SubscriptionInvoices.cshtml"));
+
+        controllerSource.Should().Contain("Playbooks = BuildBusinessLocationPlaybooks(businessId)");
+        controllerSource.Should().Contain("private List<BusinessLocationPlaybookVm> BuildBusinessLocationPlaybooks(Guid businessId)");
+        controllerSource.Should().Contain("QueueActionUrl = Url.Action(\"Locations\", \"Businesses\", new { businessId, filter = BusinessLocationQueueFilter.Primary }) ?? string.Empty");
+        controllerSource.Should().Contain("QueueActionUrl = Url.Action(\"Locations\", \"Businesses\", new { businessId, filter = BusinessLocationQueueFilter.MissingAddress }) ?? string.Empty");
+        controllerSource.Should().Contain("QueueActionUrl = Url.Action(\"Locations\", \"Businesses\", new { businessId, filter = BusinessLocationQueueFilter.MissingCoordinates }) ?? string.Empty");
+
+        locationsViewSource.Should().Contain("BusinessLocationsPlaybooksTitle");
+        locationsViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
+        locationsViewSource.Should().Contain("hx-target=\"#business-locations-workspace-shell\"");
+        locationsViewSource.Should().Contain("BusinessLocationQueueFilter.Primary");
+        locationsViewSource.Should().Contain("BusinessLocationQueueFilter.MissingAddress");
+        locationsViewSource.Should().Contain("BusinessLocationQueueFilter.MissingCoordinates");
+
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionBillingPlaybooksTitle");
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.Open");
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.Paid");
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.Draft");
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.Uncollectible");
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.Stripe");
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.Overdue");
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.PdfMissing");
+        subscriptionInvoicesViewSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing");
+        subscriptionInvoicesViewSource.Should().Contain("hx-target=\"#business-subscription-invoices-workspace-shell\"");
+    }
+
+    [Fact]
+    public void BusinessSubscriptionWorkspace_Should_KeepPlaybookOpsContractsWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var subscriptionViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Subscription.cshtml"));
+
+        controllerSource.Should().Contain("Playbooks = BuildSubscriptionPlaybooks(business.Id, subscription, managementWebsiteConfigured)");
+        controllerSource.Should().Contain("private List<BusinessSubscriptionPlaybookVm> BuildSubscriptionPlaybooks(Guid businessId, BusinessSubscriptionSnapshotVm subscription, bool managementWebsiteConfigured)");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"CommonSetup\")");
+        controllerSource.Should().Contain("QueueActionUrl = Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-business-app\" }) ?? string.Empty");
+        controllerSource.Should().Contain("QueueActionUrl = Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId, filter = BusinessSubscriptionInvoiceQueueFilter.Open }) ?? string.Empty");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"CommonPayments\")");
+        controllerSource.Should().Contain("FollowUpUrl = Url.Action(\"Payments\", \"Billing\", new { businessId }) ?? string.Empty");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"BusinessSupportQueueTitle\")");
+        controllerSource.Should().Contain("FollowUpUrl = Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty");
+
+        subscriptionViewSource.Should().Contain("BusinessSubscriptionBillingPlaybooksTitle");
+        subscriptionViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
+        subscriptionViewSource.Should().Contain("playbook.QueueActionUrl");
+        subscriptionViewSource.Should().Contain("playbook.FollowUpUrl");
+        subscriptionViewSource.Should().Contain("hx-target=\"#business-subscription-workspace-shell\"");
+    }
+
+    [Fact]
+    public void BusinessMembersWorkspace_Should_KeepSummaryAndPlaybookOpsContractsWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var membersViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Members.cshtml"));
+
+        controllerSource.Should().Contain("Summary = await BuildBusinessMemberOpsSummaryAsync(businessId, ct).ConfigureAwait(false)");
+        controllerSource.Should().Contain("Playbooks = BuildBusinessMemberPlaybooks(businessId)");
+        controllerSource.Should().Contain("private async Task<BusinessMemberOpsSummaryVm> BuildBusinessMemberOpsSummaryAsync(Guid businessId, CancellationToken ct)");
+        controllerSource.Should().Contain("BusinessMemberSupportFilter.PendingActivation");
+        controllerSource.Should().Contain("BusinessMemberSupportFilter.Locked");
+        controllerSource.Should().Contain("BusinessMemberSupportFilter.Attention");
+        controllerSource.Should().Contain("private List<BusinessMemberPlaybookVm> BuildBusinessMemberPlaybooks(Guid businessId)");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"PendingActivation\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"MobileOperationsTitle\")");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"UsersFilterLocked\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"UsersFilterLocked\")");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"NeedsAttention\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"OwnerOverrideAuditTitle\")");
+
+        membersViewSource.Should().Contain("Model.Summary.TotalCount");
+        membersViewSource.Should().Contain("Model.Summary.PendingActivationCount");
+        membersViewSource.Should().Contain("Model.Summary.LockedCount");
+        membersViewSource.Should().Contain("Model.Summary.AttentionCount");
+        membersViewSource.Should().Contain("BusinessesOperationsPlaybooksTitle");
+        membersViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
+        membersViewSource.Should().Contain("hx-target=\"#business-members-workspace-shell\"");
+        membersViewSource.Should().Contain("BusinessMemberSupportFilter.PendingActivation");
+        membersViewSource.Should().Contain("BusinessMemberSupportFilter.Locked");
+        membersViewSource.Should().Contain("BusinessMemberSupportFilter.Attention");
+    }
+
+    [Fact]
+    public void BusinessInvitationsWorkspace_Should_KeepSummaryAndPlaybookOpsContractsWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var invitationsViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Invitations.cshtml"));
+
+        controllerSource.Should().Contain("Summary = await BuildBusinessInvitationOpsSummaryAsync(businessId, ct).ConfigureAwait(false)");
+        controllerSource.Should().Contain("Playbooks = BuildBusinessInvitationPlaybooks(businessId)");
+        controllerSource.Should().Contain("private async Task<BusinessInvitationOpsSummaryVm> BuildBusinessInvitationOpsSummaryAsync(Guid businessId, CancellationToken ct)");
+        controllerSource.Should().Contain("BusinessInvitationQueueFilter.Open");
+        controllerSource.Should().Contain("BusinessInvitationQueueFilter.Pending");
+        controllerSource.Should().Contain("BusinessInvitationQueueFilter.Expired");
+        controllerSource.Should().Contain("private List<BusinessInvitationPlaybookVm> BuildBusinessInvitationPlaybooks(Guid businessId)");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"OpenInvitations\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"FailedInvitations\")");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"Pending\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"BusinessSupportQueueTitle\")");
+        controllerSource.Should().Contain("QueueActionLabel = T(\"Expired\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"BusinessInvitationsInviteUserAction\")");
+
+        invitationsViewSource.Should().Contain("Model.Summary.TotalCount");
+        invitationsViewSource.Should().Contain("Model.Summary.OpenCount");
+        invitationsViewSource.Should().Contain("Model.Summary.PendingCount");
+        invitationsViewSource.Should().Contain("Model.Summary.ExpiredCount");
+        invitationsViewSource.Should().Contain("BusinessesOperationsPlaybooksTitle");
+        invitationsViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
+        invitationsViewSource.Should().Contain("hx-target=\"#business-invitations-workspace-shell\"");
+        invitationsViewSource.Should().Contain("BusinessInvitationQueueFilter.Open");
+        invitationsViewSource.Should().Contain("BusinessInvitationQueueFilter.Pending");
+        invitationsViewSource.Should().Contain("BusinessInvitationQueueFilter.Expired");
+    }
+
+    [Fact]
+    public void BusinessOwnerOverrideAuditsWorkspace_Should_KeepPlaybookAndDrillInContractsWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var auditsViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "OwnerOverrideAudits.cshtml"));
+
+        controllerSource.Should().Contain("Playbooks = BuildBusinessOwnerOverrideAuditPlaybooks(businessId)");
+        controllerSource.Should().Contain("private List<BusinessOwnerOverrideAuditPlaybookVm> BuildBusinessOwnerOverrideAuditPlaybooks(Guid businessId)");
+        controllerSource.Should().Contain("QueueLabel = T(\"BusinessOwnerOverrideForceRemove\")");
+        controllerSource.Should().Contain("QueueActionUrl = Url.Action(\"Members\", \"Businesses\", new { businessId, filter = BusinessMemberSupportFilter.Attention }) ?? string.Empty");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"BusinessSupportQueueTitle\")");
+        controllerSource.Should().Contain("QueueLabel = T(\"BusinessOwnerOverrideDemoteDeactivate\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"MerchantReadinessTitle\")");
+        controllerSource.Should().Contain("QueueLabel = T(\"MissingActiveOwner\")");
+        controllerSource.Should().Contain("FollowUpLabel = T(\"CommonSetup\")");
+
+        auditsViewSource.Should().Contain("BusinessesOperationsPlaybooksTitle");
+        auditsViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
+        auditsViewSource.Should().Contain("hx-target=\"#business-owner-override-audits-workspace-shell\"");
+        auditsViewSource.Should().Contain("OpenUserAction");
+        auditsViewSource.Should().Contain("CommonMembers");
+    }
+
+    [Fact]
     public void UsersController_Should_KeepIdentityAndAddressMutationsProtected()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
@@ -629,6 +795,25 @@ public sealed class SecurityAndPerformanceSourceTests
         usersSource.Should().Contain("public IActionResult ChangePassword(Guid id, string? email = null)");
         usersSource.Should().Contain("public async Task<IActionResult> AddressesSection(Guid userId, CancellationToken ct = default)");
         usersSource.Should().Contain("public async Task<IActionResult> Roles(Guid id, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20, CancellationToken ct = default)");
+    }
+
+    [Fact]
+    public void UsersController_Should_KeepIdentitySupportAuditAndPlaybookContracts()
+    {
+        var usersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
+
+        usersSource.Should().Contain("private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;");
+        usersSource.Should().Contain("GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage");
+        usersSource.Should().Contain("_getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;");
+        usersSource.Should().Contain("var auditSummary = await _getEmailDispatchAuditsPage.GetSummaryAsync(null, ct);");
+        usersSource.Should().Contain("FailedActivationEmailCount = auditSummary.FailedActivationCount");
+        usersSource.Should().Contain("FailedPasswordResetEmailCount = auditSummary.FailedPasswordResetCount");
+        usersSource.Should().Contain("QueueFilter = UserQueueFilter.Unconfirmed");
+        usersSource.Should().Contain("AuditFlowKey = \"AccountActivation\"");
+        usersSource.Should().Contain("QueueFilter = UserQueueFilter.Locked");
+        usersSource.Should().Contain("AuditFlowKey = \"PasswordReset\"");
+        usersSource.Should().Contain("QueueFilter = UserQueueFilter.MobileLinked");
+        usersSource.Should().Contain("OpensMobileOperations = true");
     }
 
     [Fact]
@@ -1048,6 +1233,123 @@ public sealed class SecurityAndPerformanceSourceTests
         brandsSource.Should().Contain("public async Task<IActionResult> Index(int page = 1, int pageSize = 20,");
         brandsSource.Should().Contain("public IActionResult Create() => RenderBrandEditor(new BrandEditVm");
         brandsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
+    }
+
+    [Fact]
+    public void BusinessStaffAccessBadgeWorkspace_Should_KeepConstraintRemediationContractsWired()
+    {
+        var businessesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var badgeViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "StaffAccessBadge.cshtml"));
+
+        businessesSource.Should().Contain("public async Task<IActionResult> StaffAccessBadge(Guid id, CancellationToken ct = default)");
+        businessesSource.Should().Contain("return RenderStaffAccessBadgeWorkspace(vm);");
+
+        badgeViewSource.Should().Contain("@Model.Business.Name | @Model.UserDisplayName");
+        badgeViewSource.Should().Contain("@if (!Model.EmailConfirmed || !Model.IsActive || isLocked)");
+        badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgeConstraintWarning\")");
+        badgeViewSource.Should().Contain("@T.T(\"OpenUserAction\")");
+        badgeViewSource.Should().Contain("@T.T(\"EditMemberAction\")");
+        badgeViewSource.Should().Contain("@T.T(\"UsersFilterLocked\")");
+        badgeViewSource.Should().Contain("@T.T(\"MobileOperationsTitle\")");
+    }
+
+    [Fact]
+    public void BusinessSetupPreviewWorkspaces_Should_KeepMemberAndInvitationRemediationContractsWired()
+    {
+        var businessesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var membersPreviewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupMembersPreview.cshtml"));
+        var invitationsPreviewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupInvitationsPreview.cshtml"));
+
+        businessesSource.Should().Contain("public async Task<IActionResult> SetupMembersPreview(Guid businessId, CancellationToken ct = default)");
+        businessesSource.Should().Contain("public async Task<IActionResult> SetupInvitationsPreview(Guid businessId, CancellationToken ct = default)");
+
+        membersPreviewSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = item.UserId })");
+        membersPreviewSource.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = item.Id })");
+        membersPreviewSource.Should().Contain("flowKey = \"AccountActivation\"");
+        membersPreviewSource.Should().Contain("@T.T(\"Locked\")");
+
+        invitationsPreviewSource.Should().Contain("flowKey = \"BusinessInvitation\"");
+        invitationsPreviewSource.Should().Contain("@T.T(\"OpenFailedInvitationEmails\")");
+        invitationsPreviewSource.Should().Contain("filter = \"Pending\"");
+        invitationsPreviewSource.Should().Contain("filter = \"Expired\"");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepSummaryRemediationContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"OperationalStatus\")");
+        setupShellSource.Should().Contain("operationalStatus = Model.OperationalStatus");
+        setupShellSource.Should().Contain("@T.T(\"EditBusiness\")");
+        setupShellSource.Should().Contain("@T.T(\"Members\")");
+        setupShellSource.Should().Contain("@T.T(\"Locations\")");
+        setupShellSource.Should().Contain("@T.T(\"OpenGlobalLocalization\")");
+        setupShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepCommunicationReadinessRemediationContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"CommunicationReadiness\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("fragment = \"site-settings-admin-routing\"");
+        setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationProfileTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"EmailAudits\")");
+        setupShellSource.Should().Contain("@T.T(\"SmsWhatsAppAuditsTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"AdminAlerts\")");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepSubscriptionSnapshotRemediationContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"BusinessSubscriptionSnapshot\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Subscription\", \"Businesses\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSubscriptionInvoicesTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"OpenPayments\")");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepIncompleteChecklistRemediationContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"SetupIncompleteWarning\")");
+        setupShellSource.Should().Contain("@T.T(\"MissingActiveOwner\")");
+        setupShellSource.Should().Contain("@T.T(\"MissingPrimaryLocation\")");
+        setupShellSource.Should().Contain("@T.T(\"MissingContactEmail\")");
+        setupShellSource.Should().Contain("@T.T(\"MissingLegalName\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"Businesses\", new { id = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepOwnershipRemediationContractsWired()
+    {
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+
+        setupShellSource.Should().Contain("@T.T(\"BusinessOwnedHere\")");
+        setupShellSource.Should().Contain("@T.T(\"GlobalDependencies\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Id })");
+        setupShellSource.Should().Contain("fragment = \"site-settings-communications-policy\"");
+        setupShellSource.Should().Contain("fragment = \"site-settings-payments\"");
+        setupShellSource.Should().Contain("fragment = \"site-settings-tax\"");
+        setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationProfileTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"CommunicationPolicy\")");
+        setupShellSource.Should().Contain("@T.T(\"Payments\")");
+        setupShellSource.Should().Contain("@T.T(\"Tax\")");
     }
 
     private static string ReadWebApiFile(string relativePath)

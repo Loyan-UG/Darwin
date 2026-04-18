@@ -63,6 +63,72 @@
     </div>
 </div>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">@T.T("CommonTotal")</div>
+            <div class="fw-semibold mt-1">@Model.Summary.TotalCount</div>
+            <div class="mt-2">
+                <a asp-action="Members"
+                   asp-route-businessId="@Model.Business.Id"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+                   hx-target="#business-members-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonTotal")</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">@T.T("PendingActivation")</div>
+            <div class="fw-semibold mt-1">@Model.Summary.PendingActivationCount</div>
+            <div class="mt-2">
+                <a asp-action="Members"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
+                   class="btn btn-sm btn-outline-warning"
+                   hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
+                   hx-target="#business-members-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("PendingActivation")</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">@T.T("Locked")</div>
+            <div class="fw-semibold mt-1">@Model.Summary.LockedCount</div>
+            <div class="mt-2">
+                <a asp-action="Members"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked"
+                   class="btn btn-sm btn-outline-danger"
+                   hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked })"
+                   hx-target="#business-members-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("UsersFilterLocked")</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">@T.T("NeedsAttention")</div>
+            <div class="fw-semibold mt-1">@Model.Summary.AttentionCount</div>
+            <div class="mt-2">
+                <a asp-action="Members"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
+                   hx-target="#business-members-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("NeedsAttention")</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (Model.Business.ActiveOwnerCount == 0)
 {
     <div class="alert alert-warning">
@@ -118,6 +184,50 @@
            hx-push-url="true">@T.T("Reset")</a>
     </div>
 </form>
+
+<div class="card mb-3">
+    <div class="card-header">@T.T("BusinessesOperationsPlaybooksTitle")</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>@T.T("BusinessSubscriptionQueueColumn")</th>
+                        <th>@T.T("WhyItMatters")</th>
+                        <th>@T.T("OperatorAction")</th>
+                        <th>@T.T("CommonActions")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@playbook.QueueLabel</td>
+                        <td>@playbook.WhyItMatters</td>
+                        <td>@playbook.OperatorAction</td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="@playbook.QueueActionUrl"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#business-members-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.QueueActionLabel</a>
+                                <a href="@playbook.FollowUpUrl"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@playbook.FollowUpUrl"
+                                   hx-target="#business-members-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.FollowUpLabel</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <div class="table-responsive">
     <table class="table table-sm table-hover align-middle">

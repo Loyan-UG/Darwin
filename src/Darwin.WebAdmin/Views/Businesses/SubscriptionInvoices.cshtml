@@ -50,48 +50,127 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommonTotal")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+            <div class="mt-2">
+                <a asp-action="SubscriptionInvoices"
+                   asp-route-businessId="@Model.Business.Id"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
+                   hx-target="#business-subscription-invoices-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonAll")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommonOpen")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.OpenCount</div>
+            <div class="mt-2">
+                <a asp-action="SubscriptionInvoices"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Open"
+                   class="btn btn-sm btn-outline-warning"
+                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Open })"
+                   hx-target="#business-subscription-invoices-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonOpen")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommonPaid")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PaidCount</div>
+            <div class="mt-2">
+                <a asp-action="SubscriptionInvoices"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Paid"
+                   class="btn btn-sm btn-outline-success"
+                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Paid })"
+                   hx-target="#business-subscription-invoices-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonPaid")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommonDraft")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.DraftCount</div>
+            <div class="mt-2">
+                <a asp-action="SubscriptionInvoices"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Draft"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Draft })"
+                   hx-target="#business-subscription-invoices-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonDraft")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommonUncollectible")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.UncollectibleCount</div>
+            <div class="mt-2">
+                <a asp-action="SubscriptionInvoices"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Uncollectible"
+                   class="btn btn-sm btn-outline-danger"
+                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Uncollectible })"
+                   hx-target="#business-subscription-invoices-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonUncollectible")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommonStripe")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.StripeCount</div>
+            <div class="mt-2">
+                <a asp-action="SubscriptionInvoices"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Stripe"
+                   class="btn btn-sm btn-outline-info"
+                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Stripe })"
+                   hx-target="#business-subscription-invoices-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonStripe")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommonOverdue")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.OverdueCount</div>
+            <div class="mt-2">
+                <a asp-action="SubscriptionInvoices"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Overdue"
+                   class="btn btn-sm btn-outline-danger"
+                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Overdue })"
+                   hx-target="#business-subscription-invoices-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonOverdue")</a>
+            </div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommonPdfMissing")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PdfMissingCount</div>
+            <div class="mt-2">
+                <a asp-action="SubscriptionInvoices"
+                   asp-route-businessId="@Model.Business.Id"
+                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.PdfMissing"
+                   class="btn btn-sm btn-outline-warning"
+                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.PdfMissing })"
+                   hx-target="#business-subscription-invoices-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CommonPdfMissing")</a>
+            </div>
         </div>
     </div>
 </div>
@@ -99,13 +178,48 @@
 <div class="card mb-3">
     <div class="card-header">@T.T("BusinessSubscriptionBillingPlaybooksTitle")</div>
     <div class="card-body">
-        <ul class="mb-0">
-            <li>@T.T("BusinessSubscriptionBillingPlaybookOpenInvoices")</li>
-            <li>@T.T("BusinessSubscriptionBillingPlaybookUncollectible")</li>
-            <li>@T.T("BusinessSubscriptionBillingPlaybookMissingHostedLink")</li>
-            <li>@T.T("BusinessSubscriptionBillingPlaybookOverdue")</li>
-            <li>@T.T("BusinessSubscriptionBillingPlaybookMissingPdf")</li>
-        </ul>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Open"
+               class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Open })"
+               hx-target="#business-subscription-invoices-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookOpenInvoices")</a>
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Uncollectible"
+               class="btn btn-sm btn-outline-danger"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Uncollectible })"
+               hx-target="#business-subscription-invoices-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookUncollectible")</a>
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing"
+               class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing })"
+               hx-target="#business-subscription-invoices-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookMissingHostedLink")</a>
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Overdue"
+               class="btn btn-sm btn-outline-danger"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Overdue })"
+               hx-target="#business-subscription-invoices-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookOverdue")</a>
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.PdfMissing"
+               class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.PdfMissing })"
+               hx-target="#business-subscription-invoices-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookMissingPdf")</a>
+        </div>
     </div>
 </div>
 

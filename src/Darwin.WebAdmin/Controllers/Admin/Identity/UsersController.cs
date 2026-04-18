@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
@@ -23,6 +24,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         private readonly RegisterUserHandler _registerUser;
         private readonly GetUsersPageHandler _getUsersPage;
         private readonly GetUserOpsSummaryHandler _getUserOpsSummary;
+        private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
         private readonly GetUserWithAddressesForEditHandler _getUserWithAddresses;
         private readonly UpdateUserHandler _updateUser;
         private readonly ChangeUserEmailHandler _changeUserEmail;
@@ -53,6 +55,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             RegisterUserHandler registerUser,
             GetUsersPageHandler getUsersPage,
             GetUserOpsSummaryHandler getUserOpsSummary,
+            GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
             GetUserWithAddressesForEditHandler getUserWithAddresses,
             UpdateUserHandler updateUser,
             ChangeUserEmailHandler changeUserEmail,
@@ -74,6 +77,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             _registerUser = registerUser;
             _getUsersPage = getUsersPage;
             _getUserOpsSummary = getUserOpsSummary;
+            _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
             _getUserWithAddresses = getUserWithAddresses;
             _updateUser = updateUser;
             _changeUserEmail = changeUserEmail;
@@ -122,21 +126,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     Title = T("UsersPlaybookUnconfirmedTitle"),
                     ScopeNote = T("UsersPlaybookUnconfirmedScope"),
                     OperatorAction = T("UsersPlaybookUnconfirmedAction"),
-                    FollowUp = T("UsersPlaybookUnconfirmedFollowUp")
+                    FollowUp = T("UsersPlaybookUnconfirmedFollowUp"),
+                    QueueFilter = UserQueueFilter.Unconfirmed,
+                    AuditFlowKey = "AccountActivation"
                 },
                 new()
                 {
                     Title = T("UsersPlaybookLockedTitle"),
                     ScopeNote = T("UsersPlaybookLockedScope"),
                     OperatorAction = T("UsersPlaybookLockedAction"),
-                    FollowUp = T("UsersPlaybookLockedFollowUp")
+                    FollowUp = T("UsersPlaybookLockedFollowUp"),
+                    QueueFilter = UserQueueFilter.Locked,
+                    AuditFlowKey = "PasswordReset"
                 },
                 new()
                 {
                     Title = T("UsersPlaybookMobileLinkedTitle"),
                     ScopeNote = T("UsersPlaybookMobileLinkedScope"),
                     OperatorAction = T("UsersPlaybookMobileLinkedAction"),
-                    FollowUp = T("UsersPlaybookMobileLinkedFollowUp")
+                    FollowUp = T("UsersPlaybookMobileLinkedFollowUp"),
+                    QueueFilter = UserQueueFilter.MobileLinked,
+                    OpensMobileOperations = true
                 }
             };
         }
@@ -853,6 +863,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             var (items, total) = await _getUsersPage.HandleAsync(page, pageSize, q, filter, ct);
             var summary = await _getUserOpsSummary.HandleAsync(ct);
+            var auditSummary = await _getEmailDispatchAuditsPage.GetSummaryAsync(null, ct);
 
             return new UsersListVm
             {
@@ -867,7 +878,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     UnconfirmedCount = summary.UnconfirmedCount,
                     LockedCount = summary.LockedCount,
                     InactiveCount = summary.InactiveCount,
-                    MobileLinkedCount = summary.MobileLinkedCount
+                    MobileLinkedCount = summary.MobileLinkedCount,
+                    FailedActivationEmailCount = auditSummary.FailedActivationCount,
+                    FailedPasswordResetEmailCount = auditSummary.FailedPasswordResetCount
                 },
                 Playbooks = BuildUserSupportPlaybooks(),
                 Items = items.Select(x => new UserListItemVm

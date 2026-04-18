@@ -472,6 +472,7 @@
                         <th>@T.T("BusinessSubscriptionQueueColumn")</th>
                         <th>@T.T("WhyItMatters")</th>
                         <th>@T.T("OperatorAction")</th>
+                        <th>@T.T("CommonActions")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -481,6 +482,28 @@
                             <td class="fw-semibold">@playbook.QueueLabel</td>
                             <td>@playbook.WhyItMatters</td>
                             <td>@playbook.OperatorAction</td>
+                            <td>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))
+                                    {
+                                        <a href="@playbook.QueueActionUrl"
+                                           class="btn btn-sm btn-outline-primary"
+                                           hx-get="@playbook.QueueActionUrl"
+                                           hx-target="#business-subscription-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@playbook.QueueActionLabel</a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(playbook.FollowUpUrl))
+                                    {
+                                        <a href="@playbook.FollowUpUrl"
+                                           class="btn btn-sm btn-outline-secondary"
+                                           hx-get="@playbook.FollowUpUrl"
+                                           hx-target="#business-subscription-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@playbook.FollowUpLabel</a>
+                                    }
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>

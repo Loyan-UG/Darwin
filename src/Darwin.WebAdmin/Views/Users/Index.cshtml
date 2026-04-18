@@ -32,30 +32,139 @@
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small">@T.T("UsersSummaryTotal")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+                <div class="mt-2">
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="All"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "All" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersPageTitle")</a>
+                </div>
             </div>
         </div>
         <div class="col-md-2">
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small">@T.T("UsersSummaryUnconfirmed")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.UnconfirmedCount</div>
+                <div class="mt-2 d-flex gap-2 flex-wrap">
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="Unconfirmed"
+                       class="btn btn-sm btn-outline-warning"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-status="Failed"
+                       asp-route-flowKey="AccountActivation"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
+                </div>
             </div>
         </div>
         <div class="col-md-2">
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small">@T.T("UsersSummaryLocked")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.LockedCount</div>
+                <div class="mt-2 d-flex gap-2 flex-wrap">
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="Locked"
+                       class="btn btn-sm btn-outline-danger"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterLocked")</a>
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-status="Failed"
+                       asp-route-flowKey="PasswordReset"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
+                </div>
             </div>
         </div>
         <div class="col-md-2">
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small">@T.T("UsersSummaryInactive")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div>
+                <div class="mt-2">
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="Inactive"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "Inactive" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterInactive")</a>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small">@T.T("UsersSummaryMobileLinked")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.MobileLinkedCount</div>
+                <div class="mt-2 d-flex gap-2 flex-wrap">
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="MobileLinked"
+                       class="btn btn-sm btn-outline-info"
+                       hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
+                    <a asp-controller="MobileOperations"
+                       asp-action="Index"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "MobileOperations")"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small">@T.T("OpenFailedActivationEmails")</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.FailedActivationEmailCount</div>
+                <div class="mt-2">
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-status="Failed"
+                       asp-route-flowKey="AccountActivation"
+                       class="btn btn-sm btn-outline-warning"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small">@T.T("OpenFailedPasswordResets")</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.FailedPasswordResetEmailCount</div>
+                <div class="mt-2">
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-status="Failed"
+                       asp-route-flowKey="PasswordReset"
+                       class="btn btn-sm btn-outline-danger"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset" })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
+                </div>
             </div>
         </div>
     </div>
@@ -79,8 +188,42 @@
                         <tr>
                             <td class="fw-semibold">@item.Title</td>
                             <td>@item.ScopeNote</td>
-                            <td>@item.OperatorAction</td>
-                            <td>@item.FollowUp</td>
+                            <td>
+                                <div class="mb-2">@item.OperatorAction</div>
+                                <a asp-controller="Users"
+                                   asp-action="Index"
+                                   asp-route-filter="@item.QueueFilter"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = item.QueueFilter })"
+                                   hx-target="#users-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@item.Title</a>
+                            </td>
+                            <td>
+                                <div class="mb-2">@item.FollowUp</div>
+                                @if (!string.IsNullOrWhiteSpace(item.AuditFlowKey))
+                                {
+                                    <a asp-controller="BusinessCommunications"
+                                       asp-action="EmailAudits"
+                                       asp-route-status="Failed"
+                                       asp-route-flowKey="@item.AuditFlowKey"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
+                                       hx-target="#users-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@(item.AuditFlowKey == "AccountActivation" ? T.T("OpenFailedActivationEmails") : T.T("OpenFailedPasswordResets"))</a>
+                                }
+                                else if (item.OpensMobileOperations)
+                                {
+                                    <a asp-controller="MobileOperations"
+                                       asp-action="Index"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Index", "MobileOperations")"
+                                       hx-target="#users-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                }
+                            </td>
                         </tr>
                     }
                     </tbody>
@@ -134,31 +277,94 @@
                 @foreach (var u in Model.Items)
                 {
                     <tr>
-                        <td>@u.Email</td>
-                        <td>@($"{u.FirstName} {u.LastName}".Trim())</td>
+                        <td>
+                            <a asp-controller="Users"
+                               asp-action="Edit"
+                               asp-route-id="@u.Id"
+                               class="text-decoration-none"
+                               hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                               hx-target="#users-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@u.Email</a>
+                        </td>
+                        <td>
+                            <a asp-controller="Users"
+                               asp-action="Edit"
+                               asp-route-id="@u.Id"
+                               class="text-decoration-none"
+                               hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                               hx-target="#users-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@($"{u.FirstName} {u.LastName}".Trim())</a>
+                        </td>
                         <td>
                             @if (!u.EmailConfirmed)
                             {
-                                <div><span class="badge text-bg-warning">@T.T("UsersLifecycleUnconfirmedBadge")</span></div>
+                                <div>
+                                    <a asp-controller="BusinessCommunications"
+                                       asp-action="EmailAudits"
+                                       asp-route-status="Failed"
+                                       asp-route-flowKey="AccountActivation"
+                                       asp-route-recipientEmail="@u.Email"
+                                       class="badge text-bg-warning text-decoration-none"
+                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", recipientEmail = u.Email })"
+                                       hx-target="#users-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("UsersLifecycleUnconfirmedBadge")</a>
+                                </div>
                             }
                             @if (u.IsLockedOut)
                             {
-                                <div><span class="badge text-bg-danger">@T.T("UsersLifecycleLockedBadge")</span></div>
+                                <div>
+                                    <a asp-controller="BusinessCommunications"
+                                       asp-action="EmailAudits"
+                                       asp-route-status="Failed"
+                                       asp-route-flowKey="PasswordReset"
+                                       asp-route-recipientEmail="@u.Email"
+                                       class="badge text-bg-danger text-decoration-none"
+                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", recipientEmail = u.Email })"
+                                       hx-target="#users-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("UsersLifecycleLockedBadge")</a>
+                                </div>
                                 <div class="small text-muted">@u.LockoutEndUtc?.ToString("yyyy-MM-dd HH:mm")</div>
                             }
                             @if (u.MobileDeviceCount > 0)
                             {
-                                <div><span class="badge text-bg-info">@string.Format(T.T("UsersLifecycleMobileBadge"), u.MobileDeviceCount)</span></div>
+                                <div>
+                                    <a asp-controller="MobileOperations"
+                                       asp-action="Index"
+                                       asp-route-q="@u.Email"
+                                       class="badge text-bg-info text-decoration-none"
+                                       hx-get="@Url.Action("Index", "MobileOperations", new { q = u.Email })"
+                                       hx-target="#users-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@string.Format(T.T("UsersLifecycleMobileBadge"), u.MobileDeviceCount)</a>
+                                </div>
                             }
                         </td>
                         <td class="text-center">
                             @if (u.IsActive)
                             {
-                                <span class="badge text-bg-success">@T.T("UsersYes")</span>
+                                <a asp-controller="Users"
+                                   asp-action="Edit"
+                                   asp-route-id="@u.Id"
+                                   class="badge text-bg-success text-decoration-none"
+                                   hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                                   hx-target="#users-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("UsersYes")</a>
                             }
                             else
                             {
-                                <span class="badge text-bg-secondary">@T.T("UsersNo")</span>
+                                <a asp-controller="Users"
+                                   asp-action="Edit"
+                                   asp-route-id="@u.Id"
+                                   class="badge text-bg-secondary text-decoration-none"
+                                   hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                                   hx-target="#users-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("UsersNo")</a>
                             }
                         </td>
                         <td class="text-end">
