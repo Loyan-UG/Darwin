@@ -88,11 +88,11 @@ namespace Darwin.WebAdmin.Services.Settings
                 // Localization
                 DefaultCulture = string.IsNullOrWhiteSpace(s.DefaultCulture) ? AdminCultureCatalog.DefaultCulture : AdminCultureCatalog.NormalizeUiCulture(s.DefaultCulture),
                 SupportedCulturesCsv = string.IsNullOrWhiteSpace(s.SupportedCulturesCsv) ? AdminCultureCatalog.SupportedCulturesCsvDefault : string.Join(",", AdminCultureCatalog.NormalizeSupportedCultureNames(s.SupportedCulturesCsv)),
-                DefaultCountry = string.IsNullOrWhiteSpace(s.DefaultCountry) ? "DE" : s.DefaultCountry,
-                DefaultCurrency = string.IsNullOrWhiteSpace(s.DefaultCurrency) ? "EUR" : s.DefaultCurrency,
-                TimeZone = string.IsNullOrWhiteSpace(s.TimeZone) ? "Europe/Berlin" : s.TimeZone,
-                DateFormat = string.IsNullOrWhiteSpace(s.DateFormat) ? "yyyy-MM-dd" : s.DateFormat,
-                TimeFormat = string.IsNullOrWhiteSpace(s.TimeFormat) ? "HH:mm" : s.TimeFormat,
+                DefaultCountry = string.IsNullOrWhiteSpace(s.DefaultCountry) ? SiteSettingDto.DefaultCountryDefault : s.DefaultCountry,
+                DefaultCurrency = string.IsNullOrWhiteSpace(s.DefaultCurrency) ? SiteSettingDto.DefaultCurrencyDefault : s.DefaultCurrency,
+                TimeZone = string.IsNullOrWhiteSpace(s.TimeZone) ? SiteSettingDto.TimeZoneDefault : s.TimeZone,
+                DateFormat = string.IsNullOrWhiteSpace(s.DateFormat) ? SiteSettingDto.DateFormatDefault : s.DateFormat,
+                TimeFormat = string.IsNullOrWhiteSpace(s.TimeFormat) ? SiteSettingDto.TimeFormatDefault : s.TimeFormat,
                 AdminTextOverridesJson = s.AdminTextOverridesJson,
 
                 // JWT (additional)
@@ -225,7 +225,7 @@ namespace Darwin.WebAdmin.Services.Settings
                 PhoneVerificationAllowFallback = s.PhoneVerificationAllowFallback,
 
                 // Routing
-                HomeSlug = string.IsNullOrWhiteSpace(s.HomeSlug) ? "home" : s.HomeSlug
+                HomeSlug = string.IsNullOrWhiteSpace(s.HomeSlug) ? SiteSettingDto.HomeSlugDefault : s.HomeSlug
             };
         }
     }
