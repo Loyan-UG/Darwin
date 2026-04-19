@@ -84,12 +84,12 @@ namespace Darwin.Contracts.Businesses
         /// <summary>
         /// Gets or sets the default currency (e.g. "EUR").
         /// </summary>
-        public string DefaultCurrency { get; set; } = "EUR";
+        public string DefaultCurrency { get; set; } = ContractDefaults.DefaultCurrency;
 
         /// <summary>
         /// Gets or sets the default culture (e.g. "de-DE").
         /// </summary>
-        public string DefaultCulture { get; set; } = "de-DE";
+        public string DefaultCulture { get; set; } = ContractDefaults.DefaultLocale;
 
         /// <summary>
         /// Gets or sets the website URL.

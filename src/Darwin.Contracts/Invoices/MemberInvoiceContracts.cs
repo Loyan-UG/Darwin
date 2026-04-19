@@ -1,3 +1,5 @@
+using Darwin.Contracts.Common;
+
 namespace Darwin.Contracts.Invoices;
 
 /// <summary>
@@ -21,7 +23,7 @@ public class MemberInvoiceSummary
     public string? OrderNumber { get; set; }
 
     /// <summary>Gets or sets the invoice currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the total invoice amount in minor units.</summary>
     public long TotalGrossMinor { get; set; }

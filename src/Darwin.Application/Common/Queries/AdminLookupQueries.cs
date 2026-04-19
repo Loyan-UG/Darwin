@@ -139,7 +139,7 @@ namespace Darwin.Application.Common.Queries
                     Label = x.Sku + " - " + (
                         _db.Set<ProductTranslation>()
                             .Where(t => t.ProductId == x.ProductId && !t.IsDeleted)
-                            .OrderByDescending(t => t.Culture == "de-DE")
+                            .OrderByDescending(t => t.Culture == Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault)
                             .ThenBy(t => t.Culture)
                             .Select(t => t.Name)
                             .FirstOrDefault() ?? "Unnamed product"),

@@ -30,7 +30,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
     private string _postalCode = string.Empty;
     private string _city = string.Empty;
     private string? _state;
-    private string _countryCode = "DE";
+    private string _countryCode = ProfileContractDefaults.DefaultCountryCode;
     private string? _phoneE164;
     private bool _isDefaultBilling;
     private bool _isDefaultShipping;
@@ -463,7 +463,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
         PostalCode = string.Empty;
         City = string.Empty;
         State = null;
-        CountryCode = "DE";
+        CountryCode = ProfileContractDefaults.DefaultCountryCode;
         PhoneE164 = null;
         IsDefaultBilling = false;
         IsDefaultShipping = false;
@@ -544,7 +544,7 @@ public sealed class MemberAddressItemViewModel
     /// <summary>Gets or sets the state.</summary>
     public string? State { get; set; }
     /// <summary>Gets or sets the country code.</summary>
-    public string CountryCode { get; set; } = "DE";
+    public string CountryCode { get; set; } = ProfileContractDefaults.DefaultCountryCode;
     /// <summary>Gets or sets the phone number.</summary>
     public string? PhoneE164 { get; set; }
     /// <summary>Gets or sets a value indicating whether this item is default billing.</summary>

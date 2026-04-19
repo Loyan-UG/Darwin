@@ -1,3 +1,5 @@
+using Darwin.Contracts.Common;
+
 namespace Darwin.Contracts.Cart;
 
 /// <summary>
@@ -81,7 +83,7 @@ public sealed class PublicCartSummary
     public Guid CartId { get; set; }
 
     /// <summary>Gets or sets the cart currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the cart lines.</summary>
     public IReadOnlyList<PublicCartItemRow> Items { get; set; } = Array.Empty<PublicCartItemRow>();

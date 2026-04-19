@@ -87,7 +87,7 @@ namespace Darwin.Application.CartCheckout.DTOs
     public sealed class CartSummaryDto
     {
         public Guid CartId { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public List<CartItemRowDto> Items { get; set; } = new();
         public long SubtotalNetMinor { get; set; }
         public long VatTotalMinor { get; set; }

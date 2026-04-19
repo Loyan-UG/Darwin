@@ -144,10 +144,31 @@
                 @foreach (var playbook in Model.Playbooks)
                 {
                     <tr>
-                        <td class="fw-semibold">@playbook.QueueLabel</td>
-                        <td>@playbook.WhyItMatters</td>
+                        <td class="fw-semibold">
+                            <a href="@playbook.QueueActionUrl"
+                               class="link-body-emphasis text-decoration-none"
+                               hx-get="@playbook.QueueActionUrl"
+                               hx-target="#business-locations-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@playbook.QueueLabel</a>
+                        </td>
                         <td>
-                            <div class="mb-2">@playbook.OperatorAction</div>
+                            <a href="@playbook.QueueActionUrl"
+                               class="link-body-emphasis text-decoration-none"
+                               hx-get="@playbook.QueueActionUrl"
+                               hx-target="#business-locations-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@playbook.WhyItMatters</a>
+                        </td>
+                        <td>
+                            <div class="mb-2">
+                                <a href="@playbook.QueueActionUrl"
+                                   class="link-body-emphasis text-decoration-none"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#business-locations-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.OperatorAction</a>
+                            </div>
                             @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))
                             {
                                 <a href="@playbook.QueueActionUrl"
@@ -296,3 +317,4 @@
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 </div>
+

@@ -18,7 +18,7 @@ namespace Darwin.Application.Catalog.Queries
         private readonly IAppDbContext _db;
         public GetCatalogLookupsHandler(IAppDbContext db) => _db = db;
 
-        public async Task<CatalogLookupsDto> HandleAsync(string culture = "de-DE", CancellationToken ct = default)
+        public async Task<CatalogLookupsDto> HandleAsync(string culture = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault, CancellationToken ct = default)
         {
             // Brands: resolve per-culture name; fallback to any available translation or "?"
             var brands = await _db.Set<Brand>()

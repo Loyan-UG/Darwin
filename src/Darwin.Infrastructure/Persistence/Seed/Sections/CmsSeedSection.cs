@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Domain.Common;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Enums;
 using Darwin.Infrastructure.Persistence.Db;
@@ -135,7 +136,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         Url = "/de/home",
                         SortOrder = 0,
                         IsActive = true,
-                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Startseite" } }
+                        Translations = { new MenuItemTranslation { Culture = DomainDefaults.DefaultCulture, Label = "Startseite" } }
                     },
                     new MenuItem
                     {
@@ -143,7 +144,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         Url = "/de/c",
                         SortOrder = 1,
                         IsActive = true,
-                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Shop" } }
+                        Translations = { new MenuItemTranslation { Culture = DomainDefaults.DefaultCulture, Label = "Shop" } }
                     },
                     new MenuItem
                     {
@@ -151,7 +152,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         Url = "/de/ueber-uns",
                         SortOrder = 2,
                         IsActive = true,
-                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Über uns" } }
+                        Translations = { new MenuItemTranslation { Culture = DomainDefaults.DefaultCulture, Label = "Über uns" } }
                     },
 
                     // Children under "Shop"
@@ -161,7 +162,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         ParentId = shopId,
                         SortOrder = 0,
                         IsActive = true,
-                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "iPhones" } }
+                        Translations = { new MenuItemTranslation { Culture = DomainDefaults.DefaultCulture, Label = "iPhones" } }
                     },
                     new MenuItem
                     {
@@ -169,7 +170,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         ParentId = shopId,
                         SortOrder = 1,
                         IsActive = true,
-                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Android" } }
+                        Translations = { new MenuItemTranslation { Culture = DomainDefaults.DefaultCulture, Label = "Android" } }
                     },
                     new MenuItem
                     {
@@ -177,7 +178,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         ParentId = shopId,
                         SortOrder = 2,
                         IsActive = true,
-                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Ultrabooks" } }
+                        Translations = { new MenuItemTranslation { Culture = DomainDefaults.DefaultCulture, Label = "Ultrabooks" } }
                     }
                 };
 
@@ -236,7 +237,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         },
                         new MenuItemTranslation
                         {
-                            Culture = "de-DE",
+                            Culture = DomainDefaults.DefaultCulture,
                             Label = item.DeLabel
                         }
                     }
@@ -300,7 +301,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         },
                         new MenuItemTranslation
                         {
-                            Culture = "de-DE",
+                            Culture = DomainDefaults.DefaultCulture,
                             Label = item.DeLabel
                         }
                     }
@@ -520,7 +521,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     .Include(x => x.Translations)
                     .FirstOrDefaultAsync(
                         x => x.Slug == p.Slug ||
-                             x.Translations.Any(t => t.Culture == "de-DE" && t.Slug == p.Slug),
+                             x.Translations.Any(t => t.Culture == DomainDefaults.DefaultCulture && t.Slug == p.Slug),
                         ct);
 
                 if (page == null)
@@ -549,10 +550,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 page.Status = PageStatus.Published;
                 page.PublishStartUtc ??= publishStartUtc;
 
-                var translation = page.Translations.FirstOrDefault(x => x.Culture == "de-DE");
+                var translation = page.Translations.FirstOrDefault(x => x.Culture == DomainDefaults.DefaultCulture);
                 if (translation == null)
                 {
-                    translation = new PageTranslation { Culture = "de-DE" };
+                    translation = new PageTranslation { Culture = DomainDefaults.DefaultCulture };
                     page.Translations.Add(translation);
                 }
 
@@ -608,5 +609,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         #endregion
     }
 }
+
+
+
+
 
 

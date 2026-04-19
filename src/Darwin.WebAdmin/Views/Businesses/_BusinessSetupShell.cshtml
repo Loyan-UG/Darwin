@@ -6,6 +6,15 @@
                             Model.PrimaryLocationCount > 0 &&
                             Model.HasContactEmailConfigured &&
                             Model.HasLegalNameConfigured;
+    var setupOverrideCultures = Darwin.Application.Settings.DTOs.SiteSettingDto.SupportedCulturesCsvDefault
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var setupPrimaryCulture = setupOverrideCultures.Length > 0
+        ? setupOverrideCultures[0]
+        : Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture;
+    var setupSecondaryCulture = setupOverrideCultures.Length > 1 ? setupOverrideCultures[1] : setupPrimaryCulture;
+    var setupOverridePlaceholder =
+        "{\"" + setupPrimaryCulture + "\":{\"BusinessSetupTitle\":\"Betriebs-Setup\"},\"" +
+        setupSecondaryCulture + "\":{\"BusinessSetupTitle\":\"Business setup\"}}";
 }
 
 <div id="business-setup-shell">
@@ -502,7 +511,7 @@
                     </div>
                     <div class="col-12">
                         <label asp-for="AdminTextOverridesJson" class="form-label">@T.T("BusinessAdminTextOverridesJson")</label>
-                        <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="5" placeholder='{"de-DE":{"BusinessSetupTitle":"Betriebs-Setup"},"en-US":{"BusinessSetupTitle":"Business setup"}}'></textarea>
+                        <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="5" placeholder="@setupOverridePlaceholder"></textarea>
                         <span asp-validation-for="AdminTextOverridesJson" class="text-danger"></span>
                         <div class="form-text">
                             @T.T("BusinessAdminTextOverridesHelp")

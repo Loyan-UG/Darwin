@@ -1,4 +1,4 @@
-﻿# Darwin WebAdmin Guide
+# Darwin WebAdmin Guide
 
 [![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/aspnet/core/)
 [![HTMX](https://img.shields.io/badge/HTMX-2.0-3366CC?logo=htmx&logoColor=white)](https://htmx.org/)
@@ -808,12 +808,17 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Staff access remediation`: `StaffAccessBadge` now exposes direct follow-up pivots for `Edit member`, `User edit`, `Members`, and `Merchant Readiness`, so badge review does not stop at a passive informational header.
 - `Invitation empty-state remediation`: `Invitations` now exposes a direct pivot for `Merchant Readiness` from its empty state, so zero-row invitation review does not stop at create/setup/support actions alone.
 - `Merchant readiness empty-state remediation`: `MerchantReadiness` now exposes direct pivots for `Businesses`, `Business Support Queue`, `Payments`, and `Communication Ops` from its empty state, so zero-row readiness review does not stop at passive copy.
+- `Merchant readiness empty-state precision`: the full-queue pivot in the `MerchantReadiness` empty state now uses the concrete `BusinessesTitle` label instead of a generic queue phrasing, so that handoff matches the exact workspace it opens.
 - `Merchant readiness precision labels`: `MerchantReadiness` summary cards now use slice-specific labels instead of a generic business-queue label, so each summary drill-in matches the exact subset it opens.
+- `Businesses suspension precision`: the `SuspendedBusinesses` summary card in the main `Businesses` workspace now uses the exact suspension label instead of the generic `OpenBusinessQueue` phrasing, so that lifecycle drill-in matches the precise subset it opens.
 - `Merchant readiness header precision`: the `attentionOnly` header shortcut in `MerchantReadiness` now uses the exact `NeedsAttention` label instead of a generic business-queue label, so the top workspace entry matches the slice it opens.
 - `Merchant readiness playbook pivots`: the playbooks block in `MerchantReadiness` now also exposes direct header/footer pivots for `Business Support Queue`, `NeedsAttention`, and `Payments`, so the playbook table is no longer an isolated middle layer.
 - `Merchant readiness playbook row remediation`: the title and scope cells in `MerchantReadiness` playbook rows now deep-link into the queue-action and follow-up lanes, so the table no longer keeps dead text in its main read columns.
-- `Merchant readiness operator-action remediation`: the operator-action text in `MerchantReadiness` playbook rows now also deep-links into the queue-action lane, so the row’s main instruction no longer stays as passive copy above its button.
-- `Merchant readiness playbook source guard`: the `MerchantReadiness` playbook block is now covered by a dedicated source test, so its approval/setup/billing handoffs and the newer block-level pivots cannot silently drift.
+- `Merchant readiness operator-action remediation`: the operator-action text in `MerchantReadiness` playbook rows now also deep-links into the queue-action lane, so the row�s main instruction no longer stays as passive copy above its button.
+- `Merchant readiness playbook source guard`: the `MerchantReadiness` playbook block is now covered by a dedicated source test, so its approval/setup/billing handoffs, linked title/scope/operator-action cells, explicit plain-text fallback branches, and newer block-level pivots cannot silently drift.
+- Merchant playbook button-label source guard: the Businesses, SupportQueue, and MerchantReadiness source guards now also pin the queue-action and follow-up button labels as linked HTMX handoffs, so those row-level pivots cannot quietly degrade back into passive text or broken buttons.
+- Additional merchant playbook button-label source guard: the Members, Invitations, OwnerOverrideAudits, and Subscription source guards now also pin their queue-action and follow-up button labels as linked HTMX handoffs, so those row-level pivots cannot quietly degrade back into passive text or broken buttons.
+- Locations playbook source guard depth: the Locations source guard now also pins the linked queue-label, context, operator-action, and queue-button cells together, so the row-level location triage path cannot quietly lose depth in one column while the others stay wired.
 - `Merchant readiness source guard`: the deep row-action surface in `MerchantReadiness` is now covered by a dedicated source test, so business/setup/communications/billing/governance/support pivots cannot silently drift.
 - `Merchant readiness summary source guard`: the summary cards and top queue-entry controls in `MerchantReadiness` are now also covered by a dedicated source test, so support/billing/tax entry pivots plus readiness/account-state subset drill-ins cannot silently drift.
 - `Invitation onboarding defaults`: business-invitation onboarding now uses site-setting culture/time-zone/currency defaults for newly provisioned users instead of hardcoded `de-DE` / `Europe/Berlin` / `EUR`, and business create/edit DTO defaults now reuse the shared site-setting constants instead of repeating raw literals.
@@ -827,3 +832,54 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Billing DTO currency defaults`: the remaining billing DTO currency defaults now also reuse the shared site-setting currency constant instead of repeating raw `EUR` literals across payment, refund, tax-compliance, billing-plan, and business-subscription models.
 - `CRM and business API defaults`: the remaining CRM address DTO country defaults plus the member-business onboarding/public-business contract fallbacks now also reuse shared site-setting culture/currency/country constants instead of repeating raw `DE` / `de-DE` / `EUR` literals.
 - `Public API culture/currency defaults`: the public catalog/CMS/checkout/shipping controllers and the underlying public catalog/CMS queries now also reuse shared site-setting culture/currency constants instead of repeating raw `de-DE` / `EUR` fallback literals in storefront API entry paths.
+- `Catalog/CMS DTO defaults`: the remaining catalog/CMS DTO defaults and admin query culture defaults now also reuse shared site-setting culture/currency constants instead of repeating raw `de-DE` / `EUR` literals in application-layer catalog/content models.
+- `Commerce DTO defaults`: the remaining orders/shipping/pricing DTO defaults now also reuse shared site-setting culture/currency/country constants instead of repeating raw `de-DE` / `EUR` / `DE` literals in application-layer commerce models.
+- `Cart/invoice/add-on currency defaults`: the remaining cart checkout, CRM invoice, and applicable add-on currency fallbacks now also reuse the shared site-setting currency constant instead of repeating raw `EUR` literals.
+- `Lookup/deletion defaults`: the remaining admin lookup culture fallback and account-deletion country placeholder now also reuse shared site-setting constants instead of repeating raw `de-DE` / `DE` literals in application-layer support flows.
+- `Mobile profile/address defaults`: the remaining business/consumer MAUI profile and member-address defaults now also reuse shared contract-level locale/timezone/currency/country constants instead of repeating raw `de-DE` / `Europe/Berlin` / `EUR` / `DE` literals in mobile view models.
+- `Client contract defaults`: the remaining business-detail, billing, cart, catalog, order, invoice, checkout, and public-shipping contracts now also reuse shared contract-level locale/currency/country constants instead of repeating raw `de-DE` / `EUR` / `DE` literals across public/member DTOs.
+- `Business mobile subscription currency fallback`: the remaining runtime currency fallback in the business mobile subscription snapshot now also reuses the shared contract-level default currency constant instead of repeating a raw `EUR` literal in formatting code.
+- `Admin override placeholder defaults`: the admin-text-override placeholder examples in business setup and site settings now also derive their culture keys from shared localization/settings defaults instead of repeating raw `de-DE` / `en-US` literals in the UI guidance layer.
+- `Domain entity defaults`: the remaining default locale/timezone/currency/country values in core domain entities now also reuse a shared domain baseline instead of repeating raw `de-DE` / `Europe/Berlin` / `EUR` / `DE` literals across business, billing, cart, catalog, CMS, CRM, identity, order, pricing, and settings models.
+- `Seed baseline defaults`: the remaining identity, site-settings, shipping, and business bootstrap seed paths now also reuse the shared domain baseline instead of repeating raw `de-DE` / `Europe/Berlin` / `EUR` / `DE` literals in infrastructure seeding.
+- `Operational seed defaults`: the remaining billing, cart, catalog, CRM, order, pricing, and site-setting issuer/shipper seed defaults now also reuse the shared domain baseline instead of repeating raw `de-DE` / `EUR` / `DE` literals in infrastructure seeding.
+- `CMS seed culture defaults`: the CMS menu/page seed culture defaults now also reuse the shared domain baseline instead of repeating raw `de-DE` literals in infrastructure seeding.
+- `Admin culture baseline defaults`: the site-settings DTO baseline and the admin culture catalog now also reuse the shared domain baseline instead of repeating raw `de-DE` / `Europe/Berlin` / `EUR` / `DE` literals in parallel default catalogs.
+- `Localization baseline guard`: the centralized default chain from `DomainDefaults` into `SiteSettingDto` and `AdminCultureCatalog` is now also source-guarded, so those baseline defaults cannot silently drift back into parallel raw literal catalogs.
+- `Seed baseline guard`: the infrastructure seed baseline across identity, business, shipping, site settings, billing, cart, catalog, CMS, CRM, orders, and pricing is now also source-guarded, so those bootstrap defaults cannot silently drift back into raw literal catalogs.
+- `Members/invitations/locations/owner-override/subscription playbook deep links`: the `Businesses`, `SupportQueue`, `Members`, `Invitations`, `Locations`, `OwnerOverrideAudits`, and `Subscription` playbook tables now deep-link from their queue-label and operator-action text into the queue action itself, so those merchant-support playbooks no longer keep their primary read columns passive above the action buttons.
+- Members/invitations/owner-override/subscription playbook context remediation: the Members, Invitations, OwnerOverrideAudits, and Subscription playbook rows now also deep-link from their WhyItMatters text into the follow-up lane, so those workspaces no longer keep the context column passive while each row already exposes a dedicated escalation or remediation handoff.
+- Locations playbook context remediation: the Locations playbook rows now also deep-link from their WhyItMatters text into the queue lane, so the location-context column no longer stays passive in the one workspace where the same row keeps all remediation inside the queue itself.
+- Business-invitations playbook localization: the business-invitations playbook guidance is now resource-backed, so its WhyItMatters and OperatorAction copy no longer stays as raw English controller literals outside the shared localization system.
+- Owner-override/subscription playbook localization: the owner-override and subscription playbook guidance is now resource-backed, so those merchant-ops lanes no longer keep governance and billing operator copy as raw English controller literals outside the shared localization system.
+- Locations playbook localization: the locations playbook guidance is now resource-backed, so that queue no longer keeps location triage labels and operator copy as raw English controller literals outside the shared localization system.
+- Locations filter/playbook label localization: the locations filter and playbook labels now also route through shared resource keys, so that workspace no longer mixes localized UI shells with raw English queue-label/filter literals in the controller path.
+- Merchant filter localization: the business status/member/invitation/subscription-invoice filter labels now also route through shared resource keys, so those high-traffic merchant queue filters no longer mix localized shells with raw English controller literals.
+- Support queue playbook title remediation: the SupportQueue playbook rows now also deep-link from their title text into the queue-action lane, so the first read column in that workspace is no longer passive while the rest of the row is already actionable.
+- Businesses/support-queue playbook scope remediation: the Businesses and SupportQueue playbook rows now also deep-link from their scope text into the follow-up lane, so the second read column in those workspaces no longer stays passive while each row already exposes a dedicated follow-up action.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- Merchant readiness/support localization: the remaining business communication-readiness summaries, subscription-plan handoff labels, and support-audit guidance now also route through shared resource keys, so those merchant setup/support controller paths no longer keep raw English readiness and remediation literals outside the localization system.
+
+- Subscription status fallback localization: the subscription snapshot fallback status now also routes through shared resource keys, so that merchant billing surface no longer renders a raw English Unavailable literal when the status lookup is missing.
+
+- Merchant mutation feedback localization: the remaining business create/archive, location-archive, invitation-revoke note, and subscription-cancellation flash messages now also route through shared resource keys, so those merchant mutation feedback paths no longer keep raw English literals in the controller.
+
+- Communication resend-policy localization: the communication resend/retry policy matrix now also routes its flow names, safe-action guidance, retry-status notes, operator entry points, and escalation rules through shared resource keys, so that operator-facing communication policy surface no longer stays English-only in controller literals.

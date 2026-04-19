@@ -60,18 +60,18 @@ namespace Darwin.Domain.Entities.Businesses
         /// <summary>
         /// ISO 4217 currency code to be used by default in business operations (e.g., "EUR").
         /// </summary>
-        public string DefaultCurrency { get; set; } = "EUR";
+        public string DefaultCurrency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>
         /// Culture code preferred by the business for UI/printing (e.g., "de-DE").
         /// </summary>
-        public string DefaultCulture { get; set; } = "de-DE";
+        public string DefaultCulture { get; set; } = DomainDefaults.DefaultCulture;
 
         /// <summary>
         /// IANA time zone identifier used for business-facing scheduling, timestamps, and operational messaging.
         /// This remains business-scoped even when the hosting platform itself runs in a different server time zone.
         /// </summary>
-        public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
+        public string DefaultTimeZoneId { get; set; } = DomainDefaults.DefaultTimezone;
 
         /// <summary>
         /// Optional JSON map of business-scoped admin text overrides layered on top of platform shared resources.

@@ -96,7 +96,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "Suspended" })"
                hx-target="#businesses-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenBusinessQueue")</a>
+               hx-push-url="true">@T.T("SuspendedBusinesses")</a>
         </div>
     </div>
     <div class="col-md-2">
@@ -324,10 +324,31 @@
                 @foreach (var playbook in Model.Playbooks)
                 {
                     <tr>
-                        <td class="fw-semibold">@playbook.Title</td>
-                        <td>@playbook.ScopeNote</td>
+                        <td class="fw-semibold">
+                            <a href="@playbook.QueueActionUrl"
+                               class="link-body-emphasis text-decoration-none"
+                               hx-get="@playbook.QueueActionUrl"
+                               hx-target="#businesses-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@playbook.Title</a>
+                        </td>
                         <td>
-                            <div class="mb-2">@playbook.OperatorAction</div>
+                            <a href="@playbook.FollowUpUrl"
+                               class="link-body-emphasis text-decoration-none"
+                               hx-get="@playbook.FollowUpUrl"
+                               hx-target="#businesses-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@playbook.ScopeNote</a>
+                        </td>
+                        <td>
+                            <div class="mb-2">
+                                <a href="@playbook.QueueActionUrl"
+                                   class="link-body-emphasis text-decoration-none"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#businesses-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.OperatorAction</a>
+                            </div>
                             @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))
                             {
                                 <a href="@playbook.QueueActionUrl"

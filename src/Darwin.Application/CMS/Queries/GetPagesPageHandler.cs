@@ -27,7 +27,7 @@ namespace Darwin.Application.CMS.Queries
         public async Task<(IReadOnlyList<PageListItemDto> Items, int Total)> HandleAsync(
             int page = 1,
             int pageSize = 20,
-            string? culture = "de-DE",
+            string? culture = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault,
             CancellationToken ct = default)
         {
             return await HandleAsync(page, pageSize, culture, query: null, filter: null, ct).ConfigureAwait(false);

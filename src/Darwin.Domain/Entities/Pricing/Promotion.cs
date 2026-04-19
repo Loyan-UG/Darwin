@@ -21,7 +21,7 @@ namespace Darwin.Domain.Entities.Pricing
         /// <summary>For Type=Percentage, 0..100.00 stored as decimal.</summary>
         public decimal? Percent { get; set; }
         /// <summary>ISO currency code for amount-based rewards (phase 1: EUR).</summary>
-        public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
         /// <summary>Optional minimal order subtotal (net) required to apply the promotion (minor units).</summary>
         public long? MinSubtotalNetMinor { get; set; }
         /// <summary>Optional JSON of simple conditions (e.g., categories/products inclusion/exclusion).</summary>

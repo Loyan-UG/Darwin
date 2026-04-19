@@ -6,7 +6,7 @@ namespace Darwin.Application.Catalog.DTOs
     /// <summary>Translation slice for product.</summary>
     public sealed class ProductTranslationDto
     {
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? ShortDescription { get; set; }
@@ -26,7 +26,7 @@ namespace Darwin.Application.Catalog.DTOs
         // Pricing (NET) in minor units
         public long BasePriceNetMinor { get; set; }
         public long? CompareAtPriceNetMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public Guid TaxCategoryId { get; set; }
 
         // Inventory

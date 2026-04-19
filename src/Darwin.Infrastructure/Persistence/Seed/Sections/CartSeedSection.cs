@@ -1,4 +1,5 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Domain.Common;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var cart1 = new Cart
             {
                 UserId = userAlice?.Id,
-                Currency = "EUR",
+                Currency = DomainDefaults.DefaultCurrency,
                 CouponCode = "WELCOME10"
             };
             db.Add(cart1);
@@ -46,7 +47,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             {
                 UserId = null,
                 AnonymousId = "anon-123",
-                Currency = "EUR"
+                Currency = DomainDefaults.DefaultCurrency
             };
             db.Add(cart2);
 

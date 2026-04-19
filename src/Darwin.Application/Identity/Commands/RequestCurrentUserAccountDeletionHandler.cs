@@ -37,7 +37,7 @@ namespace Darwin.Application.Identity.Commands
         private const string DeletedStreet = "Deleted";
         private const string DeletedPostalCode = "00000";
         private const string DeletedCity = "Deleted";
-        private const string DeletedCountryCode = "DE";
+        private const string DeletedCountryCode = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault;
 
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUserService;

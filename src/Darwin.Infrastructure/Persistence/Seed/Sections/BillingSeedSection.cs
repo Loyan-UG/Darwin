@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Inventory;
@@ -111,7 +112,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     CancelAtPeriodEnd = false,
                     TrialEndsAtUtc = DateTime.UtcNow.AddDays(7),
                     UnitPriceMinor = plan.PriceMinor,
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     MetadataJson = "{\"seed\":\"true\"}"
                 });
             }
@@ -143,7 +144,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     DueAtUtc = DateTime.UtcNow.AddDays(10),
                     Status = i % 2 == 0 ? SubscriptionInvoiceStatus.Paid : SubscriptionInvoiceStatus.Open,
                     TotalMinor = subscriptions[i].UnitPriceMinor,
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     HostedInvoiceUrl = $"https://invoices.darwin.dev/{subscriptions[i].Id}",
                     PdfUrl = $"https://invoices.darwin.dev/{subscriptions[i].Id}.pdf",
                     PaidAtUtc = i % 2 == 0 ? DateTime.UtcNow.AddDays(-5) : null,

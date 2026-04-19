@@ -26,7 +26,7 @@ namespace Darwin.Domain.Entities.Identity
         /// <summary>State or province (nullable for countries without states).</summary>
         public string? State { get; set; }
         /// <summary>ISO 3166-1 alpha-2 country code, e.g., "DE".</summary>
-        public string CountryCode { get; set; } = "DE";
+    public string CountryCode { get; set; } = DomainDefaults.DefaultCountryCode;
         /// <summary>Phone number in E.164 format.</summary>
         public string? PhoneE164 { get; set; }
         /// <summary>Whether this address is the default billing address for the user.</summary>

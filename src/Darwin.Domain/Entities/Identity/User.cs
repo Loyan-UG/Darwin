@@ -66,11 +66,11 @@ namespace Darwin.Domain.Entities.Identity
         public DateTime? AcceptsTermsAtUtc { get; set; }
 
         /// <summary>Preferred culture (IETF tag), e.g., "de-DE".</summary>
-        public string Locale { get; set; } = "de-DE";
+        public string Locale { get; set; } = DomainDefaults.DefaultCulture;
         /// <summary>Preferred currency for price display.</summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
         /// <summary>Preferred time zone for display.</summary>
-        public string Timezone { get; set; } = "Europe/Berlin";
+        public string Timezone { get; set; } = DomainDefaults.DefaultTimezone;
 
         // Attribution / CRM
         public string? AnonymousId { get; set; }

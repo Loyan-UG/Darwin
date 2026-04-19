@@ -33,7 +33,7 @@ namespace Darwin.Domain.Entities.Billing
         /// <summary>
         /// Gets or sets the ISO 4217 currency code for <see cref="PriceMinor"/>.
         /// </summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>
         /// Gets or sets the subscription interval unit.
@@ -135,7 +135,7 @@ namespace Darwin.Domain.Entities.Billing
         /// <summary>
         /// Gets or sets the snapshot ISO 4217 currency code.
         /// </summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>
         /// Gets or sets optional provider reconciliation metadata as JSON.
@@ -191,7 +191,7 @@ namespace Darwin.Domain.Entities.Billing
         /// <summary>
         /// Gets or sets the ISO 4217 currency code.
         /// </summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>
         /// Gets or sets the optional hosted invoice URL.
@@ -265,7 +265,7 @@ namespace Darwin.Domain.Entities.Billing
         /// <summary>
         /// Gets or sets the ISO 4217 currency code.
         /// </summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>
         /// Gets or sets the payment lifecycle status.

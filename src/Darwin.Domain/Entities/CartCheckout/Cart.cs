@@ -18,7 +18,7 @@ namespace Darwin.Domain.Entities.CartCheckout
         public string? AnonymousId { get; set; }
 
         /// <summary>ISO currency code. Phase 1: default "EUR".</summary>
-        public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>Optional applied coupon code (validated against Promotion).</summary>
         public string? CouponCode { get; set; }

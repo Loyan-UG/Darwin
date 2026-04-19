@@ -77,7 +77,7 @@ namespace Darwin.Application.Shipping.DTOs
 
     public sealed class RateShipmentInputDto
     {
-        public string Country { get; set; } = "DE";
+        public string Country { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault;
         public long SubtotalNetMinor { get; set; }
         public int ShipmentMass { get; set; }
         public string? Currency { get; set; }
@@ -88,7 +88,7 @@ namespace Darwin.Application.Shipping.DTOs
         public Guid MethodId { get; set; }
         public string Name { get; set; } = string.Empty;
         public long PriceMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public string Carrier { get; set; } = string.Empty;
         public string Service { get; set; } = string.Empty;
     }

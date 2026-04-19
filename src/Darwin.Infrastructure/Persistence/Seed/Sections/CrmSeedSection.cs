@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
@@ -266,7 +267,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     City = pair.seed.City,
                     State = null,
                     PostalCode = pair.seed.PostalCode,
-                    Country = "DE",
+                    Country = DomainDefaults.DefaultCountryCode,
                     IsDefaultBilling = true,
                     IsDefaultShipping = true
                 });
@@ -511,7 +512,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     OrderId = null,
                     PaymentId = null,
                     Status = i % 3 == 0 ? InvoiceStatus.Paid : InvoiceStatus.Open,
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     TotalNetMinor = net,
                     TotalTaxMinor = tax,
                     TotalGrossMinor = net + tax,

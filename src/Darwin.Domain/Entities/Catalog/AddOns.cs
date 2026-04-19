@@ -15,7 +15,7 @@ namespace Darwin.Domain.Entities.Catalog
         public string Name { get; set; } = string.Empty;
 
         /// <summary>ISO 4217 currency of price deltas (phase 1 typically "EUR").</summary>
-        public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>When true, this group is considered global (applies to all products) unless overridden by assignments.</summary>
         public bool IsGlobal { get; set; } = false;

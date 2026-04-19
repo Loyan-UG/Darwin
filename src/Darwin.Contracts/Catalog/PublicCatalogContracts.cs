@@ -1,3 +1,5 @@
+using Darwin.Contracts.Common;
+
 namespace Darwin.Contracts.Catalog;
 
 /// <summary>
@@ -42,7 +44,7 @@ public class PublicProductSummary
     public string? ShortDescription { get; set; }
 
     /// <summary>Gets or sets the product currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the price in minor units.</summary>
     public long PriceMinor { get; set; }
@@ -90,7 +92,7 @@ public sealed class PublicProductVariant
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the base price in minor units.</summary>
     public long BasePriceNetMinor { get; set; }

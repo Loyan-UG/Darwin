@@ -8,7 +8,7 @@ namespace Darwin.Application.Catalog.DTOs
     /// </summary>
     public sealed class CategoryTranslationDto
     {
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? Description { get; set; }

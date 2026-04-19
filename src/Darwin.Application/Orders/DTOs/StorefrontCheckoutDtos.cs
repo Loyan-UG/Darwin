@@ -32,7 +32,7 @@ public sealed class StorefrontCheckoutIntentResultDto
     public Guid CartId { get; set; }
 
     /// <summary>Gets or sets the cart currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
     /// <summary>Gets or sets the subtotal net amount in minor units.</summary>
     public long SubtotalNetMinor { get; set; }
@@ -77,7 +77,7 @@ public sealed class StorefrontShippingOptionDto
     public long PriceMinor { get; set; }
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
     /// <summary>Gets or sets the carrier name or code.</summary>
     public string Carrier { get; set; } = string.Empty;
@@ -125,7 +125,7 @@ public sealed class StorefrontPaymentIntentResultDto
     public long AmountMinor { get; set; }
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
     /// <summary>Gets or sets the payment status.</summary>
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
@@ -209,7 +209,7 @@ public sealed class StorefrontOrderConfirmationDto
     public string OrderNumber { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
     /// <summary>Gets or sets the order subtotal net in minor units.</summary>
     public long SubtotalNetMinor { get; set; }
@@ -305,7 +305,7 @@ public sealed class StorefrontOrderConfirmationPaymentDto
     public long AmountMinor { get; set; }
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
     /// <summary>Gets or sets the payment status.</summary>
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;

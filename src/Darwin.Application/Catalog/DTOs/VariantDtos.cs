@@ -28,7 +28,7 @@ namespace Darwin.Application.Catalog.DTOs
         public string? Gtin { get; init; }
 
         /// <summary>Currency code for price fields (ISO 4217).</summary>
-        public string Currency { get; init; } = "EUR";
+        public string Currency { get; init; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
         /// <summary>Base price (net) in minor units; useful for display.</summary>
         public long BasePriceNetMinor { get; init; }

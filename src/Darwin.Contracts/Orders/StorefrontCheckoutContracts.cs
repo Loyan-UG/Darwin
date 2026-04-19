@@ -1,3 +1,5 @@
+using Darwin.Contracts.Common;
+
 namespace Darwin.Contracts.Orders;
 
 /// <summary>
@@ -27,7 +29,7 @@ public sealed class CheckoutAddress
     public string? State { get; set; }
 
     /// <summary>Gets or sets the ISO country code.</summary>
-    public string CountryCode { get; set; } = "DE";
+    public string CountryCode { get; set; } = ContractDefaults.DefaultCountryCode;
 
     /// <summary>Gets or sets the optional phone number in E.164 format.</summary>
     public string? PhoneE164 { get; set; }
@@ -75,7 +77,7 @@ public sealed class PlaceOrderFromCartResponse
     public string OrderNumber { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the order currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the grand total in minor units.</summary>
     public long GrandTotalGrossMinor { get; set; }
@@ -111,7 +113,7 @@ public sealed class CreateCheckoutIntentResponse
     public Guid CartId { get; set; }
 
     /// <summary>Gets or sets the cart currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the cart subtotal net in minor units.</summary>
     public long SubtotalNetMinor { get; set; }
@@ -174,7 +176,7 @@ public sealed class CreateStorefrontPaymentIntentResponse
     public long AmountMinor { get; set; }
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the payment status.</summary>
     public string Status { get; set; } = string.Empty;
@@ -243,7 +245,7 @@ public sealed class StorefrontOrderConfirmationResponse
     public string OrderNumber { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the order subtotal net in minor units.</summary>
     public long SubtotalNetMinor { get; set; }
@@ -339,7 +341,7 @@ public sealed class StorefrontOrderConfirmationPayment
     public long AmountMinor { get; set; }
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the payment status.</summary>
     public string Status { get; set; } = string.Empty;

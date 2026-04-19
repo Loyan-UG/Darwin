@@ -571,9 +571,30 @@
                     @foreach (var playbook in Model.Playbooks)
                     {
                         <tr>
-                            <td class="fw-semibold">@playbook.QueueLabel</td>
-                            <td>@playbook.WhyItMatters</td>
-                            <td>@playbook.OperatorAction</td>
+                            <td class="fw-semibold">
+                                <a href="@playbook.QueueActionUrl"
+                                   class="link-body-emphasis text-decoration-none"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#business-subscription-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.QueueLabel</a>
+                            </td>
+                            <td>
+                                <a href="@playbook.FollowUpUrl"
+                                   class="link-body-emphasis text-decoration-none"
+                                   hx-get="@playbook.FollowUpUrl"
+                                   hx-target="#business-subscription-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.WhyItMatters</a>
+                            </td>
+                            <td>
+                                <a href="@playbook.QueueActionUrl"
+                                   class="link-body-emphasis text-decoration-none"
+                                   hx-get="@playbook.QueueActionUrl"
+                                   hx-target="#business-subscription-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@playbook.OperatorAction</a>
+                            </td>
                             <td>
                                 <div class="d-flex gap-2 flex-wrap">
                                     @if (!string.IsNullOrWhiteSpace(playbook.QueueActionUrl))

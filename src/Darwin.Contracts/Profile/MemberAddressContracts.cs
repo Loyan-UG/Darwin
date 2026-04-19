@@ -33,7 +33,7 @@ public sealed class MemberAddress
     public string? State { get; set; }
 
     /// <summary>Gets or sets the ISO country code.</summary>
-    public string CountryCode { get; set; } = "DE";
+    public string CountryCode { get; set; } = ProfileContractDefaults.DefaultCountryCode;
 
     /// <summary>Gets or sets the optional phone number in E.164 format.</summary>
     public string? PhoneE164 { get; set; }
@@ -72,7 +72,7 @@ public sealed class CreateMemberAddressRequest
     public string? State { get; set; }
 
     /// <summary>Gets or sets the ISO country code.</summary>
-    public string CountryCode { get; set; } = "DE";
+    public string CountryCode { get; set; } = ProfileContractDefaults.DefaultCountryCode;
 
     /// <summary>Gets or sets the optional phone number in E.164 format.</summary>
     public string? PhoneE164 { get; set; }
@@ -111,7 +111,7 @@ public sealed class UpdateMemberAddressRequest
     public string? State { get; set; }
 
     /// <summary>Gets or sets the ISO country code.</summary>
-    public string CountryCode { get; set; } = "DE";
+    public string CountryCode { get; set; } = ProfileContractDefaults.DefaultCountryCode;
 
     /// <summary>Gets or sets the optional phone number in E.164 format.</summary>
     public string? PhoneE164 { get; set; }

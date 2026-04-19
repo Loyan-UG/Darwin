@@ -20,7 +20,7 @@ namespace Darwin.Application.Catalog.DTOs
     public sealed class AddOnGroupCreateDto
     {
         public string Name { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public bool IsGlobal { get; set; } = false;
         public AddOnSelectionMode SelectionMode { get; set; } = AddOnSelectionMode.Single;
         public int MinSelections { get; set; } = 0;
@@ -38,7 +38,7 @@ namespace Darwin.Application.Catalog.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
         public string Name { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public bool IsGlobal { get; set; } = false;
         public AddOnSelectionMode SelectionMode { get; set; } = AddOnSelectionMode.Single;
         public int MinSelections { get; set; } = 0;
@@ -76,7 +76,7 @@ namespace Darwin.Application.Catalog.DTOs
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public bool IsGlobal { get; set; }
         public bool IsActive { get; set; }
         public int OptionsCount { get; set; }
@@ -141,7 +141,7 @@ namespace Darwin.Application.Catalog.DTOs
         public string Name { get; set; } = string.Empty;
 
         /// <summary>ISO 4217 currency code (e.g., "EUR").</summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
         /// <summary>Selection mode (single or multiple).</summary>
         public AddOnSelectionMode SelectionMode { get; set; }

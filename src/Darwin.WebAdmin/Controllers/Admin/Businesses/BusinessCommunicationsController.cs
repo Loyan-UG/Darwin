@@ -1662,75 +1662,75 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return output;
         }
 
-        private static List<CommunicationResendPolicyVm> BuildResendPolicies()
+        private List<CommunicationResendPolicyVm> BuildResendPolicies()
         {
             return new List<CommunicationResendPolicyVm>
             {
                 new()
                 {
-                    FlowName = "Business Invitation",
-                    CurrentSafeAction = "Use controlled audit retry or the invitation workspace resend/revoke after SMTP readiness is green.",
-                    GenericRetryStatus = "Supported from failed or pending audit rows when a current invitation can be resolved safely.",
-                    OperatorEntryPoint = "Business setup, invitations list, and email-audit queue.",
+                    FlowName = T("CommunicationResendPolicyInvitationFlow"),
+                    CurrentSafeAction = T("CommunicationResendPolicyInvitationSafeAction"),
+                    GenericRetryStatus = T("CommunicationResendPolicyInvitationRetryStatus"),
+                    OperatorEntryPoint = T("CommunicationResendPolicyInvitationEntryPoint"),
                     AuditFlowKey = "BusinessInvitation",
-                    OperatorActionLabel = "Open Invitations",
+                    OperatorActionLabel = T("OpenInvitations"),
                     OperatorActionTarget = "Invitations",
-                    EscalationRule = "If repeated resends fail after transport is ready, escalate as Communication Core/platform debt instead of repeating sends."
+                    EscalationRule = T("CommunicationResendPolicyInvitationEscalation")
                 },
                 new()
                 {
-                    FlowName = "Account Activation",
-                    CurrentSafeAction = "Prefer self-service resend; use controlled audit retry or admin activation support only where current policy allows.",
-                    GenericRetryStatus = "Supported from failed or pending audit rows after resolving the live user by recipient email.",
-                    OperatorEntryPoint = "Users queue, business members queue, and email-audit queue.",
+                    FlowName = T("CommunicationResendPolicyActivationFlow"),
+                    CurrentSafeAction = T("CommunicationResendPolicyActivationSafeAction"),
+                    GenericRetryStatus = T("CommunicationResendPolicyActivationRetryStatus"),
+                    OperatorEntryPoint = T("CommunicationResendPolicyActivationEntryPoint"),
                     AuditFlowKey = "AccountActivation",
-                    OperatorActionLabel = "Open Users",
+                    OperatorActionLabel = T("OpenUsers"),
                     OperatorActionTarget = "Users",
-                    EscalationRule = "Do not bypass confirmation policy. Persistent failures after a validated resend are auth/communication troubleshooting."
+                    EscalationRule = T("CommunicationResendPolicyActivationEscalation")
                 },
                 new()
                 {
-                    FlowName = "Password Reset",
-                    CurrentSafeAction = "Reissue reset only after identity validation and transport checks, whether from audit retry or support surfaces.",
-                    GenericRetryStatus = "Supported from failed or pending audit rows after resolving the live user by recipient email.",
-                    OperatorEntryPoint = "Users queue, business member support actions, and email-audit queue.",
+                    FlowName = T("CommunicationResendPolicyPasswordResetFlow"),
+                    CurrentSafeAction = T("CommunicationResendPolicyPasswordResetSafeAction"),
+                    GenericRetryStatus = T("CommunicationResendPolicyPasswordResetRetryStatus"),
+                    OperatorEntryPoint = T("CommunicationResendPolicyPasswordResetEntryPoint"),
                     AuditFlowKey = "PasswordReset",
-                    OperatorActionLabel = "Open Users",
+                    OperatorActionLabel = T("OpenUsers"),
                     OperatorActionTarget = "Users",
-                    EscalationRule = "Avoid repeated resets without verification. Persistent failures escalate as support/security or transport issues."
+                    EscalationRule = T("CommunicationResendPolicyPasswordResetEscalation")
                 },
                 new()
                 {
-                    FlowName = "Phone Verification",
-                    CurrentSafeAction = "Request a fresh phone-verification code through the canonical profile flow after confirming the current phone number and chosen channel.",
-                    GenericRetryStatus = "No audit-driven retry yet; re-request only through the live verification flow.",
-                    OperatorEntryPoint = "Profile/mobile verification surfaces and site settings communication policy.",
+                    FlowName = T("CommunicationResendPolicyPhoneVerificationFlow"),
+                    CurrentSafeAction = T("CommunicationResendPolicyPhoneVerificationSafeAction"),
+                    GenericRetryStatus = T("CommunicationResendPolicyPhoneVerificationRetryStatus"),
+                    OperatorEntryPoint = T("CommunicationResendPolicyPhoneVerificationEntryPoint"),
                     AuditFlowKey = string.Empty,
-                    OperatorActionLabel = "Open Communication Policy",
+                    OperatorActionLabel = T("BusinessCommunicationOpenPolicyAction"),
                     OperatorActionTarget = "SiteSettings",
-                    EscalationRule = "Do not manually replay old codes. If SMS or WhatsApp delivery fails repeatedly, fix the transport or switch channel before issuing another code."
+                    EscalationRule = T("CommunicationResendPolicyPhoneVerificationEscalation")
                 },
                 new()
                 {
-                    FlowName = "Admin Communication Test",
-                    CurrentSafeAction = "Rerun the diagnostic only to the configured channel test target after fixing provider or policy settings.",
-                    GenericRetryStatus = "No retry queue; manual rerun only.",
-                    OperatorEntryPoint = "Business Communications workspace.",
+                    FlowName = T("CommunicationResendPolicyAdminTestFlow"),
+                    CurrentSafeAction = T("CommunicationResendPolicyAdminTestSafeAction"),
+                    GenericRetryStatus = T("CommunicationResendPolicyAdminTestRetryStatus"),
+                    OperatorEntryPoint = T("CommunicationResendPolicyAdminTestEntryPoint"),
                     AuditFlowKey = "AdminCommunicationTest",
-                    OperatorActionLabel = "Open Audit Log",
+                    OperatorActionLabel = T("CommunicationResendPolicyOpenAuditLog"),
                     OperatorActionTarget = "EmailAudits",
-                    EscalationRule = "Never switch diagnostics to live recipients. Keep tests scoped to the configured test target for each channel."
+                    EscalationRule = T("CommunicationResendPolicyAdminTestEscalation")
                 },
                 new()
                 {
-                    FlowName = "Admin Alerts / SMS / WhatsApp",
-                    CurrentSafeAction = "Visibility and readiness only. No shared resend workflow exists yet.",
-                    GenericRetryStatus = "Not implemented.",
-                    OperatorEntryPoint = "Site settings and Business Communications readiness workspace.",
+                    FlowName = T("CommunicationResendPolicyAdminAlertsFlow"),
+                    CurrentSafeAction = T("CommunicationResendPolicyAdminAlertsSafeAction"),
+                    GenericRetryStatus = T("CommunicationResendPolicyAdminAlertsRetryStatus"),
+                    OperatorEntryPoint = T("CommunicationResendPolicyAdminAlertsEntryPoint"),
                     AuditFlowKey = string.Empty,
-                    OperatorActionLabel = "Open Alert Settings",
+                    OperatorActionLabel = T("CommunicationResendPolicyOpenAlertSettings"),
                     OperatorActionTarget = "AdminAlerts",
-                    EscalationRule = "Treat repeated alert-channel gaps as later-phase Communication Core work, not as manual resend tasks."
+                    EscalationRule = T("CommunicationResendPolicyAdminAlertsEscalation")
                 }
             };
         }

@@ -1491,6 +1491,9 @@
   <data name="NotReady" xml:space="preserve">
     <value>Not ready</value>
   </data>
+  <data name="Unavailable" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
   <data name="Configured" xml:space="preserve">
     <value>Configured</value>
   </data>
@@ -2519,6 +2522,36 @@
   </data>
   <data name="BusinessSupportQueueTitle" xml:space="preserve">
     <value>Business Support Queue</value>
+  </data>
+  <data name="BusinessCreateOwnerAssigned" xml:space="preserve">
+    <value>Business created and owner assigned.</value>
+  </data>
+  <data name="BusinessCreateNextSteps" xml:space="preserve">
+    <value>Business created. Next, add a primary location and assign an owner.</value>
+  </data>
+  <data name="BusinessArchived" xml:space="preserve">
+    <value>Business archived.</value>
+  </data>
+  <data name="BusinessArchiveFailed" xml:space="preserve">
+    <value>Failed to archive business.</value>
+  </data>
+  <data name="BusinessLocationArchived" xml:space="preserve">
+    <value>Business location archived.</value>
+  </data>
+  <data name="BusinessLocationArchiveFailed" xml:space="preserve">
+    <value>Failed to archive location.</value>
+  </data>
+  <data name="BusinessInvitationRevokedFromWebAdminNote" xml:space="preserve">
+    <value>Revoked from WebAdmin.</value>
+  </data>
+  <data name="BusinessSubscriptionCancelAtPeriodEndUpdated" xml:space="preserve">
+    <value>Subscription will cancel at period end.</value>
+  </data>
+  <data name="BusinessSubscriptionRenewalRestored" xml:space="preserve">
+    <value>Subscription renewal restored.</value>
+  </data>
+  <data name="BusinessSubscriptionCancelAtPeriodEndUpdateFailed" xml:space="preserve">
+    <value>Failed to update subscription cancellation policy.</value>
   </data>
   <data name="BusinessSupportQueueIntro" xml:space="preserve">
     <value>Unified onboarding, activation, invitation, and failed-email triage surface for support operators.</value>
@@ -5133,6 +5166,12 @@
   <data name="BusinessMembersTitle" xml:space="preserve">
     <value>Business Members</value>
   </data>
+  <data name="BusinessMembersAllLabel" xml:space="preserve">
+    <value>All members</value>
+  </data>
+  <data name="BusinessMembersLockedLabel" xml:space="preserve">
+    <value>Locked</value>
+  </data>
   <data name="BusinessMembersAssignMemberAction" xml:space="preserve">
     <value>Assign member</value>
   </data>
@@ -5151,6 +5190,9 @@
   <data name="BusinessInvitationsTitle" xml:space="preserve">
     <value>Business Invitations</value>
   </data>
+  <data name="BusinessInvitationsAllLabel" xml:space="preserve">
+    <value>All invitations</value>
+  </data>
   <data name="BusinessInvitationsInviteUserAction" xml:space="preserve">
     <value>Invite user</value>
   </data>
@@ -5165,6 +5207,24 @@
   </data>
   <data name="BusinessInvitationsEmptyState" xml:space="preserve">
     <value>No invitations found.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookOpenWhyItMatters" xml:space="preserve">
+    <value>Open invitation rows are the first place to review onboarding friction before member activation or business-access support drifts wider.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookOpenAction" xml:space="preserve">
+    <value>Review pending and expired invitation rows first, then resend or revoke only after confirming the latest onboarding state.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookPendingWhyItMatters" xml:space="preserve">
+    <value>Pending invitations often need support follow-up before they silently turn into account-activation or owner-coverage gaps.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookPendingAction" xml:space="preserve">
+    <value>Start with still-pending invitations when onboarding progress is unclear, especially before escalating to broader merchant support.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookExpiredWhyItMatters" xml:space="preserve">
+    <value>Expired invitations usually indicate onboarding drift, stale recipient details, or unresolved operator follow-up.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookExpiredAction" xml:space="preserve">
+    <value>Review expired rows before creating fresh invites so the same recipient does not accumulate conflicting invitation history.</value>
   </data>
   <data name="BusinessMembersBackToBusinessAction" xml:space="preserve">
     <value>Back to business</value>
@@ -5207,6 +5267,27 @@
   </data>
   <data name="BusinessLocationsMissingCoordinatesLabel" xml:space="preserve">
     <value>Missing Coordinates</value>
+  </data>
+  <data name="BusinessLocationsPrimaryLocationLabel" xml:space="preserve">
+    <value>Primary location</value>
+  </data>
+  <data name="BusinessLocationsPlaybookPrimaryWhyItMatters" xml:space="preserve">
+    <value>Business-facing operational flows usually assume one clear primary location for default fulfillment and storefront context.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookPrimaryAction" xml:space="preserve">
+    <value>Review whether the current primary location still represents the live business entry point before onboarding or go-live approval.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookMissingAddressWhyItMatters" xml:space="preserve">
+    <value>Incomplete address data weakens shipping, invoicing, and public business visibility across admin and mobile workflows.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookMissingAddressAction" xml:space="preserve">
+    <value>Open the location and complete street, city, and country before relying on the location for live operations.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookMissingCoordinatesWhyItMatters" xml:space="preserve">
+    <value>Geo-dependent discovery, mapping, and future nearby-business experiences depend on a stored coordinate.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookMissingCoordinatesAction" xml:space="preserve">
+    <value>Open the location and add coordinates when the business expects map-aware or proximity-aware experiences.</value>
   </data>
   <data name="BusinessLocationsPlaybooksTitle" xml:space="preserve">
     <value>Location Operations Playbooks</value>
@@ -6570,6 +6651,102 @@
   <data name="CommunicationResendPolicyNote" xml:space="preserve">
     <value>Operators should use only the safe entry points listed here. Failed audit rows are for triage visibility; they are not a generic replay button.</value>
   </data>
+  <data name="CommunicationResendPolicyInvitationFlow" xml:space="preserve">
+    <value>Business Invitation</value>
+  </data>
+  <data name="CommunicationResendPolicyInvitationSafeAction" xml:space="preserve">
+    <value>Use controlled audit retry or the invitation workspace resend/revoke after SMTP readiness is green.</value>
+  </data>
+  <data name="CommunicationResendPolicyInvitationRetryStatus" xml:space="preserve">
+    <value>Supported from failed or pending audit rows when a current invitation can be resolved safely.</value>
+  </data>
+  <data name="CommunicationResendPolicyInvitationEntryPoint" xml:space="preserve">
+    <value>Business setup, invitations list, and email-audit queue.</value>
+  </data>
+  <data name="CommunicationResendPolicyInvitationEscalation" xml:space="preserve">
+    <value>If repeated resends fail after transport is ready, escalate as Communication Core/platform debt instead of repeating sends.</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationFlow" xml:space="preserve">
+    <value>Account Activation</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationSafeAction" xml:space="preserve">
+    <value>Prefer self-service resend; use controlled audit retry or admin activation support only where current policy allows.</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationRetryStatus" xml:space="preserve">
+    <value>Supported from failed or pending audit rows after resolving the live user by recipient email.</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationEntryPoint" xml:space="preserve">
+    <value>Users queue, business members queue, and email-audit queue.</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationEscalation" xml:space="preserve">
+    <value>Do not bypass confirmation policy. Persistent failures after a validated resend are auth/communication troubleshooting.</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetFlow" xml:space="preserve">
+    <value>Password Reset</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetSafeAction" xml:space="preserve">
+    <value>Reissue reset only after identity validation and transport checks, whether from audit retry or support surfaces.</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetRetryStatus" xml:space="preserve">
+    <value>Supported from failed or pending audit rows after resolving the live user by recipient email.</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetEntryPoint" xml:space="preserve">
+    <value>Users queue, business member support actions, and email-audit queue.</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetEscalation" xml:space="preserve">
+    <value>Avoid repeated resets without verification. Persistent failures escalate as support/security or transport issues.</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationFlow" xml:space="preserve">
+    <value>Phone Verification</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationSafeAction" xml:space="preserve">
+    <value>Request a fresh phone-verification code through the canonical profile flow after confirming the current phone number and chosen channel.</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationRetryStatus" xml:space="preserve">
+    <value>No audit-driven retry yet; re-request only through the live verification flow.</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationEntryPoint" xml:space="preserve">
+    <value>Profile/mobile verification surfaces and site settings communication policy.</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationEscalation" xml:space="preserve">
+    <value>Do not manually replay old codes. If SMS or WhatsApp delivery fails repeatedly, fix the transport or switch channel before issuing another code.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestFlow" xml:space="preserve">
+    <value>Admin Communication Test</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestSafeAction" xml:space="preserve">
+    <value>Rerun the diagnostic only to the configured channel test target after fixing provider or policy settings.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestRetryStatus" xml:space="preserve">
+    <value>No retry queue; manual rerun only.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestEntryPoint" xml:space="preserve">
+    <value>Business Communications workspace.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestEscalation" xml:space="preserve">
+    <value>Never switch diagnostics to live recipients. Keep tests scoped to the configured test target for each channel.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsFlow" xml:space="preserve">
+    <value>Admin Alerts / SMS / WhatsApp</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsSafeAction" xml:space="preserve">
+    <value>Visibility and readiness only. No shared resend workflow exists yet.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsRetryStatus" xml:space="preserve">
+    <value>Not implemented.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsEntryPoint" xml:space="preserve">
+    <value>Site settings and Business Communications readiness workspace.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsEscalation" xml:space="preserve">
+    <value>Treat repeated alert-channel gaps as later-phase Communication Core work, not as manual resend tasks.</value>
+  </data>
+  <data name="CommunicationResendPolicyOpenAuditLog" xml:space="preserve">
+    <value>Open Audit Log</value>
+  </data>
+  <data name="CommunicationResendPolicyOpenAlertSettings" xml:space="preserve">
+    <value>Open Alert Settings</value>
+  </data>
   <data name="CommunicationCurrentSafeActionColumn" xml:space="preserve">
     <value>Current safe action</value>
   </data>
@@ -6978,6 +7155,9 @@
   <data name="BusinessSubscriptionInvoicesTitle" xml:space="preserve">
     <value>Subscription Invoices</value>
   </data>
+  <data name="BusinessSubscriptionAllInvoicesLabel" xml:space="preserve">
+    <value>All invoices</value>
+  </data>
   <data name="BusinessSubscriptionShort" xml:space="preserve">
     <value>Subscription</value>
   </data>
@@ -7044,6 +7224,18 @@
   <data name="BusinessSubscriptionCurrentPlanBadge" xml:space="preserve">
     <value>Current plan</value>
   </data>
+  <data name="BusinessSubscriptionCheckoutReady" xml:space="preserve">
+    <value>Checkout-ready</value>
+  </data>
+  <data name="BusinessSubscriptionManageCurrentPlan" xml:space="preserve">
+    <value>Manage Current Plan</value>
+  </data>
+  <data name="BusinessSubscriptionUpgradeToPlan" xml:space="preserve">
+    <value>Upgrade To This Plan</value>
+  </data>
+  <data name="BusinessSubscriptionStartWithPlan" xml:space="preserve">
+    <value>Start With This Plan</value>
+  </data>
   <data name="BusinessSubscriptionEveryInterval" xml:space="preserve">
     <value>Every {0} {1}</value>
   </data>
@@ -7073,6 +7265,33 @@
   </data>
   <data name="BusinessSubscriptionQueueColumn" xml:space="preserve">
     <value>Queue</value>
+  </data>
+  <data name="BusinessSubscriptionCancellationPolicy" xml:space="preserve">
+    <value>Cancellation Policy</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookManagementWebsiteWhyItMatters" xml:space="preserve">
+    <value>Business app subscription changes rely on the external management website handoff in phase 1.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookManagementWebsiteActionConfigured" xml:space="preserve">
+    <value>Use the configured management website for upgrade, checkout, and billing handoff.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookManagementWebsiteActionMissing" xml:space="preserve">
+    <value>Configure the business management website in site settings before handing operators off to external billing management.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookCancellationWhyItMatters" xml:space="preserve">
+    <value>Cancel-at-period-end changes directly affect business continuity and renewal expectations.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookCancellationActionActive" xml:space="preserve">
+    <value>Review renewal intent and toggle cancel-at-period-end only after confirming the business wants to stop renewal.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookCancellationActionInactive" xml:space="preserve">
+    <value>No active subscription exists yet, so cancellation control is not applicable.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookNoActivePlanWhyItMatters" xml:space="preserve">
+    <value>Businesses without an active subscription may still expect access or billing support from admin.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookNoActivePlanAction" xml:space="preserve">
+    <value>Review available plans and use the external billing-management handoff when the business is ready to start or upgrade.</value>
   </data>
   <data name="CommonPayments" xml:space="preserve">
     <value>Payments</value>
@@ -7160,6 +7379,24 @@
   </data>
   <data name="BusinessOwnerOverrideDemoteDeactivate" xml:space="preserve">
     <value>Demote / deactivate</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookForceRemoveWhyItMatters" xml:space="preserve">
+    <value>Forced removal of the last active owner is a governance-level intervention and should not become a silent substitute for normal membership cleanup.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookForceRemoveAction" xml:space="preserve">
+    <value>Review the affected membership and current owner coverage before repeating a forced removal path.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookDemoteWhyItMatters" xml:space="preserve">
+    <value>Demotion or deactivation of an owner can leave approval, setup, and member escalation paths without a clear accountable operator.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookDemoteAction" xml:space="preserve">
+    <value>Re-check active-owner coverage and membership state before approving further lifecycle changes on the business.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookMissingOwnerWhyItMatters" xml:space="preserve">
+    <value>Owner-gap drift usually surfaces first as an audit or support anomaly before it becomes a broader merchant-readiness or escalation problem.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookMissingOwnerAction" xml:space="preserve">
+    <value>Use the audit trail together with members and merchant-readiness signals before assigning a replacement owner or escalating support.</value>
   </data>
   <data name="CommonSetup" xml:space="preserve">
     <value>Setup</value>
@@ -7250,6 +7487,24 @@
   </data>
   <data name="BusinessSubscriptionOpenBillingWebsite" xml:space="preserve">
     <value>Open Billing Website</value>
+  </data>
+  <data name="BusinessSupportAuditInvitationBusinessAction" xml:space="preserve">
+    <value>Open invitations for the business and use resend or revoke after checking transport readiness.</value>
+  </data>
+  <data name="BusinessSupportAuditInvitationGenericAction" xml:space="preserve">
+    <value>Review the source invitation workflow and transport readiness before resending.</value>
+  </data>
+  <data name="BusinessSupportAuditActivationBusinessAction" xml:space="preserve">
+    <value>Open members for the business and use activation support only after verifying the account state.</value>
+  </data>
+  <data name="BusinessSupportAuditActivationGenericAction" xml:space="preserve">
+    <value>Use activation support only after verifying the account state.</value>
+  </data>
+  <data name="BusinessSupportAuditPasswordResetAction" xml:space="preserve">
+    <value>Reissue reset only after support validation and communication checks.</value>
+  </data>
+  <data name="BusinessSupportAuditGenericAction" xml:space="preserve">
+    <value>Review the related workflow and communication readiness before manual intervention.</value>
   </data>
   <data name="BusinessSubscriptionNoActiveSnapshot" xml:space="preserve">
     <value>No active subscription snapshot is available for this business yet.</value>
@@ -8279,6 +8534,30 @@
   </data>
   <data name="CommunicationReadiness" xml:space="preserve">
     <value>Communication readiness</value>
+  </data>
+  <data name="BusinessCommunicationReadinessEmailConfiguredSummary" xml:space="preserve">
+    <value>SMTP is enabled and has the minimum sender configuration required for business transactional email.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessEmailMissingSummary" xml:space="preserve">
+    <value>SMTP is not fully configured yet. Business transactional email defaults may be saved, but delivery is not operational.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessSmsConfiguredSummary" xml:space="preserve">
+    <value>SMS transport is enabled and has a provider configured.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessSmsMissingSummary" xml:space="preserve">
+    <value>SMS transport is still incomplete or disabled at platform level.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessWhatsAppConfiguredSummary" xml:space="preserve">
+    <value>WhatsApp transport is enabled and has phone, token, and sender configuration.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessWhatsAppMissingSummary" xml:space="preserve">
+    <value>WhatsApp transport is still incomplete or disabled at platform level.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessAdminRoutingConfiguredSummary" xml:space="preserve">
+    <value>Global admin alert routing exists for at least one channel.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessAdminRoutingMissingSummary" xml:space="preserve">
+    <value>Admin alert routing is not configured yet, so business operational alerts may lack an escalation target.</value>
   </data>
   <data name="EmailDelivery" xml:space="preserve">
     <value>Email delivery</value>

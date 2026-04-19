@@ -1,4 +1,5 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Pricing;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +38,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Code = "WELCOME10",
                     Type = Darwin.Domain.Enums.PromotionType.Percentage,
                     Percent = 10m,
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     StartsAtUtc = DateTime.UtcNow.AddDays(-7),
                     EndsAtUtc = DateTime.UtcNow.AddMonths(6),
                     MaxRedemptions = 1000,
@@ -50,7 +51,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Code = "FIVER",
                     Type = Darwin.Domain.Enums.PromotionType.Amount,
                     AmountMinor = 500, // €5.00
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     StartsAtUtc = DateTime.UtcNow.AddDays(-7),
                     EndsAtUtc = DateTime.UtcNow.AddMonths(3),
                     MinSubtotalNetMinor = 2500,
@@ -62,7 +63,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Code = "SEASONAL",
                     Type = Darwin.Domain.Enums.PromotionType.Percentage,
                     Percent = 15m,
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     StartsAtUtc = DateTime.UtcNow.AddDays(-3),
                     EndsAtUtc = DateTime.UtcNow.AddMonths(1),
                     IsActive = true

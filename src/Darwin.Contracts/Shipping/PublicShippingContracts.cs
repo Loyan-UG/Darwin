@@ -1,3 +1,5 @@
+using Darwin.Contracts.Common;
+
 namespace Darwin.Contracts.Shipping;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace Darwin.Contracts.Shipping;
 public sealed class PublicShippingRateRequest
 {
     /// <summary>Gets or sets the ISO 3166-1 alpha-2 destination country code.</summary>
-    public string Country { get; set; } = "DE";
+    public string Country { get; set; } = ContractDefaults.DefaultCountryCode;
 
     /// <summary>Gets or sets the shipment subtotal net amount in minor units.</summary>
     public long SubtotalNetMinor { get; set; }
@@ -33,7 +35,7 @@ public sealed class PublicShippingOption
     public long PriceMinor { get; set; }
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the carrier code or name.</summary>
     public string Carrier { get; set; } = string.Empty;

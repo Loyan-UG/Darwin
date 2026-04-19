@@ -1,4 +1,5 @@
 ﻿using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Common;
 using Darwin.Domain.Enums;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
@@ -85,7 +86,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 {
                     Id = Guid.NewGuid(),
                     OrderNumber = $"DE-2026-{i + 1:D4}",
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     PricesIncludeTax = false,
                     SubtotalNetMinor = subtotalNet,
                     TaxTotalMinor = taxTotal,
@@ -128,7 +129,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Provider = "PayPal",
                     ProviderTransactionRef = $"PAY-{Guid.NewGuid():N}",
                     AmountMinor = grandTotal,
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     Status = PaymentStatus.Captured,
                     PaidAtUtc = DateTime.UtcNow.AddDays(-i)
                 };

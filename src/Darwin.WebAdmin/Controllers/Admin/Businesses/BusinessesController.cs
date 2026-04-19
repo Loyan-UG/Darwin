@@ -467,8 +467,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }
 
                 TempData["Success"] = vm.OwnerUserId.HasValue
-                    ? "Business created and owner assigned."
-                    : "Business created. Next, add a primary location and assign an owner.";
+                    ? T("BusinessCreateOwnerAssigned")
+                    : T("BusinessCreateNextSteps");
                 return RedirectOrHtmx(nameof(Edit), new { id = businessId });
             }
             catch (Exception ex)
@@ -590,8 +590,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? (cancelAtPeriodEnd ? "Subscription will cancel at period end." : "Subscription renewal restored.")
-                : (result.Error ?? "Failed to update subscription cancellation policy.");
+                ? (cancelAtPeriodEnd ? T("BusinessSubscriptionCancelAtPeriodEndUpdated") : T("BusinessSubscriptionRenewalRestored"))
+                : (result.Error ?? T("BusinessSubscriptionCancelAtPeriodEndUpdateFailed"));
 
             return RedirectOrHtmx(nameof(Subscription), new { businessId });
         }
@@ -817,7 +817,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] =
-                result.Succeeded ? "Business archived." : (result.Error ?? "Failed to archive business.");
+                result.Succeeded ? T("BusinessArchived") : (result.Error ?? T("BusinessArchiveFailed"));
 
             return RedirectOrHtmx(nameof(Index), new { });
         }
@@ -1096,7 +1096,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] =
-                result.Succeeded ? "Business location archived." : (result.Error ?? "Failed to archive location.");
+                result.Succeeded ? T("BusinessLocationArchived") : (result.Error ?? T("BusinessLocationArchiveFailed"));
 
             return RedirectOrHtmx(nameof(Locations), new { businessId });
         }
@@ -1324,7 +1324,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await _revokeBusinessInvitation.HandleAsync(new BusinessInvitationRevokeDto
                 {
                     Id = id,
-                    Note = "Revoked from WebAdmin."
+                    Note = T("BusinessInvitationRevokedFromWebAdminNote")
                 }, ct);
                 SetSuccessMessage("BusinessInvitationRevoked");
             }
@@ -1778,17 +1778,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 AdminAlertEmailsConfigured = adminEmailRoutingConfigured,
                 AdminAlertSmsConfigured = adminSmsRoutingConfigured,
                 EmailTransportSummary = emailConfigured
-                    ? "SMTP is enabled and has the minimum sender configuration required for business transactional email."
-                    : "SMTP is not fully configured yet. Business transactional email defaults may be saved, but delivery is not operational.",
+                    ? T("BusinessCommunicationReadinessEmailConfiguredSummary")
+                    : T("BusinessCommunicationReadinessEmailMissingSummary"),
                 SmsTransportSummary = smsConfigured
-                    ? "SMS transport is enabled and has a provider configured."
-                    : "SMS transport is still incomplete or disabled at platform level.",
+                    ? T("BusinessCommunicationReadinessSmsConfiguredSummary")
+                    : T("BusinessCommunicationReadinessSmsMissingSummary"),
                 WhatsAppTransportSummary = whatsAppConfigured
-                    ? "WhatsApp transport is enabled and has phone, token, and sender configuration."
-                    : "WhatsApp transport is still incomplete or disabled at platform level.",
+                    ? T("BusinessCommunicationReadinessWhatsAppConfiguredSummary")
+                    : T("BusinessCommunicationReadinessWhatsAppMissingSummary"),
                 AdminRoutingSummary = adminEmailRoutingConfigured || adminSmsRoutingConfigured
-                    ? "Global admin alert routing exists for at least one channel."
-                    : "Admin alert routing is not configured yet, so business operational alerts may lack an escalation target."
+                    ? T("BusinessCommunicationReadinessAdminRoutingConfiguredSummary")
+                    : T("BusinessCommunicationReadinessAdminRoutingMissingSummary")
             };
         }
 
@@ -1988,9 +1988,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 : RedirectOrHtmx(nameof(Members), new { businessId });
         }
 
-        private static IEnumerable<SelectListItem> BuildBusinessStatusItems(BusinessOperationalStatus? selectedStatus)
+        private IEnumerable<SelectListItem> BuildBusinessStatusItems(BusinessOperationalStatus? selectedStatus)
         {
-            yield return new SelectListItem("All statuses", string.Empty, !selectedStatus.HasValue);
+            yield return new SelectListItem(T("AllStatuses"), string.Empty, !selectedStatus.HasValue);
 
             foreach (var status in Enum.GetValues<BusinessOperationalStatus>())
             {
@@ -1998,12 +1998,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
         }
 
-        private static IEnumerable<SelectListItem> BuildBusinessMemberFilterItems(BusinessMemberSupportFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildBusinessMemberFilterItems(BusinessMemberSupportFilter selectedFilter)
         {
-            yield return new SelectListItem("All members", BusinessMemberSupportFilter.All.ToString(), selectedFilter == BusinessMemberSupportFilter.All);
-            yield return new SelectListItem("Needs attention", BusinessMemberSupportFilter.Attention.ToString(), selectedFilter == BusinessMemberSupportFilter.Attention);
-            yield return new SelectListItem("Pending activation", BusinessMemberSupportFilter.PendingActivation.ToString(), selectedFilter == BusinessMemberSupportFilter.PendingActivation);
-            yield return new SelectListItem("Locked", BusinessMemberSupportFilter.Locked.ToString(), selectedFilter == BusinessMemberSupportFilter.Locked);
+            yield return new SelectListItem(T("BusinessMembersAllLabel"), BusinessMemberSupportFilter.All.ToString(), selectedFilter == BusinessMemberSupportFilter.All);
+            yield return new SelectListItem(T("NeedsAttention"), BusinessMemberSupportFilter.Attention.ToString(), selectedFilter == BusinessMemberSupportFilter.Attention);
+            yield return new SelectListItem(T("PendingActivation"), BusinessMemberSupportFilter.PendingActivation.ToString(), selectedFilter == BusinessMemberSupportFilter.PendingActivation);
+            yield return new SelectListItem(T("BusinessMembersLockedLabel"), BusinessMemberSupportFilter.Locked.ToString(), selectedFilter == BusinessMemberSupportFilter.Locked);
         }
 
         private async Task<BusinessMemberOpsSummaryVm> BuildBusinessMemberOpsSummaryAsync(Guid businessId, CancellationToken ct)
@@ -2059,14 +2059,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
         }
 
-        private static IEnumerable<SelectListItem> BuildBusinessInvitationFilterItems(BusinessInvitationQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildBusinessInvitationFilterItems(BusinessInvitationQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All invitations", BusinessInvitationQueueFilter.All.ToString(), selectedFilter == BusinessInvitationQueueFilter.All);
-            yield return new SelectListItem("Open invitations", BusinessInvitationQueueFilter.Open.ToString(), selectedFilter == BusinessInvitationQueueFilter.Open);
-            yield return new SelectListItem("Pending", BusinessInvitationQueueFilter.Pending.ToString(), selectedFilter == BusinessInvitationQueueFilter.Pending);
-            yield return new SelectListItem("Expired", BusinessInvitationQueueFilter.Expired.ToString(), selectedFilter == BusinessInvitationQueueFilter.Expired);
-            yield return new SelectListItem("Accepted", BusinessInvitationQueueFilter.Accepted.ToString(), selectedFilter == BusinessInvitationQueueFilter.Accepted);
-            yield return new SelectListItem("Revoked", BusinessInvitationQueueFilter.Revoked.ToString(), selectedFilter == BusinessInvitationQueueFilter.Revoked);
+            yield return new SelectListItem(T("BusinessInvitationsAllLabel"), BusinessInvitationQueueFilter.All.ToString(), selectedFilter == BusinessInvitationQueueFilter.All);
+            yield return new SelectListItem(T("OpenInvitations"), BusinessInvitationQueueFilter.Open.ToString(), selectedFilter == BusinessInvitationQueueFilter.Open);
+            yield return new SelectListItem(T("Pending"), BusinessInvitationQueueFilter.Pending.ToString(), selectedFilter == BusinessInvitationQueueFilter.Pending);
+            yield return new SelectListItem(T("Expired"), BusinessInvitationQueueFilter.Expired.ToString(), selectedFilter == BusinessInvitationQueueFilter.Expired);
+            yield return new SelectListItem(T("Accepted"), BusinessInvitationQueueFilter.Accepted.ToString(), selectedFilter == BusinessInvitationQueueFilter.Accepted);
+            yield return new SelectListItem(T("Revoked"), BusinessInvitationQueueFilter.Revoked.ToString(), selectedFilter == BusinessInvitationQueueFilter.Revoked);
         }
 
         private async Task<BusinessInvitationOpsSummaryVm> BuildBusinessInvitationOpsSummaryAsync(Guid businessId, CancellationToken ct)
@@ -2092,8 +2092,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     QueueLabel = T("OpenInvitations"),
-                    WhyItMatters = "Open invitation rows are the first place to review onboarding friction before member activation or business-access support drifts wider.",
-                    OperatorAction = "Review pending and expired invitation rows first, then resend or revoke only after confirming the latest onboarding state.",
+                    WhyItMatters = T("BusinessInvitationsPlaybookOpenWhyItMatters"),
+                    OperatorAction = T("BusinessInvitationsPlaybookOpenAction"),
                     QueueActionLabel = T("OpenInvitations"),
                     QueueActionUrl = Url.Action("Invitations", "Businesses", new { businessId, filter = BusinessInvitationQueueFilter.Open }) ?? string.Empty,
                     FollowUpLabel = T("FailedInvitations"),
@@ -2102,8 +2102,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     QueueLabel = T("Pending"),
-                    WhyItMatters = "Pending invitations often need support follow-up before they silently turn into account-activation or owner-coverage gaps.",
-                    OperatorAction = "Start with still-pending invitations when onboarding progress is unclear, especially before escalating to broader merchant support.",
+                    WhyItMatters = T("BusinessInvitationsPlaybookPendingWhyItMatters"),
+                    OperatorAction = T("BusinessInvitationsPlaybookPendingAction"),
                     QueueActionLabel = T("Pending"),
                     QueueActionUrl = Url.Action("Invitations", "Businesses", new { businessId, filter = BusinessInvitationQueueFilter.Pending }) ?? string.Empty,
                     FollowUpLabel = T("BusinessSupportQueueTitle"),
@@ -2112,8 +2112,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     QueueLabel = T("Expired"),
-                    WhyItMatters = "Expired invitations usually indicate onboarding drift, stale recipient details, or unresolved operator follow-up.",
-                    OperatorAction = "Review expired rows before creating fresh invites so the same recipient does not accumulate conflicting invitation history.",
+                    WhyItMatters = T("BusinessInvitationsPlaybookExpiredWhyItMatters"),
+                    OperatorAction = T("BusinessInvitationsPlaybookExpiredAction"),
                     QueueActionLabel = T("Expired"),
                     QueueActionUrl = Url.Action("Invitations", "Businesses", new { businessId, filter = BusinessInvitationQueueFilter.Expired }) ?? string.Empty,
                     FollowUpLabel = T("BusinessInvitationsInviteUserAction"),
@@ -2129,8 +2129,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     QueueLabel = T("BusinessOwnerOverrideForceRemove"),
-                    WhyItMatters = "Forced removal of the last active owner is a governance-level intervention and should not become a silent substitute for normal membership cleanup.",
-                    OperatorAction = "Review the affected membership and current owner coverage before repeating a forced removal path.",
+                    WhyItMatters = T("BusinessOwnerOverridePlaybookForceRemoveWhyItMatters"),
+                    OperatorAction = T("BusinessOwnerOverridePlaybookForceRemoveAction"),
                     QueueActionLabel = T("CommonMembers"),
                     QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.Attention }) ?? string.Empty,
                     FollowUpLabel = T("BusinessSupportQueueTitle"),
@@ -2139,8 +2139,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     QueueLabel = T("BusinessOwnerOverrideDemoteDeactivate"),
-                    WhyItMatters = "Demotion or deactivation of an owner can leave approval, setup, and member escalation paths without a clear accountable operator.",
-                    OperatorAction = "Re-check active-owner coverage and membership state before approving further lifecycle changes on the business.",
+                    WhyItMatters = T("BusinessOwnerOverridePlaybookDemoteWhyItMatters"),
+                    OperatorAction = T("BusinessOwnerOverridePlaybookDemoteAction"),
                     QueueActionLabel = T("NeedsAttention"),
                     QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.Attention }) ?? string.Empty,
                     FollowUpLabel = T("MerchantReadinessTitle"),
@@ -2149,8 +2149,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     QueueLabel = T("MissingActiveOwner"),
-                    WhyItMatters = "Owner-gap drift usually surfaces first as an audit or support anomaly before it becomes a broader merchant-readiness or escalation problem.",
-                    OperatorAction = "Use the audit trail together with members and merchant-readiness signals before assigning a replacement owner or escalating support.",
+                    WhyItMatters = T("BusinessOwnerOverridePlaybookMissingOwnerWhyItMatters"),
+                    OperatorAction = T("BusinessOwnerOverridePlaybookMissingOwnerAction"),
                     QueueActionLabel = T("CommonMembers"),
                     QueueActionUrl = Url.Action("Members", "Businesses", new { businessId }) ?? string.Empty,
                     FollowUpLabel = T("CommonSetup"),
@@ -2240,7 +2240,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return new BusinessSubscriptionSnapshotVm
                 {
                     HasSubscription = false,
-                    Status = "Unavailable"
+                    Status = T("Unavailable")
                 };
             }
 
@@ -2305,20 +2305,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     TrialDays = x.TrialDays,
                     IsActive = x.IsActive,
                     CheckoutReady = validation.Succeeded,
-                    CheckoutReadinessLabel = validation.Succeeded ? "Checkout-ready" : (validation.Error ?? "Not ready"),
+                    CheckoutReadinessLabel = validation.Succeeded ? T("BusinessSubscriptionCheckoutReady") : (validation.Error ?? T("NotReady")),
                     IsCurrentPlan = isCurrentPlan,
                     CanOpenManagementWebsite = canOpenManagementWebsite,
                     ManagementWebsiteUrl = canOpenManagementWebsite ? planManagementWebsiteUrl : null,
                     HandoffActionLabel = isCurrentPlan
-                        ? "Manage Current Plan"
-                        : subscription.HasSubscription ? "Upgrade To This Plan" : "Start With This Plan",
+                        ? T("BusinessSubscriptionManageCurrentPlan")
+                        : subscription.HasSubscription ? T("BusinessSubscriptionUpgradeToPlan") : T("BusinessSubscriptionStartWithPlan"),
                     HandoffLabel = isCurrentPlan
-                        ? "Current plan"
+                        ? T("BusinessSubscriptionCurrentPlanBadge")
                         : canOpenManagementWebsite
-                            ? "Open external billing website"
+                            ? T("BusinessSubscriptionOpenBillingWebsite")
                             : managementWebsiteConfigured
-                                ? "Resolve plan prerequisites first"
-                                : "Configure management website first"
+                                ? T("BusinessSubscriptionResolvePrerequisites")
+                                : T("BusinessSubscriptionConfigureWebsite")
                 });
             }
 
@@ -2399,28 +2399,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
         }
 
-        private static string BuildSupportAuditRecommendedAction(EmailDispatchAuditListItemDto item)
+        private string BuildSupportAuditRecommendedAction(EmailDispatchAuditListItemDto item)
         {
             if (string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Open invitations for the business and use resend or revoke after checking transport readiness."
-                    : "Review the source invitation workflow and transport readiness before resending.";
+                    ? T("BusinessSupportAuditInvitationBusinessAction")
+                    : T("BusinessSupportAuditInvitationGenericAction");
             }
 
             if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Open members for the business and use activation support only after verifying the account state."
-                    : "Use activation support only after verifying the account state.";
+                    ? T("BusinessSupportAuditActivationBusinessAction")
+                    : T("BusinessSupportAuditActivationGenericAction");
             }
 
             if (string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
             {
-                return "Reissue reset only after support validation and communication checks.";
+                return T("BusinessSupportAuditPasswordResetAction");
             }
 
-            return "Review the related workflow and communication readiness before manual intervention.";
+            return T("BusinessSupportAuditGenericAction");
         }
 
         private List<MerchantReadinessPlaybookVm> BuildMerchantReadinessPlaybooks()
@@ -2509,11 +2509,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 new()
                 {
-                    QueueLabel = "Management Website",
-                    WhyItMatters = "Business app subscription changes rely on the external management website handoff in phase 1.",
+                    QueueLabel = T("BusinessManagementWebsite"),
+                    WhyItMatters = T("BusinessSubscriptionPlaybookManagementWebsiteWhyItMatters"),
                     OperatorAction = managementWebsiteConfigured
-                        ? "Use the configured management website for upgrade, checkout, and billing handoff."
-                        : "Configure the business management website in site settings before handing operators off to external billing management.",
+                        ? T("BusinessSubscriptionPlaybookManagementWebsiteActionConfigured")
+                        : T("BusinessSubscriptionPlaybookManagementWebsiteActionMissing"),
                     QueueActionLabel = T("CommonSetup"),
                     QueueActionUrl = Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" }) ?? string.Empty,
                     FollowUpLabel = T("CommonPayments"),
@@ -2521,11 +2521,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 },
                 new()
                 {
-                    QueueLabel = "Cancellation Policy",
-                    WhyItMatters = "Cancel-at-period-end changes directly affect business continuity and renewal expectations.",
+                    QueueLabel = T("BusinessSubscriptionCancellationPolicy"),
+                    WhyItMatters = T("BusinessSubscriptionPlaybookCancellationWhyItMatters"),
                     OperatorAction = subscription.HasSubscription
-                        ? "Review renewal intent and toggle cancel-at-period-end only after confirming the business wants to stop renewal."
-                        : "No active subscription exists yet, so cancellation control is not applicable.",
+                        ? T("BusinessSubscriptionPlaybookCancellationActionActive")
+                        : T("BusinessSubscriptionPlaybookCancellationActionInactive"),
                     QueueActionLabel = T("BusinessSubscriptionOpenInvoiceQueue"),
                     QueueActionUrl = Url.Action("SubscriptionInvoices", "Businesses", new { businessId, filter = BusinessSubscriptionInvoiceQueueFilter.Open }) ?? string.Empty,
                     FollowUpLabel = T("CommonPayments"),
@@ -2537,9 +2537,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 items.Add(new BusinessSubscriptionPlaybookVm
                 {
-                    QueueLabel = "No Active Plan",
-                    WhyItMatters = "Businesses without an active subscription may still expect access or billing support from admin.",
-                    OperatorAction = "Review available plans and use the external billing-management handoff when the business is ready to start or upgrade.",
+                    QueueLabel = T("BusinessSubscriptionNoActivePlan"),
+                    WhyItMatters = T("BusinessSubscriptionPlaybookNoActivePlanWhyItMatters"),
+                    OperatorAction = T("BusinessSubscriptionPlaybookNoActivePlanAction"),
                     QueueActionLabel = T("BusinessSubscriptionOpenInvoiceQueue"),
                     QueueActionUrl = Url.Action("SubscriptionInvoices", "Businesses", new { businessId, filter = BusinessSubscriptionInvoiceQueueFilter.All }) ?? string.Empty,
                     FollowUpLabel = T("BusinessSupportQueueTitle"),
@@ -2550,25 +2550,25 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return items;
         }
 
-        private static IEnumerable<SelectListItem> BuildBusinessSubscriptionInvoiceFilterItems(BusinessSubscriptionInvoiceQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildBusinessSubscriptionInvoiceFilterItems(BusinessSubscriptionInvoiceQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All invoices", BusinessSubscriptionInvoiceQueueFilter.All.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.All);
-            yield return new SelectListItem("Open", BusinessSubscriptionInvoiceQueueFilter.Open.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Open);
-            yield return new SelectListItem("Paid", BusinessSubscriptionInvoiceQueueFilter.Paid.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Paid);
-            yield return new SelectListItem("Draft", BusinessSubscriptionInvoiceQueueFilter.Draft.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Draft);
-            yield return new SelectListItem("Uncollectible", BusinessSubscriptionInvoiceQueueFilter.Uncollectible.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Uncollectible);
-            yield return new SelectListItem("Hosted Link Missing", BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing);
-            yield return new SelectListItem("Stripe", BusinessSubscriptionInvoiceQueueFilter.Stripe.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Stripe);
-            yield return new SelectListItem("Overdue", BusinessSubscriptionInvoiceQueueFilter.Overdue.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Overdue);
-            yield return new SelectListItem("PDF Missing", BusinessSubscriptionInvoiceQueueFilter.PdfMissing.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.PdfMissing);
+            yield return new SelectListItem(T("BusinessSubscriptionAllInvoicesLabel"), BusinessSubscriptionInvoiceQueueFilter.All.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.All);
+            yield return new SelectListItem(T("CommonOpen"), BusinessSubscriptionInvoiceQueueFilter.Open.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Open);
+            yield return new SelectListItem(T("CommonPaid"), BusinessSubscriptionInvoiceQueueFilter.Paid.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Paid);
+            yield return new SelectListItem(T("CommonDraft"), BusinessSubscriptionInvoiceQueueFilter.Draft.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Draft);
+            yield return new SelectListItem(T("CommonUncollectible"), BusinessSubscriptionInvoiceQueueFilter.Uncollectible.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Uncollectible);
+            yield return new SelectListItem(T("BusinessSubscriptionHostedLinkMissing"), BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing);
+            yield return new SelectListItem(T("CommonStripe"), BusinessSubscriptionInvoiceQueueFilter.Stripe.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Stripe);
+            yield return new SelectListItem(T("CommonOverdue"), BusinessSubscriptionInvoiceQueueFilter.Overdue.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Overdue);
+            yield return new SelectListItem(T("BusinessSubscriptionReviewPdfMissing"), BusinessSubscriptionInvoiceQueueFilter.PdfMissing.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.PdfMissing);
         }
 
-        private static IEnumerable<SelectListItem> BuildBusinessLocationFilterItems(BusinessLocationQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildBusinessLocationFilterItems(BusinessLocationQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All locations", BusinessLocationQueueFilter.All.ToString(), selectedFilter == BusinessLocationQueueFilter.All);
-            yield return new SelectListItem("Primary", BusinessLocationQueueFilter.Primary.ToString(), selectedFilter == BusinessLocationQueueFilter.Primary);
-            yield return new SelectListItem("Missing address", BusinessLocationQueueFilter.MissingAddress.ToString(), selectedFilter == BusinessLocationQueueFilter.MissingAddress);
-            yield return new SelectListItem("Missing coordinates", BusinessLocationQueueFilter.MissingCoordinates.ToString(), selectedFilter == BusinessLocationQueueFilter.MissingCoordinates);
+            yield return new SelectListItem(T("CommonAll"), BusinessLocationQueueFilter.All.ToString(), selectedFilter == BusinessLocationQueueFilter.All);
+            yield return new SelectListItem(T("BusinessLocationsPrimaryLocationLabel"), BusinessLocationQueueFilter.Primary.ToString(), selectedFilter == BusinessLocationQueueFilter.Primary);
+            yield return new SelectListItem(T("MissingAddress"), BusinessLocationQueueFilter.MissingAddress.ToString(), selectedFilter == BusinessLocationQueueFilter.MissingAddress);
+            yield return new SelectListItem(T("BusinessLocationsMissingCoordinatesLabel"), BusinessLocationQueueFilter.MissingCoordinates.ToString(), selectedFilter == BusinessLocationQueueFilter.MissingCoordinates);
         }
 
         private List<BusinessLocationPlaybookVm> BuildBusinessLocationPlaybooks(Guid businessId)
@@ -2577,23 +2577,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 new()
                 {
-                    QueueLabel = "Primary location",
-                    WhyItMatters = "Business-facing operational flows usually assume one clear primary location for default fulfillment and storefront context.",
-                    OperatorAction = "Review whether the current primary location still represents the live business entry point before onboarding or go-live approval.",
+                    QueueLabel = T("BusinessLocationsPrimaryLocationLabel"),
+                    WhyItMatters = T("BusinessLocationsPlaybookPrimaryWhyItMatters"),
+                    OperatorAction = T("BusinessLocationsPlaybookPrimaryAction"),
                     QueueActionUrl = Url.Action("Locations", "Businesses", new { businessId, filter = BusinessLocationQueueFilter.Primary }) ?? string.Empty
                 },
                 new()
                 {
-                    QueueLabel = "Missing address",
-                    WhyItMatters = "Incomplete address data weakens shipping, invoicing, and public business visibility across admin and mobile workflows.",
-                    OperatorAction = "Open the location and complete street, city, and country before relying on the location for live operations.",
+                    QueueLabel = T("MissingAddress"),
+                    WhyItMatters = T("BusinessLocationsPlaybookMissingAddressWhyItMatters"),
+                    OperatorAction = T("BusinessLocationsPlaybookMissingAddressAction"),
                     QueueActionUrl = Url.Action("Locations", "Businesses", new { businessId, filter = BusinessLocationQueueFilter.MissingAddress }) ?? string.Empty
                 },
                 new()
                 {
-                    QueueLabel = "Missing coordinates",
-                    WhyItMatters = "Geo-dependent discovery, mapping, and future nearby-business experiences depend on a stored coordinate.",
-                    OperatorAction = "Open the location and add coordinates when the business expects map-aware or proximity-aware experiences.",
+                    QueueLabel = T("BusinessLocationsMissingCoordinatesLabel"),
+                    WhyItMatters = T("BusinessLocationsPlaybookMissingCoordinatesWhyItMatters"),
+                    OperatorAction = T("BusinessLocationsPlaybookMissingCoordinatesAction"),
                     QueueActionUrl = Url.Action("Locations", "Businesses", new { businessId, filter = BusinessLocationQueueFilter.MissingCoordinates }) ?? string.Empty
                 }
             };

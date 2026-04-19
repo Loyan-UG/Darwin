@@ -42,7 +42,7 @@ public class PublicProductSummaryDto
     public string? ShortDescription { get; set; }
 
     /// <summary>Gets or sets the currency of the default variant.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
     /// <summary>Gets or sets the lowest visible price in minor units.</summary>
     public long PriceMinor { get; set; }
@@ -90,7 +90,7 @@ public sealed class PublicProductVariantDto
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
     /// <summary>Gets or sets the base price in minor units.</summary>
     public long BasePriceNetMinor { get; set; }

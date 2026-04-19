@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
+using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Infrastructure.Persistence.Db;
 using Darwin.Shared.Constants;
@@ -119,9 +120,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     LastName = "Administrator",
                     IsSystem = true,
                     IsActive = true,
-                    Locale = "de-DE",
-                    Timezone = "Europe/Berlin",
-                    Currency = "EUR"
+                    Locale = DomainDefaults.DefaultCulture,
+                    Timezone = DomainDefaults.DefaultTimezone,
+                    Currency = DomainDefaults.DefaultCurrency
                 };
                 db.Add(adminUser);
                 await db.SaveChangesAsync(ct);
@@ -209,9 +210,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     LastName = data.Last,
                     IsActive = true,
                     EmailConfirmed = true,
-                    Locale = "de-DE",
-                    Timezone = "Europe/Berlin",
-                    Currency = "EUR",
+                    Locale = DomainDefaults.DefaultCulture,
+                    Timezone = DomainDefaults.DefaultTimezone,
+                    Currency = DomainDefaults.DefaultCurrency,
                 };
                 db.Add(user);
                 await db.SaveChangesAsync(ct);
@@ -226,7 +227,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Street2 = null,
                     PostalCode = data.Postal,
                     City = data.City,
-                    CountryCode = "DE",
+                    CountryCode = DomainDefaults.DefaultCountryCode,
                     PhoneE164 = null,
                     IsDefaultBilling = true,
                     IsDefaultShipping = true
@@ -268,21 +269,21 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     requiresSave = true;
                 }
 
-                if (!string.Equals(user.Locale, "de-DE", StringComparison.Ordinal))
+                if (!string.Equals(user.Locale, DomainDefaults.DefaultCulture, StringComparison.Ordinal))
                 {
-                    user.Locale = "de-DE";
+                    user.Locale = DomainDefaults.DefaultCulture;
                     requiresSave = true;
                 }
 
-                if (!string.Equals(user.Timezone, "Europe/Berlin", StringComparison.Ordinal))
+                if (!string.Equals(user.Timezone, DomainDefaults.DefaultTimezone, StringComparison.Ordinal))
                 {
-                    user.Timezone = "Europe/Berlin";
+                    user.Timezone = DomainDefaults.DefaultTimezone;
                     requiresSave = true;
                 }
 
-                if (!string.Equals(user.Currency, "EUR", StringComparison.Ordinal))
+                if (!string.Equals(user.Currency, DomainDefaults.DefaultCurrency, StringComparison.Ordinal))
                 {
-                    user.Currency = "EUR";
+                    user.Currency = DomainDefaults.DefaultCurrency;
                     requiresSave = true;
                 }
 

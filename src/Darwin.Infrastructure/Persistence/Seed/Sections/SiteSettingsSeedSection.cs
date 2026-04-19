@@ -1,4 +1,5 @@
 ﻿using Darwin.Domain.Entities.Settings;
+using Darwin.Domain.Common;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -46,11 +47,11 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 ContactEmail = "admin@darwin.de",
 
                 // Culture & Currency
-                DefaultCulture = "de-DE",
-                SupportedCulturesCsv = "de-DE,en-US",
-                DefaultCountry = "DE",
-                DefaultCurrency = "EUR",
-                TimeZone = "Europe/Berlin",
+                DefaultCulture = DomainDefaults.DefaultCulture,
+                SupportedCulturesCsv = DomainDefaults.SupportedCulturesCsv,
+                DefaultCountry = DomainDefaults.DefaultCountryCode,
+                DefaultCurrency = DomainDefaults.DefaultCurrency,
+                TimeZone = DomainDefaults.DefaultTimezone,
                 DateFormat = "dd.MM.yyyy",
                 TimeFormat = "HH:mm",
 
@@ -94,7 +95,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 InvoiceIssuerAddressLine1 = "Musterstrasse 1",
                 InvoiceIssuerPostalCode = "10115",
                 InvoiceIssuerCity = "Berlin",
-                InvoiceIssuerCountry = "DE",
+                InvoiceIssuerCountry = DomainDefaults.DefaultCountryCode,
                 DhlEnabled = false,
                 DhlEnvironment = "Sandbox",
                 DhlApiBaseUrl = "https://api-sandbox.dhl.example",
@@ -107,7 +108,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 DhlShipperStreet = "Musterstrasse 1",
                 DhlShipperPostalCode = "10115",
                 DhlShipperCity = "Berlin",
-                DhlShipperCountry = "DE",
+                DhlShipperCountry = DomainDefaults.DefaultCountryCode,
                 ShipmentAttentionDelayHours = 24,
                 ShipmentTrackingGraceHours = 12,
 

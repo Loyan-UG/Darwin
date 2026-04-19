@@ -53,7 +53,7 @@ namespace Darwin.Application.CartCheckout.Commands
                 {
                     UserId = dto.UserId,
                     AnonymousId = dto.UserId == null ? dto.AnonymousId : null,
-                    Currency = dto.Currency ?? "EUR"
+                    Currency = dto.Currency ?? Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault
                 };
                 _db.Set<Cart>().Add(cart);
                 await _db.SaveChangesAsync(ct);

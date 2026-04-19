@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Darwin.Contracts.Common;
+
 namespace Darwin.Contracts.Billing;
 
 /// <summary>
@@ -15,7 +17,7 @@ public sealed class BusinessSubscriptionStatusResponse
     public string PlanCode { get; set; } = string.Empty;
     public string PlanName { get; set; } = string.Empty;
     public long UnitPriceMinor { get; set; }
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
     public DateTime? StartedAtUtc { get; set; }
     public DateTime? CurrentPeriodEndUtc { get; set; }
     public DateTime? TrialEndsAtUtc { get; set; }

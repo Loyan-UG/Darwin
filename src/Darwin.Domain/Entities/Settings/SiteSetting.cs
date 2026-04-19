@@ -19,14 +19,14 @@ namespace Darwin.Domain.Entities.Settings
         /// <summary>Slug of the home page used for routing.</summary>
         public string HomeSlug { get; set; } = "home";
         /// <summary>Default culture code, e.g., "de-DE".</summary>
-        public string DefaultCulture { get; set; } = "de-DE";
-        public string SupportedCulturesCsv { get; set; } = "de-DE,en-US"; // comma-separated
+        public string DefaultCulture { get; set; } = DomainDefaults.DefaultCulture;
+        public string SupportedCulturesCsv { get; set; } = DomainDefaults.SupportedCulturesCsv; // comma-separated
         /// <summary>Default ISO 3166-1 alpha-2 country code, e.g., "DE".</summary>
-        public string DefaultCountry { get; set; } = "DE";
+        public string DefaultCountry { get; set; } = DomainDefaults.DefaultCountryCode;
         /// <summary>Default ISO 4217 currency code (e.g., "EUR").</summary>
-        public string DefaultCurrency { get; set; } = "EUR";
+        public string DefaultCurrency { get; set; } = DomainDefaults.DefaultCurrency;
         /// <summary>Application time zone identifier used for display (storage is UTC).</summary>
-        public string TimeZone { get; set; } = "Europe/Berlin";
+        public string TimeZone { get; set; } = DomainDefaults.DefaultTimezone;
         /// <summary>Date and time formatting patterns for display.</summary>
         public string DateFormat { get; set; } = "dd.MM.yyyy";
         public string TimeFormat { get; set; } = "HH:mm";

@@ -14,7 +14,7 @@ namespace Darwin.Domain.Entities.Orders
     {
         public string OrderNumber { get; set; } = string.Empty;
         public Guid? UserId { get; set; }
-        public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
         public bool PricesIncludeTax { get; set; }
 
         public long SubtotalNetMinor { get; set; }

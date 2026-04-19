@@ -437,7 +437,7 @@ namespace Darwin.Domain.Entities.CRM
         /// <summary>
         /// Gets or sets the ISO 4217 currency code.
         /// </summary>
-        public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>
         /// Gets or sets the total net amount in minor units.

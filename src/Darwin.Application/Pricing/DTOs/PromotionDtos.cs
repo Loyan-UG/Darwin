@@ -10,7 +10,7 @@ namespace Darwin.Application.Pricing.DTOs
         public Darwin.Domain.Enums.PromotionType Type { get; set; }
         public long? AmountMinor { get; set; }
         public decimal? Percent { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public long? MinSubtotalNetMinor { get; set; }
         public string? ConditionsJson { get; set; }
         public DateTime? StartsAtUtc { get; set; }
@@ -29,7 +29,7 @@ namespace Darwin.Application.Pricing.DTOs
         public Darwin.Domain.Enums.PromotionType Type { get; set; }
         public long? AmountMinor { get; set; }
         public decimal? Percent { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public long? MinSubtotalNetMinor { get; set; }
         public string? ConditionsJson { get; set; }
         public DateTime? StartsAtUtc { get; set; }
@@ -45,7 +45,7 @@ namespace Darwin.Application.Pricing.DTOs
         public bool IsValid { get; set; }
         public string? Message { get; set; }
         public long DiscountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public Guid? PromotionId { get; set; }
     }
 
@@ -53,7 +53,7 @@ namespace Darwin.Application.Pricing.DTOs
     {
         public string Code { get; set; } = string.Empty;
         public long SubtotalNetMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public Guid? UserId { get; set; }
         // Optional future: lines for product/category conditions
         public List<Guid>? ProductIds { get; set; }

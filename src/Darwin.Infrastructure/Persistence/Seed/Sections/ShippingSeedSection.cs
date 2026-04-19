@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Shipping;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
@@ -28,16 +29,16 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var methods = new List<ShippingMethod>
             {
-                new() { Name = "DHL Standard", Carrier = "DHL", Service = "Standard", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "DHL Express", Carrier = "DHL", Service = "Express", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "Hermes Standard", Carrier = "Hermes", Service = "Standard", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "DPD Standard", Carrier = "DPD", Service = "Standard", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "UPS Standard", Carrier = "UPS", Service = "Standard", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "UPS Express", Carrier = "UPS", Service = "Express", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "GLS Standard", Carrier = "GLS", Service = "Standard", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "DHL Economy", Carrier = "DHL", Service = "Economy", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "DPD Pickup", Carrier = "DPD", Service = "Pickup", CountriesCsv = "DE", Currency = "EUR" },
-                new() { Name = "Hermes ParcelShop", Carrier = "Hermes", Service = "ParcelShop", CountriesCsv = "DE", Currency = "EUR" }
+                new() { Name = "DHL Standard", Carrier = "DHL", Service = "Standard", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "DHL Express", Carrier = "DHL", Service = "Express", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "Hermes Standard", Carrier = "Hermes", Service = "Standard", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "DPD Standard", Carrier = "DPD", Service = "Standard", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "UPS Standard", Carrier = "UPS", Service = "Standard", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "UPS Express", Carrier = "UPS", Service = "Express", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "GLS Standard", Carrier = "GLS", Service = "Standard", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "DHL Economy", Carrier = "DHL", Service = "Economy", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "DPD Pickup", Carrier = "DPD", Service = "Pickup", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency },
+                new() { Name = "Hermes ParcelShop", Carrier = "Hermes", Service = "ParcelShop", CountriesCsv = DomainDefaults.DefaultCountryCode, Currency = DomainDefaults.DefaultCurrency }
             };
 
             db.AddRange(methods);

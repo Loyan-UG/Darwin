@@ -121,7 +121,7 @@ namespace Darwin.Domain.Entities.Catalog
         /// <summary>Optional compare-at price (net) for strike-through pricing, stored in minor units.</summary>
         public long? CompareAtPriceNetMinor { get; set; }
         /// <summary>ISO 4217 currency code (phase 1: always "EUR").</summary>
-        public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
         /// <summary>Tax category applied to this variant (maps to VAT rate e.g., 19% or 7%).</summary>
         public Guid TaxCategoryId { get; set; }
 

@@ -2,6 +2,18 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("EditSiteSettings");
+    var adminOverrideCultures = Darwin.Application.Settings.DTOs.SiteSettingDto.SupportedCulturesCsvDefault
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var adminPrimaryCulture = adminOverrideCultures.Length > 0
+        ? adminOverrideCultures[0]
+        : Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture;
+    var adminSecondaryCulture = adminOverrideCultures.Length > 1 ? adminOverrideCultures[1] : adminPrimaryCulture;
+    var adminOverridesPlaceholder =
+        "{\"" + adminPrimaryCulture + "\":{\"Logout\":\"Abmelden\"},\"" +
+        adminSecondaryCulture + "\":{\"Logout\":\"Sign out\"}}";
+    var adminOverridesExample =
+        "{\"" + adminPrimaryCulture + "\":{\"Key\":\"Value\"},\"" +
+        adminSecondaryCulture + "\":{\"Key\":\"Value\"}}";
 }
 
 <div id="site-settings-editor-shell">
@@ -299,11 +311,11 @@
 
             <div class="mt-3">
                 <label asp-for="AdminTextOverridesJson" class="form-label"></label>
-                <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="6" placeholder='{"de-DE":{"Logout":"Abmelden"},"en-US":{"Logout":"Sign out"}}'></textarea>
+                <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="6" placeholder="@adminOverridesPlaceholder"></textarea>
                 <span asp-validation-for="AdminTextOverridesJson" class="text-danger"></span>
                 <div class="form-text">
                     @T.T("SiteSettingsAdminTextOverridesHelpPrefix")
-                    <code>{"de-DE":{"Key":"Value"},"en-US":{"Key":"Value"}}</code>.
+                    <code>@adminOverridesExample</code>.
                 </div>
             </div>
 

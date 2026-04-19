@@ -35,9 +35,9 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _firstName = string.Empty;
     private string _lastName = string.Empty;
     private string _phoneE164 = string.Empty;
-    private string _locale = "de-DE";
-    private string _timezone = "Europe/Berlin";
-    private string _currency = "EUR";
+    private string _locale = ProfileContractDefaults.DefaultLocale;
+    private string _timezone = ProfileContractDefaults.DefaultTimezone;
+    private string _currency = ProfileContractDefaults.DefaultCurrency;
 
     private string? _successMessage;
     private string _pushRegistrationStatus = AppResources.ProfilePushRegistrationStatusIdle;
@@ -326,9 +326,9 @@ public sealed class ProfileViewModel : BaseViewModel
                 FirstName = profile.FirstName ?? string.Empty;
                 LastName = profile.LastName ?? string.Empty;
                 PhoneE164 = profile.PhoneE164 ?? string.Empty;
-                Locale = string.IsNullOrWhiteSpace(profile.Locale) ? "de-DE" : profile.Locale;
-                Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? "Europe/Berlin" : profile.Timezone;
-                Currency = string.IsNullOrWhiteSpace(profile.Currency) ? "EUR" : profile.Currency;
+                Locale = string.IsNullOrWhiteSpace(profile.Locale) ? ProfileContractDefaults.DefaultLocale : profile.Locale;
+                Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? ProfileContractDefaults.DefaultTimezone : profile.Timezone;
+                Currency = string.IsNullOrWhiteSpace(profile.Currency) ? ProfileContractDefaults.DefaultCurrency : profile.Currency;
             });
 
             await LoadAddressBookSummaryAsync().ConfigureAwait(false);

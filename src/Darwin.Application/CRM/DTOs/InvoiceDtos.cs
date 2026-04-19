@@ -15,7 +15,7 @@ namespace Darwin.Application.CRM.DTOs
         public Guid? PaymentId { get; set; }
         public string PaymentSummary { get; set; } = string.Empty;
         public InvoiceStatus Status { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public long TotalNetMinor { get; set; }
         public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }
@@ -41,7 +41,7 @@ namespace Darwin.Application.CRM.DTOs
         public Guid? PaymentId { get; set; }
         public string PaymentSummary { get; set; } = string.Empty;
         public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public long TotalNetMinor { get; set; }
         public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }
@@ -65,7 +65,7 @@ namespace Darwin.Application.CRM.DTOs
         public Guid InvoiceId { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public string Reason { get; set; } = string.Empty;
     }
 }

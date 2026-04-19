@@ -24,7 +24,7 @@ namespace Darwin.Application.Catalog.Queries
         public async Task<(List<BrandListItemDto> Items, int Total)> HandleAsync(
             int page,
             int pageSize,
-            string culture = "de-DE",
+            string culture = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault,
             CancellationToken ct = default)
         {
             return await HandleAsync(page, pageSize, culture, query: null, filter: null, ct);

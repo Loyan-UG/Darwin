@@ -6,7 +6,7 @@ namespace Darwin.Application.CMS.DTOs
 {
     public sealed class PageTranslationDto
     {
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
         public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? MetaTitle { get; set; }

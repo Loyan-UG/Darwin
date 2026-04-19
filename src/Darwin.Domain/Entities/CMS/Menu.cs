@@ -59,7 +59,7 @@ namespace Darwin.Domain.Entities.CMS
     public sealed class MenuItemTranslation : BaseEntity
     {
         public Guid MenuItemId { get; set; }
-        public string Culture { get; set; } = "de-DE";
+    public string Culture { get; set; } = DomainDefaults.DefaultCulture;
         public string Label { get; set; } = string.Empty;
 
         // New-model alias.

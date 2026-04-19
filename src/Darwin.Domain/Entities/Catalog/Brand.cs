@@ -55,7 +55,7 @@ namespace Darwin.Domain.Entities.Catalog
         /// <summary>
         ///     Culture code (IETF BCP 47), e.g., "de-DE" or "en-US". Used to resolve localized brand fields.
         /// </summary>
-        public string Culture { get; set; } = "de-DE";
+    public string Culture { get; set; } = DomainDefaults.DefaultCulture;
 
         /// <summary>
         ///     Localized brand name shown in UI, lists, and product cards.

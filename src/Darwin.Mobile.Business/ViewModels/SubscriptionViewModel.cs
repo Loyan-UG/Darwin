@@ -1,4 +1,5 @@
 ﻿using Darwin.Contracts.Billing;
+using Darwin.Contracts.Common;
 using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Commands;
@@ -347,7 +348,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
     private static string FormatMoney(long minor, string? currency)
     {
-        var normalizedCurrency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency.Trim().ToUpperInvariant();
+        var normalizedCurrency = string.IsNullOrWhiteSpace(currency) ? ContractDefaults.DefaultCurrency : currency.Trim().ToUpperInvariant();
         var major = minor / 100m;
         return $"{major:0.00} {normalizedCurrency}";
     }

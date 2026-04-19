@@ -80,7 +80,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 var brand = new Brand { Slug = b.Slug };
                 brand.Translations.Add(new BrandTranslation
                 {
-                    Culture = "de-DE",
+                    Culture = DomainDefaults.DefaultCulture,
                     Name = b.Name
                 });
                 db.Add(brand);
@@ -116,7 +116,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 var cat = new Category { IsActive = true, SortOrder = 0 };
                 cat.Translations.Add(new CategoryTranslation
                 {
-                    Culture = "de-DE",
+                    Culture = DomainDefaults.DefaultCulture,
                     Name = c.Name,
                     Slug = c.Slug,
                     Description = c.Desc
@@ -145,7 +145,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 {
                     Cat = c,
                     Slug = c.Translations
-                        .Where(t => t.Culture == "de-DE")
+                        .Where(t => t.Culture == DomainDefaults.DefaultCulture)
                         .Select(t => t.Slug)
                         .FirstOrDefault() ?? string.Empty
                 })
@@ -201,7 +201,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
                 p.Translations.Add(new ProductTranslation
                 {
-                    Culture = "de-DE",
+                    Culture = DomainDefaults.DefaultCulture,
                     Name = it.Name,
                     Slug = it.Slug,
                     ShortDescription = null,
@@ -214,9 +214,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 await db.SaveChangesAsync(ct); // ensure Product.Id for the variant FK
 
                 // Map major (decimal NET) → minor (long) using domain Money helper.
-                long priceMinor = Money.FromMajor(it.Price, "EUR").AmountMinor;
+                long priceMinor = Money.FromMajor(it.Price, DomainDefaults.DefaultCurrency).AmountMinor;
                 long? compareMinor = it.Compare.HasValue
-                    ? Money.FromMajor(it.Compare.Value, "EUR").AmountMinor
+                    ? Money.FromMajor(it.Compare.Value, DomainDefaults.DefaultCurrency).AmountMinor
                     : (long?)null;
 
                 // Use fixed IDs for first two variants to match Inventory/Cart seeds.
@@ -229,7 +229,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Id = forcedId ?? Guid.NewGuid(),
                     ProductId = p.Id,
                     Sku = it.SKU,
-                    Currency = "EUR",
+                    Currency = DomainDefaults.DefaultCurrency,
                     TaxCategoryId = standardTax.Id,
                     BasePriceNetMinor = priceMinor,
                     CompareAtPriceNetMinor = compareMinor,
@@ -305,13 +305,13 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var productLookup = await db.Products
                 .Include(x => x.Translations)
                 .Include(x => x.Media)
-                .Where(x => x.Translations.Any(t => t.Culture == "de-DE" && productSlugs.Contains(t.Slug)))
+                .Where(x => x.Translations.Any(t => t.Culture == DomainDefaults.DefaultCulture && productSlugs.Contains(t.Slug)))
                 .ToListAsync(ct);
 
             foreach (var assignment in desiredAssignments)
             {
                 var product = productLookup.FirstOrDefault(
-                    x => x.Translations.Any(t => t.Culture == "de-DE" && t.Slug == assignment.ProductSlug));
+                    x => x.Translations.Any(t => t.Culture == DomainDefaults.DefaultCulture && t.Slug == assignment.ProductSlug));
                 if (product == null || !mediaByUrl.TryGetValue(assignment.MediaUrl, out var media))
                 {
                     continue;
@@ -364,7 +364,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var group = new AddOnGroup
             {
                 Name = "Extended Warranty",
-                Currency = "EUR",
+                Currency = DomainDefaults.DefaultCurrency,
                 SelectionMode = Domain.Enums.AddOnSelectionMode.Single
             };
             db.Add(group);
@@ -385,7 +385,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 {
                     AddOnOptionId = option.Id,
                     Label = "1 Jahr",
-                    PriceDeltaMinor = Money.FromMajor(0m, "EUR").AmountMinor,
+                    PriceDeltaMinor = Money.FromMajor(0m, DomainDefaults.DefaultCurrency).AmountMinor,
                     SortOrder = 0,
                     IsActive = true
                 },
@@ -393,7 +393,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 {
                     AddOnOptionId = option.Id,
                     Label = "2 Jahre",
-                    PriceDeltaMinor = Money.FromMajor(49.99m, "EUR").AmountMinor,
+                    PriceDeltaMinor = Money.FromMajor(49.99m, DomainDefaults.DefaultCurrency).AmountMinor,
                     SortOrder = 1,
                     IsActive = true
                 },
@@ -401,7 +401,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 {
                     AddOnOptionId = option.Id,
                     Label = "3 Jahre",
-                    PriceDeltaMinor = Money.FromMajor(89.99m, "EUR").AmountMinor,
+                    PriceDeltaMinor = Money.FromMajor(89.99m, DomainDefaults.DefaultCurrency).AmountMinor,
                     SortOrder = 2,
                     IsActive = true
                 }
@@ -412,7 +412,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var attachSlugs = new[] { "iphones", "android-phones", "ultrabooks", "business-laptops", "gaming-laptops" };
             var categories = await db.Categories
                 .Include(c => c.Translations)
-                .Where(c => c.Translations.Any(t => t.Culture == "de-DE" && attachSlugs.Contains(t.Slug)))
+                .Where(c => c.Translations.Any(t => t.Culture == DomainDefaults.DefaultCulture && attachSlugs.Contains(t.Slug)))
                 .ToListAsync(ct);
 
             foreach (var c in categories)

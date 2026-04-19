@@ -54,7 +54,7 @@ namespace Darwin.Application.Orders.DTOs
     public sealed class OrderCreateDto
     {
         public Guid? UserId { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public bool PricesIncludeTax { get; set; } = false;
 
         public string BillingAddressJson { get; set; } = "{}";
@@ -123,7 +123,7 @@ namespace Darwin.Application.Orders.DTOs
         public Guid Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
         public Guid? UserId { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public bool PricesIncludeTax { get; set; }
 
         public long SubtotalNetMinor { get; set; }
@@ -191,7 +191,7 @@ namespace Darwin.Application.Orders.DTOs
         /// <summary>
         /// ISO 4217 currency (e.g., "EUR").
         /// </summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
         /// <summary>
         /// Resulting status of the payment, as persisted in the domain.
@@ -210,7 +210,7 @@ namespace Darwin.Application.Orders.DTOs
         public string Provider { get; set; } = string.Empty;
         public string ProviderReference { get; set; } = string.Empty;
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public PaymentStatus Status { get; set; }
         public DateTime? CapturedAtUtc { get; set; }
         public string? FailureReason { get; set; }
@@ -277,7 +277,7 @@ namespace Darwin.Application.Orders.DTOs
         public string? ProviderReference { get; set; }
 
         /// <summary>Payment currency (ISO 4217), typically same as the order's currency.</summary>
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
 
         /// <summary>Amount in minor units (e.g., cents).</summary>
         public long AmountMinor { get; set; }
@@ -381,7 +381,7 @@ namespace Darwin.Application.Orders.DTOs
         public Guid OrderId { get; set; }
         public Guid PaymentId { get; set; }
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public string Reason { get; set; } = string.Empty;
     }
 
@@ -397,7 +397,7 @@ namespace Darwin.Application.Orders.DTOs
         public string? PaymentProviderReference { get; set; }
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
         public long AmountMinor { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public string Reason { get; set; } = string.Empty;
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -431,7 +431,7 @@ namespace Darwin.Application.Orders.DTOs
         public string CustomerDisplayName { get; set; } = string.Empty;
         public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
         public string? CustomerVatId { get; set; }
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public long TotalNetMinor { get; set; }
         public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }
@@ -456,7 +456,7 @@ namespace Darwin.Application.Orders.DTOs
         public string PostalCode { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string? State { get; set; }
-        public string CountryCode { get; set; } = "DE";
+        public string CountryCode { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault;
         public string? PhoneE164 { get; set; }
     }
 
@@ -473,7 +473,7 @@ namespace Darwin.Application.Orders.DTOs
         public CheckoutAddressDto? BillingAddress { get; set; }
         public CheckoutAddressDto? ShippingAddress { get; set; }
         public long ShippingTotalMinor { get; set; }
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
     }
 
     /// <summary>
@@ -483,7 +483,7 @@ namespace Darwin.Application.Orders.DTOs
     {
         public Guid OrderId { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+        public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public long GrandTotalGrossMinor { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Created;
     }

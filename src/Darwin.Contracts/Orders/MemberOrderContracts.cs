@@ -1,3 +1,5 @@
+using Darwin.Contracts.Common;
+
 namespace Darwin.Contracts.Orders;
 
 /// <summary>
@@ -12,7 +14,7 @@ public sealed class MemberOrderSummary
     public string OrderNumber { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the grand total in minor units.</summary>
     public long GrandTotalGrossMinor { get; set; }
@@ -36,7 +38,7 @@ public sealed class MemberOrderDetail
     public string OrderNumber { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the ISO currency code.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets a value indicating whether prices include tax.</summary>
     public bool PricesIncludeTax { get; set; }
@@ -162,7 +164,7 @@ public sealed class MemberOrderPayment
     public long AmountMinor { get; set; }
 
     /// <summary>Gets or sets the payment currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the payment status.</summary>
     public string Status { get; set; } = string.Empty;
@@ -207,7 +209,7 @@ public sealed class MemberOrderInvoice
     public Guid Id { get; set; }
 
     /// <summary>Gets or sets the invoice currency.</summary>
-    public string Currency { get; set; } = "EUR";
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
 
     /// <summary>Gets or sets the invoice total in minor units.</summary>
     public long TotalGrossMinor { get; set; }

@@ -41,7 +41,7 @@ namespace Darwin.Application.CMS.DTOs
     /// </summary>
     public sealed class MenuItemTranslationDto
     {
-        public string Culture { get; set; } = "de-DE";
+        public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
         public string Label { get; set; } = string.Empty;
     }
 

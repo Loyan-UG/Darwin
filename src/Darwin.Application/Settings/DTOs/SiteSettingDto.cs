@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Darwin.Domain.Common;
+
 namespace Darwin.Application.Settings.DTOs
 {
     /// <summary>
@@ -11,11 +13,11 @@ namespace Darwin.Application.Settings.DTOs
     public sealed class SiteSettingDto
     {
         public const string HomeSlugDefault = "home";
-        public const string DefaultCultureDefault = "de-DE";
-        public const string SupportedCulturesCsvDefault = "de-DE,en-US";
-        public const string DefaultCountryDefault = "DE";
-        public const string DefaultCurrencyDefault = "EUR";
-        public const string TimeZoneDefault = "Europe/Berlin";
+        public const string DefaultCultureDefault = DomainDefaults.DefaultCulture;
+        public const string SupportedCulturesCsvDefault = DomainDefaults.SupportedCulturesCsv;
+        public const string DefaultCountryDefault = DomainDefaults.DefaultCountryCode;
+        public const string DefaultCurrencyDefault = DomainDefaults.DefaultCurrency;
+        public const string TimeZoneDefault = DomainDefaults.DefaultTimezone;
         public const string DateFormatDefault = "yyyy-MM-dd";
         public const string TimeFormatDefault = "HH:mm";
 

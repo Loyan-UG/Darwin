@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Darwin.Application.Settings.DTOs;
 
 namespace Darwin.WebAdmin.Localization
 {
@@ -11,10 +12,10 @@ namespace Darwin.WebAdmin.Localization
     /// </summary>
     public static class AdminCultureCatalog
     {
-        public const string German = "de-DE";
+        public const string German = SiteSettingDto.DefaultCultureDefault;
         public const string English = "en-US";
         public const string DefaultCulture = German;
-        public const string SupportedCulturesCsvDefault = German + "," + English;
+        public const string SupportedCulturesCsvDefault = SiteSettingDto.SupportedCulturesCsvDefault;
 
         private static readonly IReadOnlyList<(string Culture, string Label)> _languageOptions =
             new List<(string Culture, string Label)>

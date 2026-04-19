@@ -71,6 +71,6 @@ namespace Darwin.Domain.Entities.CMS
     public abstract class TranslationBase : BaseEntity
     {
         /// <summary>Culture identifier for this translation, e.g., "de-DE".</summary>
-        public string Culture { get; set; } = "de-DE";
+    public string Culture { get; set; } = DomainDefaults.DefaultCulture;
     }
 }

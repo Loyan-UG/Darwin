@@ -1491,6 +1491,9 @@
   <data name="NotReady" xml:space="preserve">
     <value>Nicht bereit</value>
   </data>
+  <data name="Unavailable" xml:space="preserve">
+    <value>Nicht verfügbar</value>
+  </data>
   <data name="Configured" xml:space="preserve">
     <value>Konfiguriert</value>
   </data>
@@ -2519,6 +2522,36 @@
   </data>
   <data name="BusinessSupportQueueTitle" xml:space="preserve">
     <value>Business-Support-Queue</value>
+  </data>
+  <data name="BusinessCreateOwnerAssigned" xml:space="preserve">
+    <value>Business erstellt und Inhaber zugewiesen.</value>
+  </data>
+  <data name="BusinessCreateNextSteps" xml:space="preserve">
+    <value>Business erstellt. Fuegen Sie als Naechstes einen Primaerstandort hinzu und weisen Sie einen Inhaber zu.</value>
+  </data>
+  <data name="BusinessArchived" xml:space="preserve">
+    <value>Business archiviert.</value>
+  </data>
+  <data name="BusinessArchiveFailed" xml:space="preserve">
+    <value>Business konnte nicht archiviert werden.</value>
+  </data>
+  <data name="BusinessLocationArchived" xml:space="preserve">
+    <value>Business-Standort archiviert.</value>
+  </data>
+  <data name="BusinessLocationArchiveFailed" xml:space="preserve">
+    <value>Standort konnte nicht archiviert werden.</value>
+  </data>
+  <data name="BusinessInvitationRevokedFromWebAdminNote" xml:space="preserve">
+    <value>In WebAdmin widerrufen.</value>
+  </data>
+  <data name="BusinessSubscriptionCancelAtPeriodEndUpdated" xml:space="preserve">
+    <value>Das Abonnement wird zum Periodenende beendet.</value>
+  </data>
+  <data name="BusinessSubscriptionRenewalRestored" xml:space="preserve">
+    <value>Die Abonnementverlaengerung wurde wiederhergestellt.</value>
+  </data>
+  <data name="BusinessSubscriptionCancelAtPeriodEndUpdateFailed" xml:space="preserve">
+    <value>Die Kuendigungsrichtlinie des Abonnements konnte nicht aktualisiert werden.</value>
   </data>
   <data name="BusinessSupportQueueIntro" xml:space="preserve">
     <value>Gemeinsame Onboarding-, Aktivierungs-, Einladungs- und Fehler-Mail-Triage fuer Support-Operatoren.</value>
@@ -5133,6 +5166,12 @@
   <data name="BusinessMembersTitle" xml:space="preserve">
     <value>Business-Mitglieder</value>
   </data>
+  <data name="BusinessMembersAllLabel" xml:space="preserve">
+    <value>Alle Mitglieder</value>
+  </data>
+  <data name="BusinessMembersLockedLabel" xml:space="preserve">
+    <value>Gesperrt</value>
+  </data>
   <data name="BusinessMembersAssignMemberAction" xml:space="preserve">
     <value>Mitglied zuweisen</value>
   </data>
@@ -5151,6 +5190,9 @@
   <data name="BusinessInvitationsTitle" xml:space="preserve">
     <value>Business-Einladungen</value>
   </data>
+  <data name="BusinessInvitationsAllLabel" xml:space="preserve">
+    <value>Alle Einladungen</value>
+  </data>
   <data name="BusinessInvitationsInviteUserAction" xml:space="preserve">
     <value>Benutzer einladen</value>
   </data>
@@ -5165,6 +5207,24 @@
   </data>
   <data name="BusinessInvitationsEmptyState" xml:space="preserve">
     <value>Keine Einladungen gefunden.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookOpenWhyItMatters" xml:space="preserve">
+    <value>Offene Einladungen sind die erste Stelle, um Reibung im Onboarding zu prüfen, bevor Aktivierung oder Business-Support weiter auseinanderlaufen.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookOpenAction" xml:space="preserve">
+    <value>Pruefen Sie zuerst ausstehende und abgelaufene Einladungen und senden oder widerrufen Sie erst danach, wenn der aktuelle Onboarding-Status bestaetigt ist.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookPendingWhyItMatters" xml:space="preserve">
+    <value>Ausstehende Einladungen brauchen oft Support-Nachverfolgung, bevor daraus unbemerkt Aktivierungs- oder Owner-Abdeckungsprobleme werden.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookPendingAction" xml:space="preserve">
+    <value>Beginnen Sie mit weiterhin ausstehenden Einladungen, wenn der Onboarding-Fortschritt unklar ist, besonders bevor Sie in den breiteren Merchant-Support eskalieren.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookExpiredWhyItMatters" xml:space="preserve">
+    <value>Abgelaufene Einladungen deuten meist auf Onboarding-Drift, veraltete Empfaengerdaten oder ungeloeste Operator-Nachverfolgung hin.</value>
+  </data>
+  <data name="BusinessInvitationsPlaybookExpiredAction" xml:space="preserve">
+    <value>Pruefen Sie abgelaufene Eintraege, bevor Sie neue Einladungen erstellen, damit derselbe Empfaenger keine widerspruechliche Einladungshistorie ansammelt.</value>
   </data>
   <data name="BusinessMembersBackToBusinessAction" xml:space="preserve">
     <value>Zurueck zum Business</value>
@@ -5207,6 +5267,27 @@
   </data>
   <data name="BusinessLocationsMissingCoordinatesLabel" xml:space="preserve">
     <value>Fehlende Koordinaten</value>
+  </data>
+  <data name="BusinessLocationsPrimaryLocationLabel" xml:space="preserve">
+    <value>Primärer Standort</value>
+  </data>
+  <data name="BusinessLocationsPlaybookPrimaryWhyItMatters" xml:space="preserve">
+    <value>Business-seitige operative Abläufe setzen meist einen klaren primären Standort für Standard-Fulfillment und Storefront-Kontext voraus.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookPrimaryAction" xml:space="preserve">
+    <value>Prüfen Sie, ob der aktuelle primäre Standort weiterhin den Live-Einstiegspunkt des Businesses vor Onboarding oder Go-live-Freigabe darstellt.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookMissingAddressWhyItMatters" xml:space="preserve">
+    <value>Unvollständige Adressdaten schwächen Versand, Rechnungsstellung und die öffentliche Sichtbarkeit des Businesses in Admin- und Mobile-Workflows.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookMissingAddressAction" xml:space="preserve">
+    <value>Öffnen Sie den Standort und ergänzen Sie Straße, Ort und Land, bevor Sie sich im Live-Betrieb auf diesen Standort verlassen.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookMissingCoordinatesWhyItMatters" xml:space="preserve">
+    <value>Geo-abhängige Discovery-, Karten- und künftige Nearby-Business-Erlebnisse hängen von einer gespeicherten Koordinate ab.</value>
+  </data>
+  <data name="BusinessLocationsPlaybookMissingCoordinatesAction" xml:space="preserve">
+    <value>Öffnen Sie den Standort und ergänzen Sie Koordinaten, wenn das Business karten- oder standortabhängige Erlebnisse erwartet.</value>
   </data>
   <data name="BusinessLocationsPlaybooksTitle" xml:space="preserve">
     <value>Standort-Operations-Playbooks</value>
@@ -6570,6 +6651,102 @@
   <data name="CommunicationResendPolicyNote" xml:space="preserve">
     <value>Operatoren sollten nur die hier gelisteten sicheren Einstiegspunkte nutzen. Fehlgeschlagene Audit-Zeilen dienen der Triage-Sichtbarkeit und sind kein generischer Replay-Button.</value>
   </data>
+  <data name="CommunicationResendPolicyInvitationFlow" xml:space="preserve">
+    <value>Business-Einladung</value>
+  </data>
+  <data name="CommunicationResendPolicyInvitationSafeAction" xml:space="preserve">
+    <value>Verwenden Sie den kontrollierten Audit-Retry oder das Einladungs-Workspace mit Erneut senden/Widerrufen erst, wenn SMTP gruen ist.</value>
+  </data>
+  <data name="CommunicationResendPolicyInvitationRetryStatus" xml:space="preserve">
+    <value>Unterstuetzt aus fehlgeschlagenen oder ausstehenden Audit-Zeilen, wenn eine aktuelle Einladung sicher aufgeloest werden kann.</value>
+  </data>
+  <data name="CommunicationResendPolicyInvitationEntryPoint" xml:space="preserve">
+    <value>Business-Setup, Einladungsliste und E-Mail-Audit-Queue.</value>
+  </data>
+  <data name="CommunicationResendPolicyInvitationEscalation" xml:space="preserve">
+    <value>Wenn wiederholtes Erneut senden trotz bereitem Transport fehlschlaegt, als Communication-Core/Plattform-Schuld eskalieren statt weiter zu senden.</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationFlow" xml:space="preserve">
+    <value>Kontoaktivierung</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationSafeAction" xml:space="preserve">
+    <value>Bevorzugen Sie Self-Service-Resend; verwenden Sie kontrollierten Audit-Retry oder Admin-Aktivierungsunterstuetzung nur, wenn die aktuelle Policy das erlaubt.</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationRetryStatus" xml:space="preserve">
+    <value>Unterstuetzt aus fehlgeschlagenen oder ausstehenden Audit-Zeilen, nachdem der Live-Benutzer per Empfaengeradresse aufgeloest wurde.</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationEntryPoint" xml:space="preserve">
+    <value>Benutzer-Queue, Business-Mitglieder-Queue und E-Mail-Audit-Queue.</value>
+  </data>
+  <data name="CommunicationResendPolicyActivationEscalation" xml:space="preserve">
+    <value>Umgehen Sie die Bestaetigungspolitik nicht. Anhaltende Fehler nach einem validierten Resend sind Auth-/Kommunikations-Troubleshooting.</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetFlow" xml:space="preserve">
+    <value>Passwort-Reset</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetSafeAction" xml:space="preserve">
+    <value>Loesen Sie den Reset erst nach Identitaetspruefung und Transportchecks erneut aus, egal ob aus Audit-Retry oder Support-Flaechen.</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetRetryStatus" xml:space="preserve">
+    <value>Unterstuetzt aus fehlgeschlagenen oder ausstehenden Audit-Zeilen, nachdem der Live-Benutzer per Empfaengeradresse aufgeloest wurde.</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetEntryPoint" xml:space="preserve">
+    <value>Benutzer-Queue, Business-Mitgliedersupport-Aktionen und E-Mail-Audit-Queue.</value>
+  </data>
+  <data name="CommunicationResendPolicyPasswordResetEscalation" xml:space="preserve">
+    <value>Vermeiden Sie wiederholte Resets ohne Verifikation. Anhaltende Fehler eskalieren als Support-/Sicherheits- oder Transportproblem.</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationFlow" xml:space="preserve">
+    <value>Telefonverifikation</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationSafeAction" xml:space="preserve">
+    <value>Fordern Sie einen frischen Verifikationscode ueber den kanonischen Profilfluss an, nachdem aktuelle Nummer und Kanal bestaetigt wurden.</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationRetryStatus" xml:space="preserve">
+    <value>Noch kein auditgetriebener Retry; erneut anfordern nur ueber den Live-Verifikationsfluss.</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationEntryPoint" xml:space="preserve">
+    <value>Profil-/Mobile-Verifikationsflaechen und Kommunikationsrichtlinie in den Site Settings.</value>
+  </data>
+  <data name="CommunicationResendPolicyPhoneVerificationEscalation" xml:space="preserve">
+    <value>Spielen Sie alte Codes nicht manuell erneut ab. Wenn SMS- oder WhatsApp-Zustellung wiederholt fehlschlaegt, erst Transport reparieren oder Kanal wechseln.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestFlow" xml:space="preserve">
+    <value>Admin-Kommunikationstest</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestSafeAction" xml:space="preserve">
+    <value>Starten Sie die Diagnose nur zum konfigurierten Testziel erneut, nachdem Provider- oder Policy-Einstellungen korrigiert wurden.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestRetryStatus" xml:space="preserve">
+    <value>Keine Retry-Queue; nur manueller Neuversuch.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestEntryPoint" xml:space="preserve">
+    <value>Business-Communications-Workspace.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminTestEscalation" xml:space="preserve">
+    <value>Schalten Sie Diagnosen nie auf Live-Empfaenger um. Tests bleiben pro Kanal auf das konfigurierte Testziel beschraenkt.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsFlow" xml:space="preserve">
+    <value>Admin-Alerts / SMS / WhatsApp</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsSafeAction" xml:space="preserve">
+    <value>Nur Sichtbarkeit und Bereitschaft. Es gibt noch keinen gemeinsamen Resend-Workflow.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsRetryStatus" xml:space="preserve">
+    <value>Nicht implementiert.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsEntryPoint" xml:space="preserve">
+    <value>Site Settings und Business-Communications-Readiness-Workspace.</value>
+  </data>
+  <data name="CommunicationResendPolicyAdminAlertsEscalation" xml:space="preserve">
+    <value>Wiederholte Alert-Kanal-Luecken als spaetere Communication-Core-Arbeit behandeln, nicht als manuelle Resend-Aufgabe.</value>
+  </data>
+  <data name="CommunicationResendPolicyOpenAuditLog" xml:space="preserve">
+    <value>Audit-Log oeffnen</value>
+  </data>
+  <data name="CommunicationResendPolicyOpenAlertSettings" xml:space="preserve">
+    <value>Alert-Einstellungen oeffnen</value>
+  </data>
   <data name="CommunicationCurrentSafeActionColumn" xml:space="preserve">
     <value>Aktuell sichere Aktion</value>
   </data>
@@ -6978,6 +7155,9 @@
   <data name="BusinessSubscriptionInvoicesTitle" xml:space="preserve">
     <value>Abo-Rechnungen</value>
   </data>
+  <data name="BusinessSubscriptionAllInvoicesLabel" xml:space="preserve">
+    <value>Alle Rechnungen</value>
+  </data>
   <data name="BusinessSubscriptionShort" xml:space="preserve">
     <value>Abo</value>
   </data>
@@ -7044,6 +7224,18 @@
   <data name="BusinessSubscriptionCurrentPlanBadge" xml:space="preserve">
     <value>Aktueller Plan</value>
   </data>
+  <data name="BusinessSubscriptionCheckoutReady" xml:space="preserve">
+    <value>Checkout-bereit</value>
+  </data>
+  <data name="BusinessSubscriptionManageCurrentPlan" xml:space="preserve">
+    <value>Aktuellen Plan verwalten</value>
+  </data>
+  <data name="BusinessSubscriptionUpgradeToPlan" xml:space="preserve">
+    <value>Auf diesen Plan upgraden</value>
+  </data>
+  <data name="BusinessSubscriptionStartWithPlan" xml:space="preserve">
+    <value>Mit diesem Plan starten</value>
+  </data>
   <data name="BusinessSubscriptionEveryInterval" xml:space="preserve">
     <value>Alle {0} {1}</value>
   </data>
@@ -7073,6 +7265,33 @@
   </data>
   <data name="BusinessSubscriptionQueueColumn" xml:space="preserve">
     <value>Queue</value>
+  </data>
+  <data name="BusinessSubscriptionCancellationPolicy" xml:space="preserve">
+    <value>Kündigungsrichtlinie</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookManagementWebsiteWhyItMatters" xml:space="preserve">
+    <value>Änderungen an Business-App-Abos hängen in Phase 1 vom externen Handoff über die Management-Website ab.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookManagementWebsiteActionConfigured" xml:space="preserve">
+    <value>Nutzen Sie die konfigurierte Management-Website für Upgrade-, Checkout- und Billing-Handoff.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookManagementWebsiteActionMissing" xml:space="preserve">
+    <value>Konfigurieren Sie zuerst die Business-Management-Website in den Site Settings, bevor Sie Operatoren in das externe Billing-Management weiterleiten.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookCancellationWhyItMatters" xml:space="preserve">
+    <value>Änderungen an Kündigung zum Periodenende wirken sich direkt auf Business-Kontinuität und Verlängerungserwartungen aus.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookCancellationActionActive" xml:space="preserve">
+    <value>Prüfen Sie die Verlängerungsabsicht und schalten Sie Kündigung zum Periodenende erst um, wenn bestätigt ist, dass das Business die Verlängerung wirklich stoppen will.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookCancellationActionInactive" xml:space="preserve">
+    <value>Es gibt noch kein aktives Abo, daher ist die Kündigungskontrolle aktuell nicht anwendbar.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookNoActivePlanWhyItMatters" xml:space="preserve">
+    <value>Businesses ohne aktives Abo erwarten möglicherweise trotzdem Zugriff oder Billing-Support durch Admin.</value>
+  </data>
+  <data name="BusinessSubscriptionPlaybookNoActivePlanAction" xml:space="preserve">
+    <value>Prüfen Sie verfügbare Pläne und nutzen Sie den externen Billing-Management-Handoff, wenn das Business bereit für Start oder Upgrade ist.</value>
   </data>
   <data name="CommonPayments" xml:space="preserve">
     <value>Zahlungen</value>
@@ -7160,6 +7379,24 @@
   </data>
   <data name="BusinessOwnerOverrideDemoteDeactivate" xml:space="preserve">
     <value>Zurückstufen / deaktivieren</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookForceRemoveWhyItMatters" xml:space="preserve">
+    <value>Das erzwungene Entfernen des letzten aktiven Owners ist ein Governance-Eingriff und darf kein stiller Ersatz für normale Membership-Bereinigung werden.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookForceRemoveAction" xml:space="preserve">
+    <value>Prüfen Sie betroffene Membership und aktuelle Owner-Abdeckung, bevor Sie einen weiteren Force-Remove-Pfad wiederholen.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookDemoteWhyItMatters" xml:space="preserve">
+    <value>Die Zurückstufung oder Deaktivierung eines Owners kann Approval-, Setup- und Member-Eskalationspfade ohne klar verantwortlichen Operator hinterlassen.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookDemoteAction" xml:space="preserve">
+    <value>Prüfen Sie aktive Owner-Abdeckung und Membership-Status erneut, bevor Sie weitere Lifecycle-Änderungen am Business genehmigen.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookMissingOwnerWhyItMatters" xml:space="preserve">
+    <value>Owner-Lücken zeigen sich oft zuerst als Audit- oder Support-Anomalie, bevor daraus ein größeres Merchant-Readiness- oder Eskalationsproblem wird.</value>
+  </data>
+  <data name="BusinessOwnerOverridePlaybookMissingOwnerAction" xml:space="preserve">
+    <value>Nutzen Sie Audit-Trail zusammen mit Members- und Merchant-Readiness-Signalen, bevor Sie einen Ersatz-Owner zuweisen oder den Support eskalieren.</value>
   </data>
   <data name="CommonSetup" xml:space="preserve">
     <value>Setup</value>
@@ -7250,6 +7487,24 @@
   </data>
   <data name="BusinessSubscriptionOpenBillingWebsite" xml:space="preserve">
     <value>Billing-Website öffnen</value>
+  </data>
+  <data name="BusinessSupportAuditInvitationBusinessAction" xml:space="preserve">
+    <value>Öffnen Sie die Einladungen für das Business und verwenden Sie Erneut senden oder Widerrufen erst nach Prüfung der Transportbereitschaft.</value>
+  </data>
+  <data name="BusinessSupportAuditInvitationGenericAction" xml:space="preserve">
+    <value>Prüfen Sie den ursprünglichen Einladungsablauf und die Transportbereitschaft, bevor Sie erneut senden.</value>
+  </data>
+  <data name="BusinessSupportAuditActivationBusinessAction" xml:space="preserve">
+    <value>Öffnen Sie die Mitglieder des Businesses und verwenden Sie die Aktivierungsunterstützung erst nach Prüfung des Kontostatus.</value>
+  </data>
+  <data name="BusinessSupportAuditActivationGenericAction" xml:space="preserve">
+    <value>Verwenden Sie die Aktivierungsunterstützung erst nach Prüfung des Kontostatus.</value>
+  </data>
+  <data name="BusinessSupportAuditPasswordResetAction" xml:space="preserve">
+    <value>Lösen Sie das Zurücksetzen erst nach Support-Validierung und Kommunikationsprüfung erneut aus.</value>
+  </data>
+  <data name="BusinessSupportAuditGenericAction" xml:space="preserve">
+    <value>Prüfen Sie den zugehörigen Ablauf und die Kommunikationsbereitschaft, bevor Sie manuell eingreifen.</value>
   </data>
   <data name="BusinessSubscriptionNoActiveSnapshot" xml:space="preserve">
     <value>Für dieses Business ist noch kein aktiver Abo-Snapshot verfügbar.</value>
@@ -8279,6 +8534,30 @@
   </data>
   <data name="CommunicationReadiness" xml:space="preserve">
     <value>Kommunikationsbereitschaft</value>
+  </data>
+  <data name="BusinessCommunicationReadinessEmailConfiguredSummary" xml:space="preserve">
+    <value>SMTP ist aktiviert und hat die minimale Absenderkonfiguration, die für transaktionale Business-E-Mails erforderlich ist.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessEmailMissingSummary" xml:space="preserve">
+    <value>SMTP ist noch nicht vollständig konfiguriert. Standardwerte für transaktionale Business-E-Mails können gespeichert werden, aber die Zustellung ist noch nicht betriebsbereit.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessSmsConfiguredSummary" xml:space="preserve">
+    <value>Der SMS-Transport ist aktiviert und ein Anbieter ist konfiguriert.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessSmsMissingSummary" xml:space="preserve">
+    <value>Der SMS-Transport ist auf Plattformebene noch unvollständig oder deaktiviert.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessWhatsAppConfiguredSummary" xml:space="preserve">
+    <value>Der WhatsApp-Transport ist aktiviert und Telefon-, Token- und Absenderkonfiguration sind vorhanden.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessWhatsAppMissingSummary" xml:space="preserve">
+    <value>Der WhatsApp-Transport ist auf Plattformebene noch unvollständig oder deaktiviert.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessAdminRoutingConfiguredSummary" xml:space="preserve">
+    <value>Für mindestens einen Kanal ist ein globales Admin-Alert-Routing vorhanden.</value>
+  </data>
+  <data name="BusinessCommunicationReadinessAdminRoutingMissingSummary" xml:space="preserve">
+    <value>Das Admin-Alert-Routing ist noch nicht konfiguriert, daher können operativen Warnungen für Businesses Eskalationsziele fehlen.</value>
   </data>
   <data name="EmailDelivery" xml:space="preserve">
     <value>E-Mail-Zustellung</value>
