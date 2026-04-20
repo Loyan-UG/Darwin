@@ -20,6 +20,7 @@ import type { MemberAddress } from "@/features/member-portal/types";
 import {
   formatResource,
   getMemberResource,
+  matchesLocalizedQueryMessageKey,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { localizeHref } from "@/lib/locale-routing";
@@ -42,18 +43,26 @@ function getAddressesStatusMessage(
   status: string | undefined,
   copy: ReturnType<typeof getMemberResource>,
 ) {
-  switch (status) {
-    case "created":
+  if (matchesLocalizedQueryMessageKey(status, "addressCreatedMessage", "created")) {
       return copy.addressCreatedMessage;
-    case "updated":
-      return copy.addressUpdatedMessage;
-    case "deleted":
-      return copy.addressDeletedMessage;
-    case "default-updated":
-      return copy.addressDefaultUpdatedMessage;
-    default:
-      return undefined;
   }
+  if (matchesLocalizedQueryMessageKey(status, "addressUpdatedMessage", "updated")) {
+      return copy.addressUpdatedMessage;
+  }
+  if (matchesLocalizedQueryMessageKey(status, "addressDeletedMessage", "deleted")) {
+      return copy.addressDeletedMessage;
+  }
+  if (
+    matchesLocalizedQueryMessageKey(
+      status,
+      "addressDefaultUpdatedMessage",
+      "default-updated",
+    )
+  ) {
+      return copy.addressDefaultUpdatedMessage;
+  }
+
+  return undefined;
 }
 
 export function AddressesPage({

@@ -12,7 +12,13 @@ import type {
 import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberCustomerProfile } from "@/features/member-portal/types";
 import type { MemberSession } from "@/features/member-session/types";
-import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  matchesLocalizedQueryMessageKey,
+  resolveStatusMappedMessage,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
 import { localizeHref } from "@/lib/locale-routing";
 import { parseUtcTimestamp } from "@/lib/time";
@@ -48,20 +54,14 @@ export function SecurityPage({
 }: SecurityPageProps) {
   const copy = getMemberResource(culture);
   const resolvedSecurityError = resolveLocalizedQueryMessage(securityError, copy);
-  const profileWarningMessage =
-    profileStatus === "not-found"
-      ? copy.memberResourceNotFoundMessage
-      : profileStatus === "network-error"
-        ? copy.memberApiNetworkErrorMessage
-        : profileStatus === "http-error"
-          ? copy.memberApiHttpErrorMessage
-          : profileStatus === "invalid-payload"
-            ? copy.memberApiInvalidPayloadMessage
-            : profileStatus === "unauthorized"
-              ? copy.memberSessionUnauthorizedMessage
-              : profileStatus === "unauthenticated"
-                ? copy.memberSessionRequiredMessage
-                : null;
+  const profileWarningMessage = resolveStatusMappedMessage(profileStatus, copy, {
+    "not-found": "memberResourceNotFoundMessage",
+    "network-error": "memberApiNetworkErrorMessage",
+    "http-error": "memberApiHttpErrorMessage",
+    "invalid-payload": "memberApiInvalidPayloadMessage",
+    unauthorized: "memberSessionUnauthorizedMessage",
+    unauthenticated: "memberSessionRequiredMessage",
+  });
   const hasValidSessionExpiry = parseUtcTimestamp(session.accessTokenExpiresAtUtc) !== null;
   const securityState =
     !profile?.phoneNumberConfirmed && !hasValidSessionExpiry
@@ -135,7 +135,11 @@ export function SecurityPage({
             </div>
           )}
 
-          {securityStatus === "saved" && (
+          {matchesLocalizedQueryMessageKey(
+            securityStatus,
+            "securityUpdatedMessage",
+            "saved",
+          ) && (
             <div className="mt-6">
               <StatusBanner
                 title={copy.securityUpdatedTitle}

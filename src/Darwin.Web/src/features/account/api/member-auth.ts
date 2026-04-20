@@ -9,7 +9,10 @@ import {
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 import type { MemberRegisterResponse } from "@/features/account/types";
-import { toLocalizedQueryMessage } from "@/localization";
+import {
+  resolveProblemQueryMessage,
+  toLocalizedQueryMessage,
+} from "@/localization";
 
 async function postMemberAuthJson<T>(
   path: string,
@@ -35,7 +38,7 @@ async function postMemberAuthJson<T>(
       let detail = toLocalizedQueryMessage("memberAuthHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
-        detail = problem.detail ?? problem.title ?? detail;
+        detail = resolveProblemQueryMessage(problem, "memberAuthHttpErrorMessage");
       } catch {
         // Keep the status-based detail.
       }

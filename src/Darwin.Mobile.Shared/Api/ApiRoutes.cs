@@ -46,6 +46,7 @@ namespace Darwin.Mobile.Shared.Api
             public const string RequestPasswordReset = "api/v1/member/auth/password/request-reset";
             public const string ResetPassword = "api/v1/member/auth/password/reset";
             public const string RequestEmailConfirmation = "api/v1/member/auth/email/request-confirmation";
+            public const string ConfirmEmail = "api/v1/member/auth/email/confirm";
             public const string Register = "api/v1/member/auth/register";
         }
 

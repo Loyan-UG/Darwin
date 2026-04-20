@@ -71,6 +71,23 @@ public sealed class ResetPasswordViewModel : BaseViewModel
 
     public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
 
+    /// <summary>
+    /// Applies prefilled handoff values from earlier auth-recovery steps without overwriting
+    /// fields the user has already changed on the reset page.
+    /// </summary>
+    public void ApplyPrefill(string? email, string? token = null)
+    {
+        if (string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(email))
+        {
+            Email = email.Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(Token) && !string.IsNullOrWhiteSpace(token))
+        {
+            Token = token.Trim();
+        }
+    }
+
     private async Task ResetPasswordAsync()
     {
         if (IsBusy)

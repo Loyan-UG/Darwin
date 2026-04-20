@@ -99,6 +99,11 @@
                             <TapGestureRecognizer Command="{Binding RequestActivationEmailCommand}" />
                         </Label.GestureRecognizers>
                     </Label>
+                    <Button Text="{x:Static res:AppResources.ActivationOpenFlowButton}"
+                            Style="{StaticResource LinkButtonStyle}"
+                            HorizontalOptions="Center"
+                            IsVisible="{Binding ShowActivationEmailAction}"
+                            Clicked="OnOpenActivationClicked" />
                 </VerticalStackLayout>
             </Border>
 

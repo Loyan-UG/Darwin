@@ -148,6 +148,36 @@
   <data name="ActivationEmailRequestFailed" xml:space="preserve">
     <value>Bestätigungs-E-Mail kann derzeit nicht gesendet werden. Bitte versuchen Sie es erneut.</value>
   </data>
+  <data name="ActivationTitle" xml:space="preserve">
+    <value>E-Mail-Aktivierung</value>
+  </data>
+  <data name="ActivationDescription" xml:space="preserve">
+    <value>Fordern Sie eine weitere Bestätigungs-E-Mail an oder schließen Sie die Kontoaktivierung mit E-Mail-Adresse und Token ab.</value>
+  </data>
+  <data name="ActivationTokenLabel" xml:space="preserve">
+    <value>Aktivierungs-Token</value>
+  </data>
+  <data name="ActivationTokenPlaceholder" xml:space="preserve">
+    <value>Token aus der E-Mail einfügen</value>
+  </data>
+  <data name="ActivationRequestButton" xml:space="preserve">
+    <value>Aktivierungs-E-Mail senden</value>
+  </data>
+  <data name="ActivationConfirmButton" xml:space="preserve">
+    <value>E-Mail bestätigen</value>
+  </data>
+  <data name="ActivationConfirmSuccess" xml:space="preserve">
+    <value>E-Mail bestätigt. Sie können sich jetzt anmelden.</value>
+  </data>
+  <data name="ActivationConfirmFailed" xml:space="preserve">
+    <value>Die E-Mail-Bestätigung konnte nicht abgeschlossen werden. Bitte prüfen Sie den Token und versuchen Sie es erneut.</value>
+  </data>
+  <data name="ActivationEmailTokenRequired" xml:space="preserve">
+    <value>E-Mail-Adresse und Aktivierungs-Token sind erforderlich.</value>
+  </data>
+  <data name="ActivationOpenFlowButton" xml:space="preserve">
+    <value>Aktivierungsfluss öffnen</value>
+  </data>
   <data name="JoinProgramButton" xml:space="preserve">
     <value>Treueprogramm beitreten</value>
   </data>
@@ -834,6 +864,9 @@
   </data>
   <data name="RegisterEmailConfirmationSent" xml:space="preserve">
     <value>Ihr Konto wurde erstellt. Bitte bestätigen Sie Ihre E-Mail, bevor Sie sich anmelden.</value>
+  </data>
+  <data name="RegisterReturnToLoginButton" xml:space="preserve">
+    <value>Zurück zur Anmeldung</value>
   </data>
   <data name="DiscoverMyBusinessesTab" xml:space="preserve">
     <value>Meine Unternehmen</value>

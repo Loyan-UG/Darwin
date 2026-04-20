@@ -14,22 +14,15 @@ import {
   getCurrentMemberLoyaltyBusinesses,
   getCurrentMemberLoyaltyOverview,
 } from "@/features/member-portal/api/member-portal";
+import { getLoyaltyOverviewSeoMetadata } from "@/features/member-portal/server/get-loyalty-seo-metadata";
 import { getMemberSession } from "@/features/member-session/cookies";
 import { getPublishedPages } from "@/features/cms/api/public-cms";
-import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
-import { buildNoIndexMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
   const culture = await getRequestCulture();
-  const copy = getMemberResource(culture);
-
-  return buildNoIndexMetadata(
-    culture,
-    copy.loyaltyMetaTitle,
-    copy.loyaltyMetaDescription,
-    "/loyalty",
-  );
+  const { metadata } = await getLoyaltyOverviewSeoMetadata(culture);
+  return metadata;
 }
 
 type LoyaltyPageProps = {

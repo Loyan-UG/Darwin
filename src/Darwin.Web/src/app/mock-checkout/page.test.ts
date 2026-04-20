@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { getCommerceResource } from "@/localization";
 import {
   buildOutcomeUrl,
   readSearchValue,
@@ -29,6 +30,7 @@ test("mock checkout helpers only accept absolute URLs and append finalize once",
 test("mock checkout builds explicit success, cancellation, and failure reconciliation URLs", () => {
   const returnUrl = "http://localhost:3000/checkout/orders/order-1/confirmation?orderNumber=ORD-1001";
   const cancelUrl = "http://localhost:3000/checkout/orders/order-1/confirmation?orderNumber=ORD-1001";
+  const copy = getCommerceResource("en-US");
 
   assert.equal(
     buildOutcomeUrl(returnUrl, "session-1", "Succeeded"),
@@ -43,7 +45,7 @@ test("mock checkout builds explicit success, cancellation, and failure reconcili
       returnUrl,
       "session-1",
       "Failed",
-      "Mock checkout marked the payment as failed.",
+      copy.mockCheckoutFailureReason,
     ),
     "http://localhost:3000/checkout/orders/order-1/confirmation/finalize?orderNumber=ORD-1001&providerReference=session-1&outcome=Failed&failureReason=Mock+checkout+marked+the+payment+as+failed.",
   );

@@ -26,7 +26,7 @@ import {
 import { parseAddressJson, type ParsedAddress } from "@/lib/address-json";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
 import { buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
-import { toWebApiUrl } from "@/lib/webapi-url";
+import { getSafeExternalLinkProps, toWebApiUrl } from "@/lib/webapi-url";
 
 type OrderDetailPageProps = {
   culture: string;
@@ -217,6 +217,7 @@ export function OrderDetailPage({
     fallbackDescription: copy.orderDetailStorefrontCatalogFallbackDescription,
   });
   const promotionLaneCards = buildMemberPromotionLaneCards(rankedProducts, culture);
+  const safeExternalLinkProps = getSafeExternalLinkProps();
   const sectionLinks = [
     { href: "#order-detail-overview", label: copy.orderDetailEyebrow },
     { href: "#order-detail-lines", label: copy.orderLinesTitle },
@@ -382,8 +383,7 @@ export function OrderDetailPage({
                 {documentUrl ? (
                   <a
                     href={documentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    {...safeExternalLinkProps}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.downloadDocumentCta}
@@ -703,7 +703,7 @@ export function OrderDetailPage({
                   {copy.openConfirmationCta}
                 </Link>
                 {documentUrl ? (
-                  <a href={documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  <a href={documentUrl} {...safeExternalLinkProps} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                     {copy.downloadDocumentCta}
                   </a>
                 ) : (

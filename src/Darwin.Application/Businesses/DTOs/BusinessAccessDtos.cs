@@ -88,6 +88,16 @@ public sealed class BusinessAccessStateDto
     public bool IsUserLockedOut { get; set; }
 
     /// <summary>
+    /// Gets a value indicating whether the current business is still pending approval.
+    /// </summary>
+    public bool IsApprovalPending => OperationalStatus == BusinessOperationalStatus.PendingApproval;
+
+    /// <summary>
+    /// Gets a value indicating whether the current business is suspended.
+    /// </summary>
+    public bool IsSuspended => OperationalStatus == BusinessOperationalStatus.Suspended;
+
+    /// <summary>
     /// Gets a value indicating whether the current business client session is still valid for onboarding-safe access.
     /// </summary>
     public bool IsBusinessClientAccessAllowed =>
@@ -110,6 +120,36 @@ public sealed class BusinessAccessStateDto
     public bool IsSetupComplete => HasActiveOwner && HasPrimaryLocation && HasContactEmail && HasLegalName;
 
     /// <summary>
+    /// Gets a value indicating whether the current user must resolve an activation or account-state issue.
+    /// </summary>
+    public bool HasActivationBlockingIssues => !IsBusinessClientAccessAllowed;
+
+    /// <summary>
+    /// Gets the number of missing setup checklist items.
+    /// </summary>
+    public int SetupIncompleteItemCount =>
+        (HasActiveOwner ? 0 : 1) +
+        (HasPrimaryLocation ? 0 : 1) +
+        (HasContactEmail ? 0 : 1) +
+        (HasLegalName ? 0 : 1);
+
+    /// <summary>
+    /// Gets a stable machine-readable token that explains the primary blocking state.
+    /// </summary>
+    public string? PrimaryBlockingCode => OperationalStatus switch
+    {
+        _ when !HasActiveMembership => "membership_inactive",
+        _ when !IsUserActive => "user_inactive",
+        _ when !IsUserEmailConfirmed => "email_confirmation_required",
+        _ when IsUserLockedOut => "user_locked",
+        BusinessOperationalStatus.PendingApproval => "business_pending_approval",
+        BusinessOperationalStatus.Suspended => "business_suspended",
+        _ when !IsActive => "business_inactive",
+        _ when !IsSetupComplete => "setup_incomplete",
+        _ => null
+    };
+
+    /// <summary>
     /// Gets a human-readable reason that explains why operations are currently blocked.
     /// </summary>
     public string? BlockingReason => OperationalStatus switch
@@ -122,6 +162,7 @@ public sealed class BusinessAccessStateDto
         BusinessOperationalStatus.Suspended when !string.IsNullOrWhiteSpace(SuspensionReason) => SuspensionReason,
         BusinessOperationalStatus.Suspended => "Business access is currently suspended.",
         _ when !IsActive => "Business access is currently inactive.",
+        _ when !IsSetupComplete => "Business setup is still incomplete.",
         _ => null
     };
 }

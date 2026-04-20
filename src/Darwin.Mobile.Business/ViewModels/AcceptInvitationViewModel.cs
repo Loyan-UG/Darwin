@@ -48,7 +48,8 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
         get => _invitationToken;
         set
         {
-            if (SetProperty(ref _invitationToken, value))
+            var normalized = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            if (SetProperty(ref _invitationToken, normalized))
             {
                 ResetPreview();
                 RaiseCommandStates();

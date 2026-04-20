@@ -1,6 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { toSafeHttpUrl, toWebApiUrl } from "@/lib/webapi-url";
+import {
+  getSafeExternalLinkProps,
+  toSafeHttpUrl,
+  toWebApiUrl,
+} from "@/lib/webapi-url";
+
+test("getSafeExternalLinkProps returns the hardened new-tab contract", () => {
+  assert.deepEqual(getSafeExternalLinkProps(), {
+    target: "_blank",
+    rel: "noopener noreferrer",
+    referrerPolicy: "no-referrer",
+  });
+});
 
 test("toSafeHttpUrl keeps valid http and https URLs only", () => {
   assert.equal(

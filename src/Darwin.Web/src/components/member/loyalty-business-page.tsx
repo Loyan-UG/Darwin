@@ -22,6 +22,8 @@ import type {
 import {
   formatResource,
   getMemberResource,
+  matchesLocalizedQueryMessageKey,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
@@ -129,6 +131,12 @@ export function LoyaltyBusinessPage({
   categoriesStatus,
 }: LoyaltyBusinessPageProps) {
   const copy = getMemberResource(culture);
+  const dashboardStatusLabel = resolveApiStatusLabel(dashboardStatus, copy);
+  const rewardsStatusLabel = resolveApiStatusLabel(rewardsStatus, copy);
+  const timelineStatusLabel = resolveApiStatusLabel(timelineStatus, copy);
+  const promotionsStatusLabel = resolveApiStatusLabel(promotionsStatus, copy);
+  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy);
+  const categoriesStatusLabel = resolveApiStatusLabel(categoriesStatus, copy);
   const resolvedScanError = resolveLocalizedQueryMessage(scanError, copy);
   const resolvedPromotionError = resolveLocalizedQueryMessage(
     promotionError,
@@ -208,14 +216,18 @@ export function LoyaltyBusinessPage({
             tone="warning"
             title={copy.loyaltyDetailWarningsTitle}
             message={formatResource(copy.loyaltyDetailWarningsMessage, {
-              dashboardStatus,
-              rewardsStatus,
-              timelineStatus,
-              promotionsStatus,
+              dashboardStatus: dashboardStatusLabel ?? dashboardStatus,
+              rewardsStatus: rewardsStatusLabel ?? rewardsStatus,
+              timelineStatus: timelineStatusLabel ?? timelineStatus,
+              promotionsStatus: promotionsStatusLabel ?? promotionsStatus,
             })}
           />
         )}
-        {promotionStatus === "tracked" && (
+        {matchesLocalizedQueryMessageKey(
+          promotionStatus,
+          "promotionTrackedMessage",
+          "tracked",
+        ) && (
           <StatusBanner title={copy.promotionTrackedTitle} message={copy.promotionTrackedMessage} />
         )}
         {resolvedPromotionError && (
@@ -225,10 +237,18 @@ export function LoyaltyBusinessPage({
             message={resolvedPromotionError}
           />
         )}
-        {scanStatus === "prepared" && (
+        {matchesLocalizedQueryMessageKey(
+          scanStatus,
+          "scanPreparedMessage",
+          "prepared",
+        ) && (
           <StatusBanner title={copy.scanPreparedTitle} message={copy.scanPreparedMessage} />
         )}
-        {scanStatus === "cleared" && (
+        {matchesLocalizedQueryMessageKey(
+          scanStatus,
+          "scanClearedMessage",
+          "cleared",
+        ) && (
           <StatusBanner title={copy.scanClearedTitle} message={copy.scanClearedMessage} />
         )}
         {resolvedScanError && (
@@ -245,10 +265,10 @@ export function LoyaltyBusinessPage({
           </p>
           <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.loyaltyBusinessRouteSummaryMessage, {
-              dashboardStatus,
-              rewardsStatus,
-              timelineStatus,
-              promotionsStatus,
+              dashboardStatus: dashboardStatusLabel ?? dashboardStatus,
+              rewardsStatus: rewardsStatusLabel ?? rewardsStatus,
+              timelineStatus: timelineStatusLabel ?? timelineStatus,
+              promotionsStatus: promotionsStatusLabel ?? promotionsStatus,
             })}
           </p>
         </div>
@@ -521,8 +541,8 @@ export function LoyaltyBusinessPage({
                   </p>
                   <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {formatResource(copy.loyaltyBusinessStorefrontWindowMessage, {
-                      cmsStatus: cmsPagesStatus,
-                      categoriesStatus,
+                      cmsStatus: cmsPagesStatusLabel ?? cmsPagesStatus,
+                      categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
                       pageCount: cmsPages.length,
                       categoryCount: categories.length,
                     })}
@@ -560,7 +580,7 @@ export function LoyaltyBusinessPage({
                       ) : (
                         <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                           {formatResource(copy.loyaltyBusinessStorefrontCmsEmptyMessage, {
-                            status: cmsPagesStatus,
+                            status: cmsPagesStatusLabel ?? cmsPagesStatus,
                           })}
                         </p>
                       )}
@@ -602,7 +622,7 @@ export function LoyaltyBusinessPage({
                       ) : (
                         <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                           {formatResource(copy.loyaltyBusinessStorefrontCatalogEmptyMessage, {
-                            status: categoriesStatus,
+                            status: categoriesStatusLabel ?? categoriesStatus,
                           })}
                         </p>
                       )}

@@ -11,6 +11,7 @@ type CmsContinuationRailProps = {
   includeAccount?: boolean;
   title?: string;
   description?: string;
+  items?: PublicContinuationItem[];
 };
 
 export function CmsContinuationRail({
@@ -20,12 +21,13 @@ export function CmsContinuationRail({
   includeAccount = true,
   title,
   description,
+  items = [],
 }: CmsContinuationRailProps) {
   const copy = getSharedResource(culture);
-  const items: PublicContinuationItem[] = [];
+  const railItems: PublicContinuationItem[] = [...items];
 
   if (includeHome) {
-    items.push({
+    railItems.push({
       id: "cms-home",
       label: copy.cmsCrossSurfaceHomeLabel,
       title: copy.cmsCrossSurfaceHomeTitle,
@@ -36,7 +38,7 @@ export function CmsContinuationRail({
   }
 
   if (includeCatalog) {
-    items.push({
+    railItems.push({
       id: "cms-catalog",
       label: copy.cmsCrossSurfaceCatalogLabel,
       title: copy.cmsCrossSurfaceCatalogTitle,
@@ -47,7 +49,7 @@ export function CmsContinuationRail({
   }
 
   if (includeAccount) {
-    items.push({
+    railItems.push({
       id: "cms-account",
       label: copy.cmsCrossSurfaceAccountLabel,
       title: copy.cmsCrossSurfaceAccountTitle,
@@ -63,7 +65,7 @@ export function CmsContinuationRail({
       eyebrow={copy.cmsFollowUpTitle}
       title={title ?? copy.cmsCrossSurfaceTitle}
       description={description ?? copy.cmsFollowUpDescription}
-      items={items}
+      items={railItems}
     />
   );
 }

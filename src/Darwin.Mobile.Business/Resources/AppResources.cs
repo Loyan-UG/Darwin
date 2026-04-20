@@ -453,10 +453,15 @@ public static class AppResources
     public static string HomeLoadBusinessInfoFailed => ResourceManager.GetString(nameof(HomeLoadBusinessInfoFailed), Culture) ?? "Unable to load business information right now. Please try again.";
     public static string BusinessAccessStateLoadFailed => ResourceManager.GetString(nameof(BusinessAccessStateLoadFailed), Culture) ?? "Unable to verify the current business access state right now.";
     public static string BusinessOperationsBlockedGeneric => ResourceManager.GetString(nameof(BusinessOperationsBlockedGeneric), Culture) ?? "Live business operations are currently unavailable for this account.";
+    public static string BusinessMembershipInactiveMessage => ResourceManager.GetString(nameof(BusinessMembershipInactiveMessage), Culture) ?? "Your operator account is no longer assigned to an active business membership. Please contact support.";
+    public static string BusinessUserInactiveMessage => ResourceManager.GetString(nameof(BusinessUserInactiveMessage), Culture) ?? "Your operator account is currently inactive. Please contact support.";
+    public static string BusinessEmailConfirmationRequiredMessage => ResourceManager.GetString(nameof(BusinessEmailConfirmationRequiredMessage), Culture) ?? "Confirm your email address before continuing with business operations.";
+    public static string BusinessUserLockedMessage => ResourceManager.GetString(nameof(BusinessUserLockedMessage), Culture) ?? "Your operator account is currently locked. Please contact support.";
     public static string BusinessPendingApprovalMessage => ResourceManager.GetString(nameof(BusinessPendingApprovalMessage), Culture) ?? "Your business is still pending approval. You can continue setup, but live operations are not available yet.";
     public static string BusinessSuspendedMessage => ResourceManager.GetString(nameof(BusinessSuspendedMessage), Culture) ?? "Your business access is currently suspended. Please contact support.";
     public static string BusinessSuspendedMessageWithReasonFormat => ResourceManager.GetString(nameof(BusinessSuspendedMessageWithReasonFormat), Culture) ?? "Your business access is currently suspended: {0}";
     public static string BusinessInactiveMessage => ResourceManager.GetString(nameof(BusinessInactiveMessage), Culture) ?? "Your business account is currently inactive. Live operations are not available.";
+    public static string BusinessSetupIncompleteMessageFormat => ResourceManager.GetString(nameof(BusinessSetupIncompleteMessageFormat), Culture) ?? "Business setup still requires {0} item(s) before go-live.";
     public static string HomeBusinessOperationalStatusTitle => ResourceManager.GetString(nameof(HomeBusinessOperationalStatusTitle), Culture) ?? "Business operational status";
     public static string HomeBusinessStatusPendingApproval => ResourceManager.GetString(nameof(HomeBusinessStatusPendingApproval), Culture) ?? "Pending approval";
     public static string HomeBusinessStatusApproved => ResourceManager.GetString(nameof(HomeBusinessStatusApproved), Culture) ?? "Approved";
@@ -464,6 +469,7 @@ public static class AppResources
     public static string HomeBusinessStatusSuspended => ResourceManager.GetString(nameof(HomeBusinessStatusSuspended), Culture) ?? "Suspended";
     public static string HomeOperationsAllowedMessage => ResourceManager.GetString(nameof(HomeOperationsAllowedMessage), Culture) ?? "Live business operations are enabled for this account.";
     public static string HomeSetupChecklistTitle => ResourceManager.GetString(nameof(HomeSetupChecklistTitle), Culture) ?? "Setup checklist";
+    public static string HomeSetupChecklistRemainingFormat => ResourceManager.GetString(nameof(HomeSetupChecklistRemainingFormat), Culture) ?? "Remaining setup items: {0}";
     public static string HomeChecklistActiveOwner => ResourceManager.GetString(nameof(HomeChecklistActiveOwner), Culture) ?? "Active owner assigned";
     public static string HomeChecklistPrimaryLocation => ResourceManager.GetString(nameof(HomeChecklistPrimaryLocation), Culture) ?? "Primary location configured";
     public static string HomeChecklistContactEmail => ResourceManager.GetString(nameof(HomeChecklistContactEmail), Culture) ?? "Contact email configured";

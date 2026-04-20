@@ -8,7 +8,11 @@ import { buildStorefrontCategorySpotlightLinkCards, buildStorefrontOfferCards } 
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
-import { formatResource, getSharedResource } from "@/localization";
+import {
+  formatResource,
+  getSharedResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type CmsStorefrontSupportWindowProps = {
   culture: string;
@@ -33,6 +37,8 @@ export function CmsStorefrontSupportWindow({
   cartSummary,
 }: CmsStorefrontSupportWindowProps) {
   const copy = getSharedResource(culture);
+  const categoriesStatusLabel = resolveApiStatusLabel(categoriesStatus, copy);
+  const productsStatusLabel = resolveApiStatusLabel(productsStatus, copy);
   const rankedProducts = sortProductsByOpportunity(products);
   const categoryCards = buildStorefrontCategorySpotlightLinkCards(categories, {
     prefix: "cms-storefront-support",
@@ -115,7 +121,7 @@ export function CmsStorefrontSupportWindow({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.cmsCatalogWindowMessage, {
-                categoriesStatus,
+                categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
                 categoryCount: categories.length,
               })}
             </p>
@@ -131,7 +137,7 @@ export function CmsStorefrontSupportWindow({
           culture={culture}
           cards={categoryCards}
           emptyMessage={formatResource(copy.cmsCatalogWindowEmptyMessage, {
-            status: categoriesStatus,
+            status: categoriesStatusLabel ?? categoriesStatus,
           })}
         />
       </section>
@@ -144,7 +150,7 @@ export function CmsStorefrontSupportWindow({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.cmsProductsWindowMessage, {
-                productsStatus,
+                productsStatus: productsStatusLabel ?? productsStatus,
                 productCount: products.length,
               })}
             </p>
@@ -200,7 +206,7 @@ export function CmsStorefrontSupportWindow({
         ) : (
           <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.cmsProductsWindowEmptyMessage, {
-              status: productsStatus,
+              status: productsStatusLabel ?? productsStatus,
             })}
           </p>
         )}

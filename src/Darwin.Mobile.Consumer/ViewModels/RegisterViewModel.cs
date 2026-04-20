@@ -34,6 +34,7 @@ public sealed class RegisterViewModel : BaseViewModel
     private bool _acceptConsumerTerms;
     private bool _acknowledgePrivacyNotice;
     private string? _infoMessage;
+    private bool _hasPendingEmailConfirmation;
 
     public RegisterViewModel(
         IAuthService authService,
@@ -145,6 +146,15 @@ public sealed class RegisterViewModel : BaseViewModel
     public bool HasInfo => !string.IsNullOrWhiteSpace(_infoMessage);
 
     /// <summary>
+    /// Gets whether the current registration result is waiting on email confirmation before sign-in.
+    /// </summary>
+    public bool HasPendingEmailConfirmation
+    {
+        get => _hasPendingEmailConfirmation;
+        private set => SetProperty(ref _hasPendingEmailConfirmation, value);
+    }
+
+    /// <summary>
     /// Gets or sets a value indicating whether the consumer terms were explicitly accepted.
     /// </summary>
     public bool AcceptConsumerTerms
@@ -246,6 +256,7 @@ public sealed class RegisterViewModel : BaseViewModel
         IsBusy = true;
         ErrorMessage = null;
         InfoMessage = null;
+        HasPendingEmailConfirmation = false;
         RaiseRegistrationStateChanged();
 
         var normalizedEmail = Email.Trim();
@@ -275,6 +286,7 @@ public sealed class RegisterViewModel : BaseViewModel
 
             if (response.ConfirmationEmailSent)
             {
+                HasPendingEmailConfirmation = true;
                 InfoMessage = AppResources.RegisterEmailConfirmationSent;
                 Password = string.Empty;
                 ConfirmPassword = string.Empty;
@@ -293,6 +305,7 @@ public sealed class RegisterViewModel : BaseViewModel
             }
             catch
             {
+                HasPendingEmailConfirmation = false;
                 ErrorMessage = AppResources.RegisterAutoLoginFailed;
                 Password = string.Empty;
                 ConfirmPassword = string.Empty;
@@ -300,6 +313,7 @@ public sealed class RegisterViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
+            HasPendingEmailConfirmation = false;
             InfoMessage = null;
             ErrorMessage = ResolveFriendlyError(ex, AppResources.RegisterFailed);
         }

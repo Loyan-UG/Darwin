@@ -15,7 +15,11 @@ import {
 } from "@/features/review/review-workflow";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
-import { formatResource, getSharedResource } from "@/localization";
+import {
+  formatResource,
+  getSharedResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type CmsPagesIndexProps = {
   culture: string;
@@ -89,6 +93,7 @@ export function CmsPagesIndex({
   cartSummary,
 }: CmsPagesIndexProps) {
   const copy = getSharedResource(culture);
+  const statusLabel = resolveApiStatusLabel(status, copy);
   const pageStart = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const pageEnd =
     totalItems === 0 ? 0 : Math.min(totalItems, pageStart + loadedPageCount - 1);
@@ -219,7 +224,9 @@ export function CmsPagesIndex({
           <StatusBanner
             tone="warning"
             title={copy.cmsIndexDegradedTitle}
-            message={formatResource(copy.cmsIndexDegradedMessage, { status })}
+            message={formatResource(copy.cmsIndexDegradedMessage, {
+              status: statusLabel ?? status,
+            })}
           />
         )}
 

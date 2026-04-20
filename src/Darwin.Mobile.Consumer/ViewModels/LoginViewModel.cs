@@ -138,6 +138,24 @@ public sealed partial class LoginViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Applies sign-in entry context from nearby auth surfaces such as registration or recovery handoff.
+    /// This intentionally resets password and transient error state because the login attempt has not happened yet.
+    /// </summary>
+    public void ApplyEntryContext(string? email, string? infoMessage = null, bool showActivationEmailAction = false)
+    {
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            Email = email.Trim();
+        }
+
+        Password = string.Empty;
+        ErrorMessage = null;
+        InfoMessage = infoMessage;
+        ShowActivationEmailAction = showActivationEmailAction;
+        RaiseReadinessChanged();
+    }
+
+    /// <summary>
     /// Executes the login process. Uses <see cref="IAuthService.LoginAsync"/> and
     /// swaps the root page to the authenticated shell on success.
     /// </summary>

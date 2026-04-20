@@ -8,7 +8,8 @@ import { getCommerceResource } from "@/localization";
 type CommerceSeoRoute =
   | "/cart"
   | "/checkout"
-  | "/checkout/orders/[orderId]/confirmation";
+  | "/checkout/orders/[orderId]/confirmation"
+  | "/mock-checkout";
 
 function getRouteTitle(culture: string, route: CommerceSeoRoute) {
   const copy = getCommerceResource(culture);
@@ -20,6 +21,8 @@ function getRouteTitle(culture: string, route: CommerceSeoRoute) {
       return copy.checkoutMetaTitle;
     case "/checkout/orders/[orderId]/confirmation":
       return copy.confirmationMetaTitle;
+    case "/mock-checkout":
+      return copy.mockCheckoutMetaTitle;
   }
 }
 
@@ -33,6 +36,8 @@ function getRouteDescription(culture: string, route: CommerceSeoRoute) {
       return copy.checkoutMetaDescription;
     case "/checkout/orders/[orderId]/confirmation":
       return copy.confirmationMetaDescription;
+    case "/mock-checkout":
+      return copy.mockCheckoutMetaDescription;
   }
 }
 
@@ -87,3 +92,6 @@ export const getConfirmationSeoMetadata = (culture: string, orderId: string) =>
     "/checkout/orders/[orderId]/confirmation",
     `/checkout/orders/${orderId}/confirmation`,
   );
+
+export const getMockCheckoutSeoMetadata = (culture: string) =>
+  getCachedCommerceSeoMetadata(culture, "/mock-checkout", "/mock-checkout");

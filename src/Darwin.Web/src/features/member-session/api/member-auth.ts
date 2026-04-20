@@ -7,7 +7,10 @@ import {
   logApiFailure,
   withFailureDiagnostics,
 } from "@/lib/api-diagnostics";
-import { toLocalizedQueryMessage } from "@/localization";
+import {
+  resolveProblemQueryMessage,
+  toLocalizedQueryMessage,
+} from "@/localization";
 import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 type TokenResponse = {
@@ -45,7 +48,7 @@ async function postAuthJson<T>(
       let detail = toLocalizedQueryMessage("memberAuthHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
-        detail = problem.detail ?? problem.title ?? detail;
+        detail = resolveProblemQueryMessage(problem, "memberAuthHttpErrorMessage");
       } catch {
         // Keep status detail.
       }

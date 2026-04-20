@@ -1360,4 +1360,22 @@
   <data name="OperatorRoleFormat" xml:space="preserve">
     <value>Betreiberrolle: {0}</value>
   </data>
+  <data name="BusinessMembershipInactiveMessage" xml:space="preserve">
+    <value>Ihr Operator-Konto ist keiner aktiven Business-Mitgliedschaft mehr zugeordnet. Bitte kontaktieren Sie den Support.</value>
+  </data>
+  <data name="BusinessUserInactiveMessage" xml:space="preserve">
+    <value>Ihr Operator-Konto ist derzeit inaktiv. Bitte kontaktieren Sie den Support.</value>
+  </data>
+  <data name="BusinessEmailConfirmationRequiredMessage" xml:space="preserve">
+    <value>Bestaetigen Sie zuerst Ihre E-Mail-Adresse, bevor Sie mit Business-Aktionen fortfahren.</value>
+  </data>
+  <data name="BusinessUserLockedMessage" xml:space="preserve">
+    <value>Ihr Operator-Konto ist derzeit gesperrt. Bitte kontaktieren Sie den Support.</value>
+  </data>
+  <data name="BusinessSetupIncompleteMessageFormat" xml:space="preserve">
+    <value>Im Business-Setup fehlen noch {0} Punkt(e) vor dem Go-Live.</value>
+  </data>
+  <data name="HomeSetupChecklistRemainingFormat" xml:space="preserve">
+    <value>Offene Setup-Punkte: {0}</value>
+  </data>
 </root>

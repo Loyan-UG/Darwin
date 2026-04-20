@@ -26,7 +26,10 @@ import {
   buildAppQueryPath,
   sanitizeAppPath,
 } from "@/lib/locale-routing";
-import { toLocalizedQueryMessage } from "@/localization";
+import {
+  resolveProblemQueryMessage,
+  toLocalizedQueryMessage,
+} from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
@@ -66,7 +69,10 @@ async function createPaymentIntent(path: string) {
       let detail = toLocalizedQueryMessage("memberPaymentHandoffHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
-        detail = problem.detail ?? problem.title ?? detail;
+        detail = resolveProblemQueryMessage(
+          problem,
+          "memberPaymentHandoffHttpErrorMessage",
+        );
       } catch {
         // Keep status detail.
       }
@@ -166,7 +172,13 @@ export async function updateMemberProfileAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/profile", "profileStatus", "saved"));
+  redirect(
+    withFlash(
+      "/account/profile",
+      "profileStatus",
+      toLocalizedQueryMessage("profileUpdatedMessage"),
+    ),
+  );
 }
 
 export async function updateMemberPreferencesAction(formData: FormData) {
@@ -204,7 +216,13 @@ export async function updateMemberPreferencesAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/preferences", "preferencesStatus", "saved"));
+  redirect(
+    withFlash(
+      "/account/preferences",
+      "preferencesStatus",
+      toLocalizedQueryMessage("preferencesUpdatedMessage"),
+    ),
+  );
 }
 
 export async function changeMemberPasswordAction(formData: FormData) {
@@ -247,7 +265,13 @@ export async function changeMemberPasswordAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/security", "securityStatus", "saved"));
+  redirect(
+    withFlash(
+      "/account/security",
+      "securityStatus",
+      toLocalizedQueryMessage("securityUpdatedMessage"),
+    ),
+  );
 }
 
 export async function requestMemberPhoneVerificationAction(formData: FormData) {
@@ -267,7 +291,13 @@ export async function requestMemberPhoneVerificationAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/profile", "phoneStatus", "requested"));
+  redirect(
+    withFlash(
+      "/account/profile",
+      "phoneStatus",
+      toLocalizedQueryMessage("phoneCodeRequestedMessage"),
+    ),
+  );
 }
 
 export async function confirmMemberPhoneVerificationAction(formData: FormData) {
@@ -297,7 +327,13 @@ export async function confirmMemberPhoneVerificationAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/profile", "phoneStatus", "confirmed"));
+  redirect(
+    withFlash(
+      "/account/profile",
+      "phoneStatus",
+      toLocalizedQueryMessage("phoneVerifiedMessage"),
+    ),
+  );
 }
 
 export async function createMemberAddressAction(formData: FormData) {
@@ -325,7 +361,13 @@ export async function createMemberAddressAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/addresses", "addressesStatus", "created"));
+  redirect(
+    withFlash(
+      "/account/addresses",
+      "addressesStatus",
+      toLocalizedQueryMessage("addressCreatedMessage"),
+    ),
+  );
 }
 
 export async function updateMemberAddressAction(formData: FormData) {
@@ -367,7 +409,13 @@ export async function updateMemberAddressAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/addresses", "addressesStatus", "updated"));
+  redirect(
+    withFlash(
+      "/account/addresses",
+      "addressesStatus",
+      toLocalizedQueryMessage("addressUpdatedMessage"),
+    ),
+  );
 }
 
 export async function deleteMemberAddressAction(formData: FormData) {
@@ -395,7 +443,13 @@ export async function deleteMemberAddressAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/addresses", "addressesStatus", "deleted"));
+  redirect(
+    withFlash(
+      "/account/addresses",
+      "addressesStatus",
+      toLocalizedQueryMessage("addressDeletedMessage"),
+    ),
+  );
 }
 
 export async function setMemberAddressDefaultAction(formData: FormData) {
@@ -428,7 +482,13 @@ export async function setMemberAddressDefaultAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash("/account/addresses", "addressesStatus", "default-updated"));
+  redirect(
+    withFlash(
+      "/account/addresses",
+      "addressesStatus",
+      toLocalizedQueryMessage("addressDefaultUpdatedMessage"),
+    ),
+  );
 }
 
 export async function trackMemberPromotionInteractionAction(formData: FormData) {
@@ -474,7 +534,13 @@ export async function trackMemberPromotionInteractionAction(formData: FormData) 
     );
   }
 
-  redirect(withFlash(returnPath, "promotionStatus", "tracked"));
+  redirect(
+    withFlash(
+      returnPath,
+      "promotionStatus",
+      toLocalizedQueryMessage("promotionTrackedMessage"),
+    ),
+  );
 }
 
 export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
@@ -508,7 +574,13 @@ export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
     );
   }
 
-  redirect(withFlash(returnPath, "joinStatus", "joined"));
+  redirect(
+    withFlash(
+      returnPath,
+      "joinStatus",
+      toLocalizedQueryMessage("loyaltyMembershipCreatedMessage"),
+    ),
+  );
 }
 
 export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) {
@@ -567,7 +639,13 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
     businessId,
   });
 
-  redirect(withFlash(returnPath, "scanStatus", "prepared"));
+  redirect(
+    withFlash(
+      returnPath,
+      "scanStatus",
+      toLocalizedQueryMessage("scanPreparedMessage"),
+    ),
+  );
 }
 
 export async function clearMemberLoyaltyScanSessionAction(formData: FormData) {
@@ -582,7 +660,13 @@ export async function clearMemberLoyaltyScanSessionAction(formData: FormData) {
   }
 
   await clearPreparedMemberLoyaltyScanSession();
-  redirect(withFlash(returnPath, "scanStatus", "cleared"));
+  redirect(
+    withFlash(
+      returnPath,
+      "scanStatus",
+      toLocalizedQueryMessage("scanClearedMessage"),
+    ),
+  );
 }
 
 export async function createMemberInvoicePaymentIntentAction(formData: FormData) {

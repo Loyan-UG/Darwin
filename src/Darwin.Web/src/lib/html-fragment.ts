@@ -15,13 +15,22 @@ function stripInlineEventHandlers(value: string) {
     .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "");
 }
 
-function stripJavascriptUrls(value: string) {
+function stripDangerousUrlAttributes(value: string) {
   return value
     .replace(
-      /\s(href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi,
+      /\s(href|src|xlink:href|formaction)\s*=\s*(['"])\s*(javascript:|vbscript:|data:\s*text\/html)[\s\S]*?\2/gi,
       "",
     )
-    .replace(/\s(href|src)\s*=\s*javascript:[^\s>]+/gi, "");
+    .replace(
+      /\s(href|src|xlink:href|formaction)\s*=\s*(javascript:|vbscript:|data:\s*text\/html)[^\s>]+/gi,
+      "",
+    );
+}
+
+function stripDangerousStandaloneAttributes(value: string) {
+  return value
+    .replace(/\s(srcdoc)\s*=\s*(['"])[\s\S]*?\2/gi, "")
+    .replace(/\s(srcdoc)\s*=\s*[^\s>]+/gi, "");
 }
 
 export function sanitizeHtmlFragment(value: string) {
@@ -29,10 +38,12 @@ export function sanitizeHtmlFragment(value: string) {
     return "";
   }
 
-  return stripJavascriptUrls(
-    stripInlineEventHandlers(
-      stripDangerousStandaloneTags(
-        stripDangerousBlocks(value),
+  return stripDangerousUrlAttributes(
+    stripDangerousStandaloneAttributes(
+      stripInlineEventHandlers(
+        stripDangerousStandaloneTags(
+          stripDangerousBlocks(value),
+        ),
       ),
     ),
   );

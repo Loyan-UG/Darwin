@@ -309,7 +309,7 @@ namespace Darwin.Mobile.Business.ViewModels
 
             BusinessOperationalStatusLabel = BusinessAccessStateUiMapper.GetOperationalStatusLabel(state);
             BusinessOperationalStatusMessage = BusinessAccessStateUiMapper.GetOperationalStatusMessage(state);
-            SetupChecklistSummary = (!state.IsOperationsAllowed || !state.IsSetupComplete)
+            SetupChecklistSummary = state.SetupIncompleteItemCount > 0
                 ? BusinessAccessStateUiMapper.BuildSetupChecklistSummary(state)
                 : string.Empty;
             IsOperationsAllowed = state.IsOperationsAllowed;

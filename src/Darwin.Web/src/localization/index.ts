@@ -105,6 +105,87 @@ export function toLocalizedQueryMessage(key: string) {
   return `${QUERY_LOCALIZATION_PREFIX}${key}`;
 }
 
+export function isLocalizedQueryMessage(value: string | undefined) {
+  return Boolean(value?.startsWith(QUERY_LOCALIZATION_PREFIX));
+}
+
+export function matchesLocalizedQueryMessageKey(
+  value: string | undefined,
+  key: string,
+  legacyValue?: string,
+) {
+  return (
+    value === toLocalizedQueryMessage(key) ||
+    value === legacyValue ||
+    value === key
+  );
+}
+
+export function resolveProblemQueryMessage(
+  problem: { detail?: string; title?: string } | null | undefined,
+  fallbackKey: string,
+): string {
+  const fallbackMessage = toLocalizedQueryMessage(fallbackKey);
+  const detail = problem?.detail?.trim();
+  const title = problem?.title?.trim();
+
+  if (isLocalizedQueryMessage(detail)) {
+    return detail ?? fallbackMessage;
+  }
+
+  if (isLocalizedQueryMessage(title)) {
+    return title ?? fallbackMessage;
+  }
+
+  return fallbackMessage;
+}
+
+function resolveApiStatusLabelKey(status: string | undefined) {
+  switch (status) {
+    case "ok":
+      return "publicApiStatusOkLabel";
+    case "not-found":
+      return "publicApiStatusNotFoundLabel";
+    case "network-error":
+      return "publicApiStatusNetworkErrorLabel";
+    case "http-error":
+      return "publicApiStatusHttpErrorLabel";
+    case "invalid-payload":
+      return "publicApiStatusInvalidPayloadLabel";
+    case "unauthorized":
+      return "publicApiStatusUnauthorizedLabel";
+    case "unauthenticated":
+      return "publicApiStatusUnauthenticatedLabel";
+    default:
+      return undefined;
+  }
+}
+
+export function resolveApiStatusLabel<T extends Record<string, unknown>>(
+  status: string | undefined,
+  bundle: T,
+) {
+  const key = resolveApiStatusLabelKey(status);
+  if (!key) {
+    return status;
+  }
+
+  return resolveLocalizedQueryMessage(toLocalizedQueryMessage(key), bundle) ?? status;
+}
+
+export function resolveStatusMappedMessage<T extends Record<string, unknown>>(
+  status: string | undefined,
+  bundle: T,
+  statusMessageKeys: Partial<Record<string, string>>,
+) {
+  const key = status ? statusMessageKeys[status] : undefined;
+  if (!key) {
+    return undefined;
+  }
+
+  return resolveLocalizedQueryMessage(toLocalizedQueryMessage(key), bundle);
+}
+
 function resolveResourceCulture(bundle: Record<string, unknown>) {
   for (const registry of bundleRegistries) {
     for (const [culture, resource] of Object.entries(registry)) {
@@ -121,11 +202,12 @@ export function resolveLocalizedQueryMessage<T extends Record<string, unknown>>(
   value: string | undefined,
   bundle: T,
 ) {
-  if (!value?.startsWith(QUERY_LOCALIZATION_PREFIX)) {
+  if (!isLocalizedQueryMessage(value)) {
     return value;
   }
 
-  const key = value.slice(QUERY_LOCALIZATION_PREFIX.length) as keyof T;
+  const localizedKeyValue = value ?? "";
+  const key = localizedKeyValue.slice(QUERY_LOCALIZATION_PREFIX.length) as keyof T;
   const localizedValue = bundle[key];
   if (typeof localizedValue === "string") {
     return localizedValue;

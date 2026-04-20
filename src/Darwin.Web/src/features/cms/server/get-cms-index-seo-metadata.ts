@@ -6,7 +6,7 @@ import {
 } from "@/features/cms/discovery";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { cmsIndexRouteObservationContext } from "@/lib/route-observation-context";
-import { buildSeoMetadata } from "@/lib/seo";
+import { buildSeoMetadata, buildStablePublicLanguageAlternates } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { getSharedResource } from "@/localization";
 
@@ -93,6 +93,9 @@ export const getCmsIndexSeoMetadata =
       normalizedVisibleState !== "all" ||
       normalizedVisibleSort !== "featured" ||
       normalizedMetadataFocus !== "all";
+    const languageAlternates = !noIndex
+      ? buildStablePublicLanguageAlternates(canonicalPath)
+      : undefined;
 
     return {
       metadata: buildSeoMetadata({
@@ -101,11 +104,11 @@ export const getCmsIndexSeoMetadata =
         description: shared.cmsIndexMetaDescription,
         path: canonicalPath,
         noIndex,
-        allowLanguageAlternates: !noIndex,
+        languageAlternates,
       }),
       canonicalPath,
       noIndex,
-      languageAlternates: !noIndex ? {} : undefined,
+      languageAlternates,
     };
   },
 });

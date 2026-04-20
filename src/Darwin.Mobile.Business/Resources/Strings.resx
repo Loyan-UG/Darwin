@@ -1381,4 +1381,22 @@
   <data name="OperatorRoleFormat" xml:space="preserve">
     <value>Operator role: {0}</value>
   </data>
+  <data name="BusinessMembershipInactiveMessage" xml:space="preserve">
+    <value>Your operator account is no longer assigned to an active business membership. Please contact support.</value>
+  </data>
+  <data name="BusinessUserInactiveMessage" xml:space="preserve">
+    <value>Your operator account is currently inactive. Please contact support.</value>
+  </data>
+  <data name="BusinessEmailConfirmationRequiredMessage" xml:space="preserve">
+    <value>Confirm your email address before continuing with business operations.</value>
+  </data>
+  <data name="BusinessUserLockedMessage" xml:space="preserve">
+    <value>Your operator account is currently locked. Please contact support.</value>
+  </data>
+  <data name="BusinessSetupIncompleteMessageFormat" xml:space="preserve">
+    <value>Business setup still requires {0} item(s) before go-live.</value>
+  </data>
+  <data name="HomeSetupChecklistRemainingFormat" xml:space="preserve">
+    <value>Remaining setup items: {0}</value>
+  </data>
 </root>

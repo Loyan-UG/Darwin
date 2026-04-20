@@ -18,6 +18,7 @@ import type { MemberCustomerProfile } from "@/features/member-portal/types";
 import {
   formatResource,
   getMemberResource,
+  matchesLocalizedQueryMessageKey,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { getCultureDisplayName } from "@/lib/culture";
@@ -45,14 +46,14 @@ function getPhoneStatusBanner(
   phoneStatus: string | undefined,
   phoneConfirmed: boolean,
 ) {
-  if (phoneStatus === "requested") {
+  if (matchesLocalizedQueryMessageKey(phoneStatus, "phoneCodeRequestedMessage", "requested")) {
     return {
       title: copy.phoneCodeRequestedTitle,
       message: copy.phoneCodeRequestedMessage,
     };
   }
 
-  if (phoneStatus === "confirmed") {
+  if (matchesLocalizedQueryMessageKey(phoneStatus, "phoneVerifiedMessage", "confirmed")) {
     return {
       title: copy.phoneVerifiedTitle,
       message: copy.phoneVerifiedMessage,
@@ -146,7 +147,11 @@ export function ProfilePage({
             {copy.profileEditTitle}
           </h1>
 
-          {profileStatus === "saved" && (
+          {matchesLocalizedQueryMessageKey(
+            profileStatus,
+            "profileUpdatedMessage",
+            "saved",
+          ) && (
             <div className="mt-6">
               <StatusBanner
                 title={copy.profileUpdatedTitle}

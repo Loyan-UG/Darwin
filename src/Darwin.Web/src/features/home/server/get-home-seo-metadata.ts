@@ -1,6 +1,6 @@
 import "server-only";
 import { normalizeCultureArg } from "@/lib/route-context-normalization";
-import { buildSeoMetadata } from "@/lib/seo";
+import { buildSeoMetadata, buildStablePublicLanguageAlternates } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { homeSeoObservationContext } from "@/lib/route-observation-context";
 import { getSharedResource } from "@/localization";
@@ -21,11 +21,11 @@ export const getHomeSeoMetadata = createCachedObservedSeoMetadataLoader({
         title: shared.homeMetaTitle,
         description: shared.homeMetaDescription,
         path: canonicalPath,
-        allowLanguageAlternates: true,
+        languageAlternates: buildStablePublicLanguageAlternates(canonicalPath),
       }),
       canonicalPath,
       noIndex: false,
-      languageAlternates: {},
+      languageAlternates: buildStablePublicLanguageAlternates(canonicalPath),
     };
   },
 });

@@ -73,6 +73,12 @@ export function ProductDetailPage({
   cmsPagesStatus,
 }: ProductDetailPageProps) {
   const copy = getCatalogResource(culture);
+  const productRouteSummaryMessage = formatResource(copy.productRouteSummaryMessage, {
+    status,
+    relatedProductsStatus: reviewProductsStatus ?? relatedProductsStatus ?? "ok",
+    cmsPagesStatus: cmsPagesStatus ?? "ok",
+    relatedCount: reviewProducts.length,
+  });
 
   if (!product) {
     return (
@@ -83,8 +89,29 @@ export function ProductDetailPage({
             title={copy.productUnavailableTitle}
             message={formatResource(copy.productUnavailableMessage, { status })}
           />
+          <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.productRouteSummaryTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {productRouteSummaryMessage}
+            </p>
+          </div>
           <div className="mt-8">
-            <CatalogContinuationRail culture={culture} />
+            <CatalogContinuationRail
+              culture={culture}
+              description={productRouteSummaryMessage}
+              items={[
+                {
+                  id: "product-unavailable-catalog",
+                  label: copy.productBreadcrumbCatalog,
+                  title: copy.backToCatalog,
+                  description: formatResource(copy.productUnavailableMessage, { status }),
+                  href: "/catalog",
+                  ctaLabel: copy.backToCatalog,
+                },
+              ]}
+            />
           </div>
         </div>
       </section>
@@ -256,13 +283,7 @@ export function ProductDetailPage({
           {copy.productRouteSummaryTitle}
         </p>
         <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-          {formatResource(copy.productRouteSummaryMessage, {
-            status,
-            relatedProductsStatus:
-              reviewProductsStatus ?? relatedProductsStatus ?? "ok",
-            cmsPagesStatus: cmsPagesStatus ?? "ok",
-            relatedCount: reviewProducts.length,
-          })}
+          {productRouteSummaryMessage}
         </p>
       </div>
 

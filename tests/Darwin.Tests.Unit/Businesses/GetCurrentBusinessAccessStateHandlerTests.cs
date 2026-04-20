@@ -46,6 +46,11 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result!.IsOperationsAllowed.Should().BeTrue();
         result.IsBusinessClientAccessAllowed.Should().BeTrue();
         result.IsSetupComplete.Should().BeTrue();
+        result.IsApprovalPending.Should().BeFalse();
+        result.IsSuspended.Should().BeFalse();
+        result.HasActivationBlockingIssues.Should().BeFalse();
+        result.SetupIncompleteItemCount.Should().Be(0);
+        result.PrimaryBlockingCode.Should().BeNull();
         result.HasActiveMembership.Should().BeTrue();
         result.IsUserActive.Should().BeTrue();
         result.IsUserEmailConfirmed.Should().BeTrue();
@@ -82,6 +87,11 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result!.IsOperationsAllowed.Should().BeFalse();
         result.IsBusinessClientAccessAllowed.Should().BeTrue();
         result.IsSetupComplete.Should().BeFalse();
+        result.IsApprovalPending.Should().BeTrue();
+        result.IsSuspended.Should().BeFalse();
+        result.HasActivationBlockingIssues.Should().BeFalse();
+        result.SetupIncompleteItemCount.Should().Be(3);
+        result.PrimaryBlockingCode.Should().Be("business_pending_approval");
         result.HasActiveOwner.Should().BeTrue();
         result.HasPrimaryLocation.Should().BeFalse();
         result.HasContactEmail.Should().BeFalse();
@@ -124,6 +134,9 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result.Should().NotBeNull();
         result!.IsOperationsAllowed.Should().BeFalse();
         result.IsBusinessClientAccessAllowed.Should().BeTrue();
+        result.IsApprovalPending.Should().BeFalse();
+        result.IsSuspended.Should().BeTrue();
+        result.PrimaryBlockingCode.Should().Be("business_suspended");
         result.SuspendedAtUtc.Should().Be(new DateTime(2030, 1, 7, 9, 0, 0, DateTimeKind.Utc));
         result.SuspensionReason.Should().Be("Manual review in progress.");
         result.BlockingReason.Should().Be("Manual review in progress.");
@@ -161,6 +174,8 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result!.HasActiveMembership.Should().BeFalse();
         result.IsBusinessClientAccessAllowed.Should().BeFalse();
         result.IsOperationsAllowed.Should().BeFalse();
+        result.HasActivationBlockingIssues.Should().BeTrue();
+        result.PrimaryBlockingCode.Should().Be("membership_inactive");
         result.BlockingReason.Should().Be("Business membership is no longer active for this user.");
     }
 
@@ -198,6 +213,8 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result!.IsUserEmailConfirmed.Should().BeFalse();
         result.IsBusinessClientAccessAllowed.Should().BeFalse();
         result.IsOperationsAllowed.Should().BeFalse();
+        result.HasActivationBlockingIssues.Should().BeTrue();
+        result.PrimaryBlockingCode.Should().Be("email_confirmation_required");
         result.BlockingReason.Should().Be("User email confirmation is still required.");
     }
 
@@ -235,7 +252,41 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result!.IsUserLockedOut.Should().BeTrue();
         result.IsBusinessClientAccessAllowed.Should().BeFalse();
         result.IsOperationsAllowed.Should().BeFalse();
+        result.HasActivationBlockingIssues.Should().BeTrue();
+        result.PrimaryBlockingCode.Should().Be("user_locked");
         result.BlockingReason.Should().Be("User access is currently locked.");
+    }
+
+    [Fact]
+    public async Task IncompleteApprovedBusiness_Should_ExposeSetupBlockingSnapshot()
+    {
+        await using var db = BusinessAccessStateTestDbContext.Create();
+        var business = CreateBusiness();
+        var userId = Guid.NewGuid();
+        business.ContactEmail = null;
+        business.LegalName = null;
+
+        db.Set<Business>().Add(business);
+        db.Set<BusinessMember>().Add(new BusinessMember
+        {
+            BusinessId = business.Id,
+            UserId = userId,
+            Role = BusinessMemberRole.Owner,
+            IsActive = true
+        });
+        db.Set<User>().Add(CreateUser(userId));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetCurrentBusinessAccessStateHandler(db);
+        var result = await handler.HandleAsync(business.Id, userId, TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.IsBusinessClientAccessAllowed.Should().BeTrue();
+        result.IsOperationsAllowed.Should().BeTrue();
+        result.IsSetupComplete.Should().BeFalse();
+        result.SetupIncompleteItemCount.Should().Be(3);
+        result.PrimaryBlockingCode.Should().Be("setup_incomplete");
+        result.BlockingReason.Should().Be("Business setup is still incomplete.");
     }
 
     private static Business CreateBusiness()

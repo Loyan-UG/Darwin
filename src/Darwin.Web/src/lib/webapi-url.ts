@@ -1,5 +1,13 @@
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
+export function getSafeExternalLinkProps() {
+  return {
+    target: "_blank" as const,
+    rel: "noopener noreferrer",
+    referrerPolicy: "no-referrer" as const,
+  };
+}
+
 export function toSafeHttpUrl(path: string) {
   if (!path || !/^https?:\/\//i.test(path)) {
     return "";

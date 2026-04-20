@@ -2415,6 +2415,9 @@
   <data name="NoWarehousesFound" xml:space="preserve">
     <value>No warehouses found.</value>
   </data>
+  <data name="AllWarehouses" xml:space="preserve">
+    <value>All warehouses</value>
+  </data>
   <data name="ReorderPoint" xml:space="preserve">
     <value>Reorder Point</value>
   </data>
@@ -2438,6 +2441,42 @@
   </data>
   <data name="SupplierOpsPlaybooks" xml:space="preserve">
     <value>Supplier Ops Playbooks</value>
+  </data>
+  <data name="WarehousePlaybookDefaultTitle" xml:space="preserve">
+    <value>Default warehouse review</value>
+  </data>
+  <data name="WarehousePlaybookDefaultScope" xml:space="preserve">
+    <value>Default warehouses act as the most common fallback for stock and transfer workflows and deserve extra review before operations scale.</value>
+  </data>
+  <data name="WarehousePlaybookDefaultAction" xml:space="preserve">
+    <value>Confirm the default location still matches the business's active fulfillment path before onboarding more stock or staff.</value>
+  </data>
+  <data name="WarehousePlaybookEmptyTitle" xml:space="preserve">
+    <value>Empty warehouse cleanup</value>
+  </data>
+  <data name="WarehousePlaybookEmptyScope" xml:space="preserve">
+    <value>Warehouses without stock levels are often setup leftovers or incomplete go-live steps that can confuse replenishment workflows.</value>
+  </data>
+  <data name="WarehousePlaybookEmptyAction" xml:space="preserve">
+    <value>Review empty warehouses and either seed stock levels, repurpose the location, or archive the operational intent through naming and notes.</value>
+  </data>
+  <data name="SupplierPlaybookContactHygieneTitle" xml:space="preserve">
+    <value>Supplier contact hygiene</value>
+  </data>
+  <data name="SupplierPlaybookContactHygieneScope" xml:space="preserve">
+    <value>Suppliers missing address data create friction for billing, returns, and manual procurement follow-up.</value>
+  </data>
+  <data name="SupplierPlaybookContactHygieneAction" xml:space="preserve">
+    <value>Prioritize missing-address suppliers before adding more purchase orders so procurement and finance have enough fallback context.</value>
+  </data>
+  <data name="SupplierPlaybookActiveReviewTitle" xml:space="preserve">
+    <value>Active supplier review</value>
+  </data>
+  <data name="SupplierPlaybookActiveReviewScope" xml:space="preserve">
+    <value>Suppliers with purchase-order history are the first place to review when replenishment or receipt issues need business context.</value>
+  </data>
+  <data name="SupplierPlaybookActiveReviewAction" xml:space="preserve">
+    <value>Use purchase-order-linked suppliers as the primary queue for follow-up on delivery delays, cost mismatches, or receipt reconciliation.</value>
   </data>
   <data name="PurchaseOrderOpsPlaybooks" xml:space="preserve">
     <value>Purchase Order Ops Playbooks</value>
@@ -2468,6 +2507,9 @@
   </data>
   <data name="HasPurchaseOrders" xml:space="preserve">
     <value>Has Purchase Orders</value>
+  </data>
+  <data name="AllSuppliers" xml:space="preserve">
+    <value>All suppliers</value>
   </data>
   <data name="OrderNumber" xml:space="preserve">
     <value>Order Number</value>
@@ -8103,6 +8145,78 @@
   <data name="TaxCompliancePlaybookVatCleanupTitle" xml:space="preserve">
     <value>B2B VAT cleanup</value>
   </data>
+  <data name="FinancialAccountPlaybookAssetsTitle" xml:space="preserve">
+    <value>Assets without clean coding</value>
+  </data>
+  <data name="FinancialAccountPlaybookAssetsScope" xml:space="preserve">
+    <value>Asset accounts become a support liability when operators cannot tell which ledger bucket is actually canonical.</value>
+  </data>
+  <data name="FinancialAccountPlaybookAssetsAction" xml:space="preserve">
+    <value>Normalize code and name before payment, inventory, or manual journal flows depend on the account.</value>
+  </data>
+  <data name="FinancialAccountPlaybookAssetsDependency" xml:space="preserve">
+    <value>Keep invoice/VAT settings aligned so downstream exports remain understandable.</value>
+  </data>
+  <data name="FinancialAccountPlaybookMappingTitle" xml:space="preserve">
+    <value>Revenue and expense mapping review</value>
+  </data>
+  <data name="FinancialAccountPlaybookMappingScope" xml:space="preserve">
+    <value>Operational finance support depends on clear separation between incoming revenue and outgoing expenses.</value>
+  </data>
+  <data name="FinancialAccountPlaybookMappingAction" xml:space="preserve">
+    <value>Confirm revenue and expense accounts exist with stable codes before scaling manual posting or export workflows.</value>
+  </data>
+  <data name="FinancialAccountPlaybookMappingDependency" xml:space="preserve">
+    <value>No extra provider setting; this is business-scoped accounting hygiene.</value>
+  </data>
+  <data name="JournalEntryPlaybookRecentTitle" xml:space="preserve">
+    <value>Recent journal review</value>
+  </data>
+  <data name="JournalEntryPlaybookRecentScope" xml:space="preserve">
+    <value>Recent entries help finance support correlate operational incidents with accounting impact.</value>
+  </data>
+  <data name="JournalEntryPlaybookRecentAction" xml:space="preserve">
+    <value>Review recent entries first when reconciling payment, refund, or invoice anomalies.</value>
+  </data>
+  <data name="JournalEntryPlaybookRecentDependency" xml:space="preserve">
+    <value>Use alongside current payment/refund queues and VAT policy visibility.</value>
+  </data>
+  <data name="JournalEntryPlaybookMultilineTitle" xml:space="preserve">
+    <value>Multi-line journal review</value>
+  </data>
+  <data name="JournalEntryPlaybookMultilineScope" xml:space="preserve">
+    <value>Multi-line entries usually indicate more complex accounting events and deserve a manual pass.</value>
+  </data>
+  <data name="JournalEntryPlaybookMultilineAction" xml:space="preserve">
+    <value>Open the entry, review coding and memo quality, and confirm the split is audit-friendly.</value>
+  </data>
+  <data name="JournalEntryPlaybookMultilineDependency" xml:space="preserve">
+    <value>No extra provider setting; this is a finance-control surface.</value>
+  </data>
+  <data name="ExpensePlaybookRecentTitle" xml:space="preserve">
+    <value>Recent expense review</value>
+  </data>
+  <data name="ExpensePlaybookRecentScope" xml:space="preserve">
+    <value>Recent expenses are the fastest path for spotting supplier or operating-cost anomalies.</value>
+  </data>
+  <data name="ExpensePlaybookRecentAction" xml:space="preserve">
+    <value>Review the latest rows first when reconciling supplier disputes, payment issues, or unexpected cost spikes.</value>
+  </data>
+  <data name="ExpensePlaybookRecentDependency" xml:space="preserve">
+    <value>No extra provider setting; this is a business-scoped finance review surface.</value>
+  </data>
+  <data name="ExpensePlaybookHighValueTitle" xml:space="preserve">
+    <value>High-value expense review</value>
+  </data>
+  <data name="ExpensePlaybookHighValueScope" xml:space="preserve">
+    <value>Higher-value expenses deserve a manual pass before they quietly distort margin or cash reporting.</value>
+  </data>
+  <data name="ExpensePlaybookHighValueAction" xml:space="preserve">
+    <value>Open the expense, confirm amount/category accuracy, and use the supplier deep-link when external vendor follow-up is needed.</value>
+  </data>
+  <data name="ExpensePlaybookHighValueDependency" xml:space="preserve">
+    <value>Pairs well with supplier administration and journal-entry review.</value>
+  </data>
   <data name="TaxCompliancePlaybookVatCleanupScope" xml:space="preserve">
     <value>Business customers without a VAT identifier create finance and archive-readiness debt before invoices are settled or refunded.</value>
   </data>
@@ -8556,6 +8670,9 @@
   <data name="UploadMedia" xml:space="preserve">
     <value>Upload media</value>
   </data>
+  <data name="MediaAll" xml:space="preserve">
+    <value>All media</value>
+  </data>
   <data name="MediaMissingAlt" xml:space="preserve">
     <value>Missing Alt</value>
   </data>
@@ -8570,6 +8687,33 @@
   </data>
   <data name="MediaOpsPlaybooksTitle" xml:space="preserve">
     <value>Media Ops Playbooks</value>
+  </data>
+  <data name="MediaPlaybookMissingAltTitle" xml:space="preserve">
+    <value>Missing alt</value>
+  </data>
+  <data name="MediaPlaybookMissingAltScope" xml:space="preserve">
+    <value>Use this queue for accessibility and SEO hygiene.</value>
+  </data>
+  <data name="MediaPlaybookMissingAltAction" xml:space="preserve">
+    <value>Open the asset and add meaningful alt text before the asset is relied on in storefront or CMS content.</value>
+  </data>
+  <data name="MediaPlaybookMissingTitleTitle" xml:space="preserve">
+    <value>Missing title</value>
+  </data>
+  <data name="MediaPlaybookMissingTitleScope" xml:space="preserve">
+    <value>Useful for internal library discoverability and editor hygiene.</value>
+  </data>
+  <data name="MediaPlaybookMissingTitleAction" xml:space="preserve">
+    <value>Add a short descriptive title so admins can find and reuse the asset without depending on the raw filename.</value>
+  </data>
+  <data name="MediaPlaybookEditorAssetsTitle" xml:space="preserve">
+    <value>Editor assets vs library assets</value>
+  </data>
+  <data name="MediaPlaybookEditorAssetsScope" xml:space="preserve">
+    <value>Keep one-off editor uploads separate from reusable library media.</value>
+  </data>
+  <data name="MediaPlaybookEditorAssetsAction" xml:space="preserve">
+    <value>Review editor assets before reusing them broadly; keep long-lived reusable files categorized as library assets.</value>
   </data>
   <data name="MediaSearchPlaceholder" xml:space="preserve">
     <value>Search by title, alt, filename, role, or URL</value>
@@ -8609,6 +8753,24 @@
   </data>
   <data name="MediaSupportedFormatsHelp" xml:space="preserve">
     <value>Supported formats: PNG, JPG, WEBP, GIF. Max 5 MB.</value>
+  </data>
+  <data name="MediaUploadFileRequired" xml:space="preserve">
+    <value>Select a file to upload.</value>
+  </data>
+  <data name="MediaUploadFileEmpty" xml:space="preserve">
+    <value>The uploaded file is empty.</value>
+  </data>
+  <data name="MediaUploadInvalidFileType" xml:space="preserve">
+    <value>Invalid file type.</value>
+  </data>
+  <data name="MediaUploadFileTooLarge" xml:space="preserve">
+    <value>File too large (max 5MB).</value>
+  </data>
+  <data name="MediaCreateFailed" xml:space="preserve">
+    <value>Unable to create the media asset right now. Please try again.</value>
+  </data>
+  <data name="MediaUpdateFailed" xml:space="preserve">
+    <value>Unable to update the media asset right now. Please try again.</value>
   </data>
   <data name="Upload" xml:space="preserve">
     <value>Upload</value>

@@ -12,7 +12,11 @@ import type {
 } from "@/features/member-portal/types";
 import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
-import { formatResource, getMemberResource } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
 
 type LoyaltyOverviewPageProps = {
@@ -73,6 +77,11 @@ export function LoyaltyOverviewPage({
   categoriesStatus,
 }: LoyaltyOverviewPageProps) {
   const copy = getMemberResource(culture);
+  const statusLabel = resolveApiStatusLabel(status, copy);
+  const businessesStatusLabel = resolveApiStatusLabel(businessesStatus, copy);
+  const discoveryStatusLabel = resolveApiStatusLabel(discoveryStatus, copy);
+  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy);
+  const categoriesStatusLabel = resolveApiStatusLabel(categoriesStatus, copy);
   const rewardReadyAccounts = (overview?.accounts ?? []).filter(
     (account) => typeof account.pointsToNextReward === "number",
   );
@@ -130,8 +139,8 @@ export function LoyaltyOverviewPage({
             tone="warning"
             title={copy.loyaltyOverviewWarningsTitle}
             message={formatResource(copy.loyaltyOverviewWarningsMessage, {
-              status,
-              businessesStatus,
+              status: statusLabel ?? status,
+              businessesStatus: businessesStatusLabel ?? businessesStatus,
             })}
           />
         )}
@@ -146,12 +155,12 @@ export function LoyaltyOverviewPage({
           </p>
           <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.loyaltyRouteSummaryMessage, {
-              status,
-              businessesStatus,
+              status: statusLabel ?? status,
+              businessesStatus: businessesStatusLabel ?? businessesStatus,
               visibleCount: businesses.length,
               currentPage,
               totalPages,
-              discoveryStatus,
+              discoveryStatus: discoveryStatusLabel ?? discoveryStatus,
             })}
           </p>
         </div>
@@ -239,8 +248,8 @@ export function LoyaltyOverviewPage({
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {formatResource(copy.loyaltyStorefrontWindowMessage, {
-                  cmsStatus: cmsPagesStatus,
-                  categoriesStatus,
+                  cmsStatus: cmsPagesStatusLabel ?? cmsPagesStatus,
+                  categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
                   pageCount: cmsPages.length,
                   categoryCount: categories.length,
                 })}
@@ -278,7 +287,7 @@ export function LoyaltyOverviewPage({
                   ) : (
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.loyaltyStorefrontCmsEmptyMessage, {
-                        status: cmsPagesStatus,
+                        status: cmsPagesStatusLabel ?? cmsPagesStatus,
                       })}
                     </p>
                   )}
@@ -321,7 +330,7 @@ export function LoyaltyOverviewPage({
                   ) : (
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.loyaltyStorefrontCatalogEmptyMessage, {
-                        status: categoriesStatus,
+                        status: categoriesStatusLabel ?? categoriesStatus,
                       })}
                     </p>
                   )}
@@ -544,8 +553,8 @@ export function LoyaltyOverviewPage({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.loyaltyPublicOverviewStorefrontWindowMessage, {
-                cmsStatus: cmsPagesStatus,
-                categoriesStatus,
+                cmsStatus: cmsPagesStatusLabel ?? cmsPagesStatus,
+                categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
                 pageCount: cmsPages.length,
                 categoryCount: categories.length,
               })}
@@ -583,7 +592,7 @@ export function LoyaltyOverviewPage({
                 ) : (
                   <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {formatResource(copy.loyaltyPublicOverviewStorefrontCmsEmptyMessage, {
-                      status: cmsPagesStatus,
+                      status: cmsPagesStatusLabel ?? cmsPagesStatus,
                     })}
                   </p>
                 )}
@@ -626,7 +635,7 @@ export function LoyaltyOverviewPage({
                 ) : (
                   <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {formatResource(copy.loyaltyPublicOverviewStorefrontCatalogEmptyMessage, {
-                      status: categoriesStatus,
+                      status: categoriesStatusLabel ?? categoriesStatus,
                     })}
                   </p>
                 )}
@@ -638,7 +647,7 @@ export function LoyaltyOverviewPage({
         <LoyaltyDiscoverySection
           culture={culture}
           businesses={discoveryBusinesses}
-          status={discoveryStatus}
+          status={discoveryStatusLabel ?? discoveryStatus}
           currentPage={discoveryCurrentPage}
           totalPages={discoveryTotalPages}
           query={discoveryQuery}

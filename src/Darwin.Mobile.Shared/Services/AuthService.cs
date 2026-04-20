@@ -52,6 +52,9 @@ public interface IAuthService
     /// <summary>Requests that a new account confirmation email be sent to the specified email address.</summary>
     Task<bool> RequestEmailConfirmationAsync(string email, CancellationToken ct);
 
+    /// <summary>Confirms an account email using the supplied one-time token.</summary>
+    Task<bool> ConfirmEmailAsync(string email, string token, CancellationToken ct);
+
     /// <summary>Loads invitation preview data for business onboarding.</summary>
     Task<BusinessInvitationPreviewResponse?> GetBusinessInvitationPreviewAsync(string token, CancellationToken ct);
 
@@ -336,6 +339,23 @@ public sealed class AuthService : IAuthService, IDisposable
         var result = await _api.PostNoContentAsync(
             ApiRoutes.Auth.RequestEmailConfirmation,
             new RequestEmailConfirmationRequest { Email = email },
+            ct).ConfigureAwait(false);
+
+        return result.Succeeded;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ConfirmEmailAsync(string email, string token, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var result = await _api.PostNoContentAsync(
+            ApiRoutes.Auth.ConfirmEmail,
+            new ConfirmEmailRequest
+            {
+                Email = email,
+                Token = token
+            },
             ct).ConfigureAwait(false);
 
         return result.Succeeded;

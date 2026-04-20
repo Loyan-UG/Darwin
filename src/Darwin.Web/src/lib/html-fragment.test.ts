@@ -34,3 +34,21 @@ test("sanitizeHtmlFragment also strips unquoted javascript URLs and handlers", (
   assert.doesNotMatch(result, /\ssrc\s*=/i);
   assert.doesNotMatch(result, /javascript:/i);
 });
+
+test("sanitizeHtmlFragment strips dangerous form and namespaced URL attributes too", () => {
+  const html = `
+    <button formaction="javascript:alert('xss')">Run</button>
+    <a xlink:href="data:text/html,<script>alert(1)</script>">Vector</a>
+    <iframe srcdoc="<script>alert('xss')</script>"></iframe>
+    <p>Safe fallback</p>
+  `;
+
+  const result = sanitizeHtmlFragment(html);
+
+  assert.match(result, /<p>Safe fallback<\/p>/);
+  assert.doesNotMatch(result, /\sformaction\s*=/i);
+  assert.doesNotMatch(result, /\sxlink:href\s*=/i);
+  assert.doesNotMatch(result, /\ssrcdoc\s*=/i);
+  assert.doesNotMatch(result, /data:\s*text\/html/i);
+  assert.doesNotMatch(result, /javascript:/i);
+});

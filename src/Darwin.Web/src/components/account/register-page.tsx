@@ -12,7 +12,12 @@ import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { registerMemberAction } from "@/features/account/actions";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
-import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  matchesLocalizedQueryMessageKey,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 
 type RegisterPageProps = {
   culture: string;
@@ -68,7 +73,11 @@ export function RegisterPage({
             {copy.registerDescription}
           </p>
 
-          {registerStatus === "registered" && (
+          {matchesLocalizedQueryMessageKey(
+            registerStatus,
+            "registrationSubmittedMessage",
+            "registered",
+          ) && (
             <div className="mt-6">
               <StatusBanner
                 title={copy.registrationSubmittedTitle}
@@ -147,7 +156,11 @@ export function RegisterPage({
             returnPath={returnPath}
             storefrontCart={storefrontCart}
           />
-          {(registerStatus === "registered" || Boolean(email)) && (
+          {(matchesLocalizedQueryMessageKey(
+            registerStatus,
+            "registrationSubmittedMessage",
+            "registered",
+          ) || Boolean(email)) && (
             <ActivationRecoveryPanel
               culture={culture}
               email={email}

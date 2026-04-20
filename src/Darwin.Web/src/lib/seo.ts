@@ -38,6 +38,28 @@ export function getSiteMetadataBase() {
   return new URL(siteUrl);
 }
 
+export function buildStablePublicLanguageAlternates(path: string) {
+  const runtimeConfig = getSiteRuntimeConfig();
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (!isPublicLocalizedPath(normalizedPath)) {
+    return undefined;
+  }
+
+  return canonicalizeLanguageAlternates({
+    "x-default": buildLocalizedPath(
+      normalizedPath,
+      runtimeConfig.defaultCulture,
+    ),
+    ...Object.fromEntries(
+      runtimeConfig.supportedCultures.map((supportedCulture) => [
+        supportedCulture,
+        buildLocalizedPath(normalizedPath, supportedCulture),
+      ]),
+    ),
+  });
+}
+
 export function buildSeoMetadata({
   culture,
   title,
@@ -71,18 +93,7 @@ export function buildSeoMetadata({
   const derivedLanguageAlternates =
     normalizedExplicitAlternates ??
     (allowLanguageAlternates && isPublicLocalizedPath(normalizedPath)
-      ? canonicalizeLanguageAlternates({
-          "x-default": buildLocalizedPath(
-            normalizedPath,
-            runtimeConfig.defaultCulture,
-          ),
-          ...Object.fromEntries(
-            runtimeConfig.supportedCultures.map((supportedCulture) => [
-              supportedCulture,
-              buildLocalizedPath(normalizedPath, supportedCulture),
-            ]),
-          ),
-        })
+      ? buildStablePublicLanguageAlternates(normalizedPath)
       : undefined);
 
   return {

@@ -56,3 +56,26 @@ test("extractCartLinkedProductSlugs ignores non-catalog paths", () => {
 
   assert.deepEqual(extractCartLinkedProductSlugs(snapshots), ["cherries"]);
 });
+
+test("extractCartLinkedProductSlugs ignores unsafe or external snapshot href values", () => {
+  const snapshots = [
+    createSnapshot({
+      variantId: "a",
+      href: "https://evil.example/catalog/apples",
+    }),
+    createSnapshot({
+      variantId: "b",
+      href: "//evil.example/catalog/bananas",
+    }),
+    createSnapshot({
+      variantId: "c",
+      href: "javascript:alert(1)",
+    }),
+    createSnapshot({
+      variantId: "d",
+      href: "/catalog/dates",
+    }),
+  ];
+
+  assert.deepEqual(extractCartLinkedProductSlugs(snapshots), ["dates"]);
+});

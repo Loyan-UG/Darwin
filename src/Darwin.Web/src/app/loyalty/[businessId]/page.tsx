@@ -12,10 +12,9 @@ import {
 } from "@/features/member-portal/api/member-portal";
 import { createQrCodeDataUrl } from "@/features/member-portal/qr-code";
 import { readPreparedMemberLoyaltyScanSession } from "@/features/member-portal/scan-session-cookie";
+import { getLoyaltyBusinessSeoMetadata } from "@/features/member-portal/server/get-loyalty-seo-metadata";
 import { getMemberSession } from "@/features/member-session/cookies";
-import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
-import { buildNoIndexMetadata, deriveSeoDescription } from "@/lib/seo";
 
 type LoyaltyBusinessRouteProps = {
   params: Promise<{
@@ -35,21 +34,9 @@ type LoyaltyBusinessRouteProps = {
 
 export async function generateMetadata({ params }: LoyaltyBusinessRouteProps) {
   const culture = await getRequestCulture();
-  const copy = getMemberResource(culture);
   const { businessId } = await params;
-  const businessResult = await getPublicBusinessDetail(businessId);
-  const business = businessResult.data;
-
-  return buildNoIndexMetadata(
-    culture,
-    business?.name ?? copy.loyaltyBusinessFallback,
-    deriveSeoDescription(
-      business?.shortDescription,
-      business?.description,
-      copy.loyaltyMetaDescription,
-    ),
-    `/loyalty/${businessId}`,
-  );
+  const { metadata } = await getLoyaltyBusinessSeoMetadata(culture, businessId);
+  return metadata;
 }
 
 export default async function LoyaltyBusinessRoute({

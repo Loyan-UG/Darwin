@@ -1,4 +1,6 @@
 import { MockCheckoutPage } from "@/components/checkout/mock-checkout-page";
+import { getMockCheckoutSeoMetadata } from "@/features/checkout/server/get-commerce-seo-metadata";
+import { getCommerceResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 
 export function readSearchValue(
@@ -63,14 +65,8 @@ export function buildOutcomeUrl(
 
 export async function generateMetadata() {
   const culture = await getRequestCulture();
-
-  return {
-    title: culture === "de-DE" ? "Mock Checkout" : "Mock checkout",
-    description:
-      culture === "de-DE"
-        ? "Lokale Hosted-Checkout-Simulation fuer Darwin-Web-Storefront-Flows."
-        : "Local hosted-checkout simulation for Darwin storefront flows.",
-  };
+  const { metadata } = await getMockCheckoutSeoMetadata(culture);
+  return metadata;
 }
 
 type MockCheckoutRouteProps = {
@@ -96,8 +92,9 @@ export default async function MockCheckoutRoute({
     returnUrl,
     sessionToken,
     "Failed",
-    "Mock checkout marked the payment as failed.",
+    getCommerceResource(culture).mockCheckoutFailureReason,
   );
+  const copy = getCommerceResource(culture);
 
   return (
     <MockCheckoutPage
@@ -111,16 +108,8 @@ export default async function MockCheckoutRoute({
       successUrl={successUrl}
       failureUrl={failureUrl}
       cancelActionUrl={cancelActionUrl}
-      title={
-        culture === "de-DE"
-          ? "Lokaler Hosted Checkout"
-          : "Local hosted checkout"
-      }
-      description={
-        culture === "de-DE"
-          ? "Diese Entwicklungsroute simuliert den PSP-Handoff fuer den Storefront-Checkout und fuehrt mit einem expliziten Erfolg-, Abbruch- oder Fehlerausgang in die Bestaetigungs-Reconciliation zurueck."
-          : "This development route simulates the PSP handoff for storefront checkout and routes back into confirmation reconciliation with explicit success, cancellation, or failure outcomes."
-      }
+      title={copy.mockCheckoutPageTitle}
+      description={copy.mockCheckoutPageDescription}
     />
   );
 }

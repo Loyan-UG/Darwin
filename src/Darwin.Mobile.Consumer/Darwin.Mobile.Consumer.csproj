@@ -214,6 +214,9 @@
 	  <MauiXaml Update="Views\AccountDeletionPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\ActivationPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\LegalHubPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

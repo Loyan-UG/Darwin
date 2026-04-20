@@ -12,7 +12,11 @@ import {
 } from "@/features/storefront/storefront-campaigns";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
-import { formatResource, getSharedResource } from "@/localization";
+import {
+  formatResource,
+  getSharedResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type CmsCommerceCampaignWindowProps = {
   culture: string;
@@ -30,6 +34,8 @@ export function CmsCommerceCampaignWindow({
   productsStatus,
 }: CmsCommerceCampaignWindowProps) {
   const copy = getSharedResource(culture);
+  const categoriesStatusLabel = resolveApiStatusLabel(categoriesStatus, copy);
+  const productsStatusLabel = resolveApiStatusLabel(productsStatus, copy);
   const rankedProducts = sortProductsByOpportunity(products);
   const promotionLaneCards = summarizeCatalogPromotionLanes(rankedProducts).map(
     (entry) => {
@@ -109,7 +115,7 @@ export function CmsCommerceCampaignWindow({
         category: card.title,
       }),
       meta: formatResource(copy.cmsCampaignCategoryMeta, {
-        status: categoriesStatus,
+        status: categoriesStatusLabel ?? categoriesStatus,
       }),
     })),
     ...buildStorefrontProductCampaignCards(rankedProducts.slice(0, 2), {
@@ -140,7 +146,7 @@ export function CmsCommerceCampaignWindow({
         product: card.title,
       }),
       meta: formatResource(copy.cmsCampaignProductMeta, {
-        status: productsStatus,
+        status: productsStatusLabel ?? productsStatus,
       }),
     })),
   ];
@@ -177,8 +183,8 @@ export function CmsCommerceCampaignWindow({
           culture={culture}
           cards={promotionLaneCards}
           emptyMessage={formatResource(copy.cmsCampaignWindowEmptyMessage, {
-            categoriesStatus,
-            productsStatus,
+            categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
+            productsStatus: productsStatusLabel ?? productsStatus,
           })}
           columnsClassName="md:grid-cols-2"
           cardClassName="bg-[var(--color-surface-panel)]"
@@ -188,8 +194,8 @@ export function CmsCommerceCampaignWindow({
         culture={culture}
         cards={campaignCards}
         emptyMessage={formatResource(copy.cmsCampaignWindowEmptyMessage, {
-          categoriesStatus,
-          productsStatus,
+          categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
+          productsStatus: productsStatusLabel ?? productsStatus,
         })}
         columnsClassName="md:grid-cols-2"
         cardClassName="bg-[var(--color-surface-panel-strong)]"

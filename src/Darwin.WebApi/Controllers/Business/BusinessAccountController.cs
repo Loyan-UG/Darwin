@@ -68,9 +68,14 @@ public sealed class BusinessAccountController : ApiControllerBase
             IsUserActive = dto.IsUserActive,
             IsUserEmailConfirmed = dto.IsUserEmailConfirmed,
             IsUserLockedOut = dto.IsUserLockedOut,
+            IsApprovalPending = dto.IsApprovalPending,
+            IsSuspended = dto.IsSuspended,
             IsBusinessClientAccessAllowed = dto.IsBusinessClientAccessAllowed,
             IsOperationsAllowed = dto.IsOperationsAllowed,
             IsSetupComplete = dto.IsSetupComplete,
+            HasActivationBlockingIssues = dto.HasActivationBlockingIssues,
+            SetupIncompleteItemCount = dto.SetupIncompleteItemCount,
+            PrimaryBlockingCode = dto.PrimaryBlockingCode,
             BlockingReason = dto.BlockingReason
         });
     }

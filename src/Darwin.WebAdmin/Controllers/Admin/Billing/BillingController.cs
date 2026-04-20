@@ -1563,65 +1563,65 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
         }
 
-        private static List<ProviderPlaybookVm> BuildFinancialAccountPlaybooks()
+        private List<ProviderPlaybookVm> BuildFinancialAccountPlaybooks()
         {
             return new List<ProviderPlaybookVm>
             {
                 new()
                 {
-                    Title = "Assets without clean coding",
-                    ScopeNote = "Asset accounts become a support liability when operators cannot tell which ledger bucket is actually canonical.",
-                    OperatorAction = "Normalize code and name before payment, inventory, or manual journal flows depend on the account.",
-                    SettingsDependency = "Keep invoice/VAT settings aligned so downstream exports remain understandable."
+                    Title = T("FinancialAccountPlaybookAssetsTitle"),
+                    ScopeNote = T("FinancialAccountPlaybookAssetsScope"),
+                    OperatorAction = T("FinancialAccountPlaybookAssetsAction"),
+                    SettingsDependency = T("FinancialAccountPlaybookAssetsDependency")
                 },
                 new()
                 {
-                    Title = "Revenue and expense mapping review",
-                    ScopeNote = "Operational finance support depends on clear separation between incoming revenue and outgoing expenses.",
-                    OperatorAction = "Confirm revenue and expense accounts exist with stable codes before scaling manual posting or export workflows.",
-                    SettingsDependency = "No extra provider setting; this is business-scoped accounting hygiene."
+                    Title = T("FinancialAccountPlaybookMappingTitle"),
+                    ScopeNote = T("FinancialAccountPlaybookMappingScope"),
+                    OperatorAction = T("FinancialAccountPlaybookMappingAction"),
+                    SettingsDependency = T("FinancialAccountPlaybookMappingDependency")
                 }
             };
         }
 
-        private static List<ProviderPlaybookVm> BuildJournalEntryPlaybooks()
+        private List<ProviderPlaybookVm> BuildJournalEntryPlaybooks()
         {
             return new List<ProviderPlaybookVm>
             {
                 new()
                 {
-                    Title = "Recent journal review",
-                    ScopeNote = "Recent entries help finance support correlate operational incidents with accounting impact.",
-                    OperatorAction = "Review recent entries first when reconciling payment, refund, or invoice anomalies.",
-                    SettingsDependency = "Use alongside current payment/refund queues and VAT policy visibility."
+                    Title = T("JournalEntryPlaybookRecentTitle"),
+                    ScopeNote = T("JournalEntryPlaybookRecentScope"),
+                    OperatorAction = T("JournalEntryPlaybookRecentAction"),
+                    SettingsDependency = T("JournalEntryPlaybookRecentDependency")
                 },
                 new()
                 {
-                    Title = "Multi-line journal review",
-                    ScopeNote = "Multi-line entries usually indicate more complex accounting events and deserve a manual pass.",
-                    OperatorAction = "Open the entry, review coding and memo quality, and confirm the split is audit-friendly.",
-                    SettingsDependency = "No extra provider setting; this is a finance-control surface."
+                    Title = T("JournalEntryPlaybookMultilineTitle"),
+                    ScopeNote = T("JournalEntryPlaybookMultilineScope"),
+                    OperatorAction = T("JournalEntryPlaybookMultilineAction"),
+                    SettingsDependency = T("JournalEntryPlaybookMultilineDependency")
                 }
             };
         }
 
-        private static List<ProviderPlaybookVm> BuildExpensePlaybooks()
+        private List<ProviderPlaybookVm> BuildExpensePlaybooks()
         {
             return new List<ProviderPlaybookVm>
             {
                 new()
                 {
-                    Title = "Recent expense review",
-                    ScopeNote = "Recent expenses are the fastest path for spotting supplier or operating-cost anomalies.",
-                    OperatorAction = "Review the latest rows first when reconciling supplier disputes, payment issues, or unexpected cost spikes.",
-                    SettingsDependency = "No extra provider setting; this is a business-scoped finance review surface."
+                    Title = T("ExpensePlaybookRecentTitle"),
+                    ScopeNote = T("ExpensePlaybookRecentScope"),
+                    OperatorAction = T("ExpensePlaybookRecentAction"),
+                    SettingsDependency = T("ExpensePlaybookRecentDependency")
                 },
                 new()
                 {
-                    Title = "High-value expense review",
-                    ScopeNote = "Higher-value expenses deserve a manual pass before they quietly distort margin or cash reporting.",
-                    OperatorAction = "Open the expense, confirm amount/category accuracy, and use the supplier deep-link when external vendor follow-up is needed.",
-                    SettingsDependency = "Pairs well with supplier administration and journal-entry review."
+                    Title = T("ExpensePlaybookHighValueTitle"),
+                    ScopeNote = T("ExpensePlaybookHighValueScope"),
+                    OperatorAction = T("ExpensePlaybookHighValueAction"),
+                    SettingsDependency = T("ExpensePlaybookHighValueDependency")
                 }
             };
         }

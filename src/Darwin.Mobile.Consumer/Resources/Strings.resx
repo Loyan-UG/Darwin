@@ -148,6 +148,36 @@
   <data name="ActivationEmailRequestFailed" xml:space="preserve">
     <value>Unable to send a confirmation email right now. Please try again.</value>
   </data>
+  <data name="ActivationTitle" xml:space="preserve">
+    <value>Email activation</value>
+  </data>
+  <data name="ActivationDescription" xml:space="preserve">
+    <value>Request another confirmation email or complete account activation with your email and token.</value>
+  </data>
+  <data name="ActivationTokenLabel" xml:space="preserve">
+    <value>Activation token</value>
+  </data>
+  <data name="ActivationTokenPlaceholder" xml:space="preserve">
+    <value>Paste token from your email</value>
+  </data>
+  <data name="ActivationRequestButton" xml:space="preserve">
+    <value>Send activation email</value>
+  </data>
+  <data name="ActivationConfirmButton" xml:space="preserve">
+    <value>Confirm email</value>
+  </data>
+  <data name="ActivationConfirmSuccess" xml:space="preserve">
+    <value>Email confirmed. You can sign in now.</value>
+  </data>
+  <data name="ActivationConfirmFailed" xml:space="preserve">
+    <value>Email confirmation could not be completed. Please check the token and try again.</value>
+  </data>
+  <data name="ActivationEmailTokenRequired" xml:space="preserve">
+    <value>Email and activation token are required.</value>
+  </data>
+  <data name="ActivationOpenFlowButton" xml:space="preserve">
+    <value>Open activation flow</value>
+  </data>
   <data name="JoinProgramButton" xml:space="preserve">
     <value>Join Loyalty Program</value>
   </data>
@@ -849,6 +879,9 @@
   </data>
   <data name="RegisterEmailConfirmationSent" xml:space="preserve">
     <value>Your account was created. Please confirm your email before signing in.</value>
+  </data>
+  <data name="RegisterReturnToLoginButton" xml:space="preserve">
+    <value>Back to sign in</value>
   </data>
   <data name="DiscoverMyBusinessesTab" xml:space="preserve">
     <value>My Businesses</value>

@@ -7,7 +7,7 @@ import {
 } from "@/features/catalog/discovery";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { catalogIndexRouteObservationContext } from "@/lib/route-observation-context";
-import { buildSeoMetadata } from "@/lib/seo";
+import { buildSeoMetadata, buildStablePublicLanguageAlternates } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
 import { getCatalogResource } from "@/localization";
 
@@ -129,6 +129,9 @@ export const getCatalogIndexSeoMetadata =
       normalizedVisibleSort !== "featured" ||
       normalizedMediaState !== "all" ||
       normalizedSavingsBand !== "all";
+    const languageAlternates = !noIndex
+      ? buildStablePublicLanguageAlternates(canonicalPath)
+      : undefined;
 
     return {
       metadata: buildSeoMetadata({
@@ -137,11 +140,11 @@ export const getCatalogIndexSeoMetadata =
         description: copy.catalogMetaDescription,
         path: canonicalPath,
         noIndex,
-        allowLanguageAlternates: !noIndex,
+        languageAlternates,
       }),
       canonicalPath,
       noIndex,
-      languageAlternates: !noIndex ? {} : undefined,
+      languageAlternates,
     };
   },
 });

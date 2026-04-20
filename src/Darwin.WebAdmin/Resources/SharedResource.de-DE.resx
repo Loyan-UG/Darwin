@@ -2415,6 +2415,9 @@
   <data name="NoWarehousesFound" xml:space="preserve">
     <value>Keine Lager gefunden.</value>
   </data>
+  <data name="AllWarehouses" xml:space="preserve">
+    <value>Alle Lager</value>
+  </data>
   <data name="ReorderPoint" xml:space="preserve">
     <value>Meldebestand</value>
   </data>
@@ -2438,6 +2441,42 @@
   </data>
   <data name="SupplierOpsPlaybooks" xml:space="preserve">
     <value>Lieferanten-Playbooks</value>
+  </data>
+  <data name="WarehousePlaybookDefaultTitle" xml:space="preserve">
+    <value>Default-Lager prüfen</value>
+  </data>
+  <data name="WarehousePlaybookDefaultScope" xml:space="preserve">
+    <value>Default-Lager sind der häufigste Fallback für Bestands- und Transferabläufe und verdienen zusätzliche Prüfung, bevor der Betrieb skaliert.</value>
+  </data>
+  <data name="WarehousePlaybookDefaultAction" xml:space="preserve">
+    <value>Prüfen Sie, ob der Default-Standort noch zum aktiven Fulfillment-Pfad des Business passt, bevor mehr Bestand oder Personal angebunden wird.</value>
+  </data>
+  <data name="WarehousePlaybookEmptyTitle" xml:space="preserve">
+    <value>Leere Lager bereinigen</value>
+  </data>
+  <data name="WarehousePlaybookEmptyScope" xml:space="preserve">
+    <value>Lager ohne Bestandsstufen sind oft Setup-Reste oder unvollständige Go-Live-Schritte und können Replenishment-Abläufe verwirren.</value>
+  </data>
+  <data name="WarehousePlaybookEmptyAction" xml:space="preserve">
+    <value>Prüfen Sie leere Lager und hinterlegen Sie entweder Bestandsstufen, widmen Sie den Standort neu oder dokumentieren Sie die operative Absicht über Name und Notizen.</value>
+  </data>
+  <data name="SupplierPlaybookContactHygieneTitle" xml:space="preserve">
+    <value>Lieferanten-Kontakthygiene</value>
+  </data>
+  <data name="SupplierPlaybookContactHygieneScope" xml:space="preserve">
+    <value>Lieferanten ohne Adressdaten erzeugen Reibung bei Billing, Retouren und manueller Beschaffungs-Nachverfolgung.</value>
+  </data>
+  <data name="SupplierPlaybookContactHygieneAction" xml:space="preserve">
+    <value>Priorisieren Sie Lieferanten ohne Adresse, bevor weitere Bestellaufträge entstehen, damit Beschaffung und Finance genug Fallback-Kontext haben.</value>
+  </data>
+  <data name="SupplierPlaybookActiveReviewTitle" xml:space="preserve">
+    <value>Aktive Lieferanten prüfen</value>
+  </data>
+  <data name="SupplierPlaybookActiveReviewScope" xml:space="preserve">
+    <value>Lieferanten mit Bestellhistorie sind der erste Prüfpunkt, wenn Replenishment- oder Wareneingangsprobleme geschäftlichen Kontext brauchen.</value>
+  </data>
+  <data name="SupplierPlaybookActiveReviewAction" xml:space="preserve">
+    <value>Nutzen Sie lieferanten mit verknüpften Bestellaufträgen als primäre Queue für Verzögerungen, Kostenabweichungen oder Wareneingangs-Abgleich.</value>
   </data>
   <data name="PurchaseOrderOpsPlaybooks" xml:space="preserve">
     <value>Bestellauftrag-Playbooks</value>
@@ -2468,6 +2507,9 @@
   </data>
   <data name="HasPurchaseOrders" xml:space="preserve">
     <value>Mit Bestellauftraegen</value>
+  </data>
+  <data name="AllSuppliers" xml:space="preserve">
+    <value>Alle Lieferanten</value>
   </data>
   <data name="OrderNumber" xml:space="preserve">
     <value>Auftragsnummer</value>
@@ -8103,6 +8145,78 @@
   <data name="TaxCompliancePlaybookVatCleanupTitle" xml:space="preserve">
     <value>B2B-USt-Bereinigung</value>
   </data>
+  <data name="FinancialAccountPlaybookAssetsTitle" xml:space="preserve">
+    <value>Anlagenkonten ohne saubere Kontierung</value>
+  </data>
+  <data name="FinancialAccountPlaybookAssetsScope" xml:space="preserve">
+    <value>Anlagenkonten werden zu einem Support-Risiko, wenn Operatoren nicht erkennen können, welcher Kontenrahmen tatsächlich maßgeblich ist.</value>
+  </data>
+  <data name="FinancialAccountPlaybookAssetsAction" xml:space="preserve">
+    <value>Code und Bezeichnung vereinheitlichen, bevor Zahlungs-, Lager- oder manuelle Buchungsabläufe von diesem Konto abhängen.</value>
+  </data>
+  <data name="FinancialAccountPlaybookAssetsDependency" xml:space="preserve">
+    <value>Rechnungs- und Umsatzsteuer-Einstellungen abgestimmt halten, damit nachgelagerte Exporte verständlich bleiben.</value>
+  </data>
+  <data name="FinancialAccountPlaybookMappingTitle" xml:space="preserve">
+    <value>Prüfung von Erlös- und Aufwandszuordnung</value>
+  </data>
+  <data name="FinancialAccountPlaybookMappingScope" xml:space="preserve">
+    <value>Operativer Finance-Support hängt von einer klaren Trennung zwischen eingehenden Erlösen und ausgehenden Aufwänden ab.</value>
+  </data>
+  <data name="FinancialAccountPlaybookMappingAction" xml:space="preserve">
+    <value>Sicherstellen, dass Erlös- und Aufwandskonten mit stabilen Codes existieren, bevor manuelle Buchung oder Export-Workflows skaliert werden.</value>
+  </data>
+  <data name="FinancialAccountPlaybookMappingDependency" xml:space="preserve">
+    <value>Keine zusätzliche Provider-Einstellung; das ist betriebsbezogene Buchhaltungshygiene.</value>
+  </data>
+  <data name="JournalEntryPlaybookRecentTitle" xml:space="preserve">
+    <value>Prüfung aktueller Journalbuchungen</value>
+  </data>
+  <data name="JournalEntryPlaybookRecentScope" xml:space="preserve">
+    <value>Aktuelle Buchungen helfen dem Finance-Support, operative Vorfälle mit ihren buchhalterischen Auswirkungen zu verknüpfen.</value>
+  </data>
+  <data name="JournalEntryPlaybookRecentAction" xml:space="preserve">
+    <value>Zuerst die neuesten Buchungen prüfen, wenn Zahlungs-, Erstattungs- oder Rechnungsanomalien abgeglichen werden.</value>
+  </data>
+  <data name="JournalEntryPlaybookRecentDependency" xml:space="preserve">
+    <value>Zusammen mit den aktuellen Zahlungs-/Erstattungsqueues und der Sicht auf die Umsatzsteuerpolitik verwenden.</value>
+  </data>
+  <data name="JournalEntryPlaybookMultilineTitle" xml:space="preserve">
+    <value>Prüfung mehrzeiliger Journalbuchungen</value>
+  </data>
+  <data name="JournalEntryPlaybookMultilineScope" xml:space="preserve">
+    <value>Mehrzeilige Buchungen deuten meist auf komplexere Geschäftsvorfälle hin und verdienen eine manuelle Prüfung.</value>
+  </data>
+  <data name="JournalEntryPlaybookMultilineAction" xml:space="preserve">
+    <value>Buchung öffnen, Kontierung und Memo-Qualität prüfen und bestätigen, dass die Aufteilung revisionssicher ist.</value>
+  </data>
+  <data name="JournalEntryPlaybookMultilineDependency" xml:space="preserve">
+    <value>Keine zusätzliche Provider-Einstellung; das ist eine Finance-Control-Oberfläche.</value>
+  </data>
+  <data name="ExpensePlaybookRecentTitle" xml:space="preserve">
+    <value>Prüfung aktueller Ausgaben</value>
+  </data>
+  <data name="ExpensePlaybookRecentScope" xml:space="preserve">
+    <value>Aktuelle Ausgaben sind der schnellste Weg, Lieferanten- oder Betriebskostenanomalien zu erkennen.</value>
+  </data>
+  <data name="ExpensePlaybookRecentAction" xml:space="preserve">
+    <value>Bei Lieferantenstreitfällen, Zahlungsproblemen oder unerwarteten Kostenspitzen zuerst die neuesten Zeilen prüfen.</value>
+  </data>
+  <data name="ExpensePlaybookRecentDependency" xml:space="preserve">
+    <value>Keine zusätzliche Provider-Einstellung; das ist eine betriebsbezogene Finance-Review-Oberfläche.</value>
+  </data>
+  <data name="ExpensePlaybookHighValueTitle" xml:space="preserve">
+    <value>Prüfung hochpreisiger Ausgaben</value>
+  </data>
+  <data name="ExpensePlaybookHighValueScope" xml:space="preserve">
+    <value>Höherwertige Ausgaben verdienen eine manuelle Prüfung, bevor sie Marge oder Liquiditätsberichte unbemerkt verzerren.</value>
+  </data>
+  <data name="ExpensePlaybookHighValueAction" xml:space="preserve">
+    <value>Ausgabe öffnen, Betrag/Kategorie prüfen und bei Bedarf den Lieferanten-Deep-Link für externes Vendor-Follow-up nutzen.</value>
+  </data>
+  <data name="ExpensePlaybookHighValueDependency" xml:space="preserve">
+    <value>Passt gut zu Lieferantenverwaltung und Journalbuchungsprüfung.</value>
+  </data>
   <data name="TaxCompliancePlaybookVatCleanupScope" xml:space="preserve">
     <value>Geschäftskunden ohne USt-IdNr. erzeugen Finance- und Archivierungs-Readiness-Schulden, bevor Rechnungen beglichen oder erstattet werden.</value>
   </data>
@@ -8556,6 +8670,9 @@
   <data name="UploadMedia" xml:space="preserve">
     <value>Medien hochladen</value>
   </data>
+  <data name="MediaAll" xml:space="preserve">
+    <value>Alle Medien</value>
+  </data>
   <data name="MediaMissingAlt" xml:space="preserve">
     <value>Alt fehlt</value>
   </data>
@@ -8570,6 +8687,33 @@
   </data>
   <data name="MediaOpsPlaybooksTitle" xml:space="preserve">
     <value>Media-Ops-Playbooks</value>
+  </data>
+  <data name="MediaPlaybookMissingAltTitle" xml:space="preserve">
+    <value>Alt fehlt</value>
+  </data>
+  <data name="MediaPlaybookMissingAltScope" xml:space="preserve">
+    <value>Nutzen Sie diese Queue für Accessibility- und SEO-Hygiene.</value>
+  </data>
+  <data name="MediaPlaybookMissingAltAction" xml:space="preserve">
+    <value>Öffnen Sie das Asset und ergänzen Sie aussagekräftigen Alt-Text, bevor es in Storefront- oder CMS-Inhalten verwendet wird.</value>
+  </data>
+  <data name="MediaPlaybookMissingTitleTitle" xml:space="preserve">
+    <value>Titel fehlt</value>
+  </data>
+  <data name="MediaPlaybookMissingTitleScope" xml:space="preserve">
+    <value>Nützlich für interne Bibliotheks-Suche und Editor-Hygiene.</value>
+  </data>
+  <data name="MediaPlaybookMissingTitleAction" xml:space="preserve">
+    <value>Ergänzen Sie einen kurzen beschreibenden Titel, damit Admins das Asset ohne den rohen Dateinamen finden und wiederverwenden können.</value>
+  </data>
+  <data name="MediaPlaybookEditorAssetsTitle" xml:space="preserve">
+    <value>Editor-Assets vs. Bibliotheks-Assets</value>
+  </data>
+  <data name="MediaPlaybookEditorAssetsScope" xml:space="preserve">
+    <value>Halten Sie einmalige Editor-Uploads getrennt von wiederverwendbaren Bibliotheksmedien.</value>
+  </data>
+  <data name="MediaPlaybookEditorAssetsAction" xml:space="preserve">
+    <value>Prüfen Sie Editor-Assets vor breiter Wiederverwendung und führen Sie langlebige, wiederverwendbare Dateien als Bibliotheks-Assets.</value>
   </data>
   <data name="MediaSearchPlaceholder" xml:space="preserve">
     <value>Nach Titel, Alt-Text, Dateiname, Rolle oder URL suchen</value>
@@ -8609,6 +8753,24 @@
   </data>
   <data name="MediaSupportedFormatsHelp" xml:space="preserve">
     <value>Unterstützte Formate: PNG, JPG, WEBP, GIF. Maximal 5 MB.</value>
+  </data>
+  <data name="MediaUploadFileRequired" xml:space="preserve">
+    <value>Wählen Sie eine Datei zum Hochladen aus.</value>
+  </data>
+  <data name="MediaUploadFileEmpty" xml:space="preserve">
+    <value>Die hochgeladene Datei ist leer.</value>
+  </data>
+  <data name="MediaUploadInvalidFileType" xml:space="preserve">
+    <value>Ungültiger Dateityp.</value>
+  </data>
+  <data name="MediaUploadFileTooLarge" xml:space="preserve">
+    <value>Datei zu groß (maximal 5 MB).</value>
+  </data>
+  <data name="MediaCreateFailed" xml:space="preserve">
+    <value>Das Medien-Asset konnte gerade nicht erstellt werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="MediaUpdateFailed" xml:space="preserve">
+    <value>Das Medien-Asset konnte gerade nicht aktualisiert werden. Bitte versuchen Sie es erneut.</value>
   </data>
   <data name="Upload" xml:space="preserve">
     <value>Hochladen</value>

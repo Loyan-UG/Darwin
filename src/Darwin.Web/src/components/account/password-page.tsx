@@ -15,7 +15,12 @@ import {
   resetPasswordAction,
 } from "@/features/account/actions";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
-import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  matchesLocalizedQueryMessageKey,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 
 type PasswordPageProps = {
   culture: string;
@@ -36,14 +41,15 @@ type PasswordPageProps = {
 
 function getPasswordMessage(status: string | undefined, culture: string) {
   const copy = getMemberResource(culture);
-  switch (status) {
-    case "requested":
+  if (matchesLocalizedQueryMessageKey(status, "passwordRequestedMessage", "requested")) {
       return copy.passwordRequestedMessage;
-    case "reset":
-      return copy.passwordResetMessage;
-    default:
-      return undefined;
   }
+
+  if (matchesLocalizedQueryMessageKey(status, "passwordResetMessage", "reset")) {
+      return copy.passwordResetMessage;
+  }
+
+  return undefined;
 }
 
 export function PasswordPage({

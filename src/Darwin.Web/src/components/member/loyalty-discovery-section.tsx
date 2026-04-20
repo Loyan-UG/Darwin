@@ -7,7 +7,11 @@ import type {
 } from "@/features/businesses/types";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
-import { formatResource, getMemberResource } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type LoyaltyDiscoverySectionProps = {
   culture: string;
@@ -86,6 +90,7 @@ export function LoyaltyDiscoverySection({
   description,
 }: LoyaltyDiscoverySectionProps) {
   const copy = getMemberResource(culture);
+  const statusLabel = resolveApiStatusLabel(status, copy);
 
   return (
     <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -115,7 +120,7 @@ export function LoyaltyDiscoverySection({
             count: businesses.length,
             currentPage,
             totalPages,
-            status,
+            status: statusLabel ?? status,
           })}
         </p>
       </div>
@@ -125,7 +130,9 @@ export function LoyaltyDiscoverySection({
           <StatusBanner
             tone="warning"
             title={copy.discoveryWarningsTitle}
-            message={formatResource(copy.discoveryWarningsMessage, { status })}
+            message={formatResource(copy.discoveryWarningsMessage, {
+              status: statusLabel ?? status,
+            })}
           />
         </div>
       )}

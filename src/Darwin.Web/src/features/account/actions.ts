@@ -62,7 +62,7 @@ export async function registerMemberAction(formData: FormData) {
   redirect(
     buildAccountFlowPath("/account/register", {
       email,
-      registerStatus: "registered",
+      registerStatus: toLocalizedQueryMessage("registrationSubmittedMessage"),
     }, returnPath),
   );
 }
@@ -100,7 +100,7 @@ export async function requestEmailConfirmationAction(formData: FormData) {
   redirect(
     buildAccountFlowPath("/account/activation", {
       email,
-      activationStatus: "requested",
+      activationStatus: toLocalizedQueryMessage("activationRequestedMessage"),
     }, returnPath),
   );
 }
@@ -145,7 +145,7 @@ export async function confirmEmailAction(formData: FormData) {
   redirect(
     buildAccountFlowPath("/account/activation", {
       email,
-      activationStatus: "confirmed",
+      activationStatus: toLocalizedQueryMessage("activationConfirmedMessage"),
     }, returnPath),
   );
 }
@@ -185,7 +185,7 @@ export async function requestPasswordResetAction(formData: FormData) {
   redirect(
     buildAccountFlowPath("/account/password", {
       email,
-      passwordStatus: "requested",
+      passwordStatus: toLocalizedQueryMessage("passwordRequestedMessage"),
     }, returnPath),
   );
 }
@@ -229,7 +229,7 @@ export async function resetPasswordAction(formData: FormData) {
   redirect(
     buildAccountFlowPath("/account/password", {
       email,
-      passwordStatus: "reset",
+      passwordStatus: toLocalizedQueryMessage("passwordResetMessage"),
     }, returnPath),
   );
 }

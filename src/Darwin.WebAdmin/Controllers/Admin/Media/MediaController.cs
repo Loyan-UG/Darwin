@@ -104,36 +104,36 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             return RenderIndex(vm);
         }
 
-        private static IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> BuildFilterItems(MediaAssetQueueFilter selectedFilter)
+        private IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> BuildFilterItems(MediaAssetQueueFilter selectedFilter)
         {
-            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("All media", MediaAssetQueueFilter.All.ToString(), selectedFilter == MediaAssetQueueFilter.All);
-            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Missing alt", MediaAssetQueueFilter.MissingAlt.ToString(), selectedFilter == MediaAssetQueueFilter.MissingAlt);
-            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Editor assets", MediaAssetQueueFilter.EditorAssets.ToString(), selectedFilter == MediaAssetQueueFilter.EditorAssets);
-            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Library assets", MediaAssetQueueFilter.LibraryAssets.ToString(), selectedFilter == MediaAssetQueueFilter.LibraryAssets);
-            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Missing title", MediaAssetQueueFilter.MissingTitle.ToString(), selectedFilter == MediaAssetQueueFilter.MissingTitle);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaAll"), MediaAssetQueueFilter.All.ToString(), selectedFilter == MediaAssetQueueFilter.All);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaMissingAlt"), MediaAssetQueueFilter.MissingAlt.ToString(), selectedFilter == MediaAssetQueueFilter.MissingAlt);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaEditorAssets"), MediaAssetQueueFilter.EditorAssets.ToString(), selectedFilter == MediaAssetQueueFilter.EditorAssets);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaLibraryAssets"), MediaAssetQueueFilter.LibraryAssets.ToString(), selectedFilter == MediaAssetQueueFilter.LibraryAssets);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaMissingTitle"), MediaAssetQueueFilter.MissingTitle.ToString(), selectedFilter == MediaAssetQueueFilter.MissingTitle);
         }
 
-        private static List<MediaAssetPlaybookVm> BuildPlaybooks()
+        private List<MediaAssetPlaybookVm> BuildPlaybooks()
         {
             return new List<MediaAssetPlaybookVm>
             {
                 new()
                 {
-                    Title = "Missing alt",
-                    ScopeNote = "Use this queue for accessibility and SEO hygiene.",
-                    OperatorAction = "Open the asset and add meaningful alt text before the asset is relied on in storefront or CMS content."
+                    Title = T("MediaPlaybookMissingAltTitle"),
+                    ScopeNote = T("MediaPlaybookMissingAltScope"),
+                    OperatorAction = T("MediaPlaybookMissingAltAction")
                 },
                 new()
                 {
-                    Title = "Missing title",
-                    ScopeNote = "Useful for internal library discoverability and editor hygiene.",
-                    OperatorAction = "Add a short descriptive title so admins can find and reuse the asset without depending on the raw filename."
+                    Title = T("MediaPlaybookMissingTitleTitle"),
+                    ScopeNote = T("MediaPlaybookMissingTitleScope"),
+                    OperatorAction = T("MediaPlaybookMissingTitleAction")
                 },
                 new()
                 {
-                    Title = "Editor assets vs library assets",
-                    ScopeNote = "Keep one-off editor uploads separate from reusable library media.",
-                    OperatorAction = "Review editor assets before reusing them broadly; keep long-lived reusable files categorized as library assets."
+                    Title = T("MediaPlaybookEditorAssetsTitle"),
+                    ScopeNote = T("MediaPlaybookEditorAssetsScope"),
+                    OperatorAction = T("MediaPlaybookEditorAssetsAction")
                 }
             };
         }
@@ -156,7 +156,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         {
             if (vm.File is null)
             {
-                ModelState.AddModelError(nameof(vm.File), "Select a file to upload.");
+                ModelState.AddModelError(nameof(vm.File), T("MediaUploadFileRequired"));
                 return RenderCreateEditor(vm);
             }
 
@@ -186,7 +186,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(ex.Message) ? T("MediaCreateFailed") : ex.Message);
                 return RenderCreateEditor(vm);
             }
         }
@@ -253,7 +253,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(ex.Message) ? T("MediaUpdateFailed") : ex.Message);
                 return RenderEditEditor(vm);
             }
         }
@@ -279,7 +279,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         {
             if (file is null)
             {
-                return BadRequest(new { error = "No file." });
+                return BadRequest(new { error = T("MediaUploadFileRequired") });
             }
 
             var validationError = ValidateFile(file);
@@ -366,18 +366,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         {
             if (file.Length == 0)
             {
-                return "The uploaded file is empty.";
+                return T("MediaUploadFileEmpty");
             }
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!AllowedExtensions.Contains(ext))
             {
-                return "Invalid file type.";
+                return T("MediaUploadInvalidFileType");
             }
 
             if (file.Length > MaxUploadBytes)
             {
-                return "File too large (max 5MB).";
+                return T("MediaUploadFileTooLarge");
             }
 
             return null;

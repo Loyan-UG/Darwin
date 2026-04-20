@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --font-body-ui: "Manrope", sans-serif;
-  --font-display-ui: "Fraunces", serif;
+  --font-body-ui: "Aptos", "Segoe UI", "Trebuchet MS", "Helvetica Neue", Arial, sans-serif;
+  --font-display-ui: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --color-surface-canvas: #f6f3ea;
   --color-surface-panel: #fffdf8;
   --color-surface-panel-strong: #f0eadb;

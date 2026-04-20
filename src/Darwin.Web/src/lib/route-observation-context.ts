@@ -148,7 +148,11 @@ export function productDetailRouteObservationContext(
 
 export function commerceRouteObservationContext(
   culture: string,
-  route: "/cart" | "/checkout" | "/checkout/orders/[orderId]/confirmation",
+  route:
+    | "/cart"
+    | "/checkout"
+    | "/checkout/orders/[orderId]/confirmation"
+    | "/mock-checkout",
   extra?: Record<string, unknown>,
 ) {
   return {
@@ -174,8 +178,10 @@ export function memberRouteObservationContext(
     | "/account"
     | "/orders"
     | "/invoices"
+    | "/loyalty"
     | "/orders/[id]"
-    | "/invoices/[id]",
+    | "/invoices/[id]"
+    | "/loyalty/[businessId]",
   extra?: Record<string, unknown>,
 ) {
   return {

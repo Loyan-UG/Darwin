@@ -14,7 +14,12 @@ import {
   requestEmailConfirmationAction,
 } from "@/features/account/actions";
 import { buildLocalizedAuthHref } from "@/lib/locale-routing";
-import { formatResource, getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  matchesLocalizedQueryMessageKey,
+  resolveLocalizedQueryMessage,
+} from "@/localization";
 
 type ActivationPageProps = {
   culture: string;
@@ -36,14 +41,15 @@ type ActivationPageProps = {
 function getActivationMessage(status: string | undefined, culture: string) {
   const copy = getMemberResource(culture);
 
-  switch (status) {
-    case "requested":
+  if (matchesLocalizedQueryMessageKey(status, "activationRequestedMessage", "requested")) {
       return copy.activationRequestedMessage;
-    case "confirmed":
-      return copy.activationConfirmedMessage;
-    default:
-      return undefined;
   }
+
+  if (matchesLocalizedQueryMessageKey(status, "activationConfirmedMessage", "confirmed")) {
+      return copy.activationConfirmedMessage;
+  }
+
+  return undefined;
 }
 
 export function ActivationPage({

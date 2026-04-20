@@ -221,7 +221,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("await _createAccount.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("await _updateAccount.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("private async Task<FinancialAccountOpsSummaryVm> BuildFinancialAccountOpsSummaryVmAsync(Guid businessId, CancellationToken ct)");
-        source.Should().Contain("private static List<ProviderPlaybookVm> BuildFinancialAccountPlaybooks()");
+        source.Should().Contain("private List<ProviderPlaybookVm> BuildFinancialAccountPlaybooks()");
+        source.Should().Contain("Title = T(\"FinancialAccountPlaybookAssetsTitle\")");
+        source.Should().Contain("Title = T(\"FinancialAccountPlaybookMappingTitle\")");
         source.Should().Contain("private IActionResult RenderFinancialAccountsWorkspace(FinancialAccountsListVm vm)");
         source.Should().Contain("private IActionResult RenderFinancialAccountEditor(FinancialAccountEditVm vm, bool isCreate)");
 
@@ -232,7 +234,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("await _createExpense.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("await _updateExpense.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("private async Task<ExpenseOpsSummaryVm> BuildExpenseOpsSummaryVmAsync(Guid businessId, CancellationToken ct)");
-        source.Should().Contain("private static List<ProviderPlaybookVm> BuildExpensePlaybooks()");
+        source.Should().Contain("private List<ProviderPlaybookVm> BuildExpensePlaybooks()");
+        source.Should().Contain("Title = T(\"ExpensePlaybookRecentTitle\")");
+        source.Should().Contain("Title = T(\"ExpensePlaybookHighValueTitle\")");
         source.Should().Contain("private async Task PopulateExpenseOptionsAsync(ExpenseEditVm vm, CancellationToken ct)");
         source.Should().Contain("private IActionResult RenderExpensesWorkspace(ExpensesListVm vm)");
         source.Should().Contain("private IActionResult RenderExpenseEditor(ExpenseEditVm vm, bool isCreate)");
@@ -245,7 +249,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("await _createJournalEntry.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("await _updateJournalEntry.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("private async Task<JournalEntryOpsSummaryVm> BuildJournalEntryOpsSummaryVmAsync(Guid businessId, CancellationToken ct)");
-        source.Should().Contain("private static List<ProviderPlaybookVm> BuildJournalEntryPlaybooks()");
+        source.Should().Contain("private List<ProviderPlaybookVm> BuildJournalEntryPlaybooks()");
+        source.Should().Contain("Title = T(\"JournalEntryPlaybookRecentTitle\")");
+        source.Should().Contain("Title = T(\"JournalEntryPlaybookMultilineTitle\")");
         source.Should().Contain("private async Task PopulateJournalEntryOptionsAsync(JournalEntryEditVm vm, CancellationToken ct)");
         source.Should().Contain("private static void EnsureJournalEntryRows(JournalEntryEditVm vm)");
         source.Should().Contain("private IActionResult RenderJournalEntriesWorkspace(JournalEntriesListVm vm)");
@@ -1624,6 +1630,13 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("SetErrorMessage(\"WarehouseNotFoundMessage\");");
         source.Should().Contain("await _updateWarehouse.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("SetErrorMessage(\"WarehouseConcurrencyMessage\");");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildWarehouseFilterItems(WarehouseQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"AllWarehouses\"), WarehouseQueueFilter.All.ToString(), selectedFilter == WarehouseQueueFilter.All)");
+        source.Should().Contain("new SelectListItem(T(\"Default\"), WarehouseQueueFilter.Default.ToString(), selectedFilter == WarehouseQueueFilter.Default)");
+        source.Should().Contain("new SelectListItem(T(\"NoStockLevels\"), WarehouseQueueFilter.NoStockLevels.ToString(), selectedFilter == WarehouseQueueFilter.NoStockLevels)");
+        source.Should().Contain("private List<InventoryOpsPlaybookVm> BuildWarehousePlaybooks()");
+        source.Should().Contain("Title = T(\"WarehousePlaybookDefaultTitle\")");
+        source.Should().Contain("Title = T(\"WarehousePlaybookEmptyTitle\")");
         source.Should().Contain("private IActionResult RenderWarehousesWorkspace(WarehousesListVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/Inventory/Warehouses.cshtml\", vm);");
         source.Should().Contain("return View(\"Warehouses\", vm);");
@@ -1647,6 +1660,13 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("SetErrorMessage(\"SupplierNotFoundMessage\");");
         source.Should().Contain("await _updateSupplier.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("SetErrorMessage(\"SupplierConcurrencyMessage\");");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildSupplierFilterItems(SupplierQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"AllSuppliers\"), SupplierQueueFilter.All.ToString(), selectedFilter == SupplierQueueFilter.All)");
+        source.Should().Contain("new SelectListItem(T(\"MissingAddress\"), SupplierQueueFilter.MissingAddress.ToString(), selectedFilter == SupplierQueueFilter.MissingAddress)");
+        source.Should().Contain("new SelectListItem(T(\"HasPurchaseOrders\"), SupplierQueueFilter.HasPurchaseOrders.ToString(), selectedFilter == SupplierQueueFilter.HasPurchaseOrders)");
+        source.Should().Contain("private List<InventoryOpsPlaybookVm> BuildSupplierPlaybooks()");
+        source.Should().Contain("Title = T(\"SupplierPlaybookContactHygieneTitle\")");
+        source.Should().Contain("Title = T(\"SupplierPlaybookActiveReviewTitle\")");
         source.Should().Contain("private IActionResult RenderSuppliersWorkspace(SuppliersListVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/Inventory/Suppliers.cshtml\", vm);");
         source.Should().Contain("return View(\"Suppliers\", vm);");
@@ -4834,7 +4854,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("public IActionResult Create()");
         source.Should().Contain("return RenderCreateEditor(new MediaAssetCreateVm());");
         source.Should().Contain("public async Task<IActionResult> Create(MediaAssetCreateVm vm, CancellationToken ct = default)");
-        source.Should().Contain("ModelState.AddModelError(nameof(vm.File), \"Select a file to upload.\");");
+        source.Should().Contain("ModelState.AddModelError(nameof(vm.File), T(\"MediaUploadFileRequired\"));");
         source.Should().Contain("var validationError = ValidateFile(vm.File);");
         source.Should().Contain("var stored = await SaveUploadAsync(vm.File, ct).ConfigureAwait(false);");
         source.Should().Contain("await _create.HandleAsync(new MediaAssetCreateDto");
@@ -4856,7 +4876,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("SetSuccessMessage(\"MediaDeleted\");");
         source.Should().Contain("public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)");
         source.Should().Contain("[IgnoreAntiforgeryToken]");
-        source.Should().Contain("return BadRequest(new { error = \"No file.\" });");
+        source.Should().Contain("return BadRequest(new { error = T(\"MediaUploadFileRequired\") });");
         source.Should().Contain("return Json(new { url = stored.PublicUrl });");
         source.Should().Contain("if (stored is not null && System.IO.File.Exists(stored.PhysicalPath))");
         source.Should().Contain("System.IO.File.Delete(stored.PhysicalPath);");
@@ -4874,16 +4894,16 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
 
-        source.Should().Contain("private static IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> BuildFilterItems(MediaAssetQueueFilter selectedFilter)");
-        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(\"All media\", MediaAssetQueueFilter.All.ToString(), selectedFilter == MediaAssetQueueFilter.All)");
-        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(\"Missing alt\", MediaAssetQueueFilter.MissingAlt.ToString(), selectedFilter == MediaAssetQueueFilter.MissingAlt)");
-        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(\"Editor assets\", MediaAssetQueueFilter.EditorAssets.ToString(), selectedFilter == MediaAssetQueueFilter.EditorAssets)");
-        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(\"Library assets\", MediaAssetQueueFilter.LibraryAssets.ToString(), selectedFilter == MediaAssetQueueFilter.LibraryAssets)");
-        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(\"Missing title\", MediaAssetQueueFilter.MissingTitle.ToString(), selectedFilter == MediaAssetQueueFilter.MissingTitle)");
-        source.Should().Contain("private static List<MediaAssetPlaybookVm> BuildPlaybooks()");
-        source.Should().Contain("Title = \"Missing alt\"");
-        source.Should().Contain("Title = \"Missing title\"");
-        source.Should().Contain("Title = \"Editor assets vs library assets\"");
+        source.Should().Contain("private IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> BuildFilterItems(MediaAssetQueueFilter selectedFilter)");
+        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T(\"MediaAll\"), MediaAssetQueueFilter.All.ToString(), selectedFilter == MediaAssetQueueFilter.All)");
+        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T(\"MediaMissingAlt\"), MediaAssetQueueFilter.MissingAlt.ToString(), selectedFilter == MediaAssetQueueFilter.MissingAlt)");
+        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T(\"MediaEditorAssets\"), MediaAssetQueueFilter.EditorAssets.ToString(), selectedFilter == MediaAssetQueueFilter.EditorAssets)");
+        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T(\"MediaLibraryAssets\"), MediaAssetQueueFilter.LibraryAssets.ToString(), selectedFilter == MediaAssetQueueFilter.LibraryAssets)");
+        source.Should().Contain("new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T(\"MediaMissingTitle\"), MediaAssetQueueFilter.MissingTitle.ToString(), selectedFilter == MediaAssetQueueFilter.MissingTitle)");
+        source.Should().Contain("private List<MediaAssetPlaybookVm> BuildPlaybooks()");
+        source.Should().Contain("Title = T(\"MediaPlaybookMissingAltTitle\")");
+        source.Should().Contain("Title = T(\"MediaPlaybookMissingTitleTitle\")");
+        source.Should().Contain("Title = T(\"MediaPlaybookEditorAssetsTitle\")");
         source.Should().Contain("private IActionResult RedirectOrHtmx(string actionName, object routeValues)");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
         source.Should().Contain("return new EmptyResult();");
@@ -4892,12 +4912,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("return string.Equals(Request.Headers[\"HX-Request\"], \"true\", StringComparison.OrdinalIgnoreCase);");
         source.Should().Contain("private string? ValidateFile(IFormFile file)");
         source.Should().Contain("if (file.Length == 0)");
-        source.Should().Contain("return \"The uploaded file is empty.\";");
+        source.Should().Contain("return T(\"MediaUploadFileEmpty\");");
         source.Should().Contain("var ext = Path.GetExtension(file.FileName).ToLowerInvariant();");
         source.Should().Contain("if (!AllowedExtensions.Contains(ext))");
-        source.Should().Contain("return \"Invalid file type.\";");
+        source.Should().Contain("return T(\"MediaUploadInvalidFileType\");");
         source.Should().Contain("if (file.Length > MaxUploadBytes)");
-        source.Should().Contain("return \"File too large (max 5MB).\";");
+        source.Should().Contain("return T(\"MediaUploadFileTooLarge\");");
         source.Should().Contain("private async Task<StoredUploadResult> SaveUploadAsync(IFormFile file, CancellationToken ct)");
         source.Should().Contain("var uploadsRoot = Path.Combine(GetWebRootPath(), \"uploads\");");
         source.Should().Contain("Directory.CreateDirectory(uploadsRoot);");
@@ -6530,9 +6550,14 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         accountSource.Should().Contain("IsUserActive = dto.IsUserActive,");
         accountSource.Should().Contain("IsUserEmailConfirmed = dto.IsUserEmailConfirmed,");
         accountSource.Should().Contain("IsUserLockedOut = dto.IsUserLockedOut,");
+        accountSource.Should().Contain("IsApprovalPending = dto.IsApprovalPending,");
+        accountSource.Should().Contain("IsSuspended = dto.IsSuspended,");
         accountSource.Should().Contain("IsBusinessClientAccessAllowed = dto.IsBusinessClientAccessAllowed,");
         accountSource.Should().Contain("OperationalStatus = dto.OperationalStatus.ToString(),");
         accountSource.Should().Contain("IsOperationsAllowed = dto.IsOperationsAllowed,");
+        accountSource.Should().Contain("HasActivationBlockingIssues = dto.HasActivationBlockingIssues,");
+        accountSource.Should().Contain("SetupIncompleteItemCount = dto.SetupIncompleteItemCount,");
+        accountSource.Should().Contain("PrimaryBlockingCode = dto.PrimaryBlockingCode,");
         accountSource.Should().Contain("BlockingReason = dto.BlockingReason");
 
         loyaltySource.Should().Contain("public sealed class BusinessLoyaltyController : ApiControllerBase");
@@ -7121,8 +7146,13 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         accessStateSource.Should().Contain("public bool HasPrimaryLocation { get; set; }");
         accessStateSource.Should().Contain("public bool HasContactEmail { get; set; }");
         accessStateSource.Should().Contain("public bool HasLegalName { get; set; }");
+        accessStateSource.Should().Contain("public bool IsApprovalPending { get; set; }");
+        accessStateSource.Should().Contain("public bool IsSuspended { get; set; }");
         accessStateSource.Should().Contain("public bool IsOperationsAllowed { get; set; }");
         accessStateSource.Should().Contain("public bool IsSetupComplete { get; set; }");
+        accessStateSource.Should().Contain("public bool HasActivationBlockingIssues { get; set; }");
+        accessStateSource.Should().Contain("public int SetupIncompleteItemCount { get; set; }");
+        accessStateSource.Should().Contain("public string? PrimaryBlockingCode { get; set; }");
         accessStateSource.Should().Contain("public string? BlockingReason { get; set; }");
 
         detailWithMyAccountSource.Should().Contain("public sealed record BusinessDetailWithMyAccount");

@@ -17,6 +17,7 @@ import type {
 import {
   formatResource,
   getMemberResource,
+  matchesLocalizedQueryMessageKey,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { localizeHref } from "@/lib/locale-routing";
@@ -131,7 +132,11 @@ export function PreferencesPage({
             {copy.preferencesEditTitle}
           </h1>
 
-          {preferencesStatus === "saved" && (
+          {matchesLocalizedQueryMessageKey(
+            preferencesStatus,
+            "preferencesUpdatedMessage",
+            "saved",
+          ) && (
             <div className="mt-6">
               <StatusBanner
                 title={copy.preferencesUpdatedTitle}

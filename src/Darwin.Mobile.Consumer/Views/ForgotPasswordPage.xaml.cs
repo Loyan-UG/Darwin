@@ -33,6 +33,12 @@ public partial class ForgotPasswordPage : ContentPage
             var page = _serviceProvider.GetService<ResetPasswordPage>()
                 ?? throw new InvalidOperationException("Reset password page is not registered in DI.");
 
+            if (page.BindingContext is ResetPasswordViewModel resetPasswordViewModel &&
+                BindingContext is ForgotPasswordViewModel forgotPasswordViewModel)
+            {
+                resetPasswordViewModel.ApplyPrefill(forgotPasswordViewModel.Email);
+            }
+
             await Navigation.PushAsync(page);
         }
         catch

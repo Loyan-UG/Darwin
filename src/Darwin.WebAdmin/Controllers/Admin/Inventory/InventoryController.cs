@@ -1220,40 +1220,40 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             };
         }
 
-        private static List<InventoryOpsPlaybookVm> BuildWarehousePlaybooks()
+        private List<InventoryOpsPlaybookVm> BuildWarehousePlaybooks()
         {
             return new List<InventoryOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Default warehouse review",
-                    ScopeNote = "Default warehouses act as the most common fallback for stock and transfer workflows and deserve extra review before operations scale.",
-                    OperatorAction = "Confirm the default location still matches the business's active fulfillment path before onboarding more stock or staff."
+                    Title = T("WarehousePlaybookDefaultTitle"),
+                    ScopeNote = T("WarehousePlaybookDefaultScope"),
+                    OperatorAction = T("WarehousePlaybookDefaultAction")
                 },
                 new()
                 {
-                    Title = "Empty warehouse cleanup",
-                    ScopeNote = "Warehouses without stock levels are often setup leftovers or incomplete go-live steps that can confuse replenishment workflows.",
-                    OperatorAction = "Review empty warehouses and either seed stock levels, repurpose the location, or archive the operational intent through naming and notes."
+                    Title = T("WarehousePlaybookEmptyTitle"),
+                    ScopeNote = T("WarehousePlaybookEmptyScope"),
+                    OperatorAction = T("WarehousePlaybookEmptyAction")
                 }
             };
         }
 
-        private static List<InventoryOpsPlaybookVm> BuildSupplierPlaybooks()
+        private List<InventoryOpsPlaybookVm> BuildSupplierPlaybooks()
         {
             return new List<InventoryOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Supplier contact hygiene",
-                    ScopeNote = "Suppliers missing address data create friction for billing, returns, and manual procurement follow-up.",
-                    OperatorAction = "Prioritize missing-address suppliers before adding more purchase orders so procurement and finance have enough fallback context."
+                    Title = T("SupplierPlaybookContactHygieneTitle"),
+                    ScopeNote = T("SupplierPlaybookContactHygieneScope"),
+                    OperatorAction = T("SupplierPlaybookContactHygieneAction")
                 },
                 new()
                 {
-                    Title = "Active supplier review",
-                    ScopeNote = "Suppliers with purchase-order history are the first place to review when replenishment or receipt issues need business context.",
-                    OperatorAction = "Use purchase-order-linked suppliers as the primary queue for follow-up on delivery delays, cost mismatches, or receipt reconciliation."
+                    Title = T("SupplierPlaybookActiveReviewTitle"),
+                    ScopeNote = T("SupplierPlaybookActiveReviewScope"),
+                    OperatorAction = T("SupplierPlaybookActiveReviewAction")
                 }
             };
         }
@@ -1385,18 +1385,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             yield return new SelectListItem("Completed", StockTransferQueueFilter.Completed.ToString(), selectedFilter == StockTransferQueueFilter.Completed);
         }
 
-        private static IEnumerable<SelectListItem> BuildWarehouseFilterItems(WarehouseQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildWarehouseFilterItems(WarehouseQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All warehouses", WarehouseQueueFilter.All.ToString(), selectedFilter == WarehouseQueueFilter.All);
-            yield return new SelectListItem("Default", WarehouseQueueFilter.Default.ToString(), selectedFilter == WarehouseQueueFilter.Default);
-            yield return new SelectListItem("No stock levels", WarehouseQueueFilter.NoStockLevels.ToString(), selectedFilter == WarehouseQueueFilter.NoStockLevels);
+            yield return new SelectListItem(T("AllWarehouses"), WarehouseQueueFilter.All.ToString(), selectedFilter == WarehouseQueueFilter.All);
+            yield return new SelectListItem(T("Default"), WarehouseQueueFilter.Default.ToString(), selectedFilter == WarehouseQueueFilter.Default);
+            yield return new SelectListItem(T("NoStockLevels"), WarehouseQueueFilter.NoStockLevels.ToString(), selectedFilter == WarehouseQueueFilter.NoStockLevels);
         }
 
-        private static IEnumerable<SelectListItem> BuildSupplierFilterItems(SupplierQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildSupplierFilterItems(SupplierQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All suppliers", SupplierQueueFilter.All.ToString(), selectedFilter == SupplierQueueFilter.All);
-            yield return new SelectListItem("Missing address", SupplierQueueFilter.MissingAddress.ToString(), selectedFilter == SupplierQueueFilter.MissingAddress);
-            yield return new SelectListItem("Has purchase orders", SupplierQueueFilter.HasPurchaseOrders.ToString(), selectedFilter == SupplierQueueFilter.HasPurchaseOrders);
+            yield return new SelectListItem(T("AllSuppliers"), SupplierQueueFilter.All.ToString(), selectedFilter == SupplierQueueFilter.All);
+            yield return new SelectListItem(T("MissingAddress"), SupplierQueueFilter.MissingAddress.ToString(), selectedFilter == SupplierQueueFilter.MissingAddress);
+            yield return new SelectListItem(T("HasPurchaseOrders"), SupplierQueueFilter.HasPurchaseOrders.ToString(), selectedFilter == SupplierQueueFilter.HasPurchaseOrders);
         }
 
         private async Task PopulateStockTransferOptionsAsync(StockTransferEditVm vm, Guid? businessId, CancellationToken ct)

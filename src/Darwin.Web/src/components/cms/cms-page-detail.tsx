@@ -23,6 +23,7 @@ import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import {
   formatResource,
   getSharedResource,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 
@@ -67,6 +68,8 @@ export function CmsPageDetail({
 }: CmsPageDetailProps) {
   const copy = getSharedResource(culture);
   const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
+  const statusLabel = resolveApiStatusLabel(status, copy);
+  const relatedStatusLabel = resolveApiStatusLabel(relatedStatus, copy);
   const pageReference = page ? localizeHref(`/cms/${page.slug}`, culture) : null;
   const pagePath = page ? `/cms/${page.slug}` : "/cms";
   const contentSummary = page
@@ -113,6 +116,11 @@ export function CmsPageDetail({
     discoveryReadySignals >= 4
       ? copy.cmsReviewWindowReadyCta
       : copy.cmsReviewWindowAttentionCta;
+  const detailRouteSummaryMessage = formatResource(copy.cmsDetailRouteSummaryMessage, {
+    status: statusLabel ?? status,
+    relatedStatus: relatedStatusLabel ?? relatedStatus,
+    relatedCount: relatedPages.length,
+  });
   if (!page) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -120,13 +128,36 @@ export function CmsPageDetail({
           <StatusBanner
             tone="warning"
             title={copy.cmsPageUnavailableTitle}
-            message={resolvedMessage ?? formatResource(copy.cmsDetailWarningsMessage, { status })}
+            message={
+              resolvedMessage ??
+              formatResource(copy.cmsDetailWarningsMessage, {
+                status: statusLabel ?? status,
+              })
+            }
           />
+          <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.cmsDetailRouteSummaryTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {detailRouteSummaryMessage}
+            </p>
+          </div>
           <div className="mt-8">
             <CmsContinuationRail
               culture={culture}
               title={copy.cmsPageUnavailableTitle}
-              description={copy.cmsFollowUpDescription}
+              description={detailRouteSummaryMessage}
+              items={[
+                {
+                  id: "cms-page-unavailable-index",
+                  label: copy.cmsBreadcrumbIndex,
+                  title: copy.cmsBreadcrumbIndex,
+                  description: copy.cmsFollowUpDescription,
+                  href: "/cms",
+                  ctaLabel: copy.cmsFollowUpHomeCta,
+                },
+              ]}
             />
           </div>
         </div>
@@ -664,13 +695,13 @@ export function CmsPageDetail({
           <CmsContinuationRail culture={culture} description={copy.cmsFollowUpDescription} />
 
           {relatedStatus !== "ok" && (
-            <StatusBanner
-              tone="warning"
-              title={copy.cmsRelatedPagesDegradedTitle}
-              message={formatResource(copy.cmsRelatedPagesDegradedMessage, {
-                status: relatedStatus,
-              })}
-            />
+              <StatusBanner
+                tone="warning"
+                title={copy.cmsRelatedPagesDegradedTitle}
+                message={formatResource(copy.cmsRelatedPagesDegradedMessage, {
+                status: relatedStatusLabel ?? relatedStatus,
+                })}
+              />
           )}
 
           <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
@@ -678,11 +709,7 @@ export function CmsPageDetail({
               {copy.cmsDetailRouteSummaryTitle}
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {formatResource(copy.cmsDetailRouteSummaryMessage, {
-                status,
-                relatedStatus,
-                relatedCount: relatedPages.length,
-              })}
+              {detailRouteSummaryMessage}
             </p>
           </div>
         </aside>

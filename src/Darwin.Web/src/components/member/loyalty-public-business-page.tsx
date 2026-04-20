@@ -9,10 +9,16 @@ import type {
   LoyaltyRewardTierPublic,
 } from "@/features/businesses/types";
 import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
-import { toSafeHttpUrl, toWebApiUrl } from "@/lib/webapi-url";
+import {
+  getSafeExternalLinkProps,
+  toSafeHttpUrl,
+  toWebApiUrl,
+} from "@/lib/webapi-url";
 import {
   formatResource,
   getMemberResource,
+  matchesLocalizedQueryMessageKey,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 
@@ -65,6 +71,9 @@ export function LoyaltyPublicBusinessPage({
   categoriesStatus,
 }: LoyaltyPublicBusinessPageProps) {
   const copy = getMemberResource(culture);
+  const detailStatusLabel = resolveApiStatusLabel(detailStatus, copy);
+  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy);
+  const categoriesStatusLabel = resolveApiStatusLabel(categoriesStatus, copy);
   const resolvedJoinError = resolveLocalizedQueryMessage(joinError, copy);
   const locations = detail?.locations ?? [];
   const rewardTiers = detail?.loyaltyProgramPublic?.rewardTiers ?? [];
@@ -72,6 +81,7 @@ export function LoyaltyPublicBusinessPage({
     detail?.primaryImageUrl ?? detail?.galleryImageUrls?.[0] ?? detail?.imageUrls?.[0] ?? "",
   );
   const websiteUrl = toSafeHttpUrl(detail?.websiteUrl ?? "");
+  const safeExternalLinkProps = getSafeExternalLinkProps();
 
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
@@ -202,11 +212,15 @@ export function LoyaltyPublicBusinessPage({
                 tone="warning"
                 title={copy.businessDetailWarningsTitle}
                 message={formatResource(copy.businessDetailWarningsMessage, {
-                  status: detailStatus,
+                  status: detailStatusLabel ?? detailStatus,
                 })}
               />
             )}
-            {joinStatus === "joined" && (
+            {matchesLocalizedQueryMessageKey(
+              joinStatus,
+              "loyaltyMembershipCreatedMessage",
+              "joined",
+            ) && (
               <StatusBanner
                 title={copy.loyaltyMembershipCreatedTitle}
                 message={copy.loyaltyMembershipCreatedMessage}
@@ -287,8 +301,7 @@ export function LoyaltyPublicBusinessPage({
                     {copy.websiteLabel}{" "}
                     <a
                       href={websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      {...safeExternalLinkProps}
                       className="font-semibold text-[var(--color-text-primary)] underline-offset-4 hover:underline"
                     >
                       {websiteUrl}
@@ -381,8 +394,8 @@ export function LoyaltyPublicBusinessPage({
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {formatResource(copy.loyaltyPublicStorefrontWindowMessage, {
-                  cmsStatus: cmsPagesStatus,
-                  categoriesStatus,
+                  cmsStatus: cmsPagesStatusLabel ?? cmsPagesStatus,
+                  categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
                   pageCount: cmsPages.length,
                   categoryCount: categories.length,
                 })}
@@ -418,7 +431,7 @@ export function LoyaltyPublicBusinessPage({
                   ) : (
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.loyaltyPublicStorefrontCmsEmptyMessage, {
-                        status: cmsPagesStatus,
+                        status: cmsPagesStatusLabel ?? cmsPagesStatus,
                       })}
                     </p>
                   )}
@@ -459,7 +472,7 @@ export function LoyaltyPublicBusinessPage({
                   ) : (
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.loyaltyPublicStorefrontCatalogEmptyMessage, {
-                        status: categoriesStatus,
+                        status: categoriesStatusLabel ?? categoriesStatus,
                       })}
                     </p>
                   )}

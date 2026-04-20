@@ -183,6 +183,49 @@ export function CatalogPage({
     preferredCatalogReviewState === "offers"
       ? copy.catalogReviewOffersCta
       : copy.catalogReviewBaseCta;
+  const catalogRouteSummaryMessage = formatResource(copy.catalogRouteSummaryMessage, {
+    categoriesStatus: dataStatus?.categories ?? "unknown",
+    productsStatus: dataStatus?.products ?? "unknown",
+    cmsPagesStatus: dataStatus?.cmsPages ?? "unknown",
+    visibleCount: products.length,
+    totalProducts: matchingProductsTotal,
+    currentPage,
+    totalPages,
+  });
+  const catalogNoResultsRailItems = [
+    {
+      id: "catalog-no-results-reset",
+      label: copy.visibleToolsTitle,
+      title: copy.resetVisibleToolsCta,
+      description: hasFilteredWindow
+        ? formatResource(copy.visibleLensActiveMessage, {
+            count: products.length,
+            loadedCount: totalProducts,
+            serverTotal: matchingProductsTotal,
+          })
+        : copy.noResultsDescription,
+      href: buildCatalogHref(
+        activeCategorySlug,
+        1,
+        undefined,
+        "all",
+        "featured",
+        "all",
+        "all",
+      ),
+      ctaLabel: copy.resetVisibleToolsCta,
+    },
+    {
+      id: "catalog-no-results-scope",
+      label: hasActiveCategory ? copy.activeCategoryEyebrow : copy.categoriesTitle,
+      title: hasActiveCategory ? activeCategory!.name : copy.allProducts,
+      description: hasActiveCategory
+        ? activeCategory?.description ?? copy.categoryFallbackDescription
+        : catalogRouteSummaryMessage,
+      href: buildCatalogHref(activeCategorySlug, 1, undefined, "all", "featured", "all", "all"),
+      ctaLabel: hasActiveCategory ? copy.backToCatalog : copy.allProducts,
+    },
+  ];
   const sectionLinks = [
     { id: "catalog-overview", label: copy.resultSummaryTitle },
     { id: "catalog-composition", label: copy.catalogCompositionJourneyTitle },
@@ -280,18 +323,10 @@ export function CatalogPage({
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.catalogRouteSummaryTitle}
           </p>
-          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {formatResource(copy.catalogRouteSummaryMessage, {
-              categoriesStatus: dataStatus?.categories ?? "unknown",
-              productsStatus: dataStatus?.products ?? "unknown",
-              cmsPagesStatus: dataStatus?.cmsPages ?? "unknown",
-              visibleCount: products.length,
-              totalProducts: matchingProductsTotal,
-              currentPage,
-              totalPages,
-            })}
-          </p>
-        </div>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {catalogRouteSummaryMessage}
+            </p>
+          </div>
 
         {hasFilteredWindow && (
           <StatusBanner
@@ -1078,11 +1113,20 @@ export function CatalogPage({
                 <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
                   {copy.noResultsDescription}
                 </p>
+                <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 text-left">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                    {copy.catalogRouteSummaryTitle}
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                    {catalogRouteSummaryMessage}
+                  </p>
+                </div>
                 <div className="mt-8 text-left">
                   <CatalogContinuationRail
                     culture={culture}
                     title={copy.catalogNoResultsRailTitle}
                     description={copy.productCrossSurfaceMessage}
+                    items={catalogNoResultsRailItems}
                   />
                 </div>
               </div>

@@ -86,6 +86,16 @@ public sealed class BusinessAccessStateResponse
     public bool IsUserLockedOut { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether approval is still pending.
+    /// </summary>
+    public bool IsApprovalPending { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the business is suspended.
+    /// </summary>
+    public bool IsSuspended { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether onboarding-safe business access is still allowed for this user.
     /// </summary>
     public bool IsBusinessClientAccessAllowed { get; set; }
@@ -99,6 +109,21 @@ public sealed class BusinessAccessStateResponse
     /// Gets or sets a value indicating whether the minimum onboarding checklist is complete.
     /// </summary>
     public bool IsSetupComplete { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the current user still has activation/account-state blockers.
+    /// </summary>
+    public bool HasActivationBlockingIssues { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of missing setup checklist items.
+    /// </summary>
+    public int SetupIncompleteItemCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets a stable machine-readable blocking token.
+    /// </summary>
+    public string? PrimaryBlockingCode { get; set; }
 
     /// <summary>
     /// Gets or sets an optional operator-facing blocking reason.

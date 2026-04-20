@@ -21,6 +21,7 @@ function renderLinkCard(
   title: string,
   description: string,
   href: string | null,
+  unavailableLabel: string,
   tone: "brand" | "warning" | "neutral" = "neutral",
 ) {
   const toneClass =
@@ -50,7 +51,7 @@ function renderLinkCard(
         </a>
       ) : (
         <p className="mt-5 text-sm font-semibold text-[var(--color-accent)]">
-          URL unavailable
+          {unavailableLabel}
         </p>
       )}
     </article>
@@ -135,6 +136,7 @@ export function MockCheckoutPage({
               copy.mockCheckoutSuccessCta,
               copy.mockCheckoutSuccessMessage,
               successUrl,
+              copy.mockCheckoutUrlUnavailable,
               "brand",
             )}
             {renderLinkCard(
@@ -142,6 +144,7 @@ export function MockCheckoutPage({
               copy.mockCheckoutCancelCta,
               copy.mockCheckoutCancelMessage,
               cancelActionUrl,
+              copy.mockCheckoutUrlUnavailable,
               "neutral",
             )}
             {renderLinkCard(
@@ -149,6 +152,7 @@ export function MockCheckoutPage({
               copy.mockCheckoutFailureCta,
               copy.mockCheckoutFailureMessage,
               failureUrl,
+              copy.mockCheckoutUrlUnavailable,
               "warning",
             )}
           </div>

@@ -670,6 +670,10 @@
   "confirmationCompositionRouteMapCommerceCta": "Commerce-Route oeffnen",
   "confirmationCompositionRouteMapCommerceMeta": "{count} sichtbare Produktchancen",
   "mockCheckoutEyebrow": "Mock Hosted Checkout",
+  "mockCheckoutMetaTitle": "Mock Checkout",
+  "mockCheckoutMetaDescription": "Lokale Hosted-Checkout-Simulation fuer Darwin-Web-Storefront-Flows.",
+  "mockCheckoutPageTitle": "Lokaler Hosted Checkout",
+  "mockCheckoutPageDescription": "Diese Entwicklungsroute simuliert den PSP-Handoff fuer den Storefront-Checkout und fuehrt mit einem expliziten Erfolg-, Abbruch- oder Fehlerausgang in die Bestaetigungs-Reconciliation zurueck.",
   "mockCheckoutSummaryTitle": "Handoff-Zusammenfassung",
   "mockCheckoutOrderIdLabel": "Bestell-ID",
   "mockCheckoutPaymentIdLabel": "Payment-ID",
@@ -687,6 +691,7 @@
   "mockCheckoutFailureLabel": "Fehlerpfad",
   "mockCheckoutFailureCta": "Zahlung als fehlgeschlagen markieren",
   "mockCheckoutFailureMessage": "Nutze diesen Pfad, um einen Provider-Fehler zu simulieren und den Recovery-Flow auf der Bestaetigungsseite explizit zu halten.",
+  "mockCheckoutFailureReason": "Mock Checkout hat die Zahlung als fehlgeschlagen markiert.",
   "mockCheckoutNotesTitle": "Hinweis fuer lokale Tests",
   "mockCheckoutNotesMessage": "Diese Route existiert nur fuer lokale Storefront-Checkout-Tests, wenn Darwin.WebApi Payment-Intents an die lokale Web-App statt an einen externen PSP uebergibt."
 }

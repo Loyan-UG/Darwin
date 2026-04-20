@@ -142,6 +142,16 @@
                     Command="{Binding RegisterCommand}"
                     IsEnabled="{Binding IsRegistrationReady}" />
 
+            <Button Text="{x:Static res:AppResources.RegisterReturnToLoginButton}"
+                    Style="{StaticResource LinkButtonStyle}"
+                    HorizontalOptions="Center"
+                    Clicked="OnReturnToLoginClicked" />
+            <Button Text="{x:Static res:AppResources.ActivationOpenFlowButton}"
+                    Style="{StaticResource LinkButtonStyle}"
+                    HorizontalOptions="Center"
+                    IsVisible="{Binding HasPendingEmailConfirmation}"
+                    Clicked="OnOpenActivationClicked" />
+
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
                                Color="{StaticResource BrandGold500}" />

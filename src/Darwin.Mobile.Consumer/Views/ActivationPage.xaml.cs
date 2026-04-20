@@ -6,34 +6,28 @@ using Microsoft.Maui.Controls;
 namespace Darwin.Mobile.Consumer.Views;
 
 /// <summary>
-/// Page that completes the reset-password flow by accepting email, token, and a new password.
+/// Page that supports requesting another activation email or confirming an account with email + token.
 /// </summary>
-public partial class ResetPasswordPage : ContentPage, IQueryAttributable
+public partial class ActivationPage : ContentPage, IQueryAttributable
 {
-    public ResetPasswordPage(ResetPasswordViewModel viewModel)
+    public ActivationPage(ActivationViewModel viewModel)
     {
         InitializeComponent();
-
-        // Injected view model keeps navigation and business logic outside of code-behind.
         BindingContext = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         NavigationPage.SetHasNavigationBar(this, false);
     }
 
-    /// <summary>
-    /// Accepts optional recovery context from Shell/app-link style query parameters.
-    /// Supports stable aliases so future email/deep-link handoff can prefill the same page
-    /// without depending on one exact query-name shape.
-    /// </summary>
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (BindingContext is not ResetPasswordViewModel viewModel)
+        if (BindingContext is not ActivationViewModel viewModel)
         {
             return;
         }
 
         var email = ReadQueryValue(query, "email");
         var token = ReadQueryValue(query, "token")
-            ?? ReadQueryValue(query, "resetToken")
+            ?? ReadQueryValue(query, "confirmationToken")
+            ?? ReadQueryValue(query, "confirmToken")
             ?? ReadQueryValue(query, "code");
 
         viewModel.ApplyPrefill(email, token);

@@ -81,6 +81,26 @@ public partial class LoginPage
         await PushPageSafelyAsync<ForgotPasswordPage>();
     }
 
+    private async void OnOpenActivationClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            var page = _serviceProvider.GetService<ActivationPage>()
+                ?? throw new InvalidOperationException("Activation page is not registered in DI.");
+
+            if (BindingContext is LoginViewModel loginViewModel &&
+                page.BindingContext is ActivationViewModel activationViewModel)
+            {
+                activationViewModel.ApplyPrefill(loginViewModel.Email);
+            }
+
+            await Navigation.PushAsync(page);
+        }
+        catch
+        {
+        }
+    }
+
     private async void OnLegalHubClicked(object? sender, EventArgs e)
     {
         await PushPageSafelyAsync<LegalHubPage>();

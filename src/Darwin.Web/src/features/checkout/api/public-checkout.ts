@@ -10,7 +10,10 @@ import type {
   PublicStorefrontPaymentIntent,
   PlaceOrderFromCartResponse,
 } from "@/features/checkout/types";
-import { toLocalizedQueryMessage } from "@/localization";
+import {
+  resolveProblemQueryMessage,
+  toLocalizedQueryMessage,
+} from "@/localization";
 import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 async function fetchCheckoutJson<T>(
@@ -43,7 +46,7 @@ async function fetchCheckoutJson<T>(
       let detail = toLocalizedQueryMessage("storefrontCheckoutHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
-        detail = problem.detail ?? problem.title ?? detail;
+        detail = resolveProblemQueryMessage(problem, "storefrontCheckoutHttpErrorMessage");
       } catch {
         // Keep the status-based detail.
       }

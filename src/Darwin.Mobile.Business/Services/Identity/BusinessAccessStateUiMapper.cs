@@ -48,6 +48,26 @@ internal static class BusinessAccessStateUiMapper
     {
         ArgumentNullException.ThrowIfNull(state);
 
+        if (string.Equals(state.PrimaryBlockingCode, "membership_inactive", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.BusinessMembershipInactiveMessage;
+        }
+
+        if (string.Equals(state.PrimaryBlockingCode, "user_inactive", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.BusinessUserInactiveMessage;
+        }
+
+        if (string.Equals(state.PrimaryBlockingCode, "email_confirmation_required", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.BusinessEmailConfirmationRequiredMessage;
+        }
+
+        if (string.Equals(state.PrimaryBlockingCode, "user_locked", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.BusinessUserLockedMessage;
+        }
+
         if (IsStatus(state, "PendingApproval"))
         {
             return AppResources.BusinessPendingApprovalMessage;
@@ -68,6 +88,14 @@ internal static class BusinessAccessStateUiMapper
             return AppResources.BusinessInactiveMessage;
         }
 
+        if (string.Equals(state.PrimaryBlockingCode, "setup_incomplete", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Format(
+                CultureInfo.CurrentCulture,
+                AppResources.BusinessSetupIncompleteMessageFormat,
+                Math.Max(1, state.SetupIncompleteItemCount));
+        }
+
         return state.IsOperationsAllowed
             ? AppResources.HomeOperationsAllowedMessage
             : AppResources.BusinessOperationsBlockedGeneric;
@@ -80,8 +108,17 @@ internal static class BusinessAccessStateUiMapper
     {
         ArgumentNullException.ThrowIfNull(state);
 
+        if (state.SetupIncompleteItemCount <= 0)
+        {
+            return string.Empty;
+        }
+
         return string.Join(
             Environment.NewLine,
+            string.Format(
+                CultureInfo.CurrentCulture,
+                AppResources.HomeSetupChecklistRemainingFormat,
+                state.SetupIncompleteItemCount),
             FormatChecklistItem(state.HasActiveOwner, AppResources.HomeChecklistActiveOwner),
             FormatChecklistItem(state.HasPrimaryLocation, AppResources.HomeChecklistPrimaryLocation),
             FormatChecklistItem(state.HasContactEmail, AppResources.HomeChecklistContactEmail),

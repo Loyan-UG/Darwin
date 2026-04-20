@@ -25,7 +25,7 @@ import {
 } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
 import { localizeHref } from "@/lib/locale-routing";
-import { toWebApiUrl } from "@/lib/webapi-url";
+import { getSafeExternalLinkProps, toWebApiUrl } from "@/lib/webapi-url";
 
 type InvoiceDetailPageProps = {
   culture: string;
@@ -150,6 +150,7 @@ export function InvoiceDetailPage({
     fallbackDescription: copy.invoiceDetailStorefrontCatalogFallbackDescription,
   });
   const promotionLaneCards = buildMemberPromotionLaneCards(rankedProducts, culture);
+  const safeExternalLinkProps = getSafeExternalLinkProps();
   const sectionLinks = [
     { href: "#invoice-detail-overview", label: copy.invoiceDetailEyebrow },
     { href: "#invoice-detail-lines", label: copy.invoiceLinesTitle },
@@ -240,8 +241,7 @@ export function InvoiceDetailPage({
                 {documentUrl ? (
                   <a
                     href={documentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    {...safeExternalLinkProps}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.downloadDocumentCta}
@@ -476,7 +476,7 @@ export function InvoiceDetailPage({
                   </Link>
                 ) : null}
                 {documentUrl ? (
-                  <a href={documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+                  <a href={documentUrl} {...safeExternalLinkProps} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                     {copy.downloadDocumentCta}
                   </a>
                 ) : (

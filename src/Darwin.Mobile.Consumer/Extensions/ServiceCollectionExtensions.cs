@@ -70,6 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ChangePasswordViewModel>();
         services.AddTransient<BusinessDetailViewModel>();
         services.AddTransient<RegisterViewModel>();
+        services.AddTransient<ActivationViewModel>();
         services.AddTransient<ForgotPasswordViewModel>();
         services.AddTransient<ResetPasswordViewModel>();
         services.AddTransient<LegalHubViewModel>();
@@ -87,6 +88,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<MemberPreferencesPage>();
         services.AddTransient<MemberCustomerContextPage>();
         services.AddTransient<RegisterPage>();
+        services.AddTransient<ActivationPage>();
         services.AddTransient<ForgotPasswordPage>();
         services.AddTransient<ResetPasswordPage>();
         services.AddTransient<ChangePasswordPage>();

@@ -3,7 +3,10 @@ import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
 import { serializeQueryParams } from "@/lib/query-params";
 import type { PublicCartSummary } from "@/features/cart/types";
-import { toLocalizedQueryMessage } from "@/localization";
+import {
+  resolveProblemQueryMessage,
+  toLocalizedQueryMessage,
+} from "@/localization";
 import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
 
 async function fetchCartJson<T>(
@@ -36,7 +39,7 @@ async function fetchCartJson<T>(
       let detail = toLocalizedQueryMessage("storefrontCartHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
-        detail = problem.detail ?? problem.title ?? detail;
+        detail = resolveProblemQueryMessage(problem, "storefrontCartHttpErrorMessage");
       } catch {
         // Keep the status-based message.
       }
