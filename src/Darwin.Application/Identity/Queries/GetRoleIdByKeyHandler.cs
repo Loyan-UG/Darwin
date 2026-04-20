@@ -5,6 +5,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries
 {
@@ -15,9 +16,14 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetRoleIdByKeyHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>Creates a new instance of the handler.</summary>
-        public GetRoleIdByKeyHandler(IAppDbContext db) => _db = db;
+        public GetRoleIdByKeyHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         /// <summary>
         /// Returns the role id if found.
@@ -25,14 +31,14 @@ namespace Darwin.Application.Identity.Queries
         public async Task<Result<Guid>> HandleAsync(string roleKey, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(roleKey))
-                return Result<Guid>.Fail("Role key is required.");
+                return Result<Guid>.Fail(_localizer["RoleKeyRequired"]);
 
             var role = await _db.Set<Role>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Key == roleKey, ct);
 
             return role is null
-                ? Result<Guid>.Fail("Role not found.")
+                ? Result<Guid>.Fail(_localizer["RoleNotFound"])
                 : Result<Guid>.Ok(role.Id);
         }
     }

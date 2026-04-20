@@ -16,21 +16,21 @@
 <div class="col-md-4">
     <label asp-for="Locale" class="form-label"></label>
     <field-help for="Locale" text="@T.T("UserLocaleHelp")"></field-help>
-    <setting-select asp-for="Locale" key="SupportedLocalesCsv"></setting-select>
+    <setting-select asp-for="Locale" setting="SupportedCulturesCsv"></setting-select>
     <span asp-validation-for="Locale" class="text-danger"></span>
 </div>
 
 <div class="col-md-4">
     <label asp-for="Currency" class="form-label"></label>
     <field-help for="Currency" text="@T.T("UserCurrencyHelp")"></field-help>
-    <setting-select asp-for="Currency" key="SupportedCurrenciesCsv"></setting-select>
+    <setting-select asp-for="Currency" setting="SupportedCurrenciesCsv"></setting-select>
     <span asp-validation-for="Currency" class="text-danger"></span>
 </div>
 
 <div class="col-md-4">
     <label asp-for="Timezone" class="form-label"></label>
     <field-help for="Timezone" text="@T.T("UserTimezoneHelp")"></field-help>
-    <setting-select asp-for="Timezone" key="SupportedTimezonesCsv"></setting-select>
+    <setting-select asp-for="Timezone" setting="SupportedTimezonesCsv"></setting-select>
     <span asp-validation-for="Timezone" class="text-danger"></span>
 </div>
 

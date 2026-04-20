@@ -2,6 +2,8 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CustomerSegments");
+
+    string SegmentMemberCountLabel() => T.T("Members");
 }
 
 <div id="crm-segments-workspace-shell">
@@ -82,7 +84,7 @@
             <tr>
                 <th>@T.T("Name")</th>
                 <th>@T.T("Description")</th>
-                <th class="text-end">@T.T("Members")</th>
+                <th class="text-end">@SegmentMemberCountLabel()</th>
                 <th>@T.T("Status")</th>
                 <th class="text-end"></th>
             </tr>

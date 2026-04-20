@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -16,11 +17,13 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<RoleCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateRoleHandler(IAppDbContext db, IValidator<RoleCreateDto> validator)
+        public CreateRoleHandler(IAppDbContext db, IValidator<RoleCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         public async Task<Result<Guid>> HandleAsync(RoleCreateDto dto, CancellationToken ct = default)
@@ -31,7 +34,7 @@ namespace Darwin.Application.Identity.Commands
             var exists = await _db.Set<Role>().AnyAsync(r => r.NormalizedName == normalized && !r.IsDeleted, ct);
             
             if (exists) 
-                return Result<Guid>.Fail("Role key already exists.");
+                return Result<Guid>.Fail(_localizer["RoleKeyAlreadyExists"]);
 
             // NOTE: Domain.Role has: Name, NormalizedName, IsSystem, Description.
             // We also need DisplayName (admin-facing). If Domain already has it, map directly.

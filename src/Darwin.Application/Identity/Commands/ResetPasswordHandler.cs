@@ -11,6 +11,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -25,6 +26,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly ISecurityStampService _stamps;
         private readonly IClock _clock;
         private readonly IValidator<ResetPasswordDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Creates a new instance of the handler.
@@ -39,13 +41,15 @@ namespace Darwin.Application.Identity.Commands
             IUserPasswordHasher hasher,
             ISecurityStampService stamps,
             IClock clock,
-            IValidator<ResetPasswordDto> validator)
+            IValidator<ResetPasswordDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _hasher = hasher;
             _stamps = stamps;
             _clock = clock;
             _validator = validator;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -64,7 +68,7 @@ namespace Darwin.Application.Identity.Commands
                 .FirstOrDefaultAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
 
             if (user == null)
-                return Result.Fail("Invalid token or email.");
+                return Result.Fail(_localizer["InvalidTokenOrEmail"]);
 
             var token = await _db.Set<UserToken>()
                 .Where(t => t.UserId == user.Id && t.Purpose == "PasswordReset" && t.Value == dto.Token)
@@ -72,7 +76,7 @@ namespace Darwin.Application.Identity.Commands
 
             var now = _clock.UtcNow;
             if (token == null || token.UsedAtUtc != null || (token.ExpiresAtUtc.HasValue && token.ExpiresAtUtc.Value < now))
-                return Result.Fail("Invalid or expired token.");
+                return Result.Fail(_localizer["InvalidOrExpiredToken"]);
 
             user.PasswordHash = _hasher.Hash(dto.NewPassword);
             user.SecurityStamp = _stamps.NewStamp();

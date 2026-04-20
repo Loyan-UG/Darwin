@@ -1,11 +1,13 @@
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Queries;
 
@@ -16,14 +18,16 @@ public sealed class GetMyLoyaltyOverviewHandler
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetMyLoyaltyOverviewHandler"/> class.
     /// </summary>
-    public GetMyLoyaltyOverviewHandler(IAppDbContext db, ICurrentUserService currentUserService)
+    public GetMyLoyaltyOverviewHandler(IAppDbContext db, ICurrentUserService currentUserService, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -34,7 +38,7 @@ public sealed class GetMyLoyaltyOverviewHandler
         var userId = _currentUserService.GetCurrentUserId();
         if (userId == Guid.Empty)
         {
-            return Result<MyLoyaltyOverviewDto>.Fail("Unauthorized.");
+            return Result<MyLoyaltyOverviewDto>.Fail(_localizer["Unauthorized"]);
         }
 
         var accounts = await (
@@ -90,14 +94,16 @@ public sealed class GetMyLoyaltyBusinessDashboardHandler
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetMyLoyaltyBusinessDashboardHandler"/> class.
     /// </summary>
-    public GetMyLoyaltyBusinessDashboardHandler(IAppDbContext db, ICurrentUserService currentUserService)
+    public GetMyLoyaltyBusinessDashboardHandler(IAppDbContext db, ICurrentUserService currentUserService, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -107,13 +113,13 @@ public sealed class GetMyLoyaltyBusinessDashboardHandler
     {
         if (businessId == Guid.Empty)
         {
-            return Result<MyLoyaltyBusinessDashboardDto?>.Fail("BusinessId is required.");
+            return Result<MyLoyaltyBusinessDashboardDto?>.Fail(_localizer["BusinessIdRequired"]);
         }
 
         var userId = _currentUserService.GetCurrentUserId();
         if (userId == Guid.Empty)
         {
-            return Result<MyLoyaltyBusinessDashboardDto?>.Fail("Unauthorized.");
+            return Result<MyLoyaltyBusinessDashboardDto?>.Fail(_localizer["Unauthorized"]);
         }
 
         var account = await (

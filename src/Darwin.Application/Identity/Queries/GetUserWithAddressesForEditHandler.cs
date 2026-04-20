@@ -1,12 +1,14 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries
 {
@@ -16,11 +18,16 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetUserWithAddressesForEditHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public GetUserWithAddressesForEditHandler(IAppDbContext db) => _db = db;
+        public GetUserWithAddressesForEditHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
 
         /// <summary>
-        /// Loads user edit fields and related addresses in one call. User must be non-deleted.
+        /// Loads user edit fields and related addresses in one call.
         /// </summary>
         public async Task<Result<UserWithAddressesEditDto>> HandleAsync(Guid userId, CancellationToken ct = default)
         {
@@ -29,7 +36,7 @@ namespace Darwin.Application.Identity.Queries
                 .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted, ct);
 
             if (user is null)
-                return Result<UserWithAddressesEditDto>.Fail("User not found.");
+                return Result<UserWithAddressesEditDto>.Fail(_localizer["UserNotFound"]);
 
             var addresses = await _db.Set<Address>()
                 .AsNoTracking()

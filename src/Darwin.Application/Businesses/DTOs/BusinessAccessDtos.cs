@@ -8,6 +8,11 @@ namespace Darwin.Application.Businesses.DTOs;
 public sealed class BusinessAccessStateDto
 {
     /// <summary>
+    /// Gets or sets the authenticated user identifier associated with the business session.
+    /// </summary>
+    public Guid UserId { get; set; }
+
+    /// <summary>
     /// Gets or sets the business identifier.
     /// </summary>
     public Guid BusinessId { get; set; }
@@ -58,14 +63,46 @@ public sealed class BusinessAccessStateDto
     public bool HasContactEmail { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the legal business name is configured.
-    /// </summary>
+     /// Gets or sets a value indicating whether the legal business name is configured.
+     /// </summary>
     public bool HasLegalName { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the authenticated user still has an active membership in this business.
+    /// </summary>
+    public bool HasActiveMembership { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the authenticated user account remains active.
+    /// </summary>
+    public bool IsUserActive { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the authenticated user email is confirmed.
+    /// </summary>
+    public bool IsUserEmailConfirmed { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the authenticated user is currently locked.
+    /// </summary>
+    public bool IsUserLockedOut { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the current business client session is still valid for onboarding-safe access.
+    /// </summary>
+    public bool IsBusinessClientAccessAllowed =>
+        HasActiveMembership &&
+        IsUserActive &&
+        IsUserEmailConfirmed &&
+        !IsUserLockedOut;
 
     /// <summary>
     /// Gets a value indicating whether live operational workflows are currently allowed.
     /// </summary>
-    public bool IsOperationsAllowed => OperationalStatus == BusinessOperationalStatus.Approved && IsActive;
+    public bool IsOperationsAllowed =>
+        IsBusinessClientAccessAllowed &&
+        OperationalStatus == BusinessOperationalStatus.Approved &&
+        IsActive;
 
     /// <summary>
     /// Gets a value indicating whether the minimum onboarding checklist is complete.
@@ -77,6 +114,10 @@ public sealed class BusinessAccessStateDto
     /// </summary>
     public string? BlockingReason => OperationalStatus switch
     {
+        _ when !HasActiveMembership => "Business membership is no longer active for this user.",
+        _ when !IsUserActive => "User access is currently inactive.",
+        _ when !IsUserEmailConfirmed => "User email confirmation is still required.",
+        _ when IsUserLockedOut => "User access is currently locked.",
         BusinessOperationalStatus.PendingApproval => "Business approval is still pending.",
         BusinessOperationalStatus.Suspended when !string.IsNullOrWhiteSpace(SuspensionReason) => SuspensionReason,
         BusinessOperationalStatus.Suspended => "Business access is currently suspended.",

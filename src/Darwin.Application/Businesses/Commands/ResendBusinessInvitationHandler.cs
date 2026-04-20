@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Communication;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
@@ -27,6 +28,7 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IBusinessInvitationLinkBuilder _businessInvitationLinkBuilder;
         private readonly IValidator<BusinessInvitationResendDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IStringLocalizer<CommunicationResource> _communicationLocalizer;
 
         public ResendBusinessInvitationHandler(
             IAppDbContext db,
@@ -34,7 +36,8 @@ namespace Darwin.Application.Businesses.Commands
             IClock clock,
             IBusinessInvitationLinkBuilder businessInvitationLinkBuilder,
             IValidator<BusinessInvitationResendDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource> localizer,
+            IStringLocalizer<CommunicationResource> communicationLocalizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
@@ -42,6 +45,7 @@ namespace Darwin.Application.Businesses.Commands
             _businessInvitationLinkBuilder = businessInvitationLinkBuilder ?? throw new ArgumentNullException(nameof(businessInvitationLinkBuilder));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _communicationLocalizer = communicationLocalizer ?? throw new ArgumentNullException(nameof(communicationLocalizer));
         }
 
         public async Task HandleAsync(BusinessInvitationResendDto dto, CancellationToken ct = default)
@@ -76,11 +80,26 @@ namespace Darwin.Application.Businesses.Commands
 
             var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(invitation.Token);
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(business.DefaultCulture, siteSettings?.DefaultCulture);
+            var subjectTemplate = CommunicationTemplateDefaults.ResolveTemplate(
+                _communicationLocalizer,
+                communicationCulture,
+                siteSettings?.BusinessInvitationEmailSubjectTemplate,
+                CommunicationTemplateDefaults.LegacyBusinessInvitationSubjectTemplate,
+                "BusinessInvitationSubjectTemplateDefault");
+            var bodyTemplate = CommunicationTemplateDefaults.ResolveTemplate(
+                _communicationLocalizer,
+                communicationCulture,
+                siteSettings?.BusinessInvitationEmailBodyTemplate,
+                CommunicationTemplateDefaults.LegacyBusinessInvitationBodyTemplate,
+                "BusinessInvitationBodyTemplateDefault");
+            var acceptanceLinkTemplate = CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "BusinessInvitationAcceptanceLinkHtml");
+            var reissuedIntroTemplate = CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "BusinessInvitationIntroReissuedHtml");
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
                 TransactionalEmailTemplateRenderer.Render(
-                    siteSettings?.BusinessInvitationEmailSubjectTemplate,
-                    $"Invitation to join {business.Name} on Darwin",
+                    subjectTemplate,
+                    subjectTemplate,
                     new Dictionary<string, string?>
                     {
                         ["business_name"] = business.Name,
@@ -88,15 +107,8 @@ namespace Darwin.Application.Businesses.Commands
                         ["invitation_action"] = "reissued"
                     }));
             var body = TransactionalEmailTemplateRenderer.Render(
-                siteSettings?.BusinessInvitationEmailBodyTemplate,
-                $"<p>Hello,</p>" +
-                $"<p>Your invitation to join <strong>{business.Name}</strong> on Darwin as <strong>{invitation.Role}</strong> has been reissued.</p>" +
-                (string.IsNullOrWhiteSpace(acceptanceLink)
-                    ? string.Empty
-                    : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>") +
-                $"<p>Your new invitation token is:</p>" +
-                $"<p><code>{invitation.Token}</code></p>" +
-                $"<p>This invitation expires at <strong>{invitation.ExpiresAtUtc:u}</strong>.</p>",
+                bodyTemplate,
+                bodyTemplate,
                 new Dictionary<string, string?>
                 {
                     ["business_name"] = business.Name,
@@ -106,12 +118,19 @@ namespace Darwin.Application.Businesses.Commands
                     ["acceptance_link"] = acceptanceLink,
                     ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
                         ? string.Empty
-                        : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>",
+                        : TransactionalEmailTemplateRenderer.Render(acceptanceLinkTemplate, acceptanceLinkTemplate, new Dictionary<string, string?> { ["acceptance_link"] = acceptanceLink }),
                     ["invitation_action"] = "reissued",
-                    ["invitation_intro_html"] = $"Your invitation to join <strong>{business.Name}</strong> on Darwin as <strong>{invitation.Role}</strong> has been reissued."
+                    ["invitation_intro_html"] = TransactionalEmailTemplateRenderer.Render(
+                        reissuedIntroTemplate,
+                        reissuedIntroTemplate,
+                        new Dictionary<string, string?>
+                        {
+                            ["business_name"] = business.Name,
+                            ["role"] = invitation.Role.ToString()
+                        })
                 });
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? invitation.Email : siteSettings.CommunicationTestInboxEmail!;
-            body = ApplyRecipientOverrideNotice(invitation.Email, recipient, body);
+            body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, invitation.Email, recipient, body);
 
             await _emailSender.SendAsync(
                 recipient,
@@ -130,14 +149,22 @@ namespace Darwin.Application.Businesses.Commands
             return string.IsNullOrWhiteSpace(prefix) ? subject : $"{prefix.Trim()} {subject}";
         }
 
-        private static string ApplyRecipientOverrideNotice(string originalRecipient, string effectiveRecipient, string body)
+        private static string ApplyRecipientOverrideNotice(IStringLocalizer<CommunicationResource> localizer, string? culture, string originalRecipient, string effectiveRecipient, string body)
         {
             if (string.Equals(originalRecipient, effectiveRecipient, StringComparison.OrdinalIgnoreCase))
             {
                 return body;
             }
 
-            return $"<p><strong>Original recipient:</strong> {originalRecipient}</p>{body}";
+            var noticeTemplate = CommunicationTemplateDefaults.ResolveText(localizer, culture, "RecipientOverrideNoticeHtml");
+            var notice = TransactionalEmailTemplateRenderer.Render(
+                noticeTemplate,
+                noticeTemplate,
+                new Dictionary<string, string?>
+                {
+                    ["original_recipient"] = originalRecipient
+                });
+            return $"{notice}{body}";
         }
     }
 }

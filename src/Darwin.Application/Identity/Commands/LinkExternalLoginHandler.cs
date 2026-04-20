@@ -7,6 +7,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -18,16 +19,18 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<LinkExternalLoginDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Creates a new instance of the handler.
         /// </summary>
         /// <param name="db">Application DbContext abstraction used to access identity tables.</param>
         /// <param name="validator">FluentValidation validator for <see cref="LinkExternalLoginDto"/>.</param>
-        public LinkExternalLoginHandler(IAppDbContext db, IValidator<LinkExternalLoginDto> validator)
+        public LinkExternalLoginHandler(IAppDbContext db, IValidator<LinkExternalLoginDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -42,7 +45,7 @@ namespace Darwin.Application.Identity.Commands
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
             if (user == null)
-                return Result.Fail("User not found.");
+                return Result.Fail(_localizer["UserNotFound"]);
 
             var exists = await _db.Set<UserLogin>()
                 .AnyAsync(l => l.UserId == dto.UserId &&

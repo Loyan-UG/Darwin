@@ -1,12 +1,14 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries
 {
@@ -16,7 +18,13 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetUserWithRolesForEditHandler
     {
         private readonly IAppDbContext _db;
-        public GetUserWithRolesForEditHandler(IAppDbContext db) => _db = db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public GetUserWithRolesForEditHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
 
         /// <summary>
         /// Returns the edit payload including the AllRoles list for UI.
@@ -28,7 +36,7 @@ namespace Darwin.Application.Identity.Queries
                 .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted && u.IsActive, ct);
 
             if (user is null)
-                return Result<UserRolesEditDto>.Fail("User not found or inactive.");
+                return Result<UserRolesEditDto>.Fail(_localizer["UserNotFoundOrInactive"]);
 
             var currentRoleIds = await _db.Set<UserRole>()
                 .AsNoTracking()
@@ -38,7 +46,7 @@ namespace Darwin.Application.Identity.Queries
 
             var allRoles = await _db.Set<Role>()
                 .AsNoTracking()
-                .Where(r => !r.IsDeleted) // include system roles; UI disable delete there
+                .Where(r => !r.IsDeleted)
                 .OrderBy(r => r.DisplayName ?? r.Key)
                 .Select(r => new RoleListItemDto
                 {

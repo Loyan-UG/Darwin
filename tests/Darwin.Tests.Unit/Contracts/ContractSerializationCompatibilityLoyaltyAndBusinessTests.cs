@@ -15,48 +15,10 @@ namespace Darwin.Tests.Unit.Contracts;
 
 /// <summary>
 ///     Ensures JSON payload shapes for critical contracts remain stable for mobile clients.
-///     These tests are intentionally focused on serialized property names to detect accidental
-///     breaking changes introduced by refactors or serializer-option drift.
 /// </summary>
-public sealed class ContractSerializationCompatibilityTests
+public sealed class ContractSerializationCompatibilityLoyaltyAndBusinessTests : ContractSerializationCompatibilityTestBase
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
-    /// <summary>
-    ///     Verifies that token response contract serializes core authentication fields using
-    ///     the expected camelCase names consumed by clients.
-    /// </summary>
-    [Fact]
-    public void TokenResponse_Should_Serialize_WithExpectedPropertyNames()
-    {
-        // Arrange
-        var dto = new TokenResponse
-        {
-            AccessToken = "access-token-value",
-            AccessTokenExpiresAtUtc = new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            RefreshToken = "refresh-token-value",
-            RefreshTokenExpiresAtUtc = new DateTime(2030, 1, 8, 0, 0, 0, DateTimeKind.Utc),
-            UserId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Email = "member@example.test",
-            Scopes = new[] { "profile.read", "loyalty.use" }
-        };
-
-        // Act
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        // Assert
-        json.Should().Contain("\"accessToken\"");
-        json.Should().Contain("\"accessTokenExpiresAtUtc\"");
-        json.Should().Contain("\"refreshToken\"");
-        json.Should().Contain("\"refreshTokenExpiresAtUtc\"");
-        json.Should().Contain("\"userId\"");
-        json.Should().Contain("\"email\"");
-        json.Should().Contain("\"scopes\"");
-    }
-
-
-
-    /// <summary>
+/// <summary>
     ///     Verifies that process-scan request contract serializes the scan token
     ///     field with expected camelCase name.
     /// </summary>
@@ -76,7 +38,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"scanSessionToken\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that confirm-redemption request contract serializes the scan token
     ///     field with expected camelCase name.
     /// </summary>
@@ -96,136 +58,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"scanSessionToken\"");
     }
 
-    /// <summary>
-    ///     Verifies that login request contract keeps expected camelCase field names.
-    ///     This protects authentication call compatibility across mobile clients.
-    /// </summary>
-    [Fact]
-    public void PasswordLoginRequest_Should_Serialize_WithExpectedPropertyNames()
-    {
-        // Arrange
-        var dto = new PasswordLoginRequest
-        {
-            Email = "member@example.test",
-            Password = "SecurePassword123!",
-            DeviceId = "device-1",
-            BusinessId = Guid.Parse("12121212-3434-5656-7878-909090909090")
-        };
-
-        // Act
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        // Assert
-        json.Should().Contain("\"email\"");
-        json.Should().Contain("\"password\"");
-        json.Should().Contain("\"deviceId\"");
-        json.Should().Contain("\"businessId\"");
-    }
-
-    /// <summary>
-    ///     Verifies that refresh request contract preserves device binding and preferred business
-    ///     context field names for business-app token refresh.
-    /// </summary>
-    [Fact]
-    public void RefreshTokenRequest_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new RefreshTokenRequest
-        {
-            RefreshToken = "refresh-token-value",
-            DeviceId = "device-1",
-            BusinessId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"refreshToken\"");
-        json.Should().Contain("\"deviceId\"");
-        json.Should().Contain("\"businessId\"");
-    }
-
-    /// <summary>
-    ///     Verifies that email-confirmation request contracts preserve stable camelCase fields
-    ///     for activation and resend flows.
-    /// </summary>
-    [Fact]
-    public void EmailConfirmationRequests_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var request = new RequestEmailConfirmationRequest
-        {
-            Email = "member@example.test"
-        };
-
-        var confirm = new ConfirmEmailRequest
-        {
-            Email = "member@example.test",
-            Token = "confirm-token-123"
-        };
-
-        var requestJson = JsonSerializer.Serialize(request, JsonOptions);
-        var confirmJson = JsonSerializer.Serialize(confirm, JsonOptions);
-
-        requestJson.Should().Contain("\"email\"");
-        confirmJson.Should().Contain("\"email\"");
-        confirmJson.Should().Contain("\"token\"");
-    }
-
-    /// <summary>
-    ///     Verifies that business invitation preview contracts serialize onboarding payload fields
-    ///     with stable camelCase names for business-mobile clients.
-    /// </summary>
-    [Fact]
-    public void BusinessInvitationPreviewResponse_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new BusinessInvitationPreviewResponse
-        {
-            InvitationId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            BusinessId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            BusinessName = "Cafe Morgenrot",
-            Email = "operator@morgenrot.de",
-            Role = "Owner",
-            Status = "Pending",
-            ExpiresAtUtc = new DateTime(2030, 1, 2, 10, 0, 0, DateTimeKind.Utc),
-            HasExistingUser = false
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"invitationId\"");
-        json.Should().Contain("\"businessId\"");
-        json.Should().Contain("\"businessName\"");
-        json.Should().Contain("\"email\"");
-        json.Should().Contain("\"role\"");
-        json.Should().Contain("\"status\"");
-        json.Should().Contain("\"expiresAtUtc\"");
-        json.Should().Contain("\"hasExistingUser\"");
-    }
-
-    /// <summary>
-    ///     Verifies that business invitation acceptance request preserves the token-entry onboarding
-    ///     payload field names expected by the business-mobile app.
-    /// </summary>
-    [Fact]
-    public void AcceptBusinessInvitationRequest_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new AcceptBusinessInvitationRequest
-        {
-            Token = "invite-token",
-            DeviceId = "device-1",
-            FirstName = "Greta",
-            LastName = "Sommer",
-            Password = "Business123!"
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"token\"");
-        json.Should().Contain("\"deviceId\"");
-        json.Should().Contain("\"firstName\"");
-        json.Should().Contain("\"lastName\"");
-        json.Should().Contain("\"password\"");
-    }
-
-    /// <summary>
+/// <summary>
     ///     Verifies that prepare-scan response keeps the expected field names for session token,
     ///     mode, expiration, current balance, and selected rewards list.
     /// </summary>
@@ -265,7 +98,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"selectedRewards\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that business-process response contract serializes session mode,
     ///     account summary, selected rewards and allowed actions with stable names.
     /// </summary>
@@ -302,735 +135,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"allowedActions\"");
     }
 
-
-
-    /// <summary>
-    ///     Verifies that token response contract can be deserialized from a payload
-    ///     containing both known and unknown fields, preserving forward compatibility
-    ///     when server adds non-breaking fields.
-    /// </summary>
-    [Fact]
-    public void TokenResponse_Should_Deserialize_WhenUnknownFieldsArePresent()
-    {
-        // Arrange
-        const string json = """
-            {
-              "accessToken": "access-token",
-              "accessTokenExpiresAtUtc": "2030-01-01T00:00:00Z",
-              "refreshToken": "refresh-token",
-              "refreshTokenExpiresAtUtc": "2030-01-08T00:00:00Z",
-              "userId": "11111111-1111-1111-1111-111111111111",
-              "email": "member@example.test",
-              "unexpectedFutureField": "ignored"
-            }
-            """;
-
-        // Act
-        var dto = JsonSerializer.Deserialize<TokenResponse>(json, JsonOptions);
-
-        // Assert
-        dto.Should().NotBeNull();
-        dto!.AccessToken.Should().Be("access-token");
-        dto.RefreshToken.Should().Be("refresh-token");
-        dto.Email.Should().Be("member@example.test");
-    }
-
-    /// <summary>
-    ///     Verifies that customer profile contract can deserialize a minimal payload
-    ///     while still preserving required identity fields used by profile edit flows.
-    /// </summary>
-    [Fact]
-    public void CustomerProfile_Should_Deserialize_FromMinimalPayload()
-    {
-        // Arrange
-        const string json = """
-            {
-              "id": "44444444-4444-4444-4444-444444444444",
-              "email": "customer@example.test",
-              "rowVersion": "AQIDBA=="
-            }
-            """;
-
-        // Act
-        var dto = JsonSerializer.Deserialize<CustomerProfile>(json, JsonOptions);
-
-        // Assert
-        dto.Should().NotBeNull();
-        dto!.Id.Should().Be(Guid.Parse("44444444-4444-4444-4444-444444444444"));
-        dto.Email.Should().Be("customer@example.test");
-        dto.RowVersion.Should().NotBeNull();
-        dto.RowVersion.Should().HaveCount(4);
-    }
-
-    /// <summary>
-    ///     Verifies that member order detail contract serializes the expected camelCase payload
-    ///     fields for the new member order-history API surface.
-    /// </summary>
-    [Fact]
-    public void MemberOrderDetail_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new MemberOrderDetail
-        {
-            Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-            OrderNumber = "ORD-1001",
-            Currency = "EUR",
-            GrandTotalGrossMinor = 2599,
-            ShippingMethodId = Guid.Parse("12121212-3434-5656-7878-909090909090"),
-            ShippingMethodName = "DHL Paket",
-            ShippingCarrier = "DHL",
-            ShippingService = "Paket",
-            BillingAddressJson = "{}",
-            ShippingAddressJson = "{}",
-            Lines =
-            [
-                new MemberOrderLine
-                {
-                    Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                    VariantId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
-                    Name = "Coffee Beans",
-                    Sku = "COF-001",
-                    Quantity = 1,
-                    UnitPriceGrossMinor = 2599,
-                    LineGrossMinor = 2599
-                }
-            ],
-            Actions = new MemberOrderActions
-            {
-                CanRetryPayment = true,
-                PaymentIntentPath = "/api/v1/member/orders/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/payment-intent",
-                ConfirmationPath = "/api/v1/public/checkout/orders/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/confirmation",
-                DocumentPath = "/api/v1/member/orders/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/document"
-            }
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"id\"");
-        json.Should().Contain("\"orderNumber\"");
-        json.Should().Contain("\"grandTotalGrossMinor\"");
-        json.Should().Contain("\"shippingMethodId\"");
-        json.Should().Contain("\"shippingMethodName\"");
-        json.Should().Contain("\"shippingCarrier\"");
-        json.Should().Contain("\"shippingService\"");
-        json.Should().Contain("\"billingAddressJson\"");
-        json.Should().Contain("\"shippingAddressJson\"");
-        json.Should().Contain("\"lines\"");
-        json.Should().Contain("\"actions\"");
-        json.Should().Contain("\"canRetryPayment\"");
-        json.Should().Contain("\"paymentIntentPath\"");
-        json.Should().Contain("\"confirmationPath\"");
-        json.Should().Contain("\"documentPath\"");
-    }
-
-    /// <summary>
-    ///     Verifies that member invoice detail contract serializes the expected camelCase payload
-    ///     fields for the new member invoice-history API surface.
-    /// </summary>
-    [Fact]
-    public void MemberInvoiceDetail_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new MemberInvoiceDetail
-        {
-            Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
-            BusinessId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
-            OrderId = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"),
-            Currency = "EUR",
-            TotalGrossMinor = 2599,
-            BalanceMinor = 0,
-            PaymentSummary = "Stripe | EUR 25.99 | Captured",
-            Lines =
-            [
-                new MemberInvoiceLine
-                {
-                    Id = Guid.Parse("12121212-3434-5656-7878-909090909090"),
-                    Description = "Monthly subscription",
-                    Quantity = 1,
-                    UnitPriceNetMinor = 2184,
-                    TaxRate = 0.19m,
-                    TotalNetMinor = 2184,
-                    TotalGrossMinor = 2599
-                }
-            ],
-            Actions = new MemberInvoiceActions
-            {
-                CanRetryPayment = false,
-                PaymentIntentPath = null,
-                OrderPath = "/api/v1/member/orders/ffffffff-ffff-ffff-ffff-ffffffffffff",
-                DocumentPath = "/api/v1/member/invoices/dddddddd-dddd-dddd-dddd-dddddddddddd/document"
-            }
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"id\"");
-        json.Should().Contain("\"businessId\"");
-        json.Should().Contain("\"orderId\"");
-        json.Should().Contain("\"totalGrossMinor\"");
-        json.Should().Contain("\"balanceMinor\"");
-        json.Should().Contain("\"paymentSummary\"");
-        json.Should().Contain("\"lines\"");
-        json.Should().Contain("\"actions\"");
-        json.Should().Contain("\"canRetryPayment\"");
-        json.Should().Contain("\"orderPath\"");
-        json.Should().Contain("\"documentPath\"");
-    }
-
-    /// <summary>
-    ///     Verifies that public product detail contract serializes storefront-facing fields
-    ///     with stable camelCase property names.
-    /// </summary>
-    [Fact]
-    public void PublicProductDetail_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new PublicProductDetail
-        {
-            Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            Name = "Filterkaffee",
-            Slug = "filterkaffee",
-            PriceMinor = 1299,
-            PrimaryImageUrl = "/media/filterkaffee.jpg",
-            Media =
-            [
-                new PublicProductMedia
-                {
-                    Id = Guid.Parse("66666666-7777-8888-9999-000000000000"),
-                    Url = "/media/filterkaffee.jpg",
-                    Alt = "Filterkaffee"
-                }
-            ]
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"primaryImageUrl\"");
-        json.Should().Contain("\"priceMinor\"");
-        json.Should().Contain("\"media\"");
-        json.Should().Contain("\"slug\"");
-    }
-
-    /// <summary>
-    ///     Verifies that public page detail contract serializes storefront-facing fields
-    ///     with stable camelCase property names.
-    /// </summary>
-    [Fact]
-    public void PublicPageDetail_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new PublicPageDetail
-        {
-            Id = Guid.Parse("99999999-aaaa-bbbb-cccc-dddddddddddd"),
-            Title = "Über Uns",
-            Slug = "uber-uns",
-            ContentHtml = "<p>Hallo</p>"
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"title\"");
-        json.Should().Contain("\"slug\"");
-        json.Should().Contain("\"contentHtml\"");
-    }
-
-    /// <summary>
-    ///     Verifies that public cart summary contracts serialize storefront-facing fields
-    ///     with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void PublicCartSummary_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new PublicCartSummary
-        {
-            CartId = Guid.Parse("12345678-1234-1234-1234-123456789012"),
-            Currency = "EUR",
-            SubtotalNetMinor = 1999,
-            VatTotalMinor = 380,
-            GrandTotalGrossMinor = 2379,
-            CouponCode = "WILLKOMMEN10",
-            Items =
-            [
-                new PublicCartItemRow
-                {
-                    VariantId = Guid.Parse("87654321-4321-4321-4321-210987654321"),
-                    Quantity = 2,
-                    UnitPriceNetMinor = 999,
-                    AddOnPriceDeltaMinor = 100,
-                    VatRate = 0.19m,
-                    LineNetMinor = 2198,
-                    LineVatMinor = 418,
-                    LineGrossMinor = 2616,
-                    SelectedAddOnValueIdsJson = "[\"11111111-1111-1111-1111-111111111111\"]"
-                }
-            ]
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"cartId\"");
-        json.Should().Contain("\"currency\"");
-        json.Should().Contain("\"grandTotalGrossMinor\"");
-        json.Should().Contain("\"couponCode\"");
-        json.Should().Contain("\"selectedAddOnValueIdsJson\"");
-    }
-
-    /// <summary>
-    ///     Verifies that public shipping contracts serialize storefront-facing fields
-    ///     with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void PublicShippingOption_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new PublicShippingOption
-        {
-            MethodId = Guid.Parse("aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb"),
-            Name = "DHL Paket",
-            PriceMinor = 590,
-            Currency = "EUR",
-            Carrier = "DHL",
-            Service = "Paket"
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"methodId\"");
-        json.Should().Contain("\"name\"");
-        json.Should().Contain("\"priceMinor\"");
-        json.Should().Contain("\"currency\"");
-        json.Should().Contain("\"carrier\"");
-        json.Should().Contain("\"service\"");
-    }
-
-    /// <summary>
-    ///     Verifies that member address contracts serialize profile-facing fields
-    ///     with stable camelCase property names.
-    /// </summary>
-    [Fact]
-    public void MemberAddress_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new MemberAddress
-        {
-            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            RowVersion = [1, 2, 3],
-            FullName = "Max Mustermann",
-            Street1 = "Musterstraße 1",
-            PostalCode = "10115",
-            City = "Berlin",
-            CountryCode = "DE",
-            IsDefaultBilling = true,
-            IsDefaultShipping = false
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"rowVersion\"");
-        json.Should().Contain("\"fullName\"");
-        json.Should().Contain("\"street1\"");
-        json.Should().Contain("\"postalCode\"");
-        json.Should().Contain("\"isDefaultBilling\"");
-        json.Should().Contain("\"isDefaultShipping\"");
-    }
-
-    /// <summary>
-    ///     Verifies that member preference contracts serialize profile-facing privacy and
-    ///     communication fields with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void MemberPreferences_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new MemberPreferences
-        {
-            RowVersion = [1, 2, 3],
-            MarketingConsent = true,
-            AllowEmailMarketing = true,
-            AllowSmsMarketing = false,
-            AllowWhatsAppMarketing = true,
-            AllowPromotionalPushNotifications = true,
-            AllowOptionalAnalyticsTracking = false,
-            AcceptsTermsAtUtc = new DateTime(2030, 1, 1, 10, 15, 0, DateTimeKind.Utc)
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"rowVersion\"");
-        json.Should().Contain("\"marketingConsent\"");
-        json.Should().Contain("\"allowEmailMarketing\"");
-        json.Should().Contain("\"allowSmsMarketing\"");
-        json.Should().Contain("\"allowWhatsAppMarketing\"");
-        json.Should().Contain("\"allowPromotionalPushNotifications\"");
-        json.Should().Contain("\"allowOptionalAnalyticsTracking\"");
-        json.Should().Contain("\"acceptsTermsAtUtc\"");
-    }
-
-    /// <summary>
-    ///     Verifies that member preference update contracts serialize mutation-facing fields
-    ///     with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void UpdateMemberPreferencesRequest_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new UpdateMemberPreferencesRequest
-        {
-            RowVersion = [4, 3, 2, 1],
-            MarketingConsent = true,
-            AllowEmailMarketing = true,
-            AllowSmsMarketing = true,
-            AllowWhatsAppMarketing = false,
-            AllowPromotionalPushNotifications = true,
-            AllowOptionalAnalyticsTracking = true
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"rowVersion\"");
-        json.Should().Contain("\"marketingConsent\"");
-        json.Should().Contain("\"allowEmailMarketing\"");
-        json.Should().Contain("\"allowSmsMarketing\"");
-        json.Should().Contain("\"allowWhatsAppMarketing\"");
-        json.Should().Contain("\"allowPromotionalPushNotifications\"");
-        json.Should().Contain("\"allowOptionalAnalyticsTracking\"");
-    }
-
-    /// <summary>
-    ///     Verifies that linked CRM customer profile contracts serialize member-facing
-    ///     CRM linkage fields with stable camelCase property names.
-    /// </summary>
-    [Fact]
-    public void LinkedCustomerProfile_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new LinkedCustomerProfile
-        {
-            Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            UserId = Guid.Parse("66666666-7777-8888-9999-000000000000"),
-            DisplayName = "Max Mustermann",
-            Email = "max@example.de",
-            Phone = "+491701234567",
-            CompanyName = "Darwin GmbH"
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"id\"");
-        json.Should().Contain("\"userId\"");
-        json.Should().Contain("\"displayName\"");
-        json.Should().Contain("\"email\"");
-        json.Should().Contain("\"phone\"");
-        json.Should().Contain("\"companyName\"");
-    }
-
-    /// <summary>
-    ///     Verifies that linked CRM customer-context contracts serialize member-facing
-    ///     segments, consents, and recent interactions with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void MemberCustomerContext_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new MemberCustomerContext
-        {
-            Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            UserId = Guid.Parse("66666666-7777-8888-9999-000000000000"),
-            DisplayName = "Max Mustermann",
-            Email = "max@example.de",
-            Phone = "+491701234567",
-            CompanyName = "Darwin GmbH",
-            Notes = "VIP coffee subscriber",
-            InteractionCount = 3,
-            Segments =
-            [
-                new MemberCustomerSegment
-                {
-                    SegmentId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-                    Name = "VIP",
-                    Description = "High-value customers"
-                }
-            ],
-            Consents =
-            [
-                new MemberCustomerConsent
-                {
-                    Id = Guid.Parse("12121212-3434-5656-7878-909090909090"),
-                    Type = "MarketingEmail",
-                    Granted = true,
-                    GrantedAtUtc = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc)
-                }
-            ],
-            RecentInteractions =
-            [
-                new MemberCustomerInteraction
-                {
-                    Id = Guid.Parse("abababab-abab-abab-abab-abababababab"),
-                    Type = "Support",
-                    Channel = "Email",
-                    Subject = "Delivery question",
-                    ContentPreview = "Where is my order?",
-                    CreatedAtUtc = new DateTime(2030, 1, 2, 9, 0, 0, DateTimeKind.Utc)
-                }
-            ]
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"displayName\"");
-        json.Should().Contain("\"interactionCount\"");
-        json.Should().Contain("\"segments\"");
-        json.Should().Contain("\"consents\"");
-        json.Should().Contain("\"recentInteractions\"");
-        json.Should().Contain("\"contentPreview\"");
-    }
-
-    /// <summary>
-    ///     Verifies that storefront checkout contracts serialize order-placement
-    ///     fields with stable camelCase property names.
-    /// </summary>
-    [Fact]
-    public void PlaceOrderFromCartRequest_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new PlaceOrderFromCartRequest
-        {
-            CartId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            SelectedShippingMethodId = Guid.Parse("12121212-3434-5656-7878-909090909090"),
-            ShippingTotalMinor = 590,
-            Culture = "de-DE",
-            BillingAddress = new CheckoutAddress
-            {
-                FullName = "Max Mustermann",
-                Street1 = "Musterstraße 1",
-                PostalCode = "10115",
-                City = "Berlin",
-                CountryCode = "DE"
-            },
-            ShippingAddress = new CheckoutAddress
-            {
-                FullName = "Max Mustermann",
-                Street1 = "Musterstraße 1",
-                PostalCode = "10115",
-                City = "Berlin",
-                CountryCode = "DE"
-            }
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"cartId\"");
-        json.Should().Contain("\"selectedShippingMethodId\"");
-        json.Should().Contain("\"shippingTotalMinor\"");
-        json.Should().Contain("\"culture\"");
-        json.Should().Contain("\"billingAddress\"");
-        json.Should().Contain("\"shippingAddress\"");
-    }
-
-    /// <summary>
-    ///     Verifies that storefront checkout responses serialize created-order
-    ///     fields with stable camelCase property names.
-    /// </summary>
-    [Fact]
-    public void PlaceOrderFromCartResponse_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new PlaceOrderFromCartResponse
-        {
-            OrderId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            OrderNumber = "D-20300101-00001",
-            Currency = "EUR",
-            GrandTotalGrossMinor = 2590,
-            Status = "Created"
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"orderId\"");
-        json.Should().Contain("\"orderNumber\"");
-        json.Should().Contain("\"grandTotalGrossMinor\"");
-        json.Should().Contain("\"status\"");
-    }
-
-    /// <summary>
-    ///     Verifies that storefront checkout-intent contracts serialize preview and shipping
-    ///     selection fields with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void CreateCheckoutIntentResponse_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new CreateCheckoutIntentResponse
-        {
-            CartId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            Currency = "EUR",
-            SubtotalNetMinor = 3000,
-            VatTotalMinor = 570,
-            GrandTotalGrossMinor = 3570,
-            ShipmentMass = 1500,
-            RequiresShipping = true,
-            ShippingCountryCode = "DE",
-            SelectedShippingMethodId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            SelectedShippingTotalMinor = 590,
-            ShippingOptions =
-            [
-                new PublicShippingOption
-                {
-                    MethodId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-                    Name = "DHL Paket",
-                    PriceMinor = 590,
-                    Currency = "EUR",
-                    Carrier = "DHL",
-                    Service = "Paket"
-                }
-            ]
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"shipmentMass\"");
-        json.Should().Contain("\"requiresShipping\"");
-        json.Should().Contain("\"shippingCountryCode\"");
-        json.Should().Contain("\"selectedShippingMethodId\"");
-        json.Should().Contain("\"selectedShippingTotalMinor\"");
-        json.Should().Contain("\"shippingOptions\"");
-    }
-
-    /// <summary>
-    ///     Verifies that storefront payment-intent contracts serialize payment session
-    ///     fields with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void CreateStorefrontPaymentIntentResponse_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new CreateStorefrontPaymentIntentResponse
-        {
-            OrderId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            PaymentId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            Provider = "DarwinCheckout",
-            ProviderReference = "chk_abc123",
-            AmountMinor = 4160,
-            Currency = "EUR",
-            Status = "Pending",
-            CheckoutUrl = "https://payments.example.com/checkout?paymentId=11111111-2222-3333-4444-555555555555",
-            ReturnUrl = "https://storefront.example.com/checkout/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/confirmation",
-            CancelUrl = "https://storefront.example.com/checkout/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/confirmation?cancelled=true",
-            ExpiresAtUtc = new DateTime(2030, 1, 1, 12, 30, 0, DateTimeKind.Utc)
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"orderId\"");
-        json.Should().Contain("\"paymentId\"");
-        json.Should().Contain("\"provider\"");
-        json.Should().Contain("\"providerReference\"");
-        json.Should().Contain("\"amountMinor\"");
-        json.Should().Contain("\"checkoutUrl\"");
-        json.Should().Contain("\"returnUrl\"");
-        json.Should().Contain("\"cancelUrl\"");
-        json.Should().Contain("\"expiresAtUtc\"");
-    }
-
-    /// <summary>
-    ///     Verifies that storefront payment-completion request contracts serialize completion
-    ///     fields with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void CompleteStorefrontPaymentRequest_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new CompleteStorefrontPaymentRequest
-        {
-            OrderNumber = "D-20300101-00001",
-            ProviderReference = "psp_txn_123",
-            Outcome = "Succeeded",
-            FailureReason = null
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"orderNumber\"");
-        json.Should().Contain("\"providerReference\"");
-        json.Should().Contain("\"outcome\"");
-        json.Should().Contain("\"failureReason\"");
-    }
-
-    /// <summary>
-    ///     Verifies that storefront payment-completion response contracts serialize result
-    ///     fields with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void CompleteStorefrontPaymentResponse_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new CompleteStorefrontPaymentResponse
-        {
-            OrderId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            PaymentId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            OrderStatus = "Paid",
-            PaymentStatus = "Captured",
-            PaidAtUtc = new DateTime(2030, 1, 1, 12, 45, 0, DateTimeKind.Utc)
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"orderId\"");
-        json.Should().Contain("\"paymentId\"");
-        json.Should().Contain("\"orderStatus\"");
-        json.Should().Contain("\"paymentStatus\"");
-        json.Should().Contain("\"paidAtUtc\"");
-    }
-
-    /// <summary>
-    ///     Verifies that storefront order-confirmation contracts serialize line and payment
-    ///     snapshots with stable camelCase names.
-    /// </summary>
-    [Fact]
-    public void StorefrontOrderConfirmationResponse_Should_Serialize_WithExpectedPropertyNames()
-    {
-        var dto = new StorefrontOrderConfirmationResponse
-        {
-            OrderId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            OrderNumber = "D-20300101-00001",
-            Currency = "EUR",
-            ShippingMethodId = Guid.Parse("12121212-3434-5656-7878-909090909090"),
-            ShippingMethodName = "DHL Paket",
-            ShippingCarrier = "DHL",
-            ShippingService = "Paket",
-            GrandTotalGrossMinor = 4160,
-            BillingAddressJson = "{}",
-            ShippingAddressJson = "{}",
-            Lines =
-            [
-                new StorefrontOrderConfirmationLine
-                {
-                    Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-                    VariantId = Guid.Parse("66666666-7777-8888-9999-000000000000"),
-                    Name = "Filterkaffee",
-                    Sku = "COF-01",
-                    Quantity = 2,
-                    UnitPriceGrossMinor = 2080,
-                    LineGrossMinor = 4160
-                }
-            ],
-            Payments =
-            [
-                new StorefrontOrderConfirmationPayment
-                {
-                    Id = Guid.Parse("99999999-8888-7777-6666-555555555555"),
-                    Provider = "DarwinCheckout",
-                    ProviderReference = "chk_abc123",
-                    AmountMinor = 4160,
-                    Currency = "EUR",
-                    Status = "Pending"
-                }
-            ]
-        };
-
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        json.Should().Contain("\"orderId\"");
-        json.Should().Contain("\"orderNumber\"");
-        json.Should().Contain("\"shippingMethodId\"");
-        json.Should().Contain("\"shippingMethodName\"");
-        json.Should().Contain("\"shippingCarrier\"");
-        json.Should().Contain("\"shippingService\"");
-        json.Should().Contain("\"lines\"");
-        json.Should().Contain("\"payments\"");
-        json.Should().Contain("\"providerReference\"");
-        json.Should().Contain("\"unitPriceGrossMinor\"");
-    }
-
-
-
-
-
-    /// <summary>
+/// <summary>
     ///     Verifies that confirm-accrual response keeps expected field names
     ///     for success indicators, balance, account snapshot and error details.
     /// </summary>
@@ -1068,7 +173,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"errorMessage\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that confirm-accrual response can be deserialized from
     ///     a failure payload while preserving error code/message fields.
     /// </summary>
@@ -1098,7 +203,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.ErrorMessage.Should().Be("Account is locked.");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that confirm-redemption response keeps expected field names
     ///     for success indicators, balance, account snapshot and error details.
     /// </summary>
@@ -1136,7 +241,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"errorMessage\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that confirm-redemption response can be deserialized from
     ///     a failure payload while preserving error code/message fields.
     /// </summary>
@@ -1166,43 +271,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.ErrorMessage.Should().Be("Session has expired.");
     }
 
-    /// <summary>
-    ///     Verifies that customer profile contract serializes optimistic-concurrency and
-    ///     culture fields with stable names expected by mobile profile forms.
-    /// </summary>
-    [Fact]
-    public void CustomerProfile_Should_Serialize_WithExpectedPropertyNames()
-    {
-        // Arrange
-        var dto = new CustomerProfile
-        {
-            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            Email = "customer@example.test",
-            FirstName = "Test",
-            LastName = "Customer",
-            PhoneE164 = "+491111111111",
-            Locale = "de-DE",
-            Timezone = "Europe/Berlin",
-            Currency = "EUR",
-            RowVersion = [1, 2, 3, 4]
-        };
-
-        // Act
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-
-        // Assert
-        json.Should().Contain("\"id\"");
-        json.Should().Contain("\"email\"");
-        json.Should().Contain("\"firstName\"");
-        json.Should().Contain("\"lastName\"");
-        json.Should().Contain("\"phoneE164\"");
-        json.Should().Contain("\"locale\"");
-        json.Should().Contain("\"timezone\"");
-        json.Should().Contain("\"currency\"");
-        json.Should().Contain("\"rowVersion\"");
-    }
-
-    /// <summary>
+/// <summary>
     ///     Verifies that promotions feed response serializes campaign-oriented fields
     ///     with expected camelCase names used by mobile feed rendering.
     /// </summary>
@@ -1265,7 +334,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"minPoints\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that loyalty timeline response serializes cursor fields and nested
     ///     entries with expected property names for mobile infinite-scroll UX.
     /// </summary>
@@ -1308,7 +377,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"reference\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that loyalty overview contracts serialize aggregate counters and nested
     ///     account summaries with stable camelCase names.
     /// </summary>
@@ -1354,7 +423,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"nextRewardProgressPercent\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that business-scoped loyalty dashboard contracts serialize nested account,
     ///     reward, and transaction sections with stable camelCase names.
     /// </summary>
@@ -1419,7 +488,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"nextPointsExpiryAtUtc\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that map discovery request serializes viewport bounds and filters
     ///     with expected camelCase names consumed by discovery endpoints.
     /// </summary>
@@ -1459,7 +528,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"countryCode\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that business summary contract deserializes from payload containing
     ///     proximity fields used by mobile explore/discovery screens.
     /// </summary>
@@ -1501,7 +570,8 @@ public sealed class ContractSerializationCompatibilityTests
         dto.DistanceMeters.Should().Be(380);
         dto.IsOpenNow.Should().BeTrue();
     }
-    /// <summary>
+
+/// <summary>
     ///     Verifies that business campaign create/update contracts serialize mutable
     ///     payload fields and optimistic-concurrency token with stable camelCase names.
     /// </summary>
@@ -1565,7 +635,7 @@ public sealed class ContractSerializationCompatibilityTests
         updateJson.Should().Contain("\"rowVersion\"");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that business reward-configuration contracts serialize tier and
     ///     mutation payload fields with expected camelCase names.
     /// </summary>
@@ -1614,8 +684,7 @@ public sealed class ContractSerializationCompatibilityTests
         mutationJson.Should().Contain("\"success\"");
     }
 
-
-    /// <summary>
+/// <summary>
     ///     Verifies that campaign listing response deserializes nested items while tolerating
     ///     unknown future fields used for non-breaking API expansion.
     /// </summary>
@@ -1670,7 +739,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Items[0].Channels.Should().Be(3);
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that reward-tier delete request serializes concurrency-sensitive fields
     ///     with stable camelCase names consumed by business management screens.
     /// </summary>
@@ -1696,8 +765,7 @@ public sealed class ContractSerializationCompatibilityTests
         doc.RootElement.GetProperty("rowVersion").GetString().Should().Be("BAMCAQ==");
     }
 
-
-    /// <summary>
+/// <summary>
     ///     Verifies that campaign listing response serializes collection wrapper and
     ///     nested campaign fields with stable camelCase names expected by clients.
     /// </summary>
@@ -1760,7 +828,7 @@ public sealed class ContractSerializationCompatibilityTests
         firstItem.GetProperty("rowVersion").GetString().Should().Be("AQIDBA==");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that reward-tier delete request deserializes identifier and
     ///     concurrency token from a standard camelCase payload.
     /// </summary>
@@ -1785,8 +853,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.RowVersion.Should().Equal(4, 3, 2, 1);
     }
 
-
-    /// <summary>
+/// <summary>
     ///     Verifies that campaign create request deserializes mutable payload fields
     ///     from camelCase JSON for client/server compatibility.
     /// </summary>
@@ -1829,7 +896,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.PayloadJson.Should().Be("{\"kind\":\"boost\"}");
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that campaign update request deserializes identity/concurrency fields
     ///     and mutable payload content from camelCase JSON.
     /// </summary>
@@ -1876,8 +943,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.RowVersion.Should().Equal(1, 2, 3);
     }
 
-
-    /// <summary>
+/// <summary>
     ///     Verifies that business reward configuration response deserializes reward-tier
     ///     entries and concurrency tokens from camelCase payloads.
     /// </summary>
@@ -1922,7 +988,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.RewardTiers[0].RowVersion.Should().Equal(9, 9, 9);
     }
 
-    /// <summary>
+/// <summary>
     ///     Verifies that reward-tier mutation response deserializes identity and status
     ///     fields from camelCase payload names.
     /// </summary>
@@ -1947,8 +1013,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Success.Should().BeTrue();
     }
 
-
-    /// <summary>
+/// <summary>
     ///     Verifies that campaign listing deserialization preserves business identifier
     ///     and rowVersion concurrency token for nested campaign items.
     /// </summary>
@@ -1984,8 +1049,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Items[0].RowVersion.Should().Equal(1, 2, 3, 4);
     }
 
-
-    /// <summary>
+/// <summary>
     ///     Verifies that reward-tier mutation response deserializes negative status
     ///     payloads without defaulting the success flag to true.
     /// </summary>
@@ -2008,124 +1072,4 @@ public sealed class ContractSerializationCompatibilityTests
         dto!.RewardTierId.Should().Be(Guid.Parse("efefefef-efef-efef-efef-efefefefefef"));
         dto.Success.Should().BeFalse();
     }
-
-    /// <summary>
-    ///     Verifies member order action metadata keeps canonical camelCase property names
-    ///     and supports nullable payment-intent paths in serialized payloads.
-    /// </summary>
-    [Fact]
-    public void MemberOrderActions_Should_Serialize_WithExpectedPropertyNames_AndNullability()
-    {
-        // Arrange
-        var dto = new MemberOrderActions
-        {
-            CanRetryPayment = false,
-            PaymentIntentPath = null,
-            ConfirmationPath = "/api/v1/public/checkout/orders/11111111-1111-1111-1111-111111111111/confirmation",
-            DocumentPath = "/api/v1/member/orders/11111111-1111-1111-1111-111111111111/document"
-        };
-
-        // Act
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-        var roundTrip = JsonSerializer.Deserialize<MemberOrderActions>(json, JsonOptions);
-
-        // Assert
-        json.Should().Contain("\"canRetryPayment\"");
-        json.Should().Contain("\"paymentIntentPath\":null");
-        json.Should().Contain("\"confirmationPath\"");
-        json.Should().Contain("\"documentPath\"");
-
-        roundTrip.Should().NotBeNull();
-        roundTrip!.CanRetryPayment.Should().BeFalse();
-        roundTrip.PaymentIntentPath.Should().BeNull();
-        roundTrip.ConfirmationPath.Should().Contain("/confirmation");
-    }
-
-    /// <summary>
-    ///     Verifies member invoice action metadata preserves optional paths and stable
-    ///     camelCase names across JSON round-trip serialization.
-    /// </summary>
-    [Fact]
-    public void MemberInvoiceActions_Should_Serialize_WithExpectedPropertyNames_AndNullability()
-    {
-        // Arrange
-        var dto = new MemberInvoiceActions
-        {
-            CanRetryPayment = true,
-            PaymentIntentPath = null,
-            OrderPath = null,
-            DocumentPath = "/api/v1/member/invoices/22222222-2222-2222-2222-222222222222/document"
-        };
-
-        // Act
-        var json = JsonSerializer.Serialize(dto, JsonOptions);
-        var roundTrip = JsonSerializer.Deserialize<MemberInvoiceActions>(json, JsonOptions);
-
-        // Assert
-        json.Should().Contain("\"canRetryPayment\"");
-        json.Should().Contain("\"paymentIntentPath\":null");
-        json.Should().Contain("\"orderPath\":null");
-        json.Should().Contain("\"documentPath\"");
-
-        roundTrip.Should().NotBeNull();
-        roundTrip!.CanRetryPayment.Should().BeTrue();
-        roundTrip.OrderPath.Should().BeNull();
-        roundTrip.DocumentPath.Should().Contain("/document");
-    }
-
-    /// <summary>
-    ///     Verifies member order action payloads stay backward-compatible when
-    ///     additional unknown fields are present in JSON responses.
-    /// </summary>
-    [Fact]
-    public void MemberOrderActions_Should_Deserialize_WhenUnknownFieldsExist()
-    {
-        // Arrange
-        const string json = """
-            {
-              "canRetryPayment": true,
-              "paymentIntentPath": "/api/v1/member/orders/1/payment-intent",
-              "confirmationPath": "/api/v1/public/checkout/orders/1/confirmation",
-              "documentPath": "/api/v1/member/orders/1/document",
-              "futureField": "ignore-me"
-            }
-            """;
-
-        // Act
-        var dto = JsonSerializer.Deserialize<MemberOrderActions>(json, JsonOptions);
-
-        // Assert
-        dto.Should().NotBeNull();
-        dto!.CanRetryPayment.Should().BeTrue();
-        dto.PaymentIntentPath.Should().Contain("/payment-intent");
-        dto.ConfirmationPath.Should().Contain("/confirmation");
-        dto.DocumentPath.Should().Contain("/document");
-    }
-
-    /// <summary>
-    ///     Verifies member invoice action payloads deserialize with safe defaults
-    ///     when optional fields are omitted by older clients or proxies.
-    /// </summary>
-    [Fact]
-    public void MemberInvoiceActions_Should_Deserialize_WhenOptionalFieldsAreMissing()
-    {
-        // Arrange
-        const string json = """
-            {
-              "canRetryPayment": false,
-              "documentPath": "/api/v1/member/invoices/1/document"
-            }
-            """;
-
-        // Act
-        var dto = JsonSerializer.Deserialize<MemberInvoiceActions>(json, JsonOptions);
-
-        // Assert
-        dto.Should().NotBeNull();
-        dto!.CanRetryPayment.Should().BeFalse();
-        dto.PaymentIntentPath.Should().BeNull();
-        dto.OrderPath.Should().BeNull();
-        dto.DocumentPath.Should().Contain("/document");
-    }
-
 }

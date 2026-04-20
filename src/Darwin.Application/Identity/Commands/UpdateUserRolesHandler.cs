@@ -8,6 +8,7 @@ using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -19,8 +20,13 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly UserRolesUpdateValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateUserRolesHandler(IAppDbContext db) => _db = db;
+        public UpdateUserRolesHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         /// <summary>
         /// Updates user-role link set after validating inputs, user existence,
@@ -29,15 +35,15 @@ namespace Darwin.Application.Identity.Commands
         public async Task<Result> HandleAsync(UserRolesUpdateDto dto, CancellationToken ct = default)
         {
             var v = _validator.Validate(dto);
-            if (!v.IsValid) return Result.Fail("Invalid user-roles payload.");
+            if (!v.IsValid) return Result.Fail(_localizer["InvalidUserRolesPayload"]);
 
             var user = await _db.Set<User>()
                 .FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted && u.IsActive, ct);
-            if (user is null) return Result.Fail("User not found or inactive.");
+            if (user is null) return Result.Fail(_localizer["UserNotFoundOrInactive"]);
 
             // App-level optimistic concurrency check
             if (!user.RowVersion.SequenceEqual(dto.RowVersion))
-                return Result.Fail("Concurrency conflict. Please reload and try again.");
+                return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
 
             // Validate roles exist (non-deleted)
             var distinctRoleIds = dto.RoleIds.Distinct().ToList();
@@ -48,7 +54,7 @@ namespace Darwin.Application.Identity.Commands
                 .ToListAsync(ct);
 
             if (validRoleIds.Count != distinctRoleIds.Count)
-                return Result.Fail("One or more roles are invalid.");
+                return Result.Fail(_localizer["InvalidRolesSelection"]);
 
             // Current links (tracked to allow soft-delete)
             var links = await _db.Set<UserRole>()

@@ -1,5 +1,26 @@
 @model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("Members")
+    };
+
+    string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
+        _ => T.T("Invitations")
+    };
+
+    string BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch
+    {
+        Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("PendingApproval"),
+        Darwin.Domain.Enums.BusinessOperationalStatus.Suspended => T.T("SuspendedBusinesses"),
+        _ => T.T("BusinessesTitle")
+    };
+}
 
 <div id="business-support-queue-card" class="card h-100 shadow-sm border-warning-subtle">
     <div class="card-header bg-white">
@@ -24,25 +45,25 @@
         <div class="row g-3">
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("NeedsAttention")</div>
+                    <div class="text-muted small">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessSupport.AttentionBusinessCount</div>
                 </div>
             </div>
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("PendingApproval")</div>
+                    <div class="text-muted small">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessSupport.PendingApprovalBusinessCount</div>
                 </div>
             </div>
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("OpenInvitations")</div>
+                    <div class="text-muted small">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessSupport.OpenInvitationCount</div>
                 </div>
             </div>
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("PendingActivation")</div>
+                    <div class="text-muted small">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessSupport.PendingActivationMemberCount</div>
                 </div>
             </div>

@@ -10,6 +10,7 @@ using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -22,15 +23,17 @@ namespace Darwin.Application.Loyalty.Commands
     {
         private readonly IAppDbContext _db;
         private readonly ActivateLoyaltyAccountValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ActivateLoyaltyAccountHandler"/> class.
         /// </summary>
         /// <param name="db">Application database abstraction.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="db"/> is null.</exception>
-        public ActivateLoyaltyAccountHandler(IAppDbContext db)
+        public ActivateLoyaltyAccountHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -55,14 +58,14 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (account is null)
             {
-                return Result.Fail("Loyalty account not found.");
+                return Result.Fail(_localizer["LoyaltyAccountNotFound"]);
             }
 
             // Optional optimistic concurrency check.
             if (dto.RowVersion is not null &&
                 !account.RowVersion.SequenceEqual(dto.RowVersion))
             {
-                return Result.Fail("Concurrency conflict. The loyalty account was modified by another process.");
+                return Result.Fail(_localizer["LoyaltyAccountConcurrencyConflict"]);
             }
 
             if (account.Status == LoyaltyAccountStatus.Active)

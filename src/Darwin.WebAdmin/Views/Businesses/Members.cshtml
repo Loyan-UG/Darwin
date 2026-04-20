@@ -11,6 +11,7 @@
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
         _ => T.T("CommonMembers")
     };
+    string InvitationWorkspaceLabel() => T.T("Invitations");
     string MemberConfirmationStatusLabel(bool emailConfirmed) => emailConfirmed
         ? T.T("Confirmed")
         : MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation);
@@ -37,7 +38,7 @@
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-members-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("Invitations")</a>
+           hx-push-url="true">@InvitationWorkspaceLabel()</a>
         @if (isFullAdmin)
         {
             <a asp-action="Edit"

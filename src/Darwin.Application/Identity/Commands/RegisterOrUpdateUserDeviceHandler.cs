@@ -10,6 +10,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands;
 
@@ -24,11 +25,13 @@ public sealed class RegisterOrUpdateUserDeviceHandler
 
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public RegisterOrUpdateUserDeviceHandler(IAppDbContext db, IClock clock)
+    public RegisterOrUpdateUserDeviceHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -38,41 +41,41 @@ public sealed class RegisterOrUpdateUserDeviceHandler
     {
         if (dto is null)
         {
-            return Result<RegisterUserDeviceResultDto>.Fail("Request payload is required.");
+            return Result<RegisterUserDeviceResultDto>.Fail(_localizer["RequestPayloadRequired"]);
         }
 
         if (dto.UserId == Guid.Empty)
         {
-            return Result<RegisterUserDeviceResultDto>.Fail("UserId is required.");
+            return Result<RegisterUserDeviceResultDto>.Fail(_localizer["UserIdRequired"]);
         }
 
         if (string.IsNullOrWhiteSpace(dto.DeviceId))
         {
-            return Result<RegisterUserDeviceResultDto>.Fail("DeviceId is required.");
+            return Result<RegisterUserDeviceResultDto>.Fail(_localizer["DeviceIdRequired"]);
         }
 
         var normalizedDeviceId = dto.DeviceId.Trim();
         if (normalizedDeviceId.Length > 128)
         {
-            return Result<RegisterUserDeviceResultDto>.Fail("DeviceId is too long.");
+            return Result<RegisterUserDeviceResultDto>.Fail(_localizer["DeviceIdTooLong"]);
         }
 
         var normalizedPushToken = string.IsNullOrWhiteSpace(dto.PushToken) ? null : dto.PushToken.Trim();
         if (normalizedPushToken is not null && normalizedPushToken.Length > 512)
         {
-            return Result<RegisterUserDeviceResultDto>.Fail("PushToken is too long.");
+            return Result<RegisterUserDeviceResultDto>.Fail(_localizer["PushTokenTooLong"]);
         }
 
         var normalizedAppVersion = string.IsNullOrWhiteSpace(dto.AppVersion) ? null : dto.AppVersion.Trim();
         if (normalizedAppVersion is not null && normalizedAppVersion.Length > 64)
         {
-            return Result<RegisterUserDeviceResultDto>.Fail("AppVersion is too long.");
+            return Result<RegisterUserDeviceResultDto>.Fail(_localizer["AppVersionTooLong"]);
         }
 
         var normalizedDeviceModel = string.IsNullOrWhiteSpace(dto.DeviceModel) ? null : dto.DeviceModel.Trim();
         if (normalizedDeviceModel is not null && normalizedDeviceModel.Length > 128)
         {
-            return Result<RegisterUserDeviceResultDto>.Fail("DeviceModel is too long.");
+            return Result<RegisterUserDeviceResultDto>.Fail(_localizer["DeviceModelTooLong"]);
         }
 
         var now = _clock.UtcNow;

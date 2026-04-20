@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -22,10 +23,11 @@ namespace Darwin.Application.Identity.Commands
         private readonly IUserPasswordHasher _hasher;
         private readonly ISecurityStampService _stamps;
         private readonly IValidator<UserCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateUserHandler(IAppDbContext db, IUserPasswordHasher hasher, ISecurityStampService stamps, IValidator<UserCreateDto> validator)
+        public CreateUserHandler(IAppDbContext db, IUserPasswordHasher hasher, ISecurityStampService stamps, IValidator<UserCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
-            _db = db; _hasher = hasher; _stamps = stamps; _validator = validator;
+            _db = db; _hasher = hasher; _stamps = stamps; _validator = validator; _localizer = localizer;
         }
 
         public async Task<Result<Guid>> HandleAsync
@@ -37,7 +39,7 @@ namespace Darwin.Application.Identity.Commands
             var exists = await _db.Set<User>().AnyAsync
                 (u => u.NormalizedEmail == normalizedEmail && !u.IsDeleted, ct);
             if (exists) 
-                return Result<Guid>.Fail("Email already in use.");
+                return Result<Guid>.Fail(_localizer["EmailAlreadyInUse"]);
 
             var user = new User(dto.Email, _hasher.Hash(dto.Password), _stamps.NewStamp())
             {

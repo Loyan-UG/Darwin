@@ -2,6 +2,7 @@
 using Darwin.Domain.Entities.Billing;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Linq;
 using System.Threading;
@@ -15,17 +16,19 @@ namespace Darwin.Application.Billing;
 public sealed class GetBusinessSubscriptionStatusHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public GetBusinessSubscriptionStatusHandler(IAppDbContext db)
+    public GetBusinessSubscriptionStatusHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     public async Task<Result<BusinessSubscriptionStatusDto>> HandleAsync(Guid businessId, CancellationToken ct = default)
     {
         if (businessId == Guid.Empty)
         {
-            return Result<BusinessSubscriptionStatusDto>.Fail("BusinessId is required.");
+            return Result<BusinessSubscriptionStatusDto>.Fail(_localizer["BusinessIdRequired"]);
         }
 
         var snapshot = await (from subscription in _db.Set<BusinessSubscription>().AsNoTracking()

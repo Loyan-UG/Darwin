@@ -8,6 +8,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries
 {
@@ -19,6 +20,7 @@ namespace Darwin.Application.Identity.Queries
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Creates a new instance.
@@ -26,10 +28,11 @@ namespace Darwin.Application.Identity.Queries
         /// <param name="db">Application DbContext abstraction.</param>
         /// <param name="currentUser">Provides access to the current authenticated user context.</param>
         /// <exception cref="ArgumentNullException">Thrown when any dependency is null.</exception>
-        public GetCurrentUserProfileHandler(IAppDbContext db, ICurrentUserService currentUser)
+        public GetCurrentUserProfileHandler(IAppDbContext db, ICurrentUserService currentUser, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -47,7 +50,7 @@ namespace Darwin.Application.Identity.Queries
             var userId = _currentUser.GetCurrentUserId();
             if (userId == Guid.Empty)
             {
-                return Result<UserProfileEditDto>.Fail("User is not authenticated.");
+                return Result<UserProfileEditDto>.Fail(_localizer["UserNotAuthenticated"]);
             }
 
             // Read-only query: project directly to DTO to avoid materializing the aggregate.
@@ -76,7 +79,7 @@ namespace Darwin.Application.Identity.Queries
 
             if (dto is null)
             {
-                return Result<UserProfileEditDto>.Fail("User not found.");
+                return Result<UserProfileEditDto>.Fail(_localizer["UserNotFound"]);
             }
 
             // Defensive: ensure RowVersion is never null for callers that require optimistic concurrency.

@@ -3,11 +3,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Services;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -18,8 +20,13 @@ namespace Darwin.Application.Identity.Commands
     public sealed class TotpProvisioningHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public TotpProvisioningHandler(IAppDbContext db) => _db = db;
+        public TotpProvisioningHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
 
         /// <summary>
         /// Generates a new secret and stores it for the user. If an inactive secret exists, it is replaced.
@@ -27,7 +34,7 @@ namespace Darwin.Application.Identity.Commands
         public async Task<Result<TotpProvisionResult>> HandleAsync(TotpProvisionDto dto, CancellationToken ct = default)
         {
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
-            if (user is null) return Result<TotpProvisionResult>.Fail("User not found.");
+            if (user is null) return Result<TotpProvisionResult>.Fail(_localizer["UserNotFound"]);
 
             var secret = TotpUtility.GenerateSecretBase32();
             var label = string.IsNullOrWhiteSpace(dto.AccountLabelOverride) ? user.Email : dto.AccountLabelOverride!;

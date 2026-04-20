@@ -2049,11 +2049,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             return state switch
             {
-                "Canonical flow" => T("CommunicationChannelActionPolicyCanonicalFlow"),
-                "Cooldown" => T("CommunicationChannelActionPolicyCooldown"),
-                "Retry ready" => T("CommunicationChannelActionPolicyRetryReady"),
-                "Ready" => T("CommunicationChannelActionPolicyReady"),
-                "Unsupported" => T("CommunicationChannelActionPolicyUnsupported"),
+                ChannelDispatchAuditVocabulary.ActionPolicyStates.CanonicalFlow => T("CommunicationChannelActionPolicyCanonicalFlow"),
+                ChannelDispatchAuditVocabulary.ActionPolicyStates.Cooldown => T("CommunicationChannelActionPolicyCooldown"),
+                ChannelDispatchAuditVocabulary.ActionPolicyStates.RetryReady => T("CommunicationChannelActionPolicyRetryReady"),
+                ChannelDispatchAuditVocabulary.ActionPolicyStates.Ready => T("CommunicationChannelActionPolicyReady"),
+                ChannelDispatchAuditVocabulary.ActionPolicyStates.Unsupported => T("CommunicationChannelActionPolicyUnsupported"),
                 _ => state ?? string.Empty
             };
         }
@@ -2065,17 +2065,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return item.ActionBlockedReason;
             }
 
-            if (string.Equals(item.FlowKey, "PhoneVerification", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(item.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, System.StringComparison.OrdinalIgnoreCase))
             {
                 return T("CommunicationChannelActionBlockedCanonicalFlow");
             }
 
-            if (string.Equals(item.ActionPolicyState, "Cooldown", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(item.ActionPolicyState, ChannelDispatchAuditVocabulary.ActionPolicyStates.Cooldown, System.StringComparison.OrdinalIgnoreCase))
             {
                 return T("CommunicationChannelActionBlockedCooldown");
             }
 
-            if (string.Equals(item.ActionPolicyState, "Unsupported", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(item.ActionPolicyState, ChannelDispatchAuditVocabulary.ActionPolicyStates.Unsupported, System.StringComparison.OrdinalIgnoreCase))
             {
                 return T("CommunicationChannelActionBlockedUnsupported");
             }
@@ -2090,12 +2090,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return item.EscalationReason;
             }
 
-            if (string.Equals(item.FlowKey, "PhoneVerification", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(item.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, System.StringComparison.OrdinalIgnoreCase))
             {
                 return T("CommunicationChannelEscalationPhoneVerification");
             }
 
-            if (string.Equals(item.FlowKey, "AdminCommunicationTest", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(item.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.AdminCommunicationTest, System.StringComparison.OrdinalIgnoreCase))
             {
                 return T("CommunicationChannelEscalationAdminTest");
             }
@@ -2107,12 +2107,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             return recommendedAction switch
             {
-                "Review SMS/WhatsApp readiness, fallback policy, and current verification channel choice before issuing another canonical verification code." => T("CommunicationChannelProviderRecommendedVerificationElevated"),
-                "Keep verification traffic on the canonical flow, then review recent provider failures before switching channel policy or escalating." => T("CommunicationChannelProviderRecommendedVerificationStable"),
-                "Correct provider credentials, sender identity, or reserved test-target setup before rerunning more diagnostics on this lane." => T("CommunicationChannelProviderRecommendedAdminTestElevated"),
-                "Use the reserved test target for a controlled rerun only after checking provider config and template state." => T("CommunicationChannelProviderRecommendedAdminTestStable"),
-                "Review the pending and failed traffic in this provider lane before taking another manual action." => T("CommunicationChannelProviderRecommendedGenericPending"),
-                "Review recent failures in this provider lane before escalating." => T("CommunicationChannelProviderRecommendedGenericStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedVerificationElevated => T("CommunicationChannelProviderRecommendedVerificationElevated"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedVerificationStable => T("CommunicationChannelProviderRecommendedVerificationStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedAdminTestElevated => T("CommunicationChannelProviderRecommendedAdminTestElevated"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedAdminTestStable => T("CommunicationChannelProviderRecommendedAdminTestStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedGenericPending => T("CommunicationChannelProviderRecommendedGenericPending"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedGenericStable => T("CommunicationChannelProviderRecommendedGenericStable"),
                 _ => recommendedAction
             };
         }
@@ -2121,12 +2121,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             return escalationHint switch
             {
-                "Escalate as provider or channel-policy instability if verification traffic continues to fail without any successful recovery in this provider lane." => T("CommunicationChannelProviderEscalationVerificationElevated"),
-                "Escalate only if the provider lane keeps degrading after readiness, fallback, and current phone verification path have been checked." => T("CommunicationChannelProviderEscalationVerificationStable"),
-                "Escalate as provider/configuration debt when this diagnostic lane keeps failing without a successful send." => T("CommunicationChannelProviderEscalationAdminTestElevated"),
-                "Escalate only when repeated transport-test failures continue after configuration corrections." => T("CommunicationChannelProviderEscalationAdminTestStable"),
-                "Escalate this provider lane if failures keep accumulating without recovery." => T("CommunicationChannelProviderEscalationGenericElevated"),
-                "Escalate only if this provider lane continues degrading after basic transport checks." => T("CommunicationChannelProviderEscalationGenericStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationVerificationElevated => T("CommunicationChannelProviderEscalationVerificationElevated"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationVerificationStable => T("CommunicationChannelProviderEscalationVerificationStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationAdminTestElevated => T("CommunicationChannelProviderEscalationAdminTestElevated"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationAdminTestStable => T("CommunicationChannelProviderEscalationAdminTestStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationGenericElevated => T("CommunicationChannelProviderEscalationGenericElevated"),
+                ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationGenericStable => T("CommunicationChannelProviderEscalationGenericStable"),
                 _ => escalationHint
             };
         }
@@ -2135,11 +2135,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             return recommendedAction switch
             {
-                "Do not replay historical verification messages. If the user is still blocked, confirm the current phone number and request a fresh code through the canonical verification flow." => T("CommunicationChannelChainRecommendedVerificationRecovered"),
-                "Do not replay historical verification messages. Confirm the current phone number, review preferred-vs-fallback channel policy, then request a fresh code through the canonical verification flow." => T("CommunicationChannelChainRecommendedVerificationBlocked"),
-                "Rerun diagnostics only to the reserved channel test target after correcting provider settings, templates, or channel policy." => T("CommunicationChannelChainRecommendedAdminTest"),
-                "Review the latest pending or failed non-email attempts before taking manual action." => T("CommunicationChannelChainRecommendedGenericPending"),
-                "Review recent non-email delivery history before escalating." => T("CommunicationChannelChainRecommendedGenericStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedVerificationRecovered => T("CommunicationChannelChainRecommendedVerificationRecovered"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedVerificationBlocked => T("CommunicationChannelChainRecommendedVerificationBlocked"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedAdminTest => T("CommunicationChannelChainRecommendedAdminTest"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedGenericPending => T("CommunicationChannelChainRecommendedGenericPending"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedGenericStable => T("CommunicationChannelChainRecommendedGenericStable"),
                 _ => recommendedAction
             };
         }
@@ -2148,12 +2148,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             return escalationHint switch
             {
-                "Repeated verification failures without a successful send indicate a likely transport or channel-policy issue. Escalate after confirming SMS/WhatsApp readiness and fallback policy." => T("CommunicationChannelChainEscalationVerificationBlocked"),
-                "Escalate only if the canonical verification flow keeps failing after channel readiness and policy have been checked." => T("CommunicationChannelChainEscalationVerificationStable"),
-                "Repeated admin-test failures without any successful send suggest provider/configuration debt. Escalate as transport setup or provider issue instead of repeatedly rerunning tests." => T("CommunicationChannelChainEscalationAdminTestBlocked"),
-                "If a rerun succeeds, treat this as an isolated incident. Escalate only when repeated failures continue after config fixes." => T("CommunicationChannelChainEscalationAdminTestStable"),
-                "Escalate only if the chain continues to fail after a previously successful path has been revalidated." => T("CommunicationChannelChainEscalationGenericRecovered"),
-                "Escalate when the same non-email path fails repeatedly without a verified successful send." => T("CommunicationChannelChainEscalationGenericBlocked"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainEscalationVerificationBlocked => T("CommunicationChannelChainEscalationVerificationBlocked"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainEscalationVerificationStable => T("CommunicationChannelChainEscalationVerificationStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainEscalationAdminTestBlocked => T("CommunicationChannelChainEscalationAdminTestBlocked"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainEscalationAdminTestStable => T("CommunicationChannelChainEscalationAdminTestStable"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainEscalationGenericRecovered => T("CommunicationChannelChainEscalationGenericRecovered"),
+                ChannelDispatchAuditVocabulary.Guidance.ChainEscalationGenericBlocked => T("CommunicationChannelChainEscalationGenericBlocked"),
                 _ => escalationHint
             };
         }
@@ -2162,12 +2162,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             return statusMix switch
             {
-                "Mixed success/failure" => T("CommunicationChainStatusMixed"),
-                "Open failure chain" => T("CommunicationChainStatusOpenFailure"),
-                "Failure-only chain" => T("CommunicationChainStatusFailureOnly"),
-                "Pending-only chain" => T("CommunicationChainStatusPendingOnly"),
-                "Success-only chain" => T("CommunicationChainStatusSuccessOnly"),
-                "Single attempt" => T("CommunicationChainStatusSingleAttempt"),
+                ChannelDispatchAuditVocabulary.ChainStatusMixes.Mixed => T("CommunicationChainStatusMixed"),
+                ChannelDispatchAuditVocabulary.ChainStatusMixes.OpenFailure => T("CommunicationChainStatusOpenFailure"),
+                ChannelDispatchAuditVocabulary.ChainStatusMixes.FailureOnly => T("CommunicationChainStatusFailureOnly"),
+                ChannelDispatchAuditVocabulary.ChainStatusMixes.PendingOnly => T("CommunicationChainStatusPendingOnly"),
+                ChannelDispatchAuditVocabulary.ChainStatusMixes.SuccessOnly => T("CommunicationChainStatusSuccessOnly"),
+                ChannelDispatchAuditVocabulary.ChainStatusMixes.SingleAttempt => T("CommunicationChainStatusSingleAttempt"),
                 _ => statusMix ?? string.Empty
             };
         }

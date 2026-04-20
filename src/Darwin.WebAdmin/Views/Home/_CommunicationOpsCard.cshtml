@@ -1,5 +1,13 @@
 @model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string CommunicationChannelLabel(string channel) => channel switch
+    {
+        "SMS" => T.T("SMS"),
+        "WhatsApp" => T.T("WhatsApp"),
+        _ => channel
+    };
+}
 
 <div id="communication-ops-card" class="card shadow-sm">
     <div class="card-header bg-white">
@@ -18,8 +26,8 @@
                 </button>
                 <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("OpenWorkspaceAction")</a>
                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary">@T.T("SMTP")</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary">@T.T("SMS")</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary">@T.T("WhatsApp")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary">@CommunicationChannelLabel("SMS")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary">@CommunicationChannelLabel("WhatsApp")</a>
                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary">@T.T("AdminAlerts")</a>
             </div>
         </div>

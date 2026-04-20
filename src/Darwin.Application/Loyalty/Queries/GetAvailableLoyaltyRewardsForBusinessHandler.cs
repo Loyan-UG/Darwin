@@ -5,11 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Queries
 {
@@ -36,6 +38,7 @@ namespace Darwin.Application.Loyalty.Queries
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the
@@ -53,10 +56,12 @@ namespace Darwin.Application.Loyalty.Queries
         /// </exception>
         public GetAvailableLoyaltyRewardsForBusinessHandler(
             IAppDbContext db,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -80,7 +85,7 @@ namespace Darwin.Application.Loyalty.Queries
         {
             if (businessId == Guid.Empty)
             {
-                return Result<IReadOnlyList<LoyaltyRewardSummaryDto>>.Fail("BusinessId is required.");
+                return Result<IReadOnlyList<LoyaltyRewardSummaryDto>>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             var userId = _currentUserService.GetCurrentUserId();
@@ -88,7 +93,7 @@ namespace Darwin.Application.Loyalty.Queries
             {
                 // Defensive check; in typical WebApi flows the current user is always
                 // authenticated for consumer endpoints.
-                return Result<IReadOnlyList<LoyaltyRewardSummaryDto>>.Fail("Unauthorized.");
+                return Result<IReadOnlyList<LoyaltyRewardSummaryDto>>.Fail(_localizer["Unauthorized"]);
             }
 
             // Load the active loyalty program for the specified business. If there is

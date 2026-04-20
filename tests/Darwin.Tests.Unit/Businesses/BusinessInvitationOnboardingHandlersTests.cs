@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
@@ -15,6 +16,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Businesses;
 
@@ -57,7 +59,7 @@ public sealed class BusinessInvitationOnboardingHandlersTests
         db.Set<User>().Add(CreateUser(invitedEmail));
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new GetBusinessInvitationPreviewHandler(db);
+        var handler = new GetBusinessInvitationPreviewHandler(db, new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(token, TestContext.Current.CancellationToken);
 
@@ -114,7 +116,8 @@ public sealed class BusinessInvitationOnboardingHandlersTests
             new FakeSecurityStampService(),
             jwt,
             new FakeClock(new DateTime(2030, 1, 1, 9, 0, 0, DateTimeKind.Utc)),
-            new BusinessInvitationAcceptDtoValidator());
+            new BusinessInvitationAcceptDtoValidator(),
+            new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(new BusinessInvitationAcceptDto
         {
@@ -233,6 +236,19 @@ public sealed class BusinessInvitationOnboardingHandlersTests
         }
 
         public int RevokeAllForUser(Guid userId) => 0;
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public System.Collections.Generic.IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class BusinessInvitationTestDbContext : DbContext, IAppDbContext

@@ -10,6 +10,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands;
 
@@ -20,11 +21,13 @@ public sealed class MarkInactiveReminderSentHandler
 {
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public MarkInactiveReminderSentHandler(IAppDbContext db, IClock clock)
+    public MarkInactiveReminderSentHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -34,12 +37,12 @@ public sealed class MarkInactiveReminderSentHandler
     {
         if (request is null)
         {
-            return Result.Fail("Request payload is required.");
+            return Result.Fail(_localizer["RequestPayloadRequired"]);
         }
 
         if (request.UserId == Guid.Empty)
         {
-            return Result.Fail("UserId is required.");
+            return Result.Fail(_localizer["UserIdRequired"]);
         }
 
         var snapshot = await _db.Set<UserEngagementSnapshot>()
@@ -48,7 +51,7 @@ public sealed class MarkInactiveReminderSentHandler
 
         if (snapshot is null)
         {
-            return Result.Fail("User engagement snapshot was not found.");
+            return Result.Fail(_localizer["UserEngagementSnapshotNotFound"]);
         }
 
         var sentAtUtc = request.SentAtUtc ?? _clock.UtcNow;

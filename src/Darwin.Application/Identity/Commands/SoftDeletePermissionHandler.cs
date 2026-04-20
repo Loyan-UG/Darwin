@@ -4,6 +4,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,11 +18,16 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<PermissionDeleteDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SoftDeletePermissionHandler(IAppDbContext db, IValidator<PermissionDeleteDto> validator)
+        public SoftDeletePermissionHandler(
+            IAppDbContext db,
+            IValidator<PermissionDeleteDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -36,24 +42,24 @@ namespace Darwin.Application.Identity.Commands
 
             var permission = await _db.Set<Permission>().FirstOrDefaultAsync(p => p.Id == dto.Id && !p.IsDeleted, ct);
             if (permission is null)
-                return Result.Fail("Permission not found.");
+                return Result.Fail(_localizer["PermissionNotFound"]);
 
             // Concurrency check
             if (permission.RowVersion is not null && dto.RowVersion is not null && permission.RowVersion.Length > 0)
             {
                 if (!StructuralComparisons.StructuralEqualityComparer.Equals(permission.RowVersion, dto.RowVersion))
-                    return Result.Fail("Concurrency conflict.");
+                    return Result.Fail(_localizer["ConcurrencyConflict"]);
             }
 
             if (permission.IsSystem)
-                return Result.Fail("System permissions cannot be deleted.");
+                return Result.Fail(_localizer["SystemPermissionsCannotBeDeleted"]);
 
             // Check role assignments
             var assigned = await _db.Set<RolePermission>()
                 .AnyAsync(rp => rp.PermissionId == permission.Id && !rp.IsDeleted, ct);
 
             if (assigned)
-                return Result.Fail("Permission is assigned to one or more roles and cannot be deleted.");
+                return Result.Fail(_localizer["PermissionAssignedToRolesCannotDelete"]);
 
             permission.IsDeleted = true;
             await _db.SaveChangesAsync(ct);

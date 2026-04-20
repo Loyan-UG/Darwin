@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -20,11 +21,13 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<AddressCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateUserAddressHandler(IAppDbContext db, IValidator<AddressCreateDto> validator)
+        public CreateUserAddressHandler(IAppDbContext db, IValidator<AddressCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         public async Task<Result<Guid>> HandleAsync(AddressCreateDto dto, CancellationToken ct = default)
@@ -33,7 +36,7 @@ namespace Darwin.Application.Identity.Commands
 
             var userExists = await _db.Set<User>().AnyAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
             if (!userExists)
-                return Result<Guid>.Fail("User not found.");
+                return Result<Guid>.Fail(_localizer["UserNotFound"]);
 
             var address = new Address
             {

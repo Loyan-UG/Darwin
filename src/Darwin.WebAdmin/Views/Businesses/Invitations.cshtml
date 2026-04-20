@@ -23,6 +23,8 @@
         Darwin.Domain.Enums.BusinessInvitationStatus.Expired => T.T("Expired"),
         _ => T.T("BusinessInvitationsAllLabel")
     };
+
+    string MemberWorkspaceLabel() => T.T("Members");
 }
 
 <div id="business-invitations-workspace-shell">
@@ -45,7 +47,7 @@
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-invitations-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("Members")</a>
+           hx-push-url="true">@MemberWorkspaceLabel()</a>
         @if (isFullAdmin)
         {
             <a asp-action="Edit"

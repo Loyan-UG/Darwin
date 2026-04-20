@@ -1,14 +1,15 @@
-﻿using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Validators
 {
     public sealed class UserCreateValidator : AbstractValidator<UserCreateDto>
     {
-        public UserCreateValidator()
+        public UserCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Email).NotEmpty().EmailAddress();
-            RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+            RuleFor(x => x.Password).ApplyPasswordPolicy(localizer);
             RuleFor(x => x.Locale).NotEmpty();
             RuleFor(x => x.Timezone).NotEmpty();
             RuleFor(x => x.Currency).NotEmpty().Length(3);
@@ -32,23 +33,20 @@ namespace Darwin.Application.Identity.Validators
     /// </summary>
     public sealed class UserAdminSetPasswordValidator : AbstractValidator<UserAdminSetPasswordDto>
     {
-        public UserAdminSetPasswordValidator()
+        public UserAdminSetPasswordValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.NewPassword)
-                .NotEmpty()
-                .MinimumLength(8);
-            // TODO: Consider adding stronger password policy (mixed case, digits, symbols) if required.
+            RuleFor(x => x.NewPassword).ApplyPasswordPolicy(localizer);
         }
     }
 
     public sealed class UserChangePasswordValidator : AbstractValidator<UserChangePasswordDto>
     {
-        public UserChangePasswordValidator()
+        public UserChangePasswordValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.CurrentPassword).NotEmpty();
-            RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(8);
+            RuleFor(x => x.NewPassword).ApplyPasswordPolicy(localizer);
         }
     }
 

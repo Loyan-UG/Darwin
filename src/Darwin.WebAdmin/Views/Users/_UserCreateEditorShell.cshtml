@@ -26,6 +26,7 @@
         <div class="col-md-6">
             <label asp-for="Password" class="form-label"></label>
             <input asp-for="Password" type="password" class="form-control" />
+            <div class="form-text">@T.T("PasswordPolicyHelp")</div>
             <span asp-validation-for="Password" class="text-danger"></span>
         </div>
 

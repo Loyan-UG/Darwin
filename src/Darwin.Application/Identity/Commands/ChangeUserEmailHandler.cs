@@ -6,6 +6,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,13 +20,19 @@ namespace Darwin.Application.Identity.Commands
         private readonly IAppDbContext _db;
         private readonly ISecurityStampService _stamps;
         private readonly IValidator<UserChangeEmailDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>Creates a new instance of the handler.</summary>
-        public ChangeUserEmailHandler(IAppDbContext db, ISecurityStampService stamps, IValidator<UserChangeEmailDto> validator)
+        public ChangeUserEmailHandler(
+            IAppDbContext db,
+            ISecurityStampService stamps,
+            IValidator<UserChangeEmailDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _stamps = stamps;
             _validator = validator;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -41,12 +48,12 @@ namespace Darwin.Application.Identity.Commands
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.Id && !u.IsDeleted, ct);
             if (user is null)
-                return Result.Fail("User not found.");
+                return Result.Fail(_localizer["UserNotFound"]);
 
             var normalized = dto.NewEmail.Trim().ToUpperInvariant();
             var exists = await _db.Set<User>().AnyAsync(u => u.NormalizedEmail == normalized && u.Id != dto.Id && !u.IsDeleted, ct);
             if (exists)
-                return Result.Fail("Email already in use.");
+                return Result.Fail(_localizer["EmailAlreadyInUse"]);
 
             // Update email and normalized values
             var trimmed = dto.NewEmail.Trim();

@@ -8,6 +8,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -20,11 +21,13 @@ namespace Darwin.Application.Identity.Commands
 
         private readonly IAppDbContext _db;
         private readonly IWebAuthnService _webauthn;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public FinishLoginHandler(IAppDbContext db, IWebAuthnService webauthn)
+        public FinishLoginHandler(IAppDbContext db, IWebAuthnService webauthn, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _webauthn = webauthn;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -41,22 +44,22 @@ namespace Darwin.Application.Identity.Commands
                                           && (t.ExpiresAtUtc == null || t.ExpiresAtUtc > DateTime.UtcNow), ct);
 
             if (token is null)
-                return Result.Fail("Login session expired or missing.");
+                return Result.Fail(_localizer["LoginSessionExpiredOrMissing"]);
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == token.UserId && !u.IsDeleted, ct);
             if (user is null)
-                return Result.Fail("User not found for this session.");
+                return Result.Fail(_localizer["UserNotFoundForThisSession"]);
 
             var verified = await _webauthn.FinishLoginAsync(dto.ClientResponseJson, token.Value, ct);
             if (!verified.Ok)
-                return Result.Fail(verified.Error ?? "Verification failed.");
+                return Result.Fail(verified.Error ?? _localizer["VerificationFailed"]);
 
             // Update counter and last-used
             var cred = await _db.Set<UserWebAuthnCredential>()
                 .FirstOrDefaultAsync(c => c.CredentialId == verified.CredentialId && !c.IsDeleted, ct);
 
             if (cred is null)
-                return Result.Fail("Credential not found after verification.");
+                return Result.Fail(_localizer["CredentialNotFoundAfterVerification"]);
 
             cred.SignatureCounter = verified.NewSignCount;
             cred.LastUsedAtUtc = DateTime.UtcNow;

@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -14,19 +16,23 @@ namespace Darwin.Application.Businesses.Commands
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ToggleBusinessFavoriteHandler(IAppDbContext db, ICurrentUserService currentUser)
+        public ToggleBusinessFavoriteHandler(IAppDbContext db, ICurrentUserService currentUser, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result<ToggleBusinessReactionDto>> HandleAsync(Guid businessId, CancellationToken ct = default)
         {
             if (businessId == Guid.Empty)
-                return Result<ToggleBusinessReactionDto>.Fail("Business id must not be empty.");
+                return Result<ToggleBusinessReactionDto>.Fail(_localizer["BusinessIdRequired"]);
 
             var userId = _currentUser.GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return Result<ToggleBusinessReactionDto>.Fail(_localizer["UserNotAuthenticated"]);
 
             var existing = await _db.Set<BusinessFavorite>()
                 .SingleOrDefaultAsync(x => x.BusinessId == businessId && x.UserId == userId, ct)

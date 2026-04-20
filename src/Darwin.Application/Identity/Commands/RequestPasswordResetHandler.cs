@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Communication;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
@@ -14,6 +16,7 @@ using Darwin.Shared.Results;
 using Darwin.Shared.Security;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 
 namespace Darwin.Application.Identity.Commands
@@ -29,6 +32,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly IEmailSender _email;
         private readonly IClock _clock;
         private readonly IValidator<RequestPasswordResetDto> _validator;
+        private readonly IStringLocalizer<CommunicationResource> _communicationLocalizer;
         private readonly ILogger<RequestPasswordResetHandler> _logger;
 
         /// <summary>
@@ -43,12 +47,14 @@ namespace Darwin.Application.Identity.Commands
             IEmailSender email,
             IClock clock,
             IValidator<RequestPasswordResetDto> validator,
+            IStringLocalizer<CommunicationResource> communicationLocalizer,
             ILogger<RequestPasswordResetHandler> logger)
         {
             _db = db;
             _email = email;
             _clock = clock;
             _validator = validator;
+            _communicationLocalizer = communicationLocalizer ?? throw new ArgumentNullException(nameof(communicationLocalizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -92,20 +98,32 @@ namespace Darwin.Application.Identity.Commands
 
             // NOTE: For production, switch this to a templating engine and a branded reset URL.
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(user.Locale, siteSettings?.DefaultCulture);
+            var subjectTemplate = CommunicationTemplateDefaults.ResolveTemplate(
+                _communicationLocalizer,
+                communicationCulture,
+                siteSettings?.PasswordResetEmailSubjectTemplate,
+                CommunicationTemplateDefaults.LegacyPasswordResetSubjectTemplate,
+                "PasswordResetSubjectTemplateDefault");
+            var bodyTemplate = CommunicationTemplateDefaults.ResolveTemplate(
+                _communicationLocalizer,
+                communicationCulture,
+                siteSettings?.PasswordResetEmailBodyTemplate,
+                CommunicationTemplateDefaults.LegacyPasswordResetBodyTemplate,
+                "PasswordResetBodyTemplateDefault");
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
                 TransactionalEmailTemplateRenderer.Render(
-                    siteSettings?.PasswordResetEmailSubjectTemplate,
-                    "Reset your Darwin account password",
+                    subjectTemplate,
+                    subjectTemplate,
                     new Dictionary<string, string?>
                     {
                         ["email"] = user.Email,
                         ["expires_at_utc"] = expires.ToString("u")
                     }));
             var body = TransactionalEmailTemplateRenderer.Render(
-                siteSettings?.PasswordResetEmailBodyTemplate,
-                $"Use the following token to reset your password: <b>{token}</b><br/>" +
-                $"This token expires at {expires:u}.",
+                bodyTemplate,
+                bodyTemplate,
                 new Dictionary<string, string?>
                 {
                     ["email"] = user.Email,
@@ -113,7 +131,7 @@ namespace Darwin.Application.Identity.Commands
                     ["expires_at_utc"] = expires.ToString("u")
                 });
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
-            body = ApplyRecipientOverrideNotice(user.Email, recipient, body);
+            body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, user.Email, recipient, body);
 
 
             var maskedEmail = MaskEmail(user.Email);
@@ -152,14 +170,22 @@ namespace Darwin.Application.Identity.Commands
             return string.IsNullOrWhiteSpace(prefix) ? subject : $"{prefix.Trim()} {subject}";
         }
 
-        private static string ApplyRecipientOverrideNotice(string originalRecipient, string effectiveRecipient, string body)
+        private static string ApplyRecipientOverrideNotice(IStringLocalizer<CommunicationResource> localizer, string? culture, string originalRecipient, string effectiveRecipient, string body)
         {
             if (string.Equals(originalRecipient, effectiveRecipient, StringComparison.OrdinalIgnoreCase))
             {
                 return body;
             }
 
-            return $"<p><strong>Original recipient:</strong> {originalRecipient}</p>{body}";
+            var noticeTemplate = CommunicationTemplateDefaults.ResolveText(localizer, culture, "RecipientOverrideNoticeHtml");
+            var notice = TransactionalEmailTemplateRenderer.Render(
+                noticeTemplate,
+                noticeTemplate,
+                new Dictionary<string, string?>
+                {
+                    ["original_recipient"] = originalRecipient
+                });
+            return $"{notice}{body}";
         }
 
         /// <summary>

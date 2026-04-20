@@ -7,6 +7,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -17,16 +18,21 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<UnlinkExternalLoginDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Creates a new instance of the handler.
         /// </summary>
         /// <param name="db">Application DbContext abstraction used to access identity tables.</param>
         /// <param name="validator">FluentValidation validator for <see cref="UnlinkExternalLoginDto"/>.</param>
-        public UnlinkExternalLoginHandler(IAppDbContext db, IValidator<UnlinkExternalLoginDto> validator)
+        public UnlinkExternalLoginHandler(
+            IAppDbContext db,
+            IValidator<UnlinkExternalLoginDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -46,7 +52,7 @@ namespace Darwin.Application.Identity.Commands
                                           !l.IsDeleted, ct);
 
             if (link == null)
-                return Result.Fail("External link not found.");
+                return Result.Fail(_localizer["ExternalLinkNotFound"]);
 
             link.IsDeleted = true;
             await _db.SaveChangesAsync(ct);

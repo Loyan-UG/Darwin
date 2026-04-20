@@ -1,13 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries
 {
@@ -18,7 +20,13 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetRoleWithPermissionsForEditHandler
     {
         private readonly IAppDbContext _db;
-        public GetRoleWithPermissionsForEditHandler(IAppDbContext db) => _db = db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public GetRoleWithPermissionsForEditHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
 
         /// <summary>
         /// Returns the role edit payload or failure if the role is missing or deleted.
@@ -30,16 +38,14 @@ namespace Darwin.Application.Identity.Queries
                 .FirstOrDefaultAsync(r => r.Id == roleId && !r.IsDeleted, ct);
 
             if (role is null)
-                return Result<RolePermissionsEditDto>.Fail("Role not found.");
+                return Result<RolePermissionsEditDto>.Fail(_localizer["RoleNotFound"]);
 
-            // Current assignments
             var currentPermIds = await _db.Set<RolePermission>()
                 .AsNoTracking()
                 .Where(rp => rp.RoleId == roleId && !rp.IsDeleted)
                 .Select(rp => rp.PermissionId)
                 .ToListAsync(ct);
 
-            // Full selectable list
             var allPerms = await _db.Set<Permission>()
                 .AsNoTracking()
                 .Where(p => !p.IsDeleted)

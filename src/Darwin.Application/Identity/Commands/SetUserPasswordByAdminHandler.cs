@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -24,6 +25,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly IUserPasswordHasher _hasher;
         private readonly ISecurityStampService _stamps;
         private readonly IValidator<UserAdminSetPasswordDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes the handler with persistence, hashing and security stamp services.
@@ -32,12 +34,14 @@ namespace Darwin.Application.Identity.Commands
             IAppDbContext db,
             IUserPasswordHasher hasher,
             ISecurityStampService stamps,
-            IValidator<UserAdminSetPasswordDto> validator)
+            IValidator<UserAdminSetPasswordDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _hasher = hasher ?? throw new ArgumentNullException(nameof(hasher));
             _stamps = stamps ?? throw new ArgumentNullException(nameof(stamps));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -55,7 +59,7 @@ namespace Darwin.Application.Identity.Commands
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.Id && !u.IsDeleted, ct);
             if (user is null)
-                return Result.Fail("User not found.");
+                return Result.Fail(_localizer["UserNotFound"]);
 
             // Hash and set the new password.
             user.PasswordHash = _hasher.Hash(dto.NewPassword);

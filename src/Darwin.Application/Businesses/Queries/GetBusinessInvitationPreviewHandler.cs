@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Queries
 {
@@ -18,17 +19,19 @@ namespace Darwin.Application.Businesses.Queries
     public sealed class GetBusinessInvitationPreviewHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public GetBusinessInvitationPreviewHandler(IAppDbContext db)
+        public GetBusinessInvitationPreviewHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result<BusinessInvitationPreviewDto>> HandleAsync(string token, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(token))
             {
-                return Result<BusinessInvitationPreviewDto>.Fail("Invitation token is required.");
+                return Result<BusinessInvitationPreviewDto>.Fail(_localizer["InvitationTokenRequired"]);
             }
 
             var trimmedToken = token.Trim();
@@ -41,7 +44,7 @@ namespace Darwin.Application.Businesses.Queries
 
             if (invitation is null)
             {
-                return Result<BusinessInvitationPreviewDto>.Fail("Invitation not found.");
+                return Result<BusinessInvitationPreviewDto>.Fail(_localizer["InvitationNotFound"]);
             }
 
             var business = await _db.Set<Business>()
@@ -51,7 +54,7 @@ namespace Darwin.Application.Businesses.Queries
 
             if (business is null || !business.IsActive)
             {
-                return Result<BusinessInvitationPreviewDto>.Fail("The invited business is not available.");
+                return Result<BusinessInvitationPreviewDto>.Fail(_localizer["InvitedBusinessUnavailable"]);
             }
 
             var effectiveStatus = invitation.Status == BusinessInvitationStatus.Pending && invitation.ExpiresAtUtc <= utcNow

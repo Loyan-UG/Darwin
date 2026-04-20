@@ -19,6 +19,7 @@
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
         _ => T.T("Members")
     };
+    string MemberWorkspaceLabel() => T.T("Members");
     string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
     {
         Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
@@ -40,6 +41,13 @@
     string CommunicationChannelLabel(string channel) => string.Equals(channel, "WhatsApp", StringComparison.OrdinalIgnoreCase)
         ? T.T("BusinessCommunicationWhatsAppShort")
         : T.T("SMS");
+    string BusinessLifecycleStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch
+    {
+        Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("BusinessEditorPendingApproval"),
+        Darwin.Domain.Enums.BusinessOperationalStatus.Approved => T.T("BusinessEditorApproved"),
+        Darwin.Domain.Enums.BusinessOperationalStatus.Suspended => T.T("BusinessEditorSuspended"),
+        _ => status.ToString()
+    };
     var setupOverridePlaceholder =
         "{\"" + setupPrimaryCulture + "\":{\"BusinessSetupTitle\":\"Betriebs-Setup\"},\"" +
         setupSecondaryCulture + "\":{\"BusinessSetupTitle\":\"Business setup\"}}";
@@ -68,7 +76,7 @@
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
-                <i class="fa-solid fa-user-group"></i> @T.T("Members")
+                <i class="fa-solid fa-user-group"></i> @MemberWorkspaceLabel()
             </a>
             <a asp-action="Locations"
                asp-route-businessId="@Model.Id"
@@ -86,7 +94,7 @@
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
-                <i class="fa-solid fa-envelope"></i> @T.T("Invitations")
+                <i class="fa-solid fa-envelope"></i> @InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)
             </a>
             <a asp-action="Subscription"
                asp-route-businessId="@Model.Id"
@@ -113,8 +121,20 @@
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small text-uppercase">@T.T("OperationalStatus")</div>
-                <div class="fw-semibold mt-1">@Model.OperationalStatus</div>
+                <div class="fw-semibold mt-1">@BusinessLifecycleStatusLabel(Model.OperationalStatus)</div>
                 <div class="small text-muted mt-2">@(Model.IsActive ? T.T("BusinessIsActive") : T.T("BusinessIsInactive"))</div>
+                @if (Model.ApprovedAtUtc.HasValue)
+                {
+                    <div class="small text-muted mt-2">@string.Format(T.T("BusinessEditorApprovedAt"), Model.ApprovedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                }
+                @if (Model.SuspendedAtUtc.HasValue)
+                {
+                    <div class="small text-muted mt-1">@string.Format(T.T("BusinessEditorSuspendedAt"), Model.SuspendedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.SuspensionReason))
+                {
+                    <div class="small text-muted mt-1">@string.Format(T.T("BusinessEditorReasonValue"), Model.SuspensionReason)</div>
+                }
                 <div class="d-flex gap-2 flex-wrap mt-3">
                     <a asp-action="Index"
                        asp-route-operationalStatus="@Model.OperationalStatus"
@@ -131,6 +151,43 @@
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("EditBusiness")</a>
                 </div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    @if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
+                    {
+                        <form asp-action="Approve" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                            <input type="hidden" name="returnToSetup" value="true" />
+                            <button type="submit" class="btn btn-sm btn-success">@T.T("BusinessEditorApprove")</button>
+                        </form>
+                    }
+                    else if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
+                    {
+                        <form asp-action="Reactivate" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                            <input type="hidden" name="returnToSetup" value="true" />
+                            <button type="submit" class="btn btn-sm btn-success">@T.T("BusinessEditorReactivate")</button>
+                        </form>
+                    }
+                    @if (Model.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
+                    {
+                        <form asp-action="Suspend" method="post" class="d-flex gap-2 flex-wrap">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                            <input type="hidden" name="returnToSetup" value="true" />
+                            <input type="text"
+                                   name="note"
+                                   class="form-control form-control-sm"
+                                   style="min-width: 220px;"
+                                   placeholder="@T.T("BusinessEditorOptionalSuspensionReason")" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("BusinessEditorSuspend")</button>
+                        </form>
+                    }
+                </div>
             </div>
         </div>
         <div class="col-md-3">
@@ -145,7 +202,7 @@
                        hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("Members")</a>
+                       hx-push-url="true">@MemberWorkspaceLabel()</a>
                     <a asp-action="Locations"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
@@ -510,21 +567,78 @@
                            hx-get="@Url.Action("SupportQueue", "Businesses")"
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                            hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                    </div>
+                </div>
+                <div class="card border-0 bg-light-subtle mb-3">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                            <div>
+                                <div class="small text-uppercase text-muted fw-semibold">@T.T("BusinessSupportCustomerTitle")</div>
+                                <div class="fw-semibold">
+                                    @(Model.SupportCustomerProvisioned
+                                        ? T.T("BusinessSupportCustomerReady")
+                                        : T.T("BusinessSupportCustomerMissing"))
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(Model.SupportCustomerProvisioningCompanyName))
+                                {
+                                    <div class="small text-muted">@Model.SupportCustomerProvisioningCompanyName</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.SupportCustomerProvisioningEmail))
+                                {
+                                    <div class="small text-muted">@Model.SupportCustomerProvisioningEmail</div>
+                                }
+                                @if (!Model.SupportCustomerProvisioned && !string.IsNullOrWhiteSpace(Model.SupportCustomerProvisioningIssue))
+                                {
+                                    <div class="small text-danger mt-1">@T.T("BusinessSupportCustomerProvisioningNeeds"): @Model.SupportCustomerProvisioningIssue</div>
+                                }
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                @if (Model.SupportCustomerId.HasValue)
+                                {
+                                    <a asp-controller="Crm"
+                                       asp-action="EditCustomer"
+                                       asp-route-id="@Model.SupportCustomerId.Value"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.SupportCustomerId.Value })"
+                                       hx-target="#business-setup-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("OpenSupportCustomer")</a>
+                                }
+                                else
+                                {
+                                    <form asp-action="ProvisionSupportCustomer"
+                                          method="post"
+                                          class="d-inline"
+                                          hx-post="@Url.Action("ProvisionSupportCustomer", "Businesses")"
+                                          hx-target="#business-setup-shell"
+                                          hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="businessId" value="@Model.Id" />
+                                        <input type="hidden" name="returnToSetup" value="true" />
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                @(Model.CanProvisionSupportCustomer ? null : "disabled")>
+                                            @T.T("ProvisionSupportCustomer")
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label asp-for="DefaultCulture" class="form-label">@T.T("DefaultCulture")</label>
-                        <input asp-for="DefaultCulture" class="form-control" />
+                        <setting-select asp-for="DefaultCulture" setting="SupportedCulturesCsv"></setting-select>
                     </div>
                     <div class="col-md-4">
                         <label asp-for="DefaultCurrency" class="form-label">@T.T("DefaultCurrency")</label>
-                        <input asp-for="DefaultCurrency" class="form-control" maxlength="3" />
+                        <setting-select asp-for="DefaultCurrency" setting="SupportedCurrenciesCsv"></setting-select>
                     </div>
                     <div class="col-md-4">
                         <label asp-for="DefaultTimeZoneId" class="form-label">@T.T("DefaultTimeZone")</label>
-                        <input asp-for="DefaultTimeZoneId" class="form-control" />
+                        <setting-select asp-for="DefaultTimeZoneId" setting="SupportedTimezonesCsv"></setting-select>
                         <div class="form-text">@T.T("DefaultTimeZoneHelp")</div>
                     </div>
                     <div class="col-md-4">
@@ -993,7 +1107,7 @@
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
-                        <i class="fa-solid fa-user-group"></i> @T.T("Members")
+                        <i class="fa-solid fa-user-group"></i> @MemberWorkspaceLabel()
                     </a>
                     <a asp-action="Invitations"
                        asp-route-businessId="@Model.Id"
@@ -1002,7 +1116,7 @@
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
-                        <i class="fa-solid fa-list-check"></i> @T.T("Invitations")
+                        <i class="fa-solid fa-list-check"></i> @InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)
                     </a>
                     <a asp-action="OwnerOverrideAudits"
                        asp-route-businessId="@Model.Id"
@@ -1069,7 +1183,7 @@
                                hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("Members")</a>
+                               hx-push-url="true">@MemberWorkspaceLabel()</a>
                             <a asp-action="MerchantReadiness"
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("MerchantReadiness", "Businesses")"
@@ -1098,7 +1212,7 @@
                                hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("Invitations")</a>
+                               hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</a>
                             <a asp-action="SupportQueue"
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("SupportQueue", "Businesses")"

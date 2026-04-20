@@ -151,7 +151,7 @@
                                    hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, filter = "Attention" })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
-                                   hx-push-url="true">@T.T("Members")</a>
+                                   hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
                                 <a asp-controller="BusinessCommunications"
                                    asp-action="Details"
                                    asp-route-businessId="@item.BusinessId"

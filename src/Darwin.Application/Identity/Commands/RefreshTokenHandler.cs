@@ -4,6 +4,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,22 +20,24 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IJwtTokenService _jwt;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public RefreshTokenHandler(IAppDbContext db, IJwtTokenService jwt)
+        public RefreshTokenHandler(IAppDbContext db, IJwtTokenService jwt, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _jwt = jwt;
+            _localizer = localizer;
         }
 
         public async Task<Result<AuthResultDto>> HandleAsync(RefreshRequestDto dto, CancellationToken ct = default)
         {
             var userId = _jwt.ValidateRefreshToken(dto.RefreshToken, dto.DeviceId);
             if (userId is null)
-                return Result<AuthResultDto>.Fail("Invalid or expired refresh token.");
+                return Result<AuthResultDto>.Fail(_localizer["InvalidOrExpiredRefreshToken"]);
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == userId && u.IsActive && !u.IsDeleted, ct);
             if (user is null)
-                return Result<AuthResultDto>.Fail("User not found or inactive.");
+                return Result<AuthResultDto>.Fail(_localizer["UserNotFoundOrInactive"]);
 
             // Rotation: revoke the used refresh token and issue a new one for the same device.
             // DeviceId is forwarded so that device-bound refresh tokens remain consistent with SiteSetting.

@@ -10,6 +10,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands;
 
@@ -20,11 +21,13 @@ public sealed class MarkInactiveReminderAttemptHandler
 {
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public MarkInactiveReminderAttemptHandler(IAppDbContext db, IClock clock)
+    public MarkInactiveReminderAttemptHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -34,18 +37,18 @@ public sealed class MarkInactiveReminderAttemptHandler
     {
         if (request is null)
         {
-            return Result.Fail("Request payload is required.");
+            return Result.Fail(_localizer["RequestPayloadRequired"]);
         }
 
         if (request.UserId == Guid.Empty)
         {
-            return Result.Fail("UserId is required.");
+            return Result.Fail(_localizer["UserIdRequired"]);
         }
 
         var normalizedOutcome = NormalizeOutcome(request.Outcome);
         if (normalizedOutcome is null)
         {
-            return Result.Fail("Outcome must be one of: Sent, Failed, Suppressed.");
+            return Result.Fail(_localizer["InactiveReminderOutcomeInvalid"]);
         }
 
         var snapshot = await _db.Set<UserEngagementSnapshot>()
@@ -54,7 +57,7 @@ public sealed class MarkInactiveReminderAttemptHandler
 
         if (snapshot is null)
         {
-            return Result.Fail("User engagement snapshot was not found.");
+            return Result.Fail(_localizer["UserEngagementSnapshotNotFound"]);
         }
 
         var occurredAtUtc = request.OccurredAtUtc ?? _clock.UtcNow;

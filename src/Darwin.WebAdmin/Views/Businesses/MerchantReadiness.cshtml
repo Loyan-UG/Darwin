@@ -9,6 +9,8 @@
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
         _ => T.T("Members")
     };
+    string MemberWorkspaceLabel() => T.T("Members");
+    string InvitationWorkspaceLabel() => T.T("Invitations");
     string InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch
     {
         Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites => T.T("PendingInvites"),
@@ -652,14 +654,14 @@
                                        hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id })"
                                        hx-target="#merchant-readiness-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("Members")</a>
+                                       hx-push-url="true">@MemberWorkspaceLabel()</a>
                                     <a asp-action="Invitations"
                                        asp-route-businessId="@item.Id"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id })"
                                        hx-target="#merchant-readiness-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("Invitations")</a>
+                                       hx-push-url="true">@InvitationWorkspaceLabel()</a>
                                     <a asp-action="OwnerOverrideAudits"
                                        asp-route-businessId="@item.Id"
                                        class="btn btn-sm btn-outline-secondary"

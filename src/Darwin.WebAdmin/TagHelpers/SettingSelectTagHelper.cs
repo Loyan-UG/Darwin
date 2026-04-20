@@ -1,9 +1,12 @@
+using Darwin.Application.Settings.DTOs;
+using Darwin.WebAdmin.Localization;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -23,17 +26,19 @@ using System.Threading.Tasks;
 /// </summary>
 namespace Darwin.WebAdmin.TagHelpers
 {
-    [HtmlTargetElement("setting-select", Attributes = "asp-for, setting")]
+    [HtmlTargetElement("setting-select", Attributes = "asp-for")]
     public sealed class SettingSelectTagHelper : TagHelper
     {
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IAdminTextLocalizer _textLocalizer;
 
         /// <summary>
         /// Creates a new instance injecting the site setting cache.
         /// </summary>
-        public SettingSelectTagHelper(ISiteSettingCache siteSettingCache)
+        public SettingSelectTagHelper(ISiteSettingCache siteSettingCache, IAdminTextLocalizer textLocalizer)
         {
             _siteSettingCache = siteSettingCache;
+            _textLocalizer = textLocalizer;
         }
 
         /// <summary>
@@ -48,6 +53,13 @@ namespace Darwin.WebAdmin.TagHelpers
         /// </summary>
         [HtmlAttributeName("setting")]
         public string Setting { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Backward-compatible alias for <see cref="Setting"/>.
+        /// Older views used "key" before the tag helper settled on the "setting" name.
+        /// </summary>
+        [HtmlAttributeName("key")]
+        public string Key { get; set; } = string.Empty;
 
         /// <summary>
         /// Generates the select element with options from site settings.
@@ -70,48 +82,137 @@ namespace Darwin.WebAdmin.TagHelpers
             // Retrieve current site settings from the cache (cached in memory)
             var siteSettings = await _siteSettingCache.GetAsync();
 
-            // Use reflection to get the property value
-            var property = siteSettings.GetType().GetProperty(Setting, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            string? rawValue = property?.GetValue(siteSettings) as string;
-
             // Build list of options
-            string[] options;
-            if (!string.IsNullOrWhiteSpace(rawValue))
-            {
-                // If the property contains commas, split into multiple options
-                if (rawValue.Contains(','))
-                {
-                    options = rawValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                }
-                else
-                {
-                    // Single value becomes a single option
-                    options = new[] { rawValue.Trim() };
-                }
-            }
-            else
-            {
-                // Fallbacks: all system time zones when setting is "TimeZone",
-                // otherwise a minimal list containing the current value
-                if (string.Equals(Setting, "TimeZone", StringComparison.OrdinalIgnoreCase))
-                {
-                    options = TimeZoneInfo.GetSystemTimeZones().Select(tz => tz.Id).ToArray();
-                }
-                else
-                {
-                    options = string.IsNullOrEmpty(currentValue) ? Array.Empty<string>() : new[] { currentValue };
-                }
-            }
+            var options = BuildOptions(siteSettings, currentValue);
 
             // Build option tags with selection
             var innerHtml = string.Empty;
             foreach (var option in options)
             {
                 var selected = string.Equals(option, currentValue, StringComparison.OrdinalIgnoreCase) ? "selected" : null;
-                innerHtml += $"<option value=\"{option}\"{(selected != null ? " selected" : string.Empty)}>{option}</option>";
+                var encodedValue = HtmlEncoder.Default.Encode(option);
+                var encodedLabel = HtmlEncoder.Default.Encode(GetOptionLabel(option));
+                innerHtml += $"<option value=\"{encodedValue}\"{(selected != null ? " selected" : string.Empty)}>{encodedLabel}</option>";
             }
 
             output.Content.SetHtmlContent(innerHtml);
+        }
+
+        private string[] BuildOptions(SiteSettingDto siteSettings, string currentValue)
+        {
+            var configuredName = string.IsNullOrWhiteSpace(Setting) ? Key : Setting;
+
+            if (string.Equals(configuredName, "SupportedLocalesCsv", StringComparison.OrdinalIgnoreCase))
+            {
+                return SplitCsvOrFallback(siteSettings.SupportedCulturesCsv, currentValue);
+            }
+
+            if (string.Equals(configuredName, nameof(SiteSettingDto.SupportedCulturesCsv), StringComparison.OrdinalIgnoreCase))
+            {
+                return SplitCsvOrFallback(siteSettings.SupportedCulturesCsv, currentValue);
+            }
+
+            if (string.Equals(configuredName, "SupportedCurrenciesCsv", StringComparison.OrdinalIgnoreCase))
+            {
+                return new[]
+                {
+                    siteSettings.DefaultCurrency,
+                    SiteSettingDto.DefaultCurrencyDefault,
+                    "USD",
+                    currentValue
+                }
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!.Trim().ToUpperInvariant())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            }
+
+            if (string.Equals(configuredName, "SupportedTimezonesCsv", StringComparison.OrdinalIgnoreCase))
+            {
+                return TimeZoneInfo.GetSystemTimeZones()
+                    .Select(tz => tz.Id)
+                    .Prepend(siteSettings.TimeZone ?? SiteSettingDto.TimeZoneDefault)
+                    .Prepend("UTC")
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
+
+            var property = siteSettings.GetType().GetProperty(configuredName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            string? rawValue = property?.GetValue(siteSettings) as string;
+
+            if (!string.IsNullOrWhiteSpace(rawValue))
+            {
+                return SplitCsvOrFallback(rawValue, currentValue);
+            }
+
+            if (string.Equals(configuredName, nameof(SiteSettingDto.TimeZone), StringComparison.OrdinalIgnoreCase))
+            {
+                return TimeZoneInfo.GetSystemTimeZones()
+                    .Select(tz => tz.Id)
+                    .Prepend("UTC")
+                    .Prepend(siteSettings.TimeZone ?? SiteSettingDto.TimeZoneDefault)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
+
+            return string.IsNullOrEmpty(currentValue) ? Array.Empty<string>() : new[] { currentValue };
+        }
+
+        private string GetOptionLabel(string option)
+        {
+            var normalizedCulture = AdminCultureCatalog.NormalizeUiCulture(option);
+            if (string.Equals(normalizedCulture, AdminCultureCatalog.German, StringComparison.OrdinalIgnoreCase))
+            {
+                return _textLocalizer.T("LocaleGermanGermany");
+            }
+
+            if (string.Equals(normalizedCulture, AdminCultureCatalog.English, StringComparison.OrdinalIgnoreCase))
+            {
+                return _textLocalizer.T("LocaleEnglishUnitedStates");
+            }
+
+            if (string.Equals(option, "EUR", StringComparison.OrdinalIgnoreCase))
+            {
+                return _textLocalizer.T("CurrencyEuro");
+            }
+
+            if (string.Equals(option, "USD", StringComparison.OrdinalIgnoreCase))
+            {
+                return _textLocalizer.T("CurrencyUsd");
+            }
+
+            if (string.Equals(option, SiteSettingDto.TimeZoneDefault, StringComparison.OrdinalIgnoreCase))
+            {
+                return _textLocalizer.T("TimeZoneEuropeBerlin");
+            }
+
+            if (string.Equals(option, "UTC", StringComparison.OrdinalIgnoreCase))
+            {
+                return _textLocalizer.T("Utc");
+            }
+
+            return option;
+        }
+
+        private static string[] SplitCsvOrFallback(string rawValue, string currentValue)
+        {
+            if (!string.IsNullOrWhiteSpace(rawValue))
+            {
+                if (rawValue.Contains(','))
+                {
+                    return rawValue
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
+                }
+
+                return new[] { rawValue.Trim() };
+            }
+
+            return string.IsNullOrEmpty(currentValue) ? Array.Empty<string>() : new[] { currentValue };
         }
     }
 }

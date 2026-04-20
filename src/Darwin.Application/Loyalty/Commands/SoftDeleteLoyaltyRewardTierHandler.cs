@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -19,28 +20,30 @@ namespace Darwin.Application.Loyalty.Commands
     {
         private readonly IAppDbContext _db;
         private readonly LoyaltyRewardTierDeleteValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SoftDeleteLoyaltyRewardTierHandler(IAppDbContext db)
+        public SoftDeleteLoyaltyRewardTierHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result> HandleAsync(LoyaltyRewardTierDeleteDto dto, CancellationToken ct = default)
         {
             var vr = _validator.Validate(dto);
-            if (!vr.IsValid) return Result.Fail("Invalid delete request.");
+            if (!vr.IsValid) return Result.Fail(_localizer["InvalidDeleteRequest"]);
 
             var entity = await _db.Set<LoyaltyRewardTier>()
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (entity is null)
-                return Result.Fail("Reward tier not found.");
+                return Result.Fail(_localizer["LoyaltyRewardTierNotFound"]);
 
             if (entity.IsDeleted)
                 return Result.Ok();
 
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
-                return Result.Fail("Concurrency conflict. The tier was modified by another process.");
+                return Result.Fail(_localizer["LoyaltyRewardTierConcurrencyConflict"]);
 
             entity.IsDeleted = true;
             await _db.SaveChangesAsync(ct);

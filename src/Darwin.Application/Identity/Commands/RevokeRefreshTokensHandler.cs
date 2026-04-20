@@ -1,6 +1,8 @@
-﻿using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Auth;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Shared.Results;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,8 +16,13 @@ namespace Darwin.Application.Identity.Commands
     public sealed class RevokeRefreshTokensHandler
     {
         private readonly IJwtTokenService _jwt;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public RevokeRefreshTokensHandler(IJwtTokenService jwt) => _jwt = jwt;
+        public RevokeRefreshTokensHandler(IJwtTokenService jwt, IStringLocalizer<ValidationResource> localizer)
+        {
+            _jwt = jwt ?? throw new ArgumentNullException(nameof(jwt));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
 
         public Task<Result<int>> HandleAsync(RevokeRefreshRequestDto dto, CancellationToken ct = default)
         {
@@ -31,7 +38,7 @@ namespace Darwin.Application.Identity.Commands
                 return Task.FromResult(Result<int>.Ok(count));
             }
 
-            return Task.FromResult(Result<int>.Fail("Nothing to revoke."));
+            return Task.FromResult(Result<int>.Fail(_localizer["NothingToRevoke"]));
         }
     }
 }

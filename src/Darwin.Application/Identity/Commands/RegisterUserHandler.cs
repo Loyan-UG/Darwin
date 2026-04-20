@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -22,10 +23,11 @@ namespace Darwin.Application.Identity.Commands
         private readonly IUserPasswordHasher _hasher;
         private readonly ISecurityStampService _stamps;
         private readonly IValidator<UserCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public RegisterUserHandler(IAppDbContext db, IUserPasswordHasher hasher, ISecurityStampService stamps, IValidator<UserCreateDto> validator)
+        public RegisterUserHandler(IAppDbContext db, IUserPasswordHasher hasher, ISecurityStampService stamps, IValidator<UserCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
-            _db = db; _hasher = hasher; _stamps = stamps; _validator = validator;
+            _db = db; _hasher = hasher; _stamps = stamps; _validator = validator; _localizer = localizer;
         }
 
         /// <summary>
@@ -39,7 +41,7 @@ namespace Darwin.Application.Identity.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var exists = await _db.Set<User>().AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
-            if (exists) return Result<Guid>.Fail("Email already in use.");
+            if (exists) return Result<Guid>.Fail(_localizer["EmailAlreadyInUse"]);
 
             var passwordHash = _hasher.Hash(dto.Password);
             var user = new User(dto.Email, passwordHash, _stamps.NewStamp())
@@ -60,7 +62,7 @@ namespace Darwin.Application.Identity.Commands
             {
                 // idempotent check (optional): confirm role exists & not deleted
                 var roleExists = await _db.Set<Role>().AnyAsync(r => r.Id == defaultRoleId.Value && !r.IsDeleted, ct);
-                if (!roleExists) return Result<Guid>.Fail("Default role not found.");
+                if (!roleExists) return Result<Guid>.Fail(_localizer["DefaultRoleNotFound"]);
 
                 _db.Set<UserRole>().Add(new UserRole(user.Id, defaultRoleId.Value));
             }

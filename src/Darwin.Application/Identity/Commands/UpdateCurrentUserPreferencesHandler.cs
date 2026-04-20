@@ -7,6 +7,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands;
 
@@ -24,6 +25,7 @@ public sealed class UpdateCurrentUserPreferencesHandler
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IValidator<UpdateMemberPreferencesDto> _validator;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UpdateCurrentUserPreferencesHandler"/> class.
@@ -31,11 +33,13 @@ public sealed class UpdateCurrentUserPreferencesHandler
     public UpdateCurrentUserPreferencesHandler(
         IAppDbContext db,
         ICurrentUserService currentUser,
-        IValidator<UpdateMemberPreferencesDto> validator)
+        IValidator<UpdateMemberPreferencesDto> validator,
+        IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -49,7 +53,7 @@ public sealed class UpdateCurrentUserPreferencesHandler
         var userId = _currentUser.GetCurrentUserId();
         if (userId == Guid.Empty)
         {
-            return Result.Fail("User is not authenticated.");
+            return Result.Fail(_localizer["UserNotAuthenticated"]);
         }
 
         var user = await _db.Set<User>()
@@ -58,14 +62,14 @@ public sealed class UpdateCurrentUserPreferencesHandler
 
         if (user is null)
         {
-            return Result.Fail("User not found.");
+            return Result.Fail(_localizer["UserNotFound"]);
         }
 
         if (user.RowVersion is not null && user.RowVersion.Length > 0)
         {
             if (!StructuralComparisons.StructuralEqualityComparer.Equals(user.RowVersion, dto.RowVersion))
             {
-                return Result.Fail("Concurrency conflict.");
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
             }
         }
 

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Validators;
 using Darwin.Domain.Entities.Loyalty;
@@ -10,6 +11,7 @@ using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -46,15 +48,17 @@ namespace Darwin.Application.Loyalty.Commands
     {
         private readonly IAppDbContext _db;
         private readonly ConfirmLoyaltyRewardRedemptionValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConfirmLoyaltyRewardRedemptionHandler"/> class.
         /// </summary>
         /// <param name="db">Application database abstraction used to access loyalty entities.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="db"/> is null.</exception>
-        public ConfirmLoyaltyRewardRedemptionHandler(IAppDbContext db)
+        public ConfirmLoyaltyRewardRedemptionHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -105,13 +109,13 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (redemption is null)
             {
-                return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail("Redemption not found.");
+                return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(_localizer["RedemptionNotFound"]);
             }
 
             if (redemption.BusinessId != dto.BusinessId)
             {
                 // Protects against cross-business access or mismatched UI context.
-                return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail("Business mismatch for redemption.");
+                return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(_localizer["BusinessMismatchForRedemption"]);
             }
 
             // Step 3: optional optimistic concurrency check on the redemption row.
@@ -119,13 +123,13 @@ namespace Darwin.Application.Loyalty.Commands
                 !redemption.RowVersion.SequenceEqual(dto.RowVersion))
             {
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    "Concurrency conflict. The redemption was modified by another process.");
+                    _localizer["RedemptionConcurrencyConflict"]);
             }
 
             if (redemption.Status == LoyaltyRedemptionStatus.Cancelled)
             {
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    "The redemption has been cancelled and cannot be confirmed.");
+                    _localizer["RedemptionCancelledCannotConfirm"]);
             }
 
             if (redemption.Status == LoyaltyRedemptionStatus.Confirmed)
@@ -133,14 +137,14 @@ namespace Darwin.Application.Loyalty.Commands
                 // We choose to treat re-confirm attempts as an error rather than silently succeeding.
                 // This makes it easier to spot unintended double-invocations in UIs and tests.
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    "The redemption is already confirmed.");
+                    _localizer["RedemptionAlreadyConfirmed"]);
             }
 
             if (redemption.Status != LoyaltyRedemptionStatus.Pending)
             {
                 // Future-proofing: in case new statuses are introduced, this guards the invariants.
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    "The redemption is not in a pending state.");
+                    _localizer["RedemptionPendingStateRequired"]);
             }
 
             // Step 4: load the associated loyalty account and verify status and balance.
@@ -151,13 +155,13 @@ namespace Darwin.Application.Loyalty.Commands
             if (account is null)
             {
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    "Loyalty account associated with the redemption was not found.");
+                    _localizer["LoyaltyAccountNotFoundForRedemption"]);
             }
 
             if (account.Status != LoyaltyAccountStatus.Active)
             {
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    "The loyalty account is not active and cannot be used for redemption.");
+                    _localizer["LoyaltyAccountInactiveForRedemption"]);
             }
 
             var pointsToSpend = redemption.PointsSpent;
@@ -165,7 +169,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 // Defensive check: a redemption with zero or negative points is inconsistent.
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    "The redemption has an invalid points amount.");
+                    _localizer["RedemptionInvalidPointsAmount"]);
             }
 
             if (account.PointsBalance < pointsToSpend)
@@ -173,7 +177,7 @@ namespace Darwin.Application.Loyalty.Commands
                 // At scan time the balance might have been sufficient, but in a delayed confirmation
                 // scenario it is possible that the account no longer has enough points.
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    "Insufficient points to confirm the redemption.");
+                    _localizer["InsufficientPointsForRedemptionConfirmation"]);
             }
 
             // Step 5: apply the points deduction and update redemption status.

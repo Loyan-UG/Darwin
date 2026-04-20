@@ -8,6 +8,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -22,11 +23,13 @@ namespace Darwin.Application.Identity.Commands
 
         private readonly IAppDbContext _db;
         private readonly IWebAuthnService _webauthn;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public BeginRegistrationHandler(IAppDbContext db, IWebAuthnService webauthn)
+        public BeginRegistrationHandler(IAppDbContext db, IWebAuthnService webauthn, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _webauthn = webauthn;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -40,7 +43,7 @@ namespace Darwin.Application.Identity.Commands
             var user = await _db.Set<User>().AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
             if (user is null)
-                return Result<WebAuthnBeginRegisterResult>.Fail("User not found.");
+                return Result<WebAuthnBeginRegisterResult>.Fail(_localizer["UserNotFound"]);
 
             var userName = string.IsNullOrWhiteSpace(dto.UserName) ? user.Email : dto.UserName;
             var displayName = string.IsNullOrWhiteSpace(dto.DisplayName) ? user.Email : dto.DisplayName;

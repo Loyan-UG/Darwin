@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Commands
 {
@@ -20,13 +21,15 @@ namespace Darwin.Application.Catalog.Commands
     {
         private readonly IAppDbContext _db;
         private readonly BrandDeleteValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new handler instance with the application DbContext abstraction.
         /// </summary>
-        public SoftDeleteBrandHandler(IAppDbContext db)
+        public SoftDeleteBrandHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -41,21 +44,21 @@ namespace Darwin.Application.Catalog.Commands
         {
             var vr = _validator.Validate(dto);
             if (!vr.IsValid)
-                return Result.Fail("Invalid delete request.");
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
 
             // Track entity for update; include RowVersion for concurrency comparison.
             var entity = await _db.Set<Brand>()
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (entity is null)
-                return Result.Fail("Brand not found.");
+                return Result.Fail(_localizer["BrandNotFound"]);
 
             if (entity.IsDeleted)
                 return Result.Ok(); // idempotent
 
             // Concurrency check: compare current row version with the one from UI.
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
-                return Result.Fail("Concurrency conflict. The brand has been modified by another process.");
+                return Result.Fail(_localizer["BrandConcurrencyConflict"]);
 
             entity.IsDeleted = true;
             await _db.SaveChangesAsync(ct);

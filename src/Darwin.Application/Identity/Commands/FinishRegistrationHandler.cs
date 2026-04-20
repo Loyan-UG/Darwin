@@ -8,6 +8,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -21,11 +22,13 @@ namespace Darwin.Application.Identity.Commands
 
         private readonly IAppDbContext _db;
         private readonly IWebAuthnService _webauthn;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public FinishRegistrationHandler(IAppDbContext db, IWebAuthnService webauthn)
+        public FinishRegistrationHandler(IAppDbContext db, IWebAuthnService webauthn, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _webauthn = webauthn;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -42,15 +45,15 @@ namespace Darwin.Application.Identity.Commands
                                           && (t.ExpiresAtUtc == null || t.ExpiresAtUtc > DateTime.UtcNow), ct);
 
             if (token is null)
-                return Result<Guid>.Fail("Registration session expired or missing.");
+                return Result<Guid>.Fail(_localizer["RegistrationSessionExpiredOrMissing"]);
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == token.UserId && !u.IsDeleted, ct);
             if (user is null)
-                return Result<Guid>.Fail("User not found for this session.");
+                return Result<Guid>.Fail(_localizer["UserNotFoundForThisSession"]);
 
             var verified = await _webauthn.FinishRegistrationAsync(dto.ClientResponseJson, token.Value, ct);
             if (!verified.Ok)
-                return Result<Guid>.Fail(verified.Error ?? "Verification failed.");
+                return Result<Guid>.Fail(verified.Error ?? _localizer["VerificationFailed"]);
 
             var existing = await _db.Set<UserWebAuthnCredential>()
                 .FirstOrDefaultAsync(c => c.CredentialId == verified.CredentialId && !c.IsDeleted, ct);

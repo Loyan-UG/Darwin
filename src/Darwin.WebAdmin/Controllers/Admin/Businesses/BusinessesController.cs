@@ -38,6 +38,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
     {
         private readonly GetBusinessesPageHandler _getBusinessesPage;
         private readonly GetBusinessForEditHandler _getBusinessForEdit;
+        private readonly GetBusinessOnboardingCustomerProfileHandler _getBusinessOnboardingCustomerProfile;
         private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
         private readonly GetBusinessSubscriptionStatusHandler _getBusinessSubscriptionStatus;
         private readonly GetBusinessSubscriptionInvoicesPageHandler _getBusinessSubscriptionInvoicesPage;
@@ -47,6 +48,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntent;
         private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
         private readonly CreateBusinessHandler _createBusiness;
+        private readonly EnsureBusinessOnboardingCustomerProfileHandler _ensureBusinessOnboardingCustomerProfile;
         private readonly UpdateBusinessHandler _updateBusiness;
         private readonly SoftDeleteBusinessHandler _deleteBusiness;
         private readonly GetBusinessLocationsPageHandler _getBusinessLocationsPage;
@@ -78,6 +80,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         public BusinessesController(
             GetBusinessesPageHandler getBusinessesPage,
             GetBusinessForEditHandler getBusinessForEdit,
+            GetBusinessOnboardingCustomerProfileHandler getBusinessOnboardingCustomerProfile,
             GetBusinessSupportSummaryHandler getBusinessSupportSummary,
             GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatus,
             GetBusinessSubscriptionInvoicesPageHandler getBusinessSubscriptionInvoicesPage,
@@ -87,6 +90,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             CreateSubscriptionCheckoutIntentHandler createSubscriptionCheckoutIntent,
             GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
             CreateBusinessHandler createBusiness,
+            EnsureBusinessOnboardingCustomerProfileHandler ensureBusinessOnboardingCustomerProfile,
             UpdateBusinessHandler updateBusiness,
             SoftDeleteBusinessHandler deleteBusiness,
             GetBusinessLocationsPageHandler getBusinessLocationsPage,
@@ -117,6 +121,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             _getBusinessesPage = getBusinessesPage;
             _getBusinessForEdit = getBusinessForEdit;
+            _getBusinessOnboardingCustomerProfile = getBusinessOnboardingCustomerProfile;
             _getBusinessSupportSummary = getBusinessSupportSummary;
             _getBusinessSubscriptionStatus = getBusinessSubscriptionStatus;
             _getBusinessSubscriptionInvoicesPage = getBusinessSubscriptionInvoicesPage;
@@ -126,6 +131,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _createSubscriptionCheckoutIntent = createSubscriptionCheckoutIntent;
             _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
             _createBusiness = createBusiness;
+            _ensureBusinessOnboardingCustomerProfile = ensureBusinessOnboardingCustomerProfile;
             _updateBusiness = updateBusiness;
             _deleteBusiness = deleteBusiness;
             _getBusinessLocationsPage = getBusinessLocationsPage;
@@ -418,6 +424,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Create(BusinessEditVm vm, CancellationToken ct = default)
         {
+            if (vm.OwnerUserId.HasValue && !string.IsNullOrWhiteSpace(vm.OwnerInviteEmail))
+            {
+                ModelState.AddModelError(nameof(vm.OwnerInviteEmail), T("BusinessFormInitialOwnerAssignmentConflict"));
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateBusinessFormOptionsAsync(vm, ct);
@@ -466,9 +477,25 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     }, ct);
                 }
 
+                if (!string.IsNullOrWhiteSpace(vm.OwnerInviteEmail))
+                {
+                    await _createBusinessInvitation.HandleAsync(new BusinessInvitationCreateDto
+                    {
+                        BusinessId = businessId,
+                        Email = vm.OwnerInviteEmail,
+                        Role = BusinessMemberRole.Owner,
+                        ExpiresInDays = 7,
+                        Note = T("BusinessInvitationCreatedFromBusinessCreateNote")
+                    }, ct);
+                }
+
+                await SyncBusinessOnboardingCustomerProfileAsync(businessId, ct);
+
                 TempData["Success"] = vm.OwnerUserId.HasValue
                     ? T("BusinessCreateOwnerAssigned")
-                    : T("BusinessCreateNextSteps");
+                    : !string.IsNullOrWhiteSpace(vm.OwnerInviteEmail)
+                        ? T("BusinessCreateOwnerInvitationIssued")
+                        : T("BusinessCreateNextSteps");
                 return RedirectOrHtmx(nameof(Edit), new { id = businessId });
             }
             catch (Exception ex)
@@ -732,6 +759,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             try
             {
                 await _updateBusiness.HandleAsync(dto, ct);
+                await SyncBusinessOnboardingCustomerProfileAsync(vm.Id, ct);
                 SetSuccessMessage("BusinessUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
@@ -790,6 +818,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             try
             {
                 await _updateBusiness.HandleAsync(dto, ct);
+                await SyncBusinessOnboardingCustomerProfileAsync(vm.Id, ct);
                 SetSuccessMessage("BusinessSetupSaved");
                 return RedirectOrHtmx(nameof(Setup), new { id = vm.Id });
             }
@@ -804,6 +833,25 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await PopulateBusinessFormOptionsAsync(vm, ct);
                 return RenderBusinessSetupEditor(vm);
             }
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> ProvisionSupportCustomer([FromForm] Guid businessId, [FromForm] bool returnToSetup = true, CancellationToken ct = default)
+        {
+            var result = await _ensureBusinessOnboardingCustomerProfile.HandleAsync(businessId, ct);
+            if (result.CustomerId.HasValue)
+            {
+                SetSuccessMessage(result.WasCreated ? "BusinessSupportCustomerProvisioned" : "BusinessSupportCustomerUpdated");
+            }
+            else
+            {
+                TempData["Error"] = string.Format(
+                    T("BusinessSupportCustomerProvisioningBlocked"),
+                    result.MissingReason ?? T("Unspecified"));
+            }
+
+            return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id = businessId });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -824,7 +872,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
             try
             {
@@ -841,12 +889,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectOrHtmx(nameof(Edit), new { id });
+            return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] string? note, CancellationToken ct = default)
+        public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] string? note, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
             try
             {
@@ -864,12 +912,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectOrHtmx(nameof(Edit), new { id });
+            return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
             try
             {
@@ -886,7 +934,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectOrHtmx(nameof(Edit), new { id });
+            return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id });
         }
 
         [HttpGet]
@@ -1379,6 +1427,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     IsActive = vm.IsActive
                 }, ct);
 
+                if (vm.Role == BusinessMemberRole.Owner && vm.IsActive)
+                {
+                    await SyncBusinessOnboardingCustomerProfileAsync(vm.BusinessId, ct);
+                }
+
                 SetSuccessMessage("BusinessMemberAssigned");
                 return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId });
             }
@@ -1496,6 +1549,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     OverrideActorDisplayName = GetCurrentActorDisplayName(),
                     RowVersion = vm.RowVersion ?? Array.Empty<byte>()
                 }, ct);
+
+                if (vm.Role == BusinessMemberRole.Owner && vm.IsActive)
+                {
+                    await SyncBusinessOnboardingCustomerProfileAsync(vm.BusinessId, ct);
+                }
 
                 SetSuccessMessage("BusinessMemberUpdated");
                 return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId });
@@ -1711,6 +1769,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? settings.DefaultCurrency : vm.DefaultCurrency;
             vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? settings.DefaultCulture : vm.DefaultCulture;
             vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;
+            vm.ContactEmail = string.IsNullOrWhiteSpace(vm.ContactEmail) ? settings.ContactEmail : vm.ContactEmail;
+            vm.BrandDisplayName = string.IsNullOrWhiteSpace(vm.BrandDisplayName) ? settings.Title : vm.BrandDisplayName;
+            vm.BrandLogoUrl = string.IsNullOrWhiteSpace(vm.BrandLogoUrl) ? settings.LogoUrl : vm.BrandLogoUrl;
+            vm.SupportEmail = string.IsNullOrWhiteSpace(vm.SupportEmail)
+                ? (!string.IsNullOrWhiteSpace(settings.ContactEmail) ? settings.ContactEmail : settings.SmtpFromAddress)
+                : vm.SupportEmail;
+            vm.CommunicationSenderName = string.IsNullOrWhiteSpace(vm.CommunicationSenderName)
+                ? (!string.IsNullOrWhiteSpace(settings.SmtpFromDisplayName) ? settings.SmtpFromDisplayName : settings.Title)
+                : vm.CommunicationSenderName;
+            vm.CommunicationReplyToEmail = string.IsNullOrWhiteSpace(vm.CommunicationReplyToEmail)
+                ? (!string.IsNullOrWhiteSpace(settings.ContactEmail) ? settings.ContactEmail : settings.SmtpFromAddress)
+                : vm.CommunicationReplyToEmail;
 
             vm.CategoryOptions = Enum.GetValues<BusinessCategoryKind>()
                 .Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Category == x))
@@ -1719,6 +1789,30 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             vm.OwnerUserOptions = await _referenceData.GetUserOptionsAsync(vm.OwnerUserId, includeEmpty: true, ct);
             vm.CommunicationReadiness = await BuildBusinessCommunicationReadinessAsync(ct);
             vm.Subscription = await BuildBusinessSubscriptionSnapshotAsync(vm.Id, ct);
+
+            if (vm.Id != Guid.Empty)
+            {
+                var supportCustomer = await _getBusinessOnboardingCustomerProfile.HandleAsync(vm.Id, ct);
+                vm.SupportCustomerId = supportCustomer.CustomerId;
+                vm.SupportCustomerProvisioned = supportCustomer.IsProvisioned;
+                vm.CanProvisionSupportCustomer = supportCustomer.CanProvision;
+                vm.SupportCustomerProvisioningIssue = supportCustomer.MissingReason;
+                vm.SupportCustomerProvisioningEmail = supportCustomer.CandidateEmail;
+                vm.SupportCustomerProvisioningCompanyName = supportCustomer.CompanyName;
+            }
+            else
+            {
+                vm.CanProvisionSupportCustomer = !string.IsNullOrWhiteSpace(vm.Name) &&
+                                                 !string.IsNullOrWhiteSpace(vm.ContactEmail);
+                vm.SupportCustomerProvisioningEmail = vm.ContactEmail;
+                vm.SupportCustomerProvisioningCompanyName = string.IsNullOrWhiteSpace(vm.LegalName) ? vm.Name : vm.LegalName;
+                vm.SupportCustomerProvisioningIssue = vm.CanProvisionSupportCustomer ? null : T("BusinessSupportCustomerProvisioningPending");
+            }
+        }
+
+        private async Task SyncBusinessOnboardingCustomerProfileAsync(Guid businessId, CancellationToken ct)
+        {
+            await _ensureBusinessOnboardingCustomerProfile.HandleAsync(businessId, ct);
         }
 
         private async Task PopulateMemberFormOptionsAsync(BusinessMemberEditVm vm, bool includeUserSelection, CancellationToken ct)

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
@@ -13,6 +14,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Darwin.Tests.Unit.Identity;
@@ -39,6 +41,7 @@ public sealed class EmailConfirmationHandlersTests
             email,
             new FakeClock(utcNow),
             new RequestEmailConfirmationValidator(),
+            new TestStringLocalizer<CommunicationResource>(),
             NullLogger<RequestEmailConfirmationHandler>.Instance);
 
         var result = await handler.HandleAsync(
@@ -72,7 +75,8 @@ public sealed class EmailConfirmationHandlersTests
         var handler = new ConfirmEmailHandler(
             db,
             new FakeClock(new DateTime(2030, 1, 1, 8, 0, 0, DateTimeKind.Utc)),
-            new ConfirmEmailValidator());
+            new ConfirmEmailValidator(),
+            new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(
             new ConfirmEmailDto
@@ -124,6 +128,7 @@ public sealed class EmailConfirmationHandlersTests
             email,
             new FakeClock(utcNow),
             new RequestEmailConfirmationValidator(),
+            new TestStringLocalizer<CommunicationResource>(),
             NullLogger<RequestEmailConfirmationHandler>.Instance);
 
         var result = await handler.HandleAsync(
@@ -179,6 +184,19 @@ public sealed class EmailConfirmationHandlersTests
             SentMessages.Add((toEmail, subject, htmlBody, context));
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public System.Collections.Generic.IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class EmailConfirmationTestDbContext : DbContext, IAppDbContext

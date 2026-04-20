@@ -12,6 +12,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -39,6 +40,7 @@ namespace Darwin.Application.Loyalty.Commands
         private readonly ICurrentUserService _currentUserService;
         private readonly IClock _clock;
         private readonly ScanSessionTokenResolver _tokenResolver;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConfirmRedemptionFromSessionHandler"/> class.
@@ -47,12 +49,14 @@ namespace Darwin.Application.Loyalty.Commands
             IAppDbContext db,
             ICurrentUserService currentUserService,
             IClock clock,
-            ScanSessionTokenResolver tokenResolver)
+            ScanSessionTokenResolver tokenResolver,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _tokenResolver = tokenResolver ?? throw new ArgumentNullException(nameof(tokenResolver));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -65,17 +69,17 @@ namespace Darwin.Application.Loyalty.Commands
         {
             if (dto is null)
             {
-                return Result<ConfirmRedemptionResultDto>.Fail("Request is required.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["RequestPayloadRequired"]);
             }
 
             if (string.IsNullOrWhiteSpace(dto.ScanSessionToken))
             {
-                return Result<ConfirmRedemptionResultDto>.Fail("ScanSessionToken is required.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["ScanSessionTokenRequired"]);
             }
 
             if (businessId == Guid.Empty)
             {
-                return Result<ConfirmRedemptionResultDto>.Fail("BusinessId is required.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             var resolvedResult = await _tokenResolver
@@ -84,7 +88,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (!resolvedResult.Succeeded || resolvedResult.Value is null)
             {
-                return Result<ConfirmRedemptionResultDto>.Fail(resolvedResult.Error ?? "Invalid scan session token.");
+                return Result<ConfirmRedemptionResultDto>.Fail(resolvedResult.Error ?? _localizer["ScanSessionTokenNotFound"]);
             }
 
             var token = resolvedResult.Value.Token;
@@ -92,7 +96,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (session.Mode != LoyaltyScanMode.Redemption)
             {
-                return Result<ConfirmRedemptionResultDto>.Fail("Scan session is not in redemption mode.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["ScanSessionRedemptionModeRequired"]);
             }
 
             await _tokenResolver
@@ -114,7 +118,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Token was consumed concurrently by another request.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmRedemptionResultDto>.Fail("Scan session token has already been consumed.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["ScanSessionTokenAlreadyConsumed"]);
             }
 
             var now = _clock.UtcNow;
@@ -126,7 +130,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Session expired before redemption confirmation.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmRedemptionResultDto>.Fail("Scan session has expired.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["ScanSessionExpired"]);
             }
 
             var account = await _db.Set<LoyaltyAccount>()
@@ -141,7 +145,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Loyalty account for scan session not found.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmRedemptionResultDto>.Fail("Loyalty account for scan session not found.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["LoyaltyAccountNotFoundForScanSession"]);
             }
 
             if (account.Status != LoyaltyAccountStatus.Active)
@@ -151,7 +155,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Loyalty account is not active.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmRedemptionResultDto>.Fail("Loyalty account is not active.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["LoyaltyAccountInactive"]);
             }
 
             var selections = ParseSelectedRewards(session.SelectedRewardsJson);
@@ -162,7 +166,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Scan session does not contain any selected rewards.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmRedemptionResultDto>.Fail("Scan session does not contain any selected rewards.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["SelectedRewardsMissing"]);
             }
 
             var totalRequiredPoints = 0;
@@ -186,7 +190,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Selected rewards do not require any points.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmRedemptionResultDto>.Fail("Selected rewards do not require any points.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["SelectedRewardsNoPointsRequired"]);
             }
 
             if (account.PointsBalance < totalRequiredPoints)
@@ -196,13 +200,13 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Account does not have enough points at confirmation time.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmRedemptionResultDto>.Fail("Insufficient points for selected rewards.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["InsufficientPointsForSelectedRewards"]);
             }
 
             var staffUserId = _currentUserService.GetCurrentUserId();
             if (staffUserId == Guid.Empty)
             {
-                return Result<ConfirmRedemptionResultDto>.Fail("User is not authenticated.");
+                return Result<ConfirmRedemptionResultDto>.Fail(_localizer["UserNotAuthenticated"]);
             }
 
             var primaryTierId = selections[0].LoyaltyRewardTierId;

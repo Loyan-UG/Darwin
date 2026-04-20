@@ -1,12 +1,13 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.ChannelDispatchAuditsListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@using Darwin.Application.Businesses.Queries
 @{
     ViewData["Title"] = T.T("SmsWhatsAppAuditsTitle");
 
     string FlowLabel(string? flowKey) => flowKey switch
     {
-        "PhoneVerification" => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
-        "AdminCommunicationTest" => T.T("CommunicationTemplateInventoryAdminTestFlow"),
+        ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
+        ChannelDispatchAuditVocabulary.FlowKeys.AdminCommunicationTest => T.T("CommunicationTemplateInventoryAdminTestFlow"),
         "BusinessInvitation" => T.T("CommunicationDetailsActiveFlowInvitation"),
         "AccountActivation" => T.T("CommunicationDetailsActiveFlowActivation"),
         "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
@@ -15,28 +16,28 @@
 
     string ProviderPressureLabel(string? pressureState) => pressureState switch
     {
-        "Elevated" => T.T("CommunicationProviderPressureElevated"),
-        "Recovering" => T.T("CommunicationProviderPressureRecovering"),
-        "Stable" => T.T("CommunicationProviderPressureStable"),
+        ChannelDispatchAuditVocabulary.PressureStates.Elevated => T.T("CommunicationProviderPressureElevated"),
+        ChannelDispatchAuditVocabulary.PressureStates.Recovering => T.T("CommunicationProviderPressureRecovering"),
+        ChannelDispatchAuditVocabulary.PressureStates.Stable => T.T("CommunicationProviderPressureStable"),
         _ => string.IsNullOrWhiteSpace(pressureState) ? T.T("CommonUnclassified") : pressureState
     };
 
     string ProviderRecoveryLabel(string? recoveryState) => recoveryState switch
     {
-        "Recovered" => T.T("CommunicationProviderRecoveryRecovered"),
-        "Stable success" => T.T("CommunicationProviderRecoveryStableSuccess"),
-        "No recovery yet" => T.T("CommunicationProviderRecoveryNoneYet"),
+        ChannelDispatchAuditVocabulary.RecoveryStates.Recovered => T.T("CommunicationProviderRecoveryRecovered"),
+        ChannelDispatchAuditVocabulary.RecoveryStates.StableSuccess => T.T("CommunicationProviderRecoveryStableSuccess"),
+        ChannelDispatchAuditVocabulary.RecoveryStates.NoneYet => T.T("CommunicationProviderRecoveryNoneYet"),
         _ => string.IsNullOrWhiteSpace(recoveryState) ? T.T("CommonUnclassified") : recoveryState
     };
 
     string ChainStatusMixLabel(string? statusMix) => statusMix switch
     {
-        "Mixed success/failure" => T.T("CommunicationChainStatusMixed"),
-        "Open failure chain" => T.T("CommunicationChainStatusOpenFailure"),
-        "Failure-only chain" => T.T("CommunicationChainStatusFailureOnly"),
-        "Pending-only chain" => T.T("CommunicationChainStatusPendingOnly"),
-        "Success-only chain" => T.T("CommunicationChainStatusSuccessOnly"),
-        "Single attempt" => T.T("CommunicationChainStatusSingleAttempt"),
+        ChannelDispatchAuditVocabulary.ChainStatusMixes.Mixed => T.T("CommunicationChainStatusMixed"),
+        ChannelDispatchAuditVocabulary.ChainStatusMixes.OpenFailure => T.T("CommunicationChainStatusOpenFailure"),
+        ChannelDispatchAuditVocabulary.ChainStatusMixes.FailureOnly => T.T("CommunicationChainStatusFailureOnly"),
+        ChannelDispatchAuditVocabulary.ChainStatusMixes.PendingOnly => T.T("CommunicationChainStatusPendingOnly"),
+        ChannelDispatchAuditVocabulary.ChainStatusMixes.SuccessOnly => T.T("CommunicationChainStatusSuccessOnly"),
+        ChannelDispatchAuditVocabulary.ChainStatusMixes.SingleAttempt => T.T("CommunicationChainStatusSingleAttempt"),
         _ => string.IsNullOrWhiteSpace(statusMix) ? T.T("CommonUnclassified") : statusMix
     };
 
@@ -240,14 +241,14 @@
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("WhatsAppSettings")</a>
                 }
-                else if (string.Equals(Model.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(Model.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.AdminCommunicationTest, StringComparison.OrdinalIgnoreCase))
                 {
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-primary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("TestTargets")</a>
-                    @if (string.Equals(Model.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestSms)
+                        @if (string.Equals(Model.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestSms)
                     {
                         <form asp-action="SendTestSms" method="post" class="d-inline"
                               hx-post="@Url.Action("SendTestSms", "BusinessCommunications")"

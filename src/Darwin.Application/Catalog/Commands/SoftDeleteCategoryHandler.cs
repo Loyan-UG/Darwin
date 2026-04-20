@@ -5,6 +5,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Shared.Results;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Commands
 {
@@ -18,13 +19,15 @@ namespace Darwin.Application.Catalog.Commands
     public sealed class SoftDeleteCategoryHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Creates a new instance tied to the application's DbContext abstraction.
         /// </summary>
-        public SoftDeleteCategoryHandler(IAppDbContext db)
+        public SoftDeleteCategoryHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -43,7 +46,7 @@ namespace Darwin.Application.Catalog.Commands
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (category is null)
-                return Result.Fail("Category not found.");
+                return Result.Fail(_localizer["CategoryNotFound"]);
 
             if (!category.IsDeleted)
                 category.IsDeleted = true;

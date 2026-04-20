@@ -1,4 +1,4 @@
-﻿using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.DTOs;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
 
@@ -23,15 +23,13 @@ namespace Darwin.Application.Identity.Validators
 
     public sealed class PasswordResetConfirmValidator : AbstractValidator<PasswordResetConfirmDto>
     {
-        public PasswordResetConfirmValidator()
+        public PasswordResetConfirmValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Email).NotEmpty().EmailAddress();
             RuleFor(x => x.Token).NotEmpty();
-            RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(8);
+            RuleFor(x => x.NewPassword).ApplyPasswordPolicy(localizer);
         }
     }
-
-
 
     public sealed class PasswordLoginRequestValidator : AbstractValidator<PasswordLoginRequestDto>
     {

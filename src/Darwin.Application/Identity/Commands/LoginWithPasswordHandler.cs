@@ -5,6 +5,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Linq;
 using System.Threading;
@@ -22,13 +23,15 @@ namespace Darwin.Application.Identity.Commands
         private readonly IJwtTokenService _jwt;
         private readonly ILoginRateLimiter _limiter;
         private readonly IUserPasswordHasher _hasher;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public LoginWithPasswordHandler(IAppDbContext db, IJwtTokenService jwt, ILoginRateLimiter limiter, IUserPasswordHasher hasher)
+        public LoginWithPasswordHandler(IAppDbContext db, IJwtTokenService jwt, ILoginRateLimiter limiter, IUserPasswordHasher hasher, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _jwt = jwt;
             _limiter = limiter;
             _hasher = hasher;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -53,7 +56,7 @@ namespace Darwin.Application.Identity.Commands
             {
                 // 1) Rate limit (window: 60s, max 5 attempts)
                 if (!await _limiter.IsAllowedAsync(rateKey, maxAttempts: 5, windowSeconds: 60, ct).ConfigureAwait(false))
-                    return Result<AuthResultDto>.Fail("Too many attempts. Please try again.");
+                    return Result<AuthResultDto>.Fail(_localizer["TooManyAttemptsPleaseTryAgain"]);
 
                 var normalizedEmail = (dto.Email ?? string.Empty).Trim().ToUpperInvariant();
 
@@ -66,7 +69,7 @@ namespace Darwin.Application.Identity.Commands
                 {
                     // record attempt and return generic error
                     await _limiter.RecordAsync(rateKey, ct).ConfigureAwait(false);
-                    return Result<AuthResultDto>.Fail("Invalid credentials.");
+                    return Result<AuthResultDto>.Fail(_localizer["InvalidCredentials"]);
                 }
 
                 // 3) Verify password (Argon2)
@@ -74,17 +77,17 @@ namespace Darwin.Application.Identity.Commands
                 if (!ok)
                 {
                     await _limiter.RecordAsync(rateKey, ct).ConfigureAwait(false);
-                    return Result<AuthResultDto>.Fail("Invalid credentials.");
+                    return Result<AuthResultDto>.Fail(_localizer["InvalidCredentials"]);
                 }
 
                 if (user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > DateTime.UtcNow)
                 {
-                    return Result<AuthResultDto>.Fail("Account is locked.");
+                    return Result<AuthResultDto>.Fail(_localizer["AccountLocked"]);
                 }
 
                 if (!user.EmailConfirmed)
                 {
-                    return Result<AuthResultDto>.Fail("Email address is not confirmed.");
+                    return Result<AuthResultDto>.Fail(_localizer["EmailAddressNotConfirmed"]);
                 }
 
                 // 4) Issue access and refresh tokens.
@@ -108,7 +111,7 @@ namespace Darwin.Application.Identity.Commands
             {
                 // The client disconnected or cancelled the request (e.g., network/timeout).
                 // Return a controlled failure so middleware/logging is clearer.
-                return Result<AuthResultDto>.Fail("Request cancelled by client or timed out during login.");
+                return Result<AuthResultDto>.Fail(_localizer["LoginRequestCancelledOrTimedOut"]);
             }
         }
     }

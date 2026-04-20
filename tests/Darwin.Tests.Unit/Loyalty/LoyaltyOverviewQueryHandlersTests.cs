@@ -1,12 +1,14 @@
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Loyalty.Queries;
+using Darwin.Application;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Loyalty;
 
@@ -84,7 +86,10 @@ public sealed class LoyaltyOverviewQueryHandlersTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new GetMyLoyaltyOverviewHandler(db, new StubCurrentUserService(userId));
+        var handler = new GetMyLoyaltyOverviewHandler(
+            db,
+            new StubCurrentUserService(userId),
+            new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(TestContext.Current.CancellationToken);
 
@@ -171,7 +176,10 @@ public sealed class LoyaltyOverviewQueryHandlersTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new GetMyLoyaltyBusinessDashboardHandler(db, new StubCurrentUserService(userId));
+        var handler = new GetMyLoyaltyBusinessDashboardHandler(
+            db,
+            new StubCurrentUserService(userId),
+            new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(businessId, TestContext.Current.CancellationToken);
 
@@ -205,6 +213,18 @@ public sealed class LoyaltyOverviewQueryHandlersTests
         }
 
         public Guid GetCurrentUserId() => _userId;
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, false);
+
+        public LocalizedString this[string name, params object[] arguments]
+            => new(name, string.Format(name, arguments), false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class LoyaltyOverviewTestDbContext : DbContext, IAppDbContext

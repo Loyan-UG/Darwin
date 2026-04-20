@@ -5,11 +5,13 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Identity;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries;
 
@@ -20,10 +22,12 @@ namespace Darwin.Application.Identity.Queries;
 public sealed class GetInactiveReminderCandidatesHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public GetInactiveReminderCandidatesHandler(IAppDbContext db)
+    public GetInactiveReminderCandidatesHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -35,17 +39,17 @@ public sealed class GetInactiveReminderCandidatesHandler
     {
         if (request is null)
         {
-            return Result<IReadOnlyList<InactiveReminderCandidateDto>>.Fail("Request payload is required.");
+            return Result<IReadOnlyList<InactiveReminderCandidateDto>>.Fail(_localizer["RequestPayloadRequired"]);
         }
 
         if (request.InactiveThresholdDays <= 0)
         {
-            return Result<IReadOnlyList<InactiveReminderCandidateDto>>.Fail("InactiveThresholdDays must be greater than zero.");
+            return Result<IReadOnlyList<InactiveReminderCandidateDto>>.Fail(_localizer["InactiveThresholdDaysGreaterThanZero"]);
         }
 
         if (request.CooldownHours < 0)
         {
-            return Result<IReadOnlyList<InactiveReminderCandidateDto>>.Fail("CooldownHours must not be negative.");
+            return Result<IReadOnlyList<InactiveReminderCandidateDto>>.Fail(_localizer["CooldownHoursMustNotBeNegative"]);
         }
 
         var maxItems = Math.Clamp(request.MaxItems, 1, 1000);

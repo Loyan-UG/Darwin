@@ -12,6 +12,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Queries
 {
@@ -24,6 +25,7 @@ namespace Darwin.Application.Loyalty.Queries
         private readonly ICurrentUserService _currentUserService;
         private readonly IClock _clock;
         private readonly ScanSessionTokenResolver _tokenResolver;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProcessScanSessionForBusinessHandler"/> class.
@@ -32,12 +34,14 @@ namespace Darwin.Application.Loyalty.Queries
             IAppDbContext db,
             ICurrentUserService currentUserService,
             IClock clock,
-            ScanSessionTokenResolver tokenResolver)
+            ScanSessionTokenResolver tokenResolver,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _tokenResolver = tokenResolver ?? throw new ArgumentNullException(nameof(tokenResolver));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -56,7 +60,7 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (!resolved.Succeeded || resolved.Value is null)
             {
-                return Result<ScanSessionBusinessViewDto>.Fail(resolved.Error ?? "Failed to resolve scan session token.");
+                return Result<ScanSessionBusinessViewDto>.Fail(resolved.Error ?? _localizer["ScanSessionTokenNotFound"]);
             }
 
             var session = resolved.Value.Session;
@@ -68,7 +72,7 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (account is null)
             {
-                return Result<ScanSessionBusinessViewDto>.Fail("Loyalty account for scan session not found.");
+                return Result<ScanSessionBusinessViewDto>.Fail(_localizer["LoyaltyAccountNotFoundForScanSession"]);
             }
 
             // Build a minimal, business-safe customer label.

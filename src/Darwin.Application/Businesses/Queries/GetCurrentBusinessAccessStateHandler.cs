@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,13 +25,14 @@ public sealed class GetCurrentBusinessAccessStateHandler
     /// <summary>
     /// Loads the access-state snapshot for the specified business identifier.
     /// </summary>
-    public Task<BusinessAccessStateDto?> HandleAsync(Guid businessId, CancellationToken ct = default)
+    public Task<BusinessAccessStateDto?> HandleAsync(Guid businessId, Guid userId, CancellationToken ct = default)
     {
         return _db.Set<Business>()
             .AsNoTracking()
             .Where(x => x.Id == businessId)
             .Select(x => new BusinessAccessStateDto
             {
+                UserId = userId,
                 BusinessId = x.Id,
                 BusinessName = x.Name,
                 OperationalStatus = x.OperationalStatus,
@@ -43,7 +45,26 @@ public sealed class GetCurrentBusinessAccessStateHandler
                 HasPrimaryLocation = _db.Set<BusinessLocation>()
                     .Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary),
                 HasContactEmail = !string.IsNullOrWhiteSpace(x.ContactEmail),
-                HasLegalName = !string.IsNullOrWhiteSpace(x.LegalName)
+                HasLegalName = !string.IsNullOrWhiteSpace(x.LegalName),
+                HasActiveMembership = _db.Set<BusinessMember>()
+                    .Any(m => m.BusinessId == x.Id &&
+                              m.UserId == userId &&
+                              !m.IsDeleted &&
+                              m.IsActive),
+                IsUserActive = _db.Set<User>()
+                    .Any(u => u.Id == userId &&
+                              !u.IsDeleted &&
+                              u.IsActive),
+                IsUserEmailConfirmed = _db.Set<User>()
+                    .Any(u => u.Id == userId &&
+                              !u.IsDeleted &&
+                              u.IsActive &&
+                              u.EmailConfirmed),
+                IsUserLockedOut = _db.Set<User>()
+                    .Any(u => u.Id == userId &&
+                              !u.IsDeleted &&
+                              u.LockoutEndUtc.HasValue &&
+                              u.LockoutEndUtc.Value > DateTime.UtcNow)
             })
             .FirstOrDefaultAsync(ct);
     }

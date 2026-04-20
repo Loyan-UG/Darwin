@@ -132,6 +132,18 @@
   <data name="EitherUserIdOrRefreshTokenRequired" xml:space="preserve">
     <value>Entweder UserId oder RefreshToken muss angegeben werden.</value>
   </data>
+  <data name="PasswordMinLength" xml:space="preserve">
+    <value>Das Passwort muss mindestens 8 Zeichen lang sein.</value>
+  </data>
+  <data name="PasswordUppercaseRequired" xml:space="preserve">
+    <value>Das Passwort muss mindestens einen Grossbuchstaben enthalten.</value>
+  </data>
+  <data name="PasswordLowercaseRequired" xml:space="preserve">
+    <value>Das Passwort muss mindestens einen Kleinbuchstaben enthalten.</value>
+  </data>
+  <data name="PasswordDigitRequired" xml:space="preserve">
+    <value>Das Passwort muss mindestens eine Ziffer enthalten.</value>
+  </data>
   <data name="WarehouseIdValidWhenProvided" xml:space="preserve">
     <value>WarehouseId muss eine gueltige Kennung sein, wenn sie angegeben wird.</value>
   </data>
@@ -577,5 +589,437 @@
   <data name="LoyaltyAccountIdRequired" xml:space="preserve">
     <value>Die Loyalty-Konto-ID ist erforderlich.</value>
     <comment>Validierungs-/Fachmeldung, wenn die Loyalty-Konto-ID fehlt.</comment>
+  </data>
+  <data name="Unauthorized" xml:space="preserve">
+    <value>Nicht autorisiert.</value>
+  </data>
+  <data name="ConcurrencyConflict" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt.</value>
+  </data>
+  <data name="PhoneNumberMissing" xml:space="preserve">
+    <value>Die Telefonnummer fehlt.</value>
+  </data>
+  <data name="CommunicationSettingsMissing" xml:space="preserve">
+    <value>Die Kommunikationseinstellungen fehlen.</value>
+  </data>
+  <data name="InvalidOrExpiredVerificationCode" xml:space="preserve">
+    <value>Der Verifizierungscode ist ungueltig oder abgelaufen.</value>
+  </data>
+  <data name="UserNotAuthenticated" xml:space="preserve">
+    <value>Der Benutzer ist nicht authentifiziert.</value>
+  </data>
+  <data name="ExplicitDeletionConfirmationRequired" xml:space="preserve">
+    <value>Eine ausdrueckliche Loeschbestaetigung ist erforderlich.</value>
+  </data>
+  <data name="ActiveUserAccountNotFound" xml:space="preserve">
+    <value>Aktives Benutzerkonto nicht gefunden.</value>
+  </data>
+  <data name="SystemUsersCannotRequestAccountDeletion" xml:space="preserve">
+    <value>Systembenutzer koennen keine Kontoloeschung anfordern.</value>
+  </data>
+  <data name="UserIdRequired" xml:space="preserve">
+    <value>Die Benutzer-ID ist erforderlich.</value>
+  </data>
+  <data name="AddressIdRequired" xml:space="preserve">
+    <value>Die Adress-ID ist erforderlich.</value>
+  </data>
+  <data name="NothingToSet" xml:space="preserve">
+    <value>Es gibt nichts zu setzen.</value>
+  </data>
+  <data name="AddressNotFound" xml:space="preserve">
+    <value>Adresse nicht gefunden.</value>
+  </data>
+  <data name="AddressNotOwnedByUser" xml:space="preserve">
+    <value>Adresse nicht gefunden oder gehoert nicht dem Benutzer.</value>
+  </data>
+  <data name="TwoFactorAuthenticationNotEnabled" xml:space="preserve">
+    <value>Die Zwei-Faktor-Authentifizierung ist nicht aktiviert.</value>
+  </data>
+  <data name="NoActiveTotpSecret" xml:space="preserve">
+    <value>Kein aktives TOTP-Geheimnis vorhanden.</value>
+  </data>
+  <data name="InvalidTotpCode" xml:space="preserve">
+    <value>Ungueltiger TOTP-Code.</value>
+  </data>
+  <data name="InvalidTokenOrEmail" xml:space="preserve">
+    <value>Token oder E-Mail ist ungueltig.</value>
+  </data>
+  <data name="InvalidOrExpiredToken" xml:space="preserve">
+    <value>Token ist ungueltig oder abgelaufen.</value>
+  </data>
+  <data name="SystemUsersCannotBeLocked" xml:space="preserve">
+    <value>Systembenutzer koennen nicht gesperrt werden.</value>
+  </data>
+  <data name="SystemUsersCannotBeDeleted" xml:space="preserve">
+    <value>Systembenutzer koennen nicht geloescht werden.</value>
+  </data>
+  <data name="CurrentPasswordIncorrect" xml:space="preserve">
+    <value>Das aktuelle Passwort ist falsch.</value>
+  </data>
+  <data name="InvalidUserRolesPayload" xml:space="preserve">
+    <value>Ungueltige Benutzer-Rollen-Nutzlast.</value>
+  </data>
+  <data name="UserNotFoundOrInactive" xml:space="preserve">
+    <value>Benutzer nicht gefunden oder inaktiv.</value>
+  </data>
+  <data name="ConcurrencyConflictReloadAndRetry" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt. Bitte neu laden und erneut versuchen.</value>
+  </data>
+  <data name="InvalidRolesSelection" xml:space="preserve">
+    <value>Eine oder mehrere Rollen sind ungueltig.</value>
+  </data>
+  <data name="InvalidRolePermissionsPayload" xml:space="preserve">
+    <value>Ungueltige Rollen-Berechtigungs-Nutzlast.</value>
+  </data>
+  <data name="RoleNotFound" xml:space="preserve">
+    <value>Rolle nicht gefunden.</value>
+  </data>
+  <data name="InvalidPermissionsSelection" xml:space="preserve">
+    <value>Eine oder mehrere Berechtigungen sind ungueltig.</value>
+  </data>
+  <data name="PermissionNotFound" xml:space="preserve">
+    <value>Berechtigung nicht gefunden.</value>
+  </data>
+  <data name="InvalidOrExpiredConfirmationToken" xml:space="preserve">
+    <value>Der Bestaetigungstoken ist ungueltig oder abgelaufen.</value>
+  </data>
+  <data name="NoPendingTotpSecret" xml:space="preserve">
+    <value>Kein ausstehendes TOTP-Geheimnis vorhanden.</value>
+  </data>
+  <data name="LoginSessionExpiredOrMissing" xml:space="preserve">
+    <value>Die Anmeldesitzung ist abgelaufen oder fehlt.</value>
+  </data>
+  <data name="UserNotFoundForThisSession" xml:space="preserve">
+    <value>Fuer diese Sitzung wurde kein Benutzer gefunden.</value>
+  </data>
+  <data name="CredentialNotFoundAfterVerification" xml:space="preserve">
+    <value>Anmeldeinformation nach der Verifizierung nicht gefunden.</value>
+  </data>
+  <data name="VerificationFailed" xml:space="preserve">
+    <value>Verifizierung fehlgeschlagen.</value>
+  </data>
+  <data name="DeviceRequired" xml:space="preserve">
+    <value>Ein Geraet ist erforderlich.</value>
+  </data>
+  <data name="DeviceNotFound" xml:space="preserve">
+    <value>Geraet nicht gefunden.</value>
+  </data>
+  <data name="DeviceConcurrencyConflict" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt. Der Geraetedatensatz wurde von einem anderen Prozess geaendert.</value>
+  </data>
+  <data name="SystemPermissionsCannotBeDeleted" xml:space="preserve">
+    <value>Systemberechtigungen koennen nicht geloescht werden.</value>
+  </data>
+  <data name="PermissionAssignedToRolesCannotDelete" xml:space="preserve">
+    <value>Die Berechtigung ist einer oder mehreren Rollen zugewiesen und kann nicht geloescht werden.</value>
+  </data>
+  <data name="SystemRolesCannotBeEdited" xml:space="preserve">
+    <value>Systemrollen koennen nicht bearbeitet werden.</value>
+  </data>
+  <data name="SystemProtectedRoleCannotBeDeleted" xml:space="preserve">
+    <value>Diese Rolle ist systemgeschuetzt und kann nicht geloescht werden.</value>
+  </data>
+  <data name="ExternalLinkNotFound" xml:space="preserve">
+    <value>Externe Verknuepfung nicht gefunden.</value>
+  </data>
+  <data name="EmailAlreadyInUse" xml:space="preserve">
+    <value>Die E-Mail-Adresse wird bereits verwendet.</value>
+  </data>
+  <data name="RequestPayloadRequired" xml:space="preserve">
+    <value>Nutzlast der Anfrage ist erforderlich.</value>
+  </data>
+  <data name="InactiveReminderOutcomeInvalid" xml:space="preserve">
+    <value>Das Ergebnis muss einer der folgenden Werte sein: Sent, Failed, Suppressed.</value>
+  </data>
+  <data name="UserEngagementSnapshotNotFound" xml:space="preserve">
+    <value>Der Nutzer-Engagement-Snapshot wurde nicht gefunden.</value>
+  </data>
+  <data name="LoyaltyAccountConcurrencyConflict" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt. Das Loyalty-Konto wurde von einem anderen Prozess geaendert.</value>
+  </data>
+  <data name="InvalidDeleteRequest" xml:space="preserve">
+    <value>Ungueltige Loeschanfrage.</value>
+  </data>
+  <data name="LoyaltyProgramConcurrencyConflict" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt. Das Loyalty-Programm wurde von einem anderen Prozess geaendert.</value>
+  </data>
+  <data name="LoyaltyRewardTierNotFound" xml:space="preserve">
+    <value>Die Belohnungsstufe wurde nicht gefunden.</value>
+  </data>
+  <data name="LoyaltyRewardTierConcurrencyConflict" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt. Die Belohnungsstufe wurde von einem anderen Prozess geaendert.</value>
+  </data>
+  <data name="BusinessLocationNotFound" xml:space="preserve">
+    <value>Der Unternehmensstandort wurde nicht gefunden.</value>
+  </data>
+  <data name="ItemConcurrencyConflict" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt. Der Eintrag wurde von einem anderen Prozess geaendert.</value>
+  </data>
+  <data name="RatingMustBeBetweenOneAndFive" xml:space="preserve">
+    <value>Die Bewertung muss zwischen 1 und 5 liegen.</value>
+  </data>
+  <data name="EmailAuditRowNotFound" xml:space="preserve">
+    <value>Die E-Mail-Audit-Zeile wurde nicht gefunden.</value>
+  </data>
+  <data name="EmailAuditRetryStatusInvalid" xml:space="preserve">
+    <value>Nur fehlgeschlagene oder noch ausstehende E-Mail-Audit-Zeilen koennen erneut versucht werden.</value>
+  </data>
+  <data name="EmailAuditRetryBlockedRecentAttempts" xml:space="preserve">
+    <value>Erneuter Versuch blockiert: In den letzten 24 Stunden gab es bereits {0} Versuche.</value>
+  </data>
+  <data name="EmailAuditRetryCooldownActive" xml:space="preserve">
+    <value>Die Wiederholsperre ist noch bis {0:yyyy-MM-dd HH:mm} UTC aktiv.</value>
+  </data>
+  <data name="EmailAuditRecipientMissing" xml:space="preserve">
+    <value>Fuer diese Audit-Zeile ist keine Empfaenger-E-Mail fuer einen erneuten Versuch verfuegbar.</value>
+  </data>
+  <data name="EmailAuditFlowRetryUnsupported" xml:space="preserve">
+    <value>Dieser Audit-Flow unterstuetzt keinen generischen erneuten Versuch aus der Audit-Warteschlange.</value>
+  </data>
+  <data name="EmailAuditInvitationRequiresBusinessLink" xml:space="preserve">
+    <value>Die erneute Einladung erfordert eine business-verknuepfte Audit-Zeile.</value>
+  </data>
+  <data name="EmailAuditInvitationTargetNotFound" xml:space="preserve">
+    <value>Fuer diesen Empfaenger konnte keine offene oder abgelaufene Einladung gefunden werden.</value>
+  </data>
+  <data name="EmailAuditActivationTargetNotFound" xml:space="preserve">
+    <value>Fuer diese Aktivierungs-E-Mail konnte kein aktiver Nutzer gefunden werden.</value>
+  </data>
+  <data name="EmailAuditPasswordResetTargetNotFound" xml:space="preserve">
+    <value>Fuer diese Passwort-zuruecksetzen-E-Mail konnte kein aktiver Nutzer gefunden werden.</value>
+  </data>
+  <data name="BusinessCampaignBusinessAndCampaignRequired" xml:space="preserve">
+    <value>BusinessId und Kampagnen-Id sind erforderlich.</value>
+  </data>
+  <data name="BusinessCampaignNameAndTitleRequired" xml:space="preserve">
+    <value>Name und Titel sind erforderlich.</value>
+  </data>
+  <data name="BusinessCampaignNotFound" xml:space="preserve">
+    <value>Die Kampagne wurde nicht gefunden.</value>
+  </data>
+  <data name="BusinessCampaignConcurrencyConflict" xml:space="preserve">
+    <value>Die Kampagne wurde von einem anderen Nutzer aktualisiert. Bitte neu laden und erneut versuchen.</value>
+  </data>
+  <data name="RoleKeyAlreadyExists" xml:space="preserve">
+    <value>Der Rollenschluessel existiert bereits.</value>
+  </data>
+  <data name="PermissionKeyAlreadyExists" xml:space="preserve">
+    <value>Der Berechtigungsschluessel existiert bereits.</value>
+  </data>
+  <data name="RegistrationSessionExpiredOrMissing" xml:space="preserve">
+    <value>Die Registrierungssitzung ist abgelaufen oder fehlt.</value>
+  </data>
+  <data name="DefaultRoleNotFound" xml:space="preserve">
+    <value>Die Standardrolle wurde nicht gefunden.</value>
+  </data>
+  <data name="BusinessAndPlanIdentifiersRequired" xml:space="preserve">
+    <value>Business- und Plankennungen sind erforderlich.</value>
+  </data>
+  <data name="SelectedBillingPlanUnavailable" xml:space="preserve">
+    <value>Der ausgewaehlte Abrechnungsplan ist nicht verfuegbar.</value>
+  </data>
+  <data name="AddOnGroupConcurrencyConflict" xml:space="preserve">
+    <value>Die Add-on-Gruppe wurde von einem anderen Vorgang geaendert. Bitte neu laden und erneut versuchen.</value>
+  </data>
+  <data name="ProductsNotFoundOrDeleted" xml:space="preserve">
+    <value>Ein oder mehrere Produkte wurden nicht gefunden oder sind geloescht.</value>
+  </data>
+  <data name="VariantsNotFoundOrDeleted" xml:space="preserve">
+    <value>Eine oder mehrere Varianten wurden nicht gefunden oder sind geloescht.</value>
+  </data>
+  <data name="BrandConcurrencyConflict" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt. Die Marke wurde von einem anderen Prozess geaendert.</value>
+  </data>
+  <data name="PageConcurrencyConflict" xml:space="preserve">
+    <value>Die Seite wurde von einem anderen Benutzer geaendert. Bitte neu laden und erneut versuchen.</value>
+  </data>
+  <data name="RoleKeyRequired" xml:space="preserve">
+    <value>Der Rollenschluessel ist erforderlich.</value>
+  </data>
+  <data name="TitleRequired" xml:space="preserve">
+    <value>Titel ist erforderlich.</value>
+  </data>
+  <data name="CurrentUserIdMissing" xml:space="preserve">
+    <value>Die aktuelle Benutzer-Id fehlt.</value>
+  </data>
+  <data name="TooManyAttemptsPleaseTryAgain" xml:space="preserve">
+    <value>Zu viele Versuche. Bitte spaeter erneut versuchen.</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Ungueltige Zugangsdaten.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Das Konto ist gesperrt.</value>
+  </data>
+  <data name="EmailAddressNotConfirmed" xml:space="preserve">
+    <value>Die E-Mail-Adresse ist nicht bestaetigt.</value>
+  </data>
+  <data name="LoginRequestCancelledOrTimedOut" xml:space="preserve">
+    <value>Die Anfrage wurde vom Client abgebrochen oder ist waehrend der Anmeldung abgelaufen.</value>
+  </data>
+  <data name="InvalidOrExpiredRefreshToken" xml:space="preserve">
+    <value>Das Refresh-Token ist ungueltig oder abgelaufen.</value>
+  </data>
+  <data name="InvitationTokenRequired" xml:space="preserve">
+    <value>Ein Einladungstoken ist erforderlich.</value>
+  </data>
+  <data name="InvitationRevoked" xml:space="preserve">
+    <value>Die Einladung wurde widerrufen.</value>
+  </data>
+  <data name="InvitationAlreadyAccepted" xml:space="preserve">
+    <value>Die Einladung wurde bereits angenommen.</value>
+  </data>
+  <data name="InvitationExpired" xml:space="preserve">
+    <value>Die Einladung ist abgelaufen.</value>
+  </data>
+  <data name="InvitedBusinessUnavailable" xml:space="preserve">
+    <value>Das eingeladene Unternehmen ist nicht verfuegbar.</value>
+  </data>
+  <data name="InvitedUserDetailsRequired" xml:space="preserve">
+    <value>Vorname, Nachname und Passwort sind fuer einen neuen eingeladenen Benutzer erforderlich.</value>
+  </data>
+  <data name="InvitedAccountDisabled" xml:space="preserve">
+    <value>Das eingeladene Konto ist deaktiviert. Bitte den Support kontaktieren.</value>
+  </data>
+  <data name="InvitedAccountLocked" xml:space="preserve">
+    <value>Das eingeladene Konto ist voruebergehend gesperrt. Bitte den Support kontaktieren.</value>
+  </data>
+  <data name="BusinessUserRoleNotConfigured" xml:space="preserve">
+    <value>Die Business-Benutzerrolle ist nicht konfiguriert.</value>
+  </data>
+  <data name="BusinessAndSubscriptionIdentifiersRequired" xml:space="preserve">
+    <value>Business- und Abonnementkennungen sind erforderlich.</value>
+  </data>
+  <data name="SubscriptionNotFound" xml:space="preserve">
+    <value>Abonnement wurde nicht gefunden.</value>
+  </data>
+  <data name="SubscriptionConcurrencyConflict" xml:space="preserve">
+    <value>Das Abonnement wurde von einem anderen Benutzer aktualisiert. Bitte neu laden und erneut versuchen.</value>
+  </data>
+  <data name="DeviceIdRequired" xml:space="preserve">
+    <value>DeviceId ist erforderlich.</value>
+  </data>
+  <data name="DeviceIdTooLong" xml:space="preserve">
+    <value>DeviceId ist zu lang.</value>
+  </data>
+  <data name="PushTokenTooLong" xml:space="preserve">
+    <value>PushToken ist zu lang.</value>
+  </data>
+  <data name="AppVersionTooLong" xml:space="preserve">
+    <value>AppVersion ist zu lang.</value>
+  </data>
+  <data name="DeviceModelTooLong" xml:space="preserve">
+    <value>DeviceModel ist zu lang.</value>
+  </data>
+  <data name="CouldNotResolveInactiveReminderCandidates" xml:space="preserve">
+    <value>Inaktive-Erinnerungskandidaten konnten nicht ermittelt werden.</value>
+  </data>
+  <data name="NothingToRevoke" xml:space="preserve">
+    <value>Es gibt nichts zu widerrufen.</value>
+  </data>
+  <data name="InactiveThresholdDaysGreaterThanZero" xml:space="preserve">
+    <value>InactiveThresholdDays muss groesser als null sein.</value>
+  </data>
+  <data name="CooldownHoursMustNotBeNegative" xml:space="preserve">
+    <value>CooldownHours darf nicht negativ sein.</value>
+  </data>
+  <data name="InvalidPagingParameters" xml:space="preserve">
+    <value>Ungueltige Paging-Parameter.</value>
+  </data>
+  <data name="PermissionKeyRequired" xml:space="preserve">
+    <value>Ein Berechtigungsschluessel ist erforderlich.</value>
+  </data>
+  <data name="InvalidTimelineCursor" xml:space="preserve">
+    <value>Ungueltiger Cursor. BeforeAtUtc und BeforeId muessen zusammen angegeben werden.</value>
+  </data>
+  <data name="LoyaltyAccountNotFoundForSpecifiedBusinessAndUser" xml:space="preserve">
+    <value>Fuer das angegebene Unternehmen und den Benutzer wurde kein Treuekonto gefunden.</value>
+  </data>
+  <data name="RedemptionNotFound" xml:space="preserve">
+    <value>Einloesung wurde nicht gefunden.</value>
+  </data>
+  <data name="BusinessMismatchForRedemption" xml:space="preserve">
+    <value>Unternehmenskontext passt nicht zur Einloesung.</value>
+  </data>
+  <data name="RedemptionConcurrencyConflict" xml:space="preserve">
+    <value>Gleichzeitigkeitskonflikt. Die Einloesung wurde von einem anderen Prozess geaendert.</value>
+  </data>
+  <data name="RedemptionCancelledCannotConfirm" xml:space="preserve">
+    <value>Die Einloesung wurde storniert und kann nicht bestaetigt werden.</value>
+  </data>
+  <data name="RedemptionAlreadyConfirmed" xml:space="preserve">
+    <value>Die Einloesung ist bereits bestaetigt.</value>
+  </data>
+  <data name="RedemptionPendingStateRequired" xml:space="preserve">
+    <value>Die Einloesung befindet sich nicht im ausstehenden Zustand.</value>
+  </data>
+  <data name="LoyaltyAccountNotFoundForRedemption" xml:space="preserve">
+    <value>Das zur Einloesung gehoerende Treuekonto wurde nicht gefunden.</value>
+  </data>
+  <data name="LoyaltyAccountInactiveForRedemption" xml:space="preserve">
+    <value>Das Treuekonto ist nicht aktiv und kann nicht fuer die Einloesung verwendet werden.</value>
+  </data>
+  <data name="RedemptionInvalidPointsAmount" xml:space="preserve">
+    <value>Die Einloesung hat einen ungueltigen Punktewert.</value>
+  </data>
+  <data name="InsufficientPointsForRedemptionConfirmation" xml:space="preserve">
+    <value>Es sind nicht genuegend Punkte vorhanden, um die Einloesung zu bestaetigen.</value>
+  </data>
+  <data name="ScanSessionTokenNotFound" xml:space="preserve">
+    <value>Das Scan-Sitzungstoken wurde nicht gefunden.</value>
+  </data>
+  <data name="ScanSessionTokenExpired" xml:space="preserve">
+    <value>Das Scan-Sitzungstoken ist abgelaufen.</value>
+  </data>
+  <data name="ScanSessionTokenAlreadyConsumed" xml:space="preserve">
+    <value>Das Scan-Sitzungstoken wurde bereits verbraucht.</value>
+  </data>
+  <data name="ScanSessionTokenBusinessMismatch" xml:space="preserve">
+    <value>Das Scan-Sitzungstoken ist an ein anderes Unternehmen gebunden.</value>
+  </data>
+  <data name="ScanSessionNotFoundForToken" xml:space="preserve">
+    <value>Fuer das angegebene Token wurde keine Scan-Sitzung gefunden.</value>
+  </data>
+  <data name="ScanSessionBusinessMismatch" xml:space="preserve">
+    <value>Die Scan-Sitzung gehoert nicht zu diesem Unternehmen.</value>
+  </data>
+  <data name="ScanSessionExpired" xml:space="preserve">
+    <value>Die Scan-Sitzung ist abgelaufen.</value>
+  </data>
+  <data name="ScanSessionPendingRequired" xml:space="preserve">
+    <value>Die Scan-Sitzung befindet sich nicht im ausstehenden Zustand.</value>
+  </data>
+  <data name="ScanSessionAccrualModeRequired" xml:space="preserve">
+    <value>Die Scan-Sitzung befindet sich nicht im Sammelmodus.</value>
+  </data>
+  <data name="ScanSessionRedemptionModeRequired" xml:space="preserve">
+    <value>Die Scan-Sitzung befindet sich nicht im Einloesemodus.</value>
+  </data>
+  <data name="LoyaltyAccountNotFoundForScanSession" xml:space="preserve">
+    <value>Fuer die Scan-Sitzung wurde kein Treuekonto gefunden.</value>
+  </data>
+  <data name="LoyaltyAccountNotFoundForSpecifiedBusiness" xml:space="preserve">
+    <value>Fuer das angegebene Unternehmen wurde kein Treuekonto gefunden.</value>
+  </data>
+  <data name="LoyaltyAccountInactive" xml:space="preserve">
+    <value>Das Treuekonto ist nicht aktiv.</value>
+  </data>
+  <data name="InsufficientPointsForSelectedRewards" xml:space="preserve">
+    <value>Fuer die ausgewaehlten Praemien sind nicht genuegend Punkte vorhanden.</value>
+  </data>
+  <data name="SelectedRewardsMissing" xml:space="preserve">
+    <value>Die Scan-Sitzung enthaelt keine ausgewaehlten Praemien.</value>
+  </data>
+  <data name="SelectedRewardsNoPointsRequired" xml:space="preserve">
+    <value>Die ausgewaehlten Praemien erfordern keine Punkte.</value>
+  </data>
+  <data name="BusinessRequired" xml:space="preserve">
+    <value>Unternehmen ist erforderlich.</value>
+  </data>
+  <data name="UserRequired" xml:space="preserve">
+    <value>Benutzer ist erforderlich.</value>
+  </data>
+  <data name="LoyaltyAccountAlreadyExistsForMemberInBusiness" xml:space="preserve">
+    <value>Fuer dieses Mitglied existiert im ausgewaehlten Unternehmen bereits ein Treuekonto.</value>
   </data>
 </root>

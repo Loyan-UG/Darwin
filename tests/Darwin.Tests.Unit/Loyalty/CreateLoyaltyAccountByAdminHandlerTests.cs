@@ -4,6 +4,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.DTOs;
+using Darwin.Application;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
@@ -11,6 +12,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Loyalty;
 
@@ -32,7 +34,7 @@ public sealed class CreateLoyaltyAccountByAdminHandlerTests
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CreateLoyaltyAccountByAdminHandler(db, new StubClock());
+        var handler = new CreateLoyaltyAccountByAdminHandler(db, new StubClock(), new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(new CreateLoyaltyAccountByAdminDto
         {
@@ -70,7 +72,7 @@ public sealed class CreateLoyaltyAccountByAdminHandlerTests
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new CreateLoyaltyAccountByAdminHandler(db, new StubClock());
+        var handler = new CreateLoyaltyAccountByAdminHandler(db, new StubClock(), new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(new CreateLoyaltyAccountByAdminDto
         {
@@ -79,12 +81,24 @@ public sealed class CreateLoyaltyAccountByAdminHandlerTests
         }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("already exists");
+        result.Error.Should().Be("LoyaltyAccountAlreadyExistsForMemberInBusiness");
     }
 
     private sealed class StubClock : IClock
     {
         public DateTime UtcNow => new(2030, 1, 1, 8, 0, 0, DateTimeKind.Utc);
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, false);
+
+        public LocalizedString this[string name, params object[] arguments]
+            => new(name, string.Format(name, arguments), false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class CreateLoyaltyAccountTestDbContext : DbContext, IAppDbContext

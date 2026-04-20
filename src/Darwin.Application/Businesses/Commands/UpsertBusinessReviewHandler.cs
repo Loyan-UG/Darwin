@@ -7,6 +7,7 @@ using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -14,23 +15,28 @@ namespace Darwin.Application.Businesses.Commands
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpsertBusinessReviewHandler(IAppDbContext db, ICurrentUserService currentUser)
+        public UpsertBusinessReviewHandler(
+            IAppDbContext db,
+            ICurrentUserService currentUser,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result> HandleAsync(Guid businessId, UpsertBusinessReviewDto dto, CancellationToken ct = default)
         {
             if (businessId == Guid.Empty)
-                return Result.Fail("Business id must not be empty.");
+                return Result.Fail(_localizer["BusinessIdRequired"]);
 
             if (dto is null)
-                return Result.Fail("Request body is required.");
+                return Result.Fail(_localizer["RequestPayloadRequired"]);
 
             if (dto.Rating < 1 || dto.Rating > 5)
-                return Result.Fail("Rating must be between 1 and 5.");
+                return Result.Fail(_localizer["RatingMustBeBetweenOneAndFive"]);
 
             var userId = _currentUser.GetCurrentUserId();
 

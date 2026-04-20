@@ -4,6 +4,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Linq;
 using System.Threading;
@@ -23,16 +24,19 @@ namespace Darwin.Application.Catalog.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<AddOnGroupAttachToProductsDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the handler.
         /// </summary>
         public AttachAddOnGroupToProductsHandler(
             IAppDbContext db,
-            IValidator<AddOnGroupAttachToProductsDto> validator)
+            IValidator<AddOnGroupAttachToProductsDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -50,10 +54,10 @@ namespace Darwin.Application.Catalog.Commands
                 .FirstOrDefaultAsync(ct);
 
             if (group is null)
-                return Result.Fail("Add-on group not found.");
+                return Result.Fail(_localizer["AddOnGroupNotFound"]);
 
             if (dto.RowVersion is null || !dto.RowVersion.SequenceEqual(group.RowVersion))
-                return Result.Fail("The add-on group was modified by another operation. Please reload and retry.");
+                return Result.Fail(_localizer["AddOnGroupConcurrencyConflict"]);
 
             // 3) Normalize and validate requested products
             var requested = (dto.ProductIds ?? Array.Empty<Guid>())
@@ -84,7 +88,7 @@ namespace Darwin.Application.Catalog.Commands
                 .ToListAsync(ct);
 
             if (validProductIds.Count != requested.Length)
-                return Result.Fail("One or more products were not found or are deleted.");
+                return Result.Fail(_localizer["ProductsNotFoundOrDeleted"]);
 
             // 4) Hard delete ALL existing links for this group (active + soft-deleted)
             var existing = await _db.Set<AddOnGroupProduct>()

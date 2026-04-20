@@ -1,8 +1,10 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
@@ -18,17 +20,17 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetPermissionsPageHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public GetPermissionsPageHandler(IAppDbContext db) => _db = db;
+        public GetPermissionsPageHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
 
         /// <summary>
         /// Handles the paged query for permissions.
         /// </summary>
-        /// <param name="pageNumber">1-based page number.</param>
-        /// <param name="pageSize">Page size.</param>
-        /// <param name="searchTerm">Optional search term for key/display name.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>PagedResult of PermissionListItemDto.</returns>
         public async Task<Result<PagedResult<PermissionListItemDto>>> HandleAsync(
             int pageNumber,
             int pageSize,
@@ -36,7 +38,7 @@ namespace Darwin.Application.Identity.Queries
             CancellationToken ct = default)
         {
             if (pageNumber < 1 || pageSize < 1)
-                return Result<PagedResult<PermissionListItemDto>>.Fail("Invalid paging parameters.");
+                return Result<PagedResult<PermissionListItemDto>>.Fail(_localizer["InvalidPagingParameters"]);
 
             var query = _db.Set<Permission>().Where(p => !p.IsDeleted);
 

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
@@ -12,6 +13,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Darwin.Tests.Unit.Identity;
@@ -45,6 +47,7 @@ public sealed class RequestPasswordResetHandlerTests
             email,
             new FakeClock(new DateTime(2030, 3, 1, 10, 0, 0, DateTimeKind.Utc)),
             new RequestPasswordResetValidator(),
+            new TestStringLocalizer<CommunicationResource>(),
             NullLogger<RequestPasswordResetHandler>.Instance);
 
         var result = await handler.HandleAsync(
@@ -93,6 +96,19 @@ public sealed class RequestPasswordResetHandlerTests
             Messages.Add((subject, htmlBody, context));
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public System.Collections.Generic.IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class PasswordResetTestDbContext : DbContext, IAppDbContext

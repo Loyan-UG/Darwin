@@ -66,6 +66,9 @@
   <data name="AtLeast8Characters" xml:space="preserve">
     <value>At least 8 characters</value>
   </data>
+  <data name="PasswordPolicyHelp" xml:space="preserve">
+    <value>Use at least 8 characters with uppercase, lowercase, and a number.</value>
+  </data>
   <data name="MustMatchNewPassword" xml:space="preserve">
     <value>Must match the new password</value>
   </data>
@@ -2532,8 +2535,41 @@
   <data name="BusinessCreateOwnerAssigned" xml:space="preserve">
     <value>Business created and owner assigned.</value>
   </data>
+  <data name="BusinessCreateOwnerInvitationIssued" xml:space="preserve">
+    <value>Business created and owner invitation sent.</value>
+  </data>
   <data name="BusinessCreateNextSteps" xml:space="preserve">
     <value>Business created. Next, add a primary location and assign an owner.</value>
+  </data>
+  <data name="BusinessSupportCustomerTitle" xml:space="preserve">
+    <value>CRM support profile</value>
+  </data>
+  <data name="BusinessSupportCustomerReady" xml:space="preserve">
+    <value>Provisioned for CRM and billing follow-up</value>
+  </data>
+  <data name="BusinessSupportCustomerMissing" xml:space="preserve">
+    <value>Not provisioned yet</value>
+  </data>
+  <data name="BusinessSupportCustomerProvisioningNeeds" xml:space="preserve">
+    <value>Still missing</value>
+  </data>
+  <data name="ProvisionSupportCustomer" xml:space="preserve">
+    <value>Provision CRM profile</value>
+  </data>
+  <data name="OpenSupportCustomer" xml:space="preserve">
+    <value>Open CRM profile</value>
+  </data>
+  <data name="BusinessSupportCustomerProvisioned" xml:space="preserve">
+    <value>CRM support profile provisioned from business onboarding.</value>
+  </data>
+  <data name="BusinessSupportCustomerUpdated" xml:space="preserve">
+    <value>CRM support profile synced with the latest business onboarding data.</value>
+  </data>
+  <data name="BusinessSupportCustomerProvisioningBlocked" xml:space="preserve">
+    <value>CRM support profile could not be provisioned yet. Missing: {0}.</value>
+  </data>
+  <data name="BusinessSupportCustomerProvisioningPending" xml:space="preserve">
+    <value>Complete the business name and contact email first.</value>
   </data>
   <data name="BusinessArchived" xml:space="preserve">
     <value>Business archived.</value>
@@ -8318,6 +8354,18 @@
   </data>
   <data name="BusinessFormInitialOwnerHelp" xml:space="preserve">
     <value>Optional. Assigning an owner now reduces follow-up onboarding work.</value>
+  </data>
+  <data name="BusinessFormInitialOwnerInviteEmail" xml:space="preserve">
+    <value>Initial owner invite email</value>
+  </data>
+  <data name="BusinessFormInitialOwnerInviteEmailHelp" xml:space="preserve">
+    <value>Optional. If no platform user exists yet, send an owner invitation during business creation.</value>
+  </data>
+  <data name="BusinessFormInitialOwnerAssignmentConflict" xml:space="preserve">
+    <value>Choose either an existing owner or an owner invitation email, not both.</value>
+  </data>
+  <data name="BusinessInvitationCreatedFromBusinessCreateNote" xml:space="preserve">
+    <value>Owner invitation issued during business creation.</value>
   </data>
   <data name="BusinessFormBusinessIsActive" xml:space="preserve">
     <value>Business is active</value>

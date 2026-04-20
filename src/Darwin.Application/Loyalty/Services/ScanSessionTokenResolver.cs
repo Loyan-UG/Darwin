@@ -58,12 +58,12 @@ namespace Darwin.Application.Loyalty.Services
         {
             if (string.IsNullOrWhiteSpace(scanSessionToken))
             {
-                return Result<ResolvedScanSessionContext>.Fail("ScanSessionToken is required.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionTokenRequired"]);
             }
 
             if (businessId == Guid.Empty)
             {
-                return Result<ResolvedScanSessionContext>.Fail("BusinessId is required.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             // IMPORTANT:
@@ -76,24 +76,24 @@ namespace Darwin.Application.Loyalty.Services
 
             if (token is null)
             {
-                return Result<ResolvedScanSessionContext>.Fail("Scan session token not found.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionTokenNotFound"]);
             }
 
             var now = _clock.UtcNow;
 
             if (token.ExpiresAtUtc <= now)
             {
-                return Result<ResolvedScanSessionContext>.Fail("Scan session token has expired.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionTokenExpired"]);
             }
 
             if (token.ConsumedAtUtc is not null)
             {
-                return Result<ResolvedScanSessionContext>.Fail("Scan session token has already been consumed.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionTokenAlreadyConsumed"]);
             }
 
             if (token.ConsumedByBusinessId is not null && token.ConsumedByBusinessId != businessId)
             {
-                return Result<ResolvedScanSessionContext>.Fail("Scan session token is bound to a different business.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionTokenBusinessMismatch"]);
             }
 
             var session = await _db.Set<ScanSession>()
@@ -103,12 +103,12 @@ namespace Darwin.Application.Loyalty.Services
 
             if (session is null)
             {
-                return Result<ResolvedScanSessionContext>.Fail("Scan session not found for the provided token.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionNotFoundForToken"]);
             }
 
             if (session.BusinessId != businessId)
             {
-                return Result<ResolvedScanSessionContext>.Fail("Scan session does not belong to this business.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionBusinessMismatch"]);
             }
 
             if (session.ExpiresAtUtc <= now)
@@ -121,12 +121,12 @@ namespace Darwin.Application.Loyalty.Services
                     await _db.SaveChangesAsync(ct).ConfigureAwait(false);
                 }
 
-                return Result<ResolvedScanSessionContext>.Fail("Scan session has expired.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionExpired"]);
             }
 
             if (session.Status != LoyaltyScanStatus.Pending)
             {
-                return Result<ResolvedScanSessionContext>.Fail("Scan session is not in a pending state.");
+                return Result<ResolvedScanSessionContext>.Fail(_localizer["ScanSessionPendingRequired"]);
             }
 
             return Result<ResolvedScanSessionContext>.Ok(new ResolvedScanSessionContext(token, session));

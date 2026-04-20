@@ -8,6 +8,7 @@ using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Communication;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
@@ -31,6 +32,7 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IBusinessInvitationLinkBuilder _businessInvitationLinkBuilder;
         private readonly IValidator<BusinessInvitationCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IStringLocalizer<CommunicationResource> _communicationLocalizer;
 
         public CreateBusinessInvitationHandler(
             IAppDbContext db,
@@ -39,7 +41,8 @@ namespace Darwin.Application.Businesses.Commands
             ICurrentUserService currentUser,
             IBusinessInvitationLinkBuilder businessInvitationLinkBuilder,
             IValidator<BusinessInvitationCreateDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource> localizer,
+            IStringLocalizer<CommunicationResource> communicationLocalizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
@@ -48,6 +51,7 @@ namespace Darwin.Application.Businesses.Commands
             _businessInvitationLinkBuilder = businessInvitationLinkBuilder ?? throw new ArgumentNullException(nameof(businessInvitationLinkBuilder));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _communicationLocalizer = communicationLocalizer ?? throw new ArgumentNullException(nameof(communicationLocalizer));
         }
 
         public async Task<Guid> HandleAsync(BusinessInvitationCreateDto dto, CancellationToken ct = default)
@@ -104,11 +108,26 @@ namespace Darwin.Application.Businesses.Commands
 
             var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(token);
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(business.DefaultCulture, siteSettings?.DefaultCulture);
+            var subjectTemplate = CommunicationTemplateDefaults.ResolveTemplate(
+                _communicationLocalizer,
+                communicationCulture,
+                siteSettings?.BusinessInvitationEmailSubjectTemplate,
+                CommunicationTemplateDefaults.LegacyBusinessInvitationSubjectTemplate,
+                "BusinessInvitationSubjectTemplateDefault");
+            var bodyTemplate = CommunicationTemplateDefaults.ResolveTemplate(
+                _communicationLocalizer,
+                communicationCulture,
+                siteSettings?.BusinessInvitationEmailBodyTemplate,
+                CommunicationTemplateDefaults.LegacyBusinessInvitationBodyTemplate,
+                "BusinessInvitationBodyTemplateDefault");
+            var acceptanceLinkTemplate = CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "BusinessInvitationAcceptanceLinkHtml");
+            var invitedIntroTemplate = CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "BusinessInvitationIntroInvitedHtml");
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
                 TransactionalEmailTemplateRenderer.Render(
-                    siteSettings?.BusinessInvitationEmailSubjectTemplate,
-                    $"Invitation to join {business.Name} on Darwin",
+                    subjectTemplate,
+                    subjectTemplate,
                     new Dictionary<string, string?>
                     {
                         ["business_name"] = business.Name,
@@ -116,16 +135,8 @@ namespace Darwin.Application.Businesses.Commands
                         ["invitation_action"] = "invited"
                     }));
             var body = TransactionalEmailTemplateRenderer.Render(
-                siteSettings?.BusinessInvitationEmailBodyTemplate,
-                $"<p>Hello,</p>" +
-                $"<p>You have been invited to join <strong>{business.Name}</strong> on Darwin as <strong>{dto.Role}</strong>.</p>" +
-                (string.IsNullOrWhiteSpace(acceptanceLink)
-                    ? string.Empty
-                    : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>") +
-                $"<p>Your invitation token is:</p>" +
-                $"<p><code>{token}</code></p>" +
-                $"<p>This invitation expires at <strong>{expiresAtUtc:u}</strong>.</p>" +
-                $"<p>Use this token in the Darwin business onboarding flow or contact your administrator if you need assistance.</p>",
+                bodyTemplate,
+                bodyTemplate,
                 new Dictionary<string, string?>
                 {
                     ["business_name"] = business.Name,
@@ -135,12 +146,19 @@ namespace Darwin.Application.Businesses.Commands
                     ["acceptance_link"] = acceptanceLink,
                     ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
                         ? string.Empty
-                        : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>",
+                        : TransactionalEmailTemplateRenderer.Render(acceptanceLinkTemplate, acceptanceLinkTemplate, new Dictionary<string, string?> { ["acceptance_link"] = acceptanceLink }),
                     ["invitation_action"] = "invited",
-                    ["invitation_intro_html"] = $"You have been invited to join <strong>{business.Name}</strong> on Darwin as <strong>{dto.Role}</strong>."
+                    ["invitation_intro_html"] = TransactionalEmailTemplateRenderer.Render(
+                        invitedIntroTemplate,
+                        invitedIntroTemplate,
+                        new Dictionary<string, string?>
+                        {
+                            ["business_name"] = business.Name,
+                            ["role"] = dto.Role.ToString()
+                        })
                 });
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? entity.Email : siteSettings.CommunicationTestInboxEmail!;
-            body = ApplyRecipientOverrideNotice(entity.Email, recipient, body);
+            body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, entity.Email, recipient, body);
 
             await _emailSender.SendAsync(
                 recipient,
@@ -160,14 +178,22 @@ namespace Darwin.Application.Businesses.Commands
             return string.IsNullOrWhiteSpace(prefix) ? subject : $"{prefix.Trim()} {subject}";
         }
 
-        private static string ApplyRecipientOverrideNotice(string originalRecipient, string effectiveRecipient, string body)
+        private static string ApplyRecipientOverrideNotice(IStringLocalizer<CommunicationResource> localizer, string? culture, string originalRecipient, string effectiveRecipient, string body)
         {
             if (string.Equals(originalRecipient, effectiveRecipient, StringComparison.OrdinalIgnoreCase))
             {
                 return body;
             }
 
-            return $"<p><strong>Original recipient:</strong> {originalRecipient}</p>{body}";
+            var noticeTemplate = CommunicationTemplateDefaults.ResolveText(localizer, culture, "RecipientOverrideNoticeHtml");
+            var notice = TransactionalEmailTemplateRenderer.Render(
+                noticeTemplate,
+                noticeTemplate,
+                new Dictionary<string, string?>
+                {
+                    ["original_recipient"] = originalRecipient
+                });
+            return $"{notice}{body}";
         }
     }
 }

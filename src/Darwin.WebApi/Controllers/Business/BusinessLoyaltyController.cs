@@ -2,6 +2,7 @@ using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Queries;
+using Darwin.Application.Businesses.Queries;
 using Darwin.Contracts.Loyalty;
 using Darwin.Shared.Results;
 using Darwin.WebApi.Controllers.Businesses;
@@ -35,6 +36,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     private readonly UpdateBusinessCampaignHandler _updateBusinessCampaignHandler;
     private readonly SetCampaignActivationHandler _setCampaignActivationHandler;
     private readonly ILoyaltyPresentationService _presentationService;
+    private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BusinessLoyaltyController"/> class.
@@ -53,7 +55,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         CreateBusinessCampaignHandler createBusinessCampaignHandler,
         UpdateBusinessCampaignHandler updateBusinessCampaignHandler,
         SetCampaignActivationHandler setCampaignActivationHandler,
-        ILoyaltyPresentationService presentationService)
+        ILoyaltyPresentationService presentationService,
+        GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler)
     {
         _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler ?? throw new ArgumentNullException(nameof(processScanSessionForBusinessHandler));
         _confirmAccrualFromSessionHandler = confirmAccrualFromSessionHandler ?? throw new ArgumentNullException(nameof(confirmAccrualFromSessionHandler));
@@ -69,6 +72,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         _updateBusinessCampaignHandler = updateBusinessCampaignHandler ?? throw new ArgumentNullException(nameof(updateBusinessCampaignHandler));
         _setCampaignActivationHandler = setCampaignActivationHandler ?? throw new ArgumentNullException(nameof(setCampaignActivationHandler));
         _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
+        _getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));
     }
 
     /// <summary>
@@ -81,7 +85,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetBusinessRewardConfigurationAsync(CancellationToken ct = default)
     {
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -140,7 +145,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem("Request body is required.");
         }
 
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -196,7 +202,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem("RewardTierId is required.");
         }
 
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -263,7 +270,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem("RewardTierId is required.");
         }
 
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -311,7 +319,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem("ScanSessionToken is required.");
         }
 
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -394,7 +403,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem("Points must be greater than zero.");
         }
 
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -449,7 +459,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem("ScanSessionToken is too long.");
         }
 
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -486,9 +497,10 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetBusinessCampaignsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
     {
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
-            return errorResult!;
+            return errorResult ?? Forbid();
         }
 
         var result = await _getBusinessCampaignsHandler.HandleAsync(businessId, page, pageSize, filter: LoyaltyCampaignQueueFilter.All, ct: ct).ConfigureAwait(false);
@@ -540,9 +552,10 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateBusinessCampaignAsync([FromBody] CreateBusinessCampaignRequest? request, CancellationToken ct = default)
     {
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
-            return errorResult!;
+            return errorResult ?? Forbid();
         }
 
         if (request is null)
@@ -592,9 +605,10 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateBusinessCampaignAsync(Guid id, [FromBody] UpdateBusinessCampaignRequest? request, CancellationToken ct = default)
     {
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
-            return errorResult!;
+            return errorResult ?? Forbid();
         }
 
         if (request is null || request.Id != id)
@@ -646,9 +660,10 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SetBusinessCampaignActivationAsync(Guid id, [FromBody] SetCampaignActivationRequest? request, CancellationToken ct = default)
     {
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
-            return errorResult!;
+            return errorResult ?? Forbid();
         }
 
         if (request is null || request.Id != id)
@@ -675,17 +690,28 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     /// <summary>
     /// Resolves the current business identifier from the authenticated principal.
     /// </summary>
-    private bool TryGetCurrentBusinessId(out Guid businessId, out IActionResult? errorResult)
+    private async Task<(bool Success, Guid BusinessId, IActionResult? ErrorResult)> TryGetCurrentBusinessIdAsync(CancellationToken ct)
     {
-        errorResult = null;
-        if (BusinessControllerConventions.TryGetCurrentBusinessId(User, out businessId))
+        var businessId = Guid.Empty;
+
+        if (!BusinessControllerConventions.TryGetCurrentBusinessId(User, out businessId) ||
+            !BusinessControllerConventions.TryGetCurrentUserId(User, out var userId))
         {
-            return true;
+            return (false, Guid.Empty, Forbid());
         }
 
-        businessId = Guid.Empty;
-        errorResult = Forbid();
-        return false;
+        var accessState = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);
+        if (accessState is null)
+        {
+            return (false, Guid.Empty, NotFoundProblem("Business was not found."));
+        }
+
+        if (!accessState.IsBusinessClientAccessAllowed || !accessState.IsOperationsAllowed)
+        {
+            return (false, Guid.Empty, Forbid(accessState.BlockingReason));
+        }
+
+        return (true, businessId, null);
     }
 
     /// <summary>

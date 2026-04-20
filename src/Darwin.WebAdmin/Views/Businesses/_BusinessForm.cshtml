@@ -34,11 +34,16 @@
     </div>
     <div class="col-md-4">
         <label asp-for="DefaultCurrency" class="form-label">@T.T("BusinessFormDefaultCurrency")</label>
-        <input asp-for="DefaultCurrency" class="form-control" maxlength="3" />
+        <setting-select asp-for="DefaultCurrency" setting="SupportedCurrenciesCsv"></setting-select>
     </div>
     <div class="col-md-4">
         <label asp-for="DefaultCulture" class="form-label">@T.T("BusinessFormDefaultCulture")</label>
-        <input asp-for="DefaultCulture" class="form-control" />
+        <setting-select asp-for="DefaultCulture" setting="SupportedCulturesCsv"></setting-select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="DefaultTimeZoneId" class="form-label">@T.T("DefaultTimeZone")</label>
+        <setting-select asp-for="DefaultTimeZoneId" setting="SupportedTimezonesCsv"></setting-select>
+        <div class="form-text">@T.T("DefaultTimeZoneHelp")</div>
     </div>
     <div class="col-md-6">
         <label asp-for="TaxId" class="form-label">@T.T("BusinessFormTaxId")</label>
@@ -75,6 +80,27 @@
                        hx-target="#business-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("Users")</a>
+                    <a asp-action="SupportQueue"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                    <a asp-action="MerchantReadiness"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="OwnerInviteEmail" class="form-label">@T.T("BusinessFormInitialOwnerInviteEmail")</label>
+            <input asp-for="OwnerInviteEmail" class="form-control" type="email" />
+            <div class="form-text">
+                <div>@T.T("BusinessFormInitialOwnerInviteEmailHelp")</div>
+                <div class="d-flex gap-2 flex-wrap mt-2">
                     <a asp-action="SupportQueue"
                        class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("SupportQueue", "Businesses")"

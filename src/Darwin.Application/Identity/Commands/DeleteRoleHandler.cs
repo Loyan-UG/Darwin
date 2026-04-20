@@ -5,6 +5,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Shared.Results;
 using Darwin.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -16,13 +17,15 @@ namespace Darwin.Application.Identity.Commands
     public sealed class DeleteRoleHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Creates a new handler using the application's DbContext abstraction.
         /// </summary>
-        public DeleteRoleHandler(IAppDbContext db)
+        public DeleteRoleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -41,10 +44,10 @@ namespace Darwin.Application.Identity.Commands
             // Global filter hides IsDeleted==true; explicit single-row fetch
             var role = await _db.Set<Role>().FirstOrDefaultAsync(r => r.Id == id, ct);
             if (role is null)
-                return Result.Fail("Role not found.");
+                return Result.Fail(_localizer["RoleNotFound"]);
 
             if (role.IsSystem)
-                return Result.Fail("This role is system-protected and cannot be deleted.");
+                return Result.Fail(_localizer["SystemProtectedRoleCannotBeDeleted"]);
 
             // Soft delete
             role.IsDeleted = true;

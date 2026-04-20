@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Shared.Results;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands;
 
@@ -18,15 +20,18 @@ public sealed class ProcessInactiveReminderBatchHandler
     private readonly GetInactiveReminderCandidatesHandler _getCandidatesHandler;
     private readonly MarkInactiveReminderAttemptHandler _markAttemptHandler;
     private readonly IInactiveReminderDispatcher _dispatcher;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     public ProcessInactiveReminderBatchHandler(
         GetInactiveReminderCandidatesHandler getCandidatesHandler,
         MarkInactiveReminderAttemptHandler markAttemptHandler,
-        IInactiveReminderDispatcher dispatcher)
+        IInactiveReminderDispatcher dispatcher,
+        IStringLocalizer<ValidationResource> localizer)
     {
         _getCandidatesHandler = getCandidatesHandler ?? throw new ArgumentNullException(nameof(getCandidatesHandler));
         _markAttemptHandler = markAttemptHandler ?? throw new ArgumentNullException(nameof(markAttemptHandler));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -38,7 +43,7 @@ public sealed class ProcessInactiveReminderBatchHandler
     {
         if (request is null)
         {
-            return Result<ProcessInactiveReminderBatchResultDto>.Fail("Request payload is required.");
+            return Result<ProcessInactiveReminderBatchResultDto>.Fail(_localizer["RequestPayloadRequired"]);
         }
 
         var candidatesResult = await _getCandidatesHandler.HandleAsync(new GetInactiveReminderCandidatesDto
@@ -51,7 +56,7 @@ public sealed class ProcessInactiveReminderBatchHandler
 
         if (!candidatesResult.Succeeded || candidatesResult.Value is null)
         {
-            return Result<ProcessInactiveReminderBatchResultDto>.Fail(candidatesResult.Error ?? "Could not resolve inactive reminder candidates.");
+            return Result<ProcessInactiveReminderBatchResultDto>.Fail(candidatesResult.Error ?? _localizer["CouldNotResolveInactiveReminderCandidates"]);
         }
 
         var summary = new ProcessInactiveReminderBatchResultDto();

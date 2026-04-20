@@ -1,6 +1,7 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Linq;
 using System.Threading;
@@ -14,10 +15,12 @@ namespace Darwin.Application.Billing;
 public sealed class SetCancelAtPeriodEndHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public SetCancelAtPeriodEndHandler(IAppDbContext db)
+    public SetCancelAtPeriodEndHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     public async Task<Result<BusinessSubscriptionStatusDto>> HandleAsync(
@@ -29,7 +32,7 @@ public sealed class SetCancelAtPeriodEndHandler
     {
         if (businessId == Guid.Empty || subscriptionId == Guid.Empty)
         {
-            return Result<BusinessSubscriptionStatusDto>.Fail("Business and subscription identifiers are required.");
+            return Result<BusinessSubscriptionStatusDto>.Fail(_localizer["BusinessAndSubscriptionIdentifiersRequired"]);
         }
 
         var entity = await _db.Set<Darwin.Domain.Entities.Billing.BusinessSubscription>()
@@ -38,12 +41,12 @@ public sealed class SetCancelAtPeriodEndHandler
 
         if (entity is null)
         {
-            return Result<BusinessSubscriptionStatusDto>.Fail("Subscription not found.");
+            return Result<BusinessSubscriptionStatusDto>.Fail(_localizer["SubscriptionNotFound"]);
         }
 
         if (!entity.RowVersion.SequenceEqual(rowVersion ?? Array.Empty<byte>()))
         {
-            return Result<BusinessSubscriptionStatusDto>.Fail("Subscription was updated by another user. Refresh and try again.");
+            return Result<BusinessSubscriptionStatusDto>.Fail(_localizer["SubscriptionConcurrencyConflict"]);
         }
 
         entity.CancelAtPeriodEnd = cancelAtPeriodEnd;
@@ -63,7 +66,7 @@ public sealed class SetCancelAtPeriodEndHandler
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Result<BusinessSubscriptionStatusDto>.Fail("Subscription was updated by another user. Refresh and try again.");
+            return Result<BusinessSubscriptionStatusDto>.Fail(_localizer["SubscriptionConcurrencyConflict"]);
         }
 
         return Result<BusinessSubscriptionStatusDto>.Ok(new BusinessSubscriptionStatusDto

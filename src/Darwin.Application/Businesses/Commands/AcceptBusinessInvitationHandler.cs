@@ -13,6 +13,7 @@ using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -28,6 +29,7 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IJwtTokenService _jwt;
         private readonly IClock _clock;
         private readonly IValidator<BusinessInvitationAcceptDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public AcceptBusinessInvitationHandler(
             IAppDbContext db,
@@ -35,7 +37,8 @@ namespace Darwin.Application.Businesses.Commands
             ISecurityStampService stamps,
             IJwtTokenService jwt,
             IClock clock,
-            IValidator<BusinessInvitationAcceptDto> validator)
+            IValidator<BusinessInvitationAcceptDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _hasher = hasher ?? throw new ArgumentNullException(nameof(hasher));
@@ -43,6 +46,7 @@ namespace Darwin.Application.Businesses.Commands
             _jwt = jwt ?? throw new ArgumentNullException(nameof(jwt));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result<BusinessInvitationAcceptanceDto>> HandleAsync(BusinessInvitationAcceptDto dto, CancellationToken ct = default)
@@ -56,17 +60,17 @@ namespace Darwin.Application.Businesses.Commands
 
             if (invitation is null)
             {
-                return Result<BusinessInvitationAcceptanceDto>.Fail("Invitation not found.");
+                return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitationNotFound"]);
             }
 
             if (invitation.Status == BusinessInvitationStatus.Revoked)
             {
-                return Result<BusinessInvitationAcceptanceDto>.Fail("Invitation has been revoked.");
+                return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitationRevoked"]);
             }
 
             if (invitation.Status == BusinessInvitationStatus.Accepted)
             {
-                return Result<BusinessInvitationAcceptanceDto>.Fail("Invitation has already been accepted.");
+                return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitationAlreadyAccepted"]);
             }
 
             if (invitation.ExpiresAtUtc <= utcNow)
@@ -77,7 +81,7 @@ namespace Darwin.Application.Businesses.Commands
                     await _db.SaveChangesAsync(ct).ConfigureAwait(false);
                 }
 
-                return Result<BusinessInvitationAcceptanceDto>.Fail("Invitation has expired.");
+                return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitationExpired"]);
             }
 
             var business = await _db.Set<Business>()
@@ -86,7 +90,7 @@ namespace Darwin.Application.Businesses.Commands
 
             if (business is null || !business.IsActive)
             {
-                return Result<BusinessInvitationAcceptanceDto>.Fail("The invited business is not available.");
+                return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitedBusinessUnavailable"]);
             }
 
             var user = await _db.Set<User>()
@@ -100,7 +104,7 @@ namespace Darwin.Application.Businesses.Commands
                     string.IsNullOrWhiteSpace(dto.FirstName) ||
                     string.IsNullOrWhiteSpace(dto.LastName))
                 {
-                    return Result<BusinessInvitationAcceptanceDto>.Fail("First name, last name, and password are required for a new invited user.");
+                    return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitedUserDetailsRequired"]);
                 }
 
                 object? siteSetting = null;
@@ -151,12 +155,12 @@ namespace Darwin.Application.Businesses.Commands
             {
                 if (!user.IsActive)
                 {
-                    return Result<BusinessInvitationAcceptanceDto>.Fail("The invited account is disabled. Contact support.");
+                    return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitedAccountDisabled"]);
                 }
 
                 if (user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > utcNow)
                 {
-                    return Result<BusinessInvitationAcceptanceDto>.Fail("The invited account is temporarily locked. Contact support.");
+                    return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitedAccountLocked"]);
                 }
 
                 user.EmailConfirmed = true;
@@ -170,7 +174,7 @@ namespace Darwin.Application.Businesses.Commands
 
             if (!businessRoleId.HasValue)
             {
-                return Result<BusinessInvitationAcceptanceDto>.Fail("Business user role is not configured.");
+                return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["BusinessUserRoleNotConfigured"]);
             }
 
             var existingRoleLink = await _db.Set<UserRole>()

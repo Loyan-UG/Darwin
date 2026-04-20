@@ -8,6 +8,7 @@ using Darwin.Application.Identity.Services;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -17,8 +18,13 @@ namespace Darwin.Application.Identity.Commands
     public sealed class VerifyTotpForLoginHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public VerifyTotpForLoginHandler(IAppDbContext db) => _db = db;
+        public VerifyTotpForLoginHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         /// <summary>
         /// Verifies the provided TOTP code against the user's active TOTP secret.
@@ -26,18 +32,18 @@ namespace Darwin.Application.Identity.Commands
         public async Task<Result> HandleAsync(TotpVerifyDto dto, CancellationToken ct = default)
         {
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
-            if (user is null) return Result.Fail("User not found.");
+            if (user is null) return Result.Fail(_localizer["UserNotFound"]);
 
-            if (!user.TwoFactorEnabled) return Result.Fail("Two-factor authentication is not enabled.");
+            if (!user.TwoFactorEnabled) return Result.Fail(_localizer["TwoFactorAuthenticationNotEnabled"]);
 
             var secret = await _db.Set<UserTwoFactorSecret>()
                 .OrderByDescending(s => s.ActivatedAtUtc)
                 .FirstOrDefaultAsync(s => s.UserId == user.Id && s.ActivatedAtUtc != null && !s.IsDeleted, ct);
 
-            if (secret is null) return Result.Fail("No active TOTP secret.");
+            if (secret is null) return Result.Fail(_localizer["NoActiveTotpSecret"]);
 
             var ok = TotpUtility.VerifyTotpCode(secret.SecretBase32, DateTime.UtcNow, dto.Code, allowedDriftSteps: 1);
-            if (!ok) return Result.Fail("Invalid TOTP code.");
+            if (!ok) return Result.Fail(_localizer["InvalidTotpCode"]);
 
             return Result.Ok();
         }

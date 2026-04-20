@@ -4,10 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Queries
 {
@@ -33,6 +35,7 @@ namespace Darwin.Application.Loyalty.Queries
 
         private readonly IAppDbContext _dbContext;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GetMyLoyaltyTimelinePageHandler"/> class.
@@ -42,10 +45,12 @@ namespace Darwin.Application.Loyalty.Queries
         /// <exception cref="ArgumentNullException">Thrown when any dependency is null.</exception>
         public GetMyLoyaltyTimelinePageHandler(
             IAppDbContext dbContext,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -59,7 +64,7 @@ namespace Darwin.Application.Loyalty.Queries
             CancellationToken cancellationToken = default)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
-            if (dto.BusinessId == Guid.Empty) return Result<LoyaltyTimelinePageDto>.Fail("Business id must not be empty.");
+            if (dto.BusinessId == Guid.Empty) return Result<LoyaltyTimelinePageDto>.Fail(_localizer["BusinessIdRequired"]);
 
             var pageSize = dto.PageSize <= 0 ? DefaultPageSize : dto.PageSize;
             if (pageSize > MaxPageSize) pageSize = MaxPageSize;
@@ -68,10 +73,14 @@ namespace Darwin.Application.Loyalty.Queries
             // For deterministic keyset paging, both cursor parts must be provided together.
             if ((dto.BeforeAtUtc is null) != (dto.BeforeId is null))
             {
-                return Result<LoyaltyTimelinePageDto>.Fail("Invalid cursor. Both BeforeAtUtc and BeforeId must be provided together.");
+                return Result<LoyaltyTimelinePageDto>.Fail(_localizer["InvalidTimelineCursor"]);
             }
 
             var userId = _currentUserService.GetCurrentUserId();
+            if (userId == Guid.Empty)
+            {
+                return Result<LoyaltyTimelinePageDto>.Fail(_localizer["UserNotAuthenticated"]);
+            }
 
             // Resolve the loyalty account for the current user and business.
             var account = await _dbContext
@@ -83,7 +92,7 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (account is null)
             {
-                return Result<LoyaltyTimelinePageDto>.Fail("Loyalty account not found for the specified business and user.");
+                return Result<LoyaltyTimelinePageDto>.Fail(_localizer["LoyaltyAccountNotFoundForSpecifiedBusinessAndUser"]);
             }
 
             // Transactions query projected into unified timeline entries.

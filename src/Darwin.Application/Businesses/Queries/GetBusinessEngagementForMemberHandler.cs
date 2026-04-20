@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Queries
 {
@@ -19,18 +21,20 @@ namespace Darwin.Application.Businesses.Queries
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public GetBusinessEngagementForMemberHandler(IAppDbContext db, ICurrentUserService currentUser)
+        public GetBusinessEngagementForMemberHandler(IAppDbContext db, ICurrentUserService currentUser, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result<BusinessEngagementSummaryDto>> HandleAsync(Guid businessId, CancellationToken ct = default)
         {
             if (businessId == Guid.Empty)
             {
-                return Result<BusinessEngagementSummaryDto>.Fail("Business id must not be empty.");
+                return Result<BusinessEngagementSummaryDto>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             var exists = await _db.Set<Business>()
@@ -40,10 +44,14 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!exists)
             {
-                return Result<BusinessEngagementSummaryDto>.Fail("Business not found.");
+                return Result<BusinessEngagementSummaryDto>.Fail(_localizer["BusinessNotFound"]);
             }
 
             var userId = _currentUser.GetCurrentUserId();
+            if (userId == Guid.Empty)
+            {
+                return Result<BusinessEngagementSummaryDto>.Fail(_localizer["UserNotAuthenticated"]);
+            }
 
             var stats = await _db.Set<BusinessEngagementStats>()
                 .AsNoTracking()

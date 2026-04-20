@@ -4,11 +4,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Queries
 {
@@ -42,6 +44,7 @@ namespace Darwin.Application.Loyalty.Queries
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the
@@ -61,10 +64,12 @@ namespace Darwin.Application.Loyalty.Queries
         /// </exception>
         public GetMyLoyaltyAccountForBusinessHandler(
             IAppDbContext db,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
 
@@ -89,7 +94,7 @@ namespace Darwin.Application.Loyalty.Queries
         {
             if (businessId == Guid.Empty)
             {
-                return Result<LoyaltyAccountSummaryDto?>.Fail("Business id must not be empty.");
+                return Result<LoyaltyAccountSummaryDto?>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             // Resolve the current authenticated user. The implementation of
@@ -97,6 +102,10 @@ namespace Darwin.Application.Loyalty.Queries
             // available; at this level we assume authorization has already
             // been enforced by the WebApi layer.
             var currentUserId = _currentUserService.GetCurrentUserId();
+            if (currentUserId == Guid.Empty)
+            {
+                return Result<LoyaltyAccountSummaryDto?>.Fail(_localizer["UserNotAuthenticated"]);
+            }
 
             // Base query for the loyalty account of the current user within
             // the specified business. Global query filters on IsDeleted are

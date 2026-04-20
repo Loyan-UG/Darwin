@@ -1,6 +1,8 @@
 ﻿using Darwin.Application.Billing;
 using Darwin.Contracts.Billing;
 using Darwin.WebApi.Controllers;
+using Darwin.Application.Businesses.Queries;
+using Darwin.WebApi.Controllers.Businesses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -25,6 +27,7 @@ public sealed class BillingController : ApiControllerBase
     private readonly SetCancelAtPeriodEndHandler _setCancelAtPeriodEndHandler;
     private readonly GetBillingPlansHandler _getBillingPlansHandler;
     private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntentHandler;
+    private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;
     private readonly IConfiguration _configuration;
 
     public BillingController(
@@ -32,12 +35,14 @@ public sealed class BillingController : ApiControllerBase
         SetCancelAtPeriodEndHandler setCancelAtPeriodEndHandler,
         GetBillingPlansHandler getBillingPlansHandler,
         CreateSubscriptionCheckoutIntentHandler createSubscriptionCheckoutIntentHandler,
+        GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler,
         IConfiguration configuration)
     {
         _getBusinessSubscriptionStatusHandler = getBusinessSubscriptionStatusHandler ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionStatusHandler));
         _setCancelAtPeriodEndHandler = setCancelAtPeriodEndHandler ?? throw new ArgumentNullException(nameof(setCancelAtPeriodEndHandler));
         _getBillingPlansHandler = getBillingPlansHandler ?? throw new ArgumentNullException(nameof(getBillingPlansHandler));
         _createSubscriptionCheckoutIntentHandler = createSubscriptionCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createSubscriptionCheckoutIntentHandler));
+        _getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
@@ -52,7 +57,8 @@ public sealed class BillingController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetCurrentBusinessSubscriptionAsync(CancellationToken ct = default)
     {
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -80,7 +86,8 @@ public sealed class BillingController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> SetCancelAtPeriodEndAsync([FromBody] SetCancelAtPeriodEndRequest request, CancellationToken ct = default)
     {
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -124,7 +131,8 @@ public sealed class BillingController : ApiControllerBase
     public async Task<IActionResult> GetBillingPlansAsync([FromQuery] bool activeOnly = true, CancellationToken ct = default)
     {
         // Business claim gate remains explicit to keep endpoint visibility consistent with other business billing operations.
-        if (!TryGetCurrentBusinessId(out _, out var errorResult))
+        var (hasBusinessAccess, _, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -167,7 +175,8 @@ public sealed class BillingController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateSubscriptionCheckoutIntentAsync([FromBody] CreateSubscriptionCheckoutIntentRequest request, CancellationToken ct = default)
     {
-        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
         {
             return errorResult ?? Forbid();
         }
@@ -232,19 +241,32 @@ public sealed class BillingController : ApiControllerBase
             CancelAtPeriodEnd = dto.CancelAtPeriodEnd
         };
 
-    private bool TryGetCurrentBusinessId(out Guid businessId, out IActionResult? errorResult)
+    private async Task<(bool Success, Guid BusinessId, IActionResult? ErrorResult)> TryGetCurrentBusinessIdAsync(bool requireOperationsAllowed, CancellationToken ct)
     {
-        businessId = Guid.Empty;
-        errorResult = null;
+        var businessId = Guid.Empty;
 
-        var claimValue = User?.FindFirst("business_id")?.Value;
-        if (string.IsNullOrWhiteSpace(claimValue) || !Guid.TryParse(claimValue, out businessId))
+        if (!BusinessControllerConventions.TryGetCurrentBusinessId(User, out businessId) ||
+            !BusinessControllerConventions.TryGetCurrentUserId(User, out var userId))
         {
-            errorResult = Forbid();
-            businessId = Guid.Empty;
-            return false;
+            return (false, Guid.Empty, Forbid());
         }
 
-        return true;
+        var accessState = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);
+        if (accessState is null)
+        {
+            return (false, Guid.Empty, NotFoundProblem("Business was not found."));
+        }
+
+        if (!accessState.IsBusinessClientAccessAllowed)
+        {
+            return (false, Guid.Empty, Forbid(accessState.BlockingReason));
+        }
+
+        if (requireOperationsAllowed && !accessState.IsOperationsAllowed)
+        {
+            return (false, Guid.Empty, Forbid(accessState.BlockingReason));
+        }
+
+        return (true, businessId, null);
     }
 }

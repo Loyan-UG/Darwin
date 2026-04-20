@@ -11,6 +11,7 @@ using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -26,17 +27,20 @@ namespace Darwin.Application.Businesses.Commands
         private readonly ResendBusinessInvitationHandler _resendBusinessInvitation;
         private readonly RequestEmailConfirmationHandler _requestEmailConfirmation;
         private readonly RequestPasswordResetHandler _requestPasswordReset;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public RetryEmailDispatchAuditHandler(
             IAppDbContext db,
             ResendBusinessInvitationHandler resendBusinessInvitation,
             RequestEmailConfirmationHandler requestEmailConfirmation,
-            RequestPasswordResetHandler requestPasswordReset)
+            RequestPasswordResetHandler requestPasswordReset,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _resendBusinessInvitation = resendBusinessInvitation ?? throw new ArgumentNullException(nameof(resendBusinessInvitation));
             _requestEmailConfirmation = requestEmailConfirmation ?? throw new ArgumentNullException(nameof(requestEmailConfirmation));
             _requestPasswordReset = requestPasswordReset ?? throw new ArgumentNullException(nameof(requestPasswordReset));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result> HandleAsync(RetryEmailDispatchAuditDto dto, CancellationToken ct = default)
@@ -48,12 +52,12 @@ namespace Darwin.Application.Businesses.Commands
 
             if (audit is null)
             {
-                return Result.Fail("Email audit row was not found.");
+                return Result.Fail(_localizer["EmailAuditRowNotFound"]);
             }
 
             if (!CanRetryStatus(audit.Status))
             {
-                return Result.Fail("Only failed or still-pending email audit rows can be retried.");
+                return Result.Fail(_localizer["EmailAuditRetryStatusInvalid"]);
             }
 
             var recentAttemptCount24h = await _db.Set<EmailDispatchAudit>()
@@ -68,18 +72,18 @@ namespace Darwin.Application.Businesses.Commands
 
             if (recentAttemptCount24h >= MaxRetryAttemptsPerWindow)
             {
-                return Result.Fail($"Retry blocked: {recentAttemptCount24h} attempts already occurred in the last 24 hours.");
+                return Result.Fail(_localizer["EmailAuditRetryBlockedRecentAttempts", recentAttemptCount24h]);
             }
 
             var retryAvailableAtUtc = audit.AttemptedAtUtc.Add(RetryCooldown);
             if (retryAvailableAtUtc > DateTime.UtcNow)
             {
-                return Result.Fail($"Retry cooldown is still active until {retryAvailableAtUtc:yyyy-MM-dd HH:mm} UTC.");
+                return Result.Fail(_localizer["EmailAuditRetryCooldownActive", retryAvailableAtUtc]);
             }
 
             if (string.IsNullOrWhiteSpace(audit.RecipientEmail))
             {
-                return Result.Fail("This audit row does not have a recipient email to resolve for retry.");
+                return Result.Fail(_localizer["EmailAuditRecipientMissing"]);
             }
 
             try
@@ -89,7 +93,7 @@ namespace Darwin.Application.Businesses.Commands
                     "BusinessInvitation" => await RetryBusinessInvitationAsync(audit, ct).ConfigureAwait(false),
                     "AccountActivation" => await RetryAccountActivationAsync(audit, ct).ConfigureAwait(false),
                     "PasswordReset" => await RetryPasswordResetAsync(audit, ct).ConfigureAwait(false),
-                    _ => Result.Fail("This audit flow does not support generic retry from the audit queue.")
+                    _ => Result.Fail(_localizer["EmailAuditFlowRetryUnsupported"])
                 };
             }
             catch (InvalidOperationException ex)
@@ -102,7 +106,7 @@ namespace Darwin.Application.Businesses.Commands
         {
             if (!audit.BusinessId.HasValue)
             {
-                return Result.Fail("Invitation retry requires a business-linked audit row.");
+                return Result.Fail(_localizer["EmailAuditInvitationRequiresBusinessLink"]);
             }
 
             var normalizedEmail = audit.RecipientEmail.Trim().ToUpperInvariant();
@@ -119,7 +123,7 @@ namespace Darwin.Application.Businesses.Commands
 
             if (invitation is null)
             {
-                return Result.Fail("No open or expired invitation could be resolved for this recipient.");
+                return Result.Fail(_localizer["EmailAuditInvitationTargetNotFound"]);
             }
 
             await _resendBusinessInvitation.HandleAsync(
@@ -138,7 +142,7 @@ namespace Darwin.Application.Businesses.Commands
             var user = await ResolveUserByEmailAsync(audit.RecipientEmail, ct).ConfigureAwait(false);
             if (user is null)
             {
-                return Result.Fail("No active user could be resolved for this activation email.");
+                return Result.Fail(_localizer["EmailAuditActivationTargetNotFound"]);
             }
 
             return await _requestEmailConfirmation.HandleAsync(
@@ -154,7 +158,7 @@ namespace Darwin.Application.Businesses.Commands
             var user = await ResolveUserByEmailAsync(audit.RecipientEmail, ct).ConfigureAwait(false);
             if (user is null)
             {
-                return Result.Fail("No active user could be resolved for this password reset email.");
+                return Result.Fail(_localizer["EmailAuditPasswordResetTargetNotFound"]);
             }
 
             return await _requestPasswordReset.HandleAsync(

@@ -36,6 +36,9 @@
         "Email" => T.T("CommunicationBuiltInFlowEmailChannel"),
         _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : channel
     };
+
+    string MemberWorkspaceLabel() => T.T("Members");
+    string InvitationWorkspaceLabel() => T.T("Invitations");
 }
 
 <div id="business-communication-profile-shell">
@@ -69,12 +72,12 @@
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("Members")</a>
+           hx-push-url="true">@MemberWorkspaceLabel()</a>
         <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("Invitations")</a>
+           hx-push-url="true">@InvitationWorkspaceLabel()</a>
     </div>
 </div>
 

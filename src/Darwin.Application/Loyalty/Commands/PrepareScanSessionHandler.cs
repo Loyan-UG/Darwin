@@ -13,6 +13,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -34,6 +35,7 @@ namespace Darwin.Application.Loyalty.Commands
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUserService;
         private readonly IClock _clock;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Default scan session lifetime in minutes.
@@ -46,11 +48,13 @@ namespace Darwin.Application.Loyalty.Commands
         public PrepareScanSessionHandler(
             IAppDbContext db,
             ICurrentUserService currentUserService,
-            IClock clock)
+            IClock clock,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -63,18 +67,18 @@ namespace Darwin.Application.Loyalty.Commands
         {
             if (dto is null)
             {
-                return Result<ScanSessionPreparedDto>.Fail("Request is required.");
+                return Result<ScanSessionPreparedDto>.Fail(_localizer["RequestPayloadRequired"]);
             }
 
             if (dto.BusinessId == Guid.Empty)
             {
-                return Result<ScanSessionPreparedDto>.Fail("BusinessId is required.");
+                return Result<ScanSessionPreparedDto>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             var userId = _currentUserService.GetCurrentUserId();
             if (userId == Guid.Empty)
             {
-                return Result<ScanSessionPreparedDto>.Fail("User is not authenticated.");
+                return Result<ScanSessionPreparedDto>.Fail(_localizer["UserNotAuthenticated"]);
             }
 
             var account = await _db.Set<LoyaltyAccount>()
@@ -88,12 +92,12 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (account is null)
             {
-                return Result<ScanSessionPreparedDto>.Fail("Loyalty account not found for the specified business.");
+                return Result<ScanSessionPreparedDto>.Fail(_localizer["LoyaltyAccountNotFoundForSpecifiedBusiness"]);
             }
 
             if (account.Status != LoyaltyAccountStatus.Active)
             {
-                return Result<ScanSessionPreparedDto>.Fail("Loyalty account is not active.");
+                return Result<ScanSessionPreparedDto>.Fail(_localizer["LoyaltyAccountInactive"]);
             }
 
             string? selectedRewardsJson = null;
@@ -106,7 +110,7 @@ namespace Darwin.Application.Loyalty.Commands
 
                 if (payload is null)
                 {
-                    return Result<ScanSessionPreparedDto>.Fail("Insufficient points for selected rewards.");
+                    return Result<ScanSessionPreparedDto>.Fail(_localizer["InsufficientPointsForSelectedRewards"]);
                 }
 
                 selectedRewardsJson = payload.Json;

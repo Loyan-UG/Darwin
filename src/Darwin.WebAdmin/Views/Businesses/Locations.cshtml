@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BusinessLocationsTitle");
+    string InvitationWorkspaceLabel() => T.T("Invitations");
 }
 
 <div id="business-locations-workspace-shell">
@@ -24,7 +25,7 @@
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
            hx-target="#business-locations-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("Invitations")</a>
+           hx-push-url="true">@InvitationWorkspaceLabel()</a>
         <a asp-action="CreateLocation"
            asp-route-businessId="@Model.Business.Id"
            class="btn btn-primary"

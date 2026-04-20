@@ -2,6 +2,7 @@
 using Darwin.Domain.Entities.CMS;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +17,16 @@ namespace Darwin.Application.CMS.Commands
     public sealed class SoftDeletePageHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the handler with the shared DbContext abstraction.
         /// </summary>
-        public SoftDeletePageHandler(IAppDbContext db) => _db = db;
+        public SoftDeletePageHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         /// <summary>
         /// Soft-deletes the specified page by Id. If the page is system-protected or not found,
@@ -36,13 +42,13 @@ namespace Darwin.Application.CMS.Commands
         {
             var page = await _db.Set<Page>().FirstOrDefaultAsync(p => p.Id == id, ct);
             if (page is null)
-                return Result.Fail("Page not found.");
+                return Result.Fail(_localizer["PageNotFound"]);
 
             if (rowVersion is not null)
             {
                 // Optimistic concurrency: ensure the incoming token matches the current one.
                 if (page.RowVersion is null || !page.RowVersion.SequenceEqual(rowVersion))
-                    return Result.Fail("The page was modified by another user. Please reload and try again.");
+                    return Result.Fail(_localizer["PageConcurrencyConflict"]);
             }
 
             page.IsDeleted = true;

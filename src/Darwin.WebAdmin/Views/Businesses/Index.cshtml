@@ -11,6 +11,8 @@
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
         _ => T.T("Members")
     };
+    string MemberWorkspaceLabel() => T.T("Members");
+    string InvitationWorkspaceLabel() => T.T("Invitations");
     string InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch
     {
         Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites => T.T("PendingInvites"),
@@ -549,7 +551,7 @@
                 <th>@T.T("Category")</th>
                 <th class="text-center">@T.T("Status")</th>
                 <th class="text-center">@T.T("Owners")</th>
-                <th class="text-center">@T.T("Members")</th>
+                <th class="text-center">@MemberWorkspaceLabel()</th>
                 <th class="text-center">@T.T("Locations")</th>
                 <th>@T.T("Attention")</th>
                 <th class="text-end" style="width:360px">@T.T("Actions")</th>
@@ -759,7 +761,7 @@
                            hx-target="#businesses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
-                            <i class="fa-solid fa-user-group"></i> @T.T("Members")
+                            <i class="fa-solid fa-user-group"></i> @MemberWorkspaceLabel()
                         </a>
                         <a asp-action="Subscription"
                            asp-route-businessId="@item.Id"
@@ -786,7 +788,7 @@
                            hx-target="#businesses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
-                            <i class="fa-solid fa-envelope"></i> @T.T("Invitations")
+                            <i class="fa-solid fa-envelope"></i> @InvitationWorkspaceLabel()
                         </a>
                         @if (isFullAdmin)
                         {

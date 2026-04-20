@@ -10,6 +10,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -20,11 +21,13 @@ namespace Darwin.Application.Loyalty.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateLoyaltyAccountByAdminHandler(IAppDbContext db, IClock clock)
+        public CreateLoyaltyAccountByAdminHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result<LoyaltyAccountAdminListItemDto>> HandleAsync(
@@ -33,12 +36,12 @@ namespace Darwin.Application.Loyalty.Commands
         {
             if (dto.BusinessId == Guid.Empty)
             {
-                return Result<LoyaltyAccountAdminListItemDto>.Fail("Business is required.");
+                return Result<LoyaltyAccountAdminListItemDto>.Fail(_localizer["BusinessRequired"]);
             }
 
             if (dto.UserId == Guid.Empty)
             {
-                return Result<LoyaltyAccountAdminListItemDto>.Fail("User is required.");
+                return Result<LoyaltyAccountAdminListItemDto>.Fail(_localizer["UserRequired"]);
             }
 
             var business = await _db.Set<Business>()
@@ -47,7 +50,7 @@ namespace Darwin.Application.Loyalty.Commands
                 .ConfigureAwait(false);
             if (business is null)
             {
-                return Result<LoyaltyAccountAdminListItemDto>.Fail("Business not found.");
+                return Result<LoyaltyAccountAdminListItemDto>.Fail(_localizer["BusinessNotFound"]);
             }
 
             var user = await _db.Set<User>()
@@ -56,7 +59,7 @@ namespace Darwin.Application.Loyalty.Commands
                 .ConfigureAwait(false);
             if (user is null)
             {
-                return Result<LoyaltyAccountAdminListItemDto>.Fail("User not found.");
+                return Result<LoyaltyAccountAdminListItemDto>.Fail(_localizer["UserNotFoundOrInactive"]);
             }
 
             var existing = await _db.Set<LoyaltyAccount>()
@@ -68,7 +71,7 @@ namespace Darwin.Application.Loyalty.Commands
                 .ConfigureAwait(false);
             if (existing is not null)
             {
-                return Result<LoyaltyAccountAdminListItemDto>.Fail("A loyalty account already exists for this member in the selected business.");
+                return Result<LoyaltyAccountAdminListItemDto>.Fail(_localizer["LoyaltyAccountAlreadyExistsForMemberInBusiness"]);
             }
 
             var account = new LoyaltyAccount

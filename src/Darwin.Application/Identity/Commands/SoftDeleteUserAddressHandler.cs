@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -18,11 +19,13 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<AddressDeleteDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SoftDeleteUserAddressHandler(IAppDbContext db, IValidator<AddressDeleteDto> validator)
+        public SoftDeleteUserAddressHandler(IAppDbContext db, IValidator<AddressDeleteDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         public async Task<Result> HandleAsync(AddressDeleteDto dto, CancellationToken ct = default)
@@ -31,13 +34,13 @@ namespace Darwin.Application.Identity.Commands
 
             var address = await _db.Set<Address>().FirstOrDefaultAsync(a => a.Id == dto.Id && !a.IsDeleted, ct);
             if (address is null)
-                return Result.Fail("Address not found.");
+                return Result.Fail(_localizer["AddressNotFound"]);
 
             // Concurrency check
             if (address.RowVersion is not null && dto.RowVersion is not null && address.RowVersion.Length > 0)
             {
                 if (!StructuralComparisons.StructuralEqualityComparer.Equals(address.RowVersion, dto.RowVersion))
-                    return Result.Fail("Concurrency conflict.");
+                    return Result.Fail(_localizer["ConcurrencyConflict"]);
             }
 
             // Clear defaults if any

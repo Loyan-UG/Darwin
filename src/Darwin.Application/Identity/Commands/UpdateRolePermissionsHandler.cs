@@ -9,6 +9,7 @@ using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -20,8 +21,13 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly RolePermissionsUpdateValidator _validator = new();
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateRolePermissionsHandler(IAppDbContext db) => _db = db;
+        public UpdateRolePermissionsHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         /// <summary>
         /// Updates the role-permission link set after validating inputs, role existence,
@@ -30,16 +36,16 @@ namespace Darwin.Application.Identity.Commands
         public async Task<Result> HandleAsync(RolePermissionsUpdateDto dto, CancellationToken ct = default)
         {
             var v = _validator.Validate(dto);
-            if (!v.IsValid) return Result.Fail("Invalid role-permissions payload.");
+            if (!v.IsValid) return Result.Fail(_localizer["InvalidRolePermissionsPayload"]);
 
             // Load role (tracked & non-deleted)
             var role = await _db.Set<Role>()
                 .FirstOrDefaultAsync(r => r.Id == dto.RoleId && !r.IsDeleted, ct);
-            if (role is null) return Result.Fail("Role not found.");
+            if (role is null) return Result.Fail(_localizer["RoleNotFound"]);
 
             // App-level optimistic concurrency check (IAppDbContext has no Entry API)
             if (!role.RowVersion.SequenceEqual(dto.RowVersion))
-                return Result.Fail("Concurrency conflict. Please reload and try again.");
+                return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
 
             // Validate permissions exist (non-deleted)
             var distinctIds = dto.PermissionIds.Distinct().ToList();
@@ -50,7 +56,7 @@ namespace Darwin.Application.Identity.Commands
                 .ToListAsync(ct);
 
             if (validIds.Count != distinctIds.Count)
-                return Result.Fail("One or more permissions are invalid.");
+                return Result.Fail(_localizer["InvalidPermissionsSelection"]);
 
             // Current links (tracked to allow soft-delete)
             var currentLinks = await _db.Set<RolePermission>()

@@ -8,6 +8,7 @@ using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -43,6 +44,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly ICurrentUserService _currentUserService;
         private readonly ISecurityStampService _securityStampService;
         private readonly IClock _clock;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RequestCurrentUserAccountDeletionHandler"/> class.
@@ -55,12 +57,14 @@ namespace Darwin.Application.Identity.Commands
             IAppDbContext db,
             ICurrentUserService currentUserService,
             ISecurityStampService securityStampService,
-            IClock clock)
+            IClock clock,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _securityStampService = securityStampService ?? throw new ArgumentNullException(nameof(securityStampService));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -75,13 +79,13 @@ namespace Darwin.Application.Identity.Commands
         {
             if (!confirmIrreversibleDeletion)
             {
-                return Result.Fail("Explicit deletion confirmation is required.");
+                return Result.Fail(_localizer["ExplicitDeletionConfirmationRequired"]);
             }
 
             var currentUserId = _currentUserService.GetCurrentUserId();
             if (currentUserId == Guid.Empty)
             {
-                return Result.Fail("User is not authenticated.");
+                return Result.Fail(_localizer["UserNotAuthenticated"]);
             }
 
             var user = await _db.Set<User>()
@@ -90,12 +94,12 @@ namespace Darwin.Application.Identity.Commands
 
             if (user is null)
             {
-                return Result.Fail("Active user account not found.");
+                return Result.Fail(_localizer["ActiveUserAccountNotFound"]);
             }
 
             if (user.IsSystem)
             {
-                return Result.Fail("System users cannot request account deletion.");
+                return Result.Fail(_localizer["SystemUsersCannotRequestAccountDeletion"]);
             }
 
             var nowUtc = _clock.UtcNow;

@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -21,10 +22,11 @@ namespace Darwin.Application.Identity.Commands
         private readonly IUserPasswordHasher _hasher;
         private readonly ISecurityStampService _stamps;
         private readonly IValidator<UserChangePasswordDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ChangePasswordHandler(IAppDbContext db, IUserPasswordHasher hasher, ISecurityStampService stamps, IValidator<UserChangePasswordDto> validator)
+        public ChangePasswordHandler(IAppDbContext db, IUserPasswordHasher hasher, ISecurityStampService stamps, IValidator<UserChangePasswordDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
-            _db = db; _hasher = hasher; _stamps = stamps; _validator = validator;
+            _db = db; _hasher = hasher; _stamps = stamps; _validator = validator; _localizer = localizer;
         }
 
         public async Task<Result> HandleAsync(UserChangePasswordDto dto, CancellationToken ct = default)
@@ -32,10 +34,10 @@ namespace Darwin.Application.Identity.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var u = await _db.Set<User>().FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
-            if (u == null) return Result.Fail("User not found.");
+            if (u == null) return Result.Fail(_localizer["UserNotFound"]);
 
             if (!_hasher.Verify(u.PasswordHash, dto.CurrentPassword))
-                return Result.Fail("Current password is incorrect.");
+                return Result.Fail(_localizer["CurrentPasswordIncorrect"]);
 
             u.PasswordHash = _hasher.Hash(dto.NewPassword);
             u.SecurityStamp = _stamps.NewStamp();

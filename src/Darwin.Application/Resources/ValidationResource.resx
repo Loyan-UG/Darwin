@@ -132,6 +132,18 @@
   <data name="EitherUserIdOrRefreshTokenRequired" xml:space="preserve">
     <value>Either UserId or RefreshToken must be provided.</value>
   </data>
+  <data name="PasswordMinLength" xml:space="preserve">
+    <value>Password must be at least 8 characters long.</value>
+  </data>
+  <data name="PasswordUppercaseRequired" xml:space="preserve">
+    <value>Password must contain at least one uppercase letter.</value>
+  </data>
+  <data name="PasswordLowercaseRequired" xml:space="preserve">
+    <value>Password must contain at least one lowercase letter.</value>
+  </data>
+  <data name="PasswordDigitRequired" xml:space="preserve">
+    <value>Password must contain at least one digit.</value>
+  </data>
   <data name="WarehouseIdValidWhenProvided" xml:space="preserve">
     <value>WarehouseId must be a valid identifier when provided.</value>
   </data>
@@ -577,5 +589,437 @@
   <data name="LoyaltyAccountIdRequired" xml:space="preserve">
     <value>Loyalty account id is required.</value>
     <comment>Validation/business message when loyalty account id is missing.</comment>
+  </data>
+  <data name="Unauthorized" xml:space="preserve">
+    <value>Unauthorized.</value>
+  </data>
+  <data name="ConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict.</value>
+  </data>
+  <data name="PhoneNumberMissing" xml:space="preserve">
+    <value>Phone number is missing.</value>
+  </data>
+  <data name="CommunicationSettingsMissing" xml:space="preserve">
+    <value>Communication settings are missing.</value>
+  </data>
+  <data name="InvalidOrExpiredVerificationCode" xml:space="preserve">
+    <value>Invalid or expired verification code.</value>
+  </data>
+  <data name="UserNotAuthenticated" xml:space="preserve">
+    <value>User is not authenticated.</value>
+  </data>
+  <data name="ExplicitDeletionConfirmationRequired" xml:space="preserve">
+    <value>Explicit deletion confirmation is required.</value>
+  </data>
+  <data name="ActiveUserAccountNotFound" xml:space="preserve">
+    <value>Active user account not found.</value>
+  </data>
+  <data name="SystemUsersCannotRequestAccountDeletion" xml:space="preserve">
+    <value>System users cannot request account deletion.</value>
+  </data>
+  <data name="UserIdRequired" xml:space="preserve">
+    <value>User id is required.</value>
+  </data>
+  <data name="AddressIdRequired" xml:space="preserve">
+    <value>Address id is required.</value>
+  </data>
+  <data name="NothingToSet" xml:space="preserve">
+    <value>Nothing to set.</value>
+  </data>
+  <data name="AddressNotFound" xml:space="preserve">
+    <value>Address not found.</value>
+  </data>
+  <data name="AddressNotOwnedByUser" xml:space="preserve">
+    <value>Address not found or not owned by user.</value>
+  </data>
+  <data name="TwoFactorAuthenticationNotEnabled" xml:space="preserve">
+    <value>Two-factor authentication is not enabled.</value>
+  </data>
+  <data name="NoActiveTotpSecret" xml:space="preserve">
+    <value>No active TOTP secret.</value>
+  </data>
+  <data name="InvalidTotpCode" xml:space="preserve">
+    <value>Invalid TOTP code.</value>
+  </data>
+  <data name="InvalidTokenOrEmail" xml:space="preserve">
+    <value>Invalid token or email.</value>
+  </data>
+  <data name="InvalidOrExpiredToken" xml:space="preserve">
+    <value>Invalid or expired token.</value>
+  </data>
+  <data name="SystemUsersCannotBeLocked" xml:space="preserve">
+    <value>System users cannot be locked.</value>
+  </data>
+  <data name="SystemUsersCannotBeDeleted" xml:space="preserve">
+    <value>System users cannot be deleted.</value>
+  </data>
+  <data name="CurrentPasswordIncorrect" xml:space="preserve">
+    <value>Current password is incorrect.</value>
+  </data>
+  <data name="InvalidUserRolesPayload" xml:space="preserve">
+    <value>Invalid user-roles payload.</value>
+  </data>
+  <data name="UserNotFoundOrInactive" xml:space="preserve">
+    <value>User not found or inactive.</value>
+  </data>
+  <data name="ConcurrencyConflictReloadAndRetry" xml:space="preserve">
+    <value>Concurrency conflict. Please reload and try again.</value>
+  </data>
+  <data name="InvalidRolesSelection" xml:space="preserve">
+    <value>One or more roles are invalid.</value>
+  </data>
+  <data name="InvalidRolePermissionsPayload" xml:space="preserve">
+    <value>Invalid role-permissions payload.</value>
+  </data>
+  <data name="RoleNotFound" xml:space="preserve">
+    <value>Role not found.</value>
+  </data>
+  <data name="InvalidPermissionsSelection" xml:space="preserve">
+    <value>One or more permissions are invalid.</value>
+  </data>
+  <data name="PermissionNotFound" xml:space="preserve">
+    <value>Permission not found.</value>
+  </data>
+  <data name="InvalidOrExpiredConfirmationToken" xml:space="preserve">
+    <value>Invalid or expired confirmation token.</value>
+  </data>
+  <data name="NoPendingTotpSecret" xml:space="preserve">
+    <value>No pending TOTP secret.</value>
+  </data>
+  <data name="LoginSessionExpiredOrMissing" xml:space="preserve">
+    <value>Login session expired or missing.</value>
+  </data>
+  <data name="UserNotFoundForThisSession" xml:space="preserve">
+    <value>User not found for this session.</value>
+  </data>
+  <data name="CredentialNotFoundAfterVerification" xml:space="preserve">
+    <value>Credential not found after verification.</value>
+  </data>
+  <data name="VerificationFailed" xml:space="preserve">
+    <value>Verification failed.</value>
+  </data>
+  <data name="DeviceRequired" xml:space="preserve">
+    <value>Device is required.</value>
+  </data>
+  <data name="DeviceNotFound" xml:space="preserve">
+    <value>Device not found.</value>
+  </data>
+  <data name="DeviceConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. The device record was changed by another process.</value>
+  </data>
+  <data name="SystemPermissionsCannotBeDeleted" xml:space="preserve">
+    <value>System permissions cannot be deleted.</value>
+  </data>
+  <data name="PermissionAssignedToRolesCannotDelete" xml:space="preserve">
+    <value>Permission is assigned to one or more roles and cannot be deleted.</value>
+  </data>
+  <data name="SystemRolesCannotBeEdited" xml:space="preserve">
+    <value>System roles cannot be edited.</value>
+  </data>
+  <data name="SystemProtectedRoleCannotBeDeleted" xml:space="preserve">
+    <value>This role is system-protected and cannot be deleted.</value>
+  </data>
+  <data name="ExternalLinkNotFound" xml:space="preserve">
+    <value>External link not found.</value>
+  </data>
+  <data name="EmailAlreadyInUse" xml:space="preserve">
+    <value>Email address is already in use.</value>
+  </data>
+  <data name="RequestPayloadRequired" xml:space="preserve">
+    <value>Request payload is required.</value>
+  </data>
+  <data name="InactiveReminderOutcomeInvalid" xml:space="preserve">
+    <value>Outcome must be one of: Sent, Failed, Suppressed.</value>
+  </data>
+  <data name="UserEngagementSnapshotNotFound" xml:space="preserve">
+    <value>User engagement snapshot was not found.</value>
+  </data>
+  <data name="LoyaltyAccountConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. The loyalty account was modified by another process.</value>
+  </data>
+  <data name="InvalidDeleteRequest" xml:space="preserve">
+    <value>Invalid delete request.</value>
+  </data>
+  <data name="LoyaltyProgramConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. The loyalty program was modified by another process.</value>
+  </data>
+  <data name="LoyaltyRewardTierNotFound" xml:space="preserve">
+    <value>Reward tier was not found.</value>
+  </data>
+  <data name="LoyaltyRewardTierConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. The reward tier was modified by another process.</value>
+  </data>
+  <data name="BusinessLocationNotFound" xml:space="preserve">
+    <value>Business location was not found.</value>
+  </data>
+  <data name="ItemConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. The item was modified by another process.</value>
+  </data>
+  <data name="RatingMustBeBetweenOneAndFive" xml:space="preserve">
+    <value>Rating must be between 1 and 5.</value>
+  </data>
+  <data name="EmailAuditRowNotFound" xml:space="preserve">
+    <value>Email audit row was not found.</value>
+  </data>
+  <data name="EmailAuditRetryStatusInvalid" xml:space="preserve">
+    <value>Only failed or still-pending email audit rows can be retried.</value>
+  </data>
+  <data name="EmailAuditRetryBlockedRecentAttempts" xml:space="preserve">
+    <value>Retry blocked: {0} attempts already occurred in the last 24 hours.</value>
+  </data>
+  <data name="EmailAuditRetryCooldownActive" xml:space="preserve">
+    <value>Retry cooldown is still active until {0:yyyy-MM-dd HH:mm} UTC.</value>
+  </data>
+  <data name="EmailAuditRecipientMissing" xml:space="preserve">
+    <value>This audit row does not have a recipient email to resolve for retry.</value>
+  </data>
+  <data name="EmailAuditFlowRetryUnsupported" xml:space="preserve">
+    <value>This audit flow does not support generic retry from the audit queue.</value>
+  </data>
+  <data name="EmailAuditInvitationRequiresBusinessLink" xml:space="preserve">
+    <value>Invitation retry requires a business-linked audit row.</value>
+  </data>
+  <data name="EmailAuditInvitationTargetNotFound" xml:space="preserve">
+    <value>No open or expired invitation could be resolved for this recipient.</value>
+  </data>
+  <data name="EmailAuditActivationTargetNotFound" xml:space="preserve">
+    <value>No active user could be resolved for this activation email.</value>
+  </data>
+  <data name="EmailAuditPasswordResetTargetNotFound" xml:space="preserve">
+    <value>No active user could be resolved for this password reset email.</value>
+  </data>
+  <data name="BusinessCampaignBusinessAndCampaignRequired" xml:space="preserve">
+    <value>BusinessId and campaign id are required.</value>
+  </data>
+  <data name="BusinessCampaignNameAndTitleRequired" xml:space="preserve">
+    <value>Name and title are required.</value>
+  </data>
+  <data name="BusinessCampaignNotFound" xml:space="preserve">
+    <value>Campaign was not found.</value>
+  </data>
+  <data name="BusinessCampaignConcurrencyConflict" xml:space="preserve">
+    <value>Campaign was updated by another user. Refresh and retry.</value>
+  </data>
+  <data name="RoleKeyAlreadyExists" xml:space="preserve">
+    <value>Role key already exists.</value>
+  </data>
+  <data name="PermissionKeyAlreadyExists" xml:space="preserve">
+    <value>Permission key already exists.</value>
+  </data>
+  <data name="RegistrationSessionExpiredOrMissing" xml:space="preserve">
+    <value>Registration session expired or missing.</value>
+  </data>
+  <data name="DefaultRoleNotFound" xml:space="preserve">
+    <value>Default role was not found.</value>
+  </data>
+  <data name="BusinessAndPlanIdentifiersRequired" xml:space="preserve">
+    <value>Business and plan identifiers are required.</value>
+  </data>
+  <data name="SelectedBillingPlanUnavailable" xml:space="preserve">
+    <value>Selected billing plan is not available.</value>
+  </data>
+  <data name="AddOnGroupConcurrencyConflict" xml:space="preserve">
+    <value>The add-on group was modified by another operation. Please reload and retry.</value>
+  </data>
+  <data name="ProductsNotFoundOrDeleted" xml:space="preserve">
+    <value>One or more products were not found or are deleted.</value>
+  </data>
+  <data name="VariantsNotFoundOrDeleted" xml:space="preserve">
+    <value>One or more variants were not found or are deleted.</value>
+  </data>
+  <data name="BrandConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. The brand has been modified by another process.</value>
+  </data>
+  <data name="PageConcurrencyConflict" xml:space="preserve">
+    <value>The page was modified by another user. Please reload and try again.</value>
+  </data>
+  <data name="RoleKeyRequired" xml:space="preserve">
+    <value>Role key is required.</value>
+  </data>
+  <data name="TitleRequired" xml:space="preserve">
+    <value>Title is required.</value>
+  </data>
+  <data name="CurrentUserIdMissing" xml:space="preserve">
+    <value>Current user id is missing.</value>
+  </data>
+  <data name="TooManyAttemptsPleaseTryAgain" xml:space="preserve">
+    <value>Too many attempts. Please try again.</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Invalid credentials.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Account is locked.</value>
+  </data>
+  <data name="EmailAddressNotConfirmed" xml:space="preserve">
+    <value>Email address is not confirmed.</value>
+  </data>
+  <data name="LoginRequestCancelledOrTimedOut" xml:space="preserve">
+    <value>Request cancelled by client or timed out during login.</value>
+  </data>
+  <data name="InvalidOrExpiredRefreshToken" xml:space="preserve">
+    <value>Invalid or expired refresh token.</value>
+  </data>
+  <data name="InvitationTokenRequired" xml:space="preserve">
+    <value>Invitation token is required.</value>
+  </data>
+  <data name="InvitationRevoked" xml:space="preserve">
+    <value>Invitation has been revoked.</value>
+  </data>
+  <data name="InvitationAlreadyAccepted" xml:space="preserve">
+    <value>Invitation has already been accepted.</value>
+  </data>
+  <data name="InvitationExpired" xml:space="preserve">
+    <value>Invitation has expired.</value>
+  </data>
+  <data name="InvitedBusinessUnavailable" xml:space="preserve">
+    <value>The invited business is not available.</value>
+  </data>
+  <data name="InvitedUserDetailsRequired" xml:space="preserve">
+    <value>First name, last name, and password are required for a new invited user.</value>
+  </data>
+  <data name="InvitedAccountDisabled" xml:space="preserve">
+    <value>The invited account is disabled. Contact support.</value>
+  </data>
+  <data name="InvitedAccountLocked" xml:space="preserve">
+    <value>The invited account is temporarily locked. Contact support.</value>
+  </data>
+  <data name="BusinessUserRoleNotConfigured" xml:space="preserve">
+    <value>Business user role is not configured.</value>
+  </data>
+  <data name="BusinessAndSubscriptionIdentifiersRequired" xml:space="preserve">
+    <value>Business and subscription identifiers are required.</value>
+  </data>
+  <data name="SubscriptionNotFound" xml:space="preserve">
+    <value>Subscription not found.</value>
+  </data>
+  <data name="SubscriptionConcurrencyConflict" xml:space="preserve">
+    <value>Subscription was updated by another user. Refresh and try again.</value>
+  </data>
+  <data name="DeviceIdRequired" xml:space="preserve">
+    <value>DeviceId is required.</value>
+  </data>
+  <data name="DeviceIdTooLong" xml:space="preserve">
+    <value>DeviceId is too long.</value>
+  </data>
+  <data name="PushTokenTooLong" xml:space="preserve">
+    <value>PushToken is too long.</value>
+  </data>
+  <data name="AppVersionTooLong" xml:space="preserve">
+    <value>AppVersion is too long.</value>
+  </data>
+  <data name="DeviceModelTooLong" xml:space="preserve">
+    <value>DeviceModel is too long.</value>
+  </data>
+  <data name="CouldNotResolveInactiveReminderCandidates" xml:space="preserve">
+    <value>Could not resolve inactive reminder candidates.</value>
+  </data>
+  <data name="NothingToRevoke" xml:space="preserve">
+    <value>Nothing to revoke.</value>
+  </data>
+  <data name="InactiveThresholdDaysGreaterThanZero" xml:space="preserve">
+    <value>InactiveThresholdDays must be greater than zero.</value>
+  </data>
+  <data name="CooldownHoursMustNotBeNegative" xml:space="preserve">
+    <value>CooldownHours must not be negative.</value>
+  </data>
+  <data name="InvalidPagingParameters" xml:space="preserve">
+    <value>Invalid paging parameters.</value>
+  </data>
+  <data name="PermissionKeyRequired" xml:space="preserve">
+    <value>Permission key is required.</value>
+  </data>
+  <data name="InvalidTimelineCursor" xml:space="preserve">
+    <value>Invalid cursor. Both BeforeAtUtc and BeforeId must be provided together.</value>
+  </data>
+  <data name="LoyaltyAccountNotFoundForSpecifiedBusinessAndUser" xml:space="preserve">
+    <value>Loyalty account not found for the specified business and user.</value>
+  </data>
+  <data name="RedemptionNotFound" xml:space="preserve">
+    <value>Redemption not found.</value>
+  </data>
+  <data name="BusinessMismatchForRedemption" xml:space="preserve">
+    <value>Business mismatch for redemption.</value>
+  </data>
+  <data name="RedemptionConcurrencyConflict" xml:space="preserve">
+    <value>Concurrency conflict. The redemption was modified by another process.</value>
+  </data>
+  <data name="RedemptionCancelledCannotConfirm" xml:space="preserve">
+    <value>The redemption has been cancelled and cannot be confirmed.</value>
+  </data>
+  <data name="RedemptionAlreadyConfirmed" xml:space="preserve">
+    <value>The redemption is already confirmed.</value>
+  </data>
+  <data name="RedemptionPendingStateRequired" xml:space="preserve">
+    <value>The redemption is not in a pending state.</value>
+  </data>
+  <data name="LoyaltyAccountNotFoundForRedemption" xml:space="preserve">
+    <value>Loyalty account associated with the redemption was not found.</value>
+  </data>
+  <data name="LoyaltyAccountInactiveForRedemption" xml:space="preserve">
+    <value>The loyalty account is not active and cannot be used for redemption.</value>
+  </data>
+  <data name="RedemptionInvalidPointsAmount" xml:space="preserve">
+    <value>The redemption has an invalid points amount.</value>
+  </data>
+  <data name="InsufficientPointsForRedemptionConfirmation" xml:space="preserve">
+    <value>Insufficient points to confirm the redemption.</value>
+  </data>
+  <data name="ScanSessionTokenNotFound" xml:space="preserve">
+    <value>Scan session token not found.</value>
+  </data>
+  <data name="ScanSessionTokenExpired" xml:space="preserve">
+    <value>Scan session token has expired.</value>
+  </data>
+  <data name="ScanSessionTokenAlreadyConsumed" xml:space="preserve">
+    <value>Scan session token has already been consumed.</value>
+  </data>
+  <data name="ScanSessionTokenBusinessMismatch" xml:space="preserve">
+    <value>Scan session token is bound to a different business.</value>
+  </data>
+  <data name="ScanSessionNotFoundForToken" xml:space="preserve">
+    <value>Scan session not found for the provided token.</value>
+  </data>
+  <data name="ScanSessionBusinessMismatch" xml:space="preserve">
+    <value>Scan session does not belong to this business.</value>
+  </data>
+  <data name="ScanSessionExpired" xml:space="preserve">
+    <value>Scan session has expired.</value>
+  </data>
+  <data name="ScanSessionPendingRequired" xml:space="preserve">
+    <value>Scan session is not in a pending state.</value>
+  </data>
+  <data name="ScanSessionAccrualModeRequired" xml:space="preserve">
+    <value>Scan session is not in accrual mode.</value>
+  </data>
+  <data name="ScanSessionRedemptionModeRequired" xml:space="preserve">
+    <value>Scan session is not in redemption mode.</value>
+  </data>
+  <data name="LoyaltyAccountNotFoundForScanSession" xml:space="preserve">
+    <value>Loyalty account for scan session not found.</value>
+  </data>
+  <data name="LoyaltyAccountNotFoundForSpecifiedBusiness" xml:space="preserve">
+    <value>Loyalty account not found for the specified business.</value>
+  </data>
+  <data name="LoyaltyAccountInactive" xml:space="preserve">
+    <value>Loyalty account is not active.</value>
+  </data>
+  <data name="InsufficientPointsForSelectedRewards" xml:space="preserve">
+    <value>Insufficient points for selected rewards.</value>
+  </data>
+  <data name="SelectedRewardsMissing" xml:space="preserve">
+    <value>Scan session does not contain any selected rewards.</value>
+  </data>
+  <data name="SelectedRewardsNoPointsRequired" xml:space="preserve">
+    <value>Selected rewards do not require any points.</value>
+  </data>
+  <data name="BusinessRequired" xml:space="preserve">
+    <value>Business is required.</value>
+  </data>
+  <data name="UserRequired" xml:space="preserve">
+    <value>User is required.</value>
+  </data>
+  <data name="LoyaltyAccountAlreadyExistsForMemberInBusiness" xml:space="preserve">
+    <value>A loyalty account already exists for this member in the selected business.</value>
   </data>
 </root>

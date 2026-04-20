@@ -161,6 +161,7 @@ public sealed class MerchantReadinessPlaybookVm
         public DateTime? SuspendedAtUtc { get; set; }
         public string? SuspensionReason { get; set; }
         public Guid? OwnerUserId { get; set; }
+        public string? OwnerInviteEmail { get; set; }
         public int MemberCount { get; set; }
         public int ActiveOwnerCount { get; set; }
         public int LocationCount { get; set; }
@@ -168,6 +169,12 @@ public sealed class MerchantReadinessPlaybookVm
         public int InvitationCount { get; set; }
         public bool HasContactEmailConfigured { get; set; }
         public bool HasLegalNameConfigured { get; set; }
+        public Guid? SupportCustomerId { get; set; }
+        public bool SupportCustomerProvisioned { get; set; }
+        public bool CanProvisionSupportCustomer { get; set; }
+        public string? SupportCustomerProvisioningIssue { get; set; }
+        public string? SupportCustomerProvisioningEmail { get; set; }
+        public string? SupportCustomerProvisioningCompanyName { get; set; }
         public BusinessCommunicationReadinessVm CommunicationReadiness { get; set; } = new();
         public BusinessSubscriptionSnapshotVm Subscription { get; set; } = new();
         public IEnumerable<SelectListItem> OwnerUserOptions { get; set; } = Array.Empty<SelectListItem>();

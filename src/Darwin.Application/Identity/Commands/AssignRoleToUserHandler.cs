@@ -5,6 +5,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -12,7 +13,12 @@ namespace Darwin.Application.Identity.Commands
     public sealed class AssignRoleToUserHandler
     {
         private readonly IAppDbContext _db;
-        public AssignRoleToUserHandler(IAppDbContext db) => _db = db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+        public AssignRoleToUserHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task<Result> HandleAsync
             (Guid userId, Guid roleId, CancellationToken ct = default)
@@ -20,12 +26,12 @@ namespace Darwin.Application.Identity.Commands
             var userExists = await _db.Set<User>().
                 AnyAsync(x => x.Id == userId && !x.IsDeleted, ct);
 
-            if (!userExists) return Result.Fail("User not found.");
+            if (!userExists) return Result.Fail(_localizer["UserNotFound"]);
 
             var roleExists = await _db.Set<Role>().
                 AnyAsync(x => x.Id == roleId && !x.IsDeleted, ct);
 
-            if (!roleExists) return Result.Fail("Role not found.");
+            if (!roleExists) return Result.Fail(_localizer["RoleNotFound"]);
 
             var exists = await _db.Set<UserRole>().
                 AnyAsync(x => x.UserId == userId && x.RoleId == roleId && !x.IsDeleted, ct);

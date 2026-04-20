@@ -1,11 +1,13 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries
 {
@@ -15,15 +17,17 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetPermissionForEditHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public GetPermissionForEditHandler(IAppDbContext db) => _db = db;
+        public GetPermissionForEditHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
 
         /// <summary>
         /// Retrieves the permission and maps it to a PermissionEditDto.
         /// </summary>
-        /// <param name="id">Identifier of the permission.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>Result containing PermissionEditDto or failure.</returns>
         public async Task<Result<PermissionEditDto>> HandleAsync(Guid id, CancellationToken ct = default)
         {
             var permission = await _db.Set<Permission>()
@@ -31,7 +35,7 @@ namespace Darwin.Application.Identity.Queries
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, ct);
 
             if (permission is null)
-                return Result<PermissionEditDto>.Fail("Permission not found.");
+                return Result<PermissionEditDto>.Fail(_localizer["PermissionNotFound"]);
 
             return Result<PermissionEditDto>.Ok(new PermissionEditDto
             {

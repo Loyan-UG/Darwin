@@ -5,6 +5,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System.Collections;
 using System.Reflection;
 using System.Threading;
@@ -20,11 +21,16 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<PermissionEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdatePermissionHandler(IAppDbContext db, IValidator<PermissionEditDto> validator)
+        public UpdatePermissionHandler(
+            IAppDbContext db,
+            IValidator<PermissionEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -39,13 +45,13 @@ namespace Darwin.Application.Identity.Commands
 
             var permission = await _db.Set<Permission>().FirstOrDefaultAsync(p => p.Id == dto.Id && !p.IsDeleted, ct);
             if (permission is null)
-                return Result.Fail("Permission not found.");
+                return Result.Fail(_localizer["PermissionNotFound"]);
 
             // Concurrency check
             if (permission.RowVersion is not null && dto.RowVersion is not null && permission.RowVersion.Length > 0)
             {
                 if (!StructuralComparisons.StructuralEqualityComparer.Equals(permission.RowVersion, dto.RowVersion))
-                    return Result.Fail("Concurrency conflict.");
+                    return Result.Fail(_localizer["ConcurrencyConflict"]);
             }
 
             // Since DisplayName and Description have private setters, update via EF's entry

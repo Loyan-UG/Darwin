@@ -10,6 +10,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -38,6 +39,7 @@ namespace Darwin.Application.Loyalty.Commands
         private readonly ICurrentUserService _currentUserService;
         private readonly IClock _clock;
         private readonly ScanSessionTokenResolver _tokenResolver;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConfirmAccrualFromSessionHandler"/> class.
@@ -46,12 +48,14 @@ namespace Darwin.Application.Loyalty.Commands
             IAppDbContext db,
             ICurrentUserService currentUserService,
             IClock clock,
-            ScanSessionTokenResolver tokenResolver)
+            ScanSessionTokenResolver tokenResolver,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _tokenResolver = tokenResolver ?? throw new ArgumentNullException(nameof(tokenResolver));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -67,22 +71,22 @@ namespace Darwin.Application.Loyalty.Commands
         {
             if (dto is null)
             {
-                return Result<ConfirmAccrualResultDto>.Fail("Request is required.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["RequestPayloadRequired"]);
             }
 
             if (string.IsNullOrWhiteSpace(dto.ScanSessionToken))
             {
-                return Result<ConfirmAccrualResultDto>.Fail("ScanSessionToken is required.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["ScanSessionTokenRequired"]);
             }
 
             if (businessId == Guid.Empty)
             {
-                return Result<ConfirmAccrualResultDto>.Fail("BusinessId is required.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             if (dto.Points <= 0)
             {
-                return Result<ConfirmAccrualResultDto>.Fail("Points must be a positive integer.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["PointsPositiveInteger"]);
             }
 
             var resolvedResult = await _tokenResolver
@@ -91,7 +95,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (!resolvedResult.Succeeded || resolvedResult.Value is null)
             {
-                return Result<ConfirmAccrualResultDto>.Fail(resolvedResult.Error ?? "Invalid scan session token.");
+                return Result<ConfirmAccrualResultDto>.Fail(resolvedResult.Error ?? _localizer["ScanSessionTokenNotFound"]);
             }
 
             var token = resolvedResult.Value.Token;
@@ -99,7 +103,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (session.Mode != LoyaltyScanMode.Accrual)
             {
-                return Result<ConfirmAccrualResultDto>.Fail("Scan session is not in accrual mode.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["ScanSessionAccrualModeRequired"]);
             }
 
             // Consume token early to reduce replay window.
@@ -127,7 +131,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Token was consumed concurrently by another request.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmAccrualResultDto>.Fail("Scan session token has already been consumed.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["ScanSessionTokenAlreadyConsumed"]);
             }
 
             var account = await _db.Set<LoyaltyAccount>()
@@ -142,7 +146,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Loyalty account for scan session not found.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmAccrualResultDto>.Fail("Loyalty account for scan session not found.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyAccountNotFoundForScanSession"]);
             }
 
             if (account.Status != LoyaltyAccountStatus.Active)
@@ -152,7 +156,7 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Loyalty account is not active.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmAccrualResultDto>.Fail("Loyalty account is not active.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyAccountInactive"]);
             }
 
             var now = _clock.UtcNow;
@@ -164,13 +168,13 @@ namespace Darwin.Application.Loyalty.Commands
                 session.FailureReason = "Session expired before accrual confirmation.";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                return Result<ConfirmAccrualResultDto>.Fail("Scan session has expired.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["ScanSessionExpired"]);
             }
 
             var staffUserId = _currentUserService.GetCurrentUserId();
             if (staffUserId == Guid.Empty)
             {
-                return Result<ConfirmAccrualResultDto>.Fail("User is not authenticated.");
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["UserNotAuthenticated"]);
             }
 
             var transaction = new LoyaltyPointsTransaction

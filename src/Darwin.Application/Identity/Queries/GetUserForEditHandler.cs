@@ -1,11 +1,13 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries
 {
@@ -16,22 +18,17 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetUserForEditHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        /// <summary>
-        /// Creates a new instance of the handler.
-        /// </summary>
-        public GetUserForEditHandler(IAppDbContext db)
+        public GetUserForEditHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
-            _db = db;
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
-        /// Retrieves a user for editing. Returns a <see cref="UserEditDto"/> populated with
-        /// the current values and concurrency token.
+        /// Retrieves a user for editing.
         /// </summary>
-        /// <param name="id">The identifier of the user to load.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>A result containing the DTO or a failure message if the user cannot be found.</returns>
         public async Task<Result<UserEditDto>> HandleAsync(Guid id, CancellationToken ct = default)
         {
             var user = await _db.Set<User>()
@@ -40,7 +37,7 @@ namespace Darwin.Application.Identity.Queries
 
             if (user is null)
             {
-                return Result<UserEditDto>.Fail("User not found.");
+                return Result<UserEditDto>.Fail(_localizer["UserNotFound"]);
             }
 
             var dto = new UserEditDto

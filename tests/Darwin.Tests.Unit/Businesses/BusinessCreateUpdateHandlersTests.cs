@@ -7,6 +7,7 @@ using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Validators;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,15 @@ public sealed class BusinessCreateUpdateHandlersTests
     {
         await using var db = BusinessCreateUpdateTestDbContext.Create();
         var localizer = new TestStringLocalizer();
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Title = "Darwin Market",
+            LogoUrl = "https://cdn.darwin.test/logo.svg",
+            ContactEmail = "ops@darwin.test",
+            SmtpFromAddress = "mailer@darwin.test",
+            SmtpFromDisplayName = "Darwin Ops"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         var handler = new CreateBusinessHandler(db, new BusinessCreateDtoValidator(localizer));
 
         var id = await handler.HandleAsync(new BusinessCreateDto
@@ -45,6 +55,52 @@ public sealed class BusinessCreateUpdateHandlersTests
         persisted.CustomerEmailNotificationsEnabled.Should().BeTrue();
         persisted.CustomerMarketingEmailsEnabled.Should().BeTrue();
         persisted.OperationalAlertEmailsEnabled.Should().BeTrue();
+        persisted.ContactEmail.Should().Be("ops@darwin.test");
+        persisted.BrandDisplayName.Should().Be("Darwin Market");
+        persisted.BrandLogoUrl.Should().Be("https://cdn.darwin.test/logo.svg");
+        persisted.SupportEmail.Should().Be("ops@darwin.test");
+        persisted.CommunicationSenderName.Should().Be("Darwin Ops");
+        persisted.CommunicationReplyToEmail.Should().Be("ops@darwin.test");
+    }
+
+    [Fact]
+    public async Task CreateBusiness_Should_PreferExplicitCommunicationAndBrandingValues_OverSiteSettingFallbacks()
+    {
+        await using var db = BusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Title = "Darwin Market",
+            LogoUrl = "https://cdn.darwin.test/logo.svg",
+            ContactEmail = "ops@darwin.test",
+            SmtpFromAddress = "mailer@darwin.test",
+            SmtpFromDisplayName = "Darwin Ops"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateBusinessHandler(db, new BusinessCreateDtoValidator(localizer));
+
+        var id = await handler.HandleAsync(new BusinessCreateDto
+        {
+            Name = "Baeckerei Morgenstern",
+            ContactEmail = "kontakt@morgenstern.de",
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            DefaultTimeZoneId = "Europe/Berlin",
+            BrandDisplayName = "Morgenstern",
+            BrandLogoUrl = "https://morgenstern.test/logo.png",
+            SupportEmail = "support@morgenstern.de",
+            CommunicationSenderName = "Morgenstern Team",
+            CommunicationReplyToEmail = "reply@morgenstern.de"
+        }, TestContext.Current.CancellationToken);
+
+        var persisted = await db.Set<Business>().AsNoTracking().SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
+        persisted.ContactEmail.Should().Be("kontakt@morgenstern.de");
+        persisted.BrandDisplayName.Should().Be("Morgenstern");
+        persisted.BrandLogoUrl.Should().Be("https://morgenstern.test/logo.png");
+        persisted.SupportEmail.Should().Be("support@morgenstern.de");
+        persisted.CommunicationSenderName.Should().Be("Morgenstern Team");
+        persisted.CommunicationReplyToEmail.Should().Be("reply@morgenstern.de");
     }
 
     [Fact]
@@ -177,6 +233,28 @@ public sealed class BusinessCreateUpdateHandlersTests
                 builder.Property(x => x.DefaultCurrency).IsRequired();
                 builder.Property(x => x.DefaultCulture).IsRequired();
                 builder.Property(x => x.DefaultTimeZoneId).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<SiteSetting>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Title).IsRequired();
+                builder.Property(x => x.ContactEmail).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.DefaultCurrency).IsRequired();
+                builder.Property(x => x.TimeZone).IsRequired();
+                builder.Property(x => x.HomeSlug).IsRequired();
+                builder.Property(x => x.SupportedCulturesCsv).IsRequired();
+                builder.Property(x => x.DefaultCountry).IsRequired();
+                builder.Property(x => x.DateFormat).IsRequired();
+                builder.Property(x => x.TimeFormat).IsRequired();
+                builder.Property(x => x.MeasurementSystem).IsRequired();
+                builder.Property(x => x.DisplayWeightUnit).IsRequired();
+                builder.Property(x => x.DisplayLengthUnit).IsRequired();
+                builder.Property(x => x.WebAuthnRelyingPartyId).IsRequired();
+                builder.Property(x => x.WebAuthnRelyingPartyName).IsRequired();
+                builder.Property(x => x.WebAuthnAllowedOriginsCsv).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }

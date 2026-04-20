@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -15,8 +16,13 @@ namespace Darwin.Application.Identity.Commands
     public sealed class SetDefaultUserAddressHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SetDefaultUserAddressHandler(IAppDbContext db) => _db = db;
+        public SetDefaultUserAddressHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         /// <summary>
         /// Sets default address for the user.
@@ -27,13 +33,13 @@ namespace Darwin.Application.Identity.Commands
         /// <param name="asShipping">When true, sets default shipping.</param>
         public async Task<Result> HandleAsync(Guid userId, Guid addressId, bool asBilling, bool asShipping, CancellationToken ct = default)
         {
-            if (userId == Guid.Empty) return Result.Fail("User id is required.");
-            if (addressId == Guid.Empty) return Result.Fail("Address id is required.");
-            if (!asBilling && !asShipping) return Result.Fail("Nothing to set.");
+            if (userId == Guid.Empty) return Result.Fail(_localizer["UserIdRequired"]);
+            if (addressId == Guid.Empty) return Result.Fail(_localizer["AddressIdRequired"]);
+            if (!asBilling && !asShipping) return Result.Fail(_localizer["NothingToSet"]);
 
             var address = await _db.Set<Address>().FirstOrDefaultAsync(a => a.Id == addressId && !a.IsDeleted, ct);
             if (address is null || address.UserId != userId)
-                return Result.Fail("Address not found or not owned by user.");
+                return Result.Fail(_localizer["AddressNotOwnedByUser"]);
 
             if (asBilling)
             {

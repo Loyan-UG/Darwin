@@ -4,6 +4,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands;
 
@@ -43,6 +44,7 @@ public sealed class UpdateCurrentUserAddressHandler
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly UpdateUserAddressHandler _updateUserAddressHandler;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UpdateCurrentUserAddressHandler"/> class.
@@ -50,11 +52,13 @@ public sealed class UpdateCurrentUserAddressHandler
     public UpdateCurrentUserAddressHandler(
         IAppDbContext db,
         ICurrentUserService currentUser,
-        UpdateUserAddressHandler updateUserAddressHandler)
+        UpdateUserAddressHandler updateUserAddressHandler,
+        IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _updateUserAddressHandler = updateUserAddressHandler ?? throw new ArgumentNullException(nameof(updateUserAddressHandler));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -72,7 +76,7 @@ public sealed class UpdateCurrentUserAddressHandler
 
         if (!isOwned)
         {
-            return Result.Fail("Address not found or not owned by user.");
+            return Result.Fail(_localizer["AddressNotOwnedByUser"]);
         }
 
         return await _updateUserAddressHandler.HandleAsync(dto, ct).ConfigureAwait(false);
@@ -87,6 +91,7 @@ public sealed class DeleteCurrentUserAddressHandler
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly SoftDeleteUserAddressHandler _softDeleteUserAddressHandler;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DeleteCurrentUserAddressHandler"/> class.
@@ -94,11 +99,13 @@ public sealed class DeleteCurrentUserAddressHandler
     public DeleteCurrentUserAddressHandler(
         IAppDbContext db,
         ICurrentUserService currentUser,
-        SoftDeleteUserAddressHandler softDeleteUserAddressHandler)
+        SoftDeleteUserAddressHandler softDeleteUserAddressHandler,
+        IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _softDeleteUserAddressHandler = softDeleteUserAddressHandler ?? throw new ArgumentNullException(nameof(softDeleteUserAddressHandler));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -116,7 +123,7 @@ public sealed class DeleteCurrentUserAddressHandler
 
         if (!isOwned)
         {
-            return Result.Fail("Address not found or not owned by user.");
+            return Result.Fail(_localizer["AddressNotOwnedByUser"]);
         }
 
         return await _softDeleteUserAddressHandler.HandleAsync(dto, ct).ConfigureAwait(false);

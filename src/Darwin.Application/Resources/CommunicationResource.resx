@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="BusinessInvitationSubjectTemplateDefault" xml:space="preserve">
+    <value>Invitation to join {business_name} on Darwin</value>
+  </data>
+  <data name="BusinessInvitationBodyTemplateDefault" xml:space="preserve">
+    <value>&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;{invitation_intro_html}&lt;/p&gt;{acceptance_link_html}&lt;p&gt;Your invitation token is:&lt;/p&gt;&lt;p&gt;&lt;code&gt;{token}&lt;/code&gt;&lt;/p&gt;&lt;p&gt;This invitation expires at &lt;strong&gt;{expires_at_utc}&lt;/strong&gt;.&lt;/p&gt;&lt;p&gt;Use this token in the Darwin business onboarding flow or contact your administrator if you need assistance.&lt;/p&gt;</value>
+  </data>
+  <data name="BusinessInvitationAcceptanceLinkHtml" xml:space="preserve">
+    <value>&lt;p&gt;&lt;a href="{acceptance_link}"&gt;Open your invitation&lt;/a&gt;&lt;/p&gt;</value>
+  </data>
+  <data name="BusinessInvitationIntroInvitedHtml" xml:space="preserve">
+    <value>You have been invited to join &lt;strong&gt;{business_name}&lt;/strong&gt; on Darwin as &lt;strong&gt;{role}&lt;/strong&gt;.</value>
+  </data>
+  <data name="BusinessInvitationIntroReissuedHtml" xml:space="preserve">
+    <value>Your invitation to join &lt;strong&gt;{business_name}&lt;/strong&gt; on Darwin as &lt;strong&gt;{role}&lt;/strong&gt; has been reissued.</value>
+  </data>
+  <data name="AccountActivationSubjectTemplateDefault" xml:space="preserve">
+    <value>Confirm your Darwin account email</value>
+  </data>
+  <data name="AccountActivationBodyTemplateDefault" xml:space="preserve">
+    <value>&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;Use the following token to confirm the Darwin account email for &lt;strong&gt;{email}&lt;/strong&gt;:&lt;/p&gt;&lt;p&gt;&lt;code&gt;{token}&lt;/code&gt;&lt;/p&gt;&lt;p&gt;This token expires at &lt;strong&gt;{expires_at_utc}&lt;/strong&gt;.&lt;/p&gt;</value>
+  </data>
+  <data name="PasswordResetSubjectTemplateDefault" xml:space="preserve">
+    <value>Reset your Darwin account password</value>
+  </data>
+  <data name="PasswordResetBodyTemplateDefault" xml:space="preserve">
+    <value>&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;Use the following token to reset the Darwin account password for &lt;strong&gt;{email}&lt;/strong&gt;:&lt;/p&gt;&lt;p&gt;&lt;code&gt;{token}&lt;/code&gt;&lt;/p&gt;&lt;p&gt;This token expires at &lt;strong&gt;{expires_at_utc}&lt;/strong&gt;.&lt;/p&gt;</value>
+  </data>
+  <data name="PhoneVerificationSmsTemplateDefault" xml:space="preserve">
+    <value>Your Darwin verification code is {token}. It expires at {expires_at_utc} UTC.</value>
+  </data>
+  <data name="PhoneVerificationWhatsAppTemplateDefault" xml:space="preserve">
+    <value>Confirm your Darwin mobile number with code {token}. It expires at {expires_at_utc} UTC.</value>
+  </data>
+  <data name="RecipientOverrideNoticeHtml" xml:space="preserve">
+    <value>&lt;p&gt;&lt;strong&gt;Original recipient:&lt;/strong&gt; {original_recipient}&lt;/p&gt;</value>
+  </data>
+  <data name="PhoneVerificationSmsUnavailable" xml:space="preserve">
+    <value>SMS verification is not available right now.</value>
+  </data>
+  <data name="PhoneVerificationWhatsAppUnavailable" xml:space="preserve">
+    <value>WhatsApp verification is not available right now.</value>
+  </data>
+</root>

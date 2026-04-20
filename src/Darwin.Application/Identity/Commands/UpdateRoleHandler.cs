@@ -3,6 +3,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections;
 using System.Threading;
@@ -18,11 +19,16 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<RoleEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateRoleHandler(IAppDbContext db, IValidator<RoleEditDto> validator)
+        public UpdateRoleHandler(
+            IAppDbContext db,
+            IValidator<RoleEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _validator = validator;
+            _localizer = localizer;
         }
 
         public async Task<Result> HandleAsync(RoleEditDto dto, CancellationToken ct = default)
@@ -32,15 +38,15 @@ namespace Darwin.Application.Identity.Commands
             var role = await _db.Set<Darwin.Domain.Entities.Identity.Role>()
                 .FirstOrDefaultAsync(r => r.Id == dto.Id && !r.IsDeleted, ct);
 
-            if (role == null) return Result.Fail("Role not found.");
-            if (role.IsSystem) return Result.Fail("System roles cannot be edited.");
+            if (role == null) return Result.Fail(_localizer["RoleNotFound"]);
+            if (role.IsSystem) return Result.Fail(_localizer["SystemRolesCannotBeEdited"]);
 
             // optimistic concurrency (RowVersion)
             if (dto.RowVersion != null && role.RowVersion != null &&
                 dto.RowVersion.Length > 0 && role.RowVersion.Length > 0 &&
                 !StructuralComparisons.StructuralEqualityComparer.Equals(dto.RowVersion, role.RowVersion))
             {
-                return Result.Fail("Concurrency conflict. Reload and try again.");
+                return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
             }
 
             // Requires Role.DisplayName in Domain.

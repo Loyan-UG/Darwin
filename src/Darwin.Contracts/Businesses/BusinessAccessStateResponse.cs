@@ -6,6 +6,11 @@ namespace Darwin.Contracts.Businesses;
 public sealed class BusinessAccessStateResponse
 {
     /// <summary>
+    /// Gets or sets the authenticated user identifier.
+    /// </summary>
+    public Guid UserId { get; set; }
+
+    /// <summary>
     /// Gets or sets the business identifier.
     /// </summary>
     public Guid BusinessId { get; set; }
@@ -56,9 +61,34 @@ public sealed class BusinessAccessStateResponse
     public bool HasContactEmail { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether a legal business name is configured.
-    /// </summary>
+     /// Gets or sets a value indicating whether a legal business name is configured.
+     /// </summary>
     public bool HasLegalName { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the current user still has an active membership in this business.
+    /// </summary>
+    public bool HasActiveMembership { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the current user account remains active.
+    /// </summary>
+    public bool IsUserActive { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the current user email is confirmed.
+    /// </summary>
+    public bool IsUserEmailConfirmed { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the current user is locked out.
+    /// </summary>
+    public bool IsUserLockedOut { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether onboarding-safe business access is still allowed for this user.
+    /// </summary>
+    public bool IsBusinessClientAccessAllowed { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether live operational workflows are allowed.

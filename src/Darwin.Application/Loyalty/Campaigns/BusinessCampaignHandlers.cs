@@ -8,6 +8,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Marketing;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Campaigns
 {
@@ -17,19 +18,24 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class GetBusinessCampaignsHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         private const string DraftCampaignState = "Draft";
         private const string ScheduledCampaignState = "Scheduled";
         private const string ActiveCampaignState = "Active";
         private const string ExpiredCampaignState = "Expired";
 
-        public GetBusinessCampaignsHandler(IAppDbContext db) => _db = db;
+        public GetBusinessCampaignsHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task<Result<GetBusinessCampaignsResultDto>> HandleAsync(Guid businessId, int page, int pageSize, LoyaltyCampaignQueueFilter filter = LoyaltyCampaignQueueFilter.All, CancellationToken ct = default)
         {
             if (businessId == Guid.Empty)
             {
-                return Result<GetBusinessCampaignsResultDto>.Fail("BusinessId is required.");
+                return Result<GetBusinessCampaignsResultDto>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             var normalizedPage = page <= 0 ? 1 : page;
@@ -147,19 +153,24 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class CreateBusinessCampaignHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateBusinessCampaignHandler(IAppDbContext db) => _db = db;
+        public CreateBusinessCampaignHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task<Result<Guid>> HandleAsync(CreateBusinessCampaignDto dto, CancellationToken ct = default)
         {
             if (dto.BusinessId == Guid.Empty)
             {
-                return Result<Guid>.Fail("BusinessId is required.");
+                return Result<Guid>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             if (string.IsNullOrWhiteSpace(dto.Name) || string.IsNullOrWhiteSpace(dto.Title))
             {
-                return Result<Guid>.Fail("Name and Title are required.");
+                return Result<Guid>.Fail(_localizer["BusinessCampaignNameAndTitleRequired"]);
             }
 
             var entity = new Campaign
@@ -191,19 +202,24 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class UpdateBusinessCampaignHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateBusinessCampaignHandler(IAppDbContext db) => _db = db;
+        public UpdateBusinessCampaignHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task<Result> HandleAsync(UpdateBusinessCampaignDto dto, CancellationToken ct = default)
         {
             if (dto.BusinessId == Guid.Empty || dto.Id == Guid.Empty)
             {
-                return Result.Fail("BusinessId and campaign Id are required.");
+                return Result.Fail(_localizer["BusinessCampaignBusinessAndCampaignRequired"]);
             }
 
             if (string.IsNullOrWhiteSpace(dto.Name) || string.IsNullOrWhiteSpace(dto.Title))
             {
-                return Result.Fail("Name and Title are required.");
+                return Result.Fail(_localizer["BusinessCampaignNameAndTitleRequired"]);
             }
 
             var entity = await _db.Set<Campaign>()
@@ -212,12 +228,12 @@ namespace Darwin.Application.Loyalty.Campaigns
 
             if (entity is null)
             {
-                return Result.Fail("Campaign not found.");
+                return Result.Fail(_localizer["BusinessCampaignNotFound"]);
             }
 
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
             {
-                return Result.Fail("Campaign was updated by another user. Refresh and retry.");
+                return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
             }
 
             entity.Name = dto.Name.Trim();
@@ -239,7 +255,7 @@ namespace Darwin.Application.Loyalty.Campaigns
             }
             catch (DbUpdateConcurrencyException)
             {
-                return Result.Fail("Campaign was updated by another user. Refresh and retry.");
+                return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
             }
         }
     }
@@ -403,14 +419,19 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class SetCampaignActivationHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SetCampaignActivationHandler(IAppDbContext db) => _db = db;
+        public SetCampaignActivationHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
 
         public async Task<Result> HandleAsync(SetCampaignActivationDto dto, CancellationToken ct = default)
         {
             if (dto.BusinessId == Guid.Empty || dto.Id == Guid.Empty)
             {
-                return Result.Fail("BusinessId and campaign Id are required.");
+                return Result.Fail(_localizer["BusinessCampaignBusinessAndCampaignRequired"]);
             }
 
             var entity = await _db.Set<Campaign>()
@@ -419,12 +440,12 @@ namespace Darwin.Application.Loyalty.Campaigns
 
             if (entity is null)
             {
-                return Result.Fail("Campaign not found.");
+                return Result.Fail(_localizer["BusinessCampaignNotFound"]);
             }
 
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
             {
-                return Result.Fail("Campaign was updated by another user. Refresh and retry.");
+                return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
             }
 
             entity.IsActive = dto.IsActive;
@@ -436,7 +457,7 @@ namespace Darwin.Application.Loyalty.Campaigns
             }
             catch (DbUpdateConcurrencyException)
             {
-                return Result.Fail("Campaign was updated by another user. Refresh and retry.");
+                return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
             }
         }
     }

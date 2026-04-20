@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Entities.Businesses;
@@ -13,6 +14,7 @@ using Darwin.Domain.Entities.Marketing;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Queries
 {
@@ -36,18 +38,20 @@ namespace Darwin.Application.Loyalty.Queries
 
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public GetMyPromotionsHandler(IAppDbContext db, ICurrentUserService currentUser)
+        public GetMyPromotionsHandler(IAppDbContext db, ICurrentUserService currentUser, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result<MyPromotionsResultDto>> HandleAsync(MyPromotionsDto dto, CancellationToken ct = default)
         {
             if (dto is null)
             {
-                return Result<MyPromotionsResultDto>.Fail("Request is required.");
+                return Result<MyPromotionsResultDto>.Fail(_localizer["RequestPayloadRequired"]);
             }
 
             var baseMax = dto.MaxItems <= 0 ? 20 : Math.Min(dto.MaxItems, 100);

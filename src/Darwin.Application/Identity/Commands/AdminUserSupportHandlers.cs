@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -19,14 +20,16 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<UserAdminActionDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ConfirmUserEmailByAdminHandler"/>.
         /// </summary>
-        public ConfirmUserEmailByAdminHandler(IAppDbContext db, IValidator<UserAdminActionDto> validator)
+        public ConfirmUserEmailByAdminHandler(IAppDbContext db, IValidator<UserAdminActionDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -41,7 +44,7 @@ namespace Darwin.Application.Identity.Commands
 
             if (user is null)
             {
-                return Result.Fail("User not found.");
+                return Result.Fail(_localizer["UserNotFound"]);
             }
 
             if (user.EmailConfirmed)
@@ -65,6 +68,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly IClock _clock;
         private readonly ISecurityStampService _stamps;
         private readonly IValidator<UserAdminActionDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of <see cref="LockUserByAdminHandler"/>.
@@ -74,13 +78,15 @@ namespace Darwin.Application.Identity.Commands
             IJwtTokenService jwt,
             IClock clock,
             ISecurityStampService stamps,
-            IValidator<UserAdminActionDto> validator)
+            IValidator<UserAdminActionDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _jwt = jwt ?? throw new ArgumentNullException(nameof(jwt));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _stamps = stamps ?? throw new ArgumentNullException(nameof(stamps));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -95,12 +101,12 @@ namespace Darwin.Application.Identity.Commands
 
             if (user is null)
             {
-                return Result.Fail("User not found.");
+                return Result.Fail(_localizer["UserNotFound"]);
             }
 
             if (user.IsSystem)
             {
-                return Result.Fail("System users cannot be locked.");
+                return Result.Fail(_localizer["SystemUsersCannotBeLocked"]);
             }
 
             var lockoutEndUtc = _clock.UtcNow.AddYears(10);
@@ -125,14 +131,16 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<UserAdminActionDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of <see cref="UnlockUserByAdminHandler"/>.
         /// </summary>
-        public UnlockUserByAdminHandler(IAppDbContext db, IValidator<UserAdminActionDto> validator)
+        public UnlockUserByAdminHandler(IAppDbContext db, IValidator<UserAdminActionDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -147,7 +155,7 @@ namespace Darwin.Application.Identity.Commands
 
             if (user is null)
             {
-                return Result.Fail("User not found.");
+                return Result.Fail(_localizer["UserNotFound"]);
             }
 
             if (user.LockoutEndUtc is null && user.AccessFailedCount == 0)

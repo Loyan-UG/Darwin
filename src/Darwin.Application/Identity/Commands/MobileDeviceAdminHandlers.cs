@@ -6,23 +6,26 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands;
 
 public sealed class ClearUserDevicePushTokenHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public ClearUserDevicePushTokenHandler(IAppDbContext db)
+    public ClearUserDevicePushTokenHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion = null, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
-            return Result.Fail("Device is required.");
+            return Result.Fail(_localizer["DeviceRequired"]);
         }
 
         var device = await _db.Set<UserDevice>()
@@ -31,12 +34,12 @@ public sealed class ClearUserDevicePushTokenHandler
 
         if (device is null)
         {
-            return Result.Fail("Device not found.");
+            return Result.Fail(_localizer["DeviceNotFound"]);
         }
 
         if (rowVersion is not null && !device.RowVersion.SequenceEqual(rowVersion))
         {
-            return Result.Fail("Concurrency conflict. The device record was changed by another process.");
+            return Result.Fail(_localizer["DeviceConcurrencyConflict"]);
         }
 
         if (string.IsNullOrWhiteSpace(device.PushToken))
@@ -54,17 +57,19 @@ public sealed class ClearUserDevicePushTokenHandler
 public sealed class DeactivateUserDeviceHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public DeactivateUserDeviceHandler(IAppDbContext db)
+    public DeactivateUserDeviceHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion = null, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
-            return Result.Fail("Device is required.");
+            return Result.Fail(_localizer["DeviceRequired"]);
         }
 
         var device = await _db.Set<UserDevice>()
@@ -73,12 +78,12 @@ public sealed class DeactivateUserDeviceHandler
 
         if (device is null)
         {
-            return Result.Fail("Device not found.");
+            return Result.Fail(_localizer["DeviceNotFound"]);
         }
 
         if (rowVersion is not null && !device.RowVersion.SequenceEqual(rowVersion))
         {
-            return Result.Fail("Concurrency conflict. The device record was changed by another process.");
+            return Result.Fail(_localizer["DeviceConcurrencyConflict"]);
         }
 
         if (!device.IsActive && string.IsNullOrWhiteSpace(device.PushToken) && !device.NotificationsEnabled)

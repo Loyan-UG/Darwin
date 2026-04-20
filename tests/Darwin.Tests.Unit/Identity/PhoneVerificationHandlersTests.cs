@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
@@ -13,6 +14,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Identity;
 
@@ -46,7 +48,9 @@ public sealed class PhoneVerificationHandlersTests
             smsSender,
             new FakeWhatsAppSender(),
             new FakeClock(new DateTime(2030, 4, 1, 8, 0, 0, DateTimeKind.Utc)),
-            new RequestPhoneVerificationValidator());
+            new RequestPhoneVerificationValidator(),
+            new TestStringLocalizer<ValidationResource>(),
+            new TestStringLocalizer<CommunicationResource>());
 
         var result = await handler.HandleAsync(
             new RequestPhoneVerificationDto { Channel = PhoneVerificationChannel.Sms },
@@ -79,7 +83,8 @@ public sealed class PhoneVerificationHandlersTests
             db,
             new StubCurrentUserService(user.Id),
             new FakeClock(new DateTime(2030, 4, 1, 8, 0, 0, DateTimeKind.Utc)),
-            new ConfirmPhoneVerificationValidator());
+            new ConfirmPhoneVerificationValidator(),
+            new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(
             new ConfirmPhoneVerificationDto { Code = "654321" },
@@ -133,7 +138,9 @@ public sealed class PhoneVerificationHandlersTests
             smsSender,
             whatsAppSender,
             new FakeClock(new DateTime(2030, 4, 1, 8, 0, 0, DateTimeKind.Utc)),
-            new RequestPhoneVerificationValidator());
+            new RequestPhoneVerificationValidator(),
+            new TestStringLocalizer<ValidationResource>(),
+            new TestStringLocalizer<CommunicationResource>());
 
         var result = await handler.HandleAsync(
             new RequestPhoneVerificationDto(),
@@ -179,7 +186,9 @@ public sealed class PhoneVerificationHandlersTests
             smsSender,
             whatsAppSender,
             new FakeClock(new DateTime(2030, 4, 1, 8, 0, 0, DateTimeKind.Utc)),
-            new RequestPhoneVerificationValidator());
+            new RequestPhoneVerificationValidator(),
+            new TestStringLocalizer<ValidationResource>(),
+            new TestStringLocalizer<CommunicationResource>());
 
         var result = await handler.HandleAsync(
             new RequestPhoneVerificationDto(),
@@ -240,6 +249,19 @@ public sealed class PhoneVerificationHandlersTests
             Messages.Add((toPhoneE164, text));
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public System.Collections.Generic.IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class PhoneVerificationTestDbContext : DbContext, IAppDbContext

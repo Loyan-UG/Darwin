@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Communication;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
@@ -13,6 +15,7 @@ using Darwin.Shared.Results;
 using Darwin.Shared.Security;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 
 namespace Darwin.Application.Identity.Commands
@@ -28,6 +31,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly IEmailSender _email;
         private readonly IClock _clock;
         private readonly IValidator<RequestEmailConfirmationDto> _validator;
+        private readonly IStringLocalizer<CommunicationResource> _communicationLocalizer;
         private readonly ILogger<RequestEmailConfirmationHandler> _logger;
 
         /// <summary>
@@ -38,12 +42,14 @@ namespace Darwin.Application.Identity.Commands
             IEmailSender email,
             IClock clock,
             IValidator<RequestEmailConfirmationDto> validator,
+            IStringLocalizer<CommunicationResource> communicationLocalizer,
             ILogger<RequestEmailConfirmationHandler> logger)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _email = email ?? throw new ArgumentNullException(nameof(email));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _communicationLocalizer = communicationLocalizer ?? throw new ArgumentNullException(nameof(communicationLocalizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -83,20 +89,32 @@ namespace Darwin.Application.Identity.Commands
             await _db.SaveChangesAsync(ct);
 
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(user.Locale, siteSettings?.DefaultCulture);
+            var subjectTemplate = CommunicationTemplateDefaults.ResolveTemplate(
+                _communicationLocalizer,
+                communicationCulture,
+                siteSettings?.AccountActivationEmailSubjectTemplate,
+                CommunicationTemplateDefaults.LegacyAccountActivationSubjectTemplate,
+                "AccountActivationSubjectTemplateDefault");
+            var bodyTemplate = CommunicationTemplateDefaults.ResolveTemplate(
+                _communicationLocalizer,
+                communicationCulture,
+                siteSettings?.AccountActivationEmailBodyTemplate,
+                CommunicationTemplateDefaults.LegacyAccountActivationBodyTemplate,
+                "AccountActivationBodyTemplateDefault");
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
                 TransactionalEmailTemplateRenderer.Render(
-                    siteSettings?.AccountActivationEmailSubjectTemplate,
-                    "Confirm your Darwin account email",
+                    subjectTemplate,
+                    subjectTemplate,
                     new Dictionary<string, string?>
                     {
                         ["email"] = user.Email,
                         ["expires_at_utc"] = expiresAtUtc.ToString("u")
                     }));
             var body = TransactionalEmailTemplateRenderer.Render(
-                siteSettings?.AccountActivationEmailBodyTemplate,
-                $"Use the following token to confirm your email address: <b>{tokenValue}</b><br/>" +
-                $"This token expires at {expiresAtUtc:u}.",
+                bodyTemplate,
+                bodyTemplate,
                 new Dictionary<string, string?>
                 {
                     ["email"] = user.Email,
@@ -104,7 +122,7 @@ namespace Darwin.Application.Identity.Commands
                     ["expires_at_utc"] = expiresAtUtc.ToString("u")
                 });
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
-            body = ApplyRecipientOverrideNotice(user.Email, recipient, body);
+            body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, user.Email, recipient, body);
 
             await _email.SendAsync(
                 recipient,
@@ -124,14 +142,22 @@ namespace Darwin.Application.Identity.Commands
             return string.IsNullOrWhiteSpace(prefix) ? subject : $"{prefix.Trim()} {subject}";
         }
 
-        private static string ApplyRecipientOverrideNotice(string originalRecipient, string effectiveRecipient, string body)
+        private static string ApplyRecipientOverrideNotice(IStringLocalizer<CommunicationResource> localizer, string? culture, string originalRecipient, string effectiveRecipient, string body)
         {
             if (string.Equals(originalRecipient, effectiveRecipient, StringComparison.OrdinalIgnoreCase))
             {
                 return body;
             }
 
-            return $"<p><strong>Original recipient:</strong> {originalRecipient}</p>{body}";
+            var noticeTemplate = CommunicationTemplateDefaults.ResolveText(localizer, culture, "RecipientOverrideNoticeHtml");
+            var notice = TransactionalEmailTemplateRenderer.Render(
+                noticeTemplate,
+                noticeTemplate,
+                new Dictionary<string, string?>
+                {
+                    ["original_recipient"] = originalRecipient
+                });
+            return $"{notice}{body}";
         }
 
         private static string MaskEmail(string email)
@@ -162,6 +188,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
         private readonly IValidator<ConfirmEmailDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ConfirmEmailHandler"/>.
@@ -169,11 +196,13 @@ namespace Darwin.Application.Identity.Commands
         public ConfirmEmailHandler(
             IAppDbContext db,
             IClock clock,
-            IValidator<ConfirmEmailDto> validator)
+            IValidator<ConfirmEmailDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -189,7 +218,7 @@ namespace Darwin.Application.Identity.Commands
 
             if (user is null)
             {
-                return Result.Fail("Invalid or expired confirmation token.");
+                return Result.Fail(_localizer["InvalidOrExpiredConfirmationToken"]);
             }
 
             var utcNow = _clock.UtcNow;
@@ -202,12 +231,12 @@ namespace Darwin.Application.Identity.Commands
 
             if (token is null)
             {
-                return Result.Fail("Invalid or expired confirmation token.");
+                return Result.Fail(_localizer["InvalidOrExpiredConfirmationToken"]);
             }
 
             if (token.ExpiresAtUtc.HasValue && token.ExpiresAtUtc.Value < utcNow)
             {
-                return Result.Fail("Invalid or expired confirmation token.");
+                return Result.Fail(_localizer["InvalidOrExpiredConfirmationToken"]);
             }
 
             user.EmailConfirmed = true;

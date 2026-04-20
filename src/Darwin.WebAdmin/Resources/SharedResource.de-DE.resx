@@ -66,6 +66,9 @@
   <data name="AtLeast8Characters" xml:space="preserve">
     <value>Mindestens 8 Zeichen</value>
   </data>
+  <data name="PasswordPolicyHelp" xml:space="preserve">
+    <value>Verwenden Sie mindestens 8 Zeichen mit Grossbuchstaben, Kleinbuchstaben und einer Zahl.</value>
+  </data>
   <data name="MustMatchNewPassword" xml:space="preserve">
     <value>Muss mit dem neuen Passwort uebereinstimmen</value>
   </data>
@@ -2532,8 +2535,41 @@
   <data name="BusinessCreateOwnerAssigned" xml:space="preserve">
     <value>Business erstellt und Inhaber zugewiesen.</value>
   </data>
+  <data name="BusinessCreateOwnerInvitationIssued" xml:space="preserve">
+    <value>Business erstellt und Owner-Einladung versendet.</value>
+  </data>
   <data name="BusinessCreateNextSteps" xml:space="preserve">
     <value>Business erstellt. Fuegen Sie als Naechstes einen Primaerstandort hinzu und weisen Sie einen Inhaber zu.</value>
+  </data>
+  <data name="BusinessSupportCustomerTitle" xml:space="preserve">
+    <value>CRM-Supportprofil</value>
+  </data>
+  <data name="BusinessSupportCustomerReady" xml:space="preserve">
+    <value>Fuer CRM- und Billing-Follow-up provisioniert</value>
+  </data>
+  <data name="BusinessSupportCustomerMissing" xml:space="preserve">
+    <value>Noch nicht provisioniert</value>
+  </data>
+  <data name="BusinessSupportCustomerProvisioningNeeds" xml:space="preserve">
+    <value>Fehlt noch</value>
+  </data>
+  <data name="ProvisionSupportCustomer" xml:space="preserve">
+    <value>CRM-Profil provisionieren</value>
+  </data>
+  <data name="OpenSupportCustomer" xml:space="preserve">
+    <value>CRM-Profil oeffnen</value>
+  </data>
+  <data name="BusinessSupportCustomerProvisioned" xml:space="preserve">
+    <value>CRM-Supportprofil aus dem Business-Onboarding provisioniert.</value>
+  </data>
+  <data name="BusinessSupportCustomerUpdated" xml:space="preserve">
+    <value>CRM-Supportprofil mit den neuesten Business-Onboarding-Daten synchronisiert.</value>
+  </data>
+  <data name="BusinessSupportCustomerProvisioningBlocked" xml:space="preserve">
+    <value>CRM-Supportprofil konnte noch nicht provisioniert werden. Fehlt: {0}.</value>
+  </data>
+  <data name="BusinessSupportCustomerProvisioningPending" xml:space="preserve">
+    <value>Vervollstaendigen Sie zuerst Unternehmensname und Kontakt-E-Mail.</value>
   </data>
   <data name="BusinessArchived" xml:space="preserve">
     <value>Business archiviert.</value>
@@ -8318,6 +8354,18 @@
   </data>
   <data name="BusinessFormInitialOwnerHelp" xml:space="preserve">
     <value>Optional. Eine sofortige Owner-Zuweisung reduziert spaetere Onboarding-Arbeit.</value>
+  </data>
+  <data name="BusinessFormInitialOwnerInviteEmail" xml:space="preserve">
+    <value>E-Mail fuer initiale Owner-Einladung</value>
+  </data>
+  <data name="BusinessFormInitialOwnerInviteEmailHelp" xml:space="preserve">
+    <value>Optional. Wenn noch kein Plattformbenutzer existiert, wird bereits bei der Business-Erstellung eine Owner-Einladung versendet.</value>
+  </data>
+  <data name="BusinessFormInitialOwnerAssignmentConflict" xml:space="preserve">
+    <value>Waehlen Sie entweder einen bestehenden Owner oder eine E-Mail fuer die Owner-Einladung, nicht beides.</value>
+  </data>
+  <data name="BusinessInvitationCreatedFromBusinessCreateNote" xml:space="preserve">
+    <value>Owner-Einladung waehrend der Business-Erstellung versendet.</value>
   </data>
   <data name="BusinessFormBusinessIsActive" xml:space="preserve">
     <value>Business ist aktiv</value>

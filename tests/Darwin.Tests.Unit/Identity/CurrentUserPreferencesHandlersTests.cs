@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.Commands;
@@ -9,6 +10,7 @@ using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Identity;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Identity;
 
@@ -30,7 +32,10 @@ public sealed class CurrentUserPreferencesHandlersTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new GetCurrentUserPreferencesHandler(db, new StubCurrentUserService(userId));
+        var handler = new GetCurrentUserPreferencesHandler(
+            db,
+            new StubCurrentUserService(userId),
+            new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(TestContext.Current.CancellationToken);
 
@@ -60,7 +65,8 @@ public sealed class CurrentUserPreferencesHandlersTests
         var handler = new UpdateCurrentUserPreferencesHandler(
             db,
             new StubCurrentUserService(userId),
-            new UpdateMemberPreferencesValidator());
+            new UpdateMemberPreferencesValidator(),
+            new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(new UpdateMemberPreferencesDto
         {
@@ -117,6 +123,19 @@ public sealed class CurrentUserPreferencesHandlersTests
         }
 
         public Guid GetCurrentUserId() => _userId;
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class PreferenceTestDbContext : DbContext, IAppDbContext

@@ -1,5 +1,6 @@
-﻿using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Validators
 {
@@ -36,11 +37,11 @@ namespace Darwin.Application.Identity.Validators
 
     public sealed class ResetPasswordValidator : AbstractValidator<ResetPasswordDto>
     {
-        public ResetPasswordValidator()
+        public ResetPasswordValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Email).NotEmpty().EmailAddress();
             RuleFor(x => x.Token).NotEmpty();
-            RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(8);
+            RuleFor(x => x.NewPassword).ApplyPasswordPolicy(localizer);
         }
     }
 }

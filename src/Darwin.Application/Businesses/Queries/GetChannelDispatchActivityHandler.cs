@@ -415,34 +415,34 @@ namespace Darwin.Application.Businesses.Queries
             int sentCount,
             int pendingCount)
         {
-            if (string.Equals(flowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(flowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, StringComparison.OrdinalIgnoreCase))
             {
-                var recommended = string.Equals(pressureState, "Elevated", StringComparison.OrdinalIgnoreCase)
-                    ? "Review SMS/WhatsApp readiness, fallback policy, and current verification channel choice before issuing another canonical verification code."
-                    : "Keep verification traffic on the canonical flow, then review recent provider failures before switching channel policy or escalating.";
+                var recommended = string.Equals(pressureState, ChannelDispatchAuditVocabulary.PressureStates.Elevated, StringComparison.OrdinalIgnoreCase)
+                    ? ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedVerificationElevated
+                    : ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedVerificationStable;
                 var escalation = failureCount >= 2 && sentCount == 0
-                    ? "Escalate as provider or channel-policy instability if verification traffic continues to fail without any successful recovery in this provider lane."
-                    : "Escalate only if the provider lane keeps degrading after readiness, fallback, and current phone verification path have been checked.";
+                    ? ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationVerificationElevated
+                    : ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationVerificationStable;
                 return (recommended, escalation);
             }
 
-            if (string.Equals(flowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(flowKey, ChannelDispatchAuditVocabulary.FlowKeys.AdminCommunicationTest, StringComparison.OrdinalIgnoreCase))
             {
-                var recommended = string.Equals(pressureState, "Elevated", StringComparison.OrdinalIgnoreCase)
-                    ? "Correct provider credentials, sender identity, or reserved test-target setup before rerunning more diagnostics on this lane."
-                    : "Use the reserved test target for a controlled rerun only after checking provider config and template state.";
+                var recommended = string.Equals(pressureState, ChannelDispatchAuditVocabulary.PressureStates.Elevated, StringComparison.OrdinalIgnoreCase)
+                    ? ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedAdminTestElevated
+                    : ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedAdminTestStable;
                 var escalation = failureCount >= 2 && sentCount == 0
-                    ? "Escalate as provider/configuration debt when this diagnostic lane keeps failing without a successful send."
-                    : "Escalate only when repeated transport-test failures continue after configuration corrections.";
+                    ? ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationAdminTestElevated
+                    : ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationAdminTestStable;
                 return (recommended, escalation);
             }
 
             var genericRecommended = pendingCount > 0
-                ? "Review the pending and failed traffic in this provider lane before taking another manual action."
-                : "Review recent failures in this provider lane before escalating.";
-            var genericEscalation = string.Equals(pressureState, "Elevated", StringComparison.OrdinalIgnoreCase)
-                ? "Escalate this provider lane if failures keep accumulating without recovery."
-                : "Escalate only if this provider lane continues degrading after basic transport checks.";
+                ? ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedGenericPending
+                : ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedGenericStable;
+            var genericEscalation = string.Equals(pressureState, ChannelDispatchAuditVocabulary.PressureStates.Elevated, StringComparison.OrdinalIgnoreCase)
+                ? ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationGenericElevated
+                : ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationGenericStable;
             return (genericRecommended, genericEscalation);
         }
 
@@ -454,35 +454,35 @@ namespace Darwin.Application.Businesses.Queries
             bool hasPending,
             DateTime? lastSuccessfulAttemptAtUtc)
         {
-            if (string.Equals(flowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(flowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, StringComparison.OrdinalIgnoreCase))
             {
                 var recommended = hasSent
-                    ? "Do not replay historical verification messages. If the user is still blocked, confirm the current phone number and request a fresh code through the canonical verification flow."
-                    : "Do not replay historical verification messages. Confirm the current phone number, review preferred-vs-fallback channel policy, then request a fresh code through the canonical verification flow.";
+                    ? ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedVerificationRecovered
+                    : ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedVerificationBlocked;
 
                 var escalation = failedCount >= 3 && !hasSent
-                    ? "Repeated verification failures without a successful send indicate a likely transport or channel-policy issue. Escalate after confirming SMS/WhatsApp readiness and fallback policy."
-                    : "Escalate only if the canonical verification flow keeps failing after channel readiness and policy have been checked.";
+                    ? ChannelDispatchAuditVocabulary.Guidance.ChainEscalationVerificationBlocked
+                    : ChannelDispatchAuditVocabulary.Guidance.ChainEscalationVerificationStable;
 
                 return (recommended, escalation);
             }
 
-            if (string.Equals(flowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(flowKey, ChannelDispatchAuditVocabulary.FlowKeys.AdminCommunicationTest, StringComparison.OrdinalIgnoreCase))
             {
-                var recommended = "Rerun diagnostics only to the reserved channel test target after correcting provider settings, templates, or channel policy.";
+                var recommended = ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedAdminTest;
                 var escalation = failedCount >= 2 && !hasSent
-                    ? "Repeated admin-test failures without any successful send suggest provider/configuration debt. Escalate as transport setup or provider issue instead of repeatedly rerunning tests."
-                    : "If a rerun succeeds, treat this as an isolated incident. Escalate only when repeated failures continue after config fixes.";
+                    ? ChannelDispatchAuditVocabulary.Guidance.ChainEscalationAdminTestBlocked
+                    : ChannelDispatchAuditVocabulary.Guidance.ChainEscalationAdminTestStable;
 
                 return (recommended, escalation);
             }
 
             var genericRecommended = hasPending
-                ? "Review the latest pending or failed non-email attempts before taking manual action."
-                : "Review recent non-email delivery history before escalating.";
+                ? ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedGenericPending
+                : ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedGenericStable;
             var genericEscalation = lastSuccessfulAttemptAtUtc.HasValue
-                ? "Escalate only if the chain continues to fail after a previously successful path has been revalidated."
-                : "Escalate when the same non-email path fails repeatedly without a verified successful send.";
+                ? ChannelDispatchAuditVocabulary.Guidance.ChainEscalationGenericRecovered
+                : ChannelDispatchAuditVocabulary.Guidance.ChainEscalationGenericBlocked;
             return (genericRecommended, genericEscalation);
         }
 
@@ -502,12 +502,12 @@ namespace Darwin.Application.Businesses.Queries
                 var hasFailed = ordered.Any(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase));
                 var hasPending = ordered.Any(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase));
                 var chainStatusMix =
-                    hasSent && hasFailed ? "Mixed success/failure" :
-                    hasFailed && hasPending ? "Open failure chain" :
-                    hasFailed ? "Failure-only chain" :
-                    hasPending ? "Pending-only chain" :
-                    hasSent ? "Success-only chain" :
-                    "Single attempt";
+                    hasSent && hasFailed ? ChannelDispatchAuditVocabulary.ChainStatusMixes.Mixed :
+                    hasFailed && hasPending ? ChannelDispatchAuditVocabulary.ChainStatusMixes.OpenFailure :
+                    hasFailed ? ChannelDispatchAuditVocabulary.ChainStatusMixes.FailureOnly :
+                    hasPending ? ChannelDispatchAuditVocabulary.ChainStatusMixes.PendingOnly :
+                    hasSent ? ChannelDispatchAuditVocabulary.ChainStatusMixes.SuccessOnly :
+                    ChannelDispatchAuditVocabulary.ChainStatusMixes.SingleAttempt;
                 var priorFailures = 0;
                 var priorAttempts = 0;
                 DateTime? lastSuccessfulAttemptAtUtc = null;
@@ -558,18 +558,18 @@ namespace Darwin.Application.Businesses.Queries
             ChannelDispatchAudit row,
             ChannelDispatchAuditChainContext context)
         {
-            if (string.Equals(row.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(row.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, StringComparison.OrdinalIgnoreCase))
             {
                 return new ChannelDispatchActionPolicy
                 {
                     CanRerunNow = false,
-                    State = "Canonical flow",
-                    BlockedReason = "Do not replay historical verification messages. Request a fresh code through the canonical phone-verification flow.",
+                    State = ChannelDispatchAuditVocabulary.ActionPolicyStates.CanonicalFlow,
+                    BlockedReason = ChannelDispatchAuditVocabulary.Guidance.ActionBlockedCanonicalFlow,
                     AvailableAtUtc = null
                 };
             }
 
-            if (string.Equals(row.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(row.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.AdminCommunicationTest, StringComparison.OrdinalIgnoreCase))
             {
                 var cooldownUntil = row.AttemptedAtUtc.AddMinutes(5);
                 if (cooldownUntil > DateTime.UtcNow)
@@ -577,8 +577,8 @@ namespace Darwin.Application.Businesses.Queries
                     return new ChannelDispatchActionPolicy
                     {
                         CanRerunNow = false,
-                        State = "Cooldown",
-                        BlockedReason = "Wait for the transport cooldown window before rerunning the same diagnostic channel test.",
+                        State = ChannelDispatchAuditVocabulary.ActionPolicyStates.Cooldown,
+                        BlockedReason = ChannelDispatchAuditVocabulary.Guidance.ActionBlockedCooldown,
                         AvailableAtUtc = cooldownUntil
                     };
                 }
@@ -586,7 +586,7 @@ namespace Darwin.Application.Businesses.Queries
                 return new ChannelDispatchActionPolicy
                 {
                     CanRerunNow = true,
-                    State = context.PriorFailureCount > 0 ? "Retry ready" : "Ready",
+                    State = context.PriorFailureCount > 0 ? ChannelDispatchAuditVocabulary.ActionPolicyStates.RetryReady : ChannelDispatchAuditVocabulary.ActionPolicyStates.Ready,
                     BlockedReason = null,
                     AvailableAtUtc = null
                 };
@@ -595,8 +595,8 @@ namespace Darwin.Application.Businesses.Queries
             return new ChannelDispatchActionPolicy
             {
                 CanRerunNow = false,
-                State = "Unsupported",
-                BlockedReason = "No operator rerun path is defined for this non-email flow yet.",
+                State = ChannelDispatchAuditVocabulary.ActionPolicyStates.Unsupported,
+                BlockedReason = ChannelDispatchAuditVocabulary.Guidance.ActionBlockedUnsupported,
                 AvailableAtUtc = null
             };
         }
@@ -605,26 +605,26 @@ namespace Darwin.Application.Businesses.Queries
             ChannelDispatchAudit row,
             ChannelDispatchAuditChainContext context)
         {
-            if (string.Equals(row.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(row.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, StringComparison.OrdinalIgnoreCase))
             {
                 if (context.PriorFailureCount >= 2 && !context.LastSuccessfulAttemptAtUtc.HasValue)
                 {
                     return new ChannelDispatchEscalationPolicy
                     {
                         NeedsEscalationReview = true,
-                        Reason = "Repeated verification failures without any successful send. Review transport readiness and fallback policy, then escalate if the canonical flow is still blocked."
+                        Reason = ChannelDispatchAuditVocabulary.Guidance.EscalationReasonPhoneVerification
                     };
                 }
             }
 
-            if (string.Equals(row.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(row.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.AdminCommunicationTest, StringComparison.OrdinalIgnoreCase))
             {
                 if (context.PriorFailureCount >= 1 && !context.LastSuccessfulAttemptAtUtc.HasValue)
                 {
                     return new ChannelDispatchEscalationPolicy
                     {
                         NeedsEscalationReview = true,
-                        Reason = "Repeated diagnostic transport failures without a successful send. Treat this as provider/config debt rather than another routine rerun."
+                        Reason = ChannelDispatchAuditVocabulary.Guidance.EscalationReasonAdminTest
                     };
                 }
             }
@@ -683,13 +683,13 @@ namespace Darwin.Application.Businesses.Queries
                     .Select(x => (DateTime?)x.AttemptedAtUtc)
                     .FirstOrDefault();
                 var pressureState =
-                    failureCount >= 2 && !hasRecentSuccess ? "Elevated" :
-                    failureCount > 0 ? "Recovering" :
-                    "Stable";
+                    failureCount >= 2 && !hasRecentSuccess ? ChannelDispatchAuditVocabulary.PressureStates.Elevated :
+                    failureCount > 0 ? ChannelDispatchAuditVocabulary.PressureStates.Recovering :
+                    ChannelDispatchAuditVocabulary.PressureStates.Stable;
                 var recoveryState =
-                    failureCount > 0 && hasRecentSuccess ? "Recovered" :
-                    hasRecentSuccess ? "Stable success" :
-                    "No recovery yet";
+                    failureCount > 0 && hasRecentSuccess ? ChannelDispatchAuditVocabulary.RecoveryStates.Recovered :
+                    hasRecentSuccess ? ChannelDispatchAuditVocabulary.RecoveryStates.StableSuccess :
+                    ChannelDispatchAuditVocabulary.RecoveryStates.NoneYet;
 
                 foreach (var row in group)
                 {

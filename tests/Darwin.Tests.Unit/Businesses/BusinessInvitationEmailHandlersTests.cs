@@ -50,7 +50,8 @@ public sealed class BusinessInvitationEmailHandlersTests
             new FixedCurrentUserService(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")),
             new FixedBusinessInvitationLinkBuilder("darwin-business://InvitationAcceptance?token=MAGIC"),
             new BusinessInvitationCreateDtoValidator(),
-            new TestStringLocalizer());
+            new TestValidationStringLocalizer(),
+            new TestCommunicationStringLocalizer());
 
         await handler.HandleAsync(new BusinessInvitationCreateDto
         {
@@ -105,7 +106,8 @@ public sealed class BusinessInvitationEmailHandlersTests
             new FixedCurrentUserService(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")),
             new NullBusinessInvitationLinkBuilder(),
             new BusinessInvitationCreateDtoValidator(),
-            new TestStringLocalizer());
+            new TestValidationStringLocalizer(),
+            new TestCommunicationStringLocalizer());
 
         await handler.HandleAsync(new BusinessInvitationCreateDto
         {
@@ -158,7 +160,8 @@ public sealed class BusinessInvitationEmailHandlersTests
             new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
             new NullBusinessInvitationLinkBuilder(),
             new BusinessInvitationResendDtoValidator(),
-            new TestStringLocalizer());
+            new TestValidationStringLocalizer(),
+            new TestCommunicationStringLocalizer());
 
         await handler.HandleAsync(new BusinessInvitationResendDto
         {
@@ -310,7 +313,7 @@ public sealed class BusinessInvitationEmailHandlersTests
         }
     }
 
-    private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>
+    private sealed class TestValidationStringLocalizer : IStringLocalizer<ValidationResource>
     {
         public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
 
@@ -321,5 +324,34 @@ public sealed class BusinessInvitationEmailHandlersTests
             Array.Empty<LocalizedString>();
 
         public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
+    }
+
+    private sealed class TestCommunicationStringLocalizer : IStringLocalizer<CommunicationResource>
+    {
+        public LocalizedString this[string name] => new(name, Resolve(name), resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(Resolve(name), arguments), resourceNotFound: false);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
+
+        private static string Resolve(string name) => name switch
+        {
+            "BusinessInvitationSubjectTemplateDefault" => "You're invited to join {business_name}",
+            "BusinessInvitationBodyTemplateDefault" =>
+                "<p>Hello {recipient_name},</p><p>{invitation_intro_html}</p><p>{acceptance_link_html}</p><p>If you prefer, use this code instead:</p><p><code>{token}</code></p>",
+            "BusinessInvitationAcceptanceLinkHtml" =>
+                "<a href=\"{acceptance_link}\">Open your invitation</a>",
+            "BusinessInvitationIntroInvitedHtml" =>
+                "You have been invited to join <strong>{business_name}</strong> on Darwin.",
+            "BusinessInvitationIntroReissuedHtml" =>
+                "Your invitation to join <strong>{business_name}</strong> has been reissued.",
+            "RecipientOverrideNoticeHtml" =>
+                "<p><em>This message was routed to {override_recipient} because the configured recipient differs.</em></p>",
+            _ => name
+        };
     }
 }

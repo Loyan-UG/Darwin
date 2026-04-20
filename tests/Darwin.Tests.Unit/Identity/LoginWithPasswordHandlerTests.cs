@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Security;
@@ -11,6 +12,7 @@ using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Identity;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Identity;
 
@@ -30,7 +32,7 @@ public sealed class LoginWithPasswordHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var jwt = new FakeJwtTokenService();
-        var handler = new LoginWithPasswordHandler(db, jwt, new FakeLoginRateLimiter(), new FakeUserPasswordHasher());
+        var handler = new LoginWithPasswordHandler(db, jwt, new FakeLoginRateLimiter(), new FakeUserPasswordHasher(), new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(
             new PasswordLoginRequestDto
@@ -42,7 +44,7 @@ public sealed class LoginWithPasswordHandlerTests
             TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Be("Email address is not confirmed.");
+        result.Error.Should().Be("EmailAddressNotConfirmed");
         jwt.IssueTokensCalls.Should().Be(0);
     }
 
@@ -57,7 +59,7 @@ public sealed class LoginWithPasswordHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var jwt = new FakeJwtTokenService();
-        var handler = new LoginWithPasswordHandler(db, jwt, new FakeLoginRateLimiter(), new FakeUserPasswordHasher());
+        var handler = new LoginWithPasswordHandler(db, jwt, new FakeLoginRateLimiter(), new FakeUserPasswordHasher(), new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(
             new PasswordLoginRequestDto
@@ -69,7 +71,7 @@ public sealed class LoginWithPasswordHandlerTests
             TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Be("Account is locked.");
+        result.Error.Should().Be("AccountLocked");
         jwt.IssueTokensCalls.Should().Be(0);
     }
 
@@ -83,7 +85,7 @@ public sealed class LoginWithPasswordHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var jwt = new FakeJwtTokenService();
-        var handler = new LoginWithPasswordHandler(db, jwt, new FakeLoginRateLimiter(), new FakeUserPasswordHasher());
+        var handler = new LoginWithPasswordHandler(db, jwt, new FakeLoginRateLimiter(), new FakeUserPasswordHasher(), new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(
             new PasswordLoginRequestDto
@@ -159,6 +161,19 @@ public sealed class LoginWithPasswordHandlerTests
         }
 
         public int RevokeAllForUser(Guid userId) => 0;
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public System.Collections.Generic.IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class LoginWithPasswordTestDbContext : DbContext, IAppDbContext

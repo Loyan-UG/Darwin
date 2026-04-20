@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -22,15 +23,17 @@ namespace Darwin.Application.Identity.Commands
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
         private readonly IValidator<UserProfileEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the handler.
         /// </summary>
-        public UpdateCurrentUserHandler(IAppDbContext db, ICurrentUserService currentUser, IValidator<UserProfileEditDto> validator)
+        public UpdateCurrentUserHandler(IAppDbContext db, ICurrentUserService currentUser, IValidator<UserProfileEditDto> validator, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _currentUser = currentUser;
             _validator = validator;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -45,17 +48,17 @@ namespace Darwin.Application.Identity.Commands
 
             var userId = _currentUser.GetCurrentUserId();
             if (userId == Guid.Empty || userId != dto.Id)
-                return Result.Fail("Unauthorized.");
+                return Result.Fail(_localizer["Unauthorized"]);
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.Id && !u.IsDeleted && u.IsActive, ct);
             if (user is null)
-                return Result.Fail("User not found.");
+                return Result.Fail(_localizer["UserNotFound"]);
 
             // Concurrency check
             if (user.RowVersion is not null && dto.RowVersion is not null && user.RowVersion.Length > 0)
             {
                 if (!StructuralComparisons.StructuralEqualityComparer.Equals(user.RowVersion, dto.RowVersion))
-                    return Result.Fail("Concurrency conflict.");
+                    return Result.Fail(_localizer["ConcurrencyConflict"]);
             }
 
             // Update profile fields

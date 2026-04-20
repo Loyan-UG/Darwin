@@ -39,7 +39,12 @@ public sealed class BusinessAccountController : ApiControllerBase
             return BadRequestProblem("Business context is required.");
         }
 
-        var dto = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
+        if (!BusinessControllerConventions.TryGetCurrentUserId(User, out var userId))
+        {
+            return BadRequestProblem("User context is required.");
+        }
+
+        var dto = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);
         if (dto is null)
         {
             return NotFoundProblem("Business was not found.");
@@ -47,6 +52,7 @@ public sealed class BusinessAccountController : ApiControllerBase
 
         return Ok(new BusinessAccessStateResponse
         {
+            UserId = dto.UserId,
             BusinessId = dto.BusinessId,
             BusinessName = dto.BusinessName,
             OperationalStatus = dto.OperationalStatus.ToString(),
@@ -58,6 +64,11 @@ public sealed class BusinessAccountController : ApiControllerBase
             HasPrimaryLocation = dto.HasPrimaryLocation,
             HasContactEmail = dto.HasContactEmail,
             HasLegalName = dto.HasLegalName,
+            HasActiveMembership = dto.HasActiveMembership,
+            IsUserActive = dto.IsUserActive,
+            IsUserEmailConfirmed = dto.IsUserEmailConfirmed,
+            IsUserLockedOut = dto.IsUserLockedOut,
+            IsBusinessClientAccessAllowed = dto.IsBusinessClientAccessAllowed,
             IsOperationsAllowed = dto.IsOperationsAllowed,
             IsSetupComplete = dto.IsSetupComplete,
             BlockingReason = dto.BlockingReason

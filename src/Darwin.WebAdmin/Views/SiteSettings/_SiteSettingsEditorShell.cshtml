@@ -14,6 +14,19 @@
     var adminOverridesExample =
         "{\"" + adminPrimaryCulture + "\":{\"Key\":\"Value\"},\"" +
         adminSecondaryCulture + "\":{\"Key\":\"Value\"}}";
+
+    string CommunicationChannelLabel(string channel) => channel switch
+    {
+        "SMS" => T.T("SMS"),
+        "WhatsApp" => T.T("WhatsApp"),
+        _ => channel
+    };
+
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("Members")
+    };
 }
 
 <div id="site-settings-editor-shell">
@@ -46,10 +59,10 @@
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-measurement">@T.T("Units")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-seo">@T.T("Seo")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-analytics">@T.T("Analytics")</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-whatsapp">@T.T("WhatsApp")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-whatsapp">@CommunicationChannelLabel("WhatsApp")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-webauthn">@T.T("WebAuthn")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-smtp">@T.T("SMTP")</a>
-            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-sms">@T.T("SMS")</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-sms">@CommunicationChannelLabel("SMS")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-admin-routing">@T.T("AdminAlerts")</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-communications-policy">@T.T("CommunicationPolicy")</a>
         </div>
@@ -95,7 +108,7 @@
                                        hx-get="@Url.Action("SupportQueue", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("NeedsAttention")</a>
+                                       hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
                                 </div>
                             </td>
                         </tr>
@@ -833,12 +846,12 @@
 
     <!-- WhatsApp -->
     <div id="site-settings-whatsapp" class="card mb-4">
-        <div class="card-header">@T.T("WhatsApp")</div>
+        <div class="card-header">@CommunicationChannelLabel("WhatsApp")</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="WhatsAppEnabled" />
                 <label class="form-check-label" asp-for="WhatsAppEnabled"></label>
-                <field-help title="@T.T("WhatsApp")" content="@T.T("SiteSettingsWhatsAppEnabledHelp")" placement="right"></field-help>
+                <field-help title="@CommunicationChannelLabel("WhatsApp")" content="@T.T("SiteSettingsWhatsAppEnabledHelp")" placement="right"></field-help>
             </div>
 
             <div class="row">
@@ -942,7 +955,7 @@
 
     <!-- SMS -->
     <div id="site-settings-sms" class="card mb-4">
-        <div class="card-header">@T.T("SMS")</div>
+        <div class="card-header">@CommunicationChannelLabel("SMS")</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="SmsEnabled" />
@@ -1027,8 +1040,8 @@
                 <div class="col-md-3">
                     <label asp-for="PhoneVerificationPreferredChannel" class="form-label"></label>
                     <select asp-for="PhoneVerificationPreferredChannel" class="form-select">
-                        <option value="Sms">@T.T("SMS")</option>
-                        <option value="WhatsApp">@T.T("WhatsApp")</option>
+                        <option value="Sms">@CommunicationChannelLabel("SMS")</option>
+                        <option value="WhatsApp">@CommunicationChannelLabel("WhatsApp")</option>
                     </select>
                     <span asp-validation-for="PhoneVerificationPreferredChannel" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsPhoneVerificationPreferredChannelHelp")</div>

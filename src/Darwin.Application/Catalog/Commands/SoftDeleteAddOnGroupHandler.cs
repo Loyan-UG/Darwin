@@ -22,6 +22,7 @@ namespace Darwin.Application.Catalog.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<AddOnGroupDeleteDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new handler instance with the application DbContext abstraction and validator.
@@ -30,6 +31,7 @@ namespace Darwin.Application.Catalog.Commands
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = new AddOnGroupDeleteValidator(localizer);
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -44,14 +46,14 @@ namespace Darwin.Application.Catalog.Commands
             // 1) Basic input validation (Id + RowVersion)
             var vr = _validator.Validate(dto);
             if (!vr.IsValid)
-                return Result.Fail("Invalid delete request.");
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
 
             // 2) Load entity with tracking to update IsDeleted and compare RowVersion
             var entity = await _db.Set<AddOnGroup>()
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (entity is null)
-                return Result.Fail("Add-on group not found.");
+                return Result.Fail(_localizer["AddOnGroupNotFound"]);
 
             // 3) Idempotency: deleting twice is OK
             if (entity.IsDeleted)
@@ -61,7 +63,7 @@ namespace Darwin.Application.Catalog.Commands
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
             if (!currentVersion.SequenceEqual(requestVersion))
-                return Result.Fail("Concurrency conflict. The item was modified by another process.");
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
 
             // 5) Soft delete the aggregate root. 
             //    EF global query filter will hide this and any dependent rows still referencing it.

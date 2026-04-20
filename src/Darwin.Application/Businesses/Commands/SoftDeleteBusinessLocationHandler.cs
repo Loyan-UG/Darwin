@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -18,24 +19,29 @@ namespace Darwin.Application.Businesses.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<BusinessLocationDeleteDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SoftDeleteBusinessLocationHandler(IAppDbContext db, IValidator<BusinessLocationDeleteDto> validator)
+        public SoftDeleteBusinessLocationHandler(
+            IAppDbContext db,
+            IValidator<BusinessLocationDeleteDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result> HandleAsync(BusinessLocationDeleteDto dto, CancellationToken ct = default)
         {
             var vr = _validator.Validate(dto);
             if (!vr.IsValid)
-                return Result.Fail("Invalid delete request.");
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
 
             var entity = await _db.Set<BusinessLocation>()
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (entity is null)
-                return Result.Fail("Business location not found.");
+                return Result.Fail(_localizer["BusinessLocationNotFound"]);
 
             if (entity.IsDeleted)
                 return Result.Ok();
@@ -43,7 +49,7 @@ namespace Darwin.Application.Businesses.Commands
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
             if (!currentVersion.SequenceEqual(requestVersion))
-                return Result.Fail("Concurrency conflict. The item was modified by another process.");
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
 
             entity.IsDeleted = true;
             await _db.SaveChangesAsync(ct);

@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -34,15 +35,18 @@ namespace Darwin.Application.Loyalty.Commands
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUserService;
         private readonly IClock _clock;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public CreateLoyaltyAccountHandler(
             IAppDbContext db,
             ICurrentUserService currentUserService,
-            IClock clock)
+            IClock clock,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         /// <summary>
@@ -60,13 +64,13 @@ namespace Darwin.Application.Loyalty.Commands
         {
             if (businessId == Guid.Empty)
             {
-                return Result<LoyaltyAccountSummaryDto>.Fail("BusinessId is required.");
+                return Result<LoyaltyAccountSummaryDto>.Fail(_localizer["BusinessIdRequired"]);
             }
 
             var userId = _currentUserService.GetCurrentUserId();
             if (userId == Guid.Empty)
             {
-                return Result<LoyaltyAccountSummaryDto>.Fail("User is not authenticated.");
+                return Result<LoyaltyAccountSummaryDto>.Fail(_localizer["UserNotAuthenticated"]);
             }
 
             // Try find an existing (non-deleted) loyalty account for (business, user)
@@ -106,7 +110,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (business is null)
             {
-                return Result<LoyaltyAccountSummaryDto>.Fail("Business not found.");
+                return Result<LoyaltyAccountSummaryDto>.Fail(_localizer["BusinessNotFound"]);
             }
 
             // Create new loyalty account

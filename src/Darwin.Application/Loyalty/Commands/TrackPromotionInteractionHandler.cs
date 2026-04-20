@@ -10,6 +10,7 @@ using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Loyalty.Commands;
 
@@ -28,12 +29,14 @@ public sealed class TrackPromotionInteractionHandler
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IClock _clock;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public TrackPromotionInteractionHandler(IAppDbContext db, ICurrentUserService currentUser, IClock clock)
+    public TrackPromotionInteractionHandler(IAppDbContext db, ICurrentUserService currentUser, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -43,23 +46,23 @@ public sealed class TrackPromotionInteractionHandler
     {
         if (dto is null)
         {
-            return Result.Fail("Request payload is required.");
+            return Result.Fail(_localizer["RequestPayloadRequired"]);
         }
 
         if (dto.BusinessId == Guid.Empty)
         {
-            return Result.Fail("BusinessId is required.");
+            return Result.Fail(_localizer["BusinessIdRequired"]);
         }
 
         if (string.IsNullOrWhiteSpace(dto.Title))
         {
-            return Result.Fail("Title is required.");
+            return Result.Fail(_localizer["TitleRequired"]);
         }
 
         var userId = _currentUser.GetCurrentUserId();
         if (userId == Guid.Empty)
         {
-            return Result.Fail("Current user id is missing.");
+            return Result.Fail(_localizer["CurrentUserIdMissing"]);
         }
 
         var snapshot = await _db.Set<UserEngagementSnapshot>()

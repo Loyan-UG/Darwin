@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
@@ -10,6 +11,7 @@ using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Identity;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Tests.Unit.Identity;
 
@@ -28,7 +30,7 @@ public sealed class AdminUserSupportHandlersTests
         db.Set<User>().Add(user);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new ConfirmUserEmailByAdminHandler(db, new UserAdminActionValidator());
+        var handler = new ConfirmUserEmailByAdminHandler(db, new UserAdminActionValidator(), new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(new UserAdminActionDto { Id = user.Id }, TestContext.Current.CancellationToken);
 
@@ -57,7 +59,8 @@ public sealed class AdminUserSupportHandlersTests
             jwt,
             new FakeClock(utcNow),
             new FakeSecurityStampService(),
-            new UserAdminActionValidator());
+            new UserAdminActionValidator(),
+            new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(new UserAdminActionDto { Id = user.Id }, TestContext.Current.CancellationToken);
 
@@ -85,7 +88,7 @@ public sealed class AdminUserSupportHandlersTests
         db.Set<User>().Add(user);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UnlockUserByAdminHandler(db, new UserAdminActionValidator());
+        var handler = new UnlockUserByAdminHandler(db, new UserAdminActionValidator(), new TestStringLocalizer<ValidationResource>());
 
         var result = await handler.HandleAsync(new UserAdminActionDto { Id = user.Id }, TestContext.Current.CancellationToken);
 
@@ -164,6 +167,19 @@ public sealed class AdminUserSupportHandlersTests
             LastRevokedUserId = userId;
             return 1;
         }
+    }
+
+    private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
+    {
+        public LocalizedString this[string name] => new(name, name, resourceNotFound: false);
+
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(name, arguments), resourceNotFound: false);
+
+        public System.Collections.Generic.IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
+            Array.Empty<LocalizedString>();
+
+        public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
     }
 
     private sealed class AdminUserSupportTestDbContext : DbContext, IAppDbContext

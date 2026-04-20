@@ -5,6 +5,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Queries;
 
@@ -21,14 +22,16 @@ public sealed class GetCurrentUserPreferencesHandler
 
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetCurrentUserPreferencesHandler"/> class.
     /// </summary>
-    public GetCurrentUserPreferencesHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public GetCurrentUserPreferencesHandler(IAppDbContext db, ICurrentUserService currentUser, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -39,7 +42,7 @@ public sealed class GetCurrentUserPreferencesHandler
         var userId = _currentUser.GetCurrentUserId();
         if (userId == Guid.Empty)
         {
-            return Result<MemberPreferencesDto>.Fail("User is not authenticated.");
+            return Result<MemberPreferencesDto>.Fail(_localizer["UserNotAuthenticated"]);
         }
 
         var dto = await _db.Set<User>()
@@ -57,7 +60,7 @@ public sealed class GetCurrentUserPreferencesHandler
 
         if (dto is null)
         {
-            return Result<MemberPreferencesDto>.Fail("User not found.");
+            return Result<MemberPreferencesDto>.Fail(_localizer["UserNotFound"]);
         }
 
         var channels = DeserializeChannels(dto.ChannelsOptInJson);

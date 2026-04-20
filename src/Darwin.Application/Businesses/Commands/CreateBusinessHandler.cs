@@ -4,8 +4,10 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -33,6 +35,17 @@ namespace Darwin.Application.Businesses.Commands
         public async Task<Guid> HandleAsync(BusinessCreateDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
+            var settings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct) ?? new SiteSetting();
+            var contactEmail = NormalizeNullable(dto.ContactEmail) ?? NormalizeNullable(settings.ContactEmail);
+            var brandDisplayName = NormalizeNullable(dto.BrandDisplayName) ?? NormalizeNullable(settings.Title);
+            var brandLogoUrl = NormalizeNullable(dto.BrandLogoUrl) ?? NormalizeNullable(settings.LogoUrl);
+            var supportEmail = NormalizeNullable(dto.SupportEmail) ?? contactEmail ?? NormalizeNullable(settings.SmtpFromAddress);
+            var communicationSenderName = NormalizeNullable(dto.CommunicationSenderName)
+                                           ?? NormalizeNullable(settings.SmtpFromDisplayName)
+                                           ?? brandDisplayName;
+            var communicationReplyToEmail = NormalizeNullable(dto.CommunicationReplyToEmail)
+                                            ?? contactEmail
+                                            ?? NormalizeNullable(settings.SmtpFromAddress);
 
             var entity = new Business
             {
@@ -41,20 +54,20 @@ namespace Darwin.Application.Businesses.Commands
                 TaxId = string.IsNullOrWhiteSpace(dto.TaxId) ? null : dto.TaxId.Trim(),
                 ShortDescription = string.IsNullOrWhiteSpace(dto.ShortDescription) ? null : dto.ShortDescription.Trim(),
                 WebsiteUrl = string.IsNullOrWhiteSpace(dto.WebsiteUrl) ? null : dto.WebsiteUrl.Trim(),
-                ContactEmail = string.IsNullOrWhiteSpace(dto.ContactEmail) ? null : dto.ContactEmail.Trim(),
+                ContactEmail = contactEmail,
                 ContactPhoneE164 = string.IsNullOrWhiteSpace(dto.ContactPhoneE164) ? null : dto.ContactPhoneE164.Trim(),
                 Category = dto.Category,
                 DefaultCurrency = dto.DefaultCurrency.Trim(),
                 DefaultCulture = dto.DefaultCulture.Trim(),
                 DefaultTimeZoneId = dto.DefaultTimeZoneId.Trim(),
                 AdminTextOverridesJson = string.IsNullOrWhiteSpace(dto.AdminTextOverridesJson) ? null : dto.AdminTextOverridesJson.Trim(),
-                BrandDisplayName = string.IsNullOrWhiteSpace(dto.BrandDisplayName) ? null : dto.BrandDisplayName.Trim(),
-                BrandLogoUrl = string.IsNullOrWhiteSpace(dto.BrandLogoUrl) ? null : dto.BrandLogoUrl.Trim(),
+                BrandDisplayName = brandDisplayName,
+                BrandLogoUrl = brandLogoUrl,
                 BrandPrimaryColorHex = string.IsNullOrWhiteSpace(dto.BrandPrimaryColorHex) ? null : dto.BrandPrimaryColorHex.Trim(),
                 BrandSecondaryColorHex = string.IsNullOrWhiteSpace(dto.BrandSecondaryColorHex) ? null : dto.BrandSecondaryColorHex.Trim(),
-                SupportEmail = string.IsNullOrWhiteSpace(dto.SupportEmail) ? null : dto.SupportEmail.Trim(),
-                CommunicationSenderName = string.IsNullOrWhiteSpace(dto.CommunicationSenderName) ? null : dto.CommunicationSenderName.Trim(),
-                CommunicationReplyToEmail = string.IsNullOrWhiteSpace(dto.CommunicationReplyToEmail) ? null : dto.CommunicationReplyToEmail.Trim(),
+                SupportEmail = supportEmail,
+                CommunicationSenderName = communicationSenderName,
+                CommunicationReplyToEmail = communicationReplyToEmail,
                 CustomerEmailNotificationsEnabled = dto.CustomerEmailNotificationsEnabled,
                 CustomerMarketingEmailsEnabled = dto.CustomerMarketingEmailsEnabled,
                 OperationalAlertEmailsEnabled = dto.OperationalAlertEmailsEnabled,
@@ -66,6 +79,11 @@ namespace Darwin.Application.Businesses.Commands
             _db.Set<Business>().Add(entity);
             await _db.SaveChangesAsync(ct);
             return entity.Id;
+        }
+
+        private static string? NormalizeNullable(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
     }
 }

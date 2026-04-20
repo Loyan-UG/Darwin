@@ -8,6 +8,7 @@
         Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites => T.T("PendingInvites"),
         _ => T.T("Invitations")
     };
+    string MemberWorkspaceLabel() => T.T("Members");
 }
 
 <div id="business-editor-shell">
@@ -87,7 +88,7 @@
                            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
                            hx-target="#business-editor-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("Members")</a>
+                           hx-push-url="true">@MemberWorkspaceLabel()</a>
                     </div>
                 </div>
             </div>
@@ -132,7 +133,7 @@
                            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
                            hx-target="#business-editor-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("Invitations")</a>
+                           hx-push-url="true">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>
                     </div>
                 </div>
             </div>

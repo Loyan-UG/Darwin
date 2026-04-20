@@ -8,6 +8,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -21,11 +22,13 @@ namespace Darwin.Application.Identity.Commands
 
         private readonly IAppDbContext _db;
         private readonly IWebAuthnService _webauthn;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public BeginLoginHandler(IAppDbContext db, IWebAuthnService webauthn)
+        public BeginLoginHandler(IAppDbContext db, IWebAuthnService webauthn, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _webauthn = webauthn;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -39,7 +42,7 @@ namespace Darwin.Application.Identity.Commands
             var user = await _db.Set<User>().AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
             if (user is null)
-                return Result<WebAuthnBeginLoginResult>.Fail("User not found.");
+                return Result<WebAuthnBeginLoginResult>.Fail(_localizer["UserNotFound"]);
 
             var allowedIds = await _db.Set<UserWebAuthnCredential>()
                 .AsNoTracking()
