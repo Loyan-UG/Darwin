@@ -883,3 +883,71 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - Merchant mutation feedback localization: the remaining business create/archive, location-archive, invitation-revoke note, and subscription-cancellation flash messages now also route through shared resource keys, so those merchant mutation feedback paths no longer keep raw English literals in the controller.
 
 - Communication resend-policy localization: the communication resend/retry policy matrix now also routes its flow names, safe-action guidance, retry-status notes, operator entry points, and escalation rules through shared resource keys, so that operator-facing communication policy surface no longer stays English-only in controller literals.
+
+- Communication built-in-flow localization: the built-in communication flow inventory now also routes its flow names, channels, triggers, delivery paths, implementation status, and next-step guidance through shared resource keys, so the main communications workspace no longer renders that operator-facing matrix from raw English controller literals.
+
+- Communication capability/channel localization: the communication capability-coverage and channel-operations matrices now also route their capability labels, state/visibility notes, live-flow labels, safe-action guidance, risk boundaries, and next-step guidance through shared resource keys, so the main communications workspace no longer keeps those operator truth tables in raw English controller literals.
+
+- Communication template/channel-family localization: the communication template inventory and live channel-family matrices now also route their flow/family labels, surface/source notes, fallback previews, operator controls, policy notes, usage boundaries, and action labels through shared resource keys, so those communications tables no longer keep raw English controller literals outside the shared localization system.
+
+
+- Communication details localization: the business-communication details workspace now also routes its active-flow labels, readiness-issue copy, and recommended-next-action guidance through shared resource keys, so that business-specific communications triage surface no longer depends on raw English controller literals.
+
+
+- Communication audit guidance localization: the email-audit workspace and row-level audit guidance now also route their playbook titles, scope/action/escalation copy, and recommended-action text through shared resource keys, so those communications remediation surfaces no longer depend on raw English controller literals.
+
+
+- Communication filter localization: the communication setup, email-audit, and channel-audit filter/dropdown labels now also route through shared resource keys, so those high-traffic communications queue controls no longer mix localized shells with raw English controller literals.
+
+
+- Communication test-send localization: the operator test-send placeholders, transport-state wording, runtime email fallback body, and SMS/WhatsApp cooldown feedback now also route through shared resource keys, so the communications test-send path no longer keeps raw English controller literals.
+
+
+- Communication retry-feedback localization: the email-retry fallback message now also routes through shared resource keys, so that retry-feedback path no longer drops back to a raw English controller literal when the handler returns no explicit error text.
+
+
+- Channel-audit inline localization: the inline timeline plus chain/provider context fragments in ChannelAudits now also route through shared resource keys, so that workspace no longer mixes localized shells with raw English timeline/detail fragments in Razor.
+
+
+- Communication flow-label localization: the communications detail and channel-audit workspaces now also map canonical flow keys such as BusinessInvitation, AccountActivation, PasswordReset, AdminCommunicationTest, and PhoneVerification to localized user-facing labels instead of rendering raw flow identifiers in the UI.
+
+
+
+- Communication email-audits localization: the EmailAudits workspace now also routes its playbook intro through shared resource keys and maps canonical flow keys such as BusinessInvitation, AccountActivation, PasswordReset, and AdminCommunicationTest to localized user-facing labels instead of rendering raw flow identifiers or raw English intro text in the UI.
+
+
+
+- Email-audit timeline localization: the exact-chain timeline inside EmailAudits now also routes its first/latest attempt fragments through shared resource keys, so that workspace no longer mixes localized shells with raw English timeline text in Razor.
+
+
+
+- Channel-audit state localization: the provider-lane and chain-state summaries inside ChannelAudits now also map canonical state values such as Elevated, Recovering, Recovered, and Mixed success/failure through shared resource keys, so that workspace no longer renders raw English state tokens from query output in Razor.
+
+
+
+- Email-audit retry/state localization: the EmailAudits workspace now also localizes retry-policy fallback labels, retry-block reasons, and chain-status mix values before rendering them in the queue and exact-chain shell, so that workspace no longer leaks raw English retry/state tokens from query output.
+
+
+
+- Channel-audit action-policy localization: the ChannelAudits workspace now also localizes action-policy states, blocked-reason guidance, and escalation-reason copy before rendering row-level rerun/escalation surfaces, so that workspace no longer leaks raw English transport-policy strings from query output.
+
+
+
+- Channel-audit guidance localization: the provider-summary and chain-summary guidance inside ChannelAudits now also routes recommended-action and escalation-hint copy through shared resource keys, so that workspace no longer leaks raw English remediation guidance from channel-dispatch query output.
+
+
+
+- Communication email-audit source guard: the communications source guard now also pins the localized EmailAudits retry/state chain independently, so chain-status mix, retry-policy fallback labels, and retry-block reasons cannot silently drift back to raw query output.
+
+
+
+- Communication channel-audit source guard: the communications source guard now also pins the localized ChannelAudits action-policy and summary-guidance chain independently, so provider/chain remediation text and rerun-state labels cannot silently drift back to raw query output.
+
+
+
+- Communication profile status localization: the business-communication details workspace now also maps OperationalStatus to shared localized labels, so that profile status badges no longer render raw business-status enum names in the UI.
+
+
+
+- Communication delivery-status localization: the communications workspace tables now also map delivery statuses such as Pending through shared localized labels in Index, Details, and EmailAudits, so those summary and chain tables no longer fall back to raw status tokens outside the localization system.
+

@@ -12,6 +12,34 @@
         ? setupOverrideCultures[0]
         : Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture;
     var setupSecondaryCulture = setupOverrideCultures.Length > 1 ? setupOverrideCultures[1] : setupPrimaryCulture;
+    string MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("Members")
+    };
+    string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired => T.T("Expired"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Accepted => T.T("Accepted"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Revoked => T.T("Revoked"),
+        _ => T.T("BusinessInvitationsAllLabel")
+    };
+    string BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner => T.T("BusinessesMissingOwner"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation => T.T("MissingPrimaryLocation"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail => T.T("MissingContactEmail"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName => T.T("MissingLegalName"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive => T.T("ApprovedInactive"),
+        _ => T.T("Readiness")
+    };
+    string CommunicationChannelLabel(string channel) => string.Equals(channel, "WhatsApp", StringComparison.OrdinalIgnoreCase)
+        ? T.T("BusinessCommunicationWhatsAppShort")
+        : T.T("SMS");
     var setupOverridePlaceholder =
         "{\"" + setupPrimaryCulture + "\":{\"BusinessSetupTitle\":\"Betriebs-Setup\"},\"" +
         setupSecondaryCulture + "\":{\"BusinessSetupTitle\":\"Business setup\"}}";
@@ -188,7 +216,7 @@
                        hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("MissingActiveOwner")</a>
+                       hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>
                 }
                 @if (Model.PrimaryLocationCount == 0)
                 {
@@ -198,7 +226,7 @@
                        hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("MissingPrimaryLocation")</a>
+                       hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)</a>
                 }
                 @if (!Model.HasContactEmailConfigured)
                 {
@@ -208,7 +236,7 @@
                        hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("MissingContactEmail")</a>
+                       hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)</a>
                 }
                 @if (!Model.HasLegalNameConfigured)
                 {
@@ -218,7 +246,7 @@
                        hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("MissingLegalName")</a>
+                       hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)</a>
                 }
                 <a asp-action="MerchantReadiness"
                    class="btn btn-sm btn-outline-warning"
@@ -994,7 +1022,7 @@
                        hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("PendingActivation")</a>
+                       hx-push-url="true">@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
                     <a asp-action="Members"
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked"
@@ -1002,7 +1030,7 @@
                        hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("UsersFilterLocked")</a>
+                       hx-push-url="true">@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
                     <a asp-action="Invitations"
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
@@ -1010,7 +1038,7 @@
                        hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("Pending")</a>
+                       hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
                     <a asp-action="Invitations"
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired"
@@ -1018,7 +1046,7 @@
                        hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("Expired")</a>
+                       hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)</a>
                     <a asp-action="MerchantReadiness"
                        class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("MerchantReadiness", "Businesses")"
@@ -1062,7 +1090,7 @@
             <div class="col-lg-6">
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                        <span>@T.T("OpenInvitations")</span>
+                        <span>@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</span>
                         <div class="d-flex gap-2 flex-wrap">
                             <a asp-action="Invitations"
                                asp-route-businessId="@Model.Id"
@@ -1174,7 +1202,7 @@
                                    hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
-                                   hx-push-url="true">@T.T("UsersFilterLocked")</a>
+                                   hx-push-url="true">@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
                             </div>
                         </div>
                     </div>
@@ -1198,7 +1226,7 @@
                                    hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
-                                   hx-push-url="true">@T.T("SMS")</a>
+                                   hx-push-url="true">@CommunicationChannelLabel("SMS")</a>
                                 <a asp-controller="SiteSettings"
                                    asp-action="Edit"
                                    asp-fragment="site-settings-whatsapp"
@@ -1206,7 +1234,7 @@
                                    hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
-                                   hx-push-url="true">@T.T("WhatsApp")</a>
+                                   hx-push-url="true">@CommunicationChannelLabel("WhatsApp")</a>
                                 <a asp-controller="SiteSettings"
                                    asp-action="Edit"
                                    asp-fragment="site-settings-admin-routing"

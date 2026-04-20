@@ -3,6 +3,13 @@
 @{
     ViewData["Title"] = T.T("BusinessStaffAccessBadgeTitle");
     var isLocked = Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow;
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("CommonMembers")
+    };
 }
 
 <div id="business-staff-access-badge-shell">
@@ -153,7 +160,7 @@
                             @(Model.IsActive ? T.T("BusinessStaffAccessBadgeMembershipActive") : T.T("BusinessStaffAccessBadgeMembershipInactive"))
                             @if (isLocked)
                             {
-                                <span class="text-danger"> | @T.T("UsersLifecycleLockedBadge")</span>
+                                <span class="text-danger"> | @MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</span>
                             }
                         </div>
                     </div>
@@ -199,7 +206,7 @@
                                    hx-target="#business-staff-access-badge-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
-                                    <i class="fa-solid fa-user-lock"></i> @T.T("UsersFilterLocked")
+                                    <i class="fa-solid fa-user-lock"></i> @MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)
                                 </a>
                             }
                             @if (!Model.EmailConfirmed || isLocked)

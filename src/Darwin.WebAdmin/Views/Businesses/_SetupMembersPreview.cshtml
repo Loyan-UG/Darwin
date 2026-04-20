@@ -1,5 +1,14 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSetupMembersPreviewVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string MemberAttentionStatusLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("Locked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("Members")
+    };
+}
 
 @if (Model.AttentionCount == 0)
 {
@@ -111,7 +120,7 @@ else
                                hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", recipientEmail = item.UserEmail })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("PendingActivation")</a>
+                               hx-push-url="true">@MemberAttentionStatusLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
                         }
                         @if (item.LockoutEndUtc.HasValue && item.LockoutEndUtc.Value > DateTime.UtcNow)
                         {
@@ -123,7 +132,7 @@ else
                                hx-get="@Url.Action("Index", "Users", new { filter = "Locked", q = item.UserEmail })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("Locked")</a>
+                               hx-push-url="true">@MemberAttentionStatusLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
                         }
                     </td>
                 </tr>

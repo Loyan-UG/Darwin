@@ -3,6 +3,11 @@
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
     ViewData["Title"] = isCreate ? T.T("BusinessEditorCreateTitle") : T.T("BusinessEditorEditTitle");
+    string InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites => T.T("PendingInvites"),
+        _ => T.T("Invitations")
+    };
 }
 
 <div id="business-editor-shell">
@@ -118,7 +123,7 @@
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">@T.T("BusinessEditorPendingInvites")</div>
+                    <div class="text-muted small text-uppercase">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</div>
                     <div class="fs-4 fw-semibold">@Model.InvitationCount</div>
                     <div class="mt-2">
                         <a asp-action="Invitations"

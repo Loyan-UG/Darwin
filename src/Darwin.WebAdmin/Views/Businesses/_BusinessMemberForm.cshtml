@@ -2,6 +2,13 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("CommonMembers")
+    };
 }
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -29,7 +36,7 @@
                        hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("PendingActivation")</a>
+                       hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
                     <a asp-action="MerchantReadiness"
                        class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("MerchantReadiness", "Businesses")"

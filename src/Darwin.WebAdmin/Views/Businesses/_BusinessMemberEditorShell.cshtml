@@ -2,6 +2,13 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("CommonMembers")
+    };
 }
 
 <div id="business-member-editor-shell">
@@ -59,12 +66,12 @@
                     }
                     else
                     {
-                        <span class="badge text-bg-warning">@T.T("PendingActivation")</span>
+                        <span class="badge text-bg-warning">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</span>
                     }
 
                     @if (Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow)
                     {
-                        <span class="badge text-bg-danger">@T.T("UsersLifecycleLockedBadge")</span>
+                        <span class="badge text-bg-danger">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</span>
                     }
                     else
                     {

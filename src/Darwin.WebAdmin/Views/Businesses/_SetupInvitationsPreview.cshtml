@@ -1,5 +1,16 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSetupInvitationsPreviewVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired => T.T("Expired"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Accepted => T.T("Accepted"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Revoked => T.T("Revoked"),
+        _ => T.T("BusinessInvitationsAllLabel")
+    };
+}
 
 @if (Model.OpenCount == 0)
 {
@@ -101,7 +112,7 @@ else
                                hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = "Pending", q = item.Email })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("Pending")</a>
+                               hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
                         }
                         else
                         {
@@ -113,7 +124,7 @@ else
                                hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = "Expired", q = item.Email })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("Expired")</a>
+                               hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)</a>
                         }
                     </td>
                     <td>@item.Role</td>

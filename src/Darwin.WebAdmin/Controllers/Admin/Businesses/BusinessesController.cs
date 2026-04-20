@@ -2061,12 +2061,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private IEnumerable<SelectListItem> BuildBusinessInvitationFilterItems(BusinessInvitationQueueFilter selectedFilter)
         {
-            yield return new SelectListItem(T("BusinessInvitationsAllLabel"), BusinessInvitationQueueFilter.All.ToString(), selectedFilter == BusinessInvitationQueueFilter.All);
-            yield return new SelectListItem(T("OpenInvitations"), BusinessInvitationQueueFilter.Open.ToString(), selectedFilter == BusinessInvitationQueueFilter.Open);
-            yield return new SelectListItem(T("Pending"), BusinessInvitationQueueFilter.Pending.ToString(), selectedFilter == BusinessInvitationQueueFilter.Pending);
-            yield return new SelectListItem(T("Expired"), BusinessInvitationQueueFilter.Expired.ToString(), selectedFilter == BusinessInvitationQueueFilter.Expired);
-            yield return new SelectListItem(T("Accepted"), BusinessInvitationQueueFilter.Accepted.ToString(), selectedFilter == BusinessInvitationQueueFilter.Accepted);
-            yield return new SelectListItem(T("Revoked"), BusinessInvitationQueueFilter.Revoked.ToString(), selectedFilter == BusinessInvitationQueueFilter.Revoked);
+            yield return new SelectListItem(DescribeBusinessInvitationQueueLabel(BusinessInvitationQueueFilter.All), BusinessInvitationQueueFilter.All.ToString(), selectedFilter == BusinessInvitationQueueFilter.All);
+            yield return new SelectListItem(DescribeBusinessInvitationQueueLabel(BusinessInvitationQueueFilter.Open), BusinessInvitationQueueFilter.Open.ToString(), selectedFilter == BusinessInvitationQueueFilter.Open);
+            yield return new SelectListItem(DescribeBusinessInvitationQueueLabel(BusinessInvitationQueueFilter.Pending), BusinessInvitationQueueFilter.Pending.ToString(), selectedFilter == BusinessInvitationQueueFilter.Pending);
+            yield return new SelectListItem(DescribeBusinessInvitationQueueLabel(BusinessInvitationQueueFilter.Expired), BusinessInvitationQueueFilter.Expired.ToString(), selectedFilter == BusinessInvitationQueueFilter.Expired);
+            yield return new SelectListItem(DescribeBusinessInvitationQueueLabel(BusinessInvitationQueueFilter.Accepted), BusinessInvitationQueueFilter.Accepted.ToString(), selectedFilter == BusinessInvitationQueueFilter.Accepted);
+            yield return new SelectListItem(DescribeBusinessInvitationQueueLabel(BusinessInvitationQueueFilter.Revoked), BusinessInvitationQueueFilter.Revoked.ToString(), selectedFilter == BusinessInvitationQueueFilter.Revoked);
         }
 
         private async Task<BusinessInvitationOpsSummaryVm> BuildBusinessInvitationOpsSummaryAsync(Guid businessId, CancellationToken ct)
@@ -2119,6 +2119,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FollowUpLabel = T("BusinessInvitationsInviteUserAction"),
                     FollowUpUrl = Url.Action("CreateInvitation", "Businesses", new { businessId }) ?? string.Empty
                 }
+            };
+        }
+
+        private string DescribeBusinessInvitationQueueLabel(BusinessInvitationQueueFilter filter)
+        {
+            return filter switch
+            {
+                BusinessInvitationQueueFilter.All => T("BusinessInvitationsAllLabel"),
+                BusinessInvitationQueueFilter.Open => T("OpenInvitations"),
+                BusinessInvitationQueueFilter.Pending => T("Pending"),
+                BusinessInvitationQueueFilter.Expired => T("Expired"),
+                BusinessInvitationQueueFilter.Accepted => T("Accepted"),
+                BusinessInvitationQueueFilter.Revoked => T("Revoked"),
+                _ => T("BusinessInvitationsAllLabel")
             };
         }
 

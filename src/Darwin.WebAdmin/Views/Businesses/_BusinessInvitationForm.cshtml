@@ -1,5 +1,16 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessInvitationCreateVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired => T.T("Expired"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Accepted => T.T("Accepted"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Revoked => T.T("Revoked"),
+        _ => T.T("BusinessInvitationsAllLabel")
+    };
+}
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -12,7 +23,7 @@
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
            hx-target="#business-invitation-editor-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("OpenInvitations")</a>
+           hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</a>
         <a asp-action="Setup"
            asp-route-id="@Model.BusinessId"
            class="btn btn-sm btn-outline-secondary"

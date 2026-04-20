@@ -4,6 +4,17 @@
 @{
     ViewData["Title"] = T.T("BusinessMembersTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("CommonMembers")
+    };
+    string MemberConfirmationStatusLabel(bool emailConfirmed) => emailConfirmed
+        ? T.T("Confirmed")
+        : MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation);
+    string MemberActiveStatusLabel(bool isActive) => isActive ? T.T("Yes") : T.T("No");
 }
 
 <div id="business-members-workspace-shell">
@@ -81,7 +92,7 @@
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">@T.T("PendingActivation")</div>
+            <div class="text-muted small text-uppercase">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</div>
             <div class="fw-semibold mt-1">@Model.Summary.PendingActivationCount</div>
             <div class="mt-2">
                 <a asp-action="Members"
@@ -91,13 +102,13 @@
                    hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
                    hx-target="#business-members-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("PendingActivation")</a>
+                   hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">@T.T("Locked")</div>
+            <div class="text-muted small text-uppercase">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</div>
             <div class="fw-semibold mt-1">@Model.Summary.LockedCount</div>
             <div class="mt-2">
                 <a asp-action="Members"
@@ -107,13 +118,13 @@
                    hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked })"
                    hx-target="#business-members-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("UsersFilterLocked")</a>
+                   hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">@T.T("NeedsAttention")</div>
+            <div class="text-muted small text-uppercase">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</div>
             <div class="fw-semibold mt-1">@Model.Summary.AttentionCount</div>
             <div class="mt-2">
                 <a asp-action="Members"
@@ -123,7 +134,7 @@
                    hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                    hx-target="#business-members-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("NeedsAttention")</a>
+                   hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
             </div>
         </div>
     </div>
@@ -170,7 +181,7 @@
                hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
                hx-target="#business-members-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+               hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
             <a asp-action="Members"
                asp-route-businessId="@Model.Business.Id"
                asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
@@ -178,7 +189,7 @@
                hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
                hx-target="#business-members-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("PendingActivation")</a>
+               hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
             <a asp-controller="BusinessCommunications"
                asp-action="EmailAudits"
                asp-route-status="Failed"
@@ -316,27 +327,27 @@
                     <td>
                         @if (!item.EmailConfirmed)
                         {
-                            <span class="badge text-bg-warning">@T.T("PendingActivation")</span>
+                            <span class="badge text-bg-warning">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-success">@T.T("Confirmed")</span>
+                            <span class="badge text-bg-success">@MemberConfirmationStatusLabel(item.EmailConfirmed)</span>
                         }
 
                         @if (item.LockoutEndUtc.HasValue && item.LockoutEndUtc.Value > DateTime.UtcNow)
                         {
-                            <span class="badge text-bg-danger ms-1">@T.T("Locked")</span>
+                            <span class="badge text-bg-danger ms-1">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</span>
                         }
                     </td>
                     <td>@item.Role</td>
                     <td class="text-center">
                         @if (item.IsActive)
                         {
-                            <span class="badge text-bg-success">@T.T("Yes")</span>
+                            <span class="badge text-bg-success">@MemberActiveStatusLabel(item.IsActive)</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">@T.T("No")</span>
+                            <span class="badge text-bg-secondary">@MemberActiveStatusLabel(item.IsActive)</span>
                         }
                     </td>
                     <td class="text-end">

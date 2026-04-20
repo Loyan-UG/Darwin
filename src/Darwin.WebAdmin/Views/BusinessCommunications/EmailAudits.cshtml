@@ -2,6 +2,45 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("EmailDeliveryAudits");
+
+    string FlowLabel(string? flowKey) => flowKey switch
+    {
+        "BusinessInvitation" => T.T("CommunicationDetailsActiveFlowInvitation"),
+        "AccountActivation" => T.T("CommunicationDetailsActiveFlowActivation"),
+        "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
+        "AdminCommunicationTest" => T.T("CommunicationTemplateInventoryAdminTestFlow"),
+        "PhoneVerification" => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
+        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : flowKey
+    };
+
+    string RetryPolicyStateLabel(string? retryPolicyState) => retryPolicyState switch
+    {
+        "Ready" => T.T("EmailAuditsRetryReadyLabel"),
+        "Cooldown" => T.T("EmailAuditsRetryCooldownLabel"),
+        "RateLimited" => T.T("EmailAuditsRetryRateLimitedLabel"),
+        "Unsupported" => T.T("CommunicationEmailRetryPolicyUnsupported"),
+        "Closed" => T.T("CommunicationEmailRetryPolicyClosed"),
+        _ => string.IsNullOrWhiteSpace(retryPolicyState) ? T.T("CommonUnclassified") : retryPolicyState
+    };
+
+    string DeliveryStatusLabel(string? status) => status switch
+    {
+        "Sent" => T.T("Sent"),
+        "Failed" => T.T("Failed"),
+        "Pending" => T.T("Pending"),
+        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : status
+    };
+
+    string ChainStatusMixLabel(string? statusMix) => statusMix switch
+    {
+        "Mixed success/failure" => T.T("CommunicationChainStatusMixed"),
+        "Open failure chain" => T.T("CommunicationChainStatusOpenFailure"),
+        "Failure-only chain" => T.T("CommunicationChainStatusFailureOnly"),
+        "Pending-only chain" => T.T("CommunicationChainStatusPendingOnly"),
+        "Success-only chain" => T.T("CommunicationChainStatusSuccessOnly"),
+        "Single attempt" => T.T("CommunicationChainStatusSingleAttempt"),
+        _ => string.IsNullOrWhiteSpace(statusMix) ? T.T("CommonUnclassified") : statusMix
+    };
 }
 
 <div id="business-communication-audits-workspace-shell">
@@ -23,7 +62,7 @@
     <div class="card-header">@T.T("OperatorPlaybooksByFlow")</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            This queue now supports controlled retry only for live invitation, activation, and password-reset flows after safe target resolution. Everything else should still use the flow-specific actions below instead of blind replay.
+            @T.T("CommunicationEmailAuditsPlaybookIntro")
         </div>
         <div class="row g-3">
             @foreach (var playbook in Model.Playbooks)
@@ -202,7 +241,7 @@
             <strong>@T.T("ExactChainMode"):</strong> @T.T("ShowingDeliveryChainFor") <code>@Model.RecipientEmail</code>
             @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
             {
-                <span> @T.T("InFlow") <code>@Model.FlowKey</code></span>
+                <span> @T.T("InFlow") <code>@FlowLabel(Model.FlowKey)</code></span>
             }
         </div>
         <a asp-action="EmailAudits"
@@ -294,19 +333,19 @@
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("ChainProfile")</div>
-                    <div class="fw-semibold mt-1">@Model.ChainSummary.StatusMix</div>
+                    <div class="fw-semibold mt-1">@ChainStatusMixLabel(Model.ChainSummary.StatusMix)</div>
                 </div>
             </div>
         </div>
         <div class="alert alert-secondary mb-4">
             <strong>@T.T("EmailAuditChainTimelineLabel"):</strong>
-            first attempt
+            @T.T("ChannelAuditFirstAttemptLabel")
             <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>,
-            latest attempt
+            @T.T("ChannelAuditLatestAttemptLabel")
             <code>@Model.ChainSummary.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>
             @if (Model.ChainSummary.LastSuccessfulAttemptAtUtc.HasValue)
             {
-                <span>, @T.T("EmailAuditLastSuccessLabel").ToLowerInvariant() <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+                <span>, @T.T("EmailAuditLastSuccessLabel") <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
             }
             else
             {
@@ -341,15 +380,15 @@
                                     <td>
                                         @if (string.Equals(history.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge text-bg-success">@T.T("Sent")</span>
+                                            <span class="badge text-bg-success">@DeliveryStatusLabel("Sent")</span>
                                         }
                                         else if (string.Equals(history.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            <span class="badge text-bg-danger">@T.T("Failed")</span>
+                                            <span class="badge text-bg-danger">@DeliveryStatusLabel("Failed")</span>
                                         }
                                         else
                                         {
-                                            <span class="badge text-bg-secondary">@history.Status</span>
+                                            <span class="badge text-bg-secondary">@DeliveryStatusLabel(history.Status)</span>
                                         }
                                     </td>
                                     <td>@history.Provider</td>
@@ -388,19 +427,19 @@
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Failed")</div>
+            <div class="text-muted small">@DeliveryStatusLabel("Failed")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.FailedCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Sent")</div>
+            <div class="text-muted small">@DeliveryStatusLabel("Sent")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.SentCount</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Pending")</div>
+            <div class="text-muted small">@DeliveryStatusLabel("Pending")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div>
         </div>
     </div>
@@ -613,7 +652,7 @@
                     <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@item.RecipientEmail</td>
                     <td>@item.Subject</td>
-                    <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</td>
+                    <td>@FlowLabel(item.FlowKey)</td>
                     <td>
                         @if (item.BusinessId.HasValue)
                         {
@@ -631,15 +670,15 @@
                     <td>
                         @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                         {
-                            <span class="badge text-bg-success">@T.T("Sent")</span>
+                            <span class="badge text-bg-success">@DeliveryStatusLabel("Sent")</span>
                         }
                         else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                         {
-                            <span class="badge text-bg-danger">@T.T("Failed")</span>
+                            <span class="badge text-bg-danger">@DeliveryStatusLabel("Failed")</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">@item.Status</span>
+                            <span class="badge text-bg-secondary">@DeliveryStatusLabel(item.Status)</span>
                         }
                     </td>
                     <td>
@@ -688,7 +727,7 @@
                         }
                         @if (!string.IsNullOrWhiteSpace(item.ChainStatusMix))
                         {
-                            <div class="small text-muted">@string.Format(T.T("EmailAuditsChainProfile"), item.ChainStatusMix)</div>
+                            <div class="small text-muted">@string.Format(T.T("EmailAuditsChainProfile"), ChainStatusMixLabel(item.ChainStatusMix))</div>
                         }
                         @if (item.ChainSpanHours.HasValue)
                         {
@@ -715,7 +754,7 @@
                                 }
                                 else
                                 {
-                                    <span class="badge text-bg-secondary">@item.RetryPolicyState</span>
+                                    <span class="badge text-bg-secondary">@RetryPolicyStateLabel(item.RetryPolicyState)</span>
                                 }
                             </div>
                         }

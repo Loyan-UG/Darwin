@@ -2,6 +2,59 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("SmsWhatsAppAuditsTitle");
+
+    string FlowLabel(string? flowKey) => flowKey switch
+    {
+        "PhoneVerification" => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
+        "AdminCommunicationTest" => T.T("CommunicationTemplateInventoryAdminTestFlow"),
+        "BusinessInvitation" => T.T("CommunicationDetailsActiveFlowInvitation"),
+        "AccountActivation" => T.T("CommunicationDetailsActiveFlowActivation"),
+        "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
+        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : flowKey
+    };
+
+    string ProviderPressureLabel(string? pressureState) => pressureState switch
+    {
+        "Elevated" => T.T("CommunicationProviderPressureElevated"),
+        "Recovering" => T.T("CommunicationProviderPressureRecovering"),
+        "Stable" => T.T("CommunicationProviderPressureStable"),
+        _ => string.IsNullOrWhiteSpace(pressureState) ? T.T("CommonUnclassified") : pressureState
+    };
+
+    string ProviderRecoveryLabel(string? recoveryState) => recoveryState switch
+    {
+        "Recovered" => T.T("CommunicationProviderRecoveryRecovered"),
+        "Stable success" => T.T("CommunicationProviderRecoveryStableSuccess"),
+        "No recovery yet" => T.T("CommunicationProviderRecoveryNoneYet"),
+        _ => string.IsNullOrWhiteSpace(recoveryState) ? T.T("CommonUnclassified") : recoveryState
+    };
+
+    string ChainStatusMixLabel(string? statusMix) => statusMix switch
+    {
+        "Mixed success/failure" => T.T("CommunicationChainStatusMixed"),
+        "Open failure chain" => T.T("CommunicationChainStatusOpenFailure"),
+        "Failure-only chain" => T.T("CommunicationChainStatusFailureOnly"),
+        "Pending-only chain" => T.T("CommunicationChainStatusPendingOnly"),
+        "Success-only chain" => T.T("CommunicationChainStatusSuccessOnly"),
+        "Single attempt" => T.T("CommunicationChainStatusSingleAttempt"),
+        _ => string.IsNullOrWhiteSpace(statusMix) ? T.T("CommonUnclassified") : statusMix
+    };
+
+    string DeliveryStatusLabel(string? status) => status switch
+    {
+        "Sent" => T.T("Sent"),
+        "Failed" => T.T("Failed"),
+        "Pending" => T.T("Pending"),
+        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : status
+    };
+
+    string ChannelLabel(string? channel) => channel switch
+    {
+        "SMS" => T.T("BusinessCommunicationSmsShort"),
+        "WhatsApp" => T.T("BusinessCommunicationWhatsAppShort"),
+        "Email" => T.T("CommunicationBuiltInFlowEmailChannel"),
+        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : channel
+    };
 }
 
 <div id="business-communication-channel-audits-shell">
@@ -84,11 +137,11 @@
             <strong>@T.T("ProviderReviewMode"):</strong> @T.T("ShowingProviderLaneFor") <code>@Model.Provider</code>
             @if (!string.IsNullOrWhiteSpace(Model.Channel))
             {
-                <span> @T.T("OnChannel") <code>@Model.Channel</code></span>
+                <span> @T.T("OnChannel") <code>@ChannelLabel(Model.Channel)</code></span>
             }
             @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
             {
-                <span> @T.T("InFlow") <code>@Model.FlowKey</code></span>
+                <span> @T.T("InFlow") <code>@FlowLabel(Model.FlowKey)</code></span>
             }
         </div>
         <a asp-action="ChannelAudits"
@@ -128,32 +181,32 @@
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("Failed")</div>
+                    <div class="text-muted small">@DeliveryStatusLabel("Failed")</div>
                     <div class="fs-4 fw-semibold">@Model.ProviderSummary.FailureCount24h</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("Sent")</div>
+                    <div class="text-muted small">@DeliveryStatusLabel("Sent")</div>
                     <div class="fs-4 fw-semibold">@Model.ProviderSummary.SentCount24h</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("Pending")</div>
+                    <div class="text-muted small">@DeliveryStatusLabel("Pending")</div>
                     <div class="fs-4 fw-semibold">@Model.ProviderSummary.PendingCount24h</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("PressureState")</div>
-                    <div class="fw-semibold mt-1">@Model.ProviderSummary.PressureState</div>
+                    <div class="fw-semibold mt-1">@ProviderPressureLabel(Model.ProviderSummary.PressureState)</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("RecoveryState")</div>
-                    <div class="fw-semibold mt-1">@Model.ProviderSummary.RecoveryState</div>
+                    <div class="fw-semibold mt-1">@ProviderRecoveryLabel(Model.ProviderSummary.RecoveryState)</div>
                     @if (Model.ProviderSummary.LastSuccessfulAttemptAtUtc.HasValue)
                     {
                         <div class="small text-muted mt-2">@string.Format(T.T("CommonLastSuccessAtUtc"), Model.ProviderSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
@@ -271,7 +324,7 @@
             <strong>@T.T("ExactChainMode"):</strong> @T.T("ShowingDeliveryChainFor") <code>@Model.RecipientAddress</code>
             @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
             {
-                <span> @T.T("InFlow") <code>@Model.FlowKey</code></span>
+                <span> @T.T("InFlow") <code>@FlowLabel(Model.FlowKey)</code></span>
             }
         </div>
         <a asp-action="ChannelAudits"
@@ -363,19 +416,19 @@
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("Failed")</div>
+                    <div class="text-muted small">@DeliveryStatusLabel("Failed")</div>
                     <div class="fs-4 fw-semibold">@Model.ChainSummary.FailedCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("Sent")</div>
+                    <div class="text-muted small">@DeliveryStatusLabel("Sent")</div>
                     <div class="fs-4 fw-semibold">@Model.ChainSummary.SentCount</div>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("Pending")</div>
+                    <div class="text-muted small">@DeliveryStatusLabel("Pending")</div>
                     <div class="fs-4 fw-semibold">@Model.ChainSummary.PendingCount</div>
                 </div>
             </div>
@@ -388,7 +441,7 @@
             <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("ChannelAuditChainProfileLabel")</div>
-                    <div class="fw-semibold mt-1">@Model.ChainSummary.StatusMix</div>
+                    <div class="fw-semibold mt-1">@ChainStatusMixLabel(Model.ChainSummary.StatusMix)</div>
                 </div>
             </div>
             <div class="col-md-3">
@@ -410,8 +463,8 @@
 
         <div class="alert alert-secondary mb-4">
             <strong>@T.T("ChannelAuditChainTimelineLabel")</strong>
-            first attempt <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>,
-            latest attempt <code>@Model.ChainSummary.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>.
+            @T.T("ChannelAuditFirstAttemptLabel") <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>,
+            @T.T("ChannelAuditLatestAttemptLabel") <code>@Model.ChainSummary.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>.
             @if (Model.ChainSummary.LastSuccessfulAttemptAtUtc.HasValue)
             {
                 <span>
@@ -583,7 +636,7 @@
                             {
                                 <tr>
                                     <td>@family.FamilyName</td>
-                                    <td><span class="badge text-bg-light">@family.Channel</span></td>
+                                    <td><span class="badge text-bg-light">@ChannelLabel(family.Channel)</span></td>
                                     <td class="small">@family.CurrentTemplate</td>
                                     <td class="small text-body-secondary">@family.ExamplePreview</td>
                                     <td class="small"><code>@family.SupportedTokens</code></td>
@@ -605,30 +658,30 @@
                                                hx-target="#business-communication-channel-audits-shell"
                                                hx-swap="outerHTML"
                                                hx-push-url="true">@family.ActionLabel</a>
-                                            @if (string.Equals(family.FamilyName, "Phone Verification", StringComparison.OrdinalIgnoreCase))
+                                            @if (string.Equals(family.FamilyKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
                                             {
                                                 <a asp-action="ChannelAudits"
                                                    asp-route-phoneVerificationOnly="true"
-                                                   asp-route-channel="@family.Channel"
+                                                   asp-route-channel="@family.ChannelValue"
                                                    asp-route-businessId="@Model.BusinessId"
                                                    class="btn btn-sm btn-outline-dark"
-                                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, channel = family.Channel, businessId = Model.BusinessId })"
+                                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, channel = family.ChannelValue, businessId = Model.BusinessId })"
                                                    hx-target="#business-communication-channel-audits-shell"
                                                    hx-swap="outerHTML"
                                                    hx-push-url="true">@T.T("BusinessCommunicationOpenVerificationAuditsAction")</a>
                                             }
-                                            else if (string.Equals(family.FamilyName, "Admin Communication Test", StringComparison.OrdinalIgnoreCase))
+                                            else if (string.Equals(family.FamilyKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
                                             {
                                                 <a asp-action="ChannelAudits"
                                                    asp-route-adminTestOnly="true"
-                                                   asp-route-channel="@family.Channel"
+                                                   asp-route-channel="@family.ChannelValue"
                                                    asp-route-businessId="@Model.BusinessId"
                                                    class="btn btn-sm btn-outline-dark"
-                                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, channel = family.Channel, businessId = Model.BusinessId })"
+                                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, channel = family.ChannelValue, businessId = Model.BusinessId })"
                                                    hx-target="#business-communication-channel-audits-shell"
                                                    hx-swap="outerHTML"
                                                    hx-push-url="true">@T.T("BusinessCommunicationOpenTestAuditsAction")</a>
-                                                @if (string.Equals(family.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestSms)
+                                                @if (string.Equals(family.ChannelValue, "SMS", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestSms)
                                                 {
                                                     <form asp-action="SendTestSms" method="post" class="d-inline"
                                                           hx-post="@Url.Action("SendTestSms", "BusinessCommunications")"
@@ -657,7 +710,7 @@
                                                         <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunSmsTestAction")</button>
                                                     </form>
                                                 }
-                                                else if (string.Equals(family.Channel, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestWhatsApp)
+                                                else if (string.Equals(family.ChannelValue, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestWhatsApp)
                                                 {
                                                     <form asp-action="SendTestWhatsApp" method="post" class="d-inline"
                                                           hx-post="@Url.Action("SendTestWhatsApp", "BusinessCommunications")"
@@ -719,8 +772,8 @@
                             {
                                 <tr>
                                     <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                                    <td>@item.Channel</td>
-                                    <td>@item.Status</td>
+                                    <td>@ChannelLabel(item.Channel)</td>
+                                    <td>@DeliveryStatusLabel(item.Status)</td>
                                     <td>@item.Provider</td>
                                     <td>
                                         <div class="small">@item.MessagePreview</div>
@@ -753,7 +806,7 @@
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Failed")</div>
+            <div class="text-muted small">@DeliveryStatusLabel("Failed")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.FailedCount</div>
         </div>
     </div>
@@ -888,21 +941,21 @@
             {
                 <tr>
                     <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td><span class="badge text-bg-light">@item.Channel</span> <span class="small text-muted">@item.Provider</span></td>
-                    <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</td>
+                    <td><span class="badge text-bg-light">@ChannelLabel(item.Channel)</span> <span class="small text-muted">@item.Provider</span></td>
+                    <td>@FlowLabel(item.FlowKey)</td>
                     <td>@item.RecipientAddress</td>
                     <td>
                         @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                         {
-                            <span class="badge text-bg-success">@T.T("Sent")</span>
+                            <span class="badge text-bg-success">@DeliveryStatusLabel("Sent")</span>
                         }
                         else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                         {
-                            <span class="badge text-bg-danger">@T.T("Failed")</span>
+                            <span class="badge text-bg-danger">@DeliveryStatusLabel("Failed")</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">@item.Status</span>
+                            <span class="badge text-bg-secondary">@DeliveryStatusLabel(item.Status)</span>
                         }
                     </td>
                     <td>
@@ -910,26 +963,26 @@
                         @if (item.PriorAttemptCount > 0 || item.LastSuccessfulAttemptAtUtc.HasValue)
                         {
                             <div class="small text-muted mt-1">
-                                Chain context:
-                                total attempts <code>@item.ChainAttemptCount</code>,
-                                profile <code>@item.ChainStatusMix</code>,
-                                prior attempts <code>@item.PriorAttemptCount</code>,
-                                prior failures <code>@item.PriorFailureCount</code>
+                                @T.T("ChannelAuditChainContextLabel"):
+                                @T.T("ChannelAuditTotalAttemptsInlineLabel") <code>@item.ChainAttemptCount</code>,
+                                @T.T("ChannelAuditProfileInlineLabel") <code>@ChainStatusMixLabel(item.ChainStatusMix)</code>,
+                                @T.T("ChannelAuditPriorAttemptsInlineLabel") <code>@item.PriorAttemptCount</code>,
+                                @T.T("ChannelAuditPriorFailuresInlineLabel") <code>@item.PriorFailureCount</code>
                                 @if (item.LastSuccessfulAttemptAtUtc.HasValue)
                                 {
-                                    <span>, last success <code>@item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+                                    <span>, @T.T("ChannelAuditLastSuccessInlineLabel") <code>@item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
                                 }
                             </div>
                         }
                         <div class="small text-muted mt-1">
-                            Provider lane:
-                            <code>@item.ProviderPressureState</code>,
-                            recovery <code>@item.ProviderRecoveryState</code>,
-                            24h attempts <code>@item.ProviderRecentAttemptCount24h</code>,
-                            24h failures <code>@item.ProviderFailureCount24h</code>
+                            @T.T("ChannelAuditProviderLaneLabel"):
+                            <code>@ProviderPressureLabel(item.ProviderPressureState)</code>,
+                            @T.T("ChannelAuditRecoveryInlineLabel") <code>@ProviderRecoveryLabel(item.ProviderRecoveryState)</code>,
+                            @T.T("ChannelAuditAttempts24hInlineLabel") <code>@item.ProviderRecentAttemptCount24h</code>,
+                            @T.T("ChannelAuditFailures24hInlineLabel") <code>@item.ProviderFailureCount24h</code>
                             @if (item.ProviderLastSuccessfulAttemptAtUtc.HasValue)
                             {
-                                <span>, last success <code>@item.ProviderLastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+                                <span>, @T.T("ChannelAuditLastSuccessInlineLabel") <code>@item.ProviderLastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
                             }
                         </div>
                         <div class="small mt-1">

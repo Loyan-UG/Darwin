@@ -1,5 +1,34 @@
 @model IReadOnlyList<Darwin.WebAdmin.ViewModels.Businesses.BusinessListItemVm>
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("Members")
+    };
+    string InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites => T.T("PendingInvites"),
+        _ => T.T("Invitations")
+    };
+    string BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive => T.T("ApprovedInactive"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner => T.T("BusinessesMissingOwner"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation => T.T("MissingPrimaryLocation"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail => T.T("MissingContactEmail"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName => T.T("MissingLegalName"),
+        _ => T.T("Readiness")
+    };
+    string BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch
+    {
+        Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("PendingApproval"),
+        Darwin.Domain.Enums.BusinessOperationalStatus.Suspended => T.T("Suspended"),
+        _ => status.ToString()
+    };
+}
 
 <div id="support-queue-attention" class="card h-100">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -18,7 +47,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
                hx-target="#business-support-queue-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("NeedsAttention")</a>
+               hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
         </div>
     </div>
     <div class="card-body">
@@ -74,7 +103,7 @@
                                        hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "PendingApproval" })"
                                        hx-target="#business-support-queue-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("PendingApproval")</a>
+                                       hx-push-url="true">@BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</a>
                                 }
                                 else if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
                                 {
@@ -84,11 +113,11 @@
                                        hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "Suspended" })"
                                        hx-target="#business-support-queue-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("Suspended")</a>
+                                       hx-push-url="true">@BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)</a>
                                 }
                                 else
                                 {
-                                    <span class="badge text-bg-secondary">@item.OperationalStatus</span>
+                                    <span class="badge text-bg-secondary">@BusinessOperationalStatusLabel(item.OperationalStatus)</span>
                                 }
                                 @if (!item.IsActive)
                                 {
@@ -98,7 +127,7 @@
                                        hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
                                        hx-target="#business-support-queue-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("ApprovedInactive")</a>
+                                       hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)</a>
                                 }
                             </td>
                             <td>
@@ -111,7 +140,7 @@
                                            hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id })"
                                            hx-target="#business-support-queue-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@T.T("MissingOwner")</a>
+                                           hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>
                                     </div>
                                 }
                                 @if (item.PrimaryLocationCount == 0)
@@ -123,7 +152,7 @@
                                            hx-get="@Url.Action("Locations", "Businesses", new { businessId = item.Id })"
                                            hx-target="#business-support-queue-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@T.T("MissingPrimaryLocation")</a>
+                                           hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)</a>
                                     </div>
                                 }
                                 @if (!item.HasContactEmailConfigured)
@@ -135,7 +164,7 @@
                                            hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
                                            hx-target="#business-support-queue-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@T.T("MissingContactEmail")</a>
+                                           hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)</a>
                                     </div>
                                 }
                                 @if (!item.HasLegalNameConfigured)
@@ -147,7 +176,7 @@
                                            hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
                                            hx-target="#business-support-queue-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@T.T("MissingLegalName")</a>
+                                           hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)</a>
                                     </div>
                                 }
                                 @if (item.InvitationCount > 0)
@@ -160,7 +189,7 @@
                                            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id, filter = "Open" })"
                                            hx-target="#business-support-queue-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@item.InvitationCount @T.T("PendingInvites")</a>
+                                           hx-push-url="true">@item.InvitationCount @InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>
                                     </div>
                                 }
                             </td>

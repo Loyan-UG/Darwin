@@ -1,5 +1,32 @@
 @model IReadOnlyList<Darwin.WebAdmin.ViewModels.Businesses.BusinessSupportFailedEmailVm>
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string FlowLabel(string? flowKey) => flowKey switch
+    {
+        "BusinessInvitation" => T.T("CommunicationDetailsActiveFlowInvitation"),
+        "AccountActivation" => T.T("CommunicationDetailsActiveFlowActivation"),
+        "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
+        "AdminCommunicationTest" => T.T("CommunicationTemplateInventoryAdminTestFlow"),
+        "PhoneVerification" => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
+        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : flowKey
+    };
+    string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired => T.T("Expired"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Accepted => T.T("Accepted"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Revoked => T.T("Revoked"),
+        _ => T.T("BusinessInvitationsAllLabel")
+    };
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("UsersFilterUnconfirmed"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("Members")
+    };
+}
 
 <div id="support-queue-failed-emails" class="card h-100">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -35,7 +62,7 @@
                     <div class="list-group-item px-0">
                         <div class="d-flex justify-content-between gap-2">
                             <div>
-                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</div>
+                                <div class="fw-semibold">@FlowLabel(item.FlowKey)</div>
                                 <div class="small text-muted">@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</div>
                                 @if (item.BusinessId.HasValue && !string.IsNullOrWhiteSpace(item.BusinessName))
                                 {
@@ -235,7 +262,7 @@
                                    hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, filter = "Open" })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
-                                   hx-push-url="true">@T.T("OpenInvitations")</a>
+                                   hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</a>
                                 <a asp-action="MerchantReadiness"
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("MerchantReadiness", "Businesses")"
@@ -260,7 +287,7 @@
                                    hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
-                                   hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                                   hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
                                 <a asp-controller="MobileOperations"
                                    asp-action="Index"
                                    class="btn btn-sm btn-outline-secondary"
@@ -293,7 +320,7 @@
                                    hx-get="@Url.Action("Index", "Users", new { filter = "Locked", q = item.RecipientEmail })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
-                                   hx-push-url="true">@T.T("UsersFilterLocked")</a>
+                                   hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
                                 <a asp-controller="MobileOperations"
                                    asp-action="Index"
                                    class="btn btn-sm btn-outline-secondary"

@@ -1566,6 +1566,9 @@
   <data name="Sent" xml:space="preserve">
     <value>Sent</value>
   </data>
+  <data name="Pending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
   <data name="Failed" xml:space="preserve">
     <value>Failed</value>
   </data>
@@ -1895,6 +1898,9 @@
   </data>
   <data name="PendingApproval" xml:space="preserve">
     <value>Pending Approval</value>
+  </data>
+  <data name="Approved" xml:space="preserve">
+    <value>Approved</value>
   </data>
   <data name="Suspended" xml:space="preserve">
     <value>Suspended</value>
@@ -2912,6 +2918,162 @@
   </data>
   <data name="EmailDeliveryAudits" xml:space="preserve">
     <value>Email Delivery Audits</value>
+  </data>
+  <data name="CommunicationEmailAuditsPlaybookIntro" xml:space="preserve">
+    <value>This queue now supports controlled retry only for live invitation, activation, and password-reset flows after safe target resolution. Everything else should still use the flow-specific actions below instead of blind replay.</value>
+  </data>
+  <data name="CommunicationProviderPressureElevated" xml:space="preserve">
+    <value>Elevated</value>
+  </data>
+  <data name="CommunicationProviderPressureRecovering" xml:space="preserve">
+    <value>Recovering</value>
+  </data>
+  <data name="CommunicationProviderPressureStable" xml:space="preserve">
+    <value>Stable</value>
+  </data>
+  <data name="CommunicationProviderRecoveryRecovered" xml:space="preserve">
+    <value>Recovered</value>
+  </data>
+  <data name="CommunicationProviderRecoveryStableSuccess" xml:space="preserve">
+    <value>Stable success</value>
+  </data>
+  <data name="CommunicationProviderRecoveryNoneYet" xml:space="preserve">
+    <value>No recovery yet</value>
+  </data>
+  <data name="CommunicationChainStatusMixed" xml:space="preserve">
+    <value>Mixed success/failure</value>
+  </data>
+  <data name="CommunicationChainStatusOpenFailure" xml:space="preserve">
+    <value>Open failure chain</value>
+  </data>
+  <data name="CommunicationChainStatusFailureOnly" xml:space="preserve">
+    <value>Failure-only chain</value>
+  </data>
+  <data name="CommunicationChainStatusPendingOnly" xml:space="preserve">
+    <value>Pending-only chain</value>
+  </data>
+  <data name="CommunicationChainStatusSuccessOnly" xml:space="preserve">
+    <value>Success-only chain</value>
+  </data>
+  <data name="CommunicationChainStatusSingleAttempt" xml:space="preserve">
+    <value>Single attempt</value>
+  </data>
+  <data name="CommunicationEmailRetryBlockedUnsupported" xml:space="preserve">
+    <value>This flow still requires manual operator follow-up.</value>
+  </data>
+  <data name="CommunicationEmailRetryBlockedClosed" xml:space="preserve">
+    <value>Only failed or pending delivery rows can be retried.</value>
+  </data>
+  <data name="CommunicationEmailRetryBlockedRateLimited" xml:space="preserve">
+    <value>Retry limit reached: {0} attempts in the last 24 hours.</value>
+  </data>
+  <data name="CommunicationEmailRetryBlockedCooldownUntil" xml:space="preserve">
+    <value>Retry cooldown active until {0:yyyy-MM-dd HH:mm} UTC.</value>
+  </data>
+  <data name="CommunicationEmailRetryPolicyUnsupported" xml:space="preserve">
+    <value>Manual follow-up</value>
+  </data>
+  <data name="CommunicationEmailRetryPolicyClosed" xml:space="preserve">
+    <value>Closed</value>
+  </data>
+  <data name="CommunicationChannelActionPolicyCanonicalFlow" xml:space="preserve">
+    <value>Canonical flow</value>
+  </data>
+  <data name="CommunicationChannelActionPolicyCooldown" xml:space="preserve">
+    <value>Cooldown</value>
+  </data>
+  <data name="CommunicationChannelActionPolicyRetryReady" xml:space="preserve">
+    <value>Retry ready</value>
+  </data>
+  <data name="CommunicationChannelActionPolicyReady" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="CommunicationChannelActionPolicyUnsupported" xml:space="preserve">
+    <value>Unsupported</value>
+  </data>
+  <data name="CommunicationChannelActionBlockedCanonicalFlow" xml:space="preserve">
+    <value>Do not replay historical verification messages. Request a fresh code through the canonical phone-verification flow.</value>
+  </data>
+  <data name="CommunicationChannelActionBlockedCooldown" xml:space="preserve">
+    <value>Wait for the transport cooldown window before rerunning the same diagnostic channel test.</value>
+  </data>
+  <data name="CommunicationChannelActionBlockedUnsupported" xml:space="preserve">
+    <value>No operator rerun path is defined for this non-email flow yet.</value>
+  </data>
+  <data name="CommunicationChannelEscalationPhoneVerification" xml:space="preserve">
+    <value>Repeated verification failures without any successful send. Review transport readiness and fallback policy, then escalate if the canonical flow is still blocked.</value>
+  </data>
+  <data name="CommunicationChannelEscalationAdminTest" xml:space="preserve">
+    <value>Repeated diagnostic transport failures without a successful send. Treat this as provider/config debt rather than another routine rerun.</value>
+  </data>
+  <data name="CommunicationChannelProviderRecommendedVerificationElevated" xml:space="preserve">
+    <value>Review SMS/WhatsApp readiness, fallback policy, and current verification channel choice before issuing another canonical verification code.</value>
+  </data>
+  <data name="CommunicationChannelProviderRecommendedVerificationStable" xml:space="preserve">
+    <value>Keep verification traffic on the canonical flow, then review recent provider failures before switching channel policy or escalating.</value>
+  </data>
+  <data name="CommunicationChannelProviderRecommendedAdminTestElevated" xml:space="preserve">
+    <value>Correct provider credentials, sender identity, or reserved test-target setup before rerunning more diagnostics on this lane.</value>
+  </data>
+  <data name="CommunicationChannelProviderRecommendedAdminTestStable" xml:space="preserve">
+    <value>Use the reserved test target for a controlled rerun only after checking provider config and template state.</value>
+  </data>
+  <data name="CommunicationChannelProviderRecommendedGenericPending" xml:space="preserve">
+    <value>Review the pending and failed traffic in this provider lane before taking another manual action.</value>
+  </data>
+  <data name="CommunicationChannelProviderRecommendedGenericStable" xml:space="preserve">
+    <value>Review recent failures in this provider lane before escalating.</value>
+  </data>
+  <data name="CommunicationChannelProviderEscalationVerificationElevated" xml:space="preserve">
+    <value>Escalate as provider or channel-policy instability if verification traffic continues to fail without any successful recovery in this provider lane.</value>
+  </data>
+  <data name="CommunicationChannelProviderEscalationVerificationStable" xml:space="preserve">
+    <value>Escalate only if the provider lane keeps degrading after readiness, fallback, and current phone verification path have been checked.</value>
+  </data>
+  <data name="CommunicationChannelProviderEscalationAdminTestElevated" xml:space="preserve">
+    <value>Escalate as provider/configuration debt when this diagnostic lane keeps failing without a successful send.</value>
+  </data>
+  <data name="CommunicationChannelProviderEscalationAdminTestStable" xml:space="preserve">
+    <value>Escalate only when repeated transport-test failures continue after configuration corrections.</value>
+  </data>
+  <data name="CommunicationChannelProviderEscalationGenericElevated" xml:space="preserve">
+    <value>Escalate this provider lane if failures keep accumulating without recovery.</value>
+  </data>
+  <data name="CommunicationChannelProviderEscalationGenericStable" xml:space="preserve">
+    <value>Escalate only if this provider lane continues degrading after basic transport checks.</value>
+  </data>
+  <data name="CommunicationChannelChainRecommendedVerificationRecovered" xml:space="preserve">
+    <value>Do not replay historical verification messages. If the user is still blocked, confirm the current phone number and request a fresh code through the canonical verification flow.</value>
+  </data>
+  <data name="CommunicationChannelChainRecommendedVerificationBlocked" xml:space="preserve">
+    <value>Do not replay historical verification messages. Confirm the current phone number, review preferred-vs-fallback channel policy, then request a fresh code through the canonical verification flow.</value>
+  </data>
+  <data name="CommunicationChannelChainRecommendedAdminTest" xml:space="preserve">
+    <value>Rerun diagnostics only to the reserved channel test target after correcting provider settings, templates, or channel policy.</value>
+  </data>
+  <data name="CommunicationChannelChainRecommendedGenericPending" xml:space="preserve">
+    <value>Review the latest pending or failed non-email attempts before taking manual action.</value>
+  </data>
+  <data name="CommunicationChannelChainRecommendedGenericStable" xml:space="preserve">
+    <value>Review recent non-email delivery history before escalating.</value>
+  </data>
+  <data name="CommunicationChannelChainEscalationVerificationBlocked" xml:space="preserve">
+    <value>Repeated verification failures without a successful send indicate a likely transport or channel-policy issue. Escalate after confirming SMS/WhatsApp readiness and fallback policy.</value>
+  </data>
+  <data name="CommunicationChannelChainEscalationVerificationStable" xml:space="preserve">
+    <value>Escalate only if the canonical verification flow keeps failing after channel readiness and policy have been checked.</value>
+  </data>
+  <data name="CommunicationChannelChainEscalationAdminTestBlocked" xml:space="preserve">
+    <value>Repeated admin-test failures without any successful send suggest provider/configuration debt. Escalate as transport setup or provider issue instead of repeatedly rerunning tests.</value>
+  </data>
+  <data name="CommunicationChannelChainEscalationAdminTestStable" xml:space="preserve">
+    <value>If a rerun succeeds, treat this as an isolated incident. Escalate only when repeated failures continue after config fixes.</value>
+  </data>
+  <data name="CommunicationChannelChainEscalationGenericRecovered" xml:space="preserve">
+    <value>Escalate only if the chain continues to fail after a previously successful path has been revalidated.</value>
+  </data>
+  <data name="CommunicationChannelChainEscalationGenericBlocked" xml:space="preserve">
+    <value>Escalate when the same non-email path fails repeatedly without a verified successful send.</value>
   </data>
   <data name="RecentSmtpAttempts" xml:space="preserve">
     <value>Recent SMTP-based transactional delivery attempts and failures.</value>
@@ -6630,6 +6792,243 @@
   <data name="CommunicationOperatorVisibilityColumn" xml:space="preserve">
     <value>Operator visibility</value>
   </data>
+  <data name="CommunicationBuiltInFlowEmailChannel" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="CommunicationBuiltInFlowSmsWhatsAppChannel" xml:space="preserve">
+    <value>SMS / WhatsApp</value>
+  </data>
+  <data name="CommunicationBuiltInFlowEmailSmsWhatsAppChannel" xml:space="preserve">
+    <value>Email / SMS / WhatsApp</value>
+  </data>
+  <data name="CommunicationBuiltInFlowEmailSmsWhatsAppCompactChannel" xml:space="preserve">
+    <value>Email/SMS/WhatsApp</value>
+  </data>
+  <data name="CommunicationBuiltInFlowInvitationName" xml:space="preserve">
+    <value>Business Invitation</value>
+  </data>
+  <data name="CommunicationBuiltInFlowInvitationTrigger" xml:space="preserve">
+    <value>Create invitation / resend invitation</value>
+  </data>
+  <data name="CommunicationBuiltInFlowInvitationDeliveryPath" xml:space="preserve">
+    <value>SMTP via IEmailSender</value>
+  </data>
+  <data name="CommunicationBuiltInFlowInvitationStatus" xml:space="preserve">
+    <value>Live, hard-coded transactional composition</value>
+  </data>
+  <data name="CommunicationBuiltInFlowInvitationNextStep" xml:space="preserve">
+    <value>Move to Communication Core template + delivery log</value>
+  </data>
+  <data name="CommunicationBuiltInFlowActivationName" xml:space="preserve">
+    <value>Account Activation</value>
+  </data>
+  <data name="CommunicationBuiltInFlowActivationTrigger" xml:space="preserve">
+    <value>Registration or resend activation</value>
+  </data>
+  <data name="CommunicationBuiltInFlowActivationDeliveryPath" xml:space="preserve">
+    <value>SMTP via IEmailSender</value>
+  </data>
+  <data name="CommunicationBuiltInFlowActivationStatus" xml:space="preserve">
+    <value>Live, token-based hard-coded composition</value>
+  </data>
+  <data name="CommunicationBuiltInFlowActivationNextStep" xml:space="preserve">
+    <value>Move to template engine + confirmation analytics/logging</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPasswordResetName" xml:space="preserve">
+    <value>Password Reset</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPasswordResetTrigger" xml:space="preserve">
+    <value>Forgot password or admin reset support</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPasswordResetDeliveryPath" xml:space="preserve">
+    <value>SMTP via IEmailSender</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPasswordResetStatus" xml:space="preserve">
+    <value>Live, token-based hard-coded composition</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPasswordResetNextStep" xml:space="preserve">
+    <value>Move to template engine + delivery/audit visibility</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPhoneVerificationName" xml:space="preserve">
+    <value>Phone Verification</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPhoneVerificationTrigger" xml:space="preserve">
+    <value>Current user requests mobile verification</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPhoneVerificationDeliveryPath" xml:space="preserve">
+    <value>Twilio SMS or WhatsApp Cloud API via provider-backed senders</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPhoneVerificationStatus" xml:space="preserve">
+    <value>Live, token-based mobile verification with customizable text templates</value>
+  </data>
+  <data name="CommunicationBuiltInFlowPhoneVerificationNextStep" xml:space="preserve">
+    <value>Extend into richer delivery history and channel policy analytics</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminTestName" xml:space="preserve">
+    <value>Admin Communication Test</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminTestTrigger" xml:space="preserve">
+    <value>Manual operator validation from WebAdmin</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminTestDeliveryPath" xml:space="preserve">
+    <value>Configured channel transport to operator test targets only</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminTestStatus" xml:space="preserve">
+    <value>Live, operator-safe diagnostic actions for configured channels</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminTestNextStep" xml:space="preserve">
+    <value>Later fold into Communication Core test/delivery diagnostics</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminAlertsName" xml:space="preserve">
+    <value>Admin Alerts</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminAlertsTrigger" xml:space="preserve">
+    <value>Platform/operator escalation paths</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminAlertsDeliveryPath" xml:space="preserve">
+    <value>Configuration exists, full flow not yet centralized</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminAlertsStatus" xml:space="preserve">
+    <value>Partially configured, not a complete Communication Core workflow</value>
+  </data>
+  <data name="CommunicationBuiltInFlowAdminAlertsNextStep" xml:space="preserve">
+    <value>Implement reusable alert pipeline + logs</value>
+  </data>
+  <data name="CommunicationBuiltInFlowTestTargetsName" xml:space="preserve">
+    <value>SMS and WhatsApp Test Targets</value>
+  </data>
+  <data name="CommunicationBuiltInFlowTestTargetsTrigger" xml:space="preserve">
+    <value>Operator-side staged rollout validation</value>
+  </data>
+  <data name="CommunicationBuiltInFlowTestTargetsDeliveryPath" xml:space="preserve">
+    <value>Provider-backed test send actions from Business Communications</value>
+  </data>
+  <data name="CommunicationBuiltInFlowTestTargetsStatus" xml:space="preserve">
+    <value>Live, operator-safe transport validation with configured test recipients</value>
+  </data>
+  <data name="CommunicationBuiltInFlowTestTargetsNextStep" xml:space="preserve">
+    <value>Extend from transport validation into richer multi-channel delivery history</value>
+  </data>
+  <data name="CommunicationCapabilityTemplateEngine" xml:space="preserve">
+    <value>Template Engine</value>
+  </data>
+  <data name="CommunicationCapabilityTemplateEngineState" xml:space="preserve">
+    <value>Not implemented as a reusable platform capability</value>
+  </data>
+  <data name="CommunicationCapabilityTemplateEngineVisibility" xml:space="preserve">
+    <value>Workspace and business profile now show configured subject/body previews, supported tokens, and direct policy handoffs</value>
+  </data>
+  <data name="CommunicationCapabilityTemplateEngineNextStep" xml:space="preserve">
+    <value>Move invitation, activation, and password reset into Communication Core templates</value>
+  </data>
+  <data name="CommunicationCapabilityDeliveryLogging" xml:space="preserve">
+    <value>Delivery Logging</value>
+  </data>
+  <data name="CommunicationCapabilityDeliveryLoggingState" xml:space="preserve">
+    <value>Phase-1 SMTP audit rows exist with flow and optional business correlation</value>
+  </data>
+  <data name="CommunicationCapabilityDeliveryLoggingVisibility" xml:space="preserve">
+    <value>Dashboard preview and full email-audit screen are available</value>
+  </data>
+  <data name="CommunicationCapabilityDeliveryLoggingNextStep" xml:space="preserve">
+    <value>Expand into searchable multi-channel Communication Core delivery logs</value>
+  </data>
+  <data name="CommunicationCapabilityRetryWorkflow" xml:space="preserve">
+    <value>Retry / Resend Workflow</value>
+  </data>
+  <data name="CommunicationCapabilityRetryWorkflowState" xml:space="preserve">
+    <value>Controlled generic retry now exists for invitation, activation, and password-reset audit rows after safe target resolution</value>
+  </data>
+  <data name="CommunicationCapabilityRetryWorkflowVisibility" xml:space="preserve">
+    <value>Operators can retry supported live flows from the failed/stale audit queue and still fall back to flow-specific support surfaces</value>
+  </data>
+  <data name="CommunicationCapabilityRetryWorkflowNextStep" xml:space="preserve">
+    <value>Keep generic retry constrained to resolvable live flows until delivery logs and richer replay safeguards exist</value>
+  </data>
+  <data name="CommunicationCapabilityBusinessPolicyVisibility" xml:space="preserve">
+    <value>Per-Business Policy Visibility</value>
+  </data>
+  <data name="CommunicationCapabilityBusinessPolicyVisibilityState" xml:space="preserve">
+    <value>Branding, sender defaults, reply-to, and phase-1 communication toggles are stored on Business</value>
+  </data>
+  <data name="CommunicationCapabilityBusinessPolicyVisibilityVisibility" xml:space="preserve">
+    <value>Queue, detail, and setup screens now expose these policies</value>
+  </data>
+  <data name="CommunicationCapabilityBusinessPolicyVisibilityNextStep" xml:space="preserve">
+    <value>Split further into template policy, channel policy, and delivery visibility</value>
+  </data>
+  <data name="CommunicationCapabilityChannelTestTargets" xml:space="preserve">
+    <value>Channel Test Targets</value>
+  </data>
+  <data name="CommunicationCapabilityChannelTestTargetsState" xml:space="preserve">
+    <value>Email, SMS, and WhatsApp test recipients are now configurable in site settings</value>
+  </data>
+  <data name="CommunicationCapabilityChannelTestTargetsVisibility" xml:space="preserve">
+    <value>Workspace shows whether each channel has a safe test target before go-live validation</value>
+  </data>
+  <data name="CommunicationCapabilityChannelTestTargetsNextStep" xml:space="preserve">
+    <value>Keep expanding from transport tests into richer multi-channel delivery history</value>
+  </data>
+  <data name="CommunicationChannelOpsNotReadyState" xml:space="preserve">
+    <value>Transport not ready</value>
+  </data>
+  <data name="CommunicationChannelOpsProviderReadyState" xml:space="preserve">
+    <value>Provider-backed transport is live</value>
+  </data>
+  <data name="CommunicationChannelOpsEmailReadyState" xml:space="preserve">
+    <value>Live transport and live transactional flows</value>
+  </data>
+  <data name="CommunicationChannelOpsEmailLiveFlows" xml:space="preserve">
+    <value>Business invitation, account activation, password reset, admin communication test</value>
+  </data>
+  <data name="CommunicationChannelOpsEmailReadyActions" xml:space="preserve">
+    <value>Send test email, review failed audits, controlled retry for supported live flows</value>
+  </data>
+  <data name="CommunicationChannelOpsEmailNotReadyActions" xml:space="preserve">
+    <value>Complete SMTP and test-inbox settings before relying on email follow-up</value>
+  </data>
+  <data name="CommunicationChannelOpsEmailRiskBoundary" xml:space="preserve">
+    <value>Do not treat the audit queue as a blind replay engine; only supported flows can retry safely.</value>
+  </data>
+  <data name="CommunicationChannelOpsEmailNextStep" xml:space="preserve">
+    <value>Move deeper into richer delivery-log and template CRUD.</value>
+  </data>
+  <data name="CommunicationChannelOpsSmsLiveFlows" xml:space="preserve">
+    <value>Phone verification, operator test SMS</value>
+  </data>
+  <data name="CommunicationChannelOpsSmsReadyActions" xml:space="preserve">
+    <value>Send test SMS and use canonical phone-verification flow</value>
+  </data>
+  <data name="CommunicationChannelOpsSmsNotReadyActions" xml:space="preserve">
+    <value>Finish provider credentials and test-recipient setup</value>
+  </data>
+  <data name="CommunicationChannelOpsSmsFallbackRiskBoundary" xml:space="preserve">
+    <value>SMS is not yet a generic notification bus; it is currently verification-first and may be used as fallback when {0} is unavailable.</value>
+  </data>
+  <data name="CommunicationChannelOpsSmsStrictRiskBoundary" xml:space="preserve">
+    <value>SMS is not yet a generic notification bus; live use is currently verification-first, not broad campaign or alert fan-out.</value>
+  </data>
+  <data name="CommunicationChannelOpsSmsNextStep" xml:space="preserve">
+    <value>Add broader delivery history and channel-policy visibility when multi-channel delivery logs deepen.</value>
+  </data>
+  <data name="CommunicationChannelOpsWhatsAppLiveFlows" xml:space="preserve">
+    <value>Phone verification, operator test WhatsApp</value>
+  </data>
+  <data name="CommunicationChannelOpsWhatsAppReadyActions" xml:space="preserve">
+    <value>Send test WhatsApp and use canonical phone-verification flow</value>
+  </data>
+  <data name="CommunicationChannelOpsWhatsAppNotReadyActions" xml:space="preserve">
+    <value>Finish WhatsApp Cloud API credentials and test-recipient setup</value>
+  </data>
+  <data name="CommunicationChannelOpsWhatsAppFallbackRiskBoundary" xml:space="preserve">
+    <value>WhatsApp is intentionally narrow today: safe verification and operator transport validation, with fallback allowed when {0} cannot be used.</value>
+  </data>
+  <data name="CommunicationChannelOpsWhatsAppStrictRiskBoundary" xml:space="preserve">
+    <value>WhatsApp is intentionally narrow today: safe verification and operator transport validation, not a generic alert/replay surface.</value>
+  </data>
+  <data name="CommunicationChannelOpsWhatsAppNextStep" xml:space="preserve">
+    <value>Expand into broader delivery telemetry only after message-policy and history depth are stronger.</value>
+  </data>
   <data name="CommunicationChannelTruthTitle" xml:space="preserve">
     <value>Channel truth and safe live actions</value>
   </data>
@@ -8777,5 +9176,416 @@
   </data>
   <data name="MediaRolePlaceholder" xml:space="preserve">
     <value>General, Gallery, EditorAsset...</value>
+  </data>
+  <data name="CommunicationTemplateInventoryInvitationFlow" xml:space="preserve">
+    <value>Business Invitation</value>
+  </data>
+  <data name="CommunicationTemplateInventoryInvitationSurface" xml:space="preserve">
+    <value>Site-setting template fields feeding the invitation handler</value>
+  </data>
+  <data name="CommunicationTemplateInventoryInvitationSubjectSource" xml:space="preserve">
+    <value>Transactional subject prefix + BusinessInvitationEmailSubjectTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryInvitationBodySource" xml:space="preserve">
+    <value>BusinessInvitationEmailBodyTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryInvitationSubjectFallback" xml:space="preserve">
+    <value>Invitation to join {business_name} on Darwin</value>
+  </data>
+  <data name="CommunicationTemplateInventoryInvitationBodyFallback" xml:space="preserve">
+    <value>Hello {recipient_name}, use {invitation_link} to join {business_name}.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryInvitationOperatorControl" xml:space="preserve">
+    <value>Operators can edit subject/body in communication policy and resend or revoke invitations from support surfaces.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryInvitationNextStep" xml:space="preserve">
+    <value>Promote this into the Communication Core template catalog with preview and delivery logging.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryActivationFlow" xml:space="preserve">
+    <value>Account Activation</value>
+  </data>
+  <data name="CommunicationTemplateInventoryActivationSurface" xml:space="preserve">
+    <value>Site-setting template fields feeding the confirmation handler</value>
+  </data>
+  <data name="CommunicationTemplateInventoryActivationSubjectSource" xml:space="preserve">
+    <value>Transactional subject prefix + AccountActivationEmailSubjectTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryActivationBodySource" xml:space="preserve">
+    <value>AccountActivationEmailBodyTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryActivationSubjectFallback" xml:space="preserve">
+    <value>Confirm your Darwin account email</value>
+  </data>
+  <data name="CommunicationTemplateInventoryActivationBodyFallback" xml:space="preserve">
+    <value>Hello {recipient_name}, confirm your email with {confirmation_link}.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryActivationOperatorControl" xml:space="preserve">
+    <value>Operators can edit subject/body in communication policy and trigger activation support, but they cannot bypass confirmation policy.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryActivationNextStep" xml:space="preserve">
+    <value>Move this into a reusable template and confirmation analytics flow.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPasswordResetFlow" xml:space="preserve">
+    <value>Password Reset</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPasswordResetSurface" xml:space="preserve">
+    <value>Site-setting template fields feeding the password-reset handler</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPasswordResetSubjectSource" xml:space="preserve">
+    <value>Transactional subject prefix + PasswordResetEmailSubjectTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPasswordResetBodySource" xml:space="preserve">
+    <value>PasswordResetEmailBodyTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPasswordResetSubjectFallback" xml:space="preserve">
+    <value>Reset your Darwin account password</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPasswordResetBodyFallback" xml:space="preserve">
+    <value>Hello {recipient_name}, reset your password with {reset_link}.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPasswordResetOperatorControl" xml:space="preserve">
+    <value>Operators can edit subject/body in communication policy and reissue reset support only after identity validation.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPasswordResetNextStep" xml:space="preserve">
+    <value>Move this into Communication Core template inventory with controlled support resend.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationFlow" xml:space="preserve">
+    <value>Phone Verification</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationSurface" xml:space="preserve">
+    <value>Site-setting text template fields feeding the current-user mobile verification handler</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationSubjectSource" xml:space="preserve">
+    <value>Not used for SMS or WhatsApp code delivery</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationBodySource" xml:space="preserve">
+    <value>PhoneVerificationSmsTemplate + PhoneVerificationWhatsAppTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationNoSubject" xml:space="preserve">
+    <value>No subject surface</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationSmsFallback" xml:space="preserve">
+    <value>Your Darwin verification code is {token}. It expires at {expires_at_utc} UTC.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationWhatsAppFallback" xml:space="preserve">
+    <value>Confirm your Darwin mobile number with code {token}. It expires at {expires_at_utc} UTC.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationOperatorControl" xml:space="preserve">
+    <value>Operators can configure both SMS and WhatsApp text templates while backend policy chooses the preferred or fallback channel for Web and Mobile clients.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryPhoneVerificationNextStep" xml:space="preserve">
+    <value>Expand this from policy-driven delivery into richer multi-channel history so verification incidents can be audited across SMS and WhatsApp.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestFlow" xml:space="preserve">
+    <value>Admin Communication Test</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestSurface" xml:space="preserve">
+    <value>Site-setting templates for operator-side diagnostic email, SMS, and WhatsApp tests</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestSubjectSource" xml:space="preserve">
+    <value>Transactional subject prefix + CommunicationTestEmailSubjectTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestBodySource" xml:space="preserve">
+    <value>CommunicationTestEmailBodyTemplate + CommunicationTestSmsTemplate + CommunicationTestWhatsAppTemplate</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestSubjectFallback" xml:space="preserve">
+    <value>Darwin communication test for {channel}</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestEmailBodyFallback" xml:space="preserve">
+    <value>&lt;p&gt;This is a Darwin {channel} communication test.&lt;/p&gt;</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestSmsBodyFallback" xml:space="preserve">
+    <value>Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestWhatsAppBodyFallback" xml:space="preserve">
+    <value>Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestOperatorControl" xml:space="preserve">
+    <value>Operators can customize and send channel-specific diagnostic messages when the corresponding transport and test target are configured.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminTestNextStep" xml:space="preserve">
+    <value>Keep these templates aligned with rollout diagnostics so email, SMS, and WhatsApp tests validate the real message family.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminAlertsFlow" xml:space="preserve">
+    <value>Admin Alerts</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminAlertsSurface" xml:space="preserve">
+    <value>Configuration visibility only</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminAlertsNotCentralized" xml:space="preserve">
+    <value>Not centralized</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminAlertsNoSharedSurface" xml:space="preserve">
+    <value>No shared template surface</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminAlertsOperatorControl" xml:space="preserve">
+    <value>No template catalog exists yet; only routing readiness and policy visibility are exposed.</value>
+  </data>
+  <data name="CommunicationTemplateInventoryAdminAlertsNextStep" xml:space="preserve">
+    <value>Create alert template and routing inventory before adding delivery actions.</value>
+  </data>
+  <data name="CommunicationChannelFamilyPhoneVerificationName" xml:space="preserve">
+    <value>Phone Verification</value>
+  </data>
+  <data name="CommunicationChannelFamilyPhoneVerificationSmsPreviewFallback" xml:space="preserve">
+    <value>Your Darwin verification code is 731904. It expires soon.</value>
+  </data>
+  <data name="CommunicationChannelFamilyPhoneVerificationWhatsAppPreviewFallback" xml:space="preserve">
+    <value>Confirm your Darwin mobile number with code 731904.</value>
+  </data>
+  <data name="CommunicationChannelFamilyPhoneVerificationTargetSurface" xml:space="preserve">
+    <value>Current-user mobile verification</value>
+  </data>
+  <data name="CommunicationChannelFamilyPhoneVerificationPolicyNote" xml:space="preserve">
+    <value>Preferred channel is {0}; fallback is {1}.</value>
+  </data>
+  <data name="CommunicationChannelFamilyPhoneVerificationSafeUsage" xml:space="preserve">
+    <value>Use this only through the canonical current-user phone-verification flow when the current mobile number is trusted.</value>
+  </data>
+  <data name="CommunicationChannelFamilyPhoneVerificationRolloutBoundary" xml:space="preserve">
+    <value>Do not replay old verification messages or repurpose this family for generic account notifications.</value>
+  </data>
+  <data name="CommunicationChannelFamilyAdminTestName" xml:space="preserve">
+    <value>Admin Communication Test</value>
+  </data>
+  <data name="CommunicationChannelFamilyOperatorPlaceholder" xml:space="preserve">
+    <value>WebAdmin operator</value>
+  </data>
+  <data name="CommunicationChannelFamilyReservedTestTargetMissing" xml:space="preserve">
+    <value>Reserved test target missing</value>
+  </data>
+  <data name="CommunicationChannelFamilyAdminTestPolicyNote" xml:space="preserve">
+    <value>Operator-only diagnostic traffic. Never use production recipients.</value>
+  </data>
+  <data name="CommunicationChannelFamilyAdminTestSmsSafeUsage" xml:space="preserve">
+    <value>Use this only for provider validation and transport diagnostics against the reserved SMS test target.</value>
+  </data>
+  <data name="CommunicationChannelFamilyAdminTestWhatsAppSafeUsage" xml:space="preserve">
+    <value>Use this only for provider validation and transport diagnostics against the reserved WhatsApp test target.</value>
+  </data>
+  <data name="CommunicationChannelFamilyAdminTestRolloutBoundary" xml:space="preserve">
+    <value>Never switch this family to a live customer recipient or treat it like a production notification path.</value>
+  </data>
+  <data name="CommunicationChannelFamilyAdminTestSmsPreviewFallback" xml:space="preserve">
+    <value>Darwin SMS transport test requested by WebAdmin operator.</value>
+  </data>
+  <data name="CommunicationChannelFamilyAdminTestWhatsAppPreviewFallback" xml:space="preserve">
+    <value>Darwin WhatsApp transport test requested by WebAdmin operator.</value>
+  </data>
+  <data name="CommunicationChannelFamilyOpenTestTargetsAction" xml:space="preserve">
+    <value>Open test targets</value>
+  </data>
+  <data name="CommunicationDetailsActiveFlowInvitation" xml:space="preserve">
+    <value>Business Invitation</value>
+  </data>
+  <data name="CommunicationDetailsActiveFlowActivation" xml:space="preserve">
+    <value>Account Activation</value>
+  </data>
+  <data name="CommunicationDetailsActiveFlowPasswordReset" xml:space="preserve">
+    <value>Password Reset / Transactional Email Readiness</value>
+  </data>
+  <data name="CommunicationDetailsActiveFlowAdminAlerts" xml:space="preserve">
+    <value>Admin Alerts</value>
+  </data>
+  <data name="CommunicationDetailsReadinessIssueMissingSupportEmail" xml:space="preserve">
+    <value>Business support email is missing.</value>
+  </data>
+  <data name="CommunicationDetailsReadinessIssueMissingSenderIdentity" xml:space="preserve">
+    <value>Sender name or reply-to email is incomplete.</value>
+  </data>
+  <data name="CommunicationDetailsReadinessIssueMissingSmtp" xml:space="preserve">
+    <value>Email policies are enabled, but global SMTP transport is not fully configured.</value>
+  </data>
+  <data name="CommunicationDetailsReadinessIssueMissingAdminRouting" xml:space="preserve">
+    <value>Operational alerts are enabled, but global admin alert routing is not configured.</value>
+  </data>
+  <data name="CommunicationDetailsReadinessIssuePendingApproval" xml:space="preserve">
+    <value>Business is still pending approval; communication readiness should be reviewed before go-live.</value>
+  </data>
+  <data name="CommunicationDetailsReadinessIssueInactive" xml:space="preserve">
+    <value>Business is inactive; communication settings may be complete but operational use is currently blocked.</value>
+  </data>
+  <data name="CommunicationDetailsRecommendedActionCompleteBusinessDefaults" xml:space="preserve">
+    <value>Open business setup and complete support email, sender name, and reply-to defaults.</value>
+  </data>
+  <data name="CommunicationDetailsRecommendedActionOpenSmtp" xml:space="preserve">
+    <value>Open global SMTP settings before relying on transactional or marketing email for this business.</value>
+  </data>
+  <data name="CommunicationDetailsRecommendedActionConfigureAdminRouting" xml:space="preserve">
+    <value>Configure admin alert routing so business operational alerts have a real escalation target.</value>
+  </data>
+  <data name="CommunicationDetailsRecommendedActionReviewMembers" xml:space="preserve">
+    <value>Review business members and send activation email or confirm email where policy allows.</value>
+  </data>
+  <data name="CommunicationDetailsRecommendedActionReviewInvitations" xml:space="preserve">
+    <value>Review open invitations and resend or revoke stale invites before go-live.</value>
+  </data>
+  <data name="CommunicationDetailsRecommendedActionReviewLockedMembers" xml:space="preserve">
+    <value>Review locked members and unlock only after support validation.</value>
+  </data>
+  <data name="CommunicationDetailsRecommendedActionCompleteBeforeApproval" xml:space="preserve">
+    <value>Complete communication setup before approving the business for live operations.</value>
+  </data>
+  <data name="CommunicationDetailsRecommendedActionNoImmediateAction" xml:space="preserve">
+    <value>No immediate operator action is recommended from communication readiness alone.</value>
+  </data>
+  <data name="CommunicationAuditRecommendedActionNoImmediateAction" xml:space="preserve">
+    <value>No immediate operator action required.</value>
+  </data>
+  <data name="CommunicationAuditRecommendedActionInvitationBusiness" xml:space="preserve">
+    <value>Check SMTP readiness, then use controlled retry or open the recipient-scoped invitation queue for resend or revoke from the business workspace.</value>
+  </data>
+  <data name="CommunicationAuditRecommendedActionInvitationGeneric" xml:space="preserve">
+    <value>Check SMTP readiness, then review the invitation source before retrying.</value>
+  </data>
+  <data name="CommunicationAuditRecommendedActionActivationBusiness" xml:space="preserve">
+    <value>Check SMTP readiness, then use controlled retry or open member support or the user queue with the failed recipient prefilled before sending activation support.</value>
+  </data>
+  <data name="CommunicationAuditRecommendedActionActivationGeneric" xml:space="preserve">
+    <value>Check SMTP readiness, then use controlled retry, self-service resend activation, or admin activation support as policy allows.</value>
+  </data>
+  <data name="CommunicationAuditRecommendedActionPasswordResetBusiness" xml:space="preserve">
+    <value>Check SMTP readiness, then use controlled retry or open member support or the user queue with the failed recipient prefilled and reissue reset only after support validation.</value>
+  </data>
+  <data name="CommunicationAuditRecommendedActionPasswordResetGeneric" xml:space="preserve">
+    <value>Check SMTP readiness, then use controlled retry or reissue password reset only after support validation.</value>
+  </data>
+  <data name="CommunicationAuditRecommendedActionGeneric" xml:space="preserve">
+    <value>Review global transport readiness and the source workflow before attempting manual intervention.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookInvitationTitle" xml:space="preserve">
+    <value>Invitation failures</value>
+  </data>
+  <data name="CommunicationAuditPlaybookInvitationScope" xml:space="preserve">
+    <value>Use business-scoped invitation actions only.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookInvitationAllowedAction" xml:space="preserve">
+    <value>Check SMTP readiness, then use controlled retry from the audit row or open the business invitation workspace and resend or revoke the invitation.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookInvitationEscalation" xml:space="preserve">
+    <value>If repeated failures continue after transport readiness is green, treat it as communication-platform debt instead of repeatedly sending the same invitation.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookActivationTitle" xml:space="preserve">
+    <value>Activation failures</value>
+  </data>
+  <data name="CommunicationAuditPlaybookActivationScope" xml:space="preserve">
+    <value>Prefer self-service resend; admin override only where current policy allows.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookActivationAllowedAction" xml:space="preserve">
+    <value>Check SMTP readiness, then use controlled retry or direct the user to resend activation from login or use the admin activation-support action.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookActivationEscalation" xml:space="preserve">
+    <value>Do not silently bypass confirmation policy. If failures persist after resend, escalate as auth or communication troubleshooting.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookPasswordResetTitle" xml:space="preserve">
+    <value>Password reset failures</value>
+  </data>
+  <data name="CommunicationAuditPlaybookPasswordResetScope" xml:space="preserve">
+    <value>Reset support must stay identity-safe.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookPasswordResetAllowedAction" xml:space="preserve">
+    <value>Validate the requester first, then use controlled retry or reissue password reset only after support validation and transport checks.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookPasswordResetEscalation" xml:space="preserve">
+    <value>Avoid repeated resets without user verification. Persistent failures should be escalated as communication or account-lifecycle issues.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookAdminTestTitle" xml:space="preserve">
+    <value>Communication test failures</value>
+  </data>
+  <data name="CommunicationAuditPlaybookAdminTestScope" xml:space="preserve">
+    <value>Use this only for operator-side transport validation.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookAdminTestAllowedAction" xml:space="preserve">
+    <value>Check SMTP and test-inbox settings, then rerun the test email from the communication workspace after configuration is corrected.</value>
+  </data>
+  <data name="CommunicationAuditPlaybookAdminTestEscalation" xml:space="preserve">
+    <value>Do not send repeated test emails to production recipients. Keep tests scoped to the configured test inbox.</value>
+  </data>
+  <data name="CommunicationSetupFilterNeedsSetup" xml:space="preserve">
+    <value>Needs setup</value>
+  </data>
+  <data name="CommunicationSetupFilterMissingSupportEmail" xml:space="preserve">
+    <value>Missing support email</value>
+  </data>
+  <data name="CommunicationSetupFilterMissingSenderIdentity" xml:space="preserve">
+    <value>Missing sender identity</value>
+  </data>
+  <data name="CommunicationSetupFilterTransactionalEnabled" xml:space="preserve">
+    <value>Transactional enabled</value>
+  </data>
+  <data name="CommunicationSetupFilterMarketingEnabled" xml:space="preserve">
+    <value>Marketing enabled</value>
+  </data>
+  <data name="CommunicationSetupFilterOperationalAlertsEnabled" xml:space="preserve">
+    <value>Operational alerts enabled</value>
+  </data>
+  <data name="CommunicationSetupFilterAllBusinesses" xml:space="preserve">
+    <value>All businesses</value>
+  </data>
+  <data name="CommunicationAuditStatusAll" xml:space="preserve">
+    <value>All statuses</value>
+  </data>
+  <data name="CommunicationAuditFlowAll" xml:space="preserve">
+    <value>All flows</value>
+  </data>
+  <data name="CommunicationChannelAll" xml:space="preserve">
+    <value>All channels</value>
+  </data>
+  <data name="CommunicationProviderAll" xml:space="preserve">
+    <value>All providers</value>
+  </data>
+  <data name="CommunicationChannelFlowAll" xml:space="preserve">
+    <value>All channel flows</value>
+  </data>
+  <data name="CommunicationTransportStateNotReady" xml:space="preserve">
+    <value>Not ready</value>
+  </data>
+  <data name="CommunicationTestEmailBodyRuntimeFallback" xml:space="preserve">
+    <value>&lt;p&gt;This is a Darwin {channel} communication test.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;strong&gt;Requested by:&lt;/strong&gt; {requested_by}&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Attempted at (UTC):&lt;/strong&gt; {attempted_at_utc}&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Target:&lt;/strong&gt; {test_target}&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Transport state:&lt;/strong&gt; {transport_state}&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;This diagnostic is intended only for the configured communication test target.&lt;/p&gt;</value>
+  </data>
+  <data name="CommunicationTestSmsCooldownMessage" xml:space="preserve">
+    <value>SMS test rerun is cooling down. Try again after {0:yyyy-MM-dd HH:mm} UTC.</value>
+  </data>
+  <data name="CommunicationTestWhatsAppCooldownMessage" xml:space="preserve">
+    <value>WhatsApp test rerun is cooling down. Try again after {0:yyyy-MM-dd HH:mm} UTC.</value>
+  </data>
+  <data name="CommunicationEmailRetryFailedFallback" xml:space="preserve">
+    <value>Email retry failed.</value>
+  </data>
+  <data name="ChannelAuditFirstAttemptLabel" xml:space="preserve">
+    <value>first attempt</value>
+  </data>
+  <data name="ChannelAuditLatestAttemptLabel" xml:space="preserve">
+    <value>latest attempt</value>
+  </data>
+  <data name="ChannelAuditChainContextLabel" xml:space="preserve">
+    <value>Chain context</value>
+  </data>
+  <data name="ChannelAuditProviderLaneLabel" xml:space="preserve">
+    <value>Provider lane</value>
+  </data>
+  <data name="ChannelAuditTotalAttemptsInlineLabel" xml:space="preserve">
+    <value>total attempts</value>
+  </data>
+  <data name="ChannelAuditProfileInlineLabel" xml:space="preserve">
+    <value>profile</value>
+  </data>
+  <data name="ChannelAuditPriorAttemptsInlineLabel" xml:space="preserve">
+    <value>prior attempts</value>
+  </data>
+  <data name="ChannelAuditPriorFailuresInlineLabel" xml:space="preserve">
+    <value>prior failures</value>
+  </data>
+  <data name="ChannelAuditLastSuccessInlineLabel" xml:space="preserve">
+    <value>last success</value>
+  </data>
+  <data name="ChannelAuditRecoveryInlineLabel" xml:space="preserve">
+    <value>recovery</value>
+  </data>
+  <data name="ChannelAuditAttempts24hInlineLabel" xml:space="preserve">
+    <value>24h attempts</value>
+  </data>
+  <data name="ChannelAuditFailures24hInlineLabel" xml:space="preserve">
+    <value>24h failures</value>
   </data>
 </root>

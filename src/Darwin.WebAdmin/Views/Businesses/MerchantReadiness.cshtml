@@ -2,6 +2,39 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("MerchantReadinessTitle");
+    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("UsersFilterUnconfirmed"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
+        _ => T.T("Members")
+    };
+    string InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites => T.T("PendingInvites"),
+        _ => T.T("Invitations")
+    };
+    string BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive => T.T("ApprovedInactive"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner => T.T("BusinessesMissingOwner"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation => T.T("MissingPrimaryLocation"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail => T.T("MissingContactEmail"),
+        Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName => T.T("MissingLegalName"),
+        _ => T.T("Readiness")
+    };
+    string BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch
+    {
+        Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("PendingApproval"),
+        Darwin.Domain.Enums.BusinessOperationalStatus.Suspended => T.T("SuspendedBusinesses"),
+        _ => T.T("Status")
+    };
+    string BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch
+    {
+        Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("PendingApproval"),
+        Darwin.Domain.Enums.BusinessOperationalStatus.Suspended => T.T("Suspended"),
+        _ => status.ToString()
+    };
 }
 
 <div id="merchant-readiness-workspace-shell">
@@ -24,7 +57,7 @@
            hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
            hx-target="#merchant-readiness-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("NeedsAttention")</a>
+           hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
         <a asp-controller="Billing"
            asp-action="Payments"
            class="btn btn-outline-secondary"
@@ -45,7 +78,7 @@
 <div class="row g-3 mb-3">
     <div class="col-md-2">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("NeedsAttention")</div>
+            <div class="text-muted small">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.AttentionBusinessCount</div>
             <a asp-action="Index"
                asp-route-attentionOnly="true"
@@ -53,12 +86,12 @@
                hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("NeedsAttention")</a>
+               hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("PendingApproval")</div>
+            <div class="text-muted small">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PendingApprovalBusinessCount</div>
             <a asp-action="Index"
                asp-route-operationalStatus="PendingApproval"
@@ -66,12 +99,12 @@
                hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "PendingApproval" })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("PendingApproval")</a>
+               hx-push-url="true">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</a>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("SuspendedBusinesses")</div>
+            <div class="text-muted small">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.SuspendedBusinessCount</div>
             <a asp-action="Index"
                asp-route-operationalStatus="Suspended"
@@ -79,12 +112,12 @@
                hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "Suspended" })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("SuspendedBusinesses")</a>
+               hx-push-url="true">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)</a>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("BusinessesMissingOwner")</div>
+            <div class="text-muted small">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingOwnerBusinessCount</div>
             <a asp-action="Index"
                asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner"
@@ -92,12 +125,12 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("BusinessesMissingOwner")</a>
+               hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("PendingActivation")</div>
+            <div class="text-muted small">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.PendingActivationMemberCount</div>
             <a asp-controller="Users"
                asp-action="Index"
@@ -106,12 +139,12 @@
                hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+               hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
         </div>
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("LockedMembers")</div>
+            <div class="text-muted small">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.LockedMemberCount</div>
             <a asp-controller="Users"
                asp-action="Index"
@@ -120,7 +153,7 @@
                hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("UsersFilterLocked")</a>
+               hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
         </div>
     </div>
 </div>
@@ -128,7 +161,7 @@
 <div class="row g-3 mb-3">
     <div class="col-lg col-md-4">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("ApprovedInactive")</div>
+            <div class="text-muted small">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.ApprovedInactiveBusinessCount</div>
             <a asp-action="Index"
                asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive"
@@ -136,12 +169,12 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("ApprovedInactive")</a>
+               hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)</a>
         </div>
     </div>
     <div class="col-lg col-md-4">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("MissingPrimaryLocation")</div>
+            <div class="text-muted small">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingPrimaryLocationBusinessCount</div>
             <a asp-action="Index"
                asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation"
@@ -149,12 +182,12 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("MissingPrimaryLocation")</a>
+               hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)</a>
         </div>
     </div>
     <div class="col-lg col-md-4">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("MissingContactEmail")</div>
+            <div class="text-muted small">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingContactEmailBusinessCount</div>
             <a asp-action="Index"
                asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail"
@@ -162,12 +195,12 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("MissingContactEmail")</a>
+               hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)</a>
         </div>
     </div>
     <div class="col-lg col-md-4">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("MissingLegalName")</div>
+            <div class="text-muted small">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingLegalNameBusinessCount</div>
             <a asp-action="Index"
                asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName"
@@ -175,12 +208,12 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("MissingLegalName")</a>
+               hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)</a>
         </div>
     </div>
     <div class="col-lg col-md-4">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
-            <div class="text-muted small">@T.T("PendingInvites")</div>
+            <div class="text-muted small">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</div>
             <div class="fs-4 fw-semibold">@Model.Summary.OpenInvitationCount</div>
             <a asp-action="Index"
                asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites"
@@ -188,7 +221,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("PendingInvites")</a>
+               hx-push-url="true">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>
         </div>
     </div>
 </div>
@@ -312,7 +345,7 @@
                hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
                hx-target="#merchant-readiness-workspace-shell"
                hx-swap="outerHTML"
-               hx-push-url="true">@T.T("NeedsAttention")</a>
+               hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
             <a asp-controller="Billing"
                asp-action="Payments"
                class="btn btn-sm btn-outline-secondary"
@@ -417,7 +450,7 @@
                                            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id })"
                                            hx-target="#merchant-readiness-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@item.InvitationCount @T.T("PendingInvites")</a>
+                                           hx-push-url="true">@item.InvitationCount @InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>
                                     </div>
                                 }
                             </td>
@@ -430,7 +463,7 @@
                                        hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "PendingApproval" })"
                                        hx-target="#merchant-readiness-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("PendingApproval")</a>
+                                       hx-push-url="true">@BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</a>
                                 }
                                 else if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
                                 {
@@ -440,7 +473,7 @@
                                        hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = "Suspended" })"
                                        hx-target="#merchant-readiness-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("Suspended")</a>
+                                       hx-push-url="true">@BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)</a>
                                 }
                                 else if (!item.IsActive)
                                 {
@@ -450,7 +483,7 @@
                                        hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
                                        hx-target="#merchant-readiness-workspace-shell"
                                        hx-swap="outerHTML"
-                                       hx-push-url="true">@T.T("ApprovedInactive")</a>
+                                       hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)</a>
                                 }
                                 else
                                 {
@@ -484,7 +517,7 @@
                                            hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id })"
                                            hx-target="#merchant-readiness-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@T.T("MissingActiveOwner")</a>
+                                           hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>
                                     </div>
                                 }
                                 @if (item.PrimaryLocationCount == 0)
@@ -496,7 +529,7 @@
                                            hx-get="@Url.Action("Locations", "Businesses", new { businessId = item.Id })"
                                            hx-target="#merchant-readiness-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@T.T("MissingPrimaryLocation")</a>
+                                           hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)</a>
                                     </div>
                                 }
                                 @if (!item.HasContactEmailConfigured)
@@ -508,7 +541,7 @@
                                            hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
                                            hx-target="#merchant-readiness-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@T.T("MissingContactEmail")</a>
+                                           hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)</a>
                                     </div>
                                 }
                                 @if (!item.HasLegalNameConfigured)
@@ -520,7 +553,7 @@
                                            hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
                                            hx-target="#merchant-readiness-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@T.T("MissingLegalName")</a>
+                                           hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)</a>
                                     </div>
                                 }
                             </td>

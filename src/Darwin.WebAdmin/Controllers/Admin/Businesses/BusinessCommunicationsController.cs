@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -189,13 +190,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Severity = x.Severity,
                     CanRetryNow = x.CanRetryNow,
                     RetryPolicyState = x.RetryPolicyState,
-                    RetryBlockedReason = x.RetryBlockedReason,
+                    RetryBlockedReason = BuildEmailAuditRetryBlockedReason(x),
                     RetryAvailableAtUtc = x.RetryAvailableAtUtc,
                     RecentAttemptCount24h = x.RecentAttemptCount24h,
                     ChainStartedAtUtc = x.ChainStartedAtUtc,
                     ChainLastAttemptAtUtc = x.ChainLastAttemptAtUtc,
                     ChainSpanHours = x.ChainSpanHours,
-                    ChainStatusMix = x.ChainStatusMix,
+                    ChainStatusMix = BuildEmailAuditChainStatusMix(x.ChainStatusMix),
                     PriorAttemptCount = x.PriorAttemptCount,
                     PriorFailureCount = x.PriorFailureCount,
                     LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
@@ -336,13 +337,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Severity = x.Severity,
                     CanRetryNow = x.CanRetryNow,
                     RetryPolicyState = x.RetryPolicyState,
-                    RetryBlockedReason = x.RetryBlockedReason,
+                    RetryBlockedReason = BuildEmailAuditRetryBlockedReason(x),
                     RetryAvailableAtUtc = x.RetryAvailableAtUtc,
                     RecentAttemptCount24h = x.RecentAttemptCount24h,
                     ChainStartedAtUtc = x.ChainStartedAtUtc,
                     ChainLastAttemptAtUtc = x.ChainLastAttemptAtUtc,
                     ChainSpanHours = x.ChainSpanHours,
-                    ChainStatusMix = x.ChainStatusMix,
+                    ChainStatusMix = BuildEmailAuditChainStatusMix(x.ChainStatusMix),
                     PriorAttemptCount = x.PriorAttemptCount,
                     PriorFailureCount = x.PriorFailureCount,
                     LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
@@ -476,7 +477,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FirstAttemptAtUtc = chainSummary.FirstAttemptAtUtc,
                     LastAttemptAtUtc = chainSummary.LastAttemptAtUtc,
                     LastSuccessfulAttemptAtUtc = chainSummary.LastSuccessfulAttemptAtUtc,
-                    StatusMix = chainSummary.StatusMix,
+                    StatusMix = BuildEmailAuditChainStatusMix(chainSummary.StatusMix),
                     RecentHistory = chainSummary.RecentHistory.Select(x => new EmailDispatchAuditChainHistoryItemVm
                     {
                         AttemptedAtUtc = x.AttemptedAtUtc,
@@ -510,13 +511,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Severity = x.Severity,
                     CanRetryNow = x.CanRetryNow,
                     RetryPolicyState = x.RetryPolicyState,
-                    RetryBlockedReason = x.RetryBlockedReason,
+                    RetryBlockedReason = BuildEmailAuditRetryBlockedReason(x),
                     RetryAvailableAtUtc = x.RetryAvailableAtUtc,
                     RecentAttemptCount24h = x.RecentAttemptCount24h,
                     ChainStartedAtUtc = x.ChainStartedAtUtc,
                     ChainLastAttemptAtUtc = x.ChainLastAttemptAtUtc,
                     ChainSpanHours = x.ChainSpanHours,
-                    ChainStatusMix = x.ChainStatusMix,
+                    ChainStatusMix = BuildEmailAuditChainStatusMix(x.ChainStatusMix),
                     PriorAttemptCount = x.PriorAttemptCount,
                     PriorFailureCount = x.PriorFailureCount,
                     LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
@@ -642,8 +643,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     LastAttemptAtUtc = chainSummary.LastAttemptAtUtc,
                     LastSuccessfulAttemptAtUtc = chainSummary.LastSuccessfulAttemptAtUtc,
                     StatusMix = chainSummary.StatusMix,
-                    RecommendedAction = chainSummary.RecommendedAction,
-                    EscalationHint = chainSummary.EscalationHint,
+                    RecommendedAction = BuildChannelChainRecommendedAction(chainSummary.RecommendedAction),
+                    EscalationHint = BuildChannelChainEscalationHint(chainSummary.EscalationHint),
                     RecentHistory = chainSummary.RecentHistory.Select(x => new ChannelDispatchAuditChainHistoryItemVm
                     {
                         AttemptedAtUtc = x.AttemptedAtUtc,
@@ -667,8 +668,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     PressureState = providerSummary.PressureState,
                     RecoveryState = providerSummary.RecoveryState,
                     LastSuccessfulAttemptAtUtc = providerSummary.LastSuccessfulAttemptAtUtc,
-                    RecommendedAction = providerSummary.RecommendedAction,
-                    EscalationHint = providerSummary.EscalationHint
+                    RecommendedAction = BuildChannelProviderRecommendedAction(providerSummary.RecommendedAction),
+                    EscalationHint = BuildChannelProviderEscalationHint(providerSummary.EscalationHint)
                 },
                 TemplateFamilies = BuildChannelTemplateFamilies(settings, filter.FlowKey),
                 Items = items.Select(x => new ChannelDispatchAuditListItemVm
@@ -691,11 +692,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     PriorFailureCount = x.PriorFailureCount,
                     LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
                     CanRerunNow = x.CanRerunNow,
-                    ActionPolicyState = x.ActionPolicyState,
-                        ActionBlockedReason = x.ActionBlockedReason,
+                    ActionPolicyState = BuildChannelAuditActionPolicyState(x.ActionPolicyState),
+                        ActionBlockedReason = BuildChannelAuditActionBlockedReason(x),
                         ActionAvailableAtUtc = x.ActionAvailableAtUtc,
                         NeedsEscalationReview = x.NeedsEscalationReview,
-                        EscalationReason = x.EscalationReason,
+                        EscalationReason = BuildChannelAuditEscalationReason(x),
                         ProviderRecentAttemptCount24h = x.ProviderRecentAttemptCount24h,
                         ProviderFailureCount24h = x.ProviderFailureCount24h,
                         ProviderPressureState = x.ProviderPressureState,
@@ -744,7 +745,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
             else
             {
-                TempData["Error"] = result.Error ?? "Email retry failed.";
+                TempData["Error"] = result.Error ?? T("CommunicationEmailRetryFailedFallback");
             }
 
             return RedirectOrHtmx(
@@ -792,23 +793,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var requestedBy = User?.Identity?.Name ?? "WebAdmin operator";
+            var requestedBy = User?.Identity?.Name ?? T("CommunicationChannelFamilyOperatorPlaceholder");
             var placeholders = BuildCommunicationTestPlaceholders(
-                channel: "Email",
+                channel: DescribeCommunicationChannel("Email"),
                 requestedBy: requestedBy,
                 attemptedAtUtc: DateTime.UtcNow,
                 testTarget: settings.CommunicationTestInboxEmail,
-                transportState: emailTransportConfigured ? "Ready" : "Not ready");
+                transportState: DescribeCommunicationTransportState(emailTransportConfigured));
             var prefix = string.IsNullOrWhiteSpace(settings.TransactionalEmailSubjectPrefix)
                 ? string.Empty
                 : $"{settings.TransactionalEmailSubjectPrefix.Trim()} ";
             var subject = prefix + RenderTemplate(
                 settings.CommunicationTestEmailSubjectTemplate,
-                "Darwin communication test for {channel}",
+                T("CommunicationTemplateInventoryAdminTestSubjectFallback"),
                 placeholders);
             var htmlBody = RenderTemplate(
                 settings.CommunicationTestEmailBodyTemplate,
-                "<p>This is a Darwin {channel} communication test.</p><ul><li><strong>Requested by:</strong> {requested_by}</li><li><strong>Attempted at (UTC):</strong> {attempted_at_utc}</li><li><strong>Target:</strong> {test_target}</li><li><strong>Transport state:</strong> {transport_state}</li></ul><p>This diagnostic is intended only for the configured communication test target.</p>",
+                T("CommunicationTestEmailBodyRuntimeFallback"),
                 placeholders);
 
             await _emailSender.SendAsync(
@@ -919,7 +920,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ct).ConfigureAwait(false);
             if (smsCooldownUntilUtc.HasValue)
             {
-                TempData["Error"] = $"SMS test rerun is cooling down. Try again after {smsCooldownUntilUtc.Value:yyyy-MM-dd HH:mm} UTC.";
+                TempData["Error"] = string.Format(CultureInfo.InvariantCulture, T("CommunicationTestSmsCooldownMessage"), smsCooldownUntilUtc.Value);
                 return RedirectToChannelAuditsOrIndex(
                     returnToChannelAudits,
                     page,
@@ -945,16 +946,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessId);
             }
 
-            var requestedBy = User?.Identity?.Name ?? "WebAdmin operator";
+            var requestedBy = User?.Identity?.Name ?? T("CommunicationChannelFamilyOperatorPlaceholder");
             var text = RenderTemplate(
                 settings.CommunicationTestSmsTemplate,
-                "Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.",
+                T("CommunicationTemplateInventoryAdminTestSmsBodyFallback"),
                 BuildCommunicationTestPlaceholders(
-                    channel: "SMS",
+                    channel: DescribeCommunicationChannel("SMS"),
                     requestedBy: requestedBy,
                     attemptedAtUtc: DateTime.UtcNow,
                     testTarget: settings.CommunicationTestSmsRecipientE164,
-                    transportState: smsTransportConfigured ? "Ready" : "Not ready"));
+                    transportState: DescribeCommunicationTransportState(smsTransportConfigured)));
             await _smsSender.SendAsync(
                 settings.CommunicationTestSmsRecipientE164,
                 text,
@@ -1084,7 +1085,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ct).ConfigureAwait(false);
             if (whatsAppCooldownUntilUtc.HasValue)
             {
-                TempData["Error"] = $"WhatsApp test rerun is cooling down. Try again after {whatsAppCooldownUntilUtc.Value:yyyy-MM-dd HH:mm} UTC.";
+                TempData["Error"] = string.Format(CultureInfo.InvariantCulture, T("CommunicationTestWhatsAppCooldownMessage"), whatsAppCooldownUntilUtc.Value);
                 return RedirectToChannelAuditsOrIndex(
                     returnToChannelAudits,
                     page,
@@ -1110,16 +1111,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessId);
             }
 
-            var requestedBy = User?.Identity?.Name ?? "WebAdmin operator";
+            var requestedBy = User?.Identity?.Name ?? T("CommunicationChannelFamilyOperatorPlaceholder");
             var text = RenderTemplate(
                 settings.CommunicationTestWhatsAppTemplate,
-                "Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.",
+                T("CommunicationTemplateInventoryAdminTestWhatsAppBodyFallback"),
                 BuildCommunicationTestPlaceholders(
-                    channel: "WhatsApp",
+                    channel: DescribeCommunicationChannel("WhatsApp"),
                     requestedBy: requestedBy,
                     attemptedAtUtc: DateTime.UtcNow,
                     testTarget: settings.CommunicationTestWhatsAppRecipientE164,
-                    transportState: whatsAppTransportConfigured ? "Ready" : "Not ready"));
+                    transportState: DescribeCommunicationTransportState(whatsAppTransportConfigured)));
             await _whatsAppSender.SendTextAsync(
                 settings.CommunicationTestWhatsAppRecipientE164,
                 text,
@@ -1309,44 +1310,44 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                    !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail);
         }
 
-        private static IEnumerable<SelectListItem> BuildFilterItems(BusinessCommunicationSetupFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildFilterItems(BusinessCommunicationSetupFilter selectedFilter)
         {
-            yield return new SelectListItem("Needs setup", BusinessCommunicationSetupFilter.NeedsSetup.ToString(), selectedFilter == BusinessCommunicationSetupFilter.NeedsSetup);
-            yield return new SelectListItem("Missing support email", BusinessCommunicationSetupFilter.MissingSupportEmail.ToString(), selectedFilter == BusinessCommunicationSetupFilter.MissingSupportEmail);
-            yield return new SelectListItem("Missing sender identity", BusinessCommunicationSetupFilter.MissingSenderIdentity.ToString(), selectedFilter == BusinessCommunicationSetupFilter.MissingSenderIdentity);
-            yield return new SelectListItem("Transactional enabled", BusinessCommunicationSetupFilter.TransactionalEnabled.ToString(), selectedFilter == BusinessCommunicationSetupFilter.TransactionalEnabled);
-            yield return new SelectListItem("Marketing enabled", BusinessCommunicationSetupFilter.MarketingEnabled.ToString(), selectedFilter == BusinessCommunicationSetupFilter.MarketingEnabled);
-            yield return new SelectListItem("Operational alerts enabled", BusinessCommunicationSetupFilter.OperationalAlertsEnabled.ToString(), selectedFilter == BusinessCommunicationSetupFilter.OperationalAlertsEnabled);
-            yield return new SelectListItem("All businesses", BusinessCommunicationSetupFilter.All.ToString(), selectedFilter == BusinessCommunicationSetupFilter.All);
+            yield return new SelectListItem(T("CommunicationSetupFilterNeedsSetup"), BusinessCommunicationSetupFilter.NeedsSetup.ToString(), selectedFilter == BusinessCommunicationSetupFilter.NeedsSetup);
+            yield return new SelectListItem(T("CommunicationSetupFilterMissingSupportEmail"), BusinessCommunicationSetupFilter.MissingSupportEmail.ToString(), selectedFilter == BusinessCommunicationSetupFilter.MissingSupportEmail);
+            yield return new SelectListItem(T("CommunicationSetupFilterMissingSenderIdentity"), BusinessCommunicationSetupFilter.MissingSenderIdentity.ToString(), selectedFilter == BusinessCommunicationSetupFilter.MissingSenderIdentity);
+            yield return new SelectListItem(T("CommunicationSetupFilterTransactionalEnabled"), BusinessCommunicationSetupFilter.TransactionalEnabled.ToString(), selectedFilter == BusinessCommunicationSetupFilter.TransactionalEnabled);
+            yield return new SelectListItem(T("CommunicationSetupFilterMarketingEnabled"), BusinessCommunicationSetupFilter.MarketingEnabled.ToString(), selectedFilter == BusinessCommunicationSetupFilter.MarketingEnabled);
+            yield return new SelectListItem(T("CommunicationSetupFilterOperationalAlertsEnabled"), BusinessCommunicationSetupFilter.OperationalAlertsEnabled.ToString(), selectedFilter == BusinessCommunicationSetupFilter.OperationalAlertsEnabled);
+            yield return new SelectListItem(T("CommunicationSetupFilterAllBusinesses"), BusinessCommunicationSetupFilter.All.ToString(), selectedFilter == BusinessCommunicationSetupFilter.All);
         }
 
-        private static IEnumerable<SelectListItem> BuildAuditStatusItems(string? selectedStatus)
+        private IEnumerable<SelectListItem> BuildAuditStatusItems(string? selectedStatus)
         {
-            yield return new SelectListItem("All statuses", string.Empty, string.IsNullOrWhiteSpace(selectedStatus));
-            yield return new SelectListItem("Sent", "Sent", string.Equals(selectedStatus, "Sent", System.StringComparison.OrdinalIgnoreCase));
-            yield return new SelectListItem("Failed", "Failed", string.Equals(selectedStatus, "Failed", System.StringComparison.OrdinalIgnoreCase));
-            yield return new SelectListItem("Pending", "Pending", string.Equals(selectedStatus, "Pending", System.StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationAuditStatusAll"), string.Empty, string.IsNullOrWhiteSpace(selectedStatus));
+            yield return new SelectListItem(DescribeDeliveryStatus("Sent"), "Sent", string.Equals(selectedStatus, "Sent", System.StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(DescribeDeliveryStatus("Failed"), "Failed", string.Equals(selectedStatus, "Failed", System.StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(DescribeDeliveryStatus("Pending"), "Pending", string.Equals(selectedStatus, "Pending", System.StringComparison.OrdinalIgnoreCase));
         }
 
-        private static IEnumerable<SelectListItem> BuildAuditFlowItems(string? selectedFlowKey)
+        private IEnumerable<SelectListItem> BuildAuditFlowItems(string? selectedFlowKey)
         {
-            yield return new SelectListItem("All flows", string.Empty, string.IsNullOrWhiteSpace(selectedFlowKey));
-            yield return new SelectListItem("Business Invitation", "BusinessInvitation", string.Equals(selectedFlowKey, "BusinessInvitation", System.StringComparison.OrdinalIgnoreCase));
-            yield return new SelectListItem("Account Activation", "AccountActivation", string.Equals(selectedFlowKey, "AccountActivation", System.StringComparison.OrdinalIgnoreCase));
-            yield return new SelectListItem("Password Reset", "PasswordReset", string.Equals(selectedFlowKey, "PasswordReset", System.StringComparison.OrdinalIgnoreCase));
-            yield return new SelectListItem("Admin Communication Test", "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", System.StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationAuditFlowAll"), string.Empty, string.IsNullOrWhiteSpace(selectedFlowKey));
+            yield return new SelectListItem(T("CommunicationDetailsActiveFlowInvitation"), "BusinessInvitation", string.Equals(selectedFlowKey, "BusinessInvitation", System.StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationDetailsActiveFlowActivation"), "AccountActivation", string.Equals(selectedFlowKey, "AccountActivation", System.StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationTemplateInventoryPasswordResetFlow"), "PasswordReset", string.Equals(selectedFlowKey, "PasswordReset", System.StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationTemplateInventoryAdminTestFlow"), "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", System.StringComparison.OrdinalIgnoreCase));
         }
 
-        private static IEnumerable<SelectListItem> BuildChannelItems(string? selectedChannel)
+        private IEnumerable<SelectListItem> BuildChannelItems(string? selectedChannel)
         {
-            yield return new SelectListItem("All channels", string.Empty, string.IsNullOrWhiteSpace(selectedChannel));
-            yield return new SelectListItem("SMS", "SMS", string.Equals(selectedChannel, "SMS", StringComparison.OrdinalIgnoreCase));
-            yield return new SelectListItem("WhatsApp", "WhatsApp", string.Equals(selectedChannel, "WhatsApp", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationChannelAll"), string.Empty, string.IsNullOrWhiteSpace(selectedChannel));
+            yield return new SelectListItem(DescribeCommunicationChannel("SMS"), "SMS", string.Equals(selectedChannel, "SMS", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(DescribeCommunicationChannel("WhatsApp"), "WhatsApp", string.Equals(selectedChannel, "WhatsApp", StringComparison.OrdinalIgnoreCase));
         }
 
-        private static IEnumerable<SelectListItem> BuildChannelProviderItems(IEnumerable<string> providers, string? selectedProvider)
+        private IEnumerable<SelectListItem> BuildChannelProviderItems(IEnumerable<string> providers, string? selectedProvider)
         {
-            yield return new SelectListItem("All providers", string.Empty, string.IsNullOrWhiteSpace(selectedProvider));
+            yield return new SelectListItem(T("CommunicationProviderAll"), string.Empty, string.IsNullOrWhiteSpace(selectedProvider));
             foreach (var provider in providers
                          .Concat(string.IsNullOrWhiteSpace(selectedProvider) ? Array.Empty<string>() : new[] { selectedProvider! })
                          .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -1357,126 +1358,126 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
         }
 
-        private static IEnumerable<SelectListItem> BuildChannelFlowItems(string? selectedFlowKey)
+        private IEnumerable<SelectListItem> BuildChannelFlowItems(string? selectedFlowKey)
         {
-            yield return new SelectListItem("All channel flows", string.Empty, string.IsNullOrWhiteSpace(selectedFlowKey));
-            yield return new SelectListItem("Phone Verification", "PhoneVerification", string.Equals(selectedFlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase));
-            yield return new SelectListItem("Admin Communication Test", "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationChannelFlowAll"), string.Empty, string.IsNullOrWhiteSpace(selectedFlowKey));
+            yield return new SelectListItem(T("CommunicationTemplateInventoryPhoneVerificationFlow"), "PhoneVerification", string.Equals(selectedFlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationTemplateInventoryAdminTestFlow"), "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase));
         }
 
-        private static List<BuiltInCommunicationFlowVm> BuildBuiltInFlows()
+        private List<BuiltInCommunicationFlowVm> BuildBuiltInFlows()
         {
             return new List<BuiltInCommunicationFlowVm>
             {
                 new()
                 {
-                    Name = "Business Invitation",
-                    Channel = "Email",
-                    Trigger = "Create invitation / resend invitation",
-                    DeliveryPath = "SMTP via IEmailSender",
-                    CurrentImplementationStatus = "Live, hard-coded transactional composition",
-                    NextStep = "Move to Communication Core template + delivery log"
+                    Name = T("CommunicationBuiltInFlowInvitationName"),
+                    Channel = DescribeBuiltInFlowChannel("Email"),
+                    Trigger = T("CommunicationBuiltInFlowInvitationTrigger"),
+                    DeliveryPath = T("CommunicationBuiltInFlowInvitationDeliveryPath"),
+                    CurrentImplementationStatus = T("CommunicationBuiltInFlowInvitationStatus"),
+                    NextStep = T("CommunicationBuiltInFlowInvitationNextStep")
                 },
                 new()
                 {
-                    Name = "Account Activation",
-                    Channel = "Email",
-                    Trigger = "Registration or resend activation",
-                    DeliveryPath = "SMTP via IEmailSender",
-                    CurrentImplementationStatus = "Live, token-based hard-coded composition",
-                    NextStep = "Move to template engine + confirmation analytics/logging"
+                    Name = T("CommunicationBuiltInFlowActivationName"),
+                    Channel = DescribeBuiltInFlowChannel("Email"),
+                    Trigger = T("CommunicationBuiltInFlowActivationTrigger"),
+                    DeliveryPath = T("CommunicationBuiltInFlowActivationDeliveryPath"),
+                    CurrentImplementationStatus = T("CommunicationBuiltInFlowActivationStatus"),
+                    NextStep = T("CommunicationBuiltInFlowActivationNextStep")
                 },
                 new()
                 {
-                    Name = "Password Reset",
-                    Channel = "Email",
-                    Trigger = "Forgot password or admin reset support",
-                    DeliveryPath = "SMTP via IEmailSender",
-                    CurrentImplementationStatus = "Live, token-based hard-coded composition",
-                    NextStep = "Move to template engine + delivery/audit visibility"
+                    Name = T("CommunicationBuiltInFlowPasswordResetName"),
+                    Channel = DescribeBuiltInFlowChannel("Email"),
+                    Trigger = T("CommunicationBuiltInFlowPasswordResetTrigger"),
+                    DeliveryPath = T("CommunicationBuiltInFlowPasswordResetDeliveryPath"),
+                    CurrentImplementationStatus = T("CommunicationBuiltInFlowPasswordResetStatus"),
+                    NextStep = T("CommunicationBuiltInFlowPasswordResetNextStep")
                 },
                 new()
                 {
-                    Name = "Phone Verification",
-                    Channel = "SMS / WhatsApp",
-                    Trigger = "Current user requests mobile verification",
-                    DeliveryPath = "Twilio SMS or WhatsApp Cloud API via provider-backed senders",
-                    CurrentImplementationStatus = "Live, token-based mobile verification with customizable text templates",
-                    NextStep = "Extend into richer delivery history and channel policy analytics"
+                    Name = T("CommunicationBuiltInFlowPhoneVerificationName"),
+                    Channel = DescribeBuiltInFlowChannel("SmsWhatsApp"),
+                    Trigger = T("CommunicationBuiltInFlowPhoneVerificationTrigger"),
+                    DeliveryPath = T("CommunicationBuiltInFlowPhoneVerificationDeliveryPath"),
+                    CurrentImplementationStatus = T("CommunicationBuiltInFlowPhoneVerificationStatus"),
+                    NextStep = T("CommunicationBuiltInFlowPhoneVerificationNextStep")
                 },
                 new()
                 {
-                    Name = "Admin Communication Test",
-                    Channel = "Email / SMS / WhatsApp",
-                    Trigger = "Manual operator validation from WebAdmin",
-                    DeliveryPath = "Configured channel transport to operator test targets only",
-                    CurrentImplementationStatus = "Live, operator-safe diagnostic actions for configured channels",
-                    NextStep = "Later fold into Communication Core test/delivery diagnostics"
+                    Name = T("CommunicationBuiltInFlowAdminTestName"),
+                    Channel = DescribeBuiltInFlowChannel("EmailSmsWhatsApp"),
+                    Trigger = T("CommunicationBuiltInFlowAdminTestTrigger"),
+                    DeliveryPath = T("CommunicationBuiltInFlowAdminTestDeliveryPath"),
+                    CurrentImplementationStatus = T("CommunicationBuiltInFlowAdminTestStatus"),
+                    NextStep = T("CommunicationBuiltInFlowAdminTestNextStep")
                 },
                 new()
                 {
-                    Name = "Admin Alerts",
-                    Channel = "Email/SMS/WhatsApp",
-                    Trigger = "Platform/operator escalation paths",
-                    DeliveryPath = "Configuration exists, full flow not yet centralized",
-                    CurrentImplementationStatus = "Partially configured, not a complete Communication Core workflow",
-                    NextStep = "Implement reusable alert pipeline + logs"
+                    Name = T("CommunicationBuiltInFlowAdminAlertsName"),
+                    Channel = DescribeBuiltInFlowChannel("EmailSmsWhatsAppCompact"),
+                    Trigger = T("CommunicationBuiltInFlowAdminAlertsTrigger"),
+                    DeliveryPath = T("CommunicationBuiltInFlowAdminAlertsDeliveryPath"),
+                    CurrentImplementationStatus = T("CommunicationBuiltInFlowAdminAlertsStatus"),
+                    NextStep = T("CommunicationBuiltInFlowAdminAlertsNextStep")
                 },
                 new()
                 {
-                    Name = "SMS and WhatsApp Test Targets",
-                    Channel = "SMS / WhatsApp",
-                    Trigger = "Operator-side staged rollout validation",
-                    DeliveryPath = "Provider-backed test send actions from Business Communications",
-                    CurrentImplementationStatus = "Live, operator-safe transport validation with configured test recipients",
-                    NextStep = "Extend from transport validation into richer multi-channel delivery history"
+                    Name = T("CommunicationBuiltInFlowTestTargetsName"),
+                    Channel = DescribeBuiltInFlowChannel("SmsWhatsApp"),
+                    Trigger = T("CommunicationBuiltInFlowTestTargetsTrigger"),
+                    DeliveryPath = T("CommunicationBuiltInFlowTestTargetsDeliveryPath"),
+                    CurrentImplementationStatus = T("CommunicationBuiltInFlowTestTargetsStatus"),
+                    NextStep = T("CommunicationBuiltInFlowTestTargetsNextStep")
                 }
             };
         }
 
-        private static List<CommunicationCapabilityCoverageVm> BuildCapabilityCoverage()
+        private List<CommunicationCapabilityCoverageVm> BuildCapabilityCoverage()
         {
             return new List<CommunicationCapabilityCoverageVm>
             {
                 new()
                 {
-                    Capability = "Template Engine",
-                    CurrentState = "Not implemented as a reusable platform capability",
-                    OperatorVisibility = "Workspace and business profile now show configured subject/body previews, supported tokens, and direct policy handoffs",
-                    NextStep = "Move invitation, activation, and password reset into Communication Core templates"
+                    Capability = T("CommunicationCapabilityTemplateEngine"),
+                    CurrentState = T("CommunicationCapabilityTemplateEngineState"),
+                    OperatorVisibility = T("CommunicationCapabilityTemplateEngineVisibility"),
+                    NextStep = T("CommunicationCapabilityTemplateEngineNextStep")
                 },
                 new()
                 {
-                    Capability = "Delivery Logging",
-                    CurrentState = "Phase-1 SMTP audit rows exist with flow and optional business correlation",
-                    OperatorVisibility = "Dashboard preview and full email-audit screen are available",
-                    NextStep = "Expand into searchable multi-channel Communication Core delivery logs"
+                    Capability = T("CommunicationCapabilityDeliveryLogging"),
+                    CurrentState = T("CommunicationCapabilityDeliveryLoggingState"),
+                    OperatorVisibility = T("CommunicationCapabilityDeliveryLoggingVisibility"),
+                    NextStep = T("CommunicationCapabilityDeliveryLoggingNextStep")
                 },
                 new()
                 {
-                    Capability = "Retry / Resend Workflow",
-                    CurrentState = "Controlled generic retry now exists for invitation, activation, and password-reset audit rows after safe target resolution",
-                    OperatorVisibility = "Operators can retry supported live flows from the failed/stale audit queue and still fall back to flow-specific support surfaces",
-                    NextStep = "Keep generic retry constrained to resolvable live flows until delivery logs and richer replay safeguards exist"
+                    Capability = T("CommunicationCapabilityRetryWorkflow"),
+                    CurrentState = T("CommunicationCapabilityRetryWorkflowState"),
+                    OperatorVisibility = T("CommunicationCapabilityRetryWorkflowVisibility"),
+                    NextStep = T("CommunicationCapabilityRetryWorkflowNextStep")
                 },
                 new()
                 {
-                    Capability = "Per-Business Policy Visibility",
-                    CurrentState = "Branding, sender defaults, reply-to, and phase-1 communication toggles are stored on Business",
-                    OperatorVisibility = "Queue, detail, and setup screens now expose these policies",
-                    NextStep = "Split further into template policy, channel policy, and delivery visibility"
+                    Capability = T("CommunicationCapabilityBusinessPolicyVisibility"),
+                    CurrentState = T("CommunicationCapabilityBusinessPolicyVisibilityState"),
+                    OperatorVisibility = T("CommunicationCapabilityBusinessPolicyVisibilityVisibility"),
+                    NextStep = T("CommunicationCapabilityBusinessPolicyVisibilityNextStep")
                 },
                 new()
                 {
-                    Capability = "Channel Test Targets",
-                    CurrentState = "Email, SMS, and WhatsApp test recipients are now configurable in site settings",
-                    OperatorVisibility = "Workspace shows whether each channel has a safe test target before go-live validation",
-                    NextStep = "Keep expanding from transport tests into richer multi-channel delivery history"
+                    Capability = T("CommunicationCapabilityChannelTestTargets"),
+                    CurrentState = T("CommunicationCapabilityChannelTestTargetsState"),
+                    OperatorVisibility = T("CommunicationCapabilityChannelTestTargetsVisibility"),
+                    NextStep = T("CommunicationCapabilityChannelTestTargetsNextStep")
                 }
             };
         }
 
-        private static List<CommunicationChannelOpsVm> BuildChannelOperations(SiteSettingDto settings)
+        private List<CommunicationChannelOpsVm> BuildChannelOperations(SiteSettingDto settings)
         {
             var emailReady = settings.SmtpEnabled &&
                              !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
@@ -1493,137 +1494,137 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 new()
                 {
-                    Channel = "Email",
-                    CurrentState = emailReady ? "Live transport and live transactional flows" : "Transport not ready",
-                    LiveFlows = "Business invitation, account activation, password reset, admin communication test",
+                    Channel = DescribeCommunicationChannel("Email"),
+                    CurrentState = emailReady ? T("CommunicationChannelOpsEmailReadyState") : T("CommunicationChannelOpsNotReadyState"),
+                    LiveFlows = T("CommunicationChannelOpsEmailLiveFlows"),
                     SafeOperatorActions = emailReady
-                        ? "Send test email, review failed audits, controlled retry for supported live flows"
-                        : "Complete SMTP and test-inbox settings before relying on email follow-up",
-                    RiskBoundary = "Do not treat the audit queue as a blind replay engine; only supported flows can retry safely.",
-                    NextStep = "Move deeper into richer delivery-log and template CRUD."
+                        ? T("CommunicationChannelOpsEmailReadyActions")
+                        : T("CommunicationChannelOpsEmailNotReadyActions"),
+                    RiskBoundary = T("CommunicationChannelOpsEmailRiskBoundary"),
+                    NextStep = T("CommunicationChannelOpsEmailNextStep")
                 },
                 new()
                 {
                     Channel = "SMS",
-                    CurrentState = smsReady ? "Provider-backed transport is live" : "Transport not ready",
-                    LiveFlows = "Phone verification, operator test SMS",
+                    CurrentState = smsReady ? T("CommunicationChannelOpsProviderReadyState") : T("CommunicationChannelOpsNotReadyState"),
+                    LiveFlows = T("CommunicationChannelOpsSmsLiveFlows"),
                     SafeOperatorActions = smsReady
-                        ? "Send test SMS and use canonical phone-verification flow"
-                        : "Finish provider credentials and test-recipient setup",
+                        ? T("CommunicationChannelOpsSmsReadyActions")
+                        : T("CommunicationChannelOpsSmsNotReadyActions"),
                     RiskBoundary = settings.PhoneVerificationAllowFallback
-                        ? $"SMS is not yet a generic notification bus; it is currently verification-first and may be used as fallback when {settings.PhoneVerificationPreferredChannel ?? "Sms"} is unavailable."
-                        : "SMS is not yet a generic notification bus; live use is currently verification-first, not broad campaign or alert fan-out.",
-                    NextStep = "Add broader delivery history and channel-policy visibility when multi-channel delivery logs deepen."
+                        ? string.Format(CultureInfo.InvariantCulture, T("CommunicationChannelOpsSmsFallbackRiskBoundary"), DescribePreferredPhoneVerificationChannel(settings.PhoneVerificationPreferredChannel))
+                        : T("CommunicationChannelOpsSmsStrictRiskBoundary"),
+                    NextStep = T("CommunicationChannelOpsSmsNextStep")
                 },
                 new()
                 {
                     Channel = "WhatsApp",
-                    CurrentState = whatsAppReady ? "Provider-backed transport is live" : "Transport not ready",
-                    LiveFlows = "Phone verification, operator test WhatsApp",
+                    CurrentState = whatsAppReady ? T("CommunicationChannelOpsProviderReadyState") : T("CommunicationChannelOpsNotReadyState"),
+                    LiveFlows = T("CommunicationChannelOpsWhatsAppLiveFlows"),
                     SafeOperatorActions = whatsAppReady
-                        ? "Send test WhatsApp and use canonical phone-verification flow"
-                        : "Finish WhatsApp Cloud API credentials and test-recipient setup",
+                        ? T("CommunicationChannelOpsWhatsAppReadyActions")
+                        : T("CommunicationChannelOpsWhatsAppNotReadyActions"),
                     RiskBoundary = settings.PhoneVerificationAllowFallback
-                        ? $"WhatsApp is intentionally narrow today: safe verification and operator transport validation, with fallback allowed when {settings.PhoneVerificationPreferredChannel ?? "Sms"} cannot be used."
-                        : "WhatsApp is intentionally narrow today: safe verification and operator transport validation, not a generic alert/replay surface.",
-                    NextStep = "Expand into broader delivery telemetry only after message-policy and history depth are stronger."
+                        ? string.Format(CultureInfo.InvariantCulture, T("CommunicationChannelOpsWhatsAppFallbackRiskBoundary"), DescribePreferredPhoneVerificationChannel(settings.PhoneVerificationPreferredChannel))
+                        : T("CommunicationChannelOpsWhatsAppStrictRiskBoundary"),
+                    NextStep = T("CommunicationChannelOpsWhatsAppNextStep")
                 }
             };
         }
 
-        private static List<CommunicationTemplateInventoryVm> BuildTemplateInventory(SiteSettingDto settings)
+        private List<CommunicationTemplateInventoryVm> BuildTemplateInventory(SiteSettingDto settings)
         {
             return new List<CommunicationTemplateInventoryVm>
             {
                 new()
                 {
-                    FlowName = "Business Invitation",
-                    TemplateSurface = "Site-setting template fields feeding the invitation handler",
-                    SubjectSource = "Transactional subject prefix + BusinessInvitationEmailSubjectTemplate",
-                    BodySource = "BusinessInvitationEmailBodyTemplate",
-                    CurrentSubjectTemplate = SummarizeTemplate(settings.BusinessInvitationEmailSubjectTemplate, "Invitation to join {business_name} on Darwin"),
-                    CurrentBodyTemplate = SummarizeTemplate(settings.BusinessInvitationEmailBodyTemplate, "Hello {recipient_name}, use {invitation_link} to join {business_name}."),
+                    FlowName = T("CommunicationTemplateInventoryInvitationFlow"),
+                    TemplateSurface = T("CommunicationTemplateInventoryInvitationSurface"),
+                    SubjectSource = T("CommunicationTemplateInventoryInvitationSubjectSource"),
+                    BodySource = T("CommunicationTemplateInventoryInvitationBodySource"),
+                    CurrentSubjectTemplate = SummarizeTemplate(settings.BusinessInvitationEmailSubjectTemplate, T("CommunicationTemplateInventoryInvitationSubjectFallback")),
+                    CurrentBodyTemplate = SummarizeTemplate(settings.BusinessInvitationEmailBodyTemplate, T("CommunicationTemplateInventoryInvitationBodyFallback")),
                     SupportedTokens = "{recipient_name}, {business_name}, {invitation_link}, {support_email}",
-                    OperatorControl = "Operators can edit subject/body in communication policy and resend/revoke invitations from support surfaces.",
+                    OperatorControl = T("CommunicationTemplateInventoryInvitationOperatorControl"),
                     AuditFlowKey = "BusinessInvitation",
-                    OperatorActionLabel = "Open Invitations",
+                    OperatorActionLabel = T("OpenInvitations"),
                     OperatorActionTarget = "Invitations",
-                    NextStep = "Promote to Communication Core template catalog with preview and delivery logging."
+                    NextStep = T("CommunicationTemplateInventoryInvitationNextStep")
                 },
                 new()
                 {
-                    FlowName = "Account Activation",
-                    TemplateSurface = "Site-setting template fields feeding the confirmation handler",
-                    SubjectSource = "Transactional subject prefix + AccountActivationEmailSubjectTemplate",
-                    BodySource = "AccountActivationEmailBodyTemplate",
-                    CurrentSubjectTemplate = SummarizeTemplate(settings.AccountActivationEmailSubjectTemplate, "Confirm your Darwin account email"),
-                    CurrentBodyTemplate = SummarizeTemplate(settings.AccountActivationEmailBodyTemplate, "Hello {recipient_name}, confirm your email with {confirmation_link}."),
+                    FlowName = T("CommunicationTemplateInventoryActivationFlow"),
+                    TemplateSurface = T("CommunicationTemplateInventoryActivationSurface"),
+                    SubjectSource = T("CommunicationTemplateInventoryActivationSubjectSource"),
+                    BodySource = T("CommunicationTemplateInventoryActivationBodySource"),
+                    CurrentSubjectTemplate = SummarizeTemplate(settings.AccountActivationEmailSubjectTemplate, T("CommunicationTemplateInventoryActivationSubjectFallback")),
+                    CurrentBodyTemplate = SummarizeTemplate(settings.AccountActivationEmailBodyTemplate, T("CommunicationTemplateInventoryActivationBodyFallback")),
                     SupportedTokens = "{recipient_name}, {confirmation_link}, {support_email}",
-                    OperatorControl = "Operators can edit subject/body in communication policy and trigger activation support, but not bypass confirmation policy.",
+                    OperatorControl = T("CommunicationTemplateInventoryActivationOperatorControl"),
                     AuditFlowKey = "AccountActivation",
-                    OperatorActionLabel = "Open Users",
+                    OperatorActionLabel = T("OpenUsers"),
                     OperatorActionTarget = "Users",
-                    NextStep = "Move into reusable template + confirmation analytics flow."
+                    NextStep = T("CommunicationTemplateInventoryActivationNextStep")
                 },
                 new()
                 {
-                    FlowName = "Password Reset",
-                    TemplateSurface = "Site-setting template fields feeding the password-reset handler",
-                    SubjectSource = "Transactional subject prefix + PasswordResetEmailSubjectTemplate",
-                    BodySource = "PasswordResetEmailBodyTemplate",
-                    CurrentSubjectTemplate = SummarizeTemplate(settings.PasswordResetEmailSubjectTemplate, "Reset your Darwin account password"),
-                    CurrentBodyTemplate = SummarizeTemplate(settings.PasswordResetEmailBodyTemplate, "Hello {recipient_name}, reset your password with {reset_link}."),
+                    FlowName = T("CommunicationTemplateInventoryPasswordResetFlow"),
+                    TemplateSurface = T("CommunicationTemplateInventoryPasswordResetSurface"),
+                    SubjectSource = T("CommunicationTemplateInventoryPasswordResetSubjectSource"),
+                    BodySource = T("CommunicationTemplateInventoryPasswordResetBodySource"),
+                    CurrentSubjectTemplate = SummarizeTemplate(settings.PasswordResetEmailSubjectTemplate, T("CommunicationTemplateInventoryPasswordResetSubjectFallback")),
+                    CurrentBodyTemplate = SummarizeTemplate(settings.PasswordResetEmailBodyTemplate, T("CommunicationTemplateInventoryPasswordResetBodyFallback")),
                     SupportedTokens = "{recipient_name}, {reset_link}, {support_email}",
-                    OperatorControl = "Operators can edit subject/body in communication policy and reissue reset support only after identity validation.",
+                    OperatorControl = T("CommunicationTemplateInventoryPasswordResetOperatorControl"),
                     AuditFlowKey = "PasswordReset",
-                    OperatorActionLabel = "Open Users",
+                    OperatorActionLabel = T("OpenUsers"),
                     OperatorActionTarget = "Users",
-                    NextStep = "Move into Communication Core template inventory with controlled support resend."
+                    NextStep = T("CommunicationTemplateInventoryPasswordResetNextStep")
                 },
                 new()
                 {
-                    FlowName = "Phone Verification",
-                    TemplateSurface = "Site-setting text template fields feeding the current-user mobile verification handler",
-                    SubjectSource = "Not used for SMS/WhatsApp code delivery",
-                    BodySource = "PhoneVerificationSmsTemplate + PhoneVerificationWhatsAppTemplate",
-                    CurrentSubjectTemplate = "No subject surface",
-                    CurrentBodyTemplate = $"{SummarizeTemplate(settings.PhoneVerificationSmsTemplate, "Your Darwin verification code is {token}. It expires at {expires_at_utc} UTC.")} / {SummarizeTemplate(settings.PhoneVerificationWhatsAppTemplate, "Confirm your Darwin mobile number with code {token}. It expires at {expires_at_utc} UTC.")}",
+                    FlowName = T("CommunicationTemplateInventoryPhoneVerificationFlow"),
+                    TemplateSurface = T("CommunicationTemplateInventoryPhoneVerificationSurface"),
+                    SubjectSource = T("CommunicationTemplateInventoryPhoneVerificationSubjectSource"),
+                    BodySource = T("CommunicationTemplateInventoryPhoneVerificationBodySource"),
+                    CurrentSubjectTemplate = T("CommunicationTemplateInventoryPhoneVerificationNoSubject"),
+                    CurrentBodyTemplate = $"{SummarizeTemplate(settings.PhoneVerificationSmsTemplate, T("CommunicationTemplateInventoryPhoneVerificationSmsFallback"))} / {SummarizeTemplate(settings.PhoneVerificationWhatsAppTemplate, T("CommunicationTemplateInventoryPhoneVerificationWhatsAppFallback"))}",
                     SupportedTokens = "{phone_e164}, {token}, {expires_at_utc}",
-                    OperatorControl = "Operators can configure both SMS and WhatsApp text templates while backend policy picks the preferred or fallback channel for Web and Mobile clients.",
+                    OperatorControl = T("CommunicationTemplateInventoryPhoneVerificationOperatorControl"),
                     AuditFlowKey = string.Empty,
-                    OperatorActionLabel = "Open Communication Policy",
+                    OperatorActionLabel = T("BusinessCommunicationOpenPolicyAction"),
                     OperatorActionTarget = "SiteSettings",
-                    NextStep = "Expand from policy-driven delivery into richer multi-channel history so verification incidents can be audited across SMS and WhatsApp."
+                    NextStep = T("CommunicationTemplateInventoryPhoneVerificationNextStep")
                 },
                 new()
                 {
-                    FlowName = "Admin Communication Test",
-                    TemplateSurface = "Site-setting templates for operator-side diagnostic email, SMS, and WhatsApp tests",
-                    SubjectSource = "Transactional subject prefix + CommunicationTestEmailSubjectTemplate",
-                    BodySource = "CommunicationTestEmailBodyTemplate + CommunicationTestSmsTemplate + CommunicationTestWhatsAppTemplate",
-                    CurrentSubjectTemplate = SummarizeTemplate(settings.CommunicationTestEmailSubjectTemplate, "Darwin communication test for {channel}"),
-                    CurrentBodyTemplate = $"{SummarizeTemplate(settings.CommunicationTestEmailBodyTemplate, "<p>This is a Darwin {channel} communication test.</p>")} / {SummarizeTemplate(settings.CommunicationTestSmsTemplate, "Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.")} / {SummarizeTemplate(settings.CommunicationTestWhatsAppTemplate, "Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.")}",
+                    FlowName = T("CommunicationTemplateInventoryAdminTestFlow"),
+                    TemplateSurface = T("CommunicationTemplateInventoryAdminTestSurface"),
+                    SubjectSource = T("CommunicationTemplateInventoryAdminTestSubjectSource"),
+                    BodySource = T("CommunicationTemplateInventoryAdminTestBodySource"),
+                    CurrentSubjectTemplate = SummarizeTemplate(settings.CommunicationTestEmailSubjectTemplate, T("CommunicationTemplateInventoryAdminTestSubjectFallback")),
+                    CurrentBodyTemplate = $"{SummarizeTemplate(settings.CommunicationTestEmailBodyTemplate, T("CommunicationTemplateInventoryAdminTestEmailBodyFallback"))} / {SummarizeTemplate(settings.CommunicationTestSmsTemplate, T("CommunicationTemplateInventoryAdminTestSmsBodyFallback"))} / {SummarizeTemplate(settings.CommunicationTestWhatsAppTemplate, T("CommunicationTemplateInventoryAdminTestWhatsAppBodyFallback"))}",
                     SupportedTokens = "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
-                    OperatorControl = "Operators can customize and send channel-specific diagnostic messages when the corresponding transport and test target are configured.",
+                    OperatorControl = T("CommunicationTemplateInventoryAdminTestOperatorControl"),
                     AuditFlowKey = "AdminCommunicationTest",
-                    OperatorActionLabel = "Open Audit Log",
+                    OperatorActionLabel = T("CommunicationResendPolicyOpenAuditLog"),
                     OperatorActionTarget = "EmailAudits",
-                    NextStep = "Keep these templates aligned with rollout diagnostics so email, SMS, and WhatsApp tests validate the real message family."
+                    NextStep = T("CommunicationTemplateInventoryAdminTestNextStep")
                 },
                 new()
                 {
-                    FlowName = "Admin Alerts",
-                    TemplateSurface = "Configuration visibility only",
-                    SubjectSource = "Not centralized",
-                    BodySource = "Not centralized",
-                    CurrentSubjectTemplate = "No shared template surface",
-                    CurrentBodyTemplate = "No shared template surface",
-                    SupportedTokens = "Not centralized",
-                    OperatorControl = "No template catalog yet; only routing readiness and policy visibility are exposed.",
+                    FlowName = T("CommunicationTemplateInventoryAdminAlertsFlow"),
+                    TemplateSurface = T("CommunicationTemplateInventoryAdminAlertsSurface"),
+                    SubjectSource = T("CommunicationTemplateInventoryAdminAlertsNotCentralized"),
+                    BodySource = T("CommunicationTemplateInventoryAdminAlertsNotCentralized"),
+                    CurrentSubjectTemplate = T("CommunicationTemplateInventoryAdminAlertsNoSharedSurface"),
+                    CurrentBodyTemplate = T("CommunicationTemplateInventoryAdminAlertsNoSharedSurface"),
+                    SupportedTokens = T("CommunicationTemplateInventoryAdminAlertsNotCentralized"),
+                    OperatorControl = T("CommunicationTemplateInventoryAdminAlertsOperatorControl"),
                     AuditFlowKey = string.Empty,
-                    OperatorActionLabel = "Open Alert Settings",
+                    OperatorActionLabel = T("CommunicationResendPolicyOpenAlertSettings"),
                     OperatorActionTarget = "AdminAlerts",
-                    NextStep = "Create alert template + routing inventory before adding delivery actions."
+                    NextStep = T("CommunicationTemplateInventoryAdminAlertsNextStep")
                 }
             };
         }
@@ -1649,6 +1650,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ["test_target"] = testTarget,
                 ["transport_state"] = transportState
             };
+        }
+
+        private string DescribeCommunicationTransportState(bool isReady)
+        {
+            return isReady ? T("Ready") : T("CommunicationTransportStateNotReady");
         }
 
         private static string RenderTemplate(string? template, string fallback, IReadOnlyDictionary<string, string?> placeholders)
@@ -1735,7 +1741,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
         }
 
-        private static List<ChannelMessageFamilyVm> BuildChannelTemplateFamilies(SiteSettingDto settings, string? flowKey)
+        private List<ChannelMessageFamilyVm> BuildChannelTemplateFamilies(SiteSettingDto settings, string? flowKey)
         {
             var families = new List<ChannelMessageFamilyVm>();
 
@@ -1743,41 +1749,45 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 families.Add(new ChannelMessageFamilyVm
                 {
-                    FamilyName = "Phone Verification",
+                    FamilyName = T("CommunicationChannelFamilyPhoneVerificationName"),
+                    FamilyKey = "PhoneVerification",
                     Channel = "SMS",
-                    CurrentTemplate = SummarizeTemplate(settings.PhoneVerificationSmsTemplate, "Your Darwin verification code is {token}. It expires at {expires_at_utc} UTC."),
+                    ChannelValue = "SMS",
+                    CurrentTemplate = SummarizeTemplate(settings.PhoneVerificationSmsTemplate, T("CommunicationTemplateInventoryPhoneVerificationSmsFallback")),
                     ExamplePreview = SummarizeTemplate(
                         RenderTemplate(
                             settings.PhoneVerificationSmsTemplate,
-                            "Your Darwin verification code is {token}. It expires at {expires_at_utc} UTC.",
+                            T("CommunicationTemplateInventoryPhoneVerificationSmsFallback"),
                             BuildPhoneVerificationPlaceholders("+4915112345678", "731904", DateTime.UtcNow.AddMinutes(10))),
-                        "Your Darwin verification code is 731904. It expires soon."),
+                        T("CommunicationChannelFamilyPhoneVerificationSmsPreviewFallback")),
                     SupportedTokens = "{phone_e164}, {token}, {expires_at_utc}",
-                    TargetSurface = "Current-user mobile verification",
-                    PolicyNote = $"Preferred channel is {settings.PhoneVerificationPreferredChannel ?? "Sms"}; fallback is {(settings.PhoneVerificationAllowFallback ? "enabled" : "disabled")}.",
-                    SafeUsageNote = "Use only through the canonical current-user phone-verification flow when the current mobile number is trusted.",
-                    RolloutBoundary = "Do not replay old verification messages or repurpose this family for generic account notifications.",
-                    ActionLabel = "Open Communication Policy",
+                    TargetSurface = T("CommunicationChannelFamilyPhoneVerificationTargetSurface"),
+                    PolicyNote = string.Format(CultureInfo.InvariantCulture, T("CommunicationChannelFamilyPhoneVerificationPolicyNote"), DescribePreferredPhoneVerificationChannel(settings.PhoneVerificationPreferredChannel), settings.PhoneVerificationAllowFallback ? T("Enabled") : T("Disabled")),
+                    SafeUsageNote = T("CommunicationChannelFamilyPhoneVerificationSafeUsage"),
+                    RolloutBoundary = T("CommunicationChannelFamilyPhoneVerificationRolloutBoundary"),
+                    ActionLabel = T("BusinessCommunicationOpenPolicyAction"),
                     ActionTarget = "SiteSettings",
                     ActionFragment = "site-settings-communications-policy"
                 });
                 families.Add(new ChannelMessageFamilyVm
                 {
-                    FamilyName = "Phone Verification",
+                    FamilyName = T("CommunicationChannelFamilyPhoneVerificationName"),
+                    FamilyKey = "PhoneVerification",
                     Channel = "WhatsApp",
-                    CurrentTemplate = SummarizeTemplate(settings.PhoneVerificationWhatsAppTemplate, "Confirm your Darwin mobile number with code {token}. It expires at {expires_at_utc} UTC."),
+                    ChannelValue = "WhatsApp",
+                    CurrentTemplate = SummarizeTemplate(settings.PhoneVerificationWhatsAppTemplate, T("CommunicationTemplateInventoryPhoneVerificationWhatsAppFallback")),
                     ExamplePreview = SummarizeTemplate(
                         RenderTemplate(
                             settings.PhoneVerificationWhatsAppTemplate,
-                            "Confirm your Darwin mobile number with code {token}. It expires at {expires_at_utc} UTC.",
+                            T("CommunicationTemplateInventoryPhoneVerificationWhatsAppFallback"),
                             BuildPhoneVerificationPlaceholders("+4915112345678", "731904", DateTime.UtcNow.AddMinutes(10))),
-                        "Confirm your Darwin mobile number with code 731904."),
+                        T("CommunicationChannelFamilyPhoneVerificationWhatsAppPreviewFallback")),
                     SupportedTokens = "{phone_e164}, {token}, {expires_at_utc}",
-                    TargetSurface = "Current-user mobile verification",
-                    PolicyNote = $"Preferred channel is {settings.PhoneVerificationPreferredChannel ?? "Sms"}; fallback is {(settings.PhoneVerificationAllowFallback ? "enabled" : "disabled")}.",
-                    SafeUsageNote = "Use only through the canonical current-user phone-verification flow when the current mobile number is trusted.",
-                    RolloutBoundary = "Do not replay old verification messages or repurpose this family for generic account notifications.",
-                    ActionLabel = "Open Communication Policy",
+                    TargetSurface = T("CommunicationChannelFamilyPhoneVerificationTargetSurface"),
+                    PolicyNote = string.Format(CultureInfo.InvariantCulture, T("CommunicationChannelFamilyPhoneVerificationPolicyNote"), DescribePreferredPhoneVerificationChannel(settings.PhoneVerificationPreferredChannel), settings.PhoneVerificationAllowFallback ? T("Enabled") : T("Disabled")),
+                    SafeUsageNote = T("CommunicationChannelFamilyPhoneVerificationSafeUsage"),
+                    RolloutBoundary = T("CommunicationChannelFamilyPhoneVerificationRolloutBoundary"),
+                    ActionLabel = T("BusinessCommunicationOpenPolicyAction"),
                     ActionTarget = "SiteSettings",
                     ActionFragment = "site-settings-communications-policy"
                 });
@@ -1787,47 +1797,91 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 families.Add(new ChannelMessageFamilyVm
                 {
-                    FamilyName = "Admin Communication Test",
+                    FamilyName = T("CommunicationChannelFamilyAdminTestName"),
+                    FamilyKey = "AdminCommunicationTest",
                     Channel = "SMS",
-                    CurrentTemplate = SummarizeTemplate(settings.CommunicationTestSmsTemplate, "Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}."),
+                    ChannelValue = "SMS",
+                    CurrentTemplate = SummarizeTemplate(settings.CommunicationTestSmsTemplate, T("CommunicationTemplateInventoryAdminTestSmsBodyFallback")),
                     ExamplePreview = SummarizeTemplate(
                         RenderTemplate(
                             settings.CommunicationTestSmsTemplate,
-                            "Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.",
-                            BuildCommunicationTestPlaceholders("SMS", "WebAdmin operator", DateTime.UtcNow, settings.CommunicationTestSmsRecipientE164 ?? "+4915112345678", "Ready")),
-                        "Darwin SMS transport test requested by WebAdmin operator."),
+                            T("CommunicationTemplateInventoryAdminTestSmsBodyFallback"),
+                            BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("SMS"), T("CommunicationChannelFamilyOperatorPlaceholder"), DateTime.UtcNow, settings.CommunicationTestSmsRecipientE164 ?? "+4915112345678", T("Ready"))),
+                        T("CommunicationChannelFamilyAdminTestSmsPreviewFallback")),
                     SupportedTokens = "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
-                    TargetSurface = settings.CommunicationTestSmsRecipientE164 ?? "Reserved test target missing",
-                    PolicyNote = "Operator-only diagnostic traffic. Never use production recipients.",
-                    SafeUsageNote = "Use for provider validation and transport diagnostics only, against the reserved SMS test target.",
-                    RolloutBoundary = "Never switch this family to a live customer recipient or treat it like a production notification path.",
-                    ActionLabel = "Open Test Targets",
+                    TargetSurface = settings.CommunicationTestSmsRecipientE164 ?? T("CommunicationChannelFamilyReservedTestTargetMissing"),
+                    PolicyNote = T("CommunicationChannelFamilyAdminTestPolicyNote"),
+                    SafeUsageNote = T("CommunicationChannelFamilyAdminTestSmsSafeUsage"),
+                    RolloutBoundary = T("CommunicationChannelFamilyAdminTestRolloutBoundary"),
+                    ActionLabel = T("CommunicationChannelFamilyOpenTestTargetsAction"),
                     ActionTarget = "SiteSettings",
                     ActionFragment = "site-settings-communications-policy"
                 });
                 families.Add(new ChannelMessageFamilyVm
                 {
-                    FamilyName = "Admin Communication Test",
+                    FamilyName = T("CommunicationChannelFamilyAdminTestName"),
+                    FamilyKey = "AdminCommunicationTest",
                     Channel = "WhatsApp",
-                    CurrentTemplate = SummarizeTemplate(settings.CommunicationTestWhatsAppTemplate, "Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}."),
+                    ChannelValue = "WhatsApp",
+                    CurrentTemplate = SummarizeTemplate(settings.CommunicationTestWhatsAppTemplate, T("CommunicationTemplateInventoryAdminTestWhatsAppBodyFallback")),
                     ExamplePreview = SummarizeTemplate(
                         RenderTemplate(
                             settings.CommunicationTestWhatsAppTemplate,
-                            "Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.",
-                            BuildCommunicationTestPlaceholders("WhatsApp", "WebAdmin operator", DateTime.UtcNow, settings.CommunicationTestWhatsAppRecipientE164 ?? "+4915112345678", "Ready")),
-                        "Darwin WhatsApp transport test requested by WebAdmin operator."),
+                            T("CommunicationTemplateInventoryAdminTestWhatsAppBodyFallback"),
+                            BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("WhatsApp"), T("CommunicationChannelFamilyOperatorPlaceholder"), DateTime.UtcNow, settings.CommunicationTestWhatsAppRecipientE164 ?? "+4915112345678", T("Ready"))),
+                        T("CommunicationChannelFamilyAdminTestWhatsAppPreviewFallback")),
                     SupportedTokens = "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
-                    TargetSurface = settings.CommunicationTestWhatsAppRecipientE164 ?? "Reserved test target missing",
-                    PolicyNote = "Operator-only diagnostic traffic. Never use production recipients.",
-                    SafeUsageNote = "Use for provider validation and transport diagnostics only, against the reserved WhatsApp test target.",
-                    RolloutBoundary = "Never switch this family to a live customer recipient or treat it like a production notification path.",
-                    ActionLabel = "Open Test Targets",
+                    TargetSurface = settings.CommunicationTestWhatsAppRecipientE164 ?? T("CommunicationChannelFamilyReservedTestTargetMissing"),
+                    PolicyNote = T("CommunicationChannelFamilyAdminTestPolicyNote"),
+                    SafeUsageNote = T("CommunicationChannelFamilyAdminTestWhatsAppSafeUsage"),
+                    RolloutBoundary = T("CommunicationChannelFamilyAdminTestRolloutBoundary"),
+                    ActionLabel = T("CommunicationChannelFamilyOpenTestTargetsAction"),
                     ActionTarget = "SiteSettings",
                     ActionFragment = "site-settings-communications-policy"
                 });
             }
 
             return families;
+        }
+
+        private string DescribePreferredPhoneVerificationChannel(string? preferredChannel)
+        {
+            return string.Equals(preferredChannel, "WhatsApp", StringComparison.OrdinalIgnoreCase)
+                ? DescribeCommunicationChannel("WhatsApp")
+                : DescribeCommunicationChannel("SMS");
+        }
+
+        private string DescribeCommunicationChannel(string? channel)
+        {
+            return channel switch
+            {
+                "Email" => T("CommunicationBuiltInFlowEmailChannel"),
+                "WhatsApp" => T("BusinessCommunicationWhatsAppShort"),
+                _ => T("BusinessCommunicationSmsShort")
+            };
+        }
+
+        private string DescribeDeliveryStatus(string? status)
+        {
+            return status switch
+            {
+                "Sent" => T("Sent"),
+                "Failed" => T("Failed"),
+                "Pending" => T("Pending"),
+                _ => T("CommonUnclassified")
+            };
+        }
+
+        private string DescribeBuiltInFlowChannel(string? channelGroup)
+        {
+            return channelGroup switch
+            {
+                "Email" => DescribeCommunicationChannel("Email"),
+                "SmsWhatsApp" => T("CommunicationBuiltInFlowSmsWhatsAppChannel"),
+                "EmailSmsWhatsApp" => T("CommunicationBuiltInFlowEmailSmsWhatsAppChannel"),
+                "EmailSmsWhatsAppCompact" => T("CommunicationBuiltInFlowEmailSmsWhatsAppCompactChannel"),
+                _ => T("CommonUnclassified")
+            };
         }
 
         private static Dictionary<string, string?> BuildPhoneVerificationPlaceholders(
@@ -1843,34 +1897,34 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
         }
 
-        private static List<string> BuildActiveFlowNames(BusinessCommunicationProfileDto profile)
+        private List<string> BuildActiveFlowNames(BusinessCommunicationProfileDto profile)
         {
             var flows = new List<string>();
 
             if (profile.OpenInvitationCount > 0)
             {
-                flows.Add("Business Invitation");
+                flows.Add(T("CommunicationDetailsActiveFlowInvitation"));
             }
 
             if (profile.PendingActivationMemberCount > 0)
             {
-                flows.Add("Account Activation");
+                flows.Add(T("CommunicationDetailsActiveFlowActivation"));
             }
 
             if (profile.CustomerEmailNotificationsEnabled)
             {
-                flows.Add("Password Reset / Transactional Email Readiness");
+                flows.Add(T("CommunicationDetailsActiveFlowPasswordReset"));
             }
 
             if (profile.OperationalAlertEmailsEnabled)
             {
-                flows.Add("Admin Alerts");
+                flows.Add(T("CommunicationDetailsActiveFlowAdminAlerts"));
             }
 
             return flows;
         }
 
-        private static List<string> BuildReadinessIssues(
+        private List<string> BuildReadinessIssues(
             BusinessCommunicationProfileDto profile,
             bool emailTransportConfigured,
             bool adminAlertRoutingConfigured)
@@ -1879,38 +1933,38 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             if (profile.MissingSupportEmail)
             {
-                issues.Add("Business support email is missing.");
+                issues.Add(T("CommunicationDetailsReadinessIssueMissingSupportEmail"));
             }
 
             if (profile.MissingSenderIdentity)
             {
-                issues.Add("Sender name or reply-to email is incomplete.");
+                issues.Add(T("CommunicationDetailsReadinessIssueMissingSenderIdentity"));
             }
 
             if ((profile.CustomerEmailNotificationsEnabled || profile.CustomerMarketingEmailsEnabled) && !emailTransportConfigured)
             {
-                issues.Add("Email policies are enabled, but global SMTP transport is not fully configured.");
+                issues.Add(T("CommunicationDetailsReadinessIssueMissingSmtp"));
             }
 
             if (profile.OperationalAlertEmailsEnabled && !adminAlertRoutingConfigured)
             {
-                issues.Add("Operational alerts are enabled, but global admin alert routing is not configured.");
+                issues.Add(T("CommunicationDetailsReadinessIssueMissingAdminRouting"));
             }
 
             if (string.Equals(profile.OperationalStatus, "PendingApproval", System.StringComparison.OrdinalIgnoreCase))
             {
-                issues.Add("Business is still pending approval; communication readiness should be reviewed before go-live.");
+                issues.Add(T("CommunicationDetailsReadinessIssuePendingApproval"));
             }
 
             if (!profile.IsActive)
             {
-                issues.Add("Business is inactive; communication settings may be complete but operational use is currently blocked.");
+                issues.Add(T("CommunicationDetailsReadinessIssueInactive"));
             }
 
             return issues;
         }
 
-        private static List<string> BuildRecommendedActions(
+        private List<string> BuildRecommendedActions(
             BusinessCommunicationProfileDto profile,
             bool emailTransportConfigured,
             bool adminAlertRoutingConfigured)
@@ -1919,113 +1973,270 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             if (profile.MissingSupportEmail || profile.MissingSenderIdentity)
             {
-                actions.Add("Open business setup and complete support email, sender name, and reply-to defaults.");
+                actions.Add(T("CommunicationDetailsRecommendedActionCompleteBusinessDefaults"));
             }
 
             if ((profile.CustomerEmailNotificationsEnabled || profile.CustomerMarketingEmailsEnabled) && !emailTransportConfigured)
             {
-                actions.Add("Open global SMTP settings before relying on transactional or marketing email for this business.");
+                actions.Add(T("CommunicationDetailsRecommendedActionOpenSmtp"));
             }
 
             if (profile.OperationalAlertEmailsEnabled && !adminAlertRoutingConfigured)
             {
-                actions.Add("Configure admin alert routing so business operational alerts have a real escalation target.");
+                actions.Add(T("CommunicationDetailsRecommendedActionConfigureAdminRouting"));
             }
 
             if (profile.PendingActivationMemberCount > 0)
             {
-                actions.Add("Review business members and send activation email or confirm email where policy allows.");
+                actions.Add(T("CommunicationDetailsRecommendedActionReviewMembers"));
             }
 
             if (profile.OpenInvitationCount > 0)
             {
-                actions.Add("Review open invitations and resend or revoke stale invites before go-live.");
+                actions.Add(T("CommunicationDetailsRecommendedActionReviewInvitations"));
             }
 
             if (profile.LockedMemberCount > 0)
             {
-                actions.Add("Review locked members and unlock only after support validation.");
+                actions.Add(T("CommunicationDetailsRecommendedActionReviewLockedMembers"));
             }
 
             if (string.Equals(profile.OperationalStatus, "PendingApproval", System.StringComparison.OrdinalIgnoreCase))
             {
-                actions.Add("Complete communication setup before approving the business for live operations.");
+                actions.Add(T("CommunicationDetailsRecommendedActionCompleteBeforeApproval"));
             }
 
             if (actions.Count == 0)
             {
-                actions.Add("No immediate operator action is recommended from communication readiness alone.");
+                actions.Add(T("CommunicationDetailsRecommendedActionNoImmediateAction"));
             }
 
             return actions;
         }
 
-        private static string BuildAuditRecommendedAction(EmailDispatchAuditListItemDto item)
+        private string BuildAuditRecommendedAction(EmailDispatchAuditListItemDto item)
         {
             if (string.Equals(item.Status, "Sent", System.StringComparison.OrdinalIgnoreCase))
             {
-                return "No immediate operator action required.";
+                return T("CommunicationAuditRecommendedActionNoImmediateAction");
             }
 
             if (string.Equals(item.FlowKey, "BusinessInvitation", System.StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Check SMTP readiness, then use controlled retry or open the recipient-scoped invitation queue for resend/revoke from the business workspace."
-                    : "Check SMTP readiness, then review the invitation source before retrying.";
+                    ? T("CommunicationAuditRecommendedActionInvitationBusiness")
+                    : T("CommunicationAuditRecommendedActionInvitationGeneric");
             }
 
             if (string.Equals(item.FlowKey, "AccountActivation", System.StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Check SMTP readiness, then use controlled retry or open member support or the user queue with the failed recipient prefilled before sending activation support."
-                    : "Check SMTP readiness, then use controlled retry, self-service resend activation, or admin activation support as policy allows.";
+                    ? T("CommunicationAuditRecommendedActionActivationBusiness")
+                    : T("CommunicationAuditRecommendedActionActivationGeneric");
             }
 
             if (string.Equals(item.FlowKey, "PasswordReset", System.StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Check SMTP readiness, then use controlled retry or open member support or the user queue with the failed recipient prefilled and reissue reset only after support validation."
-                    : "Check SMTP readiness, then use controlled retry or reissue password reset only after support validation.";
+                    ? T("CommunicationAuditRecommendedActionPasswordResetBusiness")
+                    : T("CommunicationAuditRecommendedActionPasswordResetGeneric");
             }
 
-            return "Review global transport readiness and the source workflow before attempting manual intervention.";
+            return T("CommunicationAuditRecommendedActionGeneric");
         }
 
-        private static List<CommunicationFlowPlaybookVm> BuildAuditPlaybooks()
+        private string BuildChannelAuditActionPolicyState(string? state)
+        {
+            return state switch
+            {
+                "Canonical flow" => T("CommunicationChannelActionPolicyCanonicalFlow"),
+                "Cooldown" => T("CommunicationChannelActionPolicyCooldown"),
+                "Retry ready" => T("CommunicationChannelActionPolicyRetryReady"),
+                "Ready" => T("CommunicationChannelActionPolicyReady"),
+                "Unsupported" => T("CommunicationChannelActionPolicyUnsupported"),
+                _ => state ?? string.Empty
+            };
+        }
+
+        private string? BuildChannelAuditActionBlockedReason(ChannelDispatchAuditListItemDto item)
+        {
+            if (string.IsNullOrWhiteSpace(item.ActionBlockedReason))
+            {
+                return item.ActionBlockedReason;
+            }
+
+            if (string.Equals(item.FlowKey, "PhoneVerification", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return T("CommunicationChannelActionBlockedCanonicalFlow");
+            }
+
+            if (string.Equals(item.ActionPolicyState, "Cooldown", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return T("CommunicationChannelActionBlockedCooldown");
+            }
+
+            if (string.Equals(item.ActionPolicyState, "Unsupported", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return T("CommunicationChannelActionBlockedUnsupported");
+            }
+
+            return item.ActionBlockedReason;
+        }
+
+        private string? BuildChannelAuditEscalationReason(ChannelDispatchAuditListItemDto item)
+        {
+            if (string.IsNullOrWhiteSpace(item.EscalationReason))
+            {
+                return item.EscalationReason;
+            }
+
+            if (string.Equals(item.FlowKey, "PhoneVerification", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return T("CommunicationChannelEscalationPhoneVerification");
+            }
+
+            if (string.Equals(item.FlowKey, "AdminCommunicationTest", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return T("CommunicationChannelEscalationAdminTest");
+            }
+
+            return item.EscalationReason;
+        }
+
+        private string BuildChannelProviderRecommendedAction(string recommendedAction)
+        {
+            return recommendedAction switch
+            {
+                "Review SMS/WhatsApp readiness, fallback policy, and current verification channel choice before issuing another canonical verification code." => T("CommunicationChannelProviderRecommendedVerificationElevated"),
+                "Keep verification traffic on the canonical flow, then review recent provider failures before switching channel policy or escalating." => T("CommunicationChannelProviderRecommendedVerificationStable"),
+                "Correct provider credentials, sender identity, or reserved test-target setup before rerunning more diagnostics on this lane." => T("CommunicationChannelProviderRecommendedAdminTestElevated"),
+                "Use the reserved test target for a controlled rerun only after checking provider config and template state." => T("CommunicationChannelProviderRecommendedAdminTestStable"),
+                "Review the pending and failed traffic in this provider lane before taking another manual action." => T("CommunicationChannelProviderRecommendedGenericPending"),
+                "Review recent failures in this provider lane before escalating." => T("CommunicationChannelProviderRecommendedGenericStable"),
+                _ => recommendedAction
+            };
+        }
+
+        private string BuildChannelProviderEscalationHint(string escalationHint)
+        {
+            return escalationHint switch
+            {
+                "Escalate as provider or channel-policy instability if verification traffic continues to fail without any successful recovery in this provider lane." => T("CommunicationChannelProviderEscalationVerificationElevated"),
+                "Escalate only if the provider lane keeps degrading after readiness, fallback, and current phone verification path have been checked." => T("CommunicationChannelProviderEscalationVerificationStable"),
+                "Escalate as provider/configuration debt when this diagnostic lane keeps failing without a successful send." => T("CommunicationChannelProviderEscalationAdminTestElevated"),
+                "Escalate only when repeated transport-test failures continue after configuration corrections." => T("CommunicationChannelProviderEscalationAdminTestStable"),
+                "Escalate this provider lane if failures keep accumulating without recovery." => T("CommunicationChannelProviderEscalationGenericElevated"),
+                "Escalate only if this provider lane continues degrading after basic transport checks." => T("CommunicationChannelProviderEscalationGenericStable"),
+                _ => escalationHint
+            };
+        }
+
+        private string BuildChannelChainRecommendedAction(string recommendedAction)
+        {
+            return recommendedAction switch
+            {
+                "Do not replay historical verification messages. If the user is still blocked, confirm the current phone number and request a fresh code through the canonical verification flow." => T("CommunicationChannelChainRecommendedVerificationRecovered"),
+                "Do not replay historical verification messages. Confirm the current phone number, review preferred-vs-fallback channel policy, then request a fresh code through the canonical verification flow." => T("CommunicationChannelChainRecommendedVerificationBlocked"),
+                "Rerun diagnostics only to the reserved channel test target after correcting provider settings, templates, or channel policy." => T("CommunicationChannelChainRecommendedAdminTest"),
+                "Review the latest pending or failed non-email attempts before taking manual action." => T("CommunicationChannelChainRecommendedGenericPending"),
+                "Review recent non-email delivery history before escalating." => T("CommunicationChannelChainRecommendedGenericStable"),
+                _ => recommendedAction
+            };
+        }
+
+        private string BuildChannelChainEscalationHint(string escalationHint)
+        {
+            return escalationHint switch
+            {
+                "Repeated verification failures without a successful send indicate a likely transport or channel-policy issue. Escalate after confirming SMS/WhatsApp readiness and fallback policy." => T("CommunicationChannelChainEscalationVerificationBlocked"),
+                "Escalate only if the canonical verification flow keeps failing after channel readiness and policy have been checked." => T("CommunicationChannelChainEscalationVerificationStable"),
+                "Repeated admin-test failures without any successful send suggest provider/configuration debt. Escalate as transport setup or provider issue instead of repeatedly rerunning tests." => T("CommunicationChannelChainEscalationAdminTestBlocked"),
+                "If a rerun succeeds, treat this as an isolated incident. Escalate only when repeated failures continue after config fixes." => T("CommunicationChannelChainEscalationAdminTestStable"),
+                "Escalate only if the chain continues to fail after a previously successful path has been revalidated." => T("CommunicationChannelChainEscalationGenericRecovered"),
+                "Escalate when the same non-email path fails repeatedly without a verified successful send." => T("CommunicationChannelChainEscalationGenericBlocked"),
+                _ => escalationHint
+            };
+        }
+
+        private string BuildEmailAuditChainStatusMix(string? statusMix)
+        {
+            return statusMix switch
+            {
+                "Mixed success/failure" => T("CommunicationChainStatusMixed"),
+                "Open failure chain" => T("CommunicationChainStatusOpenFailure"),
+                "Failure-only chain" => T("CommunicationChainStatusFailureOnly"),
+                "Pending-only chain" => T("CommunicationChainStatusPendingOnly"),
+                "Success-only chain" => T("CommunicationChainStatusSuccessOnly"),
+                "Single attempt" => T("CommunicationChainStatusSingleAttempt"),
+                _ => statusMix ?? string.Empty
+            };
+        }
+
+        private string? BuildEmailAuditRetryBlockedReason(EmailDispatchAuditListItemDto item)
+        {
+            if (string.IsNullOrWhiteSpace(item.RetryBlockedReason))
+            {
+                return item.RetryBlockedReason;
+            }
+
+            if (string.Equals(item.RetryPolicyState, "Unsupported", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return T("CommunicationEmailRetryBlockedUnsupported");
+            }
+
+            if (string.Equals(item.RetryPolicyState, "Closed", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return T("CommunicationEmailRetryBlockedClosed");
+            }
+
+            if (string.Equals(item.RetryPolicyState, "RateLimited", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Format(CultureInfo.InvariantCulture, T("CommunicationEmailRetryBlockedRateLimited"), item.RecentAttemptCount24h);
+            }
+
+            if (string.Equals(item.RetryPolicyState, "Cooldown", System.StringComparison.OrdinalIgnoreCase) && item.RetryAvailableAtUtc.HasValue)
+            {
+                return string.Format(CultureInfo.InvariantCulture, T("CommunicationEmailRetryBlockedCooldownUntil"), item.RetryAvailableAtUtc.Value);
+            }
+
+            return item.RetryBlockedReason;
+        }
+
+        private List<CommunicationFlowPlaybookVm> BuildAuditPlaybooks()
         {
             return new List<CommunicationFlowPlaybookVm>
             {
                 new()
                 {
                     FlowKey = "BusinessInvitation",
-                    Title = "Invitation failures",
-                    ScopeNote = "Use business-scoped invitation actions only.",
-                    AllowedAction = "Check SMTP readiness, then use controlled retry from the audit row or open the business invitation workspace and resend or revoke the invitation.",
-                    EscalationRule = "If repeated failures continue after transport readiness is green, treat it as communication-platform debt instead of repeatedly sending the same invitation."
+                    Title = T("CommunicationAuditPlaybookInvitationTitle"),
+                    ScopeNote = T("CommunicationAuditPlaybookInvitationScope"),
+                    AllowedAction = T("CommunicationAuditPlaybookInvitationAllowedAction"),
+                    EscalationRule = T("CommunicationAuditPlaybookInvitationEscalation")
                 },
                 new()
                 {
                     FlowKey = "AccountActivation",
-                    Title = "Activation failures",
-                    ScopeNote = "Prefer self-service resend; admin override only where current policy allows.",
-                    AllowedAction = "Check SMTP readiness, then use controlled retry or direct the user to resend activation from login or use the admin activation-support action.",
-                    EscalationRule = "Do not silently bypass confirmation policy. If failures persist after resend, escalate as auth/communication troubleshooting."
+                    Title = T("CommunicationAuditPlaybookActivationTitle"),
+                    ScopeNote = T("CommunicationAuditPlaybookActivationScope"),
+                    AllowedAction = T("CommunicationAuditPlaybookActivationAllowedAction"),
+                    EscalationRule = T("CommunicationAuditPlaybookActivationEscalation")
                 },
                 new()
                 {
                     FlowKey = "PasswordReset",
-                    Title = "Password reset failures",
-                    ScopeNote = "Reset support must stay identity-safe.",
-                    AllowedAction = "Validate the requester first, then use controlled retry or reissue password reset only after support validation and transport checks.",
-                    EscalationRule = "Avoid repeated resets without user verification. Persistent failures should be escalated as communication or account-lifecycle issues."
+                    Title = T("CommunicationAuditPlaybookPasswordResetTitle"),
+                    ScopeNote = T("CommunicationAuditPlaybookPasswordResetScope"),
+                    AllowedAction = T("CommunicationAuditPlaybookPasswordResetAllowedAction"),
+                    EscalationRule = T("CommunicationAuditPlaybookPasswordResetEscalation")
                 },
                 new()
                 {
                     FlowKey = "AdminCommunicationTest",
-                    Title = "Communication test failures",
-                    ScopeNote = "Use this only for operator-side transport validation.",
-                    AllowedAction = "Check SMTP and test-inbox settings, then rerun the test email from the communication workspace after configuration is corrected.",
-                    EscalationRule = "Do not send repeated test emails to production recipients. Keep tests scoped to the configured test inbox."
+                    Title = T("CommunicationAuditPlaybookAdminTestTitle"),
+                    ScopeNote = T("CommunicationAuditPlaybookAdminTestScope"),
+                    AllowedAction = T("CommunicationAuditPlaybookAdminTestAllowedAction"),
+                    EscalationRule = T("CommunicationAuditPlaybookAdminTestEscalation")
                 }
             };
         }

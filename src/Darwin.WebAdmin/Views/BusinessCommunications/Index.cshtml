@@ -2,6 +2,42 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CommunicationOpsTitle");
+
+    string FlowLabel(string? flowKey) => flowKey switch
+    {
+        "BusinessInvitation" => T.T("CommunicationDetailsActiveFlowInvitation"),
+        "AccountActivation" => T.T("CommunicationDetailsActiveFlowActivation"),
+        "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
+        "AdminCommunicationTest" => T.T("CommunicationTemplateInventoryAdminTestFlow"),
+        "PhoneVerification" => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
+        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : flowKey
+    };
+
+    string DeliveryStatusLabel(string? status) => status switch
+    {
+        "Sent" => T.T("Sent"),
+        "Failed" => T.T("Failed"),
+        "Pending" => T.T("Pending"),
+        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : status
+    };
+
+    string SeverityLabel(string? severity) => severity switch
+    {
+        "High" => T.T("High"),
+        "Medium" => T.T("Medium"),
+        "Watch" => T.T("Watch"),
+        "Slow" => T.T("Slow"),
+        "Normal" => T.T("Normal"),
+        _ => string.IsNullOrWhiteSpace(severity) ? T.T("CommonUnclassified") : severity
+    };
+
+    string ChannelLabel(string? channel) => channel switch
+    {
+        "SMS" => T.T("BusinessCommunicationSmsShort"),
+        "WhatsApp" => T.T("BusinessCommunicationWhatsAppShort"),
+        "Email" => T.T("CommunicationBuiltInFlowEmailChannel"),
+        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : channel
+    };
 }
 
 <div id="business-communications-workspace-shell">
@@ -30,12 +66,12 @@
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("SMS")</a>
+           hx-push-url="true">@ChannelLabel("SMS")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
-           hx-push-url="true">@T.T("WhatsApp")</a>
+           hx-push-url="true">@ChannelLabel("WhatsApp")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
            hx-target="#business-communications-workspace-shell"
@@ -256,21 +292,21 @@
                     {
                         <tr>
                             <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td><span class="badge text-bg-light">@item.Channel</span> <span class="small text-muted">@item.Provider</span></td>
-                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</td>
+                            <td><span class="badge text-bg-light">@ChannelLabel(item.Channel)</span> <span class="small text-muted">@item.Provider</span></td>
+                            <td>@FlowLabel(item.FlowKey)</td>
                             <td>@item.RecipientAddress</td>
                             <td>
                                 @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-success">@T.T("Sent")</span>
+                                    <span class="badge text-bg-success">@DeliveryStatusLabel("Sent")</span>
                                 }
                                 else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-danger">@T.T("Failed")</span>
+                                    <span class="badge text-bg-danger">@DeliveryStatusLabel("Failed")</span>
                                 }
                                 else
                                 {
-                                    <span class="badge text-bg-secondary">@item.Status</span>
+                                    <span class="badge text-bg-secondary">@DeliveryStatusLabel(item.Status)</span>
                                 }
                             </td>
                             <td>
@@ -327,7 +363,7 @@
                     {
                         <tr>
                             <td class="fw-semibold">@family.FamilyName</td>
-                            <td><span class="badge text-bg-light">@family.Channel</span></td>
+                            <td><span class="badge text-bg-light">@ChannelLabel(family.Channel)</span></td>
                             <td><div class="small">@family.CurrentTemplate</div></td>
                             <td><div class="small text-body-secondary">@family.ExamplePreview</div></td>
                             <td><code>@family.SupportedTokens</code></td>
@@ -349,13 +385,13 @@
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@family.ActionLabel</a>
-                                    @if (string.Equals(family.FamilyName, "Phone Verification", StringComparison.OrdinalIgnoreCase))
+                                    @if (string.Equals(family.FamilyKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
                                     {
                                         <a asp-action="ChannelAudits"
                                            asp-route-phoneVerificationOnly="true"
-                                           asp-route-channel="@family.Channel"
+                                           asp-route-channel="@family.ChannelValue"
                                            class="btn btn-sm btn-outline-dark"
-                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, channel = family.Channel })"
+                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, channel = family.ChannelValue })"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("BusinessCommunicationOpenVerificationAuditsAction")</a>
@@ -375,17 +411,17 @@
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
                                     }
-                                    else if (string.Equals(family.FamilyName, "Admin Communication Test", StringComparison.OrdinalIgnoreCase))
+                                    else if (string.Equals(family.FamilyKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
                                     {
                                         <a asp-action="ChannelAudits"
                                            asp-route-adminTestOnly="true"
-                                           asp-route-channel="@family.Channel"
+                                           asp-route-channel="@family.ChannelValue"
                                            class="btn btn-sm btn-outline-dark"
-                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, channel = family.Channel })"
+                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, channel = family.ChannelValue })"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("BusinessCommunicationOpenTestAuditsAction")</a>
-                                        @if (string.Equals(family.Channel, "SMS", StringComparison.OrdinalIgnoreCase) && Model.Transport.CanSendTestSms)
+                                        @if (string.Equals(family.ChannelValue, "SMS", StringComparison.OrdinalIgnoreCase) && Model.Transport.CanSendTestSms)
                                         {
                                             <form asp-action="SendTestSms" method="post" class="d-inline"
                                                   hx-post="@Url.Action("SendTestSms", "BusinessCommunications")"
@@ -395,7 +431,7 @@
                                                 <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunSmsTestAction")</button>
                                             </form>
                                         }
-                                        else if (string.Equals(family.Channel, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.Transport.CanSendTestWhatsApp)
+                                        else if (string.Equals(family.ChannelValue, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.Transport.CanSendTestWhatsApp)
                                         {
                                             <form asp-action="SendTestWhatsApp" method="post" class="d-inline"
                                                   hx-post="@Url.Action("SendTestWhatsApp", "BusinessCommunications")"
@@ -636,7 +672,7 @@
                 @foreach (var item in Model.ChannelOperations)
                 {
                     <tr>
-                        <td class="fw-semibold">@item.Channel</td>
+                        <td class="fw-semibold">@ChannelLabel(item.Channel)</td>
                         <td>@item.CurrentState</td>
                         <td>@item.LiveFlows</td>
                         <td>@item.SafeOperatorActions</td>
@@ -760,43 +796,43 @@
                     {
                         <tr>
                             <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? T.T("Unclassified") : item.FlowKey)</td>
+                            <td>@FlowLabel(item.FlowKey)</td>
                             <td>@item.RecipientEmail</td>
                             <td>@item.Subject</td>
                             <td>
                                 @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-success">@T.T("Sent")</span>
+                                    <span class="badge text-bg-success">@DeliveryStatusLabel("Sent")</span>
                                 }
                                 else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-danger">@T.T("Failed")</span>
+                                    <span class="badge text-bg-danger">@DeliveryStatusLabel("Failed")</span>
                                 }
-                                else
-                                {
-                                    <span class="badge text-bg-secondary">@item.Status</span>
-                                }
+                                        else
+                                        {
+                                            <span class="badge text-bg-secondary">@DeliveryStatusLabel(item.Status)</span>
+                                        }
                             </td>
                             <td>
                                 @if (string.Equals(item.Severity, "High", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-danger">@T.T("High")</span>
+                                    <span class="badge text-bg-danger">@SeverityLabel(item.Severity)</span>
                                 }
                                 else if (string.Equals(item.Severity, "Medium", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-warning">@T.T("Medium")</span>
+                                    <span class="badge text-bg-warning">@SeverityLabel(item.Severity)</span>
                                 }
                                 else if (string.Equals(item.Severity, "Watch", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-secondary">@T.T("Watch")</span>
+                                    <span class="badge text-bg-secondary">@SeverityLabel(item.Severity)</span>
                                 }
                                 else if (string.Equals(item.Severity, "Slow", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="badge text-bg-info">@T.T("Slow")</span>
+                                    <span class="badge text-bg-info">@SeverityLabel(item.Severity)</span>
                                 }
                                 else
                                 {
-                                    <span class="badge text-bg-light">@T.T("Normal")</span>
+                                    <span class="badge text-bg-light">@SeverityLabel(item.Severity)</span>
                                 }
                                 <div class="small text-muted mt-1">@string.Format(T.T("CommunicationOpenForMinutes"), item.AttemptAgeMinutes)</div>
                                 @if (item.CompletionLatencySeconds.HasValue)
@@ -972,19 +1008,19 @@
                            hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.Id })"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML">
-                            <i class="fa-solid fa-circle-info"></i> Inspect
+                            <i class="fa-solid fa-circle-info"></i> @T.T("CommunicationInspectProfileAction")
                         </a>
                         <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
                            hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML">
-                            <i class="fa-solid fa-sliders"></i> Open Setup
+                            <i class="fa-solid fa-sliders"></i> @T.T("CommonOpenSetupAction")
                         </a>
                         <a asp-controller="Businesses" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML">
-                            <i class="fa-solid fa-pen"></i> Edit
+                            <i class="fa-solid fa-pen"></i> @T.T("CommonEditBusiness")
                         </a>
                     </td>
                 </tr>

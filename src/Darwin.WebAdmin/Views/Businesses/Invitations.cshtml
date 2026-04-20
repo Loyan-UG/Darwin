@@ -4,6 +4,25 @@
 @{
     ViewData["Title"] = T.T("BusinessInvitationsTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
+
+    string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired => T.T("Expired"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Accepted => T.T("Accepted"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Revoked => T.T("Revoked"),
+        _ => T.T("BusinessInvitationsAllLabel")
+    };
+
+    string InvitationStatusLabel(Darwin.Domain.Enums.BusinessInvitationStatus status) => status switch
+    {
+        Darwin.Domain.Enums.BusinessInvitationStatus.Pending => T.T("Pending"),
+        Darwin.Domain.Enums.BusinessInvitationStatus.Accepted => T.T("Accepted"),
+        Darwin.Domain.Enums.BusinessInvitationStatus.Revoked => T.T("Revoked"),
+        Darwin.Domain.Enums.BusinessInvitationStatus.Expired => T.T("Expired"),
+        _ => T.T("BusinessInvitationsAllLabel")
+    };
 }
 
 <div id="business-invitations-workspace-shell">
@@ -74,7 +93,7 @@
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">@T.T("OpenInvitations")</div>
+            <div class="text-muted small text-uppercase">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</div>
             <div class="fw-semibold mt-1">@Model.Summary.OpenCount</div>
             <div class="mt-2">
                 <a asp-action="Invitations"
@@ -84,13 +103,13 @@
                    hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open })"
                    hx-target="#business-invitations-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("OpenInvitations")</a>
+                   hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</a>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">@T.T("Pending")</div>
+            <div class="text-muted small text-uppercase">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</div>
             <div class="fw-semibold mt-1">@Model.Summary.PendingCount</div>
             <div class="mt-2">
                 <a asp-action="Invitations"
@@ -100,13 +119,13 @@
                    hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                    hx-target="#business-invitations-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("Pending")</a>
+                   hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
-            <div class="text-muted small text-uppercase">@T.T("Expired")</div>
+            <div class="text-muted small text-uppercase">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)</div>
             <div class="fw-semibold mt-1">@Model.Summary.ExpiredCount</div>
             <div class="mt-2">
                 <a asp-action="Invitations"
@@ -116,7 +135,7 @@
                    hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired })"
                    hx-target="#business-invitations-workspace-shell"
                    hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("Expired")</a>
+                   hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)</a>
             </div>
         </div>
     </div>
@@ -278,16 +297,16 @@
                         @switch (item.Status)
                         {
                             case Darwin.Domain.Enums.BusinessInvitationStatus.Pending:
-                                <span class="badge text-bg-primary">@T.T("Pending")</span>
+                                <span class="badge text-bg-primary">@InvitationStatusLabel(item.Status)</span>
                                 break;
                             case Darwin.Domain.Enums.BusinessInvitationStatus.Accepted:
-                                <span class="badge text-bg-success">@T.T("Accepted")</span>
+                                <span class="badge text-bg-success">@InvitationStatusLabel(item.Status)</span>
                                 break;
                             case Darwin.Domain.Enums.BusinessInvitationStatus.Revoked:
-                                <span class="badge text-bg-secondary">@T.T("Revoked")</span>
+                                <span class="badge text-bg-secondary">@InvitationStatusLabel(item.Status)</span>
                                 break;
                             case Darwin.Domain.Enums.BusinessInvitationStatus.Expired:
-                                <span class="badge text-bg-warning">@T.T("Expired")</span>
+                                <span class="badge text-bg-warning">@InvitationStatusLabel(item.Status)</span>
                                 break;
                         }
                     </td>

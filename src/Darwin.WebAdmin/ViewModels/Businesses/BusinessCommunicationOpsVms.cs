@@ -304,7 +304,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
     public sealed class ChannelMessageFamilyVm
     {
         public string FamilyName { get; set; } = string.Empty;
+        public string FamilyKey { get; set; } = string.Empty;
         public string Channel { get; set; } = string.Empty;
+        public string ChannelValue { get; set; } = string.Empty;
         public string CurrentTemplate { get; set; } = string.Empty;
         public string ExamplePreview { get; set; } = string.Empty;
         public string SupportedTokens { get; set; } = string.Empty;
