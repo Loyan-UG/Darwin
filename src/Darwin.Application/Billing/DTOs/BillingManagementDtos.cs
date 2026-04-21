@@ -53,6 +53,8 @@ namespace Darwin.Application.Billing.DTOs
         public PaymentStatus Status { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
+        public string? ProviderPaymentIntentRef { get; set; }
+        public string? ProviderCheckoutSessionRef { get; set; }
         public string? FailureReason { get; set; }
         public DateTime? PaidAtUtc { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -138,6 +140,8 @@ namespace Darwin.Application.Billing.DTOs
         public Guid PaymentId { get; set; }
         public string PaymentProvider { get; set; } = string.Empty;
         public string? PaymentProviderReference { get; set; }
+        public string? PaymentProviderPaymentIntentRef { get; set; }
+        public string? PaymentProviderCheckoutSessionRef { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
@@ -177,6 +181,8 @@ namespace Darwin.Application.Billing.DTOs
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
+        public string? ProviderPaymentIntentRef { get; set; }
+        public string? ProviderCheckoutSessionRef { get; set; }
         public DateTime? PaidAtUtc { get; set; }
     }
 
@@ -202,6 +208,7 @@ namespace Darwin.Application.Billing.DTOs
         public long RefundedAmountMinor { get; set; }
         public long NetCapturedAmountMinor { get; set; }
         public List<PaymentRefundHistoryItemDto> Refunds { get; set; } = new();
+        public List<PaymentProviderEventItemDto> ProviderEvents { get; set; } = new();
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -214,6 +221,15 @@ namespace Darwin.Application.Billing.DTOs
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
+    }
+
+    public sealed class PaymentProviderEventItemDto
+    {
+        public string EventType { get; set; } = string.Empty;
+        public DateTime OccurredAtUtc { get; set; }
+        public string? IdempotencyKey { get; set; }
+        public string CorrelationKind { get; set; } = string.Empty;
+        public string CorrelationReference { get; set; } = string.Empty;
     }
 
     public sealed class FinancialAccountListItemDto

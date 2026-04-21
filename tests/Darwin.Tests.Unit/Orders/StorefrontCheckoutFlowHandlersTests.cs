@@ -32,7 +32,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
         var productId = Guid.NewGuid();
         var taxCategoryId = Guid.NewGuid();
         var dhlMethodId = Guid.NewGuid();
-        var pickupMethodId = Guid.NewGuid();
+        var expressMethodId = Guid.NewGuid();
 
         db.Set<ProductVariant>().Add(new ProductVariant
         {
@@ -94,10 +94,10 @@ public sealed class StorefrontCheckoutFlowHandlersTests
             },
             new ShippingMethod
             {
-                Id = pickupMethodId,
-                Name = "Store Pickup",
-                Carrier = "Darwin",
-                Service = "Pickup",
+                Id = expressMethodId,
+                Name = "DHL Express",
+                Carrier = "DHL",
+                Service = "Express",
                 CountriesCsv = "DE",
                 Currency = "EUR",
                 Rates =
@@ -105,9 +105,9 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                     new ShippingRate
                     {
                         Id = Guid.NewGuid(),
-                        ShippingMethodId = pickupMethodId,
+                        ShippingMethodId = expressMethodId,
                         MaxShipmentMass = 5000,
-                        PriceMinor = 0,
+                        PriceMinor = 990,
                         SortOrder = 1
                     }
                 ]
@@ -135,8 +135,8 @@ public sealed class StorefrontCheckoutFlowHandlersTests
         result.ShipmentMass.Should().Be(1500);
         result.ShippingCountryCode.Should().Be("DE");
         result.ShippingOptions.Should().HaveCount(2);
-        result.SelectedShippingMethodId.Should().Be(pickupMethodId);
-        result.SelectedShippingTotalMinor.Should().Be(0);
+        result.SelectedShippingMethodId.Should().Be(dhlMethodId);
+        result.SelectedShippingTotalMinor.Should().Be(590);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 {
                     Id = paymentId,
                     OrderId = orderId,
-                    Provider = "DarwinCheckout",
+                    Provider = "Stripe",
                     ProviderTransactionRef = "chk_existing",
                     AmountMinor = 2590,
                     Currency = "EUR",
@@ -177,7 +177,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
         {
             OrderId = orderId,
             OrderNumber = "D-20260326-00001",
-            Provider = "DarwinCheckout"
+            Provider = "Stripe"
         }, TestContext.Current.CancellationToken);
 
         result.PaymentId.Should().Be(paymentId);
@@ -206,7 +206,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 {
                     Id = paymentId,
                     OrderId = orderId,
-                    Provider = "DarwinCheckout",
+                    Provider = "Stripe",
                     ProviderTransactionRef = "chk_pending",
                     AmountMinor = 2590,
                     Currency = "EUR",
@@ -266,7 +266,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 {
                     Id = paymentId,
                     OrderId = orderId,
-                    Provider = "DarwinCheckout",
+                    Provider = "Stripe",
                     ProviderTransactionRef = "chk_pending_cancel",
                     AmountMinor = 2590,
                     Currency = "EUR",

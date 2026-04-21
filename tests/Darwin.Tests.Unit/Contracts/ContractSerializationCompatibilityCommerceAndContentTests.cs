@@ -373,7 +373,7 @@ public sealed class ContractSerializationCompatibilityCommerceAndContentTests : 
         {
             OrderId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             PaymentId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            Provider = "DarwinCheckout",
+            Provider = "Stripe",
             ProviderReference = "chk_abc123",
             AmountMinor = 4160,
             Currency = "EUR",
@@ -482,7 +482,7 @@ public sealed class ContractSerializationCompatibilityCommerceAndContentTests : 
                 new StorefrontOrderConfirmationPayment
                 {
                     Id = Guid.Parse("99999999-8888-7777-6666-555555555555"),
-                    Provider = "DarwinCheckout",
+                    Provider = "Stripe",
                     ProviderReference = "chk_abc123",
                     AmountMinor = 4160,
                     Currency = "EUR",

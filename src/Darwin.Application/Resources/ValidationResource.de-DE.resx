@@ -42,6 +42,36 @@
   <data name="AppBootstrapJwtAudienceMissing" xml:space="preserve">
     <value>JwtAudience ist nicht konfiguriert. Das ist eine Server-Fehlkonfiguration.</value>
   </data>
+  <data name="JwtIssuerConfigurationMissing" xml:space="preserve">
+    <value>Der Konfigurationsschlüssel 'Jwt:Issuer' fehlt oder ist leer.</value>
+  </data>
+  <data name="JwtAudienceConfigurationMissing" xml:space="preserve">
+    <value>Der Konfigurationsschlüssel 'Jwt:Audience' fehlt oder ist leer.</value>
+  </data>
+  <data name="JwtSigningKeyConfigurationMissing" xml:space="preserve">
+    <value>Der Konfigurationsschlüssel 'Jwt:SigningKey' fehlt oder ist leer.</value>
+  </data>
+  <data name="JwtValidationSiteSettingsMissing" xml:space="preserve">
+    <value>Die Site-Settings-Zeile wurde nicht gefunden. Die JWT-Validierung kann nicht konfiguriert werden.</value>
+  </data>
+  <data name="JwtValidationDisabled" xml:space="preserve">
+    <value>JWT ist in den Site-Settings deaktiviert.</value>
+  </data>
+  <data name="JwtSigningKeyMissingInSiteSettings" xml:space="preserve">
+    <value>JwtSigningKey fehlt in den Site-Settings.</value>
+  </data>
+  <data name="StorefrontFrontOfficeBaseUrlNotConfigured" xml:space="preserve">
+    <value>Die Front-Office-Basis-URL des Storefront ist nicht konfiguriert.</value>
+  </data>
+  <data name="StorefrontPaymentGatewayBaseUrlNotConfigured" xml:space="preserve">
+    <value>Die Payment-Gateway-Basis-URL des Storefront ist nicht konfiguriert.</value>
+  </data>
+  <data name="StorefrontStripeCheckoutBaseUrlNotConfigured" xml:space="preserve">
+    <value>Die Stripe-Checkout-Basis-URL des Storefront ist nicht konfiguriert.</value>
+  </data>
+  <data name="StorefrontPaymentProviderNotSupported" xml:space="preserve">
+    <value>Es werden nur Stripe-Storefront-Zahlungen unterstuetzt.</value>
+  </data>
   <data name="AppBootstrapQrTokenRefreshInvalid" xml:space="preserve">
     <value>MobileQrTokenRefreshSeconds muss eine positive Ganzzahl sein.</value>
   </data>
@@ -165,6 +195,9 @@
   <data name="ScanSessionTokenRequired" xml:space="preserve">
     <value>ScanSessionToken ist erforderlich.</value>
   </data>
+  <data name="ScanSessionTokenTooLong" xml:space="preserve">
+    <value>ScanSessionToken ist zu lang.</value>
+  </data>
   <data name="PointsPositiveInteger" xml:space="preserve">
     <value>Punkte muessen eine positive ganze Zahl sein.</value>
   </data>
@@ -180,14 +213,59 @@
   <data name="RewardTierIdCannotBeEmpty" xml:space="preserve">
     <value>Die Reward-Tier-Kennung darf nicht leer sein.</value>
   </data>
+  <data name="IdentifierMustNotBeEmpty" xml:space="preserve">
+    <value>Die Kennung darf nicht leer sein.</value>
+  </data>
+  <data name="PageMustBePositiveInteger" xml:space="preserve">
+    <value>Page muss eine positive ganze Zahl sein.</value>
+  </data>
+  <data name="PageSizeMustBeBetween1And200" xml:space="preserve">
+    <value>PageSize muss zwischen 1 und 200 liegen.</value>
+  </data>
+  <data name="PageSizeMustBeBetween1And500" xml:space="preserve">
+    <value>PageSize muss zwischen 1 und 500 liegen.</value>
+  </data>
   <data name="DuplicateVariantLinesNotAllowed" xml:space="preserve">
     <value>Doppelte Variantenzeilen sind nicht erlaubt.</value>
   </data>
   <data name="EitherUserIdOrAnonymousIdRequired" xml:space="preserve">
     <value>Entweder UserId oder AnonymousId muss angegeben werden.</value>
   </data>
+  <data name="VariantIdMustNotBeEmpty" xml:space="preserve">
+    <value>VariantId darf nicht leer sein.</value>
+  </data>
+  <data name="QuantityMustBePositiveInteger" xml:space="preserve">
+    <value>Quantity muss eine positive ganze Zahl sein.</value>
+  </data>
+  <data name="CartItemAddFailed" xml:space="preserve">
+    <value>Der Warenkorbartikel konnte nicht hinzugefügt werden.</value>
+  </data>
+  <data name="CartNotFoundAfterMutation" xml:space="preserve">
+    <value>Der Warenkorb wurde nach der Mutation nicht gefunden.</value>
+  </data>
+  <data name="CartIdAndVariantIdMustNotBeEmpty" xml:space="preserve">
+    <value>CartId und VariantId dürfen nicht leer sein.</value>
+  </data>
+  <data name="CartItemUpdateFailed" xml:space="preserve">
+    <value>Der Warenkorbartikel konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="CouponApplyFailed" xml:space="preserve">
+    <value>Der Gutscheincode konnte nicht angewendet werden.</value>
+  </data>
   <data name="OrderNotFound" xml:space="preserve">
     <value>Bestellung nicht gefunden.</value>
+  </data>
+  <data name="OrderCannotAcceptNewPaymentAttempt" xml:space="preserve">
+    <value>Die Bestellung kann keinen neuen Zahlungsversuch annehmen.</value>
+  </data>
+  <data name="PaymentIntentCreationFailed" xml:space="preserve">
+    <value>Der Payment-Intent konnte nicht erstellt werden.</value>
+  </data>
+  <data name="OrderPlacementFailed" xml:space="preserve">
+    <value>Die Bestellung konnte nicht aufgegeben werden.</value>
+  </data>
+  <data name="PaymentCompletionApplyFailed" xml:space="preserve">
+    <value>Der Zahlungsabschluss konnte nicht angewendet werden.</value>
   </data>
   <data name="PaymentCurrencyMustMatchOrderCurrency" xml:space="preserve">
     <value>Die Zahlungswaehrung muss mit der Bestellwaehrung uebereinstimmen.</value>
@@ -297,6 +375,12 @@
   <data name="CategoryNotFound" xml:space="preserve">
     <value>Kategorie nicht gefunden.</value>
   </data>
+  <data name="ProfileNotFound" xml:space="preserve">
+    <value>Profil nicht gefunden.</value>
+  </data>
+  <data name="PreferencesNotFound" xml:space="preserve">
+    <value>Einstellungen nicht gefunden.</value>
+  </data>
   <data name="PageNotFound" xml:space="preserve">
     <value>Seite nicht gefunden.</value>
   </data>
@@ -314,6 +398,12 @@
   </data>
   <data name="InvoiceNotFound" xml:space="preserve">
     <value>Rechnung nicht gefunden.</value>
+  </data>
+  <data name="InvoiceNotLinkedToOrderPaymentFlow" xml:space="preserve">
+    <value>Die Rechnung ist nicht mit einer Bestellung verknuepft und kann keinen Storefront-Zahlungsablauf oeffnen.</value>
+  </data>
+  <data name="InvoiceCannotAcceptNewPaymentAttempt" xml:space="preserve">
+    <value>Die Rechnung kann keinen neuen Zahlungsversuch annehmen.</value>
   </data>
   <data name="LinkedCustomerNotFound" xml:space="preserve">
     <value>Verknuepfter Kunde nicht gefunden.</value>
@@ -395,6 +485,9 @@
   </data>
   <data name="BrandNotFound" xml:space="preserve">
     <value>Marke nicht gefunden.</value>
+  </data>
+  <data name="BrandSlugMustBeUnique" xml:space="preserve">
+    <value>Der Marken-Slug muss eindeutig sein.</value>
   </data>
   <data name="ProductNotFound" xml:space="preserve">
     <value>Produkt nicht gefunden.</value>
@@ -513,6 +606,9 @@
   <data name="OrderConfirmationContextIsInvalid" xml:space="preserve">
     <value>Der Kontext der Bestellbestaetigung ist ungueltig.</value>
   </data>
+  <data name="OrderConfirmationNotFound" xml:space="preserve">
+    <value>Die Bestellbestaetigung wurde nicht gefunden.</value>
+  </data>
   <data name="PaymentCannotBeInitiatedForCancelledOrRefundedOrder" xml:space="preserve">
     <value>Fuer eine stornierte oder erstattete Bestellung kann keine Zahlung gestartet werden.</value>
   </data>
@@ -593,6 +689,9 @@
   <data name="Unauthorized" xml:space="preserve">
     <value>Nicht autorisiert.</value>
   </data>
+  <data name="UnauthorizedTitle" xml:space="preserve">
+    <value>Nicht autorisiert</value>
+  </data>
   <data name="ConcurrencyConflict" xml:space="preserve">
     <value>Gleichzeitigkeitskonflikt.</value>
   </data>
@@ -608,8 +707,26 @@
   <data name="UserNotAuthenticated" xml:space="preserve">
     <value>Der Benutzer ist nicht authentifiziert.</value>
   </data>
+  <data name="AuthenticatedUserIdentifierNotResolved" xml:space="preserve">
+    <value>Die Benutzerkennung konnte nicht aus dem Zugriffstoken ermittelt werden.</value>
+  </data>
   <data name="ExplicitDeletionConfirmationRequired" xml:space="preserve">
     <value>Eine ausdrueckliche Loeschbestaetigung ist erforderlich.</value>
+  </data>
+  <data name="RowVersionRequiredForOptimisticConcurrency" xml:space="preserve">
+    <value>RowVersion muss fuer optimistische Parallelitaet angegeben werden.</value>
+  </data>
+  <data name="LocaleRequired" xml:space="preserve">
+    <value>Locale muss angegeben werden.</value>
+  </data>
+  <data name="TimezoneRequired" xml:space="preserve">
+    <value>Timezone muss angegeben werden.</value>
+  </data>
+  <data name="CurrencyRequired" xml:space="preserve">
+    <value>Currency muss angegeben werden.</value>
+  </data>
+  <data name="VerificationCodeRequired" xml:space="preserve">
+    <value>Der Verifizierungscode ist erforderlich.</value>
   </data>
   <data name="ActiveUserAccountNotFound" xml:space="preserve">
     <value>Aktives Benutzerkonto nicht gefunden.</value>
@@ -628,6 +745,9 @@
   </data>
   <data name="AddressNotFound" xml:space="preserve">
     <value>Adresse nicht gefunden.</value>
+  </data>
+  <data name="LinkedCustomerContextNotFound" xml:space="preserve">
+    <value>Verknuepfter CRM-Kundenkontext nicht gefunden.</value>
   </data>
   <data name="AddressNotOwnedByUser" xml:space="preserve">
     <value>Adresse nicht gefunden oder gehoert nicht dem Benutzer.</value>
@@ -727,6 +847,9 @@
   </data>
   <data name="RequestPayloadRequired" xml:space="preserve">
     <value>Nutzlast der Anfrage ist erforderlich.</value>
+  </data>
+  <data name="ShippingOptionsCouldNotBeCalculated" xml:space="preserve">
+    <value>Versandoptionen konnten nicht berechnet werden.</value>
   </data>
   <data name="InactiveReminderOutcomeInvalid" xml:space="preserve">
     <value>Das Ergebnis muss einer der folgenden Werte sein: Sent, Failed, Suppressed.</value>
@@ -935,6 +1058,9 @@
   <data name="LoyaltyAccountNotFoundForSpecifiedBusinessAndUser" xml:space="preserve">
     <value>Fuer das angegebene Unternehmen und den Benutzer wurde kein Treuekonto gefunden.</value>
   </data>
+  <data name="LoyaltyDashboardNotFoundForSpecifiedBusinessAndUser" xml:space="preserve">
+    <value>Fuer das angegebene Unternehmen und den Benutzer wurde kein Treue-Dashboard gefunden.</value>
+  </data>
   <data name="RedemptionNotFound" xml:space="preserve">
     <value>Einloesung wurde nicht gefunden.</value>
   </data>
@@ -1010,16 +1136,154 @@
   <data name="SelectedRewardsMissing" xml:space="preserve">
     <value>Die Scan-Sitzung enthaelt keine ausgewaehlten Praemien.</value>
   </data>
+  <data name="SelectedRewardsInvalid" xml:space="preserve">
+    <value>Die ausgewaehlten Praemien sind fuer diese Scan-Sitzung ungueltig.</value>
+  </data>
   <data name="SelectedRewardsNoPointsRequired" xml:space="preserve">
     <value>Die ausgewaehlten Praemien erfordern keine Punkte.</value>
+  </data>
+  <data name="OperationFailed" xml:space="preserve">
+    <value>Der Vorgang ist fehlgeschlagen.</value>
+  </data>
+  <data name="BootstrapRequestFailed" xml:space="preserve">
+    <value>Bootstrap-Anfrage ist fehlgeschlagen.</value>
+  </data>
+  <data name="BootstrapPayloadEmpty" xml:space="preserve">
+    <value>Bootstrap-Nutzlast ist leer. Das ist ein Serverfehler.</value>
   </data>
   <data name="BusinessRequired" xml:space="preserve">
     <value>Unternehmen ist erforderlich.</value>
   </data>
+  <data name="BusinessNameRequired" xml:space="preserve">
+    <value>Der Unternehmensname ist erforderlich.</value>
+  </data>
+  <data name="BusinessCategoryKindInvalid" xml:space="preserve">
+    <value>Die Unternehmenskategorie ist ungueltig. Sie muss einem bekannten Kategorienwert entsprechen.</value>
+  </data>
+  <data name="BusinessMinRatingFiniteRange" xml:space="preserve">
+    <value>MinRating muss eine endliche Zahl zwischen 0 und 5 sein.</value>
+  </data>
+  <data name="BusinessMinRatingRange" xml:space="preserve">
+    <value>MinRating muss zwischen 0 und 5 liegen.</value>
+  </data>
+  <data name="BusinessNearRequiredWhenRadiusProvided" xml:space="preserve">
+    <value>Near muss angegeben werden, wenn RadiusMeters angegeben ist.</value>
+  </data>
+  <data name="BusinessRadiusMetersPositive" xml:space="preserve">
+    <value>RadiusMeters muss null oder eine positive Ganzzahl sein.</value>
+  </data>
+  <data name="BusinessOnboardingPayloadInvalid" xml:space="preserve">
+    <value>Die Unternehmens-Onboarding-Anfrage ist ungültig.</value>
+  </data>
+  <data name="BusinessOwnerMembershipCreateFailed" xml:space="preserve">
+    <value>Die Eigentümermitgliedschaft für das Unternehmen konnte nicht erstellt werden.</value>
+  </data>
+  <data name="MapBoundsRequired" xml:space="preserve">
+    <value>Kartenbegrenzungen sind erforderlich.</value>
+  </data>
+  <data name="BusinessMembershipInactiveAccess" xml:space="preserve">
+    <value>Die Geschaeftsmitgliedschaft fuer diesen Benutzer ist nicht mehr aktiv.</value>
+  </data>
+  <data name="BusinessUserInactiveAccess" xml:space="preserve">
+    <value>Der Benutzerzugang ist derzeit inaktiv.</value>
+  </data>
+  <data name="BusinessEmailConfirmationRequiredAccess" xml:space="preserve">
+    <value>Die E-Mail-Bestaetigung des Benutzers ist weiterhin erforderlich.</value>
+  </data>
+  <data name="BusinessUserLockedAccess" xml:space="preserve">
+    <value>Der Benutzerzugang ist derzeit gesperrt.</value>
+  </data>
+  <data name="BusinessPendingApprovalAccess" xml:space="preserve">
+    <value>Die Freigabe des Geschaefts steht noch aus.</value>
+  </data>
+  <data name="BusinessSuspendedAccess" xml:space="preserve">
+    <value>Der Geschaeftszugang ist derzeit ausgesetzt.</value>
+  </data>
+  <data name="BusinessInactiveAccess" xml:space="preserve">
+    <value>Der Geschaeftszugang ist derzeit inaktiv.</value>
+  </data>
+  <data name="BusinessSetupIncompleteAccess" xml:space="preserve">
+    <value>Die Geschaeftseinrichtung ist noch nicht abgeschlossen.</value>
+  </data>
   <data name="UserRequired" xml:space="preserve">
     <value>Benutzer ist erforderlich.</value>
   </data>
+  <data name="RewardTypeInvalidAllowedValues" xml:space="preserve">
+    <value>RewardType ist ungueltig. Zulaessige Werte: FreeItem, PercentDiscount, AmountDiscount.</value>
+  </data>
+  <data name="LoyaltyRewardTierCreateFailed" xml:space="preserve">
+    <value>Die Loyalty-Belohnungsstufe konnte nicht erstellt werden.</value>
+  </data>
+  <data name="LoyaltyRewardTierUpdateFailed" xml:space="preserve">
+    <value>Die Loyalty-Belohnungsstufe konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="RequestBodyRouteIdMismatch" xml:space="preserve">
+    <value>Der Request-Payload ist erforderlich und die Routen-ID muss mit der Body-ID uebereinstimmen.</value>
+  </data>
+  <data name="BusinessSubscriptionStatusRetrievalFailed" xml:space="preserve">
+    <value>Der Abonnementstatus des Unternehmens konnte nicht abgerufen werden.</value>
+  </data>
+  <data name="SubscriptionCancellationUpdateFailed" xml:space="preserve">
+    <value>Die Einstellung zur Kuendigung am Periodenende konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="CheckoutIntentCreationFailed" xml:space="preserve">
+    <value>Der Checkout-Intent konnte nicht erstellt werden.</value>
+  </data>
+  <data name="BillingCheckoutEndpointNotConfigured" xml:space="preserve">
+    <value>Der Billing-Checkout-Endpunkt ist nicht konfiguriert.</value>
+  </data>
   <data name="LoyaltyAccountAlreadyExistsForMemberInBusiness" xml:space="preserve">
     <value>Fuer dieses Mitglied existiert im ausgewaehlten Unternehmen bereits ein Treuekonto.</value>
+  </data>
+  <data name="StripeWebhookSignatureHeaderRequired" xml:space="preserve">
+    <value>Der Header Stripe-Signature ist erforderlich.</value>
+  </data>
+  <data name="StripeWebhookSecretNotConfigured" xml:space="preserve">
+    <value>Das Stripe-Webhook-Secret ist nicht konfiguriert.</value>
+  </data>
+  <data name="StripeWebhookSignatureInvalid" xml:space="preserve">
+    <value>Die Stripe-Webhook-Signatur ist ungueltig.</value>
+  </data>
+  <data name="StripeWebhookPayloadInvalid" xml:space="preserve">
+    <value>Die Stripe-Webhook-Nutzlast ist ungueltig.</value>
+  </data>
+  <data name="StripeWebhookEventIdRequired" xml:space="preserve">
+    <value>Die Stripe-Webhook-Ereignis-ID ist erforderlich.</value>
+  </data>
+  <data name="StripeWebhookEventTypeRequired" xml:space="preserve">
+    <value>Der Stripe-Webhook-Ereignistyp ist erforderlich.</value>
+  </data>
+  <data name="StripeWebhookProcessingFailed" xml:space="preserve">
+    <value>Die Verarbeitung des Stripe-Webhooks ist fehlgeschlagen.</value>
+  </data>
+  <data name="CarrierEventOccurredAtUtcRequired" xml:space="preserve">
+    <value>occurredAtUtc des Carrier-Ereignisses ist erforderlich.</value>
+  </data>
+  <data name="DhlWebhookAuthenticationNotConfigured" xml:space="preserve">
+    <value>Die DHL-Webhook-Authentifizierung ist nicht konfiguriert.</value>
+  </data>
+  <data name="DhlWebhookPayloadInvalid" xml:space="preserve">
+    <value>Die DHL-Webhook-Nutzlast ist ungueltig.</value>
+  </data>
+  <data name="DhlWebhookApiKeyInvalid" xml:space="preserve">
+    <value>Der DHL-Webhook-API-Schluessel ist ungueltig.</value>
+  </data>
+  <data name="DhlWebhookSignatureInvalid" xml:space="preserve">
+    <value>Die DHL-Webhook-Signatur ist ungueltig.</value>
+  </data>
+  <data name="ShipmentNotFoundForCarrierCallback" xml:space="preserve">
+    <value>Fuer den Carrier-Callback wurde keine Sendung gefunden.</value>
+  </data>
+  <data name="DhlLabelGenerationNotEnabled" xml:space="preserve">
+    <value>Die DHL-Label-Erzeugung ist nicht aktiviert.</value>
+  </data>
+  <data name="DhlLabelGenerationNotConfigured" xml:space="preserve">
+    <value>Die DHL-Label-Erzeugung ist noch nicht vollstaendig konfiguriert.</value>
+  </data>
+  <data name="ShipmentNotFoundForLabelGeneration" xml:space="preserve">
+    <value>Fuer die Label-Erzeugung wurde keine Sendung gefunden.</value>
+  </data>
+  <data name="ShipmentCarrierMustBeDhlForLabelGeneration" xml:space="preserve">
+    <value>Im aktuellen Stand koennen nur DHL-Sendungen Carrier-Label erzeugen.</value>
   </data>
 </root>

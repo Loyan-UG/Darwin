@@ -36,6 +36,59 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
 
 
     [Fact]
+    public void WebApiJwtAndStorefrontInfrastructure_Should_KeepLocalizedConfigurationFailureContractsWired()
+    {
+        var dependencyInjectionSource = ReadWebApiFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+        var jwtProviderSource = ReadWebApiFile(Path.Combine("Security", "JwtSigningParametersProvider.cs"));
+        var storefrontUrlBuilderSource = ReadWebApiFile(Path.Combine("Services", "StorefrontCheckoutUrlBuilder.cs"));
+        var validationResourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.resx"));
+        var germanValidationResourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.de-DE.resx"));
+
+        dependencyInjectionSource.Should().Contain("using Darwin.Application;");
+        dependencyInjectionSource.Should().Contain("using System.Globalization;");
+        dependencyInjectionSource.Should().Contain("using System.Resources;");
+        dependencyInjectionSource.Should().Contain("throw new InvalidOperationException(GetValidationResourceText(\"JwtIssuerConfigurationMissing\"));");
+        dependencyInjectionSource.Should().Contain("throw new InvalidOperationException(GetValidationResourceText(\"JwtAudienceConfigurationMissing\"));");
+        dependencyInjectionSource.Should().Contain("throw new InvalidOperationException(GetValidationResourceText(\"JwtSigningKeyConfigurationMissing\"));");
+        dependencyInjectionSource.Should().Contain("new ResourceManager(\"Darwin.Application.Resources.ValidationResource\", typeof(ValidationResource).Assembly);");
+
+        jwtProviderSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
+        jwtProviderSource.Should().Contain("IStringLocalizer<ValidationResource> validationLocalizer)");
+        jwtProviderSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
+        jwtProviderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"JwtValidationSiteSettingsMissing\"]);");
+        jwtProviderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"JwtValidationDisabled\"]);");
+        jwtProviderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"JwtSigningKeyMissingInSiteSettings\"]);");
+
+        storefrontUrlBuilderSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
+        storefrontUrlBuilderSource.Should().Contain("IStringLocalizer<ValidationResource> validationLocalizer)");
+        storefrontUrlBuilderSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
+        storefrontUrlBuilderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"StorefrontFrontOfficeBaseUrlNotConfigured\"]);");
+        storefrontUrlBuilderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"StorefrontPaymentProviderNotSupported\"]);");
+        storefrontUrlBuilderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"StorefrontStripeCheckoutBaseUrlNotConfigured\"]);");
+
+        validationResourceSource.Should().Contain("<data name=\"JwtIssuerConfigurationMissing\"");
+        validationResourceSource.Should().Contain("<data name=\"JwtAudienceConfigurationMissing\"");
+        validationResourceSource.Should().Contain("<data name=\"JwtSigningKeyConfigurationMissing\"");
+        validationResourceSource.Should().Contain("<data name=\"JwtValidationSiteSettingsMissing\"");
+        validationResourceSource.Should().Contain("<data name=\"JwtValidationDisabled\"");
+        validationResourceSource.Should().Contain("<data name=\"JwtSigningKeyMissingInSiteSettings\"");
+        validationResourceSource.Should().Contain("<data name=\"StorefrontFrontOfficeBaseUrlNotConfigured\"");
+        validationResourceSource.Should().Contain("<data name=\"StorefrontStripeCheckoutBaseUrlNotConfigured\"");
+        validationResourceSource.Should().Contain("<data name=\"StorefrontPaymentProviderNotSupported\"");
+
+        germanValidationResourceSource.Should().Contain("<data name=\"JwtIssuerConfigurationMissing\"");
+        germanValidationResourceSource.Should().Contain("<data name=\"JwtAudienceConfigurationMissing\"");
+        germanValidationResourceSource.Should().Contain("<data name=\"JwtSigningKeyConfigurationMissing\"");
+        germanValidationResourceSource.Should().Contain("<data name=\"JwtValidationSiteSettingsMissing\"");
+        germanValidationResourceSource.Should().Contain("<data name=\"JwtValidationDisabled\"");
+        germanValidationResourceSource.Should().Contain("<data name=\"JwtSigningKeyMissingInSiteSettings\"");
+        germanValidationResourceSource.Should().Contain("<data name=\"StorefrontFrontOfficeBaseUrlNotConfigured\"");
+        germanValidationResourceSource.Should().Contain("<data name=\"StorefrontStripeCheckoutBaseUrlNotConfigured\"");
+        germanValidationResourceSource.Should().Contain("<data name=\"StorefrontPaymentProviderNotSupported\"");
+    }
+
+
+    [Fact]
     public void AuthController_Should_KeepRateLimitedAnonymousLoginAndRefreshEndpoints()
     {
         var source = ReadWebApiFile(Path.Combine("Controllers", "AuthController.cs"));
@@ -143,6 +196,61 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("public async Task<IActionResult> RequestAccountDeletionAsync(");
         source.Should().Contain("[HttpPost(\"me/deletion-request\")]");
         source.Should().Contain("[HttpPost(\"/api/v1/profile/me/deletion-request\")]");
+    }
+
+
+    [Fact]
+    public void ProfileControllers_Should_KeepLocalizedProfileAddressAndDeletionGuardsWired()
+    {
+        var profileSource = ReadWebApiFile(Path.Combine("Controllers", "Profile", "ProfileController.cs"));
+        var addressesSource = ReadWebApiFile(Path.Combine("Controllers", "Profile", "ProfileAddressesController.cs"));
+        var validationResourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.resx"));
+        var validationResourceGermanSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.de-DE.resx"));
+
+        profileSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
+        profileSource.Should().Contain("validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer))");
+        profileSource.Should().Contain("return NotFoundProblem(_validationLocalizer[\"ProfileNotFound\"])");
+        profileSource.Should().Contain("return NotFoundProblem(_validationLocalizer[\"PreferencesNotFound\"])");
+        profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"])");
+        profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"IdentifierMustNotBeEmpty\"])");
+        profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RowVersionRequiredForOptimisticConcurrency\"])");
+        profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LocaleRequired\"])");
+        profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"TimezoneRequired\"])");
+        profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"CurrencyRequired\"])");
+        profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"VerificationCodeRequired\"])");
+        profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ExplicitDeletionConfirmationRequired\"])");
+        profileSource.Should().NotContain("Profile not found.");
+        profileSource.Should().NotContain("Preferences not found.");
+        profileSource.Should().NotContain("Verification code is required.");
+
+        addressesSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
+        addressesSource.Should().Contain("validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer))");
+        addressesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"])");
+        addressesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"AddressIdRequired\"])");
+        addressesSource.Should().Contain("return dto is null ? NotFoundProblem(_validationLocalizer[\"LinkedCustomerNotFound\"]) : Ok(MapCustomer(dto));");
+        addressesSource.Should().Contain("return dto is null ? NotFoundProblem(_validationLocalizer[\"LinkedCustomerContextNotFound\"]) : Ok(MapCustomerContext(dto));");
+        addressesSource.Should().Contain("return address is null ? NotFoundProblem(_validationLocalizer[\"AddressNotFound\"]) : Ok(MapAddress(address));");
+        addressesSource.Should().NotContain("Linked CRM customer not found.");
+        addressesSource.Should().NotContain("Linked CRM customer context not found.");
+        addressesSource.Should().NotContain("Address not found.");
+
+        validationResourceSource.Should().Contain("<data name=\"ProfileNotFound\"");
+        validationResourceSource.Should().Contain("<data name=\"PreferencesNotFound\"");
+        validationResourceSource.Should().Contain("<data name=\"RowVersionRequiredForOptimisticConcurrency\"");
+        validationResourceSource.Should().Contain("<data name=\"LocaleRequired\"");
+        validationResourceSource.Should().Contain("<data name=\"TimezoneRequired\"");
+        validationResourceSource.Should().Contain("<data name=\"CurrencyRequired\"");
+        validationResourceSource.Should().Contain("<data name=\"VerificationCodeRequired\"");
+        validationResourceSource.Should().Contain("<data name=\"LinkedCustomerContextNotFound\"");
+
+        validationResourceGermanSource.Should().Contain("<data name=\"ProfileNotFound\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"PreferencesNotFound\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"RowVersionRequiredForOptimisticConcurrency\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"LocaleRequired\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"TimezoneRequired\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"CurrencyRequired\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"VerificationCodeRequired\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"LinkedCustomerContextNotFound\"");
     }
 
 
@@ -316,6 +424,144 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("public async Task<IActionResult> GetAccessStateAsync(");
         source.Should().Contain("[HttpGet(\"access-state\")]");
         source.Should().Contain("BusinessControllerConventions.TryGetCurrentBusinessId(User, out var businessId)");
+        source.Should().Contain("IStringLocalizer<ValidationResource> validationLocalizer");
+        source.Should().Contain("BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(dto, _validationLocalizer)");
+    }
+
+
+    [Fact]
+    public void BusinessAccessStateAndApiBusinessGates_Should_KeepLocalizedForbiddenContractsWired()
+    {
+        var accessStateSource = ReadApplicationFile(Path.Combine("Businesses", "DTOs", "BusinessAccessDtos.cs"));
+        var localizerSource = ReadWebApiFile(Path.Combine("Controllers", "Businesses", "BusinessAccessStateMessageLocalizer.cs"));
+        var apiControllerBaseSource = ReadWebApiFile(Path.Combine("Controllers", "ApiControllerBase.cs"));
+        var billingSource = ReadWebApiFile(Path.Combine("Controllers", "Billing", "BillingController.cs"));
+        var loyaltySource = ReadWebApiFile(Path.Combine("Controllers", "Business", "BusinessLoyaltyController.cs"));
+        var validationResourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.resx"));
+        var validationResourceGermanSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.de-DE.resx"));
+
+        accessStateSource.Should().Contain("_ when !HasActiveMembership => \"membership_inactive\"");
+        accessStateSource.Should().Contain("_ when !IsUserActive => \"user_inactive\"");
+        accessStateSource.Should().Contain("_ when !IsUserEmailConfirmed => \"email_confirmation_required\"");
+        accessStateSource.Should().Contain("_ when IsUserLockedOut => \"user_locked\"");
+        accessStateSource.Should().Contain("BusinessOperationalStatus.PendingApproval => \"business_pending_approval\"");
+        accessStateSource.Should().Contain("BusinessOperationalStatus.Suspended => \"business_suspended\"");
+        accessStateSource.Should().Contain("_ when !IsActive => \"business_inactive\"");
+        accessStateSource.Should().Contain("_ when !IsSetupComplete => \"setup_incomplete\"");
+        accessStateSource.Should().NotContain("Business approval is still pending.");
+
+        localizerSource.Should().Contain("\"membership_inactive\" => localizer[\"BusinessMembershipInactiveAccess\"]");
+        localizerSource.Should().Contain("\"user_inactive\" => localizer[\"BusinessUserInactiveAccess\"]");
+        localizerSource.Should().Contain("\"email_confirmation_required\" => localizer[\"BusinessEmailConfirmationRequiredAccess\"]");
+        localizerSource.Should().Contain("\"user_locked\" => localizer[\"BusinessUserLockedAccess\"]");
+        localizerSource.Should().Contain("\"business_pending_approval\" => localizer[\"BusinessPendingApprovalAccess\"]");
+        localizerSource.Should().Contain("\"business_suspended\" when !string.IsNullOrWhiteSpace(state.SuspensionReason) => state.SuspensionReason");
+        localizerSource.Should().Contain("\"business_suspended\" => localizer[\"BusinessSuspendedAccess\"]");
+        localizerSource.Should().Contain("\"business_inactive\" => localizer[\"BusinessInactiveAccess\"]");
+        localizerSource.Should().Contain("\"setup_incomplete\" => localizer[\"BusinessSetupIncompleteAccess\"]");
+
+        apiControllerBaseSource.Should().Contain("protected IActionResult ForbiddenProblem(string title = \"Forbidden\", string? detail = null)");
+        billingSource.Should().Contain("ForbiddenProblem(detail: BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(accessState, _validationLocalizer))");
+        loyaltySource.Should().Contain("ForbiddenProblem(detail: BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(accessState, _validationLocalizer))");
+        billingSource.Should().NotContain("Forbid(accessState.BlockingReason)");
+        loyaltySource.Should().NotContain("Forbid(accessState.BlockingReason)");
+
+        validationResourceSource.Should().Contain("<data name=\"BusinessMembershipInactiveAccess\"");
+        validationResourceSource.Should().Contain("<data name=\"BusinessUserInactiveAccess\"");
+        validationResourceSource.Should().Contain("<data name=\"BusinessEmailConfirmationRequiredAccess\"");
+        validationResourceSource.Should().Contain("<data name=\"BusinessUserLockedAccess\"");
+        validationResourceSource.Should().Contain("<data name=\"BusinessPendingApprovalAccess\"");
+        validationResourceSource.Should().Contain("<data name=\"BusinessSuspendedAccess\"");
+        validationResourceSource.Should().Contain("<data name=\"BusinessInactiveAccess\"");
+        validationResourceSource.Should().Contain("<data name=\"BusinessSetupIncompleteAccess\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessMembershipInactiveAccess\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessUserInactiveAccess\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessEmailConfirmationRequiredAccess\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessUserLockedAccess\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessPendingApprovalAccess\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessSuspendedAccess\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessInactiveAccess\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessSetupIncompleteAccess\"");
+    }
+
+
+    [Fact]
+    public void BusinessFacingBillingAndLoyaltyControllers_Should_KeepLocalizedRequestGuardsAndCanonicalScanFailureMappingWired()
+    {
+        var accountSource = ReadWebApiFile(Path.Combine("Controllers", "Business", "BusinessAccountController.cs"));
+        var billingSource = ReadWebApiFile(Path.Combine("Controllers", "Billing", "BillingController.cs"));
+        var loyaltySource = ReadWebApiFile(Path.Combine("Controllers", "Business", "BusinessLoyaltyController.cs"));
+        var validationResourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.resx"));
+        var validationResourceGermanSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.de-DE.resx"));
+
+        accountSource.Should().Contain("BadRequestProblem(_validationLocalizer[\"BusinessRequired\"])");
+        accountSource.Should().Contain("BadRequestProblem(_validationLocalizer[\"UserRequired\"])");
+        accountSource.Should().Contain("NotFoundProblem(_validationLocalizer[\"BusinessNotFound\"])");
+
+        billingSource.Should().Contain("ProblemFromResult(result, _validationLocalizer[\"BusinessSubscriptionStatusRetrievalFailed\"])");
+        billingSource.Should().Contain("BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"])");
+        billingSource.Should().Contain("ProblemFromResult(result, _validationLocalizer[\"SubscriptionCancellationUpdateFailed\"])");
+        billingSource.Should().Contain("ProblemFromResult(validation, _validationLocalizer[\"CheckoutIntentCreationFailed\"])");
+        billingSource.Should().Contain("BadRequestProblem(_validationLocalizer[\"BillingCheckoutEndpointNotConfigured\"])");
+        billingSource.Should().Contain("NotFoundProblem(_validationLocalizer[\"BusinessNotFound\"])");
+        billingSource.Should().NotContain("Failed to retrieve business subscription status.");
+        billingSource.Should().NotContain("Failed to update subscription cancellation preference.");
+        billingSource.Should().NotContain("Unable to create checkout intent.");
+        billingSource.Should().NotContain("Billing checkout endpoint is not configured.");
+
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"])");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"RewardTypeInvalidAllowedValues\"])");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"RewardTierIdCannotBeEmpty\"])");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"LoyaltyProgramNotFound\"])");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierCreateFailed\"], ex.Message)");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierUpdateFailed\"], ex.Message)");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"ScanSessionTokenRequired\"])");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"ScanSessionTokenTooLong\"])");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"PointsPositiveInteger\"])");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"RequestBodyRouteIdMismatch\"])");
+        loyaltySource.Should().Contain("NotFoundProblem(_validationLocalizer[\"BusinessNotFound\"])");
+        loyaltySource.Should().Contain("? _validationLocalizer[\"OperationFailed\"].Value.Trim()");
+        loyaltySource.Should().Contain("return ProblemFromResult(result, _validationLocalizer[\"OperationFailed\"]);");
+        loyaltySource.Should().Contain("\"expired\" or \"scansessiontokenexpired\" => _validationLocalizer[\"ScanSessionTokenExpired\"]");
+        loyaltySource.Should().Contain("\"tokenalreadyconsumed\" or \"scansessiontokenalreadyconsumed\" => _validationLocalizer[\"ScanSessionTokenAlreadyConsumed\"]");
+        loyaltySource.Should().Contain("\"accountnotfound\" or \"scansessiontokennotfound\" or \"loyaltyaccountnotfoundforscansession\" => _validationLocalizer[\"LoyaltyAccountNotFoundForScanSession\"]");
+        loyaltySource.Should().Contain("\"accountnotactive\" => _validationLocalizer[\"LoyaltyAccountInactive\"]");
+        loyaltySource.Should().Contain("\"noselections\" => _validationLocalizer[\"SelectedRewardsMissing\"]");
+        loyaltySource.Should().Contain("\"invalidselections\" => _validationLocalizer[\"SelectedRewardsInvalid\"]");
+        loyaltySource.Should().Contain("\"insufficientpoints\" => _validationLocalizer[\"InsufficientPointsForSelectedRewards\"]");
+        loyaltySource.Should().Contain("private static string NormalizeToken(string value)");
+        loyaltySource.Should().NotContain("Request body is required.");
+        loyaltySource.Should().NotContain("RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.");
+        loyaltySource.Should().NotContain("RewardTierId is required.");
+        loyaltySource.Should().NotContain("No loyalty program was found for the current business.");
+        loyaltySource.Should().NotContain("ScanSessionToken is required.");
+        loyaltySource.Should().NotContain("ScanSessionToken is too long.");
+        loyaltySource.Should().NotContain("Points must be greater than zero.");
+        loyaltySource.Should().NotContain("Request body is required and route id must match body id.");
+
+        validationResourceSource.Should().Contain("<data name=\"ScanSessionTokenTooLong\"");
+        validationResourceSource.Should().Contain("<data name=\"SelectedRewardsInvalid\"");
+        validationResourceSource.Should().Contain("<data name=\"OperationFailed\"");
+        validationResourceSource.Should().Contain("<data name=\"RewardTypeInvalidAllowedValues\"");
+        validationResourceSource.Should().Contain("<data name=\"LoyaltyRewardTierCreateFailed\"");
+        validationResourceSource.Should().Contain("<data name=\"LoyaltyRewardTierUpdateFailed\"");
+        validationResourceSource.Should().Contain("<data name=\"RequestBodyRouteIdMismatch\"");
+        validationResourceSource.Should().Contain("<data name=\"BusinessSubscriptionStatusRetrievalFailed\"");
+        validationResourceSource.Should().Contain("<data name=\"SubscriptionCancellationUpdateFailed\"");
+        validationResourceSource.Should().Contain("<data name=\"CheckoutIntentCreationFailed\"");
+        validationResourceSource.Should().Contain("<data name=\"BillingCheckoutEndpointNotConfigured\"");
+
+        validationResourceGermanSource.Should().Contain("<data name=\"ScanSessionTokenTooLong\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"SelectedRewardsInvalid\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"OperationFailed\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"RewardTypeInvalidAllowedValues\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"LoyaltyRewardTierCreateFailed\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"LoyaltyRewardTierUpdateFailed\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"RequestBodyRouteIdMismatch\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BusinessSubscriptionStatusRetrievalFailed\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"SubscriptionCancellationUpdateFailed\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"CheckoutIntentCreationFailed\"");
+        validationResourceGermanSource.Should().Contain("<data name=\"BillingCheckoutEndpointNotConfigured\"");
     }
 
 
@@ -732,16 +978,24 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
 
         memberOrdersSource.Should().Contain("Payments = dto.Payments.Select(payment => new MemberOrderPayment");
         memberOrdersSource.Should().Contain("CreatedAtUtc = payment.CreatedAtUtc,");
+        memberOrdersSource.Should().Contain("ProviderPaymentIntentReference = payment.ProviderPaymentIntentReference,");
+        memberOrdersSource.Should().Contain("ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionReference,");
         memberOrdersSource.Should().Contain("PaidAtUtc = payment.PaidAtUtc");
 
         publicCheckoutSource.Should().Contain("Payments = confirmation.Payments.Select(payment => new StorefrontOrderConfirmationPayment");
         publicCheckoutSource.Should().Contain("CreatedAtUtc = payment.CreatedAtUtc,");
+        publicCheckoutSource.Should().Contain("ProviderPaymentIntentReference = payment.ProviderPaymentIntentReference,");
+        publicCheckoutSource.Should().Contain("ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionReference,");
         publicCheckoutSource.Should().Contain("PaidAtUtc = payment.PaidAtUtc");
 
         memberOrderContractsSource.Should().Contain("public DateTime CreatedAtUtc { get; set; }");
+        memberOrderContractsSource.Should().Contain("public string? ProviderPaymentIntentReference { get; set; }");
+        memberOrderContractsSource.Should().Contain("public string? ProviderCheckoutSessionReference { get; set; }");
         memberOrderContractsSource.Should().Contain("public DateTime? PaidAtUtc { get; set; }");
 
         storefrontContractsSource.Should().Contain("public DateTime CreatedAtUtc { get; set; }");
+        storefrontContractsSource.Should().Contain("public string? ProviderPaymentIntentReference { get; set; }");
+        storefrontContractsSource.Should().Contain("public string? ProviderCheckoutSessionReference { get; set; }");
         storefrontContractsSource.Should().Contain("public DateTime? PaidAtUtc { get; set; }");
     }
 
@@ -1233,6 +1487,139 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         memberShellSource.Should().Contain("hx-push-url=\"true\">@T.T(\"CommonMembers\")</a>");
         memberShellSource.Should().Contain("hx-push-url=\"true\">@T.T(\"BusinessSupportQueueTitle\")</a>");
         memberShellSource.Should().Contain("hx-push-url=\"true\">@T.T(\"MerchantReadinessTitle\")</a>");
+    }
+
+    [Fact]
+    public void StripeWebhookInfrastructure_Should_KeepVerifiedPublicCallbackAndLifecycleHandlingWired()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "StripeWebhooksController.cs"));
+        var verifierSource = ReadWebApiFile(Path.Combine("Services", "StripeWebhookSignatureVerifier.cs"));
+        var dependencyInjectionSource = ReadWebApiFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+        var handlerSource = ReadApplicationFile(Path.Combine("Billing", "ProcessStripeWebhookHandler.cs"));
+        var dbContextSource = ReadInfrastructureFile(Path.Combine("Persistence", "Db", "DarwinDbContext.cs"));
+
+        controllerSource.Should().Contain("[AllowAnonymous]");
+        controllerSource.Should().Contain("[Route(\"api/v1/public/billing/stripe/webhooks\")]");
+        controllerSource.Should().Contain("[HttpPost(\"/api/v1/billing/stripe/webhooks\")]");
+        controllerSource.Should().Contain("private readonly IAppDbContext _db;");
+        controllerSource.Should().Contain("private readonly GetSiteSettingHandler _getSiteSettingHandler;");
+        controllerSource.Should().Contain("private readonly StripeWebhookSignatureVerifier _signatureVerifier;");
+        controllerSource.Should().Contain("Request.EnableBuffering();");
+        controllerSource.Should().Contain("var signatureHeader = Request.Headers[\"Stripe-Signature\"].ToString();");
+        controllerSource.Should().Contain("siteSetting.StripeWebhookSecret");
+        controllerSource.Should().Contain("_signatureVerifier.TryVerify(rawPayload, signatureHeader, siteSetting.StripeWebhookSecret, out var errorKey)");
+        controllerSource.Should().Contain("_db.Set<ProviderCallbackInboxMessage>()");
+        controllerSource.Should().Contain("Provider = \"Stripe\",");
+        controllerSource.Should().Contain("IdempotencyKey = eventId,");
+        controllerSource.Should().Contain("PayloadJson = rawPayload,");
+        controllerSource.Should().Contain("duplicate = existing,");
+
+        verifierSource.Should().Contain("public sealed class StripeWebhookSignatureVerifier");
+        verifierSource.Should().Contain("private static readonly TimeSpan DefaultTolerance = TimeSpan.FromMinutes(10);");
+        verifierSource.Should().Contain("new HMACSHA256(Encoding.UTF8.GetBytes(secret))");
+        verifierSource.Should().Contain("CryptographicOperations.FixedTimeEquals(computedHash, providedHash)");
+        verifierSource.Should().Contain("keyValue[0], \"v1\"");
+
+        dependencyInjectionSource.Should().Contain("services.TryAddSingleton<StripeWebhookSignatureVerifier>();");
+
+        handlerSource.Should().Contain("public sealed class ProcessStripeWebhookHandler");
+        handlerSource.Should().Contain("_db.Set<EventLog>()");
+        handlerSource.Should().Contain("AnyAsync(x => x.IdempotencyKey == eventId, ct)");
+        handlerSource.Should().Contain("case \"payment_intent.succeeded\":");
+        handlerSource.Should().Contain("case \"charge.refunded\":");
+        handlerSource.Should().Contain("case \"invoice.paid\":");
+        handlerSource.Should().Contain("case \"customer.subscription.updated\":");
+
+        dbContextSource.Should().Contain("public DbSet<ProviderCallbackInboxMessage> ProviderCallbackInboxMessages => Set<ProviderCallbackInboxMessage>();");
+    }
+
+    [Fact]
+    public void DhlWebhookInfrastructure_Should_KeepVerifiedPublicCallbackAndShipmentLifecycleHandlingWired()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "DhlWebhooksController.cs"));
+        var handlerSource = ReadApplicationFile(Path.Combine("Orders", "Commands", "ApplyShipmentCarrierEventHandler.cs"));
+        var validatorSource = ReadApplicationFile(Path.Combine("Orders", "Validators", "OrderValidators.cs"));
+        var contractsSource = ReadContractsFile(Path.Combine("Shipping", "DhlShippingContracts.cs"));
+        var recorderSource = ReadApplicationFile(Path.Combine("Orders", "Commands", "ShipmentCarrierEventRecorder.cs"));
+        var configSource = ReadInfrastructureFile(Path.Combine("Persistence", "Configurations", "Orders", "ShipmentCarrierEventConfiguration.cs"));
+        var dbContextSource = ReadInfrastructureFile(Path.Combine("Persistence", "Db", "DarwinDbContext.cs"));
+        var inboxConfigSource = ReadInfrastructureFile(Path.Combine("Persistence", "Configurations", "Integration", "ProviderCallbackInboxMessageConfiguration.cs"));
+        var shipmentProviderOperationConfigSource = ReadInfrastructureFile(Path.Combine("Persistence", "Configurations", "Integration", "ShipmentProviderOperationConfiguration.cs"));
+
+        controllerSource.Should().Contain("[AllowAnonymous]");
+        controllerSource.Should().Contain("[Route(\"api/v1/public/shipping/dhl/webhooks\")]");
+        controllerSource.Should().Contain("[HttpPost(\"/api/v1/shipping/dhl/webhooks\")]");
+        controllerSource.Should().Contain("private readonly IAppDbContext _db;");
+        controllerSource.Should().Contain("private readonly GetSiteSettingHandler _getSiteSettingHandler;");
+        controllerSource.Should().Contain("Request.EnableBuffering();");
+        controllerSource.Should().Contain("var apiKeyHeader = Request.Headers[\"X-DHL-Key\"].ToString();");
+        controllerSource.Should().Contain("var signatureHeader = Request.Headers[\"X-DHL-Signature\"].ToString();");
+        controllerSource.Should().Contain("TryVerifySignature(rawPayload, signatureHeader, siteSetting.DhlApiSecret)");
+        controllerSource.Should().Contain("var idempotencyKey = BuildIdempotencyKey(request);");
+        controllerSource.Should().Contain("_db.Set<ProviderCallbackInboxMessage>()");
+        controllerSource.Should().Contain("Provider = \"DHL\",");
+        controllerSource.Should().Contain("IdempotencyKey = idempotencyKey,");
+        controllerSource.Should().Contain("PayloadJson = rawPayload,");
+        controllerSource.Should().Contain("duplicate = existing,");
+        controllerSource.Should().Contain("private static string BuildIdempotencyKey(DhlShipmentCallbackRequest request)");
+        controllerSource.Should().Contain("request.OccurredAtUtc.ToUniversalTime().ToString(\"O\")");
+
+        handlerSource.Should().Contain("public sealed class ApplyShipmentCarrierEventHandler");
+        handlerSource.Should().Contain("FirstOrDefaultAsync(");
+        handlerSource.Should().Contain("x.ProviderShipmentReference == dto.ProviderShipmentReference");
+        handlerSource.Should().Contain("x.Carrier == dto.Carrier");
+        handlerSource.Should().Contain("var normalizedEventKey = dto.CarrierEventKey.Trim();");
+        handlerSource.Should().Contain("shipment.LastCarrierEventKey = normalizedEventKey;");
+        handlerSource.Should().Contain("ResolveStatus(dto.ProviderStatus, dto.CarrierEventKey)");
+        handlerSource.Should().Contain("await ShipmentCarrierEventRecorder.AddIfMissingAsync(");
+        handlerSource.Should().Contain("var normalizedExceptionCode = string.IsNullOrWhiteSpace(dto.ExceptionCode) ? null : dto.ExceptionCode.Trim();");
+        handlerSource.Should().Contain("var normalizedExceptionMessage = string.IsNullOrWhiteSpace(dto.ExceptionMessage) ? null : dto.ExceptionMessage.Trim();");
+        handlerSource.Should().Contain("return ShipmentStatus.Delivered;");
+        handlerSource.Should().Contain("return ShipmentStatus.Returned;");
+        handlerSource.Should().Contain("shipment.ShippedAtUtc ??= dto.OccurredAtUtc;");
+        handlerSource.Should().Contain("shipment.DeliveredAtUtc ??= dto.OccurredAtUtc;");
+
+        recorderSource.Should().Contain("internal static class ShipmentCarrierEventRecorder");
+        recorderSource.Should().Contain("db.Set<ShipmentCarrierEvent>()");
+        recorderSource.Should().Contain("x.ShipmentId == shipment.Id");
+        recorderSource.Should().Contain("x.CarrierEventKey == normalizedEventKey");
+        recorderSource.Should().Contain("string? exceptionCode = null,");
+        recorderSource.Should().Contain("string? exceptionMessage = null,");
+        recorderSource.Should().Contain("existing.ExceptionCode = normalizedExceptionCode;");
+        recorderSource.Should().Contain("existing.ExceptionMessage = normalizedExceptionMessage;");
+        recorderSource.Should().Contain("ExceptionCode = normalizedExceptionCode,");
+        recorderSource.Should().Contain("ExceptionMessage = normalizedExceptionMessage,");
+
+        configSource.Should().Contain("public sealed class ShipmentCarrierEventConfiguration : IEntityTypeConfiguration<ShipmentCarrierEvent>");
+        configSource.Should().Contain("builder.HasIndex(x => new { x.ShipmentId, x.OccurredAtUtc });");
+        configSource.Should().Contain("builder.HasOne<Shipment>()");
+        configSource.Should().Contain("builder.Property(x => x.ExceptionCode).HasMaxLength(128);");
+        configSource.Should().Contain("builder.Property(x => x.ExceptionMessage).HasMaxLength(512);");
+
+        dbContextSource.Should().Contain("public DbSet<ShipmentCarrierEvent> ShipmentCarrierEvents => Set<ShipmentCarrierEvent>();");
+        dbContextSource.Should().Contain("public DbSet<ProviderCallbackInboxMessage> ProviderCallbackInboxMessages => Set<ProviderCallbackInboxMessage>();");
+        dbContextSource.Should().Contain("public DbSet<ShipmentProviderOperation> ShipmentProviderOperations => Set<ShipmentProviderOperation>();");
+
+        inboxConfigSource.Should().Contain("public sealed class ProviderCallbackInboxMessageConfiguration : IEntityTypeConfiguration<ProviderCallbackInboxMessage>");
+        inboxConfigSource.Should().Contain("builder.ToTable(\"ProviderCallbackInboxMessages\", schema: \"Integration\");");
+        inboxConfigSource.Should().Contain("builder.HasIndex(x => new { x.Provider, x.Status, x.CreatedAtUtc });");
+        inboxConfigSource.Should().Contain("builder.HasIndex(x => x.IdempotencyKey);");
+        shipmentProviderOperationConfigSource.Should().Contain("public sealed class ShipmentProviderOperationConfiguration : IEntityTypeConfiguration<ShipmentProviderOperation>");
+        shipmentProviderOperationConfigSource.Should().Contain("builder.ToTable(\"ShipmentProviderOperations\", schema: \"Integration\");");
+
+        validatorSource.Should().Contain("public sealed class ApplyShipmentCarrierEventValidator : AbstractValidator<ApplyShipmentCarrierEventDto>");
+        validatorSource.Should().Contain("RuleFor(x => x.ProviderShipmentReference).NotEmpty().MaximumLength(128);");
+        validatorSource.Should().Contain("RuleFor(x => x.CarrierEventKey).NotEmpty().MaximumLength(128);");
+        validatorSource.Should().Contain("WithMessage(localizer[\"CarrierEventOccurredAtUtcRequired\"])");
+        validatorSource.Should().Contain("RuleFor(x => x.ExceptionCode).MaximumLength(128)");
+        validatorSource.Should().Contain("RuleFor(x => x.ExceptionMessage).MaximumLength(512)");
+
+        contractsSource.Should().Contain("public sealed class DhlShipmentCallbackRequest");
+        contractsSource.Should().Contain("public string ProviderShipmentReference { get; set; } = string.Empty;");
+        contractsSource.Should().Contain("public string CarrierEventKey { get; set; } = string.Empty;");
+        contractsSource.Should().Contain("public DateTime OccurredAtUtc { get; set; }");
+        contractsSource.Should().Contain("public string? ExceptionCode { get; set; }");
+        contractsSource.Should().Contain("public string? ExceptionMessage { get; set; }");
     }
 }
 

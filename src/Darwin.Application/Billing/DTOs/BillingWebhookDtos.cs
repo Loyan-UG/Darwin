@@ -36,6 +36,9 @@ public sealed class BillingWebhookDeliveryListItemDto
     public DateTime? LastAttemptAtUtc { get; init; }
     public string? IdempotencyKey { get; init; }
     public bool IsActiveSubscription { get; init; }
+    public string RetrySafetyState { get; set; } = string.Empty;
+    public string FailureDiagnostics { get; set; } = string.Empty;
+    public string EscalationHint { get; set; } = string.Empty;
     public string SuggestedOperatorAction { get; set; } = string.Empty;
     public string SuggestedQueueTarget { get; set; } = string.Empty;
 }

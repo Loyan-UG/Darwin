@@ -13,11 +13,13 @@
     <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.6" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Darwin.Application\Darwin.Application.csproj" />
+    <ProjectReference Include="..\Darwin.Contracts\Darwin.Contracts.csproj" />
     <ProjectReference Include="..\Darwin.Infrastructure\Darwin.Infrastructure.csproj" />
     <ProjectReference Include="..\Darwin.Shared\Darwin.Shared.csproj" />
   </ItemGroup>

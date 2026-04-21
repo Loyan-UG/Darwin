@@ -7,6 +7,7 @@ using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Auth.Commands
 {
@@ -20,10 +21,18 @@ namespace Darwin.Application.Identity.Auth.Commands
         private readonly IAppDbContext _db;
         private readonly IUserPasswordHasher _hasher;
         private readonly IValidator<SignInDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SignInHandler(IAppDbContext db, IUserPasswordHasher hasher, IValidator<SignInDto> validator)
+        public SignInHandler(
+            IAppDbContext db,
+            IUserPasswordHasher hasher,
+            IValidator<SignInDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
-            _db = db; _hasher = hasher; _validator = validator;
+            _db = db;
+            _hasher = hasher;
+            _validator = validator;
+            _localizer = localizer;
         }
 
         public async Task<SignInResultDto> HandleAsync(SignInDto dto, CancellationToken ct = default)
@@ -32,10 +41,10 @@ namespace Darwin.Application.Identity.Auth.Commands
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
             if (user == null || !user.IsActive)
-                return new SignInResultDto { Succeeded = false, FailureReason = "Invalid credentials." };
+                return new SignInResultDto { Succeeded = false, FailureReason = _localizer["InvalidCredentials"] };
 
             if (!_hasher.Verify(user.PasswordHash, dto.Password))
-                return new SignInResultDto { Succeeded = false, FailureReason = "Invalid credentials." };
+                return new SignInResultDto { Succeeded = false, FailureReason = _localizer["InvalidCredentials"] };
 
             // TODO: If 2FA enabled on user, enforce it and return RequiresTwoFactor=true.
             var twoFactorEnabled = user.TwoFactorEnabled; // Assuming Domain has this flag.

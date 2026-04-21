@@ -114,6 +114,9 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
         foreach (var item in items)
         {
             (item.SuggestedOperatorAction, item.SuggestedQueueTarget) = ResolveSuggestedQueueTarget(item);
+            item.RetrySafetyState = ResolveRetrySafetyState(item);
+            item.FailureDiagnostics = ResolveFailureDiagnostics(item);
+            item.EscalationHint = ResolveEscalationHint(item);
         }
 
         return new GetBillingWebhookDeliveriesPageDto
@@ -164,6 +167,106 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
         }
 
         return ("Review callback history", string.Empty);
+    }
+
+    private static string ResolveRetrySafetyState(BillingWebhookDeliveryListItemDto item)
+    {
+        if (!item.IsActiveSubscription)
+        {
+            return "WebhookRetrySafetySubscriptionInactive";
+        }
+
+        if (string.Equals(item.Status, "Succeeded", StringComparison.OrdinalIgnoreCase))
+        {
+            return item.RetryCount > 0
+                ? "WebhookRetrySafetyRecoveredAfterRetry"
+                : "WebhookRetrySafetyDeliveredWithoutRetry";
+        }
+
+        if (string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+        {
+            return item.RetryCount > 0
+                ? "WebhookRetrySafetyRetryInFlight"
+                : "WebhookRetrySafetyAwaitingFirstAttempt";
+        }
+
+        if (item.ResponseCode is >= 500)
+        {
+            return "WebhookRetrySafetyReceiverUnavailable";
+        }
+
+        if (item.ResponseCode is >= 400)
+        {
+            return "WebhookRetrySafetyReceiverRejected";
+        }
+
+        return "WebhookRetrySafetyNoReceiverResponse";
+    }
+
+    private static string ResolveFailureDiagnostics(BillingWebhookDeliveryListItemDto item)
+    {
+        if (!item.IsActiveSubscription)
+        {
+            return "WebhookFailureDiagnosticSubscriptionInactive";
+        }
+
+        if (string.Equals(item.Status, "Succeeded", StringComparison.OrdinalIgnoreCase))
+        {
+            return item.RetryCount > 0
+                ? "WebhookFailureDiagnosticRecoveredAfterRetry"
+                : "WebhookFailureDiagnosticDeliveredWithoutRetry";
+        }
+
+        if (string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+        {
+            return item.RetryCount > 0
+                ? "WebhookFailureDiagnosticRetryPending"
+                : "WebhookFailureDiagnosticPendingFirstAttempt";
+        }
+
+        if (item.ResponseCode is >= 500)
+        {
+            return "WebhookFailureDiagnosticReceiver5xx";
+        }
+
+        if (item.ResponseCode is >= 400)
+        {
+            return "WebhookFailureDiagnosticReceiver4xx";
+        }
+
+        return "WebhookFailureDiagnosticNoHttpResponse";
+    }
+
+    private static string ResolveEscalationHint(BillingWebhookDeliveryListItemDto item)
+    {
+        if (!item.IsActiveSubscription)
+        {
+            return "WebhookEscalationHintSubscriptionInactive";
+        }
+
+        if (string.Equals(item.Status, "Succeeded", StringComparison.OrdinalIgnoreCase))
+        {
+            return item.RetryCount > 0
+                ? "WebhookEscalationHintRecovered"
+                : "WebhookEscalationHintStable";
+        }
+
+        if (item.ResponseCode is >= 500)
+        {
+            return "WebhookEscalationHintReceiver5xx";
+        }
+
+        if (item.ResponseCode is >= 400)
+        {
+            return "WebhookEscalationHintReceiver4xx";
+        }
+
+        if (string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase) && item.RetryCount > 0)
+        {
+            return "WebhookEscalationHintRetryInFlight";
+        }
+
+        return "WebhookEscalationHintNoResponse";
     }
 }
 

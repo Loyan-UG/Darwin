@@ -1,9 +1,11 @@
+using Darwin.Application;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Contracts.Businesses;
 using Darwin.WebApi.Controllers;
 using Darwin.WebApi.Controllers.Businesses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Business;
 
@@ -16,13 +18,17 @@ namespace Darwin.WebApi.Controllers.Business;
 public sealed class BusinessAccountController : ApiControllerBase
 {
     private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BusinessAccountController"/> class.
     /// </summary>
-    public BusinessAccountController(GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler)
+    public BusinessAccountController(
+        GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -36,19 +42,21 @@ public sealed class BusinessAccountController : ApiControllerBase
     {
         if (!BusinessControllerConventions.TryGetCurrentBusinessId(User, out var businessId))
         {
-            return BadRequestProblem("Business context is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessRequired"]);
         }
 
         if (!BusinessControllerConventions.TryGetCurrentUserId(User, out var userId))
         {
-            return BadRequestProblem("User context is required.");
+            return BadRequestProblem(_validationLocalizer["UserRequired"]);
         }
 
         var dto = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);
         if (dto is null)
         {
-            return NotFoundProblem("Business was not found.");
+            return NotFoundProblem(_validationLocalizer["BusinessNotFound"]);
         }
+
+        var blockingReason = BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(dto, _validationLocalizer);
 
         return Ok(new BusinessAccessStateResponse
         {
@@ -76,7 +84,7 @@ public sealed class BusinessAccountController : ApiControllerBase
             HasActivationBlockingIssues = dto.HasActivationBlockingIssues,
             SetupIncompleteItemCount = dto.SetupIncompleteItemCount,
             PrimaryBlockingCode = dto.PrimaryBlockingCode,
-            BlockingReason = dto.BlockingReason
+            BlockingReason = blockingReason
         });
     }
 }

@@ -360,6 +360,17 @@ export function OrderDetailPage({
                         <div className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
                           <p>{formatResource(copy.shipmentStatusLabel, { value: shipment.status })}</p>
                           {shipment.trackingNumber ? <p>{formatResource(copy.trackingLabel, { value: shipment.trackingNumber })}</p> : null}
+                          {shipment.trackingUrl ? (
+                            <p>
+                              <a
+                                href={shipment.trackingUrl}
+                                {...safeExternalLinkProps}
+                                className="font-semibold text-[var(--color-brand)] underline-offset-4 transition hover:underline"
+                              >
+                                {copy.trackShipmentCta}
+                              </a>
+                            </p>
+                          ) : null}
                           {shipment.shippedAtUtc ? <p>{formatResource(copy.shippedLabel, { value: formatDateTime(shipment.shippedAtUtc, culture) })}</p> : null}
                           {shipment.deliveredAtUtc ? <p>{formatResource(copy.deliveredLabel, { value: formatDateTime(shipment.deliveredAtUtc, culture) })}</p> : null}
                         </div>

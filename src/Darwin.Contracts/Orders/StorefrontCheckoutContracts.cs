@@ -172,6 +172,12 @@ public sealed class CreateStorefrontPaymentIntentResponse
     /// <summary>Gets or sets the provider/session reference associated with the intent.</summary>
     public string ProviderReference { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the optional provider payment-intent reference.</summary>
+    public string? ProviderPaymentIntentReference { get; set; }
+
+    /// <summary>Gets or sets the optional provider checkout/session reference.</summary>
+    public string? ProviderCheckoutSessionReference { get; set; }
+
     /// <summary>Gets or sets the amount in minor units.</summary>
     public long AmountMinor { get; set; }
 
@@ -204,6 +210,12 @@ public sealed class CompleteStorefrontPaymentRequest
 
     /// <summary>Gets or sets the optional provider reference returned by the PSP.</summary>
     public string? ProviderReference { get; set; }
+
+    /// <summary>Gets or sets the optional provider payment-intent reference returned by the PSP.</summary>
+    public string? ProviderPaymentIntentReference { get; set; }
+
+    /// <summary>Gets or sets the optional provider checkout/session reference returned by the PSP.</summary>
+    public string? ProviderCheckoutSessionReference { get; set; }
 
     /// <summary>Gets or sets the reported storefront payment outcome.</summary>
     public string Outcome { get; set; } = "Succeeded";
@@ -336,6 +348,12 @@ public sealed class StorefrontOrderConfirmationPayment
 
     /// <summary>Gets or sets the provider/session reference.</summary>
     public string? ProviderReference { get; set; }
+
+    /// <summary>Gets or sets the optional provider payment-intent reference.</summary>
+    public string? ProviderPaymentIntentReference { get; set; }
+
+    /// <summary>Gets or sets the optional provider checkout/session reference.</summary>
+    public string? ProviderCheckoutSessionReference { get; set; }
 
     /// <summary>Gets or sets the amount in minor units.</summary>
     public long AmountMinor { get; set; }

@@ -131,9 +131,9 @@ public sealed class ShippingMethodsController : AdminBaseController
             SetSuccessMessage("ShippingMethodCreatedMessage");
             return RedirectOrHtmx(nameof(Index), new { });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ModelState.AddModelError(string.Empty, ex.Message);
+            AddModelErrorMessage("ShippingMethodCreateFailedMessage");
             return RenderEditor(vm, true);
         }
     }
@@ -205,9 +205,9 @@ public sealed class ShippingMethodsController : AdminBaseController
             SetErrorMessage("ShippingMethodConcurrencyMessage");
             return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ModelState.AddModelError(string.Empty, ex.Message);
+            AddModelErrorMessage("ShippingMethodUpdateFailedMessage");
             return RenderEditor(vm, false);
         }
     }

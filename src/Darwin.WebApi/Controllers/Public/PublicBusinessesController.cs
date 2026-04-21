@@ -1,3 +1,4 @@
+using Darwin.Application;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Contracts.Businesses;
@@ -6,6 +7,7 @@ using Darwin.WebApi.Controllers.Businesses;
 using Darwin.WebApi.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
 
@@ -22,15 +24,18 @@ public sealed class PublicBusinessesController : ApiControllerBase
     private readonly GetBusinessesForDiscoveryHandler _getBusinessesForDiscovery;
     private readonly GetBusinessesForMapDiscoveryHandler _getBusinessesForMapDiscovery;
     private readonly GetBusinessPublicDetailHandler _getBusinessPublicDetail;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public PublicBusinessesController(
         GetBusinessesForDiscoveryHandler getBusinessesForDiscovery,
         GetBusinessesForMapDiscoveryHandler getBusinessesForMapDiscovery,
-        GetBusinessPublicDetailHandler getBusinessPublicDetail)
+        GetBusinessPublicDetailHandler getBusinessPublicDetail,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getBusinessesForDiscovery = getBusinessesForDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForDiscovery));
         _getBusinessesForMapDiscovery = getBusinessesForMapDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForMapDiscovery));
         _getBusinessPublicDetail = getBusinessPublicDetail ?? throw new ArgumentNullException(nameof(getBusinessPublicDetail));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     [HttpPost("list")]
@@ -41,7 +46,7 @@ public sealed class PublicBusinessesController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var page = request.Page < 1 ? 1 : request.Page;
@@ -53,18 +58,18 @@ public sealed class PublicBusinessesController : ApiControllerBase
 
         var queryText = BusinessControllerConventions.NormalizeNullable(request.Query) ?? BusinessControllerConventions.NormalizeNullable(request.Search);
 
-        if (!BusinessControllerConventions.TryParseBusinessCategoryKind(request.CategoryKindKey, out var categoryKind, out var categoryError))
+        if (!BusinessControllerConventions.TryParseBusinessCategoryKind(request.CategoryKindKey, _validationLocalizer, out var categoryKind, out var categoryError))
         {
             return BadRequestProblem(categoryError);
         }
 
-        var (coordinate, radiusKm, proximityError) = BusinessControllerConventions.TryMapProximity(request.Near, request.RadiusMeters);
+        var (coordinate, radiusKm, proximityError) = BusinessControllerConventions.TryMapProximity(request.Near, _validationLocalizer, request.RadiusMeters);
         if (proximityError is not null)
         {
             return BadRequestProblem(proximityError);
         }
 
-        var (minRating, ratingError) = BusinessControllerConventions.TryNormalizeMinRating(request.MinRating);
+        var (minRating, ratingError) = BusinessControllerConventions.TryNormalizeMinRating(request.MinRating, _validationLocalizer);
         if (ratingError is not null)
         {
             return BadRequestProblem(ratingError);
@@ -110,22 +115,22 @@ public sealed class PublicBusinessesController : ApiControllerBase
     {
         if (request?.Bounds is null)
         {
-            return BadRequestProblem("Map bounds are required.");
+            return BadRequestProblem(_validationLocalizer["MapBoundsRequired"]);
         }
 
         var page = request.Page.GetValueOrDefault(1);
         if (page <= 0)
         {
-            return BadRequestProblem("Page must be a positive integer.");
+            return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
         }
 
         var pageSize = request.PageSize.GetValueOrDefault(200);
         if (pageSize <= 0 || pageSize > 500)
         {
-            return BadRequestProblem("PageSize must be between 1 and 500.");
+            return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And500"]);
         }
 
-        if (!BusinessControllerConventions.TryParseBusinessCategoryKind(request.Category, out var categoryKind, out var categoryError))
+        if (!BusinessControllerConventions.TryParseBusinessCategoryKind(request.Category, _validationLocalizer, out var categoryKind, out var categoryError))
         {
             return BadRequestProblem(categoryError);
         }
@@ -171,13 +176,13 @@ public sealed class PublicBusinessesController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Business id must be a non-empty GUID.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdValidWhenProvided"]);
         }
 
         var dto = await _getBusinessPublicDetail.HandleAsync(id, ct).ConfigureAwait(false);
         if (dto is null)
         {
-            return NotFoundProblem("Business was not found.");
+            return NotFoundProblem(_validationLocalizer["BusinessNotFound"]);
         }
 
         return Ok(BusinessContractsMapper.ToContract(dto));

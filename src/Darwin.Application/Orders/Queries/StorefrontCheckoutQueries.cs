@@ -254,6 +254,8 @@ public sealed class GetStorefrontOrderConfirmationHandler
                     CreatedAtUtc = payment.CreatedAtUtc,
                     Provider = payment.Provider,
                     ProviderReference = payment.ProviderTransactionRef,
+                    ProviderPaymentIntentReference = payment.ProviderPaymentIntentRef,
+                    ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionRef,
                     AmountMinor = payment.AmountMinor,
                     Currency = payment.Currency,
                     Status = payment.Status,

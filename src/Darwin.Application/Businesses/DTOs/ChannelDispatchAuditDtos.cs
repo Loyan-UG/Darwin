@@ -5,16 +5,22 @@ namespace Darwin.Application.Businesses.DTOs
     public sealed class ChannelDispatchAuditListItemDto
     {
         public Guid Id { get; set; }
+        public bool IsQueueOperation { get; set; }
         public string Channel { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;
         public string? FlowKey { get; set; }
+        public string? TemplateKey { get; set; }
+        public string? CorrelationKey { get; set; }
         public Guid? BusinessId { get; set; }
         public string RecipientAddress { get; set; } = string.Empty;
+        public string? IntendedRecipientAddress { get; set; }
         public string MessagePreview { get; set; } = string.Empty;
+        public string? ProviderMessageId { get; set; }
         public string Status { get; set; } = string.Empty;
         public DateTime AttemptedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
         public string? FailureMessage { get; set; }
+        public int QueueAttemptCount { get; set; }
         public bool NeedsOperatorFollowUp { get; set; }
         public int ChainAttemptCount { get; set; }
         public string ChainStatusMix { get; set; } = string.Empty;
@@ -39,6 +45,8 @@ namespace Darwin.Application.Businesses.DTOs
         public int TotalCount { get; set; }
         public int FailedCount { get; set; }
         public int PendingCount { get; set; }
+        public int QueuedPendingCount { get; set; }
+        public int QueuedFailedCount { get; set; }
         public int Recent24HourCount { get; set; }
         public int SmsCount { get; set; }
         public int WhatsAppCount { get; set; }
@@ -115,7 +123,11 @@ namespace Darwin.Application.Businesses.DTOs
         public string Channel { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;
+        public string? TemplateKey { get; set; }
+        public string? CorrelationKey { get; set; }
         public string MessagePreview { get; set; } = string.Empty;
+        public string? IntendedRecipientAddress { get; set; }
+        public string? ProviderMessageId { get; set; }
         public string? FailureMessage { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
     }

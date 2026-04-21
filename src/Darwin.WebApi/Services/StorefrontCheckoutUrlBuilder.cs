@@ -1,21 +1,27 @@
+using Darwin.Application;
 using Darwin.Application.Orders.DTOs;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Services;
 
 /// <summary>
-/// Builds storefront checkout return, cancellation, and hosted-checkout handoff URLs from configuration.
+/// Builds storefront checkout return, cancellation, and Stripe handoff URLs from configuration.
 /// </summary>
 public sealed class StorefrontCheckoutUrlBuilder
 {
     private readonly IConfiguration _configuration;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StorefrontCheckoutUrlBuilder"/> class.
     /// </summary>
-    public StorefrontCheckoutUrlBuilder(IConfiguration configuration)
+    public StorefrontCheckoutUrlBuilder(
+        IConfiguration configuration,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -26,7 +32,7 @@ public sealed class StorefrontCheckoutUrlBuilder
         var baseUrl = _configuration["StorefrontCheckout:FrontOfficeBaseUrl"];
         if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl, UriKind.Absolute, out var frontOfficeBaseUri))
         {
-            throw new InvalidOperationException("Storefront front-office base URL is not configured.");
+            throw new InvalidOperationException(_validationLocalizer["StorefrontFrontOfficeBaseUrlNotConfigured"]);
         }
 
         var queryBuilder = new QueryBuilder();
@@ -48,29 +54,39 @@ public sealed class StorefrontCheckoutUrlBuilder
     }
 
     /// <summary>
-    /// Builds the configured hosted-checkout handoff URL for a storefront payment intent.
+    /// Builds the configured Stripe checkout handoff URL for a storefront payment intent.
     /// </summary>
-    public string BuildGatewayUrl(StorefrontPaymentIntentResultDto result, string returnUrl, string cancelUrl)
+    public string BuildStripeCheckoutUrl(StorefrontPaymentIntentResultDto result, string returnUrl, string cancelUrl)
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var gatewayBaseUrl = _configuration["StorefrontCheckout:PaymentGatewayBaseUrl"];
-        if (string.IsNullOrWhiteSpace(gatewayBaseUrl) || !Uri.TryCreate(gatewayBaseUrl, UriKind.Absolute, out var gatewayBaseUri))
+        if (!string.Equals(result.Provider, "Stripe", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Storefront payment gateway base URL is not configured.");
+            throw new InvalidOperationException(_validationLocalizer["StorefrontPaymentProviderNotSupported"]);
+        }
+
+        var stripeCheckoutBaseUrl = _configuration["StorefrontCheckout:StripeCheckoutBaseUrl"];
+        if (string.IsNullOrWhiteSpace(stripeCheckoutBaseUrl) || !Uri.TryCreate(stripeCheckoutBaseUrl, UriKind.Absolute, out var stripeCheckoutBaseUri))
+        {
+            throw new InvalidOperationException(_validationLocalizer["StorefrontStripeCheckoutBaseUrlNotConfigured"]);
         }
 
         var queryBuilder = new QueryBuilder
         {
             { "orderId", result.OrderId.ToString("D") },
             { "paymentId", result.PaymentId.ToString("D") },
-            { "provider", result.Provider },
-            { "sessionToken", result.ProviderReference },
+            { "provider", "Stripe" },
+            { "checkoutSessionId", result.ProviderCheckoutSessionReference ?? result.ProviderReference },
             { "returnUrl", returnUrl },
             { "cancelUrl", cancelUrl }
         };
 
-        return new UriBuilder(gatewayBaseUri)
+        if (!string.IsNullOrWhiteSpace(result.ProviderPaymentIntentReference))
+        {
+            queryBuilder.Add("paymentIntentId", result.ProviderPaymentIntentReference);
+        }
+
+        return new UriBuilder(stripeCheckoutBaseUri)
         {
             Query = queryBuilder.ToQueryString().Value?.TrimStart('?')
         }.Uri.AbsoluteUri;

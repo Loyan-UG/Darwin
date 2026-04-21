@@ -53,7 +53,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _getPage.HandleAsync(1, 500, q, ct);
             if (!result.Succeeded || result.Value == null)
             {
-                TempData["Error"] = result.Error ?? T("PermissionsLoadFailed");
+                SetErrorMessage("PermissionsLoadFailed");
                 return RenderIndexWorkspace(new PermissionsListVm());
             }
 
@@ -157,7 +157,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 false, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? T("PermissionCreateFailed");
+                SetErrorMessage("PermissionCreateFailed");
                 return RenderCreateEditor(vm);
             }
 
@@ -174,7 +174,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _getForEdit.HandleAsync(id, ct);
             if (!result.Succeeded || result.Value is null)
             {
-                TempData["Warning"] = result.Error ?? T("PermissionNotFound");
+                SetWarningMessage("PermissionNotFound");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
@@ -216,7 +216,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _update.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? T("PermissionUpdateFailed");
+                SetErrorMessage("PermissionUpdateFailed");
                 return RenderEditEditor(vm);
             }
 
@@ -237,7 +237,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
                 var result = await _softDelete.HandleAsync(dto, ct);
                 if (!result.Succeeded)
-                    TempData["Warning"] = result.Error ?? T("PermissionDeleteFailed");
+                    SetWarningMessage("PermissionDeleteFailed");
                 else
                     SetSuccessMessage("PermissionDeleted");
             }

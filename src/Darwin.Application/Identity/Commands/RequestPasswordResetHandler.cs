@@ -93,7 +93,8 @@ namespace Darwin.Application.Identity.Commands
             var token = RandomTokenGenerator.UrlSafeToken(32);
             var expires = _clock.UtcNow.AddHours(2);
 
-            _db.Set<UserToken>().Add(new UserToken(user.Id, "PasswordReset", token, expires));
+            var tokenEntity = new UserToken(user.Id, "PasswordReset", token, expires);
+            _db.Set<UserToken>().Add(tokenEntity);
             await _db.SaveChangesAsync(ct);
 
             // NOTE: For production, switch this to a templating engine and a branded reset URL.
@@ -149,7 +150,10 @@ namespace Darwin.Application.Identity.Commands
                     ct,
                     new EmailDispatchContext
                     {
-                        FlowKey = "PasswordReset"
+                        FlowKey = "PasswordReset",
+                        TemplateKey = "PasswordResetEmail",
+                        CorrelationKey = tokenEntity.Id.ToString("N"),
+                        IntendedRecipientEmail = user.Email
                     });
             }
             catch (Exception ex)

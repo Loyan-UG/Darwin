@@ -6,6 +6,7 @@
     var total = Model.Total;
     var query = Model.Query;
     var filter = Model.Filter;
+    string LocalizePageStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 <div id="pages-workspace-shell">
 <partial name="~/Views/Shared/_Alerts.cshtml" />
@@ -140,7 +141,7 @@
                                         <span class="badge bg-warning text-dark mt-1">@T.T("Windowed")</span>
                                     }
                                 </td>
-                                <td>@p.Status</td>
+                                <td>@LocalizePageStatus(p.Status)</td>
                                 <td>@(p.PublishStartUtc?.ToString("u") ?? "-") @T.T("To") @(p.PublishEndUtc?.ToString("u") ?? "-")</td>
                                 <td>@p.ModifiedAtUtc.ToString("u")</td>
                                 <td class="text-end">

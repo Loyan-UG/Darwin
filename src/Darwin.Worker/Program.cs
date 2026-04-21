@@ -1,7 +1,27 @@
+using Darwin.Application.Orders.Commands;
+using Darwin.Application.Extensions;
+using Darwin.Infrastructure.Extensions;
 using Darwin.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddHostedService<Worker>();
+builder.Services.AddApplication();
+builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddNotificationsInfrastructure(builder.Configuration);
+builder.Services.AddHttpClient();
+builder.Services.Configure<InactiveReminderWorkerOptions>(builder.Configuration.GetSection("InactiveReminderWorker"));
+builder.Services.Configure<EmailDispatchOperationWorkerOptions>(builder.Configuration.GetSection("EmailDispatchOperationWorker"));
+builder.Services.Configure<ChannelDispatchOperationWorkerOptions>(builder.Configuration.GetSection("ChannelDispatchOperationWorker"));
+builder.Services.Configure<ProviderCallbackWorkerOptions>(builder.Configuration.GetSection("ProviderCallbackWorker"));
+builder.Services.Configure<ShipmentProviderOperationWorkerOptions>(builder.Configuration.GetSection("ShipmentProviderOperationWorker"));
+builder.Services.Configure<WebhookDeliveryWorkerOptions>(builder.Configuration.GetSection("WebhookDeliveryWorker"));
+builder.Services.AddScoped<ApplyDhlShipmentCreateOperationHandler>();
+builder.Services.AddScoped<ApplyDhlShipmentLabelOperationHandler>();
+builder.Services.AddHostedService<EmailDispatchOperationBackgroundService>();
+builder.Services.AddHostedService<ChannelDispatchOperationBackgroundService>();
+builder.Services.AddHostedService<InactiveReminderBackgroundService>();
+builder.Services.AddHostedService<ProviderCallbackBackgroundService>();
+builder.Services.AddHostedService<ShipmentProviderOperationBackgroundService>();
+builder.Services.AddHostedService<WebhookDeliveryBackgroundService>();
 
 var host = builder.Build();
 host.Run();

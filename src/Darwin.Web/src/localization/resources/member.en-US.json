@@ -1280,6 +1280,7 @@
   "shipmentsTitle": "Shipments",
   "shipmentStatusLabel": "Status: {value}",
   "trackingLabel": "Tracking: {value}",
+  "trackShipmentCta": "Open tracking",
   "shippedLabel": "Shipped: {value}",
   "deliveredLabel": "Delivered: {value}",
   "noShipmentsMessage": "No shipment snapshots are currently attached to this order.",

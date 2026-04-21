@@ -144,6 +144,7 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         memberGermanSource.Should().Contain("\"accountHubTitle\": \"Oeffentliche Self-Service-Flows sind jetzt von der spaeteren Member-Session getrennt.\"");
         memberGermanSource.Should().Contain("\"ordersTitle\": \"Der Bestellverlauf liest jetzt aus der authentifizierten Member-Portal-Oberflaeche\"");
         memberGermanSource.Should().Contain("\"invoicesTitle\": \"Der Rechnungsverlauf liest jetzt aus der authentifizierten Member-Billing-Oberflaeche\"");
+        memberGermanSource.Should().Contain("\"trackShipmentCta\": \"Tracking oeffnen\"");
 
         memberEnglishSource.Should().Contain("\"accountMetaTitle\": \"Account\"");
         memberEnglishSource.Should().Contain("\"ordersMetaTitle\": \"Orders\"");
@@ -153,6 +154,7 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         memberEnglishSource.Should().Contain("\"accountHubTitle\": \"Public self-service flows are now split from the future member session.\"");
         memberEnglishSource.Should().Contain("\"ordersTitle\": \"Order history now reads from the authenticated member portal surface\"");
         memberEnglishSource.Should().Contain("\"invoicesTitle\": \"Invoice history now reads from the authenticated member billing surface\"");
+        memberEnglishSource.Should().Contain("\"trackShipmentCta\": \"Open tracking\"");
 
         shellGermanSource.Should().Contain("\"shellTagline\": \"Web storefront\"");
         shellGermanSource.Should().Contain("\"footerTitle\": \"Grundlage fuer den oeffentlichen Storefront und das Member-Portal\"");
@@ -618,6 +620,9 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         seoSource.Should().Contain("const resolvedImageUrl = imageUrl ? toWebApiUrl(imageUrl) : undefined;");
         seoSource.Should().Contain("\"x-default\":");
         seoSource.Should().Contain("buildStablePublicLanguageAlternates(normalizedPath)");
+        orderDetailPageSource.Should().Contain("shipment.trackingUrl ? (");
+        orderDetailPageSource.Should().Contain("href={shipment.trackingUrl}");
+        orderDetailPageSource.Should().Contain("{copy.trackShipmentCta}");
         seoSource.Should().Contain("runtimeConfig.supportedCultures.map((supportedCulture) => [");
         seoSource.Should().Contain("alternates: {");
         seoSource.Should().Contain("canonical: localizedCanonicalPath,");
@@ -697,6 +702,8 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         orderDetailPageSource.Should().Contain("{...safeExternalLinkProps}");
         orderDetailPageSource.Should().Contain("href={localizeHref(`/invoices/${invoice.id}`, culture)}");
         orderDetailPageSource.Should().Contain("buildLocalizedQueryHref(`/checkout/orders/${order.id}/confirmation`, { orderNumber: order.orderNumber }, culture)");
+        orderDetailPageSource.Should().Contain("href={shipment.trackingUrl}");
+        orderDetailPageSource.Should().Contain("{copy.trackShipmentCta}");
         invoiceDetailPageSource.Should().Contain("const documentUrl = toWebApiUrl(invoice.actions.documentPath);");
         invoiceDetailPageSource.Should().Contain("const safeExternalLinkProps = getSafeExternalLinkProps();");
         invoiceDetailPageSource.Should().Contain("href={documentUrl}");

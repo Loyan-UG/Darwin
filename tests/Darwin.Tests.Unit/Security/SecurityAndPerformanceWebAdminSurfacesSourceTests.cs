@@ -157,6 +157,231 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
 
     [Fact]
+    public void BillingAndBusinessesControllers_Should_UseLocalizedSafeFailureFallbacksInsteadOfRawExceptionMessages()
+    {
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+        var billingSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var businessesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var resourcesSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
+
+        adminBaseSource.Should().Contain("protected void AddModelErrorMessage(string key)");
+        adminBaseSource.Should().Contain("ModelState.AddModelError(string.Empty, T(key));");
+
+        billingSource.Should().NotContain("ModelState.AddModelError(string.Empty, ex.Message);");
+        billingSource.Should().Contain("AddModelErrorMessage(\"BillingPlanCreateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"BillingPlanUpdateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"PaymentCreateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"PaymentUpdateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"FinancialAccountCreateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"FinancialAccountUpdateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"ExpenseCreateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"ExpenseUpdateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"JournalEntryCreateFailedMessage\");");
+        billingSource.Should().Contain("AddModelErrorMessage(\"JournalEntryUpdateFailedMessage\");");
+
+        businessesSource.Should().NotContain("ModelState.AddModelError(string.Empty, ex.Message);");
+        businessesSource.Should().NotContain("TempData[\"Error\"] = ex.Message;");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessCreateFailed\");");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessUpdateFailed\");");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessSetupSaveFailed\");");
+        businessesSource.Should().Contain("SetErrorMessage(\"BusinessApproveFailed\");");
+        businessesSource.Should().Contain("SetErrorMessage(\"BusinessSuspendFailed\");");
+        businessesSource.Should().Contain("SetErrorMessage(\"BusinessReactivateFailed\");");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessLocationCreateFailed\");");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessLocationUpdateFailed\");");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessInvitationCreateFailed\");");
+        businessesSource.Should().Contain("SetErrorMessage(\"BusinessInvitationResendFailed\");");
+        businessesSource.Should().Contain("SetErrorMessage(\"BusinessInvitationRevokeFailed\");");
+        businessesSource.Should().Contain("T(\"BusinessSubscriptionCancelAtPeriodEndUpdateFailed\")");
+        businessesSource.Should().Contain("T(\"BusinessArchiveFailed\")");
+        businessesSource.Should().Contain("T(\"BusinessLocationArchiveFailed\")");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessMemberCreateFailed\");");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessMemberUpdateFailed\");");
+        businessesSource.Should().Contain("SetErrorMessage(\"BusinessMemberDeleteFailed\");");
+        businessesSource.Should().Contain("AddModelErrorMessage(\"BusinessMemberForceDeleteFailed\");");
+        businessesSource.Should().Contain("T(\"BusinessMemberActivationEmailFailed\")");
+        businessesSource.Should().Contain("T(\"BusinessMemberEmailConfirmFailed\")");
+        businessesSource.Should().Contain("T(\"BusinessMemberPasswordResetFailed\")");
+        businessesSource.Should().Contain("T(\"BusinessMemberAccountLockFailed\")");
+        businessesSource.Should().Contain("T(\"BusinessMemberAccountUnlockFailed\")");
+
+        resourcesSource.Should().Contain("<data name=\"BillingPlanCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"BillingPlanUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"PaymentCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"PaymentUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"FinancialAccountCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"FinancialAccountUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"ExpenseCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"ExpenseUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"JournalEntryCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"JournalEntryUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessUpdateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessSetupSaveFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessApproveFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessSuspendFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessReactivateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessLocationCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessLocationUpdateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessInvitationCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessInvitationResendFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessInvitationRevokeFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessMemberCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessMemberUpdateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessMemberDeleteFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BusinessMemberForceDeleteFailed\"");
+    }
+
+    [Fact]
+    public void WebAdminAdminControllers_Should_Not_LeakRawApplicationErrorFallbacks()
+    {
+        var controllersPath = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..", "..",
+            "src", "Darwin.WebAdmin", "Controllers", "Admin"));
+
+        Directory.Exists(controllersPath).Should().BeTrue($"admin controllers should exist at {controllersPath}");
+
+        foreach (var controllerPath in Directory.GetFiles(controllersPath, "*.cs", SearchOption.AllDirectories))
+        {
+            var source = File.ReadAllText(controllerPath);
+
+            source.Should().NotContain("result.Error ??", $"admin controllers should not expose raw result errors via fallback paths: {controllerPath}");
+            source.Should().NotContain("TempData[\"Error\"] = result.Error", $"admin controllers should not place raw result errors into TempData: {controllerPath}");
+            source.Should().NotContain("TempData[\"Warning\"] = result.Error", $"admin controllers should not place raw result warnings into TempData: {controllerPath}");
+            source.Should().NotContain("ModelState.AddModelError(string.Empty, result.Error", $"admin controllers should not place raw result errors into ModelState: {controllerPath}");
+            source.Should().NotContain("BadRequest(result.Error", $"admin controllers should not return raw result errors from admin actions: {controllerPath}");
+            source.Should().NotContain("TempData[\"Error\"] = ex.Message", $"admin controllers should not expose raw exception messages via TempData: {controllerPath}");
+            source.Should().NotContain("TempData[\"Warning\"] = ex.Message", $"admin controllers should not expose raw exception messages via TempData warnings: {controllerPath}");
+            source.Should().NotContain("ModelState.AddModelError(string.Empty, ex.Message", $"admin controllers should not expose raw exception messages via ModelState: {controllerPath}");
+            source.Should().NotContain("BadRequest(ex.Message", $"admin controllers should not return raw exception messages from admin actions: {controllerPath}");
+        }
+    }
+
+    [Fact]
+    public void InventoryAndLoyaltyControllers_Should_UseLocalizedSafeFailureFallbacksInsteadOfRawValidationOrExceptionMessages()
+    {
+        var inventorySource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Inventory", "InventoryController.cs"));
+        var loyaltySource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Loyalty", "LoyaltyController.cs"));
+        var resourcesSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
+
+        inventorySource.Should().NotContain("ModelState.AddModelError(string.Empty, ex.Message);");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"WarehouseCreateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"WarehouseUpdateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"SupplierCreateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"SupplierUpdateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"StockAdjustFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"StockReserveFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"ReservationReleaseFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"ReturnReceiptProcessFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"StockLevelCreateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"StockLevelUpdateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"StockTransferCreateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"StockTransferUpdateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"PurchaseOrderCreateFailedMessage\");");
+        inventorySource.Should().Contain("AddModelErrorMessage(\"PurchaseOrderUpdateFailedMessage\");");
+
+        loyaltySource.Should().NotContain("ModelState.AddModelError(string.Empty, ex.Message);");
+        loyaltySource.Should().Contain("AddLocalizedModelError(\"LoyaltyProgramCreateFailed\");");
+        loyaltySource.Should().Contain("AddLocalizedModelError(\"LoyaltyProgramUpdateFailed\");");
+        loyaltySource.Should().Contain("AddLocalizedModelError(\"LoyaltyRewardTierCreateFailed\");");
+        loyaltySource.Should().Contain("AddLocalizedModelError(\"LoyaltyRewardTierUpdateFailed\");");
+        loyaltySource.Should().Contain("AddLocalizedModelError(\"LoyaltyPointsAdjustFailed\");");
+        loyaltySource.Should().Contain("T(\"LoyaltyProgramDeleteFailed\")");
+        loyaltySource.Should().Contain("T(\"LoyaltyRewardTierDeleteFailed\")");
+        loyaltySource.Should().Contain("private void AddLocalizedModelError(string fallbackKey, string? error = null)");
+        loyaltySource.Should().Contain("ModelState.AddModelError(string.Empty, T(fallbackKey));");
+        loyaltySource.Should().Contain("private void SetLocalizedErrorMessage(string fallbackKey, string? error = null)");
+        loyaltySource.Should().Contain("TempData[\"Error\"] = T(fallbackKey);");
+
+        resourcesSource.Should().Contain("<data name=\"WarehouseCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"WarehouseUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"SupplierCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"SupplierUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"StockAdjustFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"StockReserveFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"ReservationReleaseFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"ReturnReceiptProcessFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"StockLevelCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"StockLevelUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"StockTransferCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"StockTransferUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"PurchaseOrderCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"PurchaseOrderUpdateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"LoyaltyProgramCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"LoyaltyProgramUpdateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"LoyaltyRewardTierCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"LoyaltyRewardTierUpdateFailed\"");
+    }
+
+    [Fact]
+    public void RemainingWebAdminControllers_Should_UseLocalizedSafeFailureFallbacksInsteadOfRawExceptionMessages()
+    {
+        var addOnGroupsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "AddOnGroupsController.cs"));
+        var brandsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "BrandsController.cs"));
+        var ordersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+        var shippingSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Shipping", "ShippingMethodsController.cs"));
+        var mediaSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
+        var crmSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var rolesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "RolesController.cs"));
+        var resourcesSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
+
+        addOnGroupsSource.Should().NotContain("ex.Message");
+        addOnGroupsSource.Should().Contain("AddModelErrorMessage(\"AddOnGroupCreateFailed\");");
+        addOnGroupsSource.Should().Contain("AddModelErrorMessage(\"AddOnGroupUpdateFailed\");");
+        addOnGroupsSource.Should().Contain("SetWarningMessage(\"AddOnGroupDeleteFailed\");");
+        addOnGroupsSource.Should().Contain("SetErrorMessage(\"AddOnGroupAttachProductsFailed\");");
+        addOnGroupsSource.Should().Contain("SetErrorMessage(\"AddOnGroupAttachCategoriesFailed\");");
+        addOnGroupsSource.Should().Contain("SetErrorMessage(\"AddOnGroupAttachBrandsFailed\");");
+        addOnGroupsSource.Should().Contain("SetErrorMessage(\"AddOnGroupAttachVariantsFailed\");");
+
+        brandsSource.Should().NotContain("ex.Message");
+        brandsSource.Should().Contain("AddModelErrorMessage(\"BrandCreateFailed\");");
+        brandsSource.Should().Contain("AddModelErrorMessage(\"BrandUpdateFailed\");");
+        brandsSource.Should().Contain("result.Succeeded ? T(\"BrandDeleted\") : T(\"BrandDeleteFailed\")");
+
+        ordersSource.Should().NotContain("ex.Message");
+        ordersSource.Should().Contain("AddModelErrorMessage(\"OrderPaymentAddFailed\");");
+        ordersSource.Should().Contain("AddModelErrorMessage(\"OrderShipmentAddFailed\");");
+        ordersSource.Should().Contain("AddModelErrorMessage(\"OrderRefundAddFailed\");");
+        ordersSource.Should().Contain("AddModelErrorMessage(\"OrderInvoiceCreateFailed\");");
+        ordersSource.Should().Contain("SetErrorMessage(\"OrderStatusUpdateFailed\");");
+
+        shippingSource.Should().NotContain("ex.Message");
+        shippingSource.Should().Contain("AddModelErrorMessage(\"ShippingMethodCreateFailedMessage\");");
+        shippingSource.Should().Contain("AddModelErrorMessage(\"ShippingMethodUpdateFailedMessage\");");
+
+        mediaSource.Should().NotContain("ex.Message");
+        mediaSource.Should().Contain("AddModelErrorMessage(\"MediaCreateFailed\");");
+        mediaSource.Should().Contain("AddModelErrorMessage(\"MediaUpdateFailed\");");
+
+        crmSource.Should().NotContain("ex.Message");
+        crmSource.Should().Contain("ModelState.AddModelError(string.Empty, T(fallbackKey));");
+        crmSource.Should().Contain("TempData[\"Error\"] = T(fallbackKey);");
+
+        rolesSource.Should().NotContain("ex.Message");
+        rolesSource.Should().Contain("SetWarningMessage(\"RoleSystemProtectedDelete\");");
+        rolesSource.Should().Contain("SetErrorMessage(\"RoleCreateFailed\");");
+        rolesSource.Should().Contain("SetErrorMessage(\"RoleUpdateFailed\");");
+        rolesSource.Should().Contain("SetErrorMessage(\"RolePermissionsUpdateFailed\");");
+
+        resourcesSource.Should().Contain("<data name=\"AddOnGroupCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"AddOnGroupUpdateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"AddOnGroupAttachCategoriesFailed\"");
+        resourcesSource.Should().Contain("<data name=\"AddOnGroupAttachBrandsFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BrandCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"BrandUpdateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"OrderPaymentAddFailed\"");
+        resourcesSource.Should().Contain("<data name=\"OrderShipmentAddFailed\"");
+        resourcesSource.Should().Contain("<data name=\"OrderRefundAddFailed\"");
+        resourcesSource.Should().Contain("<data name=\"OrderInvoiceCreateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"OrderStatusUpdateFailed\"");
+        resourcesSource.Should().Contain("<data name=\"ShippingMethodCreateFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"ShippingMethodUpdateFailedMessage\"");
+    }
+
+
+    [Fact]
     public void BillingController_Should_KeepAdminFinanceWorkspacesAndEditorsReachable()
     {
         var billingSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
@@ -331,6 +556,462 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
 
     [Fact]
+    public void BillingWorkspaces_Should_KeepStripeProviderVisibilityAndWebhookSupportRailsWired()
+    {
+        var paymentsSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Payments.cshtml"));
+        var paymentFormSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "_PaymentForm.cshtml"));
+        var webhooksSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Webhooks.cshtml"));
+        var billingVmSource = ReadWebAdminFile(Path.Combine("ViewModels", "Billing", "BillingVms.cs"));
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var billingManagementHandlersSource = ReadApplicationFile(Path.Combine("Billing", "Commands", "BillingManagementHandlers.cs"));
+        var billingManagementQueriesSource = ReadApplicationFile(Path.Combine("Billing", "Queries", "BillingManagementQueries.cs"));
+        var billingManagementValidatorsSource = ReadApplicationFile(Path.Combine("Billing", "Validators", "BillingManagementValidators.cs"));
+
+        paymentsSource.Should().Contain("@T.T(\"StripeReadiness\")");
+        paymentsSource.Should().Contain("@T.T(\"WebhookLifecycleVisibility\")");
+        paymentsSource.Should().Contain("@Model.Summary.StripeCount");
+        paymentsSource.Should().Contain("@Model.Summary.MissingProviderRefCount");
+        paymentsSource.Should().Contain("@Model.Summary.NeedsReconciliationCount");
+        paymentsSource.Should().Contain("@Model.Summary.DisputeFollowUpCount");
+        paymentsSource.Should().Contain("@Model.Webhooks.PaymentExceptionCount");
+        paymentsSource.Should().Contain("@Model.Webhooks.DisputeSignalCount");
+        paymentsSource.Should().Contain("@item.ProviderTransactionRef");
+        paymentsSource.Should().Contain("@item.ProviderPaymentIntentRef");
+        paymentsSource.Should().Contain("@item.ProviderCheckoutSessionRef");
+        paymentsSource.Should().Contain("@LocalizeProviderReferenceState(item.ProviderReferenceState)");
+        paymentsSource.Should().Contain("@item.LastFinancialEventAtUtc.Value.ToString(\"yyyy-MM-dd HH:mm\")");
+        paymentsSource.Should().Contain("@T.T(\"PaymentSupportPlaybooks\")");
+        paymentsSource.Should().Contain("BillingWebhookDeliveryQueueFilter.PaymentExceptions");
+        paymentsSource.Should().Contain("BillingWebhookDeliveryQueueFilter.DisputeSignals");
+        paymentsSource.Should().Contain("PaymentQueueFilter.NeedsReconciliation");
+        paymentsSource.Should().Contain("PaymentQueueFilter.DisputeFollowUp");
+        paymentsSource.Should().Contain("@T.T(\"WebhookExceptions\")");
+
+          paymentFormSource.Should().Contain("@T.T(\"ReconciliationAndDisputeSnapshot\")");
+          paymentFormSource.Should().Contain("@LocalizeProviderReferenceState(Model.ProviderReferenceState)");
+          paymentFormSource.Should().Contain("string LocalizeProviderEventType(string? eventType) => eventType switch");
+          paymentFormSource.Should().Contain("string LocalizeProviderEventCorrelation(string? correlationKind) => correlationKind switch");
+          paymentFormSource.Should().Contain("Model.NeedsReconciliation");
+          paymentFormSource.Should().Contain("Model.NeedsDisputeFollowUp");
+          paymentFormSource.Should().Contain("@T.T(\"PaymentProviderAuditTrail\")");
+          paymentFormSource.Should().Contain("@Model.ProviderEvents.Count");
+          paymentFormSource.Should().Contain("@LocalizeProviderEventType(item.EventType)");
+          paymentFormSource.Should().Contain("@LocalizeProviderEventCorrelation(item.CorrelationKind)");
+          paymentFormSource.Should().Contain("@T.T(\"IdempotencyKey\")");
+          paymentFormSource.Should().Contain("@T.T(\"NeedsReconciliationQueue\")");
+          paymentFormSource.Should().Contain("@T.T(\"DisputeFollowUpQueue\")");
+          paymentFormSource.Should().Contain("BillingWebhookDeliveryQueueFilter.PaymentExceptions");
+          paymentFormSource.Should().Contain("BillingWebhookDeliveryQueueFilter.DisputeSignals");
+          paymentFormSource.Should().Contain("@T.T(\"RefundTimeline\")");
+        paymentFormSource.Should().Contain("label asp-for=\"ProviderTransactionRef\"");
+        paymentFormSource.Should().Contain("input asp-for=\"ProviderTransactionRef\"");
+          paymentFormSource.Should().Contain("label asp-for=\"ProviderPaymentIntentRef\"");
+          paymentFormSource.Should().Contain("input asp-for=\"ProviderPaymentIntentRef\"");
+          paymentFormSource.Should().Contain("label asp-for=\"ProviderCheckoutSessionRef\"");
+          paymentFormSource.Should().Contain("input asp-for=\"ProviderCheckoutSessionRef\"");
+          billingVmSource.Should().Contain("public List<PaymentProviderEventItemVm> ProviderEvents { get; set; } = new();");
+          billingVmSource.Should().Contain("public sealed class PaymentProviderEventItemVm");
+          controllerSource.Should().Contain("ProviderEvents = dto.ProviderEvents.Select(x => new PaymentProviderEventItemVm");
+          controllerSource.Should().Contain("Title = T(\"PaymentSupportPlaybookProviderTimelineTitle\")");
+          controllerSource.Should().Contain("dto.ProviderEvents.Count > 0");
+
+        webhooksSource.Should().Contain("@Model.Summary.PaymentExceptionCount");
+        webhooksSource.Should().Contain("@Model.Summary.DisputeSignalCount");
+        webhooksSource.Should().Contain("BillingWebhookDeliveryQueueFilter.PaymentExceptions");
+        webhooksSource.Should().Contain("BillingWebhookDeliveryQueueFilter.DisputeSignals");
+        webhooksSource.Should().Contain("@T.T(\"PaymentException\")");
+        webhooksSource.Should().Contain("@T.T(\"DisputeSignal\")");
+        webhooksSource.Should().Contain("@item.IdempotencyKey");
+        webhooksSource.Should().Contain("@T.T(\"WebhookDisputeEscalationNote\")");
+        webhooksSource.Should().Contain("@T.T(\"WebhookPaymentEvidenceNote\")");
+        webhooksSource.Should().Contain("item.SuggestedQueueTarget == \"Payments\"");
+        webhooksSource.Should().Contain("item.SuggestedQueueTarget == \"Refunds\"");
+        webhooksSource.Should().Contain("item.SuggestedQueueTarget == \"DisputeSignals\"");
+        webhooksSource.Should().Contain("@item.SuggestedOperatorAction");
+
+        billingVmSource.Should().Contain("public BillingWebhookOpsSummaryVm Webhooks { get; set; } = new();");
+        billingVmSource.Should().Contain("public int StripeCount { get; set; }");
+        billingVmSource.Should().Contain("public int MissingProviderRefCount { get; set; }");
+        billingVmSource.Should().Contain("public int NeedsReconciliationCount { get; set; }");
+        billingVmSource.Should().Contain("public int DisputeFollowUpCount { get; set; }");
+        billingVmSource.Should().Contain("public int PaymentExceptionCount { get; set; }");
+        billingVmSource.Should().Contain("public int DisputeSignalCount { get; set; }");
+        billingVmSource.Should().Contain("public string? ProviderTransactionRef { get; set; }");
+        billingVmSource.Should().Contain("public string? ProviderPaymentIntentRef { get; set; }");
+        billingVmSource.Should().Contain("public string? ProviderCheckoutSessionRef { get; set; }");
+        billingVmSource.Should().Contain("public DateTime? LastFinancialEventAtUtc { get; set; }");
+        billingVmSource.Should().Contain("public string ProviderReferenceState { get; set; } = string.Empty;");
+        billingVmSource.Should().Contain("public bool NeedsReconciliation { get; set; }");
+        billingVmSource.Should().Contain("public bool NeedsDisputeFollowUp { get; set; }");
+        billingVmSource.Should().Contain("public string? IdempotencyKey { get; set; }");
+        billingVmSource.Should().Contain("public string SuggestedQueueTarget { get; set; } = string.Empty;");
+        billingVmSource.Should().Contain("public string SuggestedOperatorAction { get; set; } = string.Empty;");
+
+        controllerSource.Should().Contain("Stripe = await BuildStripeOperationsVmAsync(ct).ConfigureAwait(false),");
+        controllerSource.Should().Contain("Webhooks = await BuildBillingWebhookOpsSummaryVmAsync(ct).ConfigureAwait(false),");
+        controllerSource.Should().Contain("PaymentExceptionCount = summary.PaymentExceptionCount");
+        controllerSource.Should().Contain("DisputeSignalCount = summary.DisputeSignalCount");
+        controllerSource.Should().Contain("NeedsReconciliationCount = summary.NeedsReconciliationCount");
+        controllerSource.Should().Contain("DisputeFollowUpCount = summary.DisputeFollowUpCount");
+        controllerSource.Should().Contain("ProviderTransactionRef = x.ProviderTransactionRef");
+        controllerSource.Should().Contain("ProviderPaymentIntentRef = x.ProviderPaymentIntentRef");
+        controllerSource.Should().Contain("ProviderCheckoutSessionRef = x.ProviderCheckoutSessionRef");
+        controllerSource.Should().Contain("LastFinancialEventAtUtc = x.LastFinancialEventAtUtc");
+        controllerSource.Should().Contain("ProviderReferenceState = x.ProviderReferenceState");
+        controllerSource.Should().Contain("NeedsReconciliation = x.NeedsReconciliation");
+        controllerSource.Should().Contain("NeedsDisputeFollowUp = x.NeedsDisputeFollowUp");
+        controllerSource.Should().Contain("IdempotencyKey = x.IdempotencyKey");
+        controllerSource.Should().Contain("SuggestedOperatorAction = x.SuggestedOperatorAction");
+        controllerSource.Should().Contain("SuggestedQueueTarget = x.SuggestedQueueTarget");
+        controllerSource.Should().Contain("Title = T(\"PaymentSupportPlaybookStripeTitle\")");
+        controllerSource.Should().Contain("ProviderPaymentIntentRef = vm.ProviderPaymentIntentRef");
+        controllerSource.Should().Contain("ProviderCheckoutSessionRef = vm.ProviderCheckoutSessionRef");
+        controllerSource.Should().Contain("private List<ProviderPlaybookVm> BuildWebhookPlaybooks()");
+
+        billingManagementQueriesSource.Should().Contain("ProviderPaymentIntentRef = x.ProviderPaymentIntentRef");
+        billingManagementQueriesSource.Should().Contain("ProviderCheckoutSessionRef = x.ProviderCheckoutSessionRef");
+        billingManagementQueriesSource.Should().Contain("item.ProviderPaymentIntentRef,");
+        billingManagementQueriesSource.Should().Contain("item.ProviderCheckoutSessionRef,");
+        billingManagementQueriesSource.Should().Contain("dto.ProviderPaymentIntentRef,");
+        billingManagementQueriesSource.Should().Contain("dto.ProviderCheckoutSessionRef,");
+        billingManagementQueriesSource.Should().Contain("(x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef != string.Empty)");
+        billingManagementQueriesSource.Should().Contain("(x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef != string.Empty)");
+        billingManagementQueriesSource.Should().Contain("(x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty)");
+        billingManagementQueriesSource.Should().Contain("(x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty)");
+
+        billingManagementHandlersSource.Should().Contain("ProviderPaymentIntentRef = NormalizeOptional(dto.ProviderPaymentIntentRef)");
+        billingManagementHandlersSource.Should().Contain("ProviderCheckoutSessionRef = NormalizeOptional(dto.ProviderCheckoutSessionRef)");
+
+        billingManagementValidatorsSource.Should().Contain("RuleFor(x => x.ProviderPaymentIntentRef).MaximumLength(200);");
+        billingManagementValidatorsSource.Should().Contain("RuleFor(x => x.ProviderCheckoutSessionRef).MaximumLength(200);");
+    }
+
+
+    [Fact]
+    public void BillingRefundWorkspaces_Should_KeepRefundDisputeAndSupportFollowUpRailsWired()
+    {
+        var refundsSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Refunds.cshtml"));
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var billingVmSource = ReadWebAdminFile(Path.Combine("ViewModels", "Billing", "BillingVms.cs"));
+        var billingManagementQueriesSource = ReadApplicationFile(Path.Combine("Billing", "Queries", "BillingManagementQueries.cs"));
+
+        refundsSource.Should().Contain("@T.T(\"RefundSupportPlaybooks\")");
+        refundsSource.Should().Contain("BillingRefundQueueFilter.NeedsSupport");
+        refundsSource.Should().Contain("BillingRefundQueueFilter.Stripe");
+        refundsSource.Should().Contain("@Model.Webhooks.DisputeSignalCount");
+        refundsSource.Should().Contain("BillingWebhookDeliveryQueueFilter.DisputeSignals");
+        refundsSource.Should().Contain("@T.T(\"ReviewDisputeSignals\")");
+        refundsSource.Should().Contain("PaymentQueueFilter.DisputeFollowUp");
+        refundsSource.Should().Contain("@T.T(\"DisputeQueue\")");
+        refundsSource.Should().Contain("string LocalizeProviderReferenceState(string? state) => state switch");
+        refundsSource.Should().Contain("@LocalizeProviderReferenceState(item.ProviderReferenceState)");
+        refundsSource.Should().Contain("@item.PaymentProviderPaymentIntentRef");
+        refundsSource.Should().Contain("@item.PaymentProviderCheckoutSessionRef");
+
+        controllerSource.Should().Contain("public async Task<IActionResult> Refunds(");
+        controllerSource.Should().Contain("_getRefundsPage.HandleAsync");
+        controllerSource.Should().Contain("Webhooks = await BuildBillingWebhookOpsSummaryVmAsync(ct).ConfigureAwait(false),");
+        controllerSource.Should().Contain("Playbooks = BuildRefundPlaybooks(),");
+        controllerSource.Should().Contain("DisputeSignalCount = summary.DisputeSignalCount");
+        controllerSource.Should().Contain("PaymentProviderPaymentIntentRef = x.PaymentProviderPaymentIntentRef");
+        controllerSource.Should().Contain("PaymentProviderCheckoutSessionRef = x.PaymentProviderCheckoutSessionRef");
+        controllerSource.Should().Contain("Title = \"BillingRefundsPlaybookPendingTitle\"");
+        controllerSource.Should().Contain("Title = \"BillingRefundsPlaybookCompletedTitle\"");
+        controllerSource.Should().Contain("Title = \"BillingRefundsPlaybookFailedTitle\"");
+        controllerSource.Should().Contain("Title = \"BillingRefundsPlaybookHistoryTitle\"");
+
+        billingVmSource.Should().Contain("public BillingWebhookOpsSummaryVm Webhooks { get; set; } = new();");
+        billingVmSource.Should().Contain("public string ProviderReferenceState { get; set; } = string.Empty;");
+        billingVmSource.Should().Contain("public string? PaymentProviderPaymentIntentRef { get; set; }");
+        billingVmSource.Should().Contain("public string? PaymentProviderCheckoutSessionRef { get; set; }");
+
+        billingManagementQueriesSource.Should().Contain("PaymentProviderPaymentIntentRef = x.Payment.ProviderPaymentIntentRef");
+        billingManagementQueriesSource.Should().Contain("PaymentProviderCheckoutSessionRef = x.Payment.ProviderCheckoutSessionRef");
+        billingManagementQueriesSource.Should().Contain("item.PaymentProviderPaymentIntentRef,");
+        billingManagementQueriesSource.Should().Contain("item.PaymentProviderCheckoutSessionRef,");
+        billingManagementQueriesSource.Should().Contain("(x.Payment.ProviderPaymentIntentRef != null && x.Payment.ProviderPaymentIntentRef.Contains(term))");
+        billingManagementQueriesSource.Should().Contain("(x.Payment.ProviderCheckoutSessionRef != null && x.Payment.ProviderCheckoutSessionRef.Contains(term))");
+    }
+
+
+    [Fact]
+    public void ShipmentAndReturnWorkspaces_Should_KeepDhlTimelineAndRmaFoundationsWired()
+    {
+        var shipmentsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "ShipmentsQueue.cshtml"));
+        var returnsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "ReturnsQueue.cshtml"));
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+        var orderVmSource = ReadWebAdminFile(Path.Combine("ViewModels", "Orders", "OrderVms.cs"));
+
+        shipmentsSource.Should().Contain("Model.Dhl.EnvironmentLabel == \"NotSet\"");
+        shipmentsSource.Should().Contain("@Model.Dhl.ShipmentAttentionDelayHours");
+        shipmentsSource.Should().Contain("@Model.Dhl.ShipmentTrackingGraceHours");
+        shipmentsSource.Should().Contain("!string.IsNullOrWhiteSpace(item.TrackingUrl)");
+        shipmentsSource.Should().Contain("<a href=\"@item.TrackingUrl\" target=\"_blank\" rel=\"noopener noreferrer\">@item.TrackingNumber</a>");
+        shipmentsSource.Should().Contain("@item.LastCarrierEventAtUtc.Value.ToString(\"yyyy-MM-dd HH:mm\")");
+        shipmentsSource.Should().Contain("@T.T(\"CarrierReviewQueue\")");
+        shipmentsSource.Should().Contain("@T.T(\"ReturnFollowUp\")");
+
+        returnsSource.Should().Contain("@T.T(\"ReturnsQueueTitle\")");
+        returnsSource.Should().Contain("@string.Format(T.T(\"CreatedUtcValue\"), item.CreatedAtUtc.ToString(\"yyyy-MM-dd HH:mm\"))");
+        returnsSource.Should().Contain("@string.Format(T.T(\"LastCarrierEventAtUtc\"), item.LastCarrierEventAtUtc.Value.ToString(\"yyyy-MM-dd HH:mm\"))");
+        returnsSource.Should().Contain("@T.T(\"ReviewRefunds\")");
+        returnsSource.Should().Contain("@T.T(\"StartReturnRefund\")");
+        returnsSource.Should().Contain("@T.T(\"CarrierReview\")");
+        returnsSource.Should().Contain("@T.T(\"ReturnFollowUp\")");
+
+        controllerSource.Should().Contain("private async Task<DhlOperationsVm> BuildDhlOperationsVmAsync(CancellationToken ct)");
+        controllerSource.Should().Contain("return BuildDhlOperationsVm(settings);");
+        controllerSource.Should().Contain("ShippingMethodName = dto.ShippingMethodName,");
+        controllerSource.Should().Contain("ReturnSupport = BuildReturnSupportBaseline(dto),");
+        controllerSource.Should().Contain("private static ReturnSupportBaselineVm BuildReturnSupportBaseline(OrderDetailDto dto)");
+        controllerSource.Should().Contain("ReturnedShipmentCount = dto.Shipments.Count(x => x.Status == ShipmentStatus.Returned)");
+        controllerSource.Should().Contain("ReturnedWithoutTrackingCount = dto.Shipments.Count(x => x.Status == ShipmentStatus.Returned && string.IsNullOrWhiteSpace(x.TrackingNumber))");
+        controllerSource.Should().Contain("CarrierReviewShipmentCount = dto.Shipments.Count(");
+
+        orderVmSource.Should().Contain("public DhlOperationsVm Dhl { get; set; } = new();");
+        orderVmSource.Should().Contain("public ReturnSupportBaselineVm ReturnSupport { get; set; } = new();");
+        orderVmSource.Should().Contain("public int ReturnedShipmentCount { get; set; }");
+        orderVmSource.Should().Contain("public int ReturnedWithoutTrackingCount { get; set; }");
+        orderVmSource.Should().Contain("public int CarrierReviewShipmentCount { get; set; }");
+        orderVmSource.Should().Contain("public string? ShippingMethodName { get; set; }");
+    }
+
+
+    [Fact]
+    public void AuditInfrastructure_Should_KeepActorTimestampAndOperationalAuditContractsWired()
+    {
+        var baseEntitySource = ReadDomainFile(Path.Combine("Common", "BaseEntity.cs"));
+        var dbContextAuditSource = ReadInfrastructureFile(Path.Combine("Persistence", "Db", "DarwinDbContext.Auditing.cs"));
+        var siteSettingSource = ReadDomainFile(Path.Combine("Entities", "Settings", "SiteSetting.cs"));
+        var orderEntitiesSource = ReadDomainFile(Path.Combine("Entities", "Orders", "PaymentShipment.cs"));
+        var userSource = ReadDomainFile(Path.Combine("Entities", "Identity", "User.cs"));
+        var webhooksSource = ReadDomainFile(Path.Combine("Entities", "Integration", "Webhooks.cs"));
+        var ownerOverrideAuditSource = ReadDomainFile(Path.Combine("Entities", "Businesses", "BusinessOwnerOverrideAudit.cs"));
+        var emailAuditSource = ReadDomainFile(Path.Combine("Entities", "Integration", "EmailDispatchAudit.cs"));
+        var channelAuditSource = ReadDomainFile(Path.Combine("Entities", "Integration", "ChannelDispatchAudit.cs"));
+        var businessesControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var communicationsControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessCommunicationsController.cs"));
+        var billingControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+
+        baseEntitySource.Should().Contain("CreatedAtUtc/ModifiedAtUtc");
+        baseEntitySource.Should().Contain("CreatedByUserId/ModifiedByUserId");
+        baseEntitySource.Should().Contain("public Guid CreatedByUserId { get; set; }");
+        baseEntitySource.Should().Contain("public Guid ModifiedByUserId { get; set; }");
+
+        dbContextAuditSource.Should().Contain("public override int SaveChanges()");
+        dbContextAuditSource.Should().Contain("public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)");
+        dbContextAuditSource.Should().Contain("ChangeTracker.Entries<BaseEntity>()");
+        dbContextAuditSource.Should().Contain("_currentUser?.GetCurrentUserId() ?? Darwin.Shared.Constants.WellKnownIds.AdministratorUserId");
+        dbContextAuditSource.Should().Contain("entry.Entity.CreatedByUserId = userId;");
+        dbContextAuditSource.Should().Contain("entry.Entity.ModifiedByUserId = userId;");
+        dbContextAuditSource.Should().Contain("entry.Entity.CreatedAtUtc = now;");
+        dbContextAuditSource.Should().Contain("entry.Entity.ModifiedAtUtc = now;");
+
+        siteSettingSource.Should().Contain("public sealed class SiteSetting : BaseEntity");
+        userSource.Should().Contain("public sealed class User : BaseEntity");
+        orderEntitiesSource.Should().Contain("public sealed class Shipment : BaseEntity");
+        orderEntitiesSource.Should().Contain("public sealed class Refund : BaseEntity");
+        webhooksSource.Should().Contain("public sealed class WebhookDelivery : BaseEntity");
+
+        ownerOverrideAuditSource.Should().Contain("public sealed class BusinessOwnerOverrideAudit : BaseEntity");
+        ownerOverrideAuditSource.Should().Contain("Explicit audit record for controlled overrides");
+        ownerOverrideAuditSource.Should().Contain("public string Reason { get; set; } = string.Empty;");
+        emailAuditSource.Should().Contain("public sealed class EmailDispatchAudit : BaseEntity");
+        emailAuditSource.Should().Contain("Append-only audit entry for phase-1 email delivery attempts.");
+        channelAuditSource.Should().Contain("public sealed class ChannelDispatchAudit : BaseEntity");
+        channelAuditSource.Should().Contain("Append-only audit entry for SMS and WhatsApp delivery attempts");
+
+        businessesControllerSource.Should().Contain("public async Task<IActionResult> OwnerOverrideAudits(");
+        businessesControllerSource.Should().Contain("GetBusinessOwnerOverrideAuditsPageHandler");
+        businessesControllerSource.Should().Contain("RequestPasswordResetHandler");
+        businessesControllerSource.Should().Contain("GetEmailDispatchAuditsPageHandler");
+        businessesControllerSource.Should().Contain("BuildBusinessOwnerOverrideAuditPlaybooks");
+
+        communicationsControllerSource.Should().Contain("public async Task<IActionResult> EmailAudits(");
+        communicationsControllerSource.Should().Contain("public async Task<IActionResult> ChannelAudits(");
+        communicationsControllerSource.Should().Contain("RetryEmailDispatchAuditHandler");
+
+        billingControllerSource.Should().Contain("public async Task<IActionResult> Webhooks(");
+        billingControllerSource.Should().Contain("IdempotencyKey = x.IdempotencyKey");
+        billingControllerSource.Should().Contain("BuildWebhookPlaybooks()");
+    }
+
+
+    [Fact]
+    public void AdminSupportWorkspaces_Should_KeepOnboardingAuthPaymentShippingAndCommunicationTroubleshootingReachable()
+    {
+        var businessesControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var usersControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
+        var billingControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var communicationsControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessCommunicationsController.cs"));
+        var supportQueueSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "SupportQueue.cshtml"));
+        var paymentsSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Payments.cshtml"));
+        var shipmentsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "ShipmentsQueue.cshtml"));
+        var emailAuditsSource = ReadWebAdminFile(Path.Combine("Views", "BusinessCommunications", "EmailAudits.cshtml"));
+
+        businessesControllerSource.Should().Contain("public async Task<IActionResult> SupportQueue(CancellationToken ct = default)");
+        businessesControllerSource.Should().Contain("public async Task<IActionResult> MerchantReadiness(CancellationToken ct = default)");
+        businessesControllerSource.Should().Contain("BuildMerchantReadinessPlaybooks()");
+        businessesControllerSource.Should().Contain("RenderSupportQueueWorkspace(vm)");
+        businessesControllerSource.Should().Contain("RenderMerchantReadinessWorkspace(vm)");
+
+        usersControllerSource.Should().Contain("BuildUserSupportPlaybooks()");
+        usersControllerSource.Should().Contain("Playbooks = BuildUserSupportPlaybooks(),");
+
+        billingControllerSource.Should().Contain("BuildPaymentSupportPlaybooks(PaymentEditDto dto)");
+        billingControllerSource.Should().Contain("Title = T(\"PaymentSupportPlaybookProviderCorrelationTitle\")");
+        billingControllerSource.Should().Contain("Title = T(\"PaymentSupportPlaybookFailureRefundTitle\")");
+        billingControllerSource.Should().Contain("Title = T(\"PaymentSupportPlaybookStripeTitle\")");
+
+        communicationsControllerSource.Should().Contain("public async Task<IActionResult> EmailAudits(");
+        communicationsControllerSource.Should().Contain("public async Task<IActionResult> ChannelAudits(");
+        communicationsControllerSource.Should().Contain("RenderEmailAuditsWorkspace(vm)");
+        communicationsControllerSource.Should().Contain("RenderChannelAuditsWorkspace(vm)");
+        communicationsControllerSource.Should().Contain("BuildChannelAuditActionPolicyState");
+        communicationsControllerSource.Should().Contain("BuildChannelAuditActionBlockedReason");
+        communicationsControllerSource.Should().Contain("BuildChannelAuditEscalationReason");
+
+        supportQueueSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+        supportQueueSource.Should().Contain("@T.T(\"BusinessSupportQueueIntro\")");
+        supportQueueSource.Should().Contain("_SupportQueueAttentionBusinesses.cshtml");
+        supportQueueSource.Should().Contain("_SupportQueueFailedEmails.cshtml");
+        supportQueueSource.Should().Contain("@T.T(\"OperatorAction\")");
+
+        paymentsSource.Should().Contain("@T.T(\"PaymentSupportPlaybooks\")");
+        paymentsSource.Should().Contain("@T.T(\"OperatorAction\")");
+
+        shipmentsSource.Should().Contain("@T.T(\"ShipmentSupportPlaybooks\")");
+        shipmentsSource.Should().Contain("@T.T(\"OperatorAction\")");
+        shipmentsSource.Should().Contain("@T.T(\"CarrierReviewQueue\")");
+
+        emailAuditsSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        emailAuditsSource.Should().Contain("@T.T(\"SupportQueue\")");
+    }
+
+    [Fact]
+    public void BusinessOnboardingWorkspaces_Should_KeepApprovalActivationAndSupportRailsWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var supportQueueSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "SupportQueue.cshtml"));
+        var readinessSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "MerchantReadiness.cshtml"));
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+        var memberShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessMemberEditorShell.cshtml"));
+
+        controllerSource.Should().Contain("public async Task<IActionResult> ProvisionSupportCustomer(");
+        controllerSource.Should().Contain("public async Task<IActionResult> SupportQueue(");
+        controllerSource.Should().Contain("public async Task<IActionResult> Approve(");
+        controllerSource.Should().Contain("public async Task<IActionResult> Suspend(");
+        controllerSource.Should().Contain("public async Task<IActionResult> Reactivate(");
+        controllerSource.Should().Contain("SetSuccessMessage(\"BusinessApproved\")");
+        controllerSource.Should().Contain("SetSuccessMessage(\"BusinessSuspended\")");
+        controllerSource.Should().Contain("SetSuccessMessage(\"BusinessReactivated\")");
+        controllerSource.Should().Contain("SetErrorMessage(\"BusinessApproveFailed\")");
+        controllerSource.Should().Contain("SetErrorMessage(\"BusinessSuspendFailed\")");
+        controllerSource.Should().Contain("SetErrorMessage(\"BusinessReactivateFailed\")");
+        controllerSource.Should().Contain("public async Task<IActionResult> CreateInvitation(");
+        controllerSource.Should().Contain("public async Task<IActionResult> ResendInvitation(");
+        controllerSource.Should().Contain("public async Task<IActionResult> RevokeInvitation(");
+        controllerSource.Should().Contain("public async Task<IActionResult> ConfirmMemberEmail(");
+        controllerSource.Should().Contain("public async Task<IActionResult> SendMemberPasswordReset(");
+        controllerSource.Should().Contain("public async Task<IActionResult> SendMemberActivationEmail(");
+        controllerSource.Should().Contain("public async Task<IActionResult> LockMemberUser(");
+        controllerSource.Should().Contain("public async Task<IActionResult> UnlockMemberUser(");
+
+        supportQueueSource.Should().Contain("T.T(\"PendingApproval\")");
+        supportQueueSource.Should().Contain("BusinessMemberSupportFilter.PendingActivation");
+        supportQueueSource.Should().Contain("BusinessMemberSupportFilter.Locked");
+        supportQueueSource.Should().Contain("@T.T(\"FailedEmails\")");
+        supportQueueSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+
+        readinessSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+        readinessSource.Should().Contain("BusinessOperationalStatus.PendingApproval");
+        readinessSource.Should().Contain("BusinessReadinessQueueFilter.ApprovedInactive");
+        readinessSource.Should().Contain("string SubscriptionStatusLabel(string? status)");
+        readinessSource.Should().Contain("@Url.Action(\"Subscription\", \"Businesses\", new { businessId = item.Id })");
+        readinessSource.Should().Contain("@Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = item.Id })");
+        readinessSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\")");
+        readinessSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+
+        setupShellSource.Should().Contain("@T.T(\"BusinessSetupTitle\")");
+        setupShellSource.Should().Contain("@T.T(\"BusinessSetupPlatformDependenciesTitle\")");
+        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id })");
+
+        memberShellSource.Should().Contain("@T.T(\"BusinessMembersOwnerOverrideAuditAction\")");
+        memberShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+        memberShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
+    }
+
+
+    [Fact]
+    public void OperationalObservabilityWorkspaces_Should_KeepWebhookCommunicationAndFailureDiagnosticsReachable()
+    {
+        var billingControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var communicationsControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessCommunicationsController.cs"));
+        var webhooksSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Webhooks.cshtml"));
+        var emailAuditsSource = ReadWebAdminFile(Path.Combine("Views", "BusinessCommunications", "EmailAudits.cshtml"));
+        var channelAuditsSource = ReadWebAdminFile(Path.Combine("Views", "BusinessCommunications", "ChannelAudits.cshtml"));
+        var failedEmailsSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SupportQueueFailedEmails.cshtml"));
+
+        billingControllerSource.Should().Contain("public async Task<IActionResult> Webhooks(");
+        billingControllerSource.Should().Contain("BuildBillingWebhookOpsSummaryVmAsync(ct)");
+        billingControllerSource.Should().Contain("BuildWebhookPlaybooks()");
+        billingControllerSource.Should().Contain("PaymentExceptionCount = summary.PaymentExceptionCount");
+        billingControllerSource.Should().Contain("DisputeSignalCount = summary.DisputeSignalCount");
+        billingControllerSource.Should().Contain("SuggestedOperatorAction = x.SuggestedOperatorAction");
+        billingControllerSource.Should().Contain("SuggestedQueueTarget = x.SuggestedQueueTarget");
+
+        communicationsControllerSource.Should().Contain("public async Task<IActionResult> EmailAudits(");
+        communicationsControllerSource.Should().Contain("public async Task<IActionResult> ChannelAudits(");
+        communicationsControllerSource.Should().Contain("BuildEmailAuditRetryBlockedReason");
+        communicationsControllerSource.Should().Contain("BuildAuditRecommendedAction");
+        communicationsControllerSource.Should().Contain("BuildChannelAuditActionBlockedReason");
+        communicationsControllerSource.Should().Contain("BuildChannelAuditEscalationReason");
+        communicationsControllerSource.Should().Contain("BuildChannelProviderRecommendedAction");
+        communicationsControllerSource.Should().Contain("BuildChannelProviderEscalationHint");
+        communicationsControllerSource.Should().Contain("BuildChannelChainRecommendedAction");
+        communicationsControllerSource.Should().Contain("BuildChannelChainEscalationHint");
+        communicationsControllerSource.Should().Contain("RetryEmailDispatchAuditHandler");
+        communicationsControllerSource.Should().Contain("ChannelAuditSummary = new ChannelDispatchAuditSummaryVm");
+        communicationsControllerSource.Should().Contain("ProviderSummary = providerSummary == null ? null : new ChannelDispatchProviderSummaryVm");
+
+        webhooksSource.Should().Contain("@T.T(\"WebhookSupportPlaybooks\")");
+        webhooksSource.Should().Contain("@Model.Summary.PaymentExceptionCount");
+        webhooksSource.Should().Contain("@Model.Summary.DisputeSignalCount");
+        webhooksSource.Should().Contain("@item.IdempotencyKey");
+        webhooksSource.Should().Contain("@item.SuggestedOperatorAction");
+        webhooksSource.Should().Contain("BillingWebhookDeliveryQueueFilter.PaymentExceptions");
+        webhooksSource.Should().Contain("BillingWebhookDeliveryQueueFilter.DisputeSignals");
+
+        emailAuditsSource.Should().Contain("@T.T(\"RecentSmtpAttempts\")");
+        emailAuditsSource.Should().Contain("@T.T(\"RetryReady\")");
+        emailAuditsSource.Should().Contain("@T.T(\"RetryBlocked\")");
+        emailAuditsSource.Should().Contain("@T.T(\"HeavyChains\")");
+        emailAuditsSource.Should().Contain("@T.T(\"BusinessLinkedFailures\")");
+        emailAuditsSource.Should().Contain("@T.T(\"PriorSuccessContext\")");
+        emailAuditsSource.Should().Contain("@T.T(\"FailedInvitations\")");
+        emailAuditsSource.Should().Contain("@T.T(\"FailedActivations\")");
+        emailAuditsSource.Should().Contain("@T.T(\"SupportQueue\")");
+
+        channelAuditsSource.Should().Contain("@T.T(\"ProviderReview\")");
+        channelAuditsSource.Should().Contain("@T.T(\"EscalationCandidates\")");
+        channelAuditsSource.Should().Contain("@T.T(\"ActionBlocked\")");
+        channelAuditsSource.Should().Contain("@T.T(\"HeavyChains\")");
+        channelAuditsSource.Should().Contain("@Model.ProviderSummary.RecommendedAction");
+        channelAuditsSource.Should().Contain("@Model.ProviderSummary.EscalationHint");
+        channelAuditsSource.Should().Contain("@T.T(\"OpenVerificationPolicy\")");
+        channelAuditsSource.Should().Contain("@T.T(\"TestTargets\")");
+
+        failedEmailsSource.Should().Contain("@item.FailureMessage");
+        failedEmailsSource.Should().Contain("@item.RecommendedAction");
+        failedEmailsSource.Should().Contain("@T.T(\"EmailDeliveryAudits\")");
+        failedEmailsSource.Should().Contain("@T.T(\"SmsWhatsAppAuditsTitle\")");
+        failedEmailsSource.Should().Contain("@T.T(\"OwnerOverrideAuditTitle\")");
+    }
+
+
+    [Fact]
     public void BillingFinancialAccountsView_Should_KeepLocalizedTypeAndWorkspaceContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Billing", "FinancialAccounts.cshtml"));
@@ -370,6 +1051,24 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("public async Task<IActionResult> EditAddress(");
         source.Should().Contain("public async Task<IActionResult> DeleteAddress(");
         source.Should().Contain("public async Task<IActionResult> SetDefaultAddress(");
+        source.Should().Contain("AddModelErrorMessage(\"UserCreateFailedMessage\");");
+        source.Should().Contain("AddModelErrorMessage(\"UserUpdateFailedMessage\");");
+        source.Should().Contain("AddModelErrorMessage(\"ChangeEmailFailedMessage\");");
+        source.Should().Contain("AddModelErrorMessage(\"ChangePasswordFailedMessage\");");
+        source.Should().Contain("AddModelErrorMessage(\"UserRolesUpdateFailedMessage\");");
+        source.Should().Contain("SetErrorMessage(\"UserNotFoundMessage\");");
+        source.Should().Contain(": T(\"ConfirmEmailFailedMessage\")");
+        source.Should().Contain(": T(\"ActivationEmailSendFailedMessage\")");
+        source.Should().Contain(": T(\"PasswordResetEmailSendFailedMessage\")");
+        source.Should().Contain(": T(\"AccountLockFailedMessage\")");
+        source.Should().Contain(": T(\"AccountUnlockFailedMessage\")");
+        source.Should().Contain(": T(\"UserDeleteFailedMessage\")");
+        source.Should().Contain("return BadRequest(T(\"AddressCreateFailedMessage\"));");
+        source.Should().Contain("return BadRequest(T(\"AddressUpdateFailedMessage\"));");
+        source.Should().Contain("return BadRequest(T(\"AddressDeleteFailedMessage\"));");
+        source.Should().Contain("return BadRequest(T(\"SetDefaultAddressFailedMessage\"));");
+        source.Should().NotContain("ModelState.AddModelError(string.Empty, result.Error");
+        source.Should().NotContain("BadRequest(result.Error ??");
     }
 
 
@@ -837,8 +1536,15 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         orderVmsSource.Should().Contain("public bool TrackingOverdue { get; set; }");
         orderVmsSource.Should().Contain("public int AttentionDelayHours { get; set; }");
         orderVmsSource.Should().Contain("public int TrackingGraceHours { get; set; }");
+        orderVmsSource.Should().Contain("public string? TrackingUrl { get; set; }");
+        orderVmsSource.Should().Contain("public string? ProviderShipmentReference { get; set; }");
+        orderVmsSource.Should().Contain("public string? LabelUrl { get; set; }");
+        orderVmsSource.Should().Contain("public string? LastCarrierEventKey { get; set; }");
         orderVmsSource.Should().Contain("public bool HasRefundablePayment { get; set; }");
         orderVmsSource.Should().Contain("public sealed class ShipmentCreateVm");
+        orderVmsSource.Should().Contain("public string? ProviderShipmentReference { get; set; }");
+        orderVmsSource.Should().Contain("public string? LabelUrl { get; set; }");
+        orderVmsSource.Should().Contain("public string? LastCarrierEventKey { get; set; }");
         orderVmsSource.Should().Contain("[Range(1, int.MaxValue)]");
         orderVmsSource.Should().Contain("public List<ShipmentLineCreateVm> Lines { get; set; } = new();");
     }
@@ -912,7 +1618,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
         var homeSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Home", "HomeController.cs"));
-        var dashboardSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Home", "DashboardController.cs"));
+        var dashboardControllerPath = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..", "..",
+            "src", "Darwin.WebAdmin", "Controllers", "Admin", "Home", "DashboardController.cs"));
         var cultureSource = ReadWebAdminFile(Path.Combine("Controllers", "CultureController.cs"));
 
         adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
@@ -923,10 +1632,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         homeSource.Should().Contain("public async Task<IActionResult> BusinessSupportQueueFragment(Guid? businessId = null, CancellationToken ct = default)");
         homeSource.Should().Contain("public IActionResult AlertsFragment()");
 
-        dashboardSource.Should().Contain("public sealed class DashboardController : AdminBaseController");
-        dashboardSource.Should().Contain("[HttpGet(\"/admin\")]");
-        dashboardSource.Should().Contain("[HttpGet(\"/dashboard\")]");
-        dashboardSource.Should().Contain("public IActionResult Index()");
+        File.Exists(dashboardControllerPath).Should().BeFalse("legacy /admin and /dashboard compatibility redirects should be removed after the completion audit");
 
         cultureSource.Should().Contain("public sealed class CultureController : Controller");
         cultureSource.Should().Contain("[HttpPost]");
@@ -960,6 +1666,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Settings", "SiteSettingsController.cs"));
 
+        source.Should().Contain("[PermissionAuthorize(PermissionKeys.FullAdminAccess)]");
         source.Should().Contain("public async Task<IActionResult> Edit(CancellationToken ct)");
         source.Should().Contain("var dto = await _cache.GetAsync(ct);");
         source.Should().Contain("var vm = MapToVm(dto);");
@@ -993,6 +1700,71 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("SmsProvider = vm.SmsProvider,");
         source.Should().Contain("CommunicationTestInboxEmail = vm.CommunicationTestInboxEmail,");
         source.Should().Contain("PhoneVerificationPreferredChannel = vm.PhoneVerificationPreferredChannel,");
+    }
+
+    [Fact]
+    public void SiteSettingsEditorShell_Should_KeepCategorizedOwnershipAndExplicitSettingDomainsWired()
+    {
+        var shellSource = ReadWebAdminFile(Path.Combine("Views", "SiteSettings", "_SiteSettingsEditorShell.cshtml"));
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Settings", "SiteSettingsController.cs"));
+        var vmSource = ReadWebAdminFile(Path.Combine("ViewModels", "Settings", "SiteSettingVm.cs"));
+
+        shellSource.Should().Contain("@T.T(\"SettingsCategories\")");
+        shellSource.Should().Contain("href=\"#site-settings-localization\"");
+        shellSource.Should().Contain("href=\"#site-settings-security\"");
+        shellSource.Should().Contain("href=\"#site-settings-business-app\"");
+        shellSource.Should().Contain("href=\"#site-settings-payments\"");
+        shellSource.Should().Contain("href=\"#site-settings-tax\"");
+        shellSource.Should().Contain("href=\"#site-settings-shipping\"");
+        shellSource.Should().Contain("href=\"#site-settings-smtp\"");
+        shellSource.Should().Contain("href=\"#site-settings-sms\"");
+        shellSource.Should().Contain("href=\"#site-settings-whatsapp\"");
+        shellSource.Should().Contain("href=\"#site-settings-admin-routing\"");
+        shellSource.Should().Contain("href=\"#site-settings-communications-policy\"");
+        shellSource.Should().Contain("@T.T(\"SettingsOwnershipMatrix\")");
+        shellSource.Should().Contain("@T.T(\"SiteSettingsLocalizationDefaultsTitle\")");
+        shellSource.Should().Contain("@T.T(\"SiteSettingsCommunicationPolicyTitle\")");
+        shellSource.Should().Contain("@T.T(\"SiteSettingsPaymentsShippingTitle\")");
+        shellSource.Should().Contain("@T.T(\"SiteSettingsBrandingDefaultsTitle\")");
+
+        controllerSource.Should().Contain("return PartialView(\"~/Views/SiteSettings/_SiteSettingsEditorShell.cshtml\", vm);");
+
+        vmSource.Should().Contain("public string DefaultCulture { get; set; } = AdminCultureCatalog.DefaultCulture;");
+        vmSource.Should().Contain("public bool JwtEnabled { get; set; } = true;");
+        vmSource.Should().Contain("public bool StripeEnabled { get; set; }");
+        vmSource.Should().Contain("public bool DhlEnabled { get; set; }");
+        vmSource.Should().Contain("public string? InvoiceIssuerLegalName { get; set; }");
+        vmSource.Should().Contain("public bool WhatsAppEnabled { get; set; }");
+        vmSource.Should().Contain("public bool SmtpEnabled { get; set; }");
+        vmSource.Should().Contain("public bool SmsEnabled { get; set; }");
+        vmSource.Should().Contain("public string? AdminAlertEmailsCsv { get; set; }");
+        vmSource.Should().Contain("public string? BusinessInvitationEmailSubjectTemplate { get; set; }");
+        vmSource.Should().Contain("public string? PhoneVerificationSmsTemplate { get; set; }");
+    }
+
+    [Fact]
+    public void SiteSettingsEditorShell_Should_KeepCategoryBasedInformationArchitectureWired()
+    {
+        var shellSource = ReadWebAdminFile(Path.Combine("Views", "SiteSettings", "_SiteSettingsEditorShell.cshtml"));
+
+        shellSource.Should().Contain("href=\"#site-settings-basics\">@T.T(\"General\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-localization\">@T.T(\"Localization\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-security\">@T.T(\"Security\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-mobile\">@T.T(\"Mobile\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-business-app\">@T.T(\"BusinessApp\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-payments\">@T.T(\"Payments\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-tax\">@T.T(\"TaxAndInvoicing\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-shipping\">@T.T(\"Shipping\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-retention\">@T.T(\"Operational\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-measurement\">@T.T(\"Units\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-seo\">@T.T(\"Seo\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-analytics\">@T.T(\"Analytics\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-whatsapp\">@CommunicationChannelLabel(\"WhatsApp\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-webauthn\">@T.T(\"WebAuthn\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-smtp\">@T.T(\"SMTP\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-sms\">@CommunicationChannelLabel(\"SMS\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-admin-routing\">@T.T(\"AdminAlerts\")</a>");
+        shellSource.Should().Contain("href=\"#site-settings-communications-policy\">@T.T(\"CommunicationPolicy\")</a>");
     }
 
     [Fact]
@@ -1432,11 +2204,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
         source.Should().Contain("var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);");
         source.Should().Contain("SetSuccessMessage(\"MobilePushTokenCleared\")");
-        source.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"MobilePushTokenClearFailed\")");
+        source.Should().Contain("SetErrorMessage(\"MobilePushTokenClearFailed\")");
         source.Should().Contain("public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
         source.Should().Contain("var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);");
         source.Should().Contain("SetSuccessMessage(\"MobileDeviceDeactivated\")");
-        source.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"MobileDeviceDeactivateFailed\")");
+        source.Should().Contain("SetErrorMessage(\"MobileDeviceDeactivateFailed\")");
         source.Should().Contain("return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, controllerName, routeValues) ?? string.Empty;");
         source.Should().Contain("return new EmptyResult();");
@@ -1516,6 +2288,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         indexSource.Should().Contain("id=\"orders-workspace-shell\"");
         indexSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         indexSource.Should().Contain("@T.T(\"OrdersTitle\")");
+        indexSource.Should().Contain("string LocalizeOrderStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        indexSource.Should().Contain("@LocalizeOrderStatus(o.Status)");
         indexSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\")\"");
         indexSource.Should().Contain("@T.T(\"ShipmentsQueue\")");
         indexSource.Should().Contain("hx-get=\"@Url.Action(\"ReturnsQueue\", \"Orders\")\"");
@@ -1631,12 +2405,114 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("private IActionResult RenderShipmentEditor(ShipmentCreateVm vm)");
         source.Should().Contain("PartialView(\"~/Views/Orders/_ShipmentCreateShell.cshtml\", vm)");
         source.Should().Contain("return View(\"AddShipment\", vm);");
+        source.Should().Contain("ProviderShipmentReference = vm.ProviderShipmentReference");
+        source.Should().Contain("LabelUrl = vm.LabelUrl");
+        source.Should().Contain("LastCarrierEventKey = vm.LastCarrierEventKey");
         source.Should().Contain("private IActionResult RenderRefundEditor(RefundCreateVm vm)");
         source.Should().Contain("PartialView(\"~/Views/Orders/_RefundCreateShell.cshtml\", vm)");
         source.Should().Contain("return View(\"AddRefund\", vm);");
         source.Should().Contain("private IActionResult RenderInvoiceCreateEditor(OrderInvoiceCreateVm vm)");
         source.Should().Contain("PartialView(\"~/Views/Orders/_InvoiceCreateShell.cshtml\", vm)");
         source.Should().Contain("return View(\"CreateInvoice\", vm);");
+    }
+
+
+    [Fact]
+    public void OrdersShippingWorkspaces_Should_KeepDhlVisibilityAndCarrierSupportRailsWired()
+    {
+        var shipmentsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "ShipmentsQueue.cshtml"));
+        var returnsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "ReturnsQueue.cshtml"));
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+        var viewModelSource = ReadWebAdminFile(Path.Combine("ViewModels", "Orders", "OrderVms.cs"));
+
+        shipmentsSource.Should().Contain("@T.T(\"DhlMethods\")");
+        shipmentsSource.Should().Contain("ShipmentQueueFilter.Dhl");
+        shipmentsSource.Should().Contain("ShipmentQueueFilter.MissingService");
+        shipmentsSource.Should().Contain("ShipmentQueueFilter.AwaitingHandoff");
+        shipmentsSource.Should().Contain("ShipmentQueueFilter.TrackingOverdue");
+        shipmentsSource.Should().Contain("ShipmentQueueFilter.CarrierReview");
+        shipmentsSource.Should().Contain("ShipmentQueueFilter.ReturnFollowUp");
+        shipmentsSource.Should().Contain("@Model.Summary.DhlCount");
+        shipmentsSource.Should().Contain("@Model.Summary.MissingServiceCount");
+        shipmentsSource.Should().Contain("@Model.Summary.AwaitingHandoffCount");
+        shipmentsSource.Should().Contain("@Model.Summary.TrackingOverdueCount");
+        shipmentsSource.Should().Contain("@Model.Summary.CarrierReviewCount");
+        shipmentsSource.Should().Contain("@Model.Summary.ReturnFollowUpCount");
+        shipmentsSource.Should().Contain("@T.T(\"DhlPhaseOneReadiness\")");
+        shipmentsSource.Should().Contain("@T.T(\"ProviderShipmentReference\")");
+        shipmentsSource.Should().Contain("@T.T(\"CarrierLabel\")");
+        shipmentsSource.Should().Contain("@T.T(\"LastCarrierEventKey\")");
+        shipmentsSource.Should().Contain("Model.Dhl.ApiBaseUrlConfigured");
+        shipmentsSource.Should().Contain("Model.Dhl.ApiCredentialsConfigured");
+        shipmentsSource.Should().Contain("Model.Dhl.AccountNumberConfigured");
+        shipmentsSource.Should().Contain("Model.Dhl.EnvironmentLabel");
+        shipmentsSource.Should().Contain("Model.Dhl.ShipperIdentityConfigured");
+        shipmentsSource.Should().Contain("Model.Dhl.ShipmentAttentionDelayHours");
+        shipmentsSource.Should().Contain("Model.Dhl.ShipmentTrackingGraceHours");
+        shipmentsSource.Should().Contain("@T.T(\"ShipmentSupportPlaybooks\")");
+        shipmentsSource.Should().Contain("@T.T(\"NeedsCarrierReview\")");
+        shipmentsSource.Should().Contain("@T.T(\"CarrierReviewQueue\")");
+        shipmentsSource.Should().Contain("@T.T(\"ShippingMethods\")");
+        shipmentsSource.Should().Contain("asp-route-filter=\"Dhl\"");
+
+        returnsSource.Should().Contain("@T.T(\"ReturnsQueueTitle\")");
+        returnsSource.Should().Contain("@Model.Summary.ReturnFollowUpCount");
+        returnsSource.Should().Contain("@Model.Summary.CarrierReviewCount");
+        returnsSource.Should().Contain("@T.T(\"ReturnsQueuePlaybooksTitle\")");
+        returnsSource.Should().Contain("@T.T(\"ReviewRefunds\")");
+        returnsSource.Should().Contain("@T.T(\"StartReturnRefund\")");
+        returnsSource.Should().Contain("ReturnQueueFilter.CarrierReview");
+        returnsSource.Should().Contain("ReturnQueueFilter.FollowUp");
+
+        viewModelSource.Should().Contain("public DhlOperationsVm Dhl { get; set; } = new();");
+        viewModelSource.Should().Contain("public bool ApiBaseUrlConfigured { get; set; }");
+        viewModelSource.Should().Contain("public bool ApiCredentialsConfigured { get; set; }");
+        viewModelSource.Should().Contain("public bool AccountNumberConfigured { get; set; }");
+        viewModelSource.Should().Contain("public bool ShipperIdentityConfigured { get; set; }");
+        viewModelSource.Should().Contain("public int DhlCount { get; set; }");
+        viewModelSource.Should().Contain("public int MissingServiceCount { get; set; }");
+        viewModelSource.Should().Contain("public int AwaitingHandoffCount { get; set; }");
+        viewModelSource.Should().Contain("public int TrackingOverdueCount { get; set; }");
+        viewModelSource.Should().Contain("public int CarrierReviewCount { get; set; }");
+        viewModelSource.Should().Contain("public int ReturnFollowUpCount { get; set; }");
+        viewModelSource.Should().Contain("public bool IsDhl { get; set; }");
+        viewModelSource.Should().Contain("public bool NeedsCarrierReview { get; set; }");
+        viewModelSource.Should().Contain("public bool NeedsReturnFollowUp { get; set; }");
+        viewModelSource.Should().Contain("public bool AwaitingHandoff { get; set; }");
+        viewModelSource.Should().Contain("public bool TrackingOverdue { get; set; }");
+        viewModelSource.Should().Contain("public DateTime? LastCarrierEventAtUtc { get; set; }");
+        viewModelSource.Should().Contain("public string? ProviderShipmentReference { get; set; }");
+        viewModelSource.Should().Contain("public string? LabelUrl { get; set; }");
+        viewModelSource.Should().Contain("public string? LastCarrierEventKey { get; set; }");
+        viewModelSource.Should().Contain("public string TrackingState { get; set; } = string.Empty;");
+        viewModelSource.Should().Contain("public string ExceptionNote { get; set; } = string.Empty;");
+
+        controllerSource.Should().Contain("Dhl = BuildDhlOperationsVm(settings)");
+        controllerSource.Should().Contain("Summary = await BuildShipmentOpsSummaryVmAsync(settings.ShipmentAttentionDelayHours, settings.ShipmentTrackingGraceHours, ct).ConfigureAwait(false)");
+        controllerSource.Should().Contain("ShipmentQueueFilter.Dhl");
+        controllerSource.Should().Contain("ShipmentQueueFilter.MissingService");
+        controllerSource.Should().Contain("ShipmentQueueFilter.AwaitingHandoff");
+        controllerSource.Should().Contain("ShipmentQueueFilter.TrackingOverdue");
+        controllerSource.Should().Contain("ShipmentQueueFilter.CarrierReview");
+        controllerSource.Should().Contain("ShipmentQueueFilter.ReturnFollowUp");
+        controllerSource.Should().Contain("ApiBaseUrlConfigured = !string.IsNullOrWhiteSpace(settings.DhlApiBaseUrl)");
+        controllerSource.Should().Contain("ApiCredentialsConfigured = !string.IsNullOrWhiteSpace(settings.DhlApiKey) && !string.IsNullOrWhiteSpace(settings.DhlApiSecret)");
+        controllerSource.Should().Contain("AccountNumberConfigured = !string.IsNullOrWhiteSpace(settings.DhlAccountNumber)");
+        controllerSource.Should().Contain("EnvironmentLabel = string.IsNullOrWhiteSpace(settings.DhlEnvironment) ? \"NotSet\" : settings.DhlEnvironment");
+        controllerSource.Should().Contain("ShipmentAttentionDelayHours = settings.ShipmentAttentionDelayHours");
+        controllerSource.Should().Contain("ShipmentTrackingGraceHours = settings.ShipmentTrackingGraceHours");
+        controllerSource.Should().Contain("DhlCount = summary.DhlCount");
+        controllerSource.Should().Contain("MissingServiceCount = summary.MissingServiceCount");
+        controllerSource.Should().Contain("AwaitingHandoffCount = summary.AwaitingHandoffCount");
+        controllerSource.Should().Contain("TrackingOverdueCount = summary.TrackingOverdueCount");
+        controllerSource.Should().Contain("CarrierReviewCount = summary.CarrierReviewCount");
+        controllerSource.Should().Contain("ReturnFollowUpCount = summary.ReturnFollowUpCount");
+        controllerSource.Should().Contain("ProviderShipmentReference = x.ProviderShipmentReference");
+        controllerSource.Should().Contain("LabelUrl = x.LabelUrl");
+        controllerSource.Should().Contain("LastCarrierEventKey = x.LastCarrierEventKey");
+        controllerSource.Should().Contain("Title = T(\"ShipmentPlaybookDhlDataTitle\")");
+        controllerSource.Should().Contain("Title = T(\"ShipmentPlaybookCarrierReviewTitle\")");
+        controllerSource.Should().Contain("Title = T(\"ShipmentPlaybookReturnFollowUpTitle\")");
     }
 
 
@@ -1705,11 +2581,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     public void OrderDetailAndFinancialGrids_Should_KeepResourceBackedStatusContractsWired()
     {
         var detailsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "Details.cshtml"));
+        var paymentsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_PaymentsGrid.cshtml"));
         var invoicesSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_InvoicesGrid.cshtml"));
         var refundsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_RefundsGrid.cshtml"));
+        var shipmentsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_ShipmentsGrid.cshtml"));
 
         detailsSource.Should().Contain("string LocalizeOrderStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         detailsSource.Should().Contain("@LocalizeOrderStatus(Model.Status)");
+
+        paymentsSource.Should().Contain("string LocalizePaymentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        paymentsSource.Should().Contain("string LocalizeInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        paymentsSource.Should().Contain("@LocalizePaymentStatus(p.Status)");
+        paymentsSource.Should().Contain("@LocalizeInvoiceStatus(p.InvoiceStatus)");
 
         invoicesSource.Should().Contain("string LocalizeInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         invoicesSource.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
@@ -1720,12 +2603,16 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         refundsSource.Should().Contain("string LocalizeRefundStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         refundsSource.Should().Contain("@LocalizeRefundStatus(item.PaymentStatus)");
         refundsSource.Should().Contain("@LocalizeRefundStatus(item.Status)");
+
+        shipmentsSource.Should().Contain("string LocalizeShipmentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        shipmentsSource.Should().Contain("@LocalizeShipmentStatus(s.Status)");
     }
 
 
     [Fact]
     public void LowerTrafficBillingCrmInventoryAndSubscriptionViews_Should_KeepResourceBackedStatusContractsWired()
     {
+        var subscriptionWorkspaceSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Subscription.cshtml"));
         var subscriptionInvoicesSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "SubscriptionInvoices.cshtml"));
         var crmLeadsSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "Leads.cshtml"));
         var crmInvoicesSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "Invoices.cshtml"));
@@ -1736,9 +2623,13 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         var taxComplianceSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "TaxCompliance.cshtml"));
         var webhooksSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Webhooks.cshtml"));
         var paymentFormSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "_PaymentForm.cshtml"));
+        var billingVmSource = ReadWebAdminFile(Path.Combine("ViewModels", "Billing", "BillingVms.cs"));
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
         var purchaseOrdersSource = ReadWebAdminFile(Path.Combine("Views", "Inventory", "PurchaseOrders.cshtml"));
         var stockTransfersSource = ReadWebAdminFile(Path.Combine("Views", "Inventory", "StockTransfers.cshtml"));
 
+        subscriptionWorkspaceSource.Should().Contain("string LocalizeSubscriptionInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        subscriptionWorkspaceSource.Should().Contain("@LocalizeSubscriptionInvoiceStatus(invoice.Status)");
         subscriptionInvoicesSource.Should().Contain("string LocalizeSubscriptionInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         subscriptionInvoicesSource.Should().Contain("@LocalizeSubscriptionInvoiceStatus(item.Status)");
 
@@ -1765,9 +2656,20 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         billingRefundsSource.Should().Contain("@LocalizePaymentStatus(item.PaymentStatus)");
         taxComplianceSource.Should().Contain("string LocalizeTaxInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         taxComplianceSource.Should().Contain("@LocalizeTaxInvoiceStatus(item.Status)");
-        webhooksSource.Should().Contain("string LocalizeWebhookStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
-        webhooksSource.Should().Contain("@LocalizeWebhookStatus(item.Status)");
-        paymentFormSource.Should().Contain("string LocalizePaymentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+          webhooksSource.Should().Contain("string LocalizeWebhookStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+          webhooksSource.Should().Contain("string LocalizeRetrySafetyState(string? state) => string.IsNullOrWhiteSpace(state) ? \"-\" : T.T(state);");
+          webhooksSource.Should().Contain("@LocalizeWebhookStatus(item.Status)");
+          webhooksSource.Should().Contain("@LocalizeRetrySafetyState(item.RetrySafetyState)");
+          webhooksSource.Should().Contain("@T.T(\"FailureDiagnostics\")");
+          webhooksSource.Should().Contain("@T.T(item.FailureDiagnostics)");
+          webhooksSource.Should().Contain("@T.T(item.EscalationHint)");
+          billingVmSource.Should().Contain("public string RetrySafetyState { get; set; } = string.Empty;");
+          billingVmSource.Should().Contain("public string FailureDiagnostics { get; set; } = string.Empty;");
+          billingVmSource.Should().Contain("public string EscalationHint { get; set; } = string.Empty;");
+          controllerSource.Should().Contain("RetrySafetyState = x.RetrySafetyState,");
+          controllerSource.Should().Contain("FailureDiagnostics = x.FailureDiagnostics,");
+          controllerSource.Should().Contain("EscalationHint = x.EscalationHint,");
+          paymentFormSource.Should().Contain("string LocalizePaymentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         paymentFormSource.Should().Contain("@LocalizePaymentStatus(Model.Status)");
         paymentFormSource.Should().Contain("string LocalizeInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         paymentFormSource.Should().Contain("string LocalizeRefundStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
@@ -1780,6 +2682,132 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         purchaseOrdersSource.Should().Contain("@LocalizePurchaseOrderStatus(item.Status)");
         stockTransfersSource.Should().Contain("string LocalizeStockTransferStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         stockTransfersSource.Should().Contain("@LocalizeStockTransferStatus(item.Status)");
+    }
+
+    [Fact]
+    public void TaxAwareOrderAndInvoiceWorkspaces_Should_KeepVatReverseChargeIssuerAndArchiveReadinessWired()
+    {
+        var orderDetailsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "Details.cshtml"));
+        var orderInvoicesSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_InvoicesGrid.cshtml"));
+        var crmInvoicesSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "Invoices.cshtml"));
+        var crmInvoiceEditorSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "_InvoiceEditorShell.cshtml"));
+        var taxComplianceSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "TaxCompliance.cshtml"));
+        var billingControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var billingVmsSource = ReadWebAdminFile(Path.Combine("ViewModels", "Billing", "BillingVms.cs"));
+
+        orderDetailsSource.Should().Contain("@T.T(\"VatEnabled\")");
+        orderDetailsSource.Should().Contain("@T.T(\"DefaultVat\")");
+        orderDetailsSource.Should().Contain("@T.T(\"ReverseCharge\")");
+        orderDetailsSource.Should().Contain("@T.T(\"Issuer\")");
+        orderDetailsSource.Should().Contain("@T.T(\"SiteSettingInvoiceIssuerCountry\")");
+        orderDetailsSource.Should().Contain("@T.T(\"ArchiveReadiness\")");
+        orderDetailsSource.Should().Contain("@T.T(\"EInvoiceBaseline\")");
+        orderDetailsSource.Should().Contain("@T.T(\"StructuredExportReadiness\")");
+        orderDetailsSource.Should().Contain("Model.TaxPolicy.AllowReverseCharge");
+        orderDetailsSource.Should().Contain("Model.TaxPolicy.InvoiceIssuerCountry");
+        orderDetailsSource.Should().Contain("Model.TaxPolicy.ArchiveReadinessComplete");
+        orderDetailsSource.Should().Contain("Model.TaxPolicy.EInvoiceBaselineReady");
+        orderDetailsSource.Should().Contain("Model.TaxPolicy.StructuredExportBaselineReady");
+        orderDetailsSource.Should().Contain("Model.TaxPolicy.StructuredExportBaselineLabel");
+
+        orderInvoicesSource.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
+        orderInvoicesSource.Should().Contain("@LocalizeCustomerTaxProfileType(item.CustomerTaxProfileType)");
+        orderInvoicesSource.Should().Contain("@item.CustomerVatId");
+        orderInvoicesSource.Should().Contain("@T.T(\"VatIdMissing\")");
+
+        crmInvoicesSource.Should().Contain("@T.T(\"VatEnabled\")");
+        crmInvoicesSource.Should().Contain("@T.T(\"DefaultVat\")");
+        crmInvoicesSource.Should().Contain("@T.T(\"ReverseCharge\")");
+        crmInvoicesSource.Should().Contain("@T.T(\"Issuer\")");
+        crmInvoicesSource.Should().Contain("@T.T(\"SiteSettingInvoiceIssuerCountry\")");
+        crmInvoicesSource.Should().Contain("@T.T(\"ArchiveReadiness\")");
+        crmInvoicesSource.Should().Contain("@T.T(\"EInvoiceBaseline\")");
+        crmInvoicesSource.Should().Contain("@T.T(\"StructuredExportReadiness\")");
+        crmInvoicesSource.Should().Contain("Model.TaxPolicy.AllowReverseCharge");
+        crmInvoicesSource.Should().Contain("Model.TaxPolicy.InvoiceIssuerCountry");
+        crmInvoicesSource.Should().Contain("Model.TaxPolicy.ArchiveReadinessComplete");
+        crmInvoicesSource.Should().Contain("Model.TaxPolicy.EInvoiceBaselineReady");
+        crmInvoicesSource.Should().Contain("Model.TaxPolicy.StructuredExportBaselineReady");
+        crmInvoicesSource.Should().Contain("Model.TaxPolicy.StructuredExportBaselineLabel");
+        crmInvoicesSource.Should().Contain("@LocalizeCustomerTaxProfileType(item.CustomerTaxProfileType)");
+        crmInvoicesSource.Should().Contain("@item.CustomerVatId");
+        crmInvoicesSource.Should().Contain("@T.T(\"VatIdMissing\")");
+
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"VatEnabled\")");
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"DefaultVat\")");
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"ReverseCharge\")");
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"Issuer\")");
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"SiteSettingInvoiceIssuerCountry\")");
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"ArchiveReadiness\")");
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"EInvoiceBaseline\")");
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"StructuredExportReadiness\")");
+        crmInvoiceEditorSource.Should().Contain("Model.TaxPolicy.AllowReverseCharge");
+        crmInvoiceEditorSource.Should().Contain("Model.TaxPolicy.InvoiceIssuerCountry");
+        crmInvoiceEditorSource.Should().Contain("Model.TaxPolicy.ArchiveReadinessComplete");
+        crmInvoiceEditorSource.Should().Contain("Model.TaxPolicy.EInvoiceBaselineReady");
+        crmInvoiceEditorSource.Should().Contain("Model.TaxPolicy.StructuredExportBaselineReady");
+        crmInvoiceEditorSource.Should().Contain("Model.TaxPolicy.StructuredExportBaselineLabel");
+        crmInvoiceEditorSource.Should().Contain("@if (Model.IsFinancialContentLocked)");
+        crmInvoiceEditorSource.Should().Contain("@Model.FinancialEditLockReason");
+        crmInvoiceEditorSource.Should().Contain("disabled=\"@(Model.IsFinancialContentLocked ? \"disabled\" : null)\"");
+        crmInvoiceEditorSource.Should().Contain("readonly=\"@Model.IsFinancialContentLocked\"");
+        crmInvoiceEditorSource.Should().Contain("@LocalizeCustomerTaxProfileType(Model.CustomerTaxProfileType)");
+        crmInvoiceEditorSource.Should().Contain("@Model.CustomerVatId");
+        crmInvoiceEditorSource.Should().Contain("@T.T(\"VatIdMissing\")");
+
+        taxComplianceSource.Should().Contain("@T.T(\"VatEnabled\")");
+        taxComplianceSource.Should().Contain("@T.T(\"DefaultVat\")");
+        taxComplianceSource.Should().Contain("@T.T(\"ReverseCharge\")");
+        taxComplianceSource.Should().Contain("@T.T(\"Issuer\")");
+        taxComplianceSource.Should().Contain("@T.T(\"SiteSettingInvoiceIssuerCountry\")");
+        taxComplianceSource.Should().Contain("@T.T(\"ArchiveReadiness\")");
+        taxComplianceSource.Should().Contain("@T.T(\"EInvoiceBaseline\")");
+        taxComplianceSource.Should().Contain("@T.T(\"StructuredExportReadiness\")");
+        taxComplianceSource.Should().Contain("Model.Tax.AllowReverseCharge");
+        taxComplianceSource.Should().Contain("Model.Tax.InvoiceIssuerCountry");
+        taxComplianceSource.Should().Contain("Model.Tax.ArchiveReadinessComplete");
+        taxComplianceSource.Should().Contain("Model.Tax.EInvoiceBaselineReady");
+        taxComplianceSource.Should().Contain("Model.Tax.StructuredExportBaselineReady");
+        taxComplianceSource.Should().Contain("Model.Tax.StructuredExportBaselineLabel");
+        taxComplianceSource.Should().Contain("@LocalizeTaxInvoiceStatus(item.Status)");
+        taxComplianceSource.Should().Contain("@T.T(\"VatIdMissing\")");
+
+        billingControllerSource.Should().Contain("public async Task<IActionResult> TaxCompliance(CancellationToken ct = default)");
+        billingControllerSource.Should().Contain("AllowReverseCharge = settings.AllowReverseCharge,");
+        billingControllerSource.Should().Contain("InvoiceIssuerCountry = settings.InvoiceIssuerCountry ?? string.Empty,");
+        billingControllerSource.Should().Contain("ArchiveReadinessComplete = archiveReady,");
+        billingControllerSource.Should().Contain("EInvoiceBaselineReady = eInvoiceBaselineReady,");
+        billingControllerSource.Should().Contain("StructuredExportBaselineReady = structuredExportBaselineReady,");
+        billingControllerSource.Should().Contain("StructuredExportBaselineLabel = structuredExportBaselineReady ? T(\"TaxPolicyStructuredExportReady\") : T(\"TaxPolicyStructuredExportIncomplete\"),");
+
+        var crmVmsSource = ReadWebAdminFile(Path.Combine("ViewModels", "CRM", "CrmVms.cs"));
+        var crmControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
+        var ordersControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+
+        billingVmsSource.Should().Contain("public bool AllowReverseCharge { get; set; }");
+        billingVmsSource.Should().Contain("public string InvoiceIssuerCountry { get; set; } = string.Empty;");
+        billingVmsSource.Should().Contain("public bool ArchiveReadinessComplete { get; set; }");
+        billingVmsSource.Should().Contain("public string ArchiveReadinessLabel { get; set; } = string.Empty;");
+        billingVmsSource.Should().Contain("public bool EInvoiceBaselineReady { get; set; }");
+        billingVmsSource.Should().Contain("public string EInvoiceBaselineLabel { get; set; } = string.Empty;");
+        billingVmsSource.Should().Contain("public bool StructuredExportBaselineReady { get; set; }");
+        billingVmsSource.Should().Contain("public string StructuredExportBaselineLabel { get; set; } = string.Empty;");
+        crmVmsSource.Should().Contain("public bool IsFinancialContentLocked { get; set; }");
+        crmVmsSource.Should().Contain("public string FinancialEditLockReason { get; set; } = string.Empty;");
+        crmVmsSource.Should().Contain("public string InvoiceIssuerCountry { get; set; } = string.Empty;");
+        crmVmsSource.Should().Contain("public bool StructuredExportBaselineReady { get; set; }");
+        crmVmsSource.Should().Contain("public string StructuredExportBaselineLabel { get; set; } = string.Empty;");
+        crmControllerSource.Should().Contain("InvoiceIssuerCountry = dto.InvoiceIssuerCountry ?? string.Empty,");
+        crmControllerSource.Should().Contain("StructuredExportBaselineReady = structuredExportBaselineReady,");
+        crmControllerSource.Should().Contain("StructuredExportBaselineLabel = structuredExportBaselineReady ? T(\"TaxPolicyStructuredExportReady\") : T(\"TaxPolicyStructuredExportIncomplete\"),");
+        crmControllerSource.Should().Contain("private static bool IsInvoiceFinancialContentLocked(Darwin.Domain.Enums.InvoiceStatus status)");
+        crmControllerSource.Should().Contain("vm.IsFinancialContentLocked = IsInvoiceFinancialContentLocked(vm.Status);");
+        crmControllerSource.Should().Contain("vm.FinancialEditLockReason = vm.IsFinancialContentLocked ? T(\"InvoiceFinancialEditLockReason\") : string.Empty;");
+        crmControllerSource.Should().Contain("if (IsInvoiceFinancialContentLocked(existingInvoice.Status))");
+        crmControllerSource.Should().Contain("SetErrorMessage(\"InvoiceFinancialEditLockedMessage\")");
+        ordersControllerSource.Should().Contain("InvoiceIssuerCountry = dto.InvoiceIssuerCountry ?? string.Empty,");
+        ordersControllerSource.Should().Contain("StructuredExportBaselineReady = structuredExportBaselineReady,");
+        ordersControllerSource.Should().Contain("StructuredExportBaselineLabel = structuredExportBaselineReady ? T(\"TaxPolicyStructuredExportReady\") : T(\"TaxPolicyStructuredExportIncomplete\"),");
     }
 
 
@@ -2548,9 +3576,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("vm.CustomerOptions = await _referenceData.GetCustomerOptionsAsync(vm.CustomerId, includeEmpty: true, ct).ConfigureAwait(false);");
         source.Should().Contain("vm.PaymentOptions = await _referenceData.GetPaymentOptionsAsync(vm.PaymentId, includeEmpty: true, ct).ConfigureAwait(false);");
         source.Should().Contain("private void AddLocalizedModelError(string fallbackKey, Exception ex)");
-        source.Should().Contain("ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(ex.Message) ? T(fallbackKey) : ex.Message);");
+        source.Should().Contain("ModelState.AddModelError(string.Empty, T(fallbackKey));");
         source.Should().Contain("private void SetLocalizedError(string fallbackKey, Exception ex)");
-        source.Should().Contain("TempData[\"Error\"] = string.IsNullOrWhiteSpace(ex.Message) ? T(fallbackKey) : ex.Message;");
+        source.Should().Contain("TempData[\"Error\"] = T(fallbackKey);");
         source.Should().Contain("private static CustomerAddressDto MapCustomerAddress(CustomerAddressVm vm)");
         source.Should().Contain("AddressId = vm.AddressId,");
         source.Should().Contain("IsDefaultBilling = vm.IsDefaultBilling,");
@@ -3494,21 +4522,23 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
         source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         source.Should().Contain("<label asp-for=\"BusinessId\" class=\"form-label\"></label>");
-        source.Should().Contain("<select asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\"></select>");
+        source.Should().Contain("<select asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\" disabled=\"@(Model.IsFinancialContentLocked ? \"disabled\" : null)\"></select>");
         source.Should().Contain("<label asp-for=\"CustomerId\" class=\"form-label\"></label>");
-        source.Should().Contain("<select asp-for=\"CustomerId\" asp-items=\"Model.CustomerOptions\" class=\"form-select\"></select>");
+        source.Should().Contain("<select asp-for=\"CustomerId\" asp-items=\"Model.CustomerOptions\" class=\"form-select\" disabled=\"@(Model.IsFinancialContentLocked ? \"disabled\" : null)\"></select>");
         source.Should().Contain("<label asp-for=\"PaymentId\" class=\"form-label\"></label>");
-        source.Should().Contain("<select asp-for=\"PaymentId\" asp-items=\"Model.PaymentOptions\" class=\"form-select\"></select>");
+        source.Should().Contain("<select asp-for=\"PaymentId\" asp-items=\"Model.PaymentOptions\" class=\"form-select\" disabled=\"@(Model.IsFinancialContentLocked ? \"disabled\" : null)\"></select>");
         source.Should().Contain("@T.T(\"Current\"): @Model.PaymentSummary");
         source.Should().Contain("var invoiceStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>().Select");
         source.Should().Contain("Text = T.T(option.Text)");
-        source.Should().Contain("asp-for=\"Status\" asp-items=\"invoiceStatusOptions\" class=\"form-select\"");
+        source.Should().Contain("asp-for=\"Status\" asp-items=\"invoiceStatusOptions\" class=\"form-select\" disabled=\"@(Model.IsFinancialContentLocked ? \"disabled\" : null)\"");
         source.Should().Contain("<label asp-for=\"Currency\" class=\"form-label\"></label>");
         source.Should().Contain("<label asp-for=\"DueDateUtc\" class=\"form-label\"></label>");
         source.Should().Contain("<label asp-for=\"PaidAtUtc\" class=\"form-label\"></label>");
         source.Should().Contain("<label asp-for=\"TotalNetMinor\" class=\"form-label\"></label>");
         source.Should().Contain("<label asp-for=\"TotalTaxMinor\" class=\"form-label\"></label>");
         source.Should().Contain("<label asp-for=\"TotalGrossMinor\" class=\"form-label\"></label>");
+        source.Should().Contain("@if (Model.IsFinancialContentLocked)");
+        source.Should().Contain("@Model.FinancialEditLockReason");
         source.Should().Contain("@T.T(\"Save\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
         source.Should().Contain("@T.T(\"Back\")");
@@ -3722,7 +4752,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("await _adjustPoints.HandleAsync(new AdjustLoyaltyPointsDto");
         source.Should().Contain("PerformedByUserId = null,");
         source.Should().Contain("SetSuccessMessage(\"LoyaltyPointsAdjusted\");");
-        source.Should().Contain("AddLocalizedModelError(\"LoyaltyPointsAdjustFailed\", ex.Message);");
+        source.Should().Contain("AddLocalizedModelError(\"LoyaltyPointsAdjustFailed\");");
         source.Should().Contain("return RenderAdjustPointsEditor(vm);");
         source.Should().Contain("private IActionResult RenderAdjustPointsEditor(AdjustLoyaltyPointsVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/Loyalty/_AdjustPointsEditorShell.cshtml\", vm);");
@@ -3766,10 +4796,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("public async Task<IActionResult> ConfirmRedemption(Guid redemptionId, Guid businessId, Guid loyaltyAccountId, byte[]? rowVersion, CancellationToken ct = default)");
         source.Should().Contain("SetLocalizedResultMessage(result.Succeeded, \"LoyaltyRedemptionConfirmed\", \"LoyaltyRedemptionConfirmFailed\", result.Error);");
         source.Should().Contain("private void AddLocalizedModelError(string fallbackKey, string? error = null)");
-        source.Should().Contain("ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(error) ? T(fallbackKey) : error);");
+        source.Should().Contain("ModelState.AddModelError(string.Empty, T(fallbackKey));");
         source.Should().Contain("private void SetLocalizedResultMessage(bool succeeded, string successKey, string failureKey, string? error = null)");
         source.Should().Contain("SetSuccessMessage(successKey);");
         source.Should().Contain("SetLocalizedErrorMessage(failureKey, error);");
+        source.Should().Contain("private void SetLocalizedErrorMessage(string fallbackKey, string? error = null)");
+        source.Should().Contain("TempData[\"Error\"] = T(fallbackKey);");
     }
 
 
@@ -4395,12 +5427,19 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         detailsSource.Should().Contain("string LocalizeScanStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         detailsSource.Should().Contain("string LocalizeScanOutcome(string? outcome) => string.IsNullOrWhiteSpace(outcome) ? \"-\" : T.T(outcome);");
         detailsSource.Should().Contain("string LocalizeScanFailureReason(string? reason) => reason switch");
+        detailsSource.Should().Contain("\"TokenAlreadyConsumed\" => T.T(\"TokenAlreadyConsumed\")");
         detailsSource.Should().Contain("\"Token was consumed concurrently by another request.\" => T.T(\"TokenAlreadyConsumed\")");
+        detailsSource.Should().Contain("\"AccountNotFound\" => T.T(\"AccountNotFound\")");
         detailsSource.Should().Contain("\"Loyalty account for scan session not found.\" => T.T(\"AccountNotFound\")");
+        detailsSource.Should().Contain("\"AccountNotActive\" => T.T(\"AccountNotActive\")");
         detailsSource.Should().Contain("\"Loyalty account is not active.\" => T.T(\"AccountNotActive\")");
+        detailsSource.Should().Contain("\"Expired\" => T.T(\"Expired\")");
         detailsSource.Should().Contain("\"Session expired before redemption confirmation.\" => T.T(\"Expired\")");
+        detailsSource.Should().Contain("\"NoSelections\" => T.T(\"NoSelections\")");
         detailsSource.Should().Contain("\"Scan session does not contain any selected rewards.\" => T.T(\"NoSelections\")");
+        detailsSource.Should().Contain("\"InvalidSelections\" => T.T(\"InvalidSelections\")");
         detailsSource.Should().Contain("\"Selected rewards do not require any points.\" => T.T(\"InvalidSelections\")");
+        detailsSource.Should().Contain("\"InsufficientPoints\" => T.T(\"InsufficientPoints\")");
         detailsSource.Should().Contain("\"Account does not have enough points at confirmation time.\" => T.T(\"InsufficientPoints\")");
         detailsSource.Should().Contain("@T.T(\"Status\")");
         detailsSource.Should().Contain("@T.T(\"Points\")");
@@ -4563,6 +5602,13 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         scanSource.Should().Contain("string LocalizeScanStatus(Darwin.Domain.Enums.LoyaltyScanStatus status) => T.T(status.ToString());");
         scanSource.Should().Contain("string LocalizeScanOutcome(string? outcome) => string.IsNullOrWhiteSpace(outcome) ? \"-\" : T.T(outcome);");
         scanSource.Should().Contain("string LocalizeScanFailureReason(string? reason) => reason switch");
+        scanSource.Should().Contain("\"TokenAlreadyConsumed\" => T.T(\"TokenAlreadyConsumed\")");
+        scanSource.Should().Contain("\"AccountNotFound\" => T.T(\"AccountNotFound\")");
+        scanSource.Should().Contain("\"AccountNotActive\" => T.T(\"AccountNotActive\")");
+        scanSource.Should().Contain("\"Expired\" => T.T(\"Expired\")");
+        scanSource.Should().Contain("\"NoSelections\" => T.T(\"NoSelections\")");
+        scanSource.Should().Contain("\"InvalidSelections\" => T.T(\"InvalidSelections\")");
+        scanSource.Should().Contain("\"InsufficientPoints\" => T.T(\"InsufficientPoints\")");
         scanSource.Should().Contain("\"Session expired before use.\" => T.T(\"Expired\")");
         scanSource.Should().Contain("@T.T(\"LoyaltyClearQueueFilters\")");
         scanSource.Should().Contain("@T.T(\"Customer\")");
@@ -4613,6 +5659,13 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         redemptionsSource.Should().Contain("string LocalizeScanStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         redemptionsSource.Should().Contain("string LocalizeScanOutcome(string? outcome) => string.IsNullOrWhiteSpace(outcome) ? \"-\" : T.T(outcome);");
         redemptionsSource.Should().Contain("string LocalizeScanFailureReason(string? reason) => reason switch");
+        redemptionsSource.Should().Contain("\"TokenAlreadyConsumed\" => T.T(\"TokenAlreadyConsumed\")");
+        redemptionsSource.Should().Contain("\"AccountNotFound\" => T.T(\"AccountNotFound\")");
+        redemptionsSource.Should().Contain("\"AccountNotActive\" => T.T(\"AccountNotActive\")");
+        redemptionsSource.Should().Contain("\"Expired\" => T.T(\"Expired\")");
+        redemptionsSource.Should().Contain("\"NoSelections\" => T.T(\"NoSelections\")");
+        redemptionsSource.Should().Contain("\"InvalidSelections\" => T.T(\"InvalidSelections\")");
+        redemptionsSource.Should().Contain("\"InsufficientPoints\" => T.T(\"InsufficientPoints\")");
         redemptionsSource.Should().Contain("@T.T(\"Member\")");
         redemptionsSource.Should().Contain("@T.T(\"Reward\")");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyScan\")");
@@ -4700,7 +5753,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("SetErrorMessage(\"BrandConcurrencyConflict\");");
         source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
         source.Should().Contain("var dto = new BrandDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };");
-        source.Should().Contain("result.Succeeded ? T(\"BrandDeleted\") : (result.Error ?? T(\"BrandDeleteFailed\"))");
+        source.Should().Contain("result.Succeeded ? T(\"BrandDeleted\") : T(\"BrandDeleteFailed\")");
         source.Should().Contain("private IActionResult RenderBrandEditor(BrandEditVm vm, bool isCreate)");
         source.Should().Contain("ViewData[\"IsCreate\"] = isCreate;");
         source.Should().Contain("return PartialView(\"~/Views/Brands/_BrandEditorShell.cshtml\", vm);");
@@ -4845,7 +5898,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
         source.Should().Contain("var dto = new AddOnGroupDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };");
         source.Should().Contain("var result = await _softDelete.HandleAsync(dto, ct);");
-        source.Should().Contain("TempData[\"Warning\"] = result.Error ?? T(\"AddOnGroupDeleteFailed\");");
+        source.Should().Contain("SetWarningMessage(\"AddOnGroupDeleteFailed\");");
         source.Should().Contain("SetSuccessMessage(\"AddOnGroupDeleted\");");
         source.Should().Contain("public async Task<IActionResult> AttachToProducts(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)");
         source.Should().Contain("var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, defaultCulture, query, filter: null, ct);");
@@ -4855,6 +5908,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("var dto = new AddOnGroupAttachToProductsDto");
         source.Should().Contain("ProductIds = (vm.SelectedProductIds ?? new List<Guid>()).ToArray()");
         source.Should().Contain("var result = await _attachProducts.HandleAsync(dto, ct);");
+        source.Should().Contain("SetErrorMessage(\"AddOnGroupAttachProductsFailed\");");
         source.Should().Contain("SetSuccessMessage(\"AddOnGroupAttachedToProducts\");");
         source.Should().Contain("public async Task<IActionResult> AttachToCategories(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)");
         source.Should().Contain("var attached = await _getAttachedCategories.HandleAsync(id, ct);");
@@ -4876,6 +5930,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("var dto = new AddOnGroupAttachToVariantsDto");
         source.Should().Contain("VariantIds = (vm.SelectedVariantIds ?? new List<Guid>()).ToArray()");
         source.Should().Contain("var result = await _attachVariants.HandleAsync(dto, ct);");
+        source.Should().Contain("SetErrorMessage(\"AddOnGroupAttachVariantsFailed\");");
         source.Should().Contain("SetSuccessMessage(\"AddOnGroupAttachedToVariants\");");
         source.Should().Contain("private IActionResult RenderAttachToProducts(AddOnGroupAttachToProductsVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/AddOnGroups/AttachToProducts.cshtml\", vm);");
@@ -5359,7 +6414,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("Key = model.Key?.Trim() ?? string.Empty,");
         source.Should().Contain("DisplayName = model.DisplayName?.Trim() ?? string.Empty,");
         source.Should().Contain("var result = await _create.HandleAsync(dto, ct);");
-        source.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"RoleCreateFailed\");");
+        source.Should().Contain("SetErrorMessage(\"RoleCreateFailed\");");
         source.Should().Contain("SetSuccessMessage(\"RoleCreated\");");
         source.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
         source.Should().Contain("var dto = await _getRoleForEdit.HandleAsync(id, ct);");
@@ -5370,12 +6425,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("RowVersion = model.RowVersion,");
         source.Should().Contain("IsSystem = model.IsSystem");
         source.Should().Contain("var result = await _update.HandleAsync(dto, ct);");
-        source.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"RoleUpdateFailed\");");
+        source.Should().Contain("SetErrorMessage(\"RoleUpdateFailed\");");
         source.Should().Contain("SetSuccessMessage(\"RoleUpdated\");");
         source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)");
         source.Should().Contain("await _delete.HandleAsync(id, ct);");
         source.Should().Contain("SetSuccessMessage(\"RoleDeleted\");");
-        source.Should().Contain("TempData[\"Warning\"] = string.IsNullOrWhiteSpace(ex.Message)");
+        source.Should().Contain("SetWarningMessage(\"RoleSystemProtectedDelete\");");
         source.Should().Contain("SetErrorMessage(\"RoleDeleteFailed\");");
         source.Should().Contain("public async Task<IActionResult> Permissions(Guid id, CancellationToken ct = default)");
         source.Should().Contain("var vm = await BuildRolePermissionsVmAsync(id, null, null, ct);");
@@ -5385,7 +6440,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("var dto = new RolePermissionsUpdateDto");
         source.Should().Contain("PermissionIds = vm.SelectedPermissionIds?.ToList() ?? new List<Guid>()");
         source.Should().Contain("var result = await _updateRolePerms.HandleAsync(dto, ct);");
-        source.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"RolePermissionsUpdateFailed\");");
+        source.Should().Contain("SetErrorMessage(\"RolePermissionsUpdateFailed\");");
         source.Should().Contain("SetSuccessMessage(\"RolePermissionsUpdated\");");
         source.Should().Contain("return RedirectOrHtmx(nameof(Permissions), new { id = vm.RoleId });");
         source.Should().Contain("private IActionResult RenderCreateEditor(RoleCreateVm vm)");
@@ -5443,7 +6498,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("public sealed class PermissionsController : AdminBaseController");
         source.Should().Contain("public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, PermissionQueueFilter filter = PermissionQueueFilter.All, CancellationToken ct = default)");
         source.Should().Contain("var result = await _getPage.HandleAsync(1, 500, q, ct);");
-        source.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"PermissionsLoadFailed\");");
+        source.Should().Contain("SetErrorMessage(\"PermissionsLoadFailed\");");
         source.Should().Contain("return RenderIndexWorkspace(new PermissionsListVm());");
         source.Should().Contain("var listItems = pageData.Items");
         source.Should().Contain("var filteredItems = ApplyPermissionFilter(listItems, filter).ToList();");
@@ -5461,23 +6516,23 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("vm.DisplayName?.Trim() ?? string.Empty,");
         source.Should().Contain("string.IsNullOrWhiteSpace(vm.Description) ? null : vm.Description.Trim(),");
         source.Should().Contain("false, ct);");
-        source.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"PermissionCreateFailed\");");
+        source.Should().Contain("SetErrorMessage(\"PermissionCreateFailed\");");
         source.Should().Contain("SetSuccessMessage(\"PermissionCreated\");");
         source.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
         source.Should().Contain("var result = await _getForEdit.HandleAsync(id, ct);");
-        source.Should().Contain("TempData[\"Warning\"] = result.Error ?? T(\"PermissionNotFound\");");
+        source.Should().Contain("SetWarningMessage(\"PermissionNotFound\");");
         source.Should().Contain("return RenderEditEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Edit(PermissionEditVm vm, CancellationToken ct = default)");
         source.Should().Contain("var dto = new PermissionEditDto");
         source.Should().Contain("RowVersion = vm.RowVersion,");
         source.Should().Contain("DisplayName = vm.DisplayName?.Trim() ?? string.Empty,");
         source.Should().Contain("var result = await _update.HandleAsync(dto, ct);");
-        source.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"PermissionUpdateFailed\");");
+        source.Should().Contain("SetErrorMessage(\"PermissionUpdateFailed\");");
         source.Should().Contain("SetSuccessMessage(\"PermissionUpdated\");");
         source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
         source.Should().Contain("var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };");
         source.Should().Contain("var result = await _softDelete.HandleAsync(dto, ct);");
-        source.Should().Contain("TempData[\"Warning\"] = result.Error ?? T(\"PermissionDeleteFailed\");");
+        source.Should().Contain("SetWarningMessage(\"PermissionDeleteFailed\");");
         source.Should().Contain("SetSuccessMessage(\"PermissionDeleted\");");
         source.Should().Contain("SetErrorMessage(\"PermissionDeleteFailed\");");
         source.Should().Contain("private IActionResult RenderCreateEditor(PermissionCreateVm vm)");
@@ -5583,7 +6638,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"NoPagesFound\")");
         source.Should().Contain("@T.T(\"Live\")");
         source.Should().Contain("@T.T(\"Windowed\")");
-        source.Should().Contain("@p.Status");
+        source.Should().Contain("string LocalizePageStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        source.Should().Contain("@LocalizePageStatus(p.Status)");
         source.Should().Contain("@(p.PublishStartUtc?.ToString(\"u\") ?? \"-\") @T.T(\"To\") @(p.PublishEndUtc?.ToString(\"u\") ?? \"-\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Pages\", new { id = p.Id })\"");
         source.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Pages\")\"");
@@ -6204,6 +7260,126 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         setupShellSource.Should().Contain("@T.T(\"EmailAudits\")");
         setupShellSource.Should().Contain("@T.T(\"SmsWhatsAppAuditsTitle\")");
         setupShellSource.Should().Contain("@T.T(\"AdminAlerts\")");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepBusinessScopedCommunicationDefaultsWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+        var formSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessForm.cshtml"));
+
+        controllerSource.Should().Contain("public async Task<IActionResult> Setup(BusinessEditVm vm, CancellationToken ct = default)");
+        controllerSource.Should().Contain("SupportEmail = vm.SupportEmail,");
+        controllerSource.Should().Contain("CommunicationSenderName = vm.CommunicationSenderName,");
+        controllerSource.Should().Contain("CommunicationReplyToEmail = vm.CommunicationReplyToEmail,");
+        controllerSource.Should().Contain("CustomerEmailNotificationsEnabled = vm.CustomerEmailNotificationsEnabled,");
+        controllerSource.Should().Contain("CustomerMarketingEmailsEnabled = vm.CustomerMarketingEmailsEnabled,");
+        controllerSource.Should().Contain("OperationalAlertEmailsEnabled = vm.OperationalAlertEmailsEnabled,");
+        controllerSource.Should().Contain("SetSuccessMessage(\"BusinessSetupSaved\");");
+
+        setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaults\")");
+        setupShellSource.Should().Contain("label asp-for=\"SupportEmail\" class=\"form-label\">@T.T(\"SupportEmail\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"CommunicationSenderName\" class=\"form-label\">@T.T(\"SenderDisplayName\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"CommunicationReplyToEmail\" class=\"form-label\">@T.T(\"ReplyToEmail\")</label>");
+        setupShellSource.Should().Contain("input asp-for=\"CustomerEmailNotificationsEnabled\" class=\"form-check-input\"");
+        setupShellSource.Should().Contain("input asp-for=\"CustomerMarketingEmailsEnabled\" class=\"form-check-input\"");
+        setupShellSource.Should().Contain("input asp-for=\"OperationalAlertEmailsEnabled\" class=\"form-check-input\"");
+        setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaultsHelp\")");
+
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"SupportEmail\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"CommunicationSenderName\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"CommunicationReplyToEmail\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"CustomerEmailNotificationsEnabled\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"CustomerMarketingEmailsEnabled\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"OperationalAlertEmailsEnabled\" />");
+    }
+
+    [Fact]
+    public void BusinessSetupWorkspace_Should_KeepBusinessOwnedBrandingLocalizationAndAdminOverrideStorageWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+        var formSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessForm.cshtml"));
+        var vmSource = ReadWebAdminFile(Path.Combine("ViewModels", "Businesses", "BusinessVms.cs"));
+        var createHandlerSource = ReadApplicationFile(Path.Combine("Businesses", "Commands", "CreateBusinessHandler.cs"));
+        var updateHandlerSource = ReadApplicationFile(Path.Combine("Businesses", "Commands", "UpdateBusinessHandler.cs"));
+        var dtoSource = ReadApplicationFile(Path.Combine("Businesses", "DTOs", "BusinessDtos.cs"));
+        var entitySource = ReadDomainFile(Path.Combine("Entities", "Businesses", "Business.cs"));
+
+        vmSource.Should().Contain("public string DefaultCurrency { get; set; } = string.Empty;");
+        vmSource.Should().Contain("public string DefaultCulture { get; set; } = AdminCultureCatalog.DefaultCulture;");
+        vmSource.Should().Contain("public string DefaultTimeZoneId { get; set; } = string.Empty;");
+        vmSource.Should().Contain("public string? AdminTextOverridesJson { get; set; }");
+        vmSource.Should().Contain("public string? BrandDisplayName { get; set; }");
+        vmSource.Should().Contain("public string? BrandLogoUrl { get; set; }");
+        vmSource.Should().Contain("public string? BrandPrimaryColorHex { get; set; }");
+        vmSource.Should().Contain("public string? BrandSecondaryColorHex { get; set; }");
+
+        dtoSource.Should().Contain("public string DefaultCurrency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;");
+        dtoSource.Should().Contain("public string DefaultCulture { get; set; } = SiteSettingDto.DefaultCultureDefault;");
+        dtoSource.Should().Contain("public string DefaultTimeZoneId { get; set; } = SiteSettingDto.TimeZoneDefault;");
+        dtoSource.Should().Contain("public string? AdminTextOverridesJson { get; set; }");
+        dtoSource.Should().Contain("public string? BrandDisplayName { get; set; }");
+        dtoSource.Should().Contain("public string? BrandLogoUrl { get; set; }");
+        dtoSource.Should().Contain("public string? BrandPrimaryColorHex { get; set; }");
+        dtoSource.Should().Contain("public string? BrandSecondaryColorHex { get; set; }");
+
+        entitySource.Should().Contain("public string DefaultCurrency { get; set; } = DomainDefaults.DefaultCurrency;");
+        entitySource.Should().Contain("public string DefaultCulture { get; set; } = DomainDefaults.DefaultCulture;");
+        entitySource.Should().Contain("public string DefaultTimeZoneId { get; set; } = DomainDefaults.DefaultTimezone;");
+        entitySource.Should().Contain("public string? AdminTextOverridesJson { get; set; }");
+        entitySource.Should().Contain("public string? BrandDisplayName { get; set; }");
+        entitySource.Should().Contain("public string? BrandLogoUrl { get; set; }");
+        entitySource.Should().Contain("public string? BrandPrimaryColorHex { get; set; }");
+        entitySource.Should().Contain("public string? BrandSecondaryColorHex { get; set; }");
+
+        createHandlerSource.Should().Contain("DefaultCurrency = dto.DefaultCurrency.Trim(),");
+        createHandlerSource.Should().Contain("DefaultCulture = dto.DefaultCulture.Trim(),");
+        createHandlerSource.Should().Contain("DefaultTimeZoneId = dto.DefaultTimeZoneId.Trim(),");
+        createHandlerSource.Should().Contain("AdminTextOverridesJson = string.IsNullOrWhiteSpace(dto.AdminTextOverridesJson) ? null : dto.AdminTextOverridesJson.Trim(),");
+        createHandlerSource.Should().Contain("BrandDisplayName = brandDisplayName,");
+        createHandlerSource.Should().Contain("BrandLogoUrl = brandLogoUrl,");
+        createHandlerSource.Should().Contain("BrandPrimaryColorHex = string.IsNullOrWhiteSpace(dto.BrandPrimaryColorHex) ? null : dto.BrandPrimaryColorHex.Trim(),");
+        createHandlerSource.Should().Contain("BrandSecondaryColorHex = string.IsNullOrWhiteSpace(dto.BrandSecondaryColorHex) ? null : dto.BrandSecondaryColorHex.Trim(),");
+
+        updateHandlerSource.Should().Contain("entity.DefaultCurrency = dto.DefaultCurrency.Trim();");
+        updateHandlerSource.Should().Contain("entity.DefaultCulture = dto.DefaultCulture.Trim();");
+        updateHandlerSource.Should().Contain("entity.DefaultTimeZoneId = dto.DefaultTimeZoneId.Trim();");
+        updateHandlerSource.Should().Contain("entity.AdminTextOverridesJson = string.IsNullOrWhiteSpace(dto.AdminTextOverridesJson) ? null : dto.AdminTextOverridesJson.Trim();");
+        updateHandlerSource.Should().Contain("entity.BrandDisplayName = string.IsNullOrWhiteSpace(dto.BrandDisplayName) ? null : dto.BrandDisplayName.Trim();");
+        updateHandlerSource.Should().Contain("entity.BrandLogoUrl = string.IsNullOrWhiteSpace(dto.BrandLogoUrl) ? null : dto.BrandLogoUrl.Trim();");
+        updateHandlerSource.Should().Contain("entity.BrandPrimaryColorHex = string.IsNullOrWhiteSpace(dto.BrandPrimaryColorHex) ? null : dto.BrandPrimaryColorHex.Trim();");
+        updateHandlerSource.Should().Contain("entity.BrandSecondaryColorHex = string.IsNullOrWhiteSpace(dto.BrandSecondaryColorHex) ? null : dto.BrandSecondaryColorHex.Trim();");
+
+        controllerSource.Should().Contain("DefaultCurrency = vm.DefaultCurrency,");
+        controllerSource.Should().Contain("DefaultCulture = vm.DefaultCulture,");
+        controllerSource.Should().Contain("DefaultTimeZoneId = vm.DefaultTimeZoneId,");
+        controllerSource.Should().Contain("AdminTextOverridesJson = vm.AdminTextOverridesJson,");
+        controllerSource.Should().Contain("BrandDisplayName = vm.BrandDisplayName,");
+        controllerSource.Should().Contain("BrandLogoUrl = vm.BrandLogoUrl,");
+        controllerSource.Should().Contain("BrandPrimaryColorHex = vm.BrandPrimaryColorHex,");
+        controllerSource.Should().Contain("BrandSecondaryColorHex = vm.BrandSecondaryColorHex,");
+        controllerSource.Should().Contain("vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? settings.DefaultCurrency : vm.DefaultCurrency;");
+        controllerSource.Should().Contain("vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? settings.DefaultCulture : vm.DefaultCulture;");
+        controllerSource.Should().Contain("vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;");
+        controllerSource.Should().Contain("vm.BrandDisplayName = string.IsNullOrWhiteSpace(vm.BrandDisplayName) ? settings.Title : vm.BrandDisplayName;");
+        controllerSource.Should().Contain("vm.BrandLogoUrl = string.IsNullOrWhiteSpace(vm.BrandLogoUrl) ? settings.LogoUrl : vm.BrandLogoUrl;");
+
+        setupShellSource.Should().Contain("label asp-for=\"DefaultCulture\" class=\"form-label\">@T.T(\"DefaultCulture\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"DefaultCurrency\" class=\"form-label\">@T.T(\"DefaultCurrency\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"DefaultTimeZoneId\" class=\"form-label\">@T.T(\"DefaultTimeZone\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"AdminTextOverridesJson\" class=\"form-label\">@T.T(\"BusinessAdminTextOverridesJson\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"BrandDisplayName\" class=\"form-label\">@T.T(\"BrandDisplayName\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"BrandLogoUrl\" class=\"form-label\">@T.T(\"BrandLogoUrl\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"BrandPrimaryColorHex\" class=\"form-label\">@T.T(\"PrimaryBrandColor\")</label>");
+        setupShellSource.Should().Contain("label asp-for=\"BrandSecondaryColorHex\" class=\"form-label\">@T.T(\"SecondaryBrandColor\")</label>");
+
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"BrandDisplayName\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"BrandLogoUrl\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"BrandPrimaryColorHex\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"BrandSecondaryColorHex\" />");
+        formSource.Should().Contain("<input type=\"hidden\" asp-for=\"DefaultTimeZoneId\" />");
     }
 
 
@@ -6954,33 +8130,37 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         ordersSource.Should().Contain("private readonly GetMyOrderForViewHandler _getMyOrderForViewHandler;");
         ordersSource.Should().Contain("private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;");
         ordersSource.Should().Contain("private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;");
+        ordersSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
         ordersSource.Should().Contain("_getMyOrdersPageHandler = getMyOrdersPageHandler ?? throw new ArgumentNullException(nameof(getMyOrdersPageHandler));");
         ordersSource.Should().Contain("_getMyOrderForViewHandler = getMyOrderForViewHandler ?? throw new ArgumentNullException(nameof(getMyOrderForViewHandler));");
         ordersSource.Should().Contain("_createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));");
         ordersSource.Should().Contain("_checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));");
+        ordersSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
         ordersSource.Should().Contain("public async Task<IActionResult> GetMyOrdersAsync([FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct = default)");
         ordersSource.Should().Contain("var normalizedPage = page.GetValueOrDefault(1);");
         ordersSource.Should().Contain("var normalizedPageSize = pageSize.GetValueOrDefault(20);");
+        ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PageMustBePositiveInteger\"]);");
+        ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PageSizeMustBeBetween1And200\"]);");
         ordersSource.Should().Contain("var (items, total) = await _getMyOrdersPageHandler");
         ordersSource.Should().Contain("return Ok(new PagedResponse<MemberOrderSummary>");
         ordersSource.Should().Contain("Items = items.Select(MapSummary).ToList(),");
         ordersSource.Should().Contain("public async Task<IActionResult> GetMyOrderAsync(Guid id, CancellationToken ct = default)");
         ordersSource.Should().Contain("if (id == Guid.Empty)");
-        ordersSource.Should().Contain("return BadRequestProblem(\"Id must not be empty.\");");
+        ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"IdentifierMustNotBeEmpty\"]);");
         ordersSource.Should().Contain("var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);");
         ordersSource.Should().Contain("if (dto is null)");
-        ordersSource.Should().Contain("return NotFoundProblem(\"Order not found.\");");
+        ordersSource.Should().Contain("return NotFoundProblem(_validationLocalizer[\"OrderNotFound\"]);");
         ordersSource.Should().Contain("return Ok(MapDetail(dto));");
         ordersSource.Should().Contain("public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromBody] CreateStorefrontPaymentIntentRequest? request, CancellationToken ct = default)");
         ordersSource.Should().Contain("if (!CanRetryPayment(dto))");
-        ordersSource.Should().Contain("return BadRequestProblem(\"Order cannot accept a new payment attempt.\");");
+        ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"OrderCannotAcceptNewPaymentAttempt\"]);");
         ordersSource.Should().Contain("var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto");
         ordersSource.Should().Contain("OrderNumber = dto.OrderNumber,");
-        ordersSource.Should().Contain("Provider = string.IsNullOrWhiteSpace(request?.Provider) ? \"DarwinCheckout\" : request.Provider.Trim()");
+        ordersSource.Should().Contain("Provider = string.IsNullOrWhiteSpace(request?.Provider) ? \"Stripe\" : request.Provider.Trim()");
         ordersSource.Should().Contain("var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: false);");
         ordersSource.Should().Contain("var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: true);");
-        ordersSource.Should().Contain("var checkoutUrl = _checkoutUrlBuilder.BuildGatewayUrl(result, returnUrl, cancelUrl);");
-        ordersSource.Should().Contain("return BadRequestProblem(\"Payment intent could not be created.\", ex.Message);");
+        ordersSource.Should().Contain("var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);");
+        ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PaymentIntentCreationFailed\"], ex.Message);");
         ordersSource.Should().Contain("public async Task<IActionResult> DownloadDocumentAsync(Guid id, CancellationToken ct = default)");
         ordersSource.Should().Contain("var fileName = $\"order-{SanitizeFileToken(dto.OrderNumber)}.txt\";");
         ordersSource.Should().Contain("var bytes = Encoding.UTF8.GetBytes(RenderOrderDocument(dto));");
@@ -7007,25 +8187,30 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         invoicesSource.Should().Contain("private readonly GetMyInvoiceDetailHandler _getMyInvoiceDetailHandler;");
         invoicesSource.Should().Contain("private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;");
         invoicesSource.Should().Contain("private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;");
+        invoicesSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
         invoicesSource.Should().Contain("_getMyInvoicesPageHandler = getMyInvoicesPageHandler ?? throw new ArgumentNullException(nameof(getMyInvoicesPageHandler));");
         invoicesSource.Should().Contain("_getMyInvoiceDetailHandler = getMyInvoiceDetailHandler ?? throw new ArgumentNullException(nameof(getMyInvoiceDetailHandler));");
         invoicesSource.Should().Contain("_createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));");
         invoicesSource.Should().Contain("_checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));");
+        invoicesSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
         invoicesSource.Should().Contain("public async Task<IActionResult> GetMyInvoicesAsync([FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct = default)");
+        invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PageMustBePositiveInteger\"]);");
         invoicesSource.Should().Contain("var normalizedPageSize = pageSize.GetValueOrDefault(20);");
+        invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PageSizeMustBeBetween1And200\"]);");
         invoicesSource.Should().Contain("var (items, total) = await _getMyInvoicesPageHandler");
         invoicesSource.Should().Contain("Items = items.Select(MapSummary).ToList(),");
         invoicesSource.Should().Contain("public async Task<IActionResult> GetMyInvoiceAsync(Guid id, CancellationToken ct = default)");
-        invoicesSource.Should().Contain("return NotFoundProblem(\"Invoice not found.\");");
+        invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"IdentifierMustNotBeEmpty\"]);");
+        invoicesSource.Should().Contain("return NotFoundProblem(_validationLocalizer[\"InvoiceNotFound\"]);");
         invoicesSource.Should().Contain("public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromBody] CreateStorefrontPaymentIntentRequest? request, CancellationToken ct = default)");
         invoicesSource.Should().Contain("if (!dto.OrderId.HasValue)");
-        invoicesSource.Should().Contain("return BadRequestProblem(\"Invoice is not linked to an order and cannot open a storefront payment flow.\");");
+        invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"InvoiceNotLinkedToOrderPaymentFlow\"]);");
         invoicesSource.Should().Contain("if (!CanRetryPayment(dto))");
-        invoicesSource.Should().Contain("return BadRequestProblem(\"Invoice cannot accept a new payment attempt.\");");
+        invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"InvoiceCannotAcceptNewPaymentAttempt\"]);");
         invoicesSource.Should().Contain("OrderId = dto.OrderId.Value,");
         invoicesSource.Should().Contain("var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: false);");
         invoicesSource.Should().Contain("var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: true);");
-        invoicesSource.Should().Contain("return BadRequestProblem(\"Payment intent could not be created.\", ex.Message);");
+        invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PaymentIntentCreationFailed\"], ex.Message);");
         invoicesSource.Should().Contain("public async Task<IActionResult> DownloadDocumentAsync(Guid id, CancellationToken ct = default)");
         invoicesSource.Should().Contain("var fileName = $\"invoice-{SanitizeFileToken(dto.OrderNumber ?? dto.Id.ToString(\"D\"))}.txt\";");
         invoicesSource.Should().Contain("var bytes = Encoding.UTF8.GetBytes(RenderInvoiceDocument(dto));");
@@ -7051,14 +8236,17 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         accountSource.Should().Contain("public sealed class BusinessAccountController : ApiControllerBase");
         accountSource.Should().Contain("private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;");
+        accountSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
         accountSource.Should().Contain("_getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));");
+        accountSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
         accountSource.Should().Contain("public async Task<IActionResult> GetAccessStateAsync(CancellationToken ct = default)");
         accountSource.Should().Contain("if (!BusinessControllerConventions.TryGetCurrentBusinessId(User, out var businessId))");
-        accountSource.Should().Contain("return BadRequestProblem(\"Business context is required.\");");
+        accountSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BusinessRequired\"]);");
         accountSource.Should().Contain("if (!BusinessControllerConventions.TryGetCurrentUserId(User, out var userId))");
-        accountSource.Should().Contain("return BadRequestProblem(\"User context is required.\");");
+        accountSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"UserRequired\"]);");
         accountSource.Should().Contain("var dto = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);");
-        accountSource.Should().Contain("return NotFoundProblem(\"Business was not found.\");");
+        accountSource.Should().Contain("return NotFoundProblem(_validationLocalizer[\"BusinessNotFound\"]);");
+        accountSource.Should().Contain("var blockingReason = BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(dto, _validationLocalizer);");
         accountSource.Should().Contain("return Ok(new BusinessAccessStateResponse");
         accountSource.Should().Contain("UserId = dto.UserId,");
         accountSource.Should().Contain("HasActiveMembership = dto.HasActiveMembership,");
@@ -7073,7 +8261,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         accountSource.Should().Contain("HasActivationBlockingIssues = dto.HasActivationBlockingIssues,");
         accountSource.Should().Contain("SetupIncompleteItemCount = dto.SetupIncompleteItemCount,");
         accountSource.Should().Contain("PrimaryBlockingCode = dto.PrimaryBlockingCode,");
-        accountSource.Should().Contain("BlockingReason = dto.BlockingReason");
+        accountSource.Should().Contain("BlockingReason = blockingReason");
 
         loyaltySource.Should().Contain("public sealed class BusinessLoyaltyController : ApiControllerBase");
         loyaltySource.Should().Contain("private readonly ProcessScanSessionForBusinessHandler _processScanSessionForBusinessHandler;");
@@ -7103,24 +8291,25 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         loyaltySource.Should().Contain("RewardType = x.RewardType.ToString(),");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> CreateBusinessRewardTierAsync([FromBody] CreateBusinessRewardTierRequest? request, CancellationToken ct = default)");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"Request body is required.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
         loyaltySource.Should().Contain("if (!TryParseRewardType(request.RewardType, out var rewardType))");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RewardTypeInvalidAllowedValues\"]);");
         loyaltySource.Should().Contain("var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: true, ct).ConfigureAwait(false);");
         loyaltySource.Should().Contain("HandleAsync(new LoyaltyRewardTierCreateDto");
         loyaltySource.Should().Contain("AllowSelfRedemption = request.AllowSelfRedemption,");
         loyaltySource.Should().Contain("MetadataJson = request.MetadataJson");
         loyaltySource.Should().Contain("catch (FluentValidation.ValidationException ex)");
-        loyaltySource.Should().Contain("return BadRequestProblem(ex.Message);");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierCreateFailed\"], ex.Message);");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> UpdateBusinessRewardTierAsync([FromBody] UpdateBusinessRewardTierRequest? request, CancellationToken ct = default)");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"RewardTierId is required.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RewardTierIdCannotBeEmpty\"]);");
         loyaltySource.Should().Contain("var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: false, ct).ConfigureAwait(false);");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"No loyalty program was found for the current business.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LoyaltyProgramNotFound\"]);");
         loyaltySource.Should().Contain("if (!await IsRewardTierOwnedByBusinessAsync(programId, request.RewardTierId, ct).ConfigureAwait(false))");
         loyaltySource.Should().Contain("return Forbid();");
         loyaltySource.Should().Contain("HandleAsync(new LoyaltyRewardTierEditDto");
         loyaltySource.Should().Contain("RowVersion = request.RowVersion");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierUpdateFailed\"], ex.Message);");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> DeleteBusinessRewardTierAsync([FromBody] DeleteBusinessRewardTierRequest? request, CancellationToken ct = default)");
         loyaltySource.Should().Contain("HandleAsync(new LoyaltyRewardTierDeleteDto { Id = request.RewardTierId, RowVersion = request.RowVersion }, ct)");
@@ -7129,7 +8318,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         loyaltySource.Should().Contain("return Ok(new BusinessRewardTierMutationResponse { RewardTierId = request.RewardTierId, Success = true });");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> ProcessScanSessionForBusinessAsync([FromBody] ProcessScanSessionForBusinessRequest? request, CancellationToken ct = default)");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"ScanSessionToken is required.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ScanSessionTokenRequired\"]);");
         loyaltySource.Should().Contain(".HandleAsync(request.ScanSessionToken, businessId, ct)");
         loyaltySource.Should().Contain("if (!result.Succeeded || result.Value is null)");
         loyaltySource.Should().Contain("return MapScanFailure(result);");
@@ -7141,8 +8330,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         loyaltySource.Should().Contain("SelectedRewards = selectedRewards,");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> ConfirmAccrualAsync([FromBody] ConfirmAccrualRequest? request, CancellationToken ct = default)");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"ScanSessionToken is too long.\");");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"Points must be greater than zero.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ScanSessionTokenRequired\"]);");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ScanSessionTokenTooLong\"]);");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PointsPositiveInteger\"]);");
         loyaltySource.Should().Contain("HandleAsync(new ConfirmAccrualFromSessionDto");
         loyaltySource.Should().Contain("Points = request.Points,");
         loyaltySource.Should().Contain("Note = request.Note");
@@ -7165,7 +8355,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         loyaltySource.Should().Contain("public async Task<IActionResult> UpdateBusinessCampaignAsync(Guid id, [FromBody] UpdateBusinessCampaignRequest? request, CancellationToken ct = default)");
         loyaltySource.Should().Contain("if (request is null || request.Id != id)");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"Request body is required and route id must match body id.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestBodyRouteIdMismatch\"]);");
         loyaltySource.Should().Contain("var result = await _updateBusinessCampaignHandler.HandleAsync(new UpdateBusinessCampaignDto");
         loyaltySource.Should().Contain("return NoContent();");
 
@@ -7178,7 +8368,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         loyaltySource.Should().Contain("!BusinessControllerConventions.TryGetCurrentUserId(User, out var userId)");
         loyaltySource.Should().Contain("var accessState = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);");
         loyaltySource.Should().Contain("if (!accessState.IsBusinessClientAccessAllowed || !accessState.IsOperationsAllowed)");
-        loyaltySource.Should().Contain("return (false, Guid.Empty, Forbid(accessState.BlockingReason));");
+        loyaltySource.Should().Contain("return (false, Guid.Empty, ForbiddenProblem(detail: BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(accessState, _validationLocalizer)));");
         loyaltySource.Should().Contain("private async Task<Guid> EnsureBusinessProgramAsync(Guid businessId, bool createIfMissing, CancellationToken ct)");
         loyaltySource.Should().Contain("if (!createIfMissing)");
         loyaltySource.Should().Contain("return Guid.Empty;");
@@ -7189,12 +8379,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         loyaltySource.Should().Contain("private static bool TryParseRewardType(string? rewardType, out DomainLoyaltyRewardType value)");
         loyaltySource.Should().Contain("Enum.TryParse(rewardType, ignoreCase: true, out DomainLoyaltyRewardType parsed)");
         loyaltySource.Should().Contain("private IActionResult MapScanFailure<T>(Result<T> result)");
-        loyaltySource.Should().Contain("if (text.Contains(\"expired\") || text.Contains(\"consumed\"))");
-        loyaltySource.Should().Contain("return ConflictProblem(msg);");
-        loyaltySource.Should().Contain("if (text.Contains(\"not found\"))");
-        loyaltySource.Should().Contain("return NotFoundProblem(msg);");
-        loyaltySource.Should().Contain("text.Contains(\"belongs to a different business\") ||");
-        loyaltySource.Should().Contain("return ProblemFromResult(result);");
+        loyaltySource.Should().Contain("? _validationLocalizer[\"OperationFailed\"].Value.Trim()");
+        loyaltySource.Should().Contain("if (normalized is \"expired\" or \"scansessiontokenexpired\" or \"tokenalreadyconsumed\" or \"scansessiontokenalreadyconsumed\")");
+        loyaltySource.Should().Contain("return ConflictProblem(LocalizeScanFailureMessage(msg));");
+        loyaltySource.Should().Contain("if (normalized is \"accountnotfound\" or \"scansessiontokennotfound\" or \"loyaltyaccountnotfoundforscansession\")");
+        loyaltySource.Should().Contain("return NotFoundProblem(LocalizeScanFailureMessage(msg));");
+        loyaltySource.Should().Contain("if (normalized is \"accountnotactive\" or \"noselections\" or \"invalidselections\" or \"insufficientpoints\")");
+        loyaltySource.Should().Contain("return BadRequestProblem(LocalizeScanFailureMessage(msg));");
+        loyaltySource.Should().Contain("if (normalized is \"scansessiontokenbusinessmismatch\" ||");
+        loyaltySource.Should().Contain("return ProblemFromResult(result, _validationLocalizer[\"OperationFailed\"]);");
+        loyaltySource.Should().Contain("private string LocalizeScanFailureMessage(string message)");
+        loyaltySource.Should().Contain("\"invalidselections\" => _validationLocalizer[\"SelectedRewardsInvalid\"]");
+        loyaltySource.Should().Contain("private static string NormalizeToken(string value)");
         loyaltySource.Should().Contain("private IActionResult ConflictProblem(string detail)");
         loyaltySource.Should().Contain("Title = \"Conflict\",");
         loyaltySource.Should().Contain("Status = StatusCodes.Status409Conflict,");
@@ -7211,9 +8407,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         shippingSource.Should().Contain("public sealed class PublicShippingController : ApiControllerBase");
         shippingSource.Should().Contain("private readonly RateShipmentHandler _rateShipmentHandler;");
+        shippingSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
         shippingSource.Should().Contain("_rateShipmentHandler = rateShipmentHandler ?? throw new ArgumentNullException(nameof(rateShipmentHandler));");
+        shippingSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
         shippingSource.Should().Contain("public async Task<IActionResult> GetRatesAsync([FromBody] PublicShippingRateRequest? request, CancellationToken ct = default)");
-        shippingSource.Should().Contain("return BadRequestProblem(\"Request body is required.\");");
+        shippingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
         shippingSource.Should().Contain("var items = await _rateShipmentHandler.HandleAsync(new RateShipmentInputDto");
         shippingSource.Should().Contain("Country = request.Country,");
         shippingSource.Should().Contain("SubtotalNetMinor = request.SubtotalNetMinor,");
@@ -7222,7 +8420,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         shippingSource.Should().Contain("}, request.Currency ?? SiteSettingDto.DefaultCurrencyDefault, ct).ConfigureAwait(false);");
         shippingSource.Should().Contain("return Ok(items.Select(MapOption).ToList());");
         shippingSource.Should().Contain("catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)");
-        shippingSource.Should().Contain("return BadRequestProblem(\"Shipping options could not be calculated.\", ex.Message);");
+        shippingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ShippingOptionsCouldNotBeCalculated\"], ex.Message);");
         shippingSource.Should().Contain("private static PublicShippingOption MapOption(ShippingOptionDto dto)");
         shippingSource.Should().Contain("MethodId = dto.MethodId,");
         shippingSource.Should().Contain("Carrier = dto.Carrier,");
@@ -7239,11 +8437,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         billingSource.Should().Contain("var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);");
         billingSource.Should().Contain("if (!hasBusinessAccess)");
         billingSource.Should().Contain("var result = await _getBusinessSubscriptionStatusHandler");
-        billingSource.Should().Contain("return ProblemFromResult(result, \"Failed to retrieve business subscription status.\");");
+        billingSource.Should().Contain("return ProblemFromResult(result, _validationLocalizer[\"BusinessSubscriptionStatusRetrievalFailed\"]);");
         billingSource.Should().Contain("return Ok(MapStatus(result.Value));");
         billingSource.Should().Contain("public async Task<IActionResult> SetCancelAtPeriodEndAsync([FromBody] SetCancelAtPeriodEndRequest request, CancellationToken ct = default)");
         billingSource.Should().Contain("if (request is null)");
-        billingSource.Should().Contain("return BadRequestProblem(\"Request body is required.\");");
+        billingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
         billingSource.Should().Contain("HandleAsync(");
         billingSource.Should().Contain("request.SubscriptionId,");
         billingSource.Should().Contain("request.CancelAtPeriodEnd,");
@@ -7259,10 +8457,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         billingSource.Should().Contain("public async Task<IActionResult> CreateSubscriptionCheckoutIntentAsync([FromBody] CreateSubscriptionCheckoutIntentRequest request, CancellationToken ct = default)");
         billingSource.Should().Contain("var validation = await _createSubscriptionCheckoutIntentHandler");
         billingSource.Should().Contain(".ValidateAsync(businessId, request.PlanId, ct)");
-        billingSource.Should().Contain("return ProblemFromResult(validation, \"Unable to create checkout intent.\");");
+        billingSource.Should().Contain("return ProblemFromResult(validation, _validationLocalizer[\"CheckoutIntentCreationFailed\"]);");
         billingSource.Should().Contain("var checkoutBaseUrl = _configuration[\"Billing:CheckoutBaseUrl\"];");
         billingSource.Should().Contain("if (string.IsNullOrWhiteSpace(checkoutBaseUrl) || !Uri.TryCreate(checkoutBaseUrl, UriKind.Absolute, out var baseUri))");
-        billingSource.Should().Contain("return BadRequestProblem(\"Billing checkout endpoint is not configured.\");");
+        billingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BillingCheckoutEndpointNotConfigured\"]);");
         billingSource.Should().Contain("var queryBuilder = new QueryBuilder");
         billingSource.Should().Contain("{ \"businessId\", businessId.ToString(\"D\") },");
         billingSource.Should().Contain("{ \"planId\", request.PlanId.ToString(\"D\") }");
@@ -7278,17 +8476,19 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         billingSource.Should().Contain("var accessState = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);");
         billingSource.Should().Contain("if (!accessState.IsBusinessClientAccessAllowed)");
         billingSource.Should().Contain("if (requireOperationsAllowed && !accessState.IsOperationsAllowed)");
-        billingSource.Should().Contain("return (false, Guid.Empty, Forbid(accessState.BlockingReason));");
+        billingSource.Should().Contain("return (false, Guid.Empty, ForbiddenProblem(detail: BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(accessState, _validationLocalizer)));");
 
         loyaltySource.Should().Contain("public sealed class LoyaltyController : ApiControllerBase");
         loyaltySource.Should().Contain("private readonly PrepareScanSessionHandler _prepareScanSessionHandler;");
         loyaltySource.Should().Contain("private readonly GetMyLoyaltyTimelinePageHandler _getMyLoyaltyTimelinePageHandler;");
         loyaltySource.Should().Contain("private readonly CreateLoyaltyAccountHandler _createLoyaltyAccountHandler;");
         loyaltySource.Should().Contain("private readonly ILoyaltyPresentationService _presentationService;");
+        loyaltySource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
         loyaltySource.Should().Contain("_presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));");
+        loyaltySource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
         loyaltySource.Should().Contain("public async Task<IActionResult> PrepareScanSessionAsync(");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"Request body is required.\");");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"BusinessId is required.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BusinessIdRequired\"]);");
         loyaltySource.Should().Contain("var dto = new PrepareScanSessionDto");
         loyaltySource.Should().Contain("Mode = LoyaltyContractsMapper.ToDomain(request.Mode),");
         loyaltySource.Should().Contain("SelectedRewardTierIds = request.SelectedRewardTierIds?");
@@ -7302,9 +8502,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         loyaltySource.Should().Contain("public async Task<IActionResult> GetMyBusinessesAsync(");
         loyaltySource.Should().Contain("var normalizedPage = page.GetValueOrDefault(1);");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"Page must be a positive integer.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PageMustBePositiveInteger\"]);");
         loyaltySource.Should().Contain("var normalizedPageSize = pageSize.GetValueOrDefault(20);");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"PageSize must be between 1 and 200.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PageSizeMustBeBetween1And200\"]);");
         loyaltySource.Should().Contain("var request = new MyLoyaltyBusinessListRequestDto");
         loyaltySource.Should().Contain("IncludeInactiveBusinesses = includeInactiveBusinesses.GetValueOrDefault(false)");
         loyaltySource.Should().Contain("var (items, total) = await _getMyLoyaltyBusinessesHandler.HandleAsync(request, ct).ConfigureAwait(false);");
@@ -7313,7 +8513,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         loyaltySource.Should().Contain("public async Task<IActionResult> GetMyPromotionsAsync([FromBody] MyPromotionsRequest? request, CancellationToken ct = default)");
         loyaltySource.Should().Contain("if (request.BusinessId.HasValue && request.BusinessId.Value == Guid.Empty)");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"BusinessId must be a non-empty GUID when provided.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BusinessIdValidWhenProvided\"]);");
         loyaltySource.Should().Contain("HandleAsync(new MyPromotionsDto");
         loyaltySource.Should().Contain("Policy = request.Policy is null");
         loyaltySource.Should().Contain("EnableDeduplication = request.Policy.EnableDeduplication,");
@@ -7326,18 +8526,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         loyaltySource.Should().Contain("public async Task<IActionResult> TrackPromotionInteractionAsync(");
         loyaltySource.Should().Contain("if (request.BusinessId == Guid.Empty)");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"BusinessId is required.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BusinessIdRequired\"]);");
         loyaltySource.Should().Contain("if (string.IsNullOrWhiteSpace(request.Title))");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"Title is required.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"TitleRequired\"]);");
         loyaltySource.Should().Contain("HandleAsync(new TrackPromotionInteractionDto");
         loyaltySource.Should().Contain("EventType = MapPromotionInteractionEventType(request.EventType),");
         loyaltySource.Should().Contain("return NoContent();");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> GetMyLoyaltyTimelinePageAsync(");
         loyaltySource.Should().Contain("if (!request.BusinessId.HasValue || request.BusinessId.Value == Guid.Empty)");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"BusinessId is required and must be a non-empty GUID.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BusinessIdRequired\"]);");
         loyaltySource.Should().Contain("if ((request.BeforeAtUtc is null) != (request.BeforeId is null))");
-        loyaltySource.Should().Contain("return BadRequestProblem(\"Invalid cursor. Both BeforeAtUtc and BeforeId must be provided together.\");");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"InvalidTimelineCursor\"]);");
         loyaltySource.Should().Contain("var dto = new GetMyLoyaltyTimelinePageDto");
         loyaltySource.Should().Contain("BeforeAtUtc = request.BeforeAtUtc,");
         loyaltySource.Should().Contain("BeforeId = request.BeforeId");
@@ -8098,6 +9298,228 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         loyaltyRewardTierSource.Should().Contain("public int Threshold { get; init; }");
         loyaltyRewardTierSource.Should().Contain("public string Title { get; init; } = default!;");
         loyaltyRewardTierSource.Should().Contain("public string? Description { get; init; }");
+    }
+
+    [Fact]
+    public void AdminOperationalDatasets_Should_KeepPagedSearchableAndQueueFilteredEntryPathsWired()
+    {
+        var businessesControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var communicationsControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessCommunicationsController.cs"));
+        var billingControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var crmControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
+        var inventoryControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Inventory", "InventoryController.cs"));
+        var loyaltyControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Loyalty", "LoyaltyController.cs"));
+        var mediaControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
+        var mobileOpsControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Mobile", "MobileOperationsController.cs"));
+        var ordersControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+        var shippingControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Shipping", "ShippingMethodsController.cs"));
+        var usersControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
+
+        businessesControllerSource.Should().Contain("int page = 1,");
+        businessesControllerSource.Should().Contain("int pageSize = 20,");
+        businessesControllerSource.Should().Contain("string? query = null");
+        businessesControllerSource.Should().Contain("BusinessReadinessQueueFilter? readinessFilter = null");
+        businessesControllerSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter filter = BusinessSubscriptionInvoiceQueueFilter.All");
+        businessesControllerSource.Should().Contain("BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All");
+        businessesControllerSource.Should().Contain("BusinessInvitationQueueFilter filter = BusinessInvitationQueueFilter.All");
+        communicationsControllerSource.Should().Contain("BusinessCommunicationSetupFilter filter = BusinessCommunicationSetupFilter.NeedsSetup");
+        communicationsControllerSource.Should().Contain("int pageSize = 20,");
+        billingControllerSource.Should().Contain("public async Task<IActionResult> Plans(int page = 1, int pageSize = 20, string? q = null, BillingPlanQueueFilter queue = BillingPlanQueueFilter.All");
+        billingControllerSource.Should().Contain("public async Task<IActionResult> Payments(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, PaymentQueueFilter? queue = null");
+        billingControllerSource.Should().Contain("public async Task<IActionResult> Webhooks(int page = 1, int pageSize = 20, string? q = null, BillingWebhookDeliveryQueueFilter queue = BillingWebhookDeliveryQueueFilter.All");
+        billingControllerSource.Should().Contain("public async Task<IActionResult> Refunds(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, BillingRefundQueueFilter? queue = null");
+        billingControllerSource.Should().Contain("public async Task<IActionResult> JournalEntries(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, JournalEntryQueueFilter? queue = null");
+        crmControllerSource.Should().Contain("int page = 1");
+        crmControllerSource.Should().Contain("int pageSize = 20");
+        crmControllerSource.Should().Contain("string? q = null");
+        inventoryControllerSource.Should().Contain("WarehouseQueueFilter filter = WarehouseQueueFilter.All");
+        inventoryControllerSource.Should().Contain("SupplierQueueFilter filter = SupplierQueueFilter.All");
+        inventoryControllerSource.Should().Contain("StockLevelQueueFilter filter = StockLevelQueueFilter.All");
+        inventoryControllerSource.Should().Contain("StockTransferQueueFilter filter = StockTransferQueueFilter.All");
+        inventoryControllerSource.Should().Contain("PurchaseOrderQueueFilter filter = PurchaseOrderQueueFilter.All");
+        inventoryControllerSource.Should().Contain("InventoryLedgerQueueFilter filter = InventoryLedgerQueueFilter.All");
+        loyaltyControllerSource.Should().Contain("LoyaltyProgramQueueFilter filter = LoyaltyProgramQueueFilter.All");
+        loyaltyControllerSource.Should().Contain("LoyaltyRewardTierQueueFilter filter = LoyaltyRewardTierQueueFilter.All");
+        loyaltyControllerSource.Should().Contain("string? q = null");
+        mediaControllerSource.Should().Contain("public async Task<IActionResult> Index(int page = 1, int pageSize = 24, string? query = null, MediaAssetQueueFilter filter = MediaAssetQueueFilter.All");
+        mobileOpsControllerSource.Should().Contain("string? q = null");
+        mobileOpsControllerSource.Should().Contain("int page = 1,");
+        mobileOpsControllerSource.Should().Contain("int pageSize = 20,");
+        ordersControllerSource.Should().Contain("public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, OrderQueueFilter filter = OrderQueueFilter.All");
+        ordersControllerSource.Should().Contain("public async Task<IActionResult> ShipmentsQueue(int page = 1, int pageSize = 20, string? query = null, ShipmentQueueFilter filter = ShipmentQueueFilter.All");
+        ordersControllerSource.Should().Contain("public async Task<IActionResult> ReturnsQueue(int page = 1, int pageSize = 20, string? query = null, ReturnQueueFilter filter = ReturnQueueFilter.All");
+        shippingControllerSource.Should().Contain("int page = 1");
+        shippingControllerSource.Should().Contain("int pageSize = 20");
+        shippingControllerSource.Should().Contain("string? query = null");
+        usersControllerSource.Should().Contain("int page = 1");
+        usersControllerSource.Should().Contain("int pageSize = 20");
+        usersControllerSource.Should().Contain("public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, UserQueueFilter filter = UserQueueFilter.All");
+
+        var businessesPageHandlerSource = ReadApplicationFile(Path.Combine("Businesses", "Queries", "GetBusinessesPageHandler.cs"));
+        var businessInvitationsHandlerSource = ReadApplicationFile(Path.Combine("Businesses", "Queries", "GetBusinessInvitationsPageHandler.cs"));
+        var businessLocationsHandlerSource = ReadApplicationFile(Path.Combine("Businesses", "Queries", "GetBusinessLocationsPageHandler.cs"));
+        var businessMembersHandlerSource = ReadApplicationFile(Path.Combine("Businesses", "Queries", "GetBusinessMembersPageHandler.cs"));
+        var businessCommunicationSetupHandlerSource = ReadApplicationFile(Path.Combine("Businesses", "Queries", "GetBusinessCommunicationSetupPageHandler.cs"));
+        var billingManagementQueriesSource = ReadApplicationFile(Path.Combine("Billing", "Queries", "BillingManagementQueries.cs"));
+        var billingPlanQueriesSource = ReadApplicationFile(Path.Combine("Billing", "Queries", "BillingPlanAdminQueries.cs"));
+        var billingWebhookQueriesSource = ReadApplicationFile(Path.Combine("Billing", "Queries", "BillingWebhookQueries.cs"));
+        var businessSubscriptionInvoicesHandlerSource = ReadApplicationFile(Path.Combine("Billing", "GetBusinessSubscriptionInvoicesHandler.cs"));
+        var crmEngagementQueriesSource = ReadApplicationFile(Path.Combine("CRM", "Queries", "CrmEngagementQueries.cs"));
+        var customerLeadQueriesSource = ReadApplicationFile(Path.Combine("CRM", "Queries", "CustomerLeadQueries.cs"));
+        var opportunityQueriesSource = ReadApplicationFile(Path.Combine("CRM", "Queries", "OpportunityQueries.cs"));
+        var inventoryManagementQueriesSource = ReadApplicationFile(Path.Combine("Inventory", "Queries", "InventoryManagementQueries.cs"));
+        var inventoryLedgerHandlerSource = ReadApplicationFile(Path.Combine("Inventory", "Queries", "GetInventoryLedgerHandler.cs"));
+        var loyaltyProgramsHandlerSource = ReadApplicationFile(Path.Combine("Loyalty", "Queries", "GetLoyaltyProgramsPageHandler.cs"));
+        var loyaltyRewardTiersHandlerSource = ReadApplicationFile(Path.Combine("Loyalty", "Queries", "GetLoyaltyRewardTiersPageHandler.cs"));
+        var businessCampaignHandlersSource = ReadApplicationFile(Path.Combine("Loyalty", "Campaigns", "BusinessCampaignHandlers.cs"));
+        var mediaAssetsHandlerSource = ReadApplicationFile(Path.Combine("Media", "Queries", "GetMediaAssetsPageHandler.cs"));
+        var ordersPageHandlerSource = ReadApplicationFile(Path.Combine("Orders", "Queries", "GetOrdersPageHandler.cs"));
+        var shipmentsPageHandlerSource = ReadApplicationFile(Path.Combine("Orders", "Queries", "GetShipmentsPageHandler.cs"));
+        var shippingMethodsHandlerSource = ReadApplicationFile(Path.Combine("Shipping", "Queries", "GetShippingMethodsPageHandler.cs"));
+        var usersPageHandlerSource = ReadApplicationFile(Path.Combine("Identity", "Queries", "GetUsersPageHandler.cs"));
+
+        businessesPageHandlerSource.Should().Contain("BusinessReadinessQueueFilter? readinessFilter = null");
+        businessesPageHandlerSource.Should().Contain("string? query = null");
+        businessInvitationsHandlerSource.Should().Contain("BusinessInvitationQueueFilter filter = BusinessInvitationQueueFilter.All");
+        businessLocationsHandlerSource.Should().Contain("BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All");
+        businessMembersHandlerSource.Should().Contain("BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All");
+        businessCommunicationSetupHandlerSource.Should().Contain("BusinessCommunicationSetupFilter filter = BusinessCommunicationSetupFilter.NeedsSetup");
+        billingManagementQueriesSource.Should().Contain("PaymentQueueFilter? filter = null");
+        billingManagementQueriesSource.Should().Contain("BillingRefundQueueFilter? filter = null");
+        billingManagementQueriesSource.Should().Contain("JournalEntryQueueFilter? filter = null");
+        billingPlanQueriesSource.Should().Contain("BillingPlanQueueFilter filter = BillingPlanQueueFilter.All");
+        billingWebhookQueriesSource.Should().Contain("BillingWebhookDeliveryQueueFilter filter = BillingWebhookDeliveryQueueFilter.All");
+        businessSubscriptionInvoicesHandlerSource.Should().Contain("BusinessSubscriptionInvoiceQueueFilter filter = BusinessSubscriptionInvoiceQueueFilter.All");
+        crmEngagementQueriesSource.Should().Contain("CustomerSegmentQueueFilter filter = CustomerSegmentQueueFilter.All");
+        customerLeadQueriesSource.Should().Contain("CustomerQueueFilter filter = CustomerQueueFilter.All");
+        customerLeadQueriesSource.Should().Contain("LeadQueueFilter filter = LeadQueueFilter.All");
+        opportunityQueriesSource.Should().Contain("OpportunityQueueFilter filter = OpportunityQueueFilter.All");
+        inventoryManagementQueriesSource.Should().Contain("WarehouseQueueFilter filter = WarehouseQueueFilter.All");
+        inventoryManagementQueriesSource.Should().Contain("SupplierQueueFilter filter = SupplierQueueFilter.All");
+        inventoryManagementQueriesSource.Should().Contain("StockLevelQueueFilter filter = StockLevelQueueFilter.All");
+        inventoryManagementQueriesSource.Should().Contain("StockTransferQueueFilter filter = StockTransferQueueFilter.All");
+        inventoryManagementQueriesSource.Should().Contain("PurchaseOrderQueueFilter filter = PurchaseOrderQueueFilter.All");
+        inventoryLedgerHandlerSource.Should().Contain("InventoryLedgerQueueFilter filter = InventoryLedgerQueueFilter.All");
+        loyaltyProgramsHandlerSource.Should().Contain("LoyaltyProgramQueueFilter filter = LoyaltyProgramQueueFilter.All");
+        loyaltyRewardTiersHandlerSource.Should().Contain("LoyaltyRewardTierQueueFilter filter = LoyaltyRewardTierQueueFilter.All");
+        businessCampaignHandlersSource.Should().Contain("LoyaltyCampaignQueueFilter filter = LoyaltyCampaignQueueFilter.All");
+        mediaAssetsHandlerSource.Should().Contain("MediaAssetQueueFilter filter = MediaAssetQueueFilter.All");
+        ordersPageHandlerSource.Should().Contain("OrderQueueFilter filter = OrderQueueFilter.All");
+        shipmentsPageHandlerSource.Should().Contain("ShipmentQueueFilter filter = ShipmentQueueFilter.All");
+        shippingMethodsHandlerSource.Should().Contain("ShippingMethodQueueFilter filter = ShippingMethodQueueFilter.All");
+        usersPageHandlerSource.Should().Contain("UserQueueFilter filter = UserQueueFilter.All");
+    }
+
+    [Fact]
+    public void ShipmentWorkspaces_Should_KeepDhlLabelGenerationActionWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+        var queueSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "ShipmentsQueue.cshtml"));
+        var gridSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_ShipmentsGrid.cshtml"));
+        var resourcesSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
+        var diSource = ReadWebAdminFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+        var handlerSource = ReadApplicationFile(Path.Combine("Orders", "Commands", "GenerateDhlShipmentLabelHandler.cs"));
+        var applyHandlerSource = ReadApplicationFile(Path.Combine("Orders", "Commands", "ApplyDhlShipmentLabelOperationHandler.cs"));
+
+        controllerSource.Should().Contain("private readonly GenerateDhlShipmentLabelHandler _generateDhlShipmentLabel;");
+        controllerSource.Should().Contain("public async Task<IActionResult> GenerateDhlLabel(");
+        controllerSource.Should().Contain("await _generateDhlShipmentLabel.HandleAsync(shipmentId, ct).ConfigureAwait(false);");
+        controllerSource.Should().Contain("SetSuccessMessage(\"DhlLabelGenerationQueued\");");
+        controllerSource.Should().Contain("SetErrorMessage(\"DhlLabelGenerationFailed\");");
+        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter });");
+
+        queueSource.Should().Contain("asp-action=\"GenerateDhlLabel\"");
+        queueSource.Should().Contain("name=\"returnToQueue\" value=\"true\"");
+        queueSource.Should().Contain("@T.T(\"GenerateCarrierLabel\")");
+        queueSource.Should().Contain("item.ProviderOperationQueued");
+        queueSource.Should().Contain("item.ProviderOperationFailed");
+
+        gridSource.Should().Contain("asp-action=\"GenerateDhlLabel\"");
+        gridSource.Should().Contain("name=\"returnToQueue\" value=\"false\"");
+        gridSource.Should().Contain("@T.T(\"GenerateCarrierLabel\")");
+        gridSource.Should().Contain("s.ProviderOperationQueued");
+        gridSource.Should().Contain("s.ProviderOperationFailed");
+
+        handlerSource.Should().Contain("public sealed class GenerateDhlShipmentLabelHandler");
+        handlerSource.Should().Contain("_db.Set<ShipmentProviderOperation>()");
+        handlerSource.Should().Contain("OperationType = \"GenerateLabel\"");
+        handlerSource.Should().Contain("failedOperation.Status = \"Pending\";");
+
+        applyHandlerSource.Should().Contain("public sealed class ApplyDhlShipmentLabelOperationHandler");
+        applyHandlerSource.Should().Contain("shipment.LastCarrierEventKey = \"shipment.label_created\";");
+        applyHandlerSource.Should().Contain("shipment.Status = ShipmentStatus.Packed;");
+        applyHandlerSource.Should().Contain("shipment.LabelUrl ??= DhlShipmentPhaseOneMetadata.BuildLabelUrl(settings.DhlApiBaseUrl!, shipment.ProviderShipmentReference);");
+        applyHandlerSource.Should().Contain("DhlShipmentPhaseOneMetadata.BuildProviderShipmentReference(shipment)");
+        applyHandlerSource.Should().Contain("await ShipmentCarrierEventRecorder.AddIfMissingAsync(");
+
+        diSource.Should().Contain("services.AddScoped<GenerateDhlShipmentLabelHandler>();");
+        resourcesSource.Should().Contain("<data name=\"GenerateCarrierLabel\"");
+        resourcesSource.Should().Contain("<data name=\"DhlLabelGenerationQueued\"");
+        resourcesSource.Should().Contain("<data name=\"DhlLabelGenerationFailed\"");
+    }
+
+    [Fact]
+    public void AddShipmentHandler_Should_KeepDhlProviderCreationQueueWired()
+    {
+        var handlerSource = ReadApplicationFile(Path.Combine("Orders", "Commands", "AddShipmentHandler.cs"));
+        var createHandlerSource = ReadApplicationFile(Path.Combine("Orders", "Commands", "ApplyDhlShipmentCreateOperationHandler.cs"));
+        var helperSource = ReadApplicationFile(Path.Combine("Orders", "Commands", "DhlShipmentPhaseOneMetadata.cs"));
+
+        handlerSource.Should().Contain("if (DhlShipmentPhaseOneMetadata.IsDhlCarrier(shipment.Carrier))");
+        handlerSource.Should().Contain("_db.Set<SiteSetting>()");
+        handlerSource.Should().Contain("settings.DhlEnabled &&");
+        handlerSource.Should().Contain("DhlShipmentPhaseOneMetadata.HasLabelGenerationReadiness(settings) &&");
+        handlerSource.Should().Contain("shipment.LastCarrierEventKey = string.IsNullOrWhiteSpace(shipment.LastCarrierEventKey)");
+        handlerSource.Should().Contain("? \"shipment.provider_create_queued\"");
+        handlerSource.Should().Contain("_db.Set<ShipmentProviderOperation>().Add(new ShipmentProviderOperation");
+        handlerSource.Should().Contain("OperationType = \"CreateShipment\"");
+
+        createHandlerSource.Should().Contain("public sealed class ApplyDhlShipmentCreateOperationHandler");
+        createHandlerSource.Should().Contain("shipment.ProviderShipmentReference = string.IsNullOrWhiteSpace(shipment.ProviderShipmentReference)");
+        createHandlerSource.Should().Contain("shipment.LastCarrierEventKey = \"shipment.provider_created\";");
+        createHandlerSource.Should().Contain("await ShipmentCarrierEventRecorder.AddIfMissingAsync(");
+        createHandlerSource.Should().Contain("OperationType == \"GenerateLabel\"");
+        createHandlerSource.Should().Contain("_db.Set<ShipmentProviderOperation>().Add(new ShipmentProviderOperation");
+
+        helperSource.Should().Contain("internal static class DhlShipmentPhaseOneMetadata");
+        helperSource.Should().Contain("return $\"dhl-ship-{shipment.Id:N}\";");
+        helperSource.Should().Contain("return new Uri(baseUri, relative).ToString();");
+    }
+
+    [Fact]
+    public void ShipmentWorkspaces_Should_KeepCarrierEventTimelineWired()
+    {
+        var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+        var queueSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "ShipmentsQueue.cshtml"));
+        var gridSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_ShipmentsGrid.cshtml"));
+        var viewModelSource = ReadWebAdminFile(Path.Combine("ViewModels", "Orders", "OrderVms.cs"));
+        var shipmentsPageHandlerSource = ReadApplicationFile(Path.Combine("Orders", "Queries", "GetShipmentsPageHandler.cs"));
+        var orderShipmentsPageHandlerSource = ReadApplicationFile(Path.Combine("Orders", "Queries", "GetOrderShipmentsPageHandler.cs"));
+        var projectionSource = ReadApplicationFile(Path.Combine("Orders", "Queries", "ShipmentCarrierEventProjection.cs"));
+
+        viewModelSource.Should().Contain("public sealed class ShipmentCarrierEventVm");
+        viewModelSource.Should().Contain("public List<ShipmentCarrierEventVm> RecentCarrierEvents { get; set; } = new();");
+        viewModelSource.Should().Contain("public string? ExceptionCode { get; set; }");
+        viewModelSource.Should().Contain("public string? ExceptionMessage { get; set; }");
+
+        controllerSource.Should().Contain("RecentCarrierEvents = x.RecentCarrierEvents.Select(e => new ShipmentCarrierEventVm");
+        controllerSource.Should().Contain("ExceptionCode = e.ExceptionCode,");
+        controllerSource.Should().Contain("ExceptionMessage = e.ExceptionMessage,");
+        shipmentsPageHandlerSource.Should().Contain("await ShipmentCarrierEventProjection.PopulateRecentEventsAsync(_db, items, 3, ct).ConfigureAwait(false);");
+        orderShipmentsPageHandlerSource.Should().Contain("await ShipmentCarrierEventProjection.PopulateRecentEventsAsync(_db, items, 3, ct).ConfigureAwait(false);");
+        projectionSource.Should().Contain("internal static class ShipmentCarrierEventProjection");
+        projectionSource.Should().Contain("db.Set<ShipmentCarrierEvent>()");
+        projectionSource.Should().Contain("ExceptionCode = x.ExceptionCode,");
+        projectionSource.Should().Contain("ExceptionMessage = x.ExceptionMessage,");
+
+        queueSource.Should().Contain("item.RecentCarrierEvents.Count > 0");
+        queueSource.Should().Contain("foreach (var carrierEvent in item.RecentCarrierEvents)");
+        queueSource.Should().Contain("carrierEvent.ExceptionCode");
+        queueSource.Should().Contain("carrierEvent.ExceptionMessage");
+        gridSource.Should().Contain("s.RecentCarrierEvents.Count > 0");
+        gridSource.Should().Contain("foreach (var carrierEvent in s.RecentCarrierEvents)");
+        gridSource.Should().Contain("carrierEvent.ExceptionCode");
+        gridSource.Should().Contain("carrierEvent.ExceptionMessage");
     }
 }
 

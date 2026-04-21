@@ -122,6 +122,8 @@ public sealed class GetMyOrderForViewHandler
                     CreatedAtUtc = payment.CreatedAtUtc,
                     Provider = payment.Provider,
                     ProviderReference = payment.ProviderTransactionRef,
+                    ProviderPaymentIntentReference = payment.ProviderPaymentIntentRef,
+                    ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionRef,
                     AmountMinor = payment.AmountMinor,
                     Currency = payment.Currency,
                     Status = payment.Status,
@@ -133,6 +135,7 @@ public sealed class GetMyOrderForViewHandler
                     Carrier = shipment.Carrier,
                     Service = shipment.Service,
                     TrackingNumber = shipment.TrackingNumber,
+                    TrackingUrl = ShipmentTrackingPresentation.ResolveTrackingUrl(shipment.Carrier, shipment.TrackingNumber),
                     Status = shipment.Status,
                     ShippedAtUtc = shipment.ShippedAtUtc,
                     DeliveredAtUtc = shipment.DeliveredAtUtc

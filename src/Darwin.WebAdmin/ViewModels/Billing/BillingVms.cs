@@ -95,6 +95,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string ArchiveReadinessLabel { get; set; } = string.Empty;
         public bool EInvoiceBaselineReady { get; set; }
         public string EInvoiceBaselineLabel { get; set; } = string.Empty;
+        public bool StructuredExportBaselineReady { get; set; }
+        public string StructuredExportBaselineLabel { get; set; } = string.Empty;
         public string ComplianceScopeNote { get; set; } = string.Empty;
     }
 
@@ -214,6 +216,9 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime? LastAttemptAtUtc { get; set; }
         public string? IdempotencyKey { get; set; }
         public bool IsActiveSubscription { get; set; }
+        public string RetrySafetyState { get; set; } = string.Empty;
+        public string FailureDiagnostics { get; set; } = string.Empty;
+        public string EscalationHint { get; set; } = string.Empty;
         public string SuggestedOperatorAction { get; set; } = string.Empty;
         public string SuggestedQueueTarget { get; set; } = string.Empty;
     }
@@ -255,6 +260,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public PaymentStatus Status { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
+        public string? ProviderPaymentIntentRef { get; set; }
+        public string? ProviderCheckoutSessionRef { get; set; }
         public string? FailureReason { get; set; }
         public DateTime? PaidAtUtc { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -278,6 +285,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public Guid PaymentId { get; set; }
         public string PaymentProvider { get; set; } = string.Empty;
         public string? PaymentProviderReference { get; set; }
+        public string? PaymentProviderPaymentIntentRef { get; set; }
+        public string? PaymentProviderCheckoutSessionRef { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
@@ -345,10 +354,19 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         [StringLength(200)]
         public string? ProviderTransactionRef { get; set; }
 
+        [Display(Name = "ProviderPaymentIntentRef")]
+        [StringLength(200)]
+        public string? ProviderPaymentIntentRef { get; set; }
+
+        [Display(Name = "ProviderCheckoutSessionRef")]
+        [StringLength(200)]
+        public string? ProviderCheckoutSessionRef { get; set; }
+
         public DateTime? PaidAtUtc { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long NetCapturedAmountMinor { get; set; }
         public List<PaymentRefundHistoryItemVm> Refunds { get; set; } = new();
+        public List<PaymentProviderEventItemVm> ProviderEvents { get; set; } = new();
         public List<PaymentSupportPlaybookVm> SupportPlaybooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
@@ -405,6 +423,15 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
+    }
+
+    public sealed class PaymentProviderEventItemVm
+    {
+        public string EventType { get; set; } = string.Empty;
+        public DateTime OccurredAtUtc { get; set; }
+        public string? IdempotencyKey { get; set; }
+        public string CorrelationKind { get; set; } = string.Empty;
+        public string CorrelationReference { get; set; } = string.Empty;
     }
 
     public sealed class PaymentSupportPlaybookVm

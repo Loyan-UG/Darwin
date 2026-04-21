@@ -184,9 +184,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 SetSuccessMessage("MediaUploaded");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(ex.Message) ? T("MediaCreateFailed") : ex.Message);
+                AddModelErrorMessage("MediaCreateFailed");
                 return RenderCreateEditor(vm);
             }
         }
@@ -251,9 +251,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 SetErrorMessage("MediaConcurrencyConflict");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(ex.Message) ? T("MediaUpdateFailed") : ex.Message);
+                AddModelErrorMessage("MediaUpdateFailed");
                 return RenderEditEditor(vm);
             }
         }

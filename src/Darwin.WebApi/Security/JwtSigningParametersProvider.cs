@@ -1,6 +1,8 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application;
 using Darwin.Domain.Entities.Settings;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -19,6 +21,7 @@ namespace Darwin.WebApi.Security
 
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<JwtSigningParametersProvider> _logger;
+        private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
         private readonly object _sync = new();
         private DateTime _lastReadUtc;
@@ -29,10 +32,14 @@ namespace Darwin.WebApi.Security
         /// </summary>
         /// <param name="scopeFactory">Scope factory used to resolve a scoped IAppDbContext.</param>
         /// <param name="logger">Logger for diagnostics.</param>
-        public JwtSigningParametersProvider(IServiceScopeFactory scopeFactory, ILogger<JwtSigningParametersProvider> logger)
+        public JwtSigningParametersProvider(
+            IServiceScopeFactory scopeFactory,
+            ILogger<JwtSigningParametersProvider> logger,
+            IStringLocalizer<ValidationResource> validationLocalizer)
         {
             _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
         }
 
         /// <summary>
@@ -57,12 +64,12 @@ namespace Darwin.WebApi.Security
                 var s = db.Set<SiteSetting>().AsNoTracking().FirstOrDefault();
                 if (s is null)
                 {
-                    throw new InvalidOperationException("SiteSetting row not found. JWT validation cannot be configured.");
+                    throw new InvalidOperationException(_validationLocalizer["JwtValidationSiteSettingsMissing"]);
                 }
 
                 if (s.JwtEnabled == false)
                 {
-                    throw new InvalidOperationException("JWT is disabled by SiteSetting.");
+                    throw new InvalidOperationException(_validationLocalizer["JwtValidationDisabled"]);
                 }
 
                 var keys = new List<SecurityKey>
@@ -98,11 +105,11 @@ namespace Darwin.WebApi.Security
         /// Converts a signing key string into bytes.
         /// Supports base64 or raw UTF8 strings.
         /// </summary>
-        private static byte[] GetKeyBytes(string? key)
+        private byte[] GetKeyBytes(string? key)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
-                throw new InvalidOperationException("JwtSigningKey is missing in SiteSetting.");
+                throw new InvalidOperationException(_validationLocalizer["JwtSigningKeyMissingInSiteSettings"]);
             }
 
             try

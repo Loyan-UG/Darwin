@@ -139,6 +139,12 @@ public sealed class MemberOrderPaymentDto
     /// <summary>Gets or sets the optional provider transaction reference.</summary>
     public string? ProviderReference { get; set; }
 
+    /// <summary>Gets or sets the optional provider payment-intent reference.</summary>
+    public string? ProviderPaymentIntentReference { get; set; }
+
+    /// <summary>Gets or sets the optional provider checkout/session reference.</summary>
+    public string? ProviderCheckoutSessionReference { get; set; }
+
     /// <summary>Gets or sets the payment amount in minor units.</summary>
     public long AmountMinor { get; set; }
 
@@ -168,6 +174,9 @@ public sealed class MemberOrderShipmentDto
 
     /// <summary>Gets or sets the optional tracking number.</summary>
     public string? TrackingNumber { get; set; }
+
+    /// <summary>Gets or sets the optional carrier tracking URL.</summary>
+    public string? TrackingUrl { get; set; }
 
     /// <summary>Gets or sets the shipment lifecycle status.</summary>
     public ShipmentStatus Status { get; set; } = ShipmentStatus.Pending;

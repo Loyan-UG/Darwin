@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
@@ -9,6 +10,7 @@ using Darwin.Contracts.Identity;
 using Darwin.WebApi.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Business;
 
@@ -23,13 +25,16 @@ public sealed class BusinessAuthController : ApiControllerBase
 {
     private readonly GetBusinessInvitationPreviewHandler _getBusinessInvitationPreviewHandler;
     private readonly AcceptBusinessInvitationHandler _acceptBusinessInvitationHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public BusinessAuthController(
         GetBusinessInvitationPreviewHandler getBusinessInvitationPreviewHandler,
-        AcceptBusinessInvitationHandler acceptBusinessInvitationHandler)
+        AcceptBusinessInvitationHandler acceptBusinessInvitationHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getBusinessInvitationPreviewHandler = getBusinessInvitationPreviewHandler ?? throw new ArgumentNullException(nameof(getBusinessInvitationPreviewHandler));
         _acceptBusinessInvitationHandler = acceptBusinessInvitationHandler ?? throw new ArgumentNullException(nameof(acceptBusinessInvitationHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     [HttpGet("invitations/preview")]
@@ -40,7 +45,7 @@ public sealed class BusinessAuthController : ApiControllerBase
     {
         if (string.IsNullOrWhiteSpace(token))
         {
-            return BadRequestProblem("Invitation token is required.");
+            return BadRequestProblem(_validationLocalizer["InvitationTokenRequired"]);
         }
 
         var result = await _getBusinessInvitationPreviewHandler.HandleAsync(token, ct).ConfigureAwait(false);
@@ -71,7 +76,7 @@ public sealed class BusinessAuthController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var result = await _acceptBusinessInvitationHandler.HandleAsync(new BusinessInvitationAcceptDto

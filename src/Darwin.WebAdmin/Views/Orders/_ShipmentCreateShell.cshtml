@@ -38,6 +38,21 @@
                 <input asp-for="TrackingNumber" class="form-control" />
                 <span asp-validation-for="TrackingNumber" class="text-danger"></span>
             </div>
+            <div class="col-md-4">
+                <label asp-for="ProviderShipmentReference" class="form-label">@T.T("ProviderShipmentReference")</label>
+                <input asp-for="ProviderShipmentReference" class="form-control" />
+                <span asp-validation-for="ProviderShipmentReference" class="text-danger"></span>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="LabelUrl" class="form-label">@T.T("CarrierLabelUrl")</label>
+                <input asp-for="LabelUrl" class="form-control" />
+                <span asp-validation-for="LabelUrl" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="LastCarrierEventKey" class="form-label">@T.T("LastCarrierEventKey")</label>
+                <input asp-for="LastCarrierEventKey" class="form-control" />
+                <span asp-validation-for="LastCarrierEventKey" class="text-danger"></span>
+            </div>
             <div class="col-md-3">
                 <label asp-for="TotalWeight" class="form-label"></label>
                 <input asp-for="TotalWeight" class="form-control" />

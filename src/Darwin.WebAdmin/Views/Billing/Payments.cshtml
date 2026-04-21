@@ -368,11 +368,25 @@
         {
             foreach (var item in Model.Items)
             {
-                var missingProviderReference = string.IsNullOrWhiteSpace(item.ProviderTransactionRef);
+                var missingProviderReference =
+                    string.IsNullOrWhiteSpace(item.ProviderTransactionRef) &&
+                    string.IsNullOrWhiteSpace(item.ProviderPaymentIntentRef) &&
+                    string.IsNullOrWhiteSpace(item.ProviderCheckoutSessionRef);
                 <tr>
                     <td>
                         <div class="fw-semibold">@item.Provider</div>
-                        <div class="small text-muted">@item.ProviderTransactionRef</div>
+                        @if (!string.IsNullOrWhiteSpace(item.ProviderTransactionRef))
+                        {
+                            <div class="small text-muted">@T.T("ProviderRef"): @item.ProviderTransactionRef</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.ProviderPaymentIntentRef))
+                        {
+                            <div class="small text-muted">@T.T("ProviderPaymentIntentRef"): @item.ProviderPaymentIntentRef</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.ProviderCheckoutSessionRef))
+                        {
+                            <div class="small text-muted">@T.T("ProviderCheckoutSessionRef"): @item.ProviderCheckoutSessionRef</div>
+                        }
                         <div class="small text-muted">@LocalizeProviderReferenceState(item.ProviderReferenceState)</div>
                         <span class="badge text-bg-light mt-1">@LocalizePaymentStatus(item.Status)</span>
                         @if (item.IsStripe)

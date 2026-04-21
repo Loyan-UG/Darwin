@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
-using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.Integration;
@@ -35,9 +34,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly RetryEmailDispatchAuditHandler _retryEmailDispatchAudit;
         private readonly IAppDbContext _db;
         private readonly ISiteSettingCache _siteSettingCache;
-        private readonly IEmailSender _emailSender;
-        private readonly ISmsSender _smsSender;
-        private readonly IWhatsAppSender _whatsAppSender;
 
         public BusinessCommunicationsController(
             GetBusinessCommunicationOpsSummaryHandler getSummary,
@@ -47,10 +43,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             GetChannelDispatchActivityHandler getChannelDispatchActivity,
             RetryEmailDispatchAuditHandler retryEmailDispatchAudit,
             IAppDbContext db,
-            ISiteSettingCache siteSettingCache,
-            IEmailSender emailSender,
-            ISmsSender smsSender,
-            IWhatsAppSender whatsAppSender)
+            ISiteSettingCache siteSettingCache)
         {
             _getSummary = getSummary;
             _getSetupPage = getSetupPage;
@@ -60,9 +53,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _retryEmailDispatchAudit = retryEmailDispatchAudit;
             _db = db;
             _siteSettingCache = siteSettingCache;
-            _emailSender = emailSender;
-            _smsSender = smsSender;
-            _whatsAppSender = whatsAppSender;
         }
 
         [HttpGet]
@@ -165,6 +155,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     TotalCount = channelAuditSummary.TotalCount,
                     FailedCount = channelAuditSummary.FailedCount,
                     PendingCount = channelAuditSummary.PendingCount,
+                    QueuedPendingCount = channelAuditSummary.QueuedPendingCount,
+                    QueuedFailedCount = channelAuditSummary.QueuedFailedCount,
                     Recent24HourCount = channelAuditSummary.Recent24HourCount,
                     SmsCount = channelAuditSummary.SmsCount,
                     WhatsAppCount = channelAuditSummary.WhatsAppCount,
@@ -176,10 +168,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Id = x.Id,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
+                    TemplateKey = x.TemplateKey,
+                    CorrelationKey = x.CorrelationKey,
                     BusinessId = x.BusinessId,
                     BusinessName = x.BusinessName,
                     RecipientEmail = x.RecipientEmail,
+                    IntendedRecipientEmail = x.IntendedRecipientEmail,
                     Subject = x.Subject,
+                    ProviderMessageId = x.ProviderMessageId,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
@@ -205,16 +201,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 RecentChannelAudits = channelAudits.Select(x => new ChannelDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    IsQueueOperation = x.IsQueueOperation,
                     Channel = x.Channel,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
+                    TemplateKey = x.TemplateKey,
+                    CorrelationKey = x.CorrelationKey,
                     BusinessId = x.BusinessId,
                     RecipientAddress = x.RecipientAddress,
+                    IntendedRecipientAddress = x.IntendedRecipientAddress,
                     MessagePreview = x.MessagePreview,
+                    ProviderMessageId = x.ProviderMessageId,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
-                    FailureMessage = x.FailureMessage
+                    FailureMessage = x.FailureMessage,
+                    QueueAttemptCount = x.QueueAttemptCount
                 }).ToList(),
                 Items = items.Select(x => new BusinessCommunicationSetupListItemVm
                 {
@@ -323,10 +325,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Id = x.Id,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
+                    TemplateKey = x.TemplateKey,
+                    CorrelationKey = x.CorrelationKey,
                     BusinessId = x.BusinessId,
                     BusinessName = x.BusinessName,
                     RecipientEmail = x.RecipientEmail,
+                    IntendedRecipientEmail = x.IntendedRecipientEmail,
                     Subject = x.Subject,
+                    ProviderMessageId = x.ProviderMessageId,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
@@ -359,6 +365,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TotalCount = channelAuditSummary.TotalCount,
                 FailedCount = channelAuditSummary.FailedCount,
                 PendingCount = channelAuditSummary.PendingCount,
+                QueuedPendingCount = channelAuditSummary.QueuedPendingCount,
+                QueuedFailedCount = channelAuditSummary.QueuedFailedCount,
                 Recent24HourCount = channelAuditSummary.Recent24HourCount,
                 SmsCount = channelAuditSummary.SmsCount,
                 WhatsAppCount = channelAuditSummary.WhatsAppCount,
@@ -368,16 +376,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             vm.RecentChannelAudits = channelAudits.Select(x => new ChannelDispatchAuditListItemVm
             {
                 Id = x.Id,
+                IsQueueOperation = x.IsQueueOperation,
                 Channel = x.Channel,
                 Provider = x.Provider,
                 FlowKey = x.FlowKey,
+                TemplateKey = x.TemplateKey,
+                CorrelationKey = x.CorrelationKey,
                 BusinessId = x.BusinessId,
                 RecipientAddress = x.RecipientAddress,
+                IntendedRecipientAddress = x.IntendedRecipientAddress,
                 MessagePreview = x.MessagePreview,
+                ProviderMessageId = x.ProviderMessageId,
                 Status = x.Status,
                 AttemptedAtUtc = x.AttemptedAtUtc,
                 CompletedAtUtc = x.CompletedAtUtc,
-                FailureMessage = x.FailureMessage
+                FailureMessage = x.FailureMessage,
+                QueueAttemptCount = x.QueueAttemptCount
             }).ToList();
 
             return RenderCommunicationProfileWorkspace(vm);
@@ -483,7 +497,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                         AttemptedAtUtc = x.AttemptedAtUtc,
                         Status = x.Status,
                         Provider = x.Provider,
+                        TemplateKey = x.TemplateKey,
+                        CorrelationKey = x.CorrelationKey,
                         Subject = x.Subject,
+                        IntendedRecipientEmail = x.IntendedRecipientEmail,
+                        ProviderMessageId = x.ProviderMessageId,
                         FailureMessage = x.FailureMessage,
                         CompletedAtUtc = x.CompletedAtUtc
                     }).ToList()
@@ -497,10 +515,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Id = x.Id,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
+                    TemplateKey = x.TemplateKey,
+                    CorrelationKey = x.CorrelationKey,
                     BusinessId = x.BusinessId,
                     BusinessName = x.BusinessName,
                     RecipientEmail = x.RecipientEmail,
+                    IntendedRecipientEmail = x.IntendedRecipientEmail,
                     Subject = x.Subject,
+                    ProviderMessageId = x.ProviderMessageId,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
@@ -618,6 +640,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     TotalCount = summary.TotalCount,
                     FailedCount = summary.FailedCount,
                     PendingCount = summary.PendingCount,
+                    QueuedPendingCount = summary.QueuedPendingCount,
+                    QueuedFailedCount = summary.QueuedFailedCount,
                     Recent24HourCount = summary.Recent24HourCount,
                     SmsCount = summary.SmsCount,
                     WhatsAppCount = summary.WhatsAppCount,
@@ -651,7 +675,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                         Channel = x.Channel,
                         Status = x.Status,
                         Provider = x.Provider,
+                        TemplateKey = x.TemplateKey,
+                        CorrelationKey = x.CorrelationKey,
                         MessagePreview = x.MessagePreview,
+                        IntendedRecipientAddress = x.IntendedRecipientAddress,
+                        ProviderMessageId = x.ProviderMessageId,
                         FailureMessage = x.FailureMessage,
                         CompletedAtUtc = x.CompletedAtUtc
                     }).ToList()
@@ -675,16 +703,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Items = items.Select(x => new ChannelDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    IsQueueOperation = x.IsQueueOperation,
                     Channel = x.Channel,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
+                    TemplateKey = x.TemplateKey,
+                    CorrelationKey = x.CorrelationKey,
                     BusinessId = x.BusinessId,
                     RecipientAddress = x.RecipientAddress,
+                    IntendedRecipientAddress = x.IntendedRecipientAddress,
                     MessagePreview = x.MessagePreview,
+                    ProviderMessageId = x.ProviderMessageId,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
                     FailureMessage = x.FailureMessage,
+                    QueueAttemptCount = x.QueueAttemptCount,
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
                     ChainAttemptCount = x.ChainAttemptCount,
                     ChainStatusMix = x.ChainStatusMix,
@@ -745,7 +779,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("CommunicationEmailRetryFailedFallback");
+                SetErrorMessage("CommunicationEmailRetryFailedFallback");
             }
 
             return RedirectOrHtmx(
@@ -812,17 +846,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 T("CommunicationTestEmailBodyRuntimeFallback"),
                 placeholders);
 
-            await _emailSender.SendAsync(
-                settings.CommunicationTestInboxEmail!,
-                subject,
-                htmlBody,
-                ct,
-                new EmailDispatchContext
-                {
-                    FlowKey = "AdminCommunicationTest"
-                }).ConfigureAwait(false);
+            _db.Set<EmailDispatchOperation>().Add(new EmailDispatchOperation
+            {
+                Provider = "SMTP",
+                RecipientEmail = settings.CommunicationTestInboxEmail!,
+                IntendedRecipientEmail = settings.CommunicationTestInboxEmail,
+                Subject = subject,
+                HtmlBody = htmlBody,
+                FlowKey = "AdminCommunicationTest",
+                TemplateKey = "AdminCommunicationTestEmail",
+                CorrelationKey = Guid.NewGuid().ToString("N"),
+                Status = "Pending"
+            });
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-            TempData["Success"] = string.Format(T("CommunicationTestEmailSentMessage"), settings.CommunicationTestInboxEmail);
+            TempData["Success"] = string.Format(T("CommunicationTestEmailQueuedMessage"), settings.CommunicationTestInboxEmail);
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -956,16 +994,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     attemptedAtUtc: DateTime.UtcNow,
                     testTarget: settings.CommunicationTestSmsRecipientE164,
                     transportState: DescribeCommunicationTransportState(smsTransportConfigured)));
-            await _smsSender.SendAsync(
-                settings.CommunicationTestSmsRecipientE164,
-                text,
-                ct,
-                new ChannelDispatchContext
-                {
-                    FlowKey = "AdminCommunicationTest"
-                }).ConfigureAwait(false);
+            _db.Set<ChannelDispatchOperation>().Add(new ChannelDispatchOperation
+            {
+                Channel = "SMS",
+                Provider = settings.SmsProvider!.Trim(),
+                RecipientAddress = settings.CommunicationTestSmsRecipientE164,
+                IntendedRecipientAddress = settings.CommunicationTestSmsRecipientE164,
+                MessageText = text,
+                FlowKey = "AdminCommunicationTest",
+                TemplateKey = "AdminCommunicationTestSms",
+                CorrelationKey = Guid.NewGuid().ToString("N"),
+                Status = "Pending"
+            });
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-            TempData["Success"] = string.Format(T("CommunicationTestSmsSentMessage"), settings.CommunicationTestSmsRecipientE164);
+            TempData["Success"] = string.Format(T("CommunicationTestSmsQueuedMessage"), settings.CommunicationTestSmsRecipientE164);
             return RedirectToChannelAuditsOrIndex(
                 returnToChannelAudits,
                 page,
@@ -1121,16 +1164,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     attemptedAtUtc: DateTime.UtcNow,
                     testTarget: settings.CommunicationTestWhatsAppRecipientE164,
                     transportState: DescribeCommunicationTransportState(whatsAppTransportConfigured)));
-            await _whatsAppSender.SendTextAsync(
-                settings.CommunicationTestWhatsAppRecipientE164,
-                text,
-                ct,
-                new ChannelDispatchContext
-                {
-                    FlowKey = "AdminCommunicationTest"
-                }).ConfigureAwait(false);
+            _db.Set<ChannelDispatchOperation>().Add(new ChannelDispatchOperation
+            {
+                Channel = "WhatsApp",
+                Provider = "Meta",
+                RecipientAddress = settings.CommunicationTestWhatsAppRecipientE164,
+                IntendedRecipientAddress = settings.CommunicationTestWhatsAppRecipientE164,
+                MessageText = text,
+                FlowKey = "AdminCommunicationTest",
+                TemplateKey = "AdminCommunicationTestWhatsApp",
+                CorrelationKey = Guid.NewGuid().ToString("N"),
+                Status = "Pending"
+            });
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-            TempData["Success"] = string.Format(T("CommunicationTestWhatsAppSentMessage"), settings.CommunicationTestWhatsAppRecipientE164);
+            TempData["Success"] = string.Format(T("CommunicationTestWhatsAppQueuedMessage"), settings.CommunicationTestWhatsAppRecipientE164);
             return RedirectToChannelAuditsOrIndex(
                 returnToChannelAudits,
                 page,

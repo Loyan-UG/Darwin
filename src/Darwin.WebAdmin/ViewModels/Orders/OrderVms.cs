@@ -194,8 +194,15 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         /// <summary>Service level (e.g., "Standard", "Express").</summary>
         public string Service { get; set; } = string.Empty;
 
+        public string? ProviderShipmentReference { get; set; }
+
         /// <summary>Optional tracking number provided by the carrier.</summary>
         public string? TrackingNumber { get; set; }
+
+        /// <summary>Optional carrier tracking URL when the shipment is trackable in phase-1 flows.</summary>
+        public string? TrackingUrl { get; set; }
+
+        public string? LabelUrl { get; set; }
 
         /// <summary>Total weight of the shipment, unit decided by SiteSetting/UI.</summary>
         public int TotalWeight { get; set; }
@@ -217,15 +224,33 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int OpenAgeHours { get; set; }
         public int? InTransitAgeHours { get; set; }
         public DateTime? LastCarrierEventAtUtc { get; set; }
+        public string? LastCarrierEventKey { get; set; }
+        public List<ShipmentCarrierEventVm> RecentCarrierEvents { get; set; } = new();
         public string TrackingState { get; set; } = string.Empty;
         public string ExceptionNote { get; set; } = string.Empty;
         public int AttentionDelayHours { get; set; }
         public int TrackingGraceHours { get; set; }
         public Guid? DefaultRefundPaymentId { get; set; }
         public bool HasRefundablePayment { get; set; }
+        public bool ProviderOperationQueued { get; set; }
+        public bool ProviderOperationFailed { get; set; }
+        public string? ProviderOperationType { get; set; }
+        public string? ProviderOperationFailureReason { get; set; }
 
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class ShipmentCarrierEventVm
+    {
+        public string CarrierEventKey { get; set; } = string.Empty;
+        public string? ProviderStatus { get; set; }
+        public string? ExceptionCode { get; set; }
+        public string? ExceptionMessage { get; set; }
+        public string? TrackingNumber { get; set; }
+        public string? LabelUrl { get; set; }
+        public string? Service { get; set; }
+        public DateTime OccurredAtUtc { get; set; }
     }
 
     public sealed class ShipmentCreateVm
@@ -240,8 +265,17 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         [StringLength(64)]
         public string Service { get; set; } = string.Empty;
 
+        [StringLength(128)]
+        public string? ProviderShipmentReference { get; set; }
+
         [StringLength(64)]
         public string? TrackingNumber { get; set; }
+
+        [StringLength(2048)]
+        public string? LabelUrl { get; set; }
+
+        [StringLength(128)]
+        public string? LastCarrierEventKey { get; set; }
 
         public int? TotalWeight { get; set; }
         public List<ShipmentLineCreateVm> Lines { get; set; } = new();

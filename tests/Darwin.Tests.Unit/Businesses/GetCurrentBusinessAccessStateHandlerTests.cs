@@ -96,7 +96,7 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result.HasPrimaryLocation.Should().BeFalse();
         result.HasContactEmail.Should().BeFalse();
         result.HasLegalName.Should().BeFalse();
-        result.BlockingReason.Should().Be("Business approval is still pending.");
+        result.BlockingReason.Should().Be("business_pending_approval");
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result.IsOperationsAllowed.Should().BeFalse();
         result.HasActivationBlockingIssues.Should().BeTrue();
         result.PrimaryBlockingCode.Should().Be("membership_inactive");
-        result.BlockingReason.Should().Be("Business membership is no longer active for this user.");
+        result.BlockingReason.Should().Be("membership_inactive");
     }
 
     [Fact]
@@ -215,7 +215,7 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result.IsOperationsAllowed.Should().BeFalse();
         result.HasActivationBlockingIssues.Should().BeTrue();
         result.PrimaryBlockingCode.Should().Be("email_confirmation_required");
-        result.BlockingReason.Should().Be("User email confirmation is still required.");
+        result.BlockingReason.Should().Be("email_confirmation_required");
     }
 
     [Fact]
@@ -254,7 +254,7 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result.IsOperationsAllowed.Should().BeFalse();
         result.HasActivationBlockingIssues.Should().BeTrue();
         result.PrimaryBlockingCode.Should().Be("user_locked");
-        result.BlockingReason.Should().Be("User access is currently locked.");
+        result.BlockingReason.Should().Be("user_locked");
     }
 
     [Fact]
@@ -286,7 +286,7 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
         result.IsSetupComplete.Should().BeFalse();
         result.SetupIncompleteItemCount.Should().Be(3);
         result.PrimaryBlockingCode.Should().Be("setup_incomplete");
-        result.BlockingReason.Should().Be("Business setup is still incomplete.");
+        result.BlockingReason.Should().Be("setup_incomplete");
     }
 
     private static Business CreateBusiness()

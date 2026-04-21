@@ -58,18 +58,40 @@ namespace Darwin.Application.Businesses.Queries
                 .Select(x => new ChannelDispatchAuditListItemDto
                 {
                     Id = x.Id,
+                    IsQueueOperation = false,
                     Channel = x.Channel,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
+                    TemplateKey = x.TemplateKey,
+                    CorrelationKey = x.CorrelationKey,
                     BusinessId = x.BusinessId,
                     RecipientAddress = x.RecipientAddress,
+                    IntendedRecipientAddress = x.IntendedRecipientAddress,
                     MessagePreview = x.MessagePreview,
+                    ProviderMessageId = x.ProviderMessageId,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
-                    FailureMessage = x.FailureMessage
+                    FailureMessage = x.FailureMessage,
+                    QueueAttemptCount = 0
                 })
                 .ToList();
+
+            var queuedItems = await BuildQueuedOperationItemsAsync(
+                    new ChannelDispatchAuditFilterDto
+                    {
+                        BusinessId = businessId
+                    },
+                    rows,
+                    ct)
+                .ConfigureAwait(false);
+            items = items
+                .Concat(queuedItems)
+                .OrderByDescending(x => x.AttemptedAtUtc)
+                .Take(take)
+                .ToList();
+            summary.QueuedPendingCount = queuedItems.Count(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+            summary.QueuedFailedCount = queuedItems.Count(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase));
 
             return (items, summary);
         }
@@ -101,15 +123,19 @@ namespace Darwin.Application.Businesses.Queries
                 var q = filter.Query.Trim();
                 query = query.Where(x =>
                     x.RecipientAddress.Contains(q) ||
+                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.Contains(q)) ||
                     x.Provider.Contains(q) ||
                     x.MessagePreview.Contains(q) ||
-                    (x.FlowKey != null && x.FlowKey.Contains(q)));
+                    (x.FlowKey != null && x.FlowKey.Contains(q)) ||
+                    (x.TemplateKey != null && x.TemplateKey.Contains(q)) ||
+                    (x.CorrelationKey != null && x.CorrelationKey.Contains(q)) ||
+                    (x.ProviderMessageId != null && x.ProviderMessageId.Contains(q)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.RecipientAddress))
             {
                 var normalizedRecipientAddress = filter.RecipientAddress.Trim();
-                query = query.Where(x => x.RecipientAddress == normalizedRecipientAddress);
+                query = query.Where(x => (x.IntendedRecipientAddress ?? x.RecipientAddress) == normalizedRecipientAddress);
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Channel))
@@ -205,10 +231,7 @@ namespace Darwin.Application.Businesses.Queries
             }
 
             var filteredRowsList = filteredRows.ToList();
-            var total = rows.Count;
-            var items = filteredRowsList
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+            var auditItems = filteredRowsList
                 .Select(x =>
                 {
                     var actionPolicy = BuildActionPolicy(x, chainContext[x.Id]);
@@ -216,16 +239,22 @@ namespace Darwin.Application.Businesses.Queries
                     return new ChannelDispatchAuditListItemDto
                     {
                         Id = x.Id,
+                        IsQueueOperation = false,
                         Channel = x.Channel,
                         Provider = x.Provider,
                         FlowKey = x.FlowKey,
+                        TemplateKey = x.TemplateKey,
+                        CorrelationKey = x.CorrelationKey,
                         BusinessId = x.BusinessId,
                         RecipientAddress = x.RecipientAddress,
+                        IntendedRecipientAddress = x.IntendedRecipientAddress,
                         MessagePreview = x.MessagePreview,
+                        ProviderMessageId = x.ProviderMessageId,
                         Status = x.Status,
                         AttemptedAtUtc = x.AttemptedAtUtc,
                         CompletedAtUtc = x.CompletedAtUtc,
                         FailureMessage = x.FailureMessage,
+                        QueueAttemptCount = 0,
                         NeedsOperatorFollowUp = NeedsOperatorFollowUp(x),
                         ChainAttemptCount = chainContext[x.Id].ChainAttemptCount,
                         ChainStatusMix = chainContext[x.Id].ChainStatusMix,
@@ -246,8 +275,18 @@ namespace Darwin.Application.Businesses.Queries
                     };
                 })
                 .ToList();
+            var queuedItems = await BuildQueuedOperationItemsAsync(filter, rows, ct).ConfigureAwait(false);
+            var total = filteredRowsList.Count + queuedItems.Count;
+            var items = auditItems
+                .Concat(queuedItems)
+                .OrderByDescending(x => x.AttemptedAtUtc)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
             var summary = BuildSummary(rows, chainContext, providerContext);
+            summary.QueuedPendingCount = queuedItems.Count(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+            summary.QueuedFailedCount = queuedItems.Count(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase));
             ChannelDispatchAuditChainSummaryDto? chainSummary = null;
             ChannelDispatchProviderSummaryDto? providerSummary = null;
             if (!string.IsNullOrWhiteSpace(filter.RecipientAddress))
@@ -260,7 +299,7 @@ namespace Darwin.Application.Businesses.Queries
                 providerSummary = BuildProviderSummary(rows, filter.Provider, filter.Channel, filter.FlowKey);
             }
 
-            return (items, filteredRowsList.Count, summary, chainSummary, providerSummary);
+            return (items, total, summary, chainSummary, providerSummary);
         }
 
         private static ChannelDispatchAuditSummaryDto BuildSummary(
@@ -288,6 +327,157 @@ namespace Darwin.Application.Businesses.Queries
                 ProviderReviewCount = rows.Count(x => NeedsProviderReview(providerContext[x.Id])),
                 ProviderRecoveredCount = rows.Count(x => string.Equals(providerContext[x.Id].RecoveryState, "Recovered", StringComparison.OrdinalIgnoreCase))
             };
+        }
+
+        private async Task<List<ChannelDispatchAuditListItemDto>> BuildQueuedOperationItemsAsync(
+            ChannelDispatchAuditFilterDto filter,
+            IReadOnlyCollection<ChannelDispatchAudit> auditRows,
+            CancellationToken ct)
+        {
+            if (filter.ActionReadyOnly ||
+                filter.ActionBlockedOnly ||
+                filter.EscalationCandidatesOnly ||
+                filter.HeavyChainsOnly ||
+                filter.ProviderReviewOnly ||
+                filter.ChainFollowUpOnly ||
+                filter.ChainResolvedOnly)
+            {
+                return new List<ChannelDispatchAuditListItemDto>();
+            }
+
+            var query = _db.Set<ChannelDispatchOperation>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .Where(x => x.Status == "Pending" || x.Status == "Failed");
+
+            if (filter.BusinessId.HasValue)
+            {
+                query = query.Where(x => x.BusinessId == filter.BusinessId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Query))
+            {
+                var q = filter.Query.Trim();
+                query = query.Where(x =>
+                    x.RecipientAddress.Contains(q) ||
+                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.Contains(q)) ||
+                    x.Provider.Contains(q) ||
+                    x.MessageText.Contains(q) ||
+                    (x.FlowKey != null && x.FlowKey.Contains(q)) ||
+                    (x.TemplateKey != null && x.TemplateKey.Contains(q)) ||
+                    (x.CorrelationKey != null && x.CorrelationKey.Contains(q)) ||
+                    (x.FailureReason != null && x.FailureReason.Contains(q)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.RecipientAddress))
+            {
+                var normalizedRecipientAddress = filter.RecipientAddress.Trim();
+                query = query.Where(x => (x.IntendedRecipientAddress ?? x.RecipientAddress) == normalizedRecipientAddress);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Channel))
+            {
+                var normalizedChannel = filter.Channel.Trim();
+                query = query.Where(x => x.Channel == normalizedChannel);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Provider))
+            {
+                var normalizedProvider = filter.Provider.Trim();
+                query = query.Where(x => x.Provider == normalizedProvider);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.FlowKey))
+            {
+                var normalizedFlowKey = filter.FlowKey.Trim();
+                query = query.Where(x => x.FlowKey == normalizedFlowKey);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Status))
+            {
+                var normalizedStatus = filter.Status.Trim();
+                query = query.Where(x => x.Status == normalizedStatus);
+            }
+
+            if (filter.FailedOnly)
+            {
+                query = query.Where(x => x.Status == "Failed");
+            }
+
+            if (filter.PhoneVerificationOnly)
+            {
+                query = query.Where(x => x.FlowKey == "PhoneVerification");
+            }
+
+            if (filter.AdminTestOnly)
+            {
+                query = query.Where(x => x.FlowKey == "AdminCommunicationTest");
+            }
+
+            var auditCorrelationKeys = auditRows
+                .Where(x => !string.IsNullOrWhiteSpace(x.CorrelationKey))
+                .Select(x => x.CorrelationKey!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (auditCorrelationKeys.Count > 0)
+            {
+                query = query.Where(x => string.IsNullOrWhiteSpace(x.CorrelationKey) || !auditCorrelationKeys.Contains(x.CorrelationKey));
+            }
+
+            var rows = await query
+                .OrderByDescending(x => x.LastAttemptAtUtc ?? x.CreatedAtUtc)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            return rows.Select(x => new ChannelDispatchAuditListItemDto
+                {
+                    Id = x.Id,
+                    IsQueueOperation = true,
+                    Channel = x.Channel,
+                    Provider = x.Provider,
+                    FlowKey = x.FlowKey,
+                    TemplateKey = x.TemplateKey,
+                    CorrelationKey = x.CorrelationKey,
+                    BusinessId = x.BusinessId,
+                    RecipientAddress = x.RecipientAddress,
+                    IntendedRecipientAddress = x.IntendedRecipientAddress,
+                    MessagePreview = TruncateMessagePreview(x.MessageText),
+                    ProviderMessageId = null,
+                    Status = x.Status,
+                    AttemptedAtUtc = x.LastAttemptAtUtc ?? x.CreatedAtUtc,
+                    CompletedAtUtc = x.ProcessedAtUtc,
+                    FailureMessage = x.FailureReason,
+                    QueueAttemptCount = x.AttemptCount,
+                    NeedsOperatorFollowUp = true,
+                    ChainAttemptCount = 0,
+                    ChainStatusMix = string.Empty,
+                    PriorAttemptCount = 0,
+                    PriorFailureCount = 0,
+                    LastSuccessfulAttemptAtUtc = null,
+                    CanRerunNow = false,
+                    ActionPolicyState = string.Empty,
+                    ActionBlockedReason = null,
+                    ActionAvailableAtUtc = null,
+                    NeedsEscalationReview = false,
+                    EscalationReason = null,
+                    ProviderRecentAttemptCount24h = 0,
+                    ProviderFailureCount24h = 0,
+                    ProviderPressureState = string.Empty,
+                    ProviderRecoveryState = string.Empty,
+                    ProviderLastSuccessfulAttemptAtUtc = null
+                })
+                .ToList();
+        }
+
+        private static string TruncateMessagePreview(string? messageText)
+        {
+            if (string.IsNullOrWhiteSpace(messageText))
+            {
+                return string.Empty;
+            }
+
+            var normalized = messageText.Trim();
+            return normalized.Length <= 180 ? normalized : normalized[..180];
         }
 
         private static bool NeedsOperatorFollowUp(ChannelDispatchAudit row)
@@ -350,7 +540,11 @@ namespace Darwin.Application.Businesses.Queries
                         Channel = x.Channel,
                         Status = x.Status,
                         Provider = x.Provider,
+                        TemplateKey = x.TemplateKey,
+                        CorrelationKey = x.CorrelationKey,
                         MessagePreview = x.MessagePreview,
+                        IntendedRecipientAddress = x.IntendedRecipientAddress,
+                        ProviderMessageId = x.ProviderMessageId,
                         FailureMessage = x.FailureMessage,
                         CompletedAtUtc = x.CompletedAtUtc
                     })
@@ -494,7 +688,7 @@ namespace Darwin.Application.Businesses.Queries
                          {
                              x.BusinessId,
                              FlowKey = x.FlowKey ?? string.Empty,
-                             x.RecipientAddress
+                             RecipientAddress = x.IntendedRecipientAddress ?? x.RecipientAddress
                          }))
             {
                 var ordered = group.OrderBy(x => x.AttemptedAtUtc).ToList();

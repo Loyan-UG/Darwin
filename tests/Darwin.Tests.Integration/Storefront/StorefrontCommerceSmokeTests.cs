@@ -194,7 +194,7 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
             cancellationToken: TestContext.Current.CancellationToken);
         paymentIntent.Should().NotBeNull();
         paymentIntent!.PaymentId.Should().NotBeEmpty();
-        paymentIntent.Provider.Should().Be("DarwinCheckout");
+        paymentIntent.Provider.Should().Be("Stripe");
         paymentIntent.CheckoutUrl.Should().Contain("mock-checkout");
 
         using var completePaymentResponse = await client.PostAsJsonAsync(

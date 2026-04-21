@@ -222,7 +222,15 @@
                         <div>@item.PaymentProvider</div>
                         @if (!string.IsNullOrWhiteSpace(item.PaymentProviderReference))
                         {
-                            <div class="small text-muted">@item.PaymentProviderReference</div>
+                            <div class="small text-muted">@T.T("ProviderRef"): @item.PaymentProviderReference</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.PaymentProviderPaymentIntentRef))
+                        {
+                            <div class="small text-muted">@T.T("ProviderPaymentIntentRef"): @item.PaymentProviderPaymentIntentRef</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.PaymentProviderCheckoutSessionRef))
+                        {
+                            <div class="small text-muted">@T.T("ProviderCheckoutSessionRef"): @item.PaymentProviderCheckoutSessionRef</div>
                         }
                         <div class="small text-muted">@LocalizeProviderReferenceState(item.ProviderReferenceState)</div>
                         <div class="small">@LocalizePaymentStatus(item.PaymentStatus)</div>

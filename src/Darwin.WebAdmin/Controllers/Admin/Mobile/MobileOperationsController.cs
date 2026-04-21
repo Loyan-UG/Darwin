@@ -142,7 +142,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("MobilePushTokenClearFailed");
+                SetErrorMessage("MobilePushTokenClearFailed");
             }
 
             return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
@@ -159,7 +159,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("MobileDeviceDeactivateFailed");
+                SetErrorMessage("MobileDeviceDeactivateFailed");
             }
 
             return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });

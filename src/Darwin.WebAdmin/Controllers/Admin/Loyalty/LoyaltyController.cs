@@ -181,9 +181,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 SetSuccessMessage("LoyaltyProgramCreated");
                 return RedirectOrHtmx(nameof(EditProgram), new { id });
             }
-            catch (ValidationException ex)
+            catch (ValidationException)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("LoyaltyProgramCreateFailed");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderProgramEditor(vm, isCreate: true);
             }
@@ -241,9 +241,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 SetSuccessMessage("LoyaltyProgramUpdated");
                 return RedirectOrHtmx(nameof(EditProgram), new { id = vm.Id });
             }
-            catch (ValidationException ex)
+            catch (ValidationException)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("LoyaltyProgramUpdateFailed");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderProgramEditor(vm, isCreate: false);
             }
@@ -259,7 +259,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyProgramDeleted") : result.Error ?? T("LoyaltyProgramDeleteFailed");
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyProgramDeleted") : T("LoyaltyProgramDeleteFailed");
             return RedirectOrHtmx(nameof(Programs), new { businessId });
         }
 
@@ -348,12 +348,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 SetSuccessMessage("LoyaltyRewardTierCreated");
                 return RedirectOrHtmx(nameof(EditRewardTier), new { id, loyaltyProgramId = vm.LoyaltyProgramId });
             }
-            catch (ValidationException ex)
+            catch (ValidationException)
             {
                 var program = await _getProgramForEdit.HandleAsync(vm.LoyaltyProgramId, ct).ConfigureAwait(false);
                 vm.ProgramName = program?.Name ?? vm.ProgramName;
                 vm.BusinessId = program?.BusinessId ?? vm.BusinessId;
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("LoyaltyRewardTierCreateFailed");
                 return RenderRewardTierEditor(vm, isCreate: true);
             }
         }
@@ -413,12 +413,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 SetSuccessMessage("LoyaltyRewardTierUpdated");
                 return RedirectOrHtmx(nameof(EditRewardTier), new { id = vm.Id, loyaltyProgramId = vm.LoyaltyProgramId });
             }
-            catch (ValidationException ex)
+            catch (ValidationException)
             {
                 var program = await _getProgramForEdit.HandleAsync(vm.LoyaltyProgramId, ct).ConfigureAwait(false);
                 vm.ProgramName = program?.Name ?? vm.ProgramName;
                 vm.BusinessId = program?.BusinessId ?? vm.BusinessId;
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddLocalizedModelError("LoyaltyRewardTierUpdateFailed");
                 return RenderRewardTierEditor(vm, isCreate: false);
             }
         }
@@ -433,7 +433,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = rowVersion
             }, ct).ConfigureAwait(false);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyRewardTierDeleted") : result.Error ?? T("LoyaltyRewardTierDeleteFailed");
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyRewardTierDeleted") : T("LoyaltyRewardTierDeleteFailed");
             return RedirectOrHtmx(nameof(RewardTiers), new { loyaltyProgramId });
         }
 
@@ -941,11 +941,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 SetSuccessMessage("LoyaltyPointsAdjusted");
                 return RedirectOrHtmx(nameof(AccountDetails), new { id = vm.LoyaltyAccountId });
             }
-            catch (ValidationException ex)
+            catch (ValidationException)
             {
                 var account = await _getAccountForAdmin.HandleAsync(vm.LoyaltyAccountId, ct).ConfigureAwait(false);
                 vm.AccountLabel = account is null ? vm.AccountLabel : $"{account.UserDisplayName} ({account.UserEmail})";
-                AddLocalizedModelError("LoyaltyPointsAdjustFailed", ex.Message);
+                AddLocalizedModelError("LoyaltyPointsAdjustFailed");
                 return RenderAdjustPointsEditor(vm);
             }
         }
@@ -1349,12 +1349,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
         private void AddLocalizedModelError(string fallbackKey, string? error = null)
         {
-            ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(error) ? T(fallbackKey) : error);
+            ModelState.AddModelError(string.Empty, T(fallbackKey));
         }
 
         private void SetLocalizedErrorMessage(string fallbackKey, string? error = null)
         {
-            TempData["Error"] = string.IsNullOrWhiteSpace(error) ? T(fallbackKey) : error;
+            TempData["Error"] = T(fallbackKey);
         }
 
         private void SetLocalizedResultMessage(bool succeeded, string successKey, string failureKey, string? error = null)

@@ -2,6 +2,7 @@ using System;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Contracts.Notifications;
@@ -9,6 +10,7 @@ using Darwin.Domain.Enums;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Notifications;
 
@@ -21,11 +23,15 @@ namespace Darwin.WebApi.Controllers.Notifications;
 public sealed class NotificationsController : ApiControllerBase
 {
     private readonly RegisterOrUpdateUserDeviceHandler _registerOrUpdateUserDeviceHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
-    public NotificationsController(RegisterOrUpdateUserDeviceHandler registerOrUpdateUserDeviceHandler)
+    public NotificationsController(
+        RegisterOrUpdateUserDeviceHandler registerOrUpdateUserDeviceHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _registerOrUpdateUserDeviceHandler = registerOrUpdateUserDeviceHandler
             ?? throw new ArgumentNullException(nameof(registerOrUpdateUserDeviceHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -40,7 +46,7 @@ public sealed class NotificationsController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var userId = GetUserIdFromClaims(User);
@@ -49,8 +55,8 @@ public sealed class NotificationsController : ApiControllerBase
             return StatusCode(StatusCodes.Status401Unauthorized, new Darwin.Contracts.Common.ProblemDetails
             {
                 Status = 401,
-                Title = "Unauthorized",
-                Detail = "User identifier could not be resolved from the access token.",
+                Title = _validationLocalizer["UnauthorizedTitle"],
+                Detail = _validationLocalizer["AuthenticatedUserIdentifierNotResolved"],
                 Instance = HttpContext.Request?.Path.Value
             });
         }

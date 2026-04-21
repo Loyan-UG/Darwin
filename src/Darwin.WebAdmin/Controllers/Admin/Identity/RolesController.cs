@@ -139,7 +139,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _create.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? T("RoleCreateFailed");
+                SetErrorMessage("RoleCreateFailed");
                 return RenderCreateEditor(model);
             }
 
@@ -226,7 +226,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _update.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? T("RoleUpdateFailed");
+                SetErrorMessage("RoleUpdateFailed");
                 return RenderEditEditor(model);
             }
 
@@ -247,12 +247,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 await _delete.HandleAsync(id, ct);
                 SetSuccessMessage("RoleDeleted");
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException)
             {
-                // System role or business rule violation.
-                TempData["Warning"] = string.IsNullOrWhiteSpace(ex.Message)
-                    ? T("RoleSystemProtectedDelete")
-                    : ex.Message;
+                SetWarningMessage("RoleSystemProtectedDelete");
             }
             catch (Exception)
             {
@@ -349,7 +346,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var result = await _updateRolePerms.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
-                TempData["Error"] = result.Error ?? T("RolePermissionsUpdateFailed");
+                SetErrorMessage("RolePermissionsUpdateFailed");
                 var failedVm = await BuildRolePermissionsVmAsync(vm.RoleId, vm.SelectedPermissionIds, vm.RowVersion, ct);
                 return failedVm is null ? RedirectOrHtmx(nameof(Index), new { }) : RenderPermissionsEditor(failedVm);
             }

@@ -1,3 +1,4 @@
+using Darwin.Application;
 using Darwin.Application.CartCheckout.Commands;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.CartCheckout.Queries;
@@ -5,6 +6,7 @@ using Darwin.Contracts.Cart;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
 
@@ -22,6 +24,7 @@ public sealed class PublicCartController : ApiControllerBase
     private readonly UpdateCartItemQuantityHandler _updateCartItemQuantityHandler;
     private readonly RemoveCartItemHandler _removeCartItemHandler;
     private readonly ApplyCouponHandler _applyCouponHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicCartController"/> class.
@@ -32,7 +35,8 @@ public sealed class PublicCartController : ApiControllerBase
         AddOrIncreaseCartItemHandler addOrIncreaseCartItemHandler,
         UpdateCartItemQuantityHandler updateCartItemQuantityHandler,
         RemoveCartItemHandler removeCartItemHandler,
-        ApplyCouponHandler applyCouponHandler)
+        ApplyCouponHandler applyCouponHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
         _getCartSummaryHandler = getCartSummaryHandler ?? throw new ArgumentNullException(nameof(getCartSummaryHandler));
@@ -40,6 +44,7 @@ public sealed class PublicCartController : ApiControllerBase
         _updateCartItemQuantityHandler = updateCartItemQuantityHandler ?? throw new ArgumentNullException(nameof(updateCartItemQuantityHandler));
         _removeCartItemHandler = removeCartItemHandler ?? throw new ArgumentNullException(nameof(removeCartItemHandler));
         _applyCouponHandler = applyCouponHandler ?? throw new ArgumentNullException(nameof(applyCouponHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -56,11 +61,11 @@ public sealed class PublicCartController : ApiControllerBase
         var normalizedAnonymousId = NormalizeAnonymousId(anonymousId);
         if (userId is null && normalizedAnonymousId is null)
         {
-            return BadRequestProblem("AnonymousId is required when no authenticated member token is present.");
+            return BadRequestProblem(_validationLocalizer["EitherUserIdOrAnonymousIdRequired"]);
         }
 
         var dto = await _getCartSummaryHandler.HandleAsync(userId, normalizedAnonymousId, ct).ConfigureAwait(false);
-        return dto is null ? NotFoundProblem("Cart not found.") : Ok(MapSummary(dto));
+        return dto is null ? NotFoundProblem(_validationLocalizer["CartNotFound"]) : Ok(MapSummary(dto));
     }
 
     /// <summary>
@@ -74,24 +79,24 @@ public sealed class PublicCartController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var userId = GetCurrentUserId();
         var normalizedAnonymousId = NormalizeAnonymousId(request.AnonymousId);
         if (userId is null && normalizedAnonymousId is null)
         {
-            return BadRequestProblem("AnonymousId is required when no authenticated member token is present.");
+            return BadRequestProblem(_validationLocalizer["EitherUserIdOrAnonymousIdRequired"]);
         }
 
         if (request.VariantId == Guid.Empty)
         {
-            return BadRequestProblem("VariantId must not be empty.");
+            return BadRequestProblem(_validationLocalizer["VariantIdMustNotBeEmpty"]);
         }
 
         if (request.Quantity <= 0)
         {
-            return BadRequestProblem("Quantity must be a positive integer.");
+            return BadRequestProblem(_validationLocalizer["QuantityMustBePositiveInteger"]);
         }
 
         try
@@ -110,11 +115,11 @@ public sealed class PublicCartController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem("Cart item could not be added.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["CartItemAddFailed"], ex.Message);
         }
 
         var summary = await _getCartSummaryHandler.HandleAsync(userId, normalizedAnonymousId, ct).ConfigureAwait(false);
-        return summary is null ? NotFoundProblem("Cart not found after mutation.") : Ok(MapSummary(summary));
+        return summary is null ? NotFoundProblem(_validationLocalizer["CartNotFoundAfterMutation"]) : Ok(MapSummary(summary));
     }
 
     /// <summary>
@@ -128,12 +133,12 @@ public sealed class PublicCartController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (request.CartId == Guid.Empty || request.VariantId == Guid.Empty)
         {
-            return BadRequestProblem("CartId and VariantId must not be empty.");
+            return BadRequestProblem(_validationLocalizer["CartIdAndVariantIdMustNotBeEmpty"]);
         }
 
         try
@@ -148,7 +153,7 @@ public sealed class PublicCartController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem("Cart item could not be updated.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["CartItemUpdateFailed"], ex.Message);
         }
 
         return await ReloadCartAsync(request.CartId, ct).ConfigureAwait(false);
@@ -165,12 +170,12 @@ public sealed class PublicCartController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (request.CartId == Guid.Empty || request.VariantId == Guid.Empty)
         {
-            return BadRequestProblem("CartId and VariantId must not be empty.");
+            return BadRequestProblem(_validationLocalizer["CartIdAndVariantIdMustNotBeEmpty"]);
         }
 
         await _removeCartItemHandler.HandleAsync(new CartRemoveItemDto
@@ -194,12 +199,12 @@ public sealed class PublicCartController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (request.CartId == Guid.Empty)
         {
-            return BadRequestProblem("CartId must not be empty.");
+            return BadRequestProblem(_validationLocalizer["CartIdRequired"]);
         }
 
         try
@@ -212,7 +217,7 @@ public sealed class PublicCartController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem("Coupon could not be applied.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["CouponApplyFailed"], ex.Message);
         }
 
         return await ReloadCartAsync(request.CartId, ct).ConfigureAwait(false);
@@ -227,7 +232,7 @@ public sealed class PublicCartController : ApiControllerBase
         }
         catch (InvalidOperationException)
         {
-            return NotFoundProblem("Cart not found.");
+            return NotFoundProblem(_validationLocalizer["CartNotFound"]);
         }
     }
 

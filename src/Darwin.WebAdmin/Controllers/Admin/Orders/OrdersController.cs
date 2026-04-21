@@ -32,6 +32,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         private readonly GetCustomerLookupHandler _getCustomerLookup;
         private readonly AddPaymentHandler _addPayment;
         private readonly AddShipmentHandler _addShipment;
+        private readonly GenerateDhlShipmentLabelHandler _generateDhlShipmentLabel;
         private readonly AddRefundHandler _addRefund;
         private readonly CreateOrderInvoiceHandler _createOrderInvoice;
         private readonly UpdateOrderStatusHandler _updateOrderStatus;
@@ -51,6 +52,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             GetCustomerLookupHandler getCustomerLookup,
             AddPaymentHandler addPayment,
             AddShipmentHandler addShipment,
+            GenerateDhlShipmentLabelHandler generateDhlShipmentLabel,
             AddRefundHandler addRefund,
             CreateOrderInvoiceHandler createOrderInvoice,
             UpdateOrderStatusHandler updateOrderStatus,
@@ -69,6 +71,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             _getCustomerLookup = getCustomerLookup;
             _addPayment = addPayment;
             _addShipment = addShipment;
+            _generateDhlShipmentLabel = generateDhlShipmentLabel;
             _addRefund = addRefund;
             _createOrderInvoice = createOrderInvoice;
             _updateOrderStatus = updateOrderStatus;
@@ -136,7 +139,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     OrderNumber = x.OrderNumber,
                     Carrier = x.Carrier,
                     Service = x.Service,
+                    ProviderShipmentReference = x.ProviderShipmentReference,
                     TrackingNumber = x.TrackingNumber,
+                    TrackingUrl = x.TrackingUrl,
+                    LabelUrl = x.LabelUrl,
                     TotalWeight = x.TotalWeight,
                     Status = x.Status,
                     ShippedAtUtc = x.ShippedAtUtc,
@@ -150,12 +156,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     OpenAgeHours = x.OpenAgeHours,
                     InTransitAgeHours = x.InTransitAgeHours,
                     LastCarrierEventAtUtc = x.LastCarrierEventAtUtc,
+                    LastCarrierEventKey = x.LastCarrierEventKey,
+                    RecentCarrierEvents = x.RecentCarrierEvents.Select(e => new ShipmentCarrierEventVm
+                    {
+                        CarrierEventKey = e.CarrierEventKey,
+                        ProviderStatus = e.ProviderStatus,
+                        ExceptionCode = e.ExceptionCode,
+                        ExceptionMessage = e.ExceptionMessage,
+                        TrackingNumber = e.TrackingNumber,
+                        LabelUrl = e.LabelUrl,
+                        Service = e.Service,
+                        OccurredAtUtc = e.OccurredAtUtc
+                    }).ToList(),
                     TrackingState = x.TrackingState,
                     ExceptionNote = x.ExceptionNote,
                     AttentionDelayHours = x.AttentionDelayHours,
                     TrackingGraceHours = x.TrackingGraceHours,
                     DefaultRefundPaymentId = x.DefaultRefundPaymentId,
                     HasRefundablePayment = x.HasRefundablePayment,
+                    ProviderOperationQueued = x.ProviderOperationQueued,
+                    ProviderOperationFailed = x.ProviderOperationFailed,
+                    ProviderOperationType = x.ProviderOperationType,
+                    ProviderOperationFailureReason = x.ProviderOperationFailureReason,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -201,7 +223,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     OrderNumber = x.OrderNumber,
                     Carrier = x.Carrier,
                     Service = x.Service,
+                    ProviderShipmentReference = x.ProviderShipmentReference,
                     TrackingNumber = x.TrackingNumber,
+                    TrackingUrl = x.TrackingUrl,
+                    LabelUrl = x.LabelUrl,
                     TotalWeight = x.TotalWeight,
                     Status = x.Status,
                     ShippedAtUtc = x.ShippedAtUtc,
@@ -215,12 +240,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     OpenAgeHours = x.OpenAgeHours,
                     InTransitAgeHours = x.InTransitAgeHours,
                     LastCarrierEventAtUtc = x.LastCarrierEventAtUtc,
+                    LastCarrierEventKey = x.LastCarrierEventKey,
+                    RecentCarrierEvents = x.RecentCarrierEvents.Select(e => new ShipmentCarrierEventVm
+                    {
+                        CarrierEventKey = e.CarrierEventKey,
+                        ProviderStatus = e.ProviderStatus,
+                        ExceptionCode = e.ExceptionCode,
+                        ExceptionMessage = e.ExceptionMessage,
+                        TrackingNumber = e.TrackingNumber,
+                        LabelUrl = e.LabelUrl,
+                        Service = e.Service,
+                        OccurredAtUtc = e.OccurredAtUtc
+                    }).ToList(),
                     TrackingState = x.TrackingState,
                     ExceptionNote = x.ExceptionNote,
                     AttentionDelayHours = x.AttentionDelayHours,
                     TrackingGraceHours = x.TrackingGraceHours,
                     DefaultRefundPaymentId = x.DefaultRefundPaymentId,
                     HasRefundablePayment = x.HasRefundablePayment,
+                    ProviderOperationQueued = x.ProviderOperationQueued,
+                    ProviderOperationFailed = x.ProviderOperationFailed,
+                    ProviderOperationType = x.ProviderOperationType,
+                    ProviderOperationFailureReason = x.ProviderOperationFailureReason,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -267,6 +308,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 !string.IsNullOrWhiteSpace(dto.InvoiceIssuerCountry);
             var archiveReady = issuerConfigured && issuerTaxIdConfigured && issuerAddressConfigured;
             var eInvoiceBaselineReady = archiveReady && dto.VatEnabled;
+            var structuredExportBaselineReady = archiveReady;
 
             return new TaxPolicySnapshotVm
             {
@@ -276,11 +318,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 AllowReverseCharge = dto.AllowReverseCharge,
                 IssuerConfigured = issuerConfigured,
                 InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName ?? string.Empty,
+                InvoiceIssuerCountry = dto.InvoiceIssuerCountry ?? string.Empty,
                 InvoiceIssuerTaxIdConfigured = issuerTaxIdConfigured,
                 ArchiveReadinessComplete = archiveReady,
                 ArchiveReadinessLabel = archiveReady ? T("TaxPolicyArchiveReady") : T("TaxPolicyArchiveIncomplete"),
                 EInvoiceBaselineReady = eInvoiceBaselineReady,
                 EInvoiceBaselineLabel = eInvoiceBaselineReady ? T("TaxPolicyBaselineReady") : T("TaxPolicyBaselineIncomplete"),
+                StructuredExportBaselineReady = structuredExportBaselineReady,
+                StructuredExportBaselineLabel = structuredExportBaselineReady ? T("TaxPolicyStructuredExportReady") : T("TaxPolicyStructuredExportIncomplete"),
                 ComplianceScopeNote = T("TaxPolicyComplianceScopeNote")
             };
         }
@@ -531,7 +576,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     OrderNumber = x.OrderNumber,
                     Carrier = x.Carrier,
                     Service = x.Service,
+                    ProviderShipmentReference = x.ProviderShipmentReference,
                     TrackingNumber = x.TrackingNumber,
+                    TrackingUrl = x.TrackingUrl,
+                    LabelUrl = x.LabelUrl,
                     TotalWeight = x.TotalWeight,
                     Status = x.Status,
                     ShippedAtUtc = x.ShippedAtUtc,
@@ -545,12 +593,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     OpenAgeHours = x.OpenAgeHours,
                     InTransitAgeHours = x.InTransitAgeHours,
                     LastCarrierEventAtUtc = x.LastCarrierEventAtUtc,
+                    LastCarrierEventKey = x.LastCarrierEventKey,
+                    RecentCarrierEvents = x.RecentCarrierEvents.Select(e => new ShipmentCarrierEventVm
+                    {
+                        CarrierEventKey = e.CarrierEventKey,
+                        ProviderStatus = e.ProviderStatus,
+                        TrackingNumber = e.TrackingNumber,
+                        LabelUrl = e.LabelUrl,
+                        Service = e.Service,
+                        OccurredAtUtc = e.OccurredAtUtc
+                    }).ToList(),
                     TrackingState = x.TrackingState,
                     ExceptionNote = x.ExceptionNote,
                     AttentionDelayHours = x.AttentionDelayHours,
                     TrackingGraceHours = x.TrackingGraceHours,
                     DefaultRefundPaymentId = x.DefaultRefundPaymentId,
                     HasRefundablePayment = x.HasRefundablePayment,
+                    ProviderOperationQueued = x.ProviderOperationQueued,
+                    ProviderOperationFailed = x.ProviderOperationFailed,
+                    ProviderOperationType = x.ProviderOperationType,
+                    ProviderOperationFailureReason = x.ProviderOperationFailureReason,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -678,9 +740,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 await _addPayment.HandleAsync(dto, ct).ConfigureAwait(false);
                 SetSuccessMessage("OrderPaymentAdded");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("OrderPaymentAddFailed");
                 SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
                 return RenderPaymentEditor(vm);
             }
@@ -701,6 +763,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var vm = new ShipmentCreateVm
             {
                 OrderId = dto.Id,
+                Carrier = dto.ShippingCarrier ?? string.Empty,
+                Service = dto.ShippingService ?? string.Empty,
                 Lines = dto.Lines.Select(x => new ShipmentLineCreateVm
                 {
                     OrderLineId = x.Id,
@@ -728,7 +792,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 OrderId = vm.OrderId,
                 Carrier = vm.Carrier,
                 Service = vm.Service,
+                ProviderShipmentReference = vm.ProviderShipmentReference,
                 TrackingNumber = vm.TrackingNumber,
+                LabelUrl = vm.LabelUrl,
+                LastCarrierEventKey = vm.LastCarrierEventKey,
                 TotalWeight = vm.TotalWeight,
                 Lines = vm.Lines
                     .Where(x => x.Quantity > 0)
@@ -745,9 +812,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 await _addShipment.HandleAsync(dto, ct).ConfigureAwait(false);
                 SetSuccessMessage("OrderShipmentAdded");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("OrderShipmentAddFailed");
                 SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
                 return RenderShipmentEditor(vm);
             }
@@ -784,6 +851,36 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateDhlLabel(
+            Guid shipmentId,
+            Guid orderId,
+            bool returnToQueue = false,
+            ShipmentQueueFilter filter = ShipmentQueueFilter.All,
+            string? query = null,
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken ct = default)
+        {
+            try
+            {
+                await _generateDhlShipmentLabel.HandleAsync(shipmentId, ct).ConfigureAwait(false);
+                SetSuccessMessage("DhlLabelGenerationQueued");
+            }
+            catch (Exception)
+            {
+                SetErrorMessage("DhlLabelGenerationFailed");
+            }
+
+            if (returnToQueue)
+            {
+                return RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter });
+            }
+
+            return RedirectOrHtmx(nameof(Details), new { id = orderId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddRefund(RefundCreateVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -806,9 +903,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
                 SetSuccessMessage("OrderRefundAdded");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("OrderRefundAddFailed");
                 await PopulateRefundOptionsAsync(vm, ct).ConfigureAwait(false);
                 SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
                 return RenderRefundEditor(vm);
@@ -865,9 +962,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
                 SetSuccessMessage("OrderInvoiceCreated");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("OrderInvoiceCreateFailed");
                 await PopulateOrderInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
                 SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
                 return RenderInvoiceCreateEditor(vm);
@@ -898,9 +995,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
                 TempData["Success"] = string.Format(T("OrderStatusUpdatedFormat"), vm.NewStatus);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["Error"] = ex.Message;
+                SetErrorMessage("OrderStatusUpdateFailed");
             }
 
             return RedirectOrHtmxDetails(vm.OrderId);

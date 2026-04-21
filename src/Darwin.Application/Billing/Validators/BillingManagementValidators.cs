@@ -14,6 +14,8 @@ namespace Darwin.Application.Billing.Validators
             RuleFor(x => x.Status).IsInEnum();
             RuleFor(x => x.Provider).NotEmpty().MaximumLength(120);
             RuleFor(x => x.ProviderTransactionRef).MaximumLength(200);
+            RuleFor(x => x.ProviderPaymentIntentRef).MaximumLength(200);
+            RuleFor(x => x.ProviderCheckoutSessionRef).MaximumLength(200);
         }
     }
 

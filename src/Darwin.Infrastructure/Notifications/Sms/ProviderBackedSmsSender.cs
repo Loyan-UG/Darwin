@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
@@ -60,8 +61,11 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             Channel = "SMS",
             Provider = settings.SmsProvider!.Trim(),
             FlowKey = string.IsNullOrWhiteSpace(context?.FlowKey) ? null : context.FlowKey.Trim(),
+            TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim(),
+            CorrelationKey = string.IsNullOrWhiteSpace(context?.CorrelationKey) ? null : context.CorrelationKey.Trim(),
             BusinessId = context?.BusinessId,
             RecipientAddress = toPhoneE164,
+            IntendedRecipientAddress = string.IsNullOrWhiteSpace(context?.IntendedRecipientAddress) ? toPhoneE164 : context.IntendedRecipientAddress.Trim(),
             MessagePreview = BuildPreview(text),
             Status = "Pending",
             AttemptedAtUtc = attemptedAtUtc,
@@ -87,9 +91,9 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             }),
             ct);
 
+        var body = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
             audit.Status = "Failed";
             audit.CompletedAtUtc = DateTime.UtcNow;
             audit.FailureMessage = BuildFailure(body);
@@ -98,6 +102,7 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             throw new InvalidOperationException("SMS send failed.");
         }
 
+        audit.ProviderMessageId = ExtractProviderMessageId(body);
         audit.Status = "Sent";
         audit.CompletedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
@@ -113,5 +118,28 @@ public sealed class ProviderBackedSmsSender : ISmsSender
     {
         var value = string.IsNullOrWhiteSpace(body) ? "SMS send failed." : body.Trim();
         return value.Length <= 2000 ? value : value[..2000];
+    }
+
+    private static string? ExtractProviderMessageId(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.TryGetProperty("sid", out var sidElement))
+            {
+                var sid = sidElement.GetString();
+                return string.IsNullOrWhiteSpace(sid) ? null : sid.Trim();
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        return null;
     }
 }

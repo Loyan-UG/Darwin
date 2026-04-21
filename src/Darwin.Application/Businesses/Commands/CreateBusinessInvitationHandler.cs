@@ -168,7 +168,10 @@ namespace Darwin.Application.Businesses.Commands
                 new EmailDispatchContext
                 {
                     FlowKey = "BusinessInvitation",
-                    BusinessId = business.Id
+                    TemplateKey = "BusinessInvitationEmail",
+                    CorrelationKey = entity.Id.ToString("N"),
+                    BusinessId = business.Id,
+                    IntendedRecipientEmail = entity.Email
                 });
             return entity.Id;
         }

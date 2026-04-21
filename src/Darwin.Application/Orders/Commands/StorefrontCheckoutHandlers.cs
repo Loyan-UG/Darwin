@@ -37,7 +37,7 @@ public sealed class CreateStorefrontPaymentIntentHandler
             throw new InvalidOperationException(_localizer["OrderIdRequired"]);
         }
 
-        var provider = string.IsNullOrWhiteSpace(dto.Provider) ? "DarwinCheckout" : dto.Provider.Trim();
+        var provider = NormalizeProvider(dto.Provider);
 
         var order = await _db.Set<Order>()
             .Include(x => x.Payments)
@@ -80,6 +80,13 @@ public sealed class CreateStorefrontPaymentIntentHandler
                     .ConfigureAwait(false)
                 : null;
 
+            var providerPaymentIntentReference = IsStripeProvider(provider)
+                ? $"pi_{Guid.NewGuid():N}"
+                : null;
+            var providerCheckoutSessionReference = IsStripeProvider(provider)
+                ? $"cs_{Guid.NewGuid():N}"
+                : null;
+
             existing = new Payment
             {
                 OrderId = order.Id,
@@ -88,7 +95,9 @@ public sealed class CreateStorefrontPaymentIntentHandler
                 AmountMinor = order.GrandTotalGrossMinor,
                 Currency = order.Currency,
                 Provider = provider,
-                ProviderTransactionRef = $"chk_{Guid.NewGuid():N}",
+                ProviderTransactionRef = providerCheckoutSessionReference ?? $"chk_{Guid.NewGuid():N}",
+                ProviderPaymentIntentRef = providerPaymentIntentReference,
+                ProviderCheckoutSessionRef = providerCheckoutSessionReference,
                 Status = PaymentStatus.Pending
             };
 
@@ -102,11 +111,27 @@ public sealed class CreateStorefrontPaymentIntentHandler
             PaymentId = existing.Id,
             Provider = existing.Provider,
             ProviderReference = existing.ProviderTransactionRef ?? string.Empty,
+            ProviderPaymentIntentReference = existing.ProviderPaymentIntentRef,
+            ProviderCheckoutSessionReference = existing.ProviderCheckoutSessionRef,
             AmountMinor = existing.AmountMinor,
             Currency = existing.Currency,
             Status = existing.Status,
             ExpiresAtUtc = DateTime.UtcNow.AddMinutes(15)
         };
+    }
+
+    private static bool IsStripeProvider(string provider)
+        => string.Equals(provider, "Stripe", StringComparison.OrdinalIgnoreCase);
+
+    private string NormalizeProvider(string? provider)
+    {
+        var normalized = string.IsNullOrWhiteSpace(provider) ? "Stripe" : provider.Trim();
+        if (!IsStripeProvider(normalized))
+        {
+            throw new InvalidOperationException(_localizer["StorefrontPaymentProviderNotSupported"]);
+        }
+
+        return "Stripe";
     }
 }
 
@@ -165,6 +190,20 @@ public sealed class CompleteStorefrontPaymentHandler
             payment.ProviderTransactionRef = dto.ProviderReference.Trim();
         }
 
+        if (!string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentReference))
+        {
+            payment.ProviderPaymentIntentRef = dto.ProviderPaymentIntentReference.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionReference))
+        {
+            payment.ProviderCheckoutSessionRef = dto.ProviderCheckoutSessionReference.Trim();
+        }
+        else if (IsStripeProvider(payment.Provider) && !string.IsNullOrWhiteSpace(dto.ProviderReference))
+        {
+            payment.ProviderCheckoutSessionRef = dto.ProviderReference.Trim();
+        }
+
         switch (dto.Outcome)
         {
             case StorefrontPaymentOutcome.Succeeded:
@@ -202,4 +241,7 @@ public sealed class CompleteStorefrontPaymentHandler
             PaidAtUtc = payment.PaidAtUtc
         };
     }
+
+    private static bool IsStripeProvider(string provider)
+        => string.Equals(provider, "Stripe", StringComparison.OrdinalIgnoreCase);
 }

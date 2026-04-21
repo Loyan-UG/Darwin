@@ -330,6 +330,7 @@ namespace Darwin.WebAdmin.Extensions
             // Orders – commands
             services.AddScoped<AddPaymentHandler>();
             services.AddScoped<AddShipmentHandler>();
+            services.AddScoped<GenerateDhlShipmentLabelHandler>();
             services.AddScoped<AddRefundHandler>();
             services.AddScoped<CreateOrderInvoiceHandler>();
             services.AddScoped<UpdateOrderStatusHandler>();

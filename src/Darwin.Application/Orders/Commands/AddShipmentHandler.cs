@@ -4,8 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Domain.Entities.Integration;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Entities.Settings;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -51,9 +53,12 @@ namespace Darwin.Application.Orders.Commands
                 OrderId = order.Id,
                 Carrier = dto.Carrier.Trim(),
                 Service = dto.Service.Trim(),
+                ProviderShipmentReference = string.IsNullOrWhiteSpace(dto.ProviderShipmentReference) ? null : dto.ProviderShipmentReference.Trim(),
                 TrackingNumber = string.IsNullOrWhiteSpace(dto.TrackingNumber) ? null : dto.TrackingNumber.Trim(),
+                LabelUrl = string.IsNullOrWhiteSpace(dto.LabelUrl) ? null : dto.LabelUrl.Trim(),
                 TotalWeight = dto.TotalWeight,
                 Status = Darwin.Domain.Enums.ShipmentStatus.Pending,
+                LastCarrierEventKey = string.IsNullOrWhiteSpace(dto.LastCarrierEventKey) ? null : dto.LastCarrierEventKey.Trim(),
                 Lines = dto.Lines.Select(l => new ShipmentLine
                 {
                     OrderLineId = l.OrderLineId,
@@ -61,8 +66,43 @@ namespace Darwin.Application.Orders.Commands
                 }).ToList()
             };
 
+            if (DhlShipmentPhaseOneMetadata.IsDhlCarrier(shipment.Carrier))
+            {
+                var settings = await _db.Set<SiteSetting>()
+                    .AsNoTracking()
+                    .OrderBy(x => x.Id)
+                    .FirstOrDefaultAsync(ct)
+                    .ConfigureAwait(false);
+
+                if (settings is not null &&
+                    settings.DhlEnabled &&
+                    DhlShipmentPhaseOneMetadata.HasLabelGenerationReadiness(settings) &&
+                    string.IsNullOrWhiteSpace(shipment.ProviderShipmentReference) &&
+                    string.IsNullOrWhiteSpace(shipment.TrackingNumber) &&
+                    string.IsNullOrWhiteSpace(shipment.LabelUrl))
+                {
+                    shipment.LastCarrierEventKey = string.IsNullOrWhiteSpace(shipment.LastCarrierEventKey)
+                        ? "shipment.provider_create_queued"
+                        : shipment.LastCarrierEventKey.Trim();
+                }
+            }
+
             _db.Set<Shipment>().Add(shipment);
             await _db.SaveChangesAsync(ct);
+
+            if (DhlShipmentPhaseOneMetadata.IsDhlCarrier(shipment.Carrier) &&
+                string.Equals(shipment.LastCarrierEventKey, "shipment.provider_create_queued", StringComparison.OrdinalIgnoreCase))
+            {
+                _db.Set<ShipmentProviderOperation>().Add(new ShipmentProviderOperation
+                {
+                    ShipmentId = shipment.Id,
+                    Provider = "DHL",
+                    OperationType = "CreateShipment",
+                    Status = "Pending"
+                });
+
+                await _db.SaveChangesAsync(ct);
+            }
         }
     }
 }

@@ -27,6 +27,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
             builder.Property(x => x.ProviderTransactionRef)
                 .HasMaxLength(256);
 
+            builder.Property(x => x.ProviderPaymentIntentRef)
+                .HasMaxLength(256);
+
+            builder.Property(x => x.ProviderCheckoutSessionRef)
+                .HasMaxLength(256);
+
             builder.Property(x => x.FailureReason)
                 .HasMaxLength(1000);
 
@@ -41,6 +47,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
             builder.HasIndex(x => x.InvoiceId);
             builder.HasIndex(x => x.CustomerId);
             builder.HasIndex(x => x.UserId);
+            builder.HasIndex(x => x.ProviderPaymentIntentRef);
+            builder.HasIndex(x => x.ProviderCheckoutSessionRef);
         }
     }
 }

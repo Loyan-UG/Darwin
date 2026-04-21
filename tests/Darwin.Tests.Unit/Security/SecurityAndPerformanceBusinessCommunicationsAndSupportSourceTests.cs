@@ -508,7 +508,12 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("ResendPolicies = BuildResendPolicies(),");
         controllerSource.Should().Contain("ChannelAuditSummary = new ChannelDispatchAuditSummaryVm");
         controllerSource.Should().Contain("RecentEmailAudits = emailAudits.Select(x => new EmailDispatchAuditListItemVm");
+        controllerSource.Should().Contain("TemplateKey = x.TemplateKey,");
+        controllerSource.Should().Contain("CorrelationKey = x.CorrelationKey,");
+        controllerSource.Should().Contain("IntendedRecipientEmail = x.IntendedRecipientEmail,");
+        controllerSource.Should().Contain("ProviderMessageId = x.ProviderMessageId,");
         controllerSource.Should().Contain("RecentChannelAudits = channelAudits.Select(x => new ChannelDispatchAuditListItemVm");
+        controllerSource.Should().Contain("IntendedRecipientAddress = x.IntendedRecipientAddress,");
         controllerSource.Should().Contain("Items = items.Select(x => new BusinessCommunicationSetupListItemVm");
         controllerSource.Should().Contain("return RenderCommunicationsWorkspace(vm);");
         controllerSource.Should().Contain("private IActionResult RenderCommunicationsWorkspace(BusinessCommunicationOpsVm vm)");
@@ -537,9 +542,12 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("ReadinessIssues = BuildReadinessIssues(profile, emailTransportConfigured, adminAlertRoutingConfigured),");
         controllerSource.Should().Contain("RecommendedActions = BuildRecommendedActions(profile, emailTransportConfigured, adminAlertRoutingConfigured),");
         controllerSource.Should().Contain("RecentEmailAudits = recentAudits.Select(x => new EmailDispatchAuditListItemVm");
+        controllerSource.Should().Contain("IntendedRecipientEmail = x.IntendedRecipientEmail,");
         controllerSource.Should().Contain("var (channelAudits, channelAuditSummary) = await _getChannelDispatchActivity");
         controllerSource.Should().Contain("vm.ChannelAuditSummary = new ChannelDispatchAuditSummaryVm");
         controllerSource.Should().Contain("vm.RecentChannelAudits = channelAudits.Select(x => new ChannelDispatchAuditListItemVm");
+        controllerSource.Should().Contain("TemplateKey = x.TemplateKey,");
+        controllerSource.Should().Contain("CorrelationKey = x.CorrelationKey,");
         controllerSource.Should().Contain("return RenderCommunicationProfileWorkspace(vm);");
         controllerSource.Should().Contain("private IActionResult RenderCommunicationProfileWorkspace(BusinessCommunicationProfileVm vm)");
         controllerSource.Should().Contain("return PartialView(\"~/Views/BusinessCommunications/Details.cshtml\", vm);");
@@ -565,6 +573,11 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("FlowItems = BuildAuditFlowItems(flowKey),");
         controllerSource.Should().Contain("Playbooks = BuildAuditPlaybooks(),");
         controllerSource.Should().Contain("Items = items.Select(x => new EmailDispatchAuditListItemVm");
+        controllerSource.Should().Contain("RecipientEmail = x.RecipientEmail,");
+        controllerSource.Should().Contain("IntendedRecipientEmail = x.IntendedRecipientEmail,");
+        controllerSource.Should().Contain("TemplateKey = x.TemplateKey,");
+        controllerSource.Should().Contain("CorrelationKey = x.CorrelationKey,");
+        controllerSource.Should().Contain("ProviderMessageId = x.ProviderMessageId,");
         controllerSource.Should().Contain("RetryBlockedReason = BuildEmailAuditRetryBlockedReason(x),");
         controllerSource.Should().Contain("ChainStatusMix = BuildEmailAuditChainStatusMix(x.ChainStatusMix),");
         controllerSource.Should().Contain("RecommendedAction = BuildAuditRecommendedAction(x)");
@@ -595,6 +608,10 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("EscalationHint = BuildChannelProviderEscalationHint(providerSummary.EscalationHint)");
         controllerSource.Should().Contain("TemplateFamilies = BuildChannelTemplateFamilies(settings, filter.FlowKey),");
         controllerSource.Should().Contain("Items = items.Select(x => new ChannelDispatchAuditListItemVm");
+        controllerSource.Should().Contain("TemplateKey = x.TemplateKey,");
+        controllerSource.Should().Contain("CorrelationKey = x.CorrelationKey,");
+        controllerSource.Should().Contain("IntendedRecipientAddress = x.IntendedRecipientAddress,");
+        controllerSource.Should().Contain("ProviderMessageId = x.ProviderMessageId,");
         controllerSource.Should().Contain("ActionPolicyState = BuildChannelAuditActionPolicyState(x.ActionPolicyState),");
         controllerSource.Should().Contain("ActionBlockedReason = BuildChannelAuditActionBlockedReason(x),");
         controllerSource.Should().Contain("EscalationReason = BuildChannelAuditEscalationReason(x),");
@@ -736,7 +753,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("var result = await _retryEmailDispatchAudit");
         controllerSource.Should().Contain(".HandleAsync(new RetryEmailDispatchAuditDto { AuditId = id }, ct)");
         controllerSource.Should().Contain("SetSuccessMessage(\"EmailFlowRetriedSuccessfully\")");
-        controllerSource.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"CommunicationEmailRetryFailedFallback\")");
+        controllerSource.Should().Contain("SetErrorMessage(\"CommunicationEmailRetryFailedFallback\")");
         controllerSource.Should().Contain("return RedirectOrHtmx(");
         controllerSource.Should().Contain("nameof(EmailAudits),");
         controllerSource.Should().Contain("chainFollowUpOnly,");
@@ -758,9 +775,10 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("BuildCommunicationTestPlaceholders(");
         controllerSource.Should().Contain("channel: DescribeCommunicationChannel(\"Email\"),");
         controllerSource.Should().Contain("transportState: DescribeCommunicationTransportState(emailTransportConfigured)");
-        controllerSource.Should().Contain("await _emailSender.SendAsync(");
+        controllerSource.Should().Contain("_db.Set<EmailDispatchOperation>().Add(new EmailDispatchOperation");
         controllerSource.Should().Contain("FlowKey = \"AdminCommunicationTest\"");
-        controllerSource.Should().Contain("TempData[\"Success\"] = string.Format(T(\"CommunicationTestEmailSentMessage\"), settings.CommunicationTestInboxEmail);");
+        controllerSource.Should().Contain("TemplateKey = \"AdminCommunicationTestEmail\"");
+        controllerSource.Should().Contain("TempData[\"Success\"] = string.Format(T(\"CommunicationTestEmailQueuedMessage\"), settings.CommunicationTestInboxEmail);");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Index), new { });");
     }
 
@@ -778,9 +796,12 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("\"SMS\",");
         controllerSource.Should().Contain("TempData[\"Error\"] = string.Format(CultureInfo.InvariantCulture, T(\"CommunicationTestSmsCooldownMessage\"), smsCooldownUntilUtc.Value);");
         controllerSource.Should().Contain("channel: DescribeCommunicationChannel(\"SMS\"),");
-        controllerSource.Should().Contain("await _smsSender.SendAsync(");
+        controllerSource.Should().Contain("_db.Set<ChannelDispatchOperation>().Add(new ChannelDispatchOperation");
+        controllerSource.Should().Contain("Channel = \"SMS\",");
+        controllerSource.Should().Contain("TemplateKey = \"AdminCommunicationTestSms\",");
         controllerSource.Should().Contain("FlowKey = \"AdminCommunicationTest\"");
-        controllerSource.Should().Contain("TempData[\"Success\"] = string.Format(T(\"CommunicationTestSmsSentMessage\"), settings.CommunicationTestSmsRecipientE164);");
+        controllerSource.Should().Contain("await _db.SaveChangesAsync(ct).ConfigureAwait(false);");
+        controllerSource.Should().Contain("TempData[\"Success\"] = string.Format(T(\"CommunicationTestSmsQueuedMessage\"), settings.CommunicationTestSmsRecipientE164);");
         controllerSource.Should().Contain("return RedirectToChannelAuditsOrIndex(");
     }
 
@@ -798,9 +819,12 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("\"WhatsApp\",");
         controllerSource.Should().Contain("TempData[\"Error\"] = string.Format(CultureInfo.InvariantCulture, T(\"CommunicationTestWhatsAppCooldownMessage\"), whatsAppCooldownUntilUtc.Value);");
         controllerSource.Should().Contain("channel: DescribeCommunicationChannel(\"WhatsApp\"),");
-        controllerSource.Should().Contain("await _whatsAppSender.SendTextAsync(");
+        controllerSource.Should().Contain("_db.Set<ChannelDispatchOperation>().Add(new ChannelDispatchOperation");
+        controllerSource.Should().Contain("Channel = \"WhatsApp\",");
+        controllerSource.Should().Contain("TemplateKey = \"AdminCommunicationTestWhatsApp\",");
         controllerSource.Should().Contain("FlowKey = \"AdminCommunicationTest\"");
-        controllerSource.Should().Contain("TempData[\"Success\"] = string.Format(T(\"CommunicationTestWhatsAppSentMessage\"), settings.CommunicationTestWhatsAppRecipientE164);");
+        controllerSource.Should().Contain("await _db.SaveChangesAsync(ct).ConfigureAwait(false);");
+        controllerSource.Should().Contain("TempData[\"Success\"] = string.Format(T(\"CommunicationTestWhatsAppQueuedMessage\"), settings.CommunicationTestWhatsAppRecipientE164);");
         controllerSource.Should().Contain("return RedirectToChannelAuditsOrIndex(");
     }
 
@@ -920,7 +944,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessCommunicationsController.cs"));
 
         controllerSource.Should().Contain("SetSuccessMessage(\"EmailFlowRetriedSuccessfully\")");
-        controllerSource.Should().Contain("TempData[\"Error\"] = result.Error ?? T(\"CommunicationEmailRetryFailedFallback\")");
+        controllerSource.Should().Contain("SetErrorMessage(\"CommunicationEmailRetryFailedFallback\")");
     }
 
 
@@ -3332,6 +3356,11 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         businessCommunicationOpsVmsSource.Should().Contain("public string FamilyKey { get; set; } = string.Empty;");
         businessCommunicationOpsVmsSource.Should().Contain("public string ChannelValue { get; set; } = string.Empty;");
         businessCommunicationOpsVmsSource.Should().Contain("public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();");
+        businessCommunicationOpsVmsSource.Should().Contain("public string? TemplateKey { get; set; }");
+        businessCommunicationOpsVmsSource.Should().Contain("public string? CorrelationKey { get; set; }");
+        businessCommunicationOpsVmsSource.Should().Contain("public string? IntendedRecipientEmail { get; set; }");
+        businessCommunicationOpsVmsSource.Should().Contain("public string? ProviderMessageId { get; set; }");
+        businessCommunicationOpsVmsSource.Should().Contain("public string? IntendedRecipientAddress { get; set; }");
 
         mobileOpsVmsSource.Should().Contain("public sealed class MobileOperationsVm");
         mobileOpsVmsSource.Should().Contain("public bool JwtSingleDeviceOnly { get; set; }");
@@ -3383,9 +3412,14 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         emailAuditsViewSource.Should().Contain("asp-route-chainFollowUpOnly=\"true\"");
         emailAuditsViewSource.Should().Contain("asp-route-chainResolvedOnly=\"true\"");
         emailAuditsViewSource.Should().Contain("hx-post=\"@Url.Action(\"RetryEmailAudit\", \"BusinessCommunications\")\"");
-        emailAuditsViewSource.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-q=\"@item.RecipientEmail\"");
+        emailAuditsViewSource.Should().Contain("string LogicalRecipientEmail(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>");
+        emailAuditsViewSource.Should().Contain("@T.T(\"EffectiveRecipient\")");
+        emailAuditsViewSource.Should().Contain("@T.T(\"TemplateKey\")");
+        emailAuditsViewSource.Should().Contain("@T.T(\"ProviderMessageId\")");
+        emailAuditsViewSource.Should().Contain("asp-route-recipientEmail=\"@LogicalRecipientEmail(item)\"");
+        emailAuditsViewSource.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-q=\"@LogicalRecipientEmail(item)\"");
         emailAuditsViewSource.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Invitations\"");
-        emailAuditsViewSource.Should().Contain("asp-controller=\"MobileOperations\" asp-action=\"Index\" asp-route-q=\"@item.RecipientEmail\"");
+        emailAuditsViewSource.Should().Contain("asp-controller=\"MobileOperations\" asp-action=\"Index\" asp-route-q=\"@LogicalRecipientEmail(item)\"");
         emailAuditsViewSource.Should().Contain("asp-controller=\"SiteSettings\" asp-action=\"Edit\" asp-fragment=\"site-settings-communications-policy\"");
         emailAuditsViewSource.Should().Contain("<pager page=\"Model.Page\"");
         emailAuditsViewSource.Should().Contain("asp-action=\"EmailAudits\"");
@@ -3406,11 +3440,20 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         channelAuditsViewSource.Should().Contain("@T.T(\"RecoveryState\")");
         channelAuditsViewSource.Should().Contain("hx-post=\"@Url.Action(\"SendTestSms\", \"BusinessCommunications\")\"");
         channelAuditsViewSource.Should().Contain("hx-post=\"@Url.Action(\"SendTestWhatsApp\", \"BusinessCommunications\")\"");
+        channelAuditsViewSource.Should().Contain("string LogicalRecipientAddress(Darwin.WebAdmin.ViewModels.Businesses.ChannelDispatchAuditListItemVm item) =>");
+        channelAuditsViewSource.Should().Contain("@T.T(\"EffectiveRecipient\")");
+        channelAuditsViewSource.Should().Contain("@T.T(\"TemplateKey\")");
+        channelAuditsViewSource.Should().Contain("@T.T(\"ProviderMessageId\")");
+        channelAuditsViewSource.Should().Contain("@T.T(\"CommunicationQueuedDispatchesLabel\")");
+        channelAuditsViewSource.Should().Contain("item.IsQueueOperation");
+        channelAuditsViewSource.Should().Contain("@T.T(\"CommunicationQueuedDispatchOperationLabel\")");
+        channelAuditsViewSource.Should().Contain("@string.Format(T.T(\"CommunicationQueuedDispatchAttempts\"), item.QueueAttemptCount)");
+        channelAuditsViewSource.Should().Contain("asp-route-recipientAddress=\"@LogicalRecipientAddress(item)\"");
         channelAuditsViewSource.Should().Contain("asp-controller=\"MobileOperations\" asp-action=\"Index\"");
         channelAuditsViewSource.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-filter=\"MobileLinked\"");
         channelAuditsViewSource.Should().Contain("asp-controller=\"SiteSettings\" asp-action=\"Edit\" asp-fragment=\"site-settings-communications-policy\"");
         channelAuditsViewSource.Should().Contain("asp-route-provider=\"@item.Provider\"");
-        channelAuditsViewSource.Should().Contain("asp-route-recipientAddress=\"@item.RecipientAddress\"");
+        channelAuditsViewSource.Should().Contain("asp-route-recipientAddress=\"@LogicalRecipientAddress(item)\"");
         channelAuditsViewSource.Should().Contain("<pager page=\"Model.Page\"");
         channelAuditsViewSource.Should().Contain("asp-action=\"ChannelAudits\"");
     }
@@ -3474,6 +3517,17 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         detailsViewSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, flowKey = \"BusinessInvitation\" })\"");
         detailsViewSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id, phoneVerificationOnly = true, channel = family.ChannelValue })\"");
         detailsViewSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id, adminTestOnly = true, channel = family.ChannelValue })\"");
+    }
+
+    [Fact]
+    public void BusinessCommunicationsChannelAuditViewModels_Should_KeepQueuedWorkerVisibilityContractsWired()
+    {
+        var viewModelSource = ReadWebAdminFile(Path.Combine("ViewModels", "Businesses", "BusinessCommunicationOpsVms.cs"));
+
+        viewModelSource.Should().Contain("public int QueuedPendingCount { get; set; }");
+        viewModelSource.Should().Contain("public int QueuedFailedCount { get; set; }");
+        viewModelSource.Should().Contain("public bool IsQueueOperation { get; set; }");
+        viewModelSource.Should().Contain("public int QueueAttemptCount { get; set; }");
     }
 }
 

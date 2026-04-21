@@ -42,6 +42,36 @@
   <data name="AppBootstrapJwtAudienceMissing" xml:space="preserve">
     <value>JwtAudience is not configured. This is a server misconfiguration.</value>
   </data>
+  <data name="JwtIssuerConfigurationMissing" xml:space="preserve">
+    <value>Configuration key 'Jwt:Issuer' is missing or empty.</value>
+  </data>
+  <data name="JwtAudienceConfigurationMissing" xml:space="preserve">
+    <value>Configuration key 'Jwt:Audience' is missing or empty.</value>
+  </data>
+  <data name="JwtSigningKeyConfigurationMissing" xml:space="preserve">
+    <value>Configuration key 'Jwt:SigningKey' is missing or empty.</value>
+  </data>
+  <data name="JwtValidationSiteSettingsMissing" xml:space="preserve">
+    <value>Site settings row was not found. JWT validation cannot be configured.</value>
+  </data>
+  <data name="JwtValidationDisabled" xml:space="preserve">
+    <value>JWT is disabled by site settings.</value>
+  </data>
+  <data name="JwtSigningKeyMissingInSiteSettings" xml:space="preserve">
+    <value>JwtSigningKey is missing in site settings.</value>
+  </data>
+  <data name="StorefrontFrontOfficeBaseUrlNotConfigured" xml:space="preserve">
+    <value>Storefront front-office base URL is not configured.</value>
+  </data>
+  <data name="StorefrontPaymentGatewayBaseUrlNotConfigured" xml:space="preserve">
+    <value>Storefront payment gateway base URL is not configured.</value>
+  </data>
+  <data name="StorefrontStripeCheckoutBaseUrlNotConfigured" xml:space="preserve">
+    <value>Storefront Stripe checkout base URL is not configured.</value>
+  </data>
+  <data name="StorefrontPaymentProviderNotSupported" xml:space="preserve">
+    <value>Only Stripe storefront payments are supported.</value>
+  </data>
   <data name="AppBootstrapQrTokenRefreshInvalid" xml:space="preserve">
     <value>MobileQrTokenRefreshSeconds must be a positive integer.</value>
   </data>
@@ -165,6 +195,9 @@
   <data name="ScanSessionTokenRequired" xml:space="preserve">
     <value>ScanSessionToken is required.</value>
   </data>
+  <data name="ScanSessionTokenTooLong" xml:space="preserve">
+    <value>ScanSessionToken is too long.</value>
+  </data>
   <data name="PointsPositiveInteger" xml:space="preserve">
     <value>Points must be a positive integer.</value>
   </data>
@@ -180,14 +213,59 @@
   <data name="RewardTierIdCannotBeEmpty" xml:space="preserve">
     <value>Reward tier id cannot be empty.</value>
   </data>
+  <data name="IdentifierMustNotBeEmpty" xml:space="preserve">
+    <value>Id must not be empty.</value>
+  </data>
+  <data name="PageMustBePositiveInteger" xml:space="preserve">
+    <value>Page must be a positive integer.</value>
+  </data>
+  <data name="PageSizeMustBeBetween1And200" xml:space="preserve">
+    <value>PageSize must be between 1 and 200.</value>
+  </data>
+  <data name="PageSizeMustBeBetween1And500" xml:space="preserve">
+    <value>PageSize must be between 1 and 500.</value>
+  </data>
   <data name="DuplicateVariantLinesNotAllowed" xml:space="preserve">
     <value>Duplicate variant lines are not allowed.</value>
   </data>
   <data name="EitherUserIdOrAnonymousIdRequired" xml:space="preserve">
     <value>Either UserId or AnonymousId must be provided.</value>
   </data>
+  <data name="VariantIdMustNotBeEmpty" xml:space="preserve">
+    <value>VariantId must not be empty.</value>
+  </data>
+  <data name="QuantityMustBePositiveInteger" xml:space="preserve">
+    <value>Quantity must be a positive integer.</value>
+  </data>
+  <data name="CartItemAddFailed" xml:space="preserve">
+    <value>Cart item could not be added.</value>
+  </data>
+  <data name="CartNotFoundAfterMutation" xml:space="preserve">
+    <value>Cart not found after mutation.</value>
+  </data>
+  <data name="CartIdAndVariantIdMustNotBeEmpty" xml:space="preserve">
+    <value>CartId and VariantId must not be empty.</value>
+  </data>
+  <data name="CartItemUpdateFailed" xml:space="preserve">
+    <value>Cart item could not be updated.</value>
+  </data>
+  <data name="CouponApplyFailed" xml:space="preserve">
+    <value>Coupon could not be applied.</value>
+  </data>
   <data name="OrderNotFound" xml:space="preserve">
     <value>Order not found.</value>
+  </data>
+  <data name="OrderCannotAcceptNewPaymentAttempt" xml:space="preserve">
+    <value>Order cannot accept a new payment attempt.</value>
+  </data>
+  <data name="PaymentIntentCreationFailed" xml:space="preserve">
+    <value>Payment intent could not be created.</value>
+  </data>
+  <data name="OrderPlacementFailed" xml:space="preserve">
+    <value>Order could not be placed.</value>
+  </data>
+  <data name="PaymentCompletionApplyFailed" xml:space="preserve">
+    <value>Payment completion could not be applied.</value>
   </data>
   <data name="PaymentCurrencyMustMatchOrderCurrency" xml:space="preserve">
     <value>Payment currency does not match order currency.</value>
@@ -297,6 +375,12 @@
   <data name="CategoryNotFound" xml:space="preserve">
     <value>Category not found.</value>
   </data>
+  <data name="ProfileNotFound" xml:space="preserve">
+    <value>Profile not found.</value>
+  </data>
+  <data name="PreferencesNotFound" xml:space="preserve">
+    <value>Preferences not found.</value>
+  </data>
   <data name="PageNotFound" xml:space="preserve">
     <value>Page not found.</value>
   </data>
@@ -314,6 +398,12 @@
   </data>
   <data name="InvoiceNotFound" xml:space="preserve">
     <value>Invoice not found.</value>
+  </data>
+  <data name="InvoiceNotLinkedToOrderPaymentFlow" xml:space="preserve">
+    <value>Invoice is not linked to an order and cannot open a storefront payment flow.</value>
+  </data>
+  <data name="InvoiceCannotAcceptNewPaymentAttempt" xml:space="preserve">
+    <value>Invoice cannot accept a new payment attempt.</value>
   </data>
   <data name="LinkedCustomerNotFound" xml:space="preserve">
     <value>Linked customer not found.</value>
@@ -395,6 +485,9 @@
   </data>
   <data name="BrandNotFound" xml:space="preserve">
     <value>Brand not found.</value>
+  </data>
+  <data name="BrandSlugMustBeUnique" xml:space="preserve">
+    <value>Brand slug must be unique.</value>
   </data>
   <data name="ProductNotFound" xml:space="preserve">
     <value>Product not found.</value>
@@ -513,6 +606,9 @@
   <data name="OrderConfirmationContextIsInvalid" xml:space="preserve">
     <value>Order confirmation context is invalid.</value>
   </data>
+  <data name="OrderConfirmationNotFound" xml:space="preserve">
+    <value>Order confirmation not found.</value>
+  </data>
   <data name="PaymentCannotBeInitiatedForCancelledOrRefundedOrder" xml:space="preserve">
     <value>Payment cannot be initiated for a cancelled or refunded order.</value>
   </data>
@@ -593,6 +689,9 @@
   <data name="Unauthorized" xml:space="preserve">
     <value>Unauthorized.</value>
   </data>
+  <data name="UnauthorizedTitle" xml:space="preserve">
+    <value>Unauthorized</value>
+  </data>
   <data name="ConcurrencyConflict" xml:space="preserve">
     <value>Concurrency conflict.</value>
   </data>
@@ -608,8 +707,26 @@
   <data name="UserNotAuthenticated" xml:space="preserve">
     <value>User is not authenticated.</value>
   </data>
+  <data name="AuthenticatedUserIdentifierNotResolved" xml:space="preserve">
+    <value>User identifier could not be resolved from the access token.</value>
+  </data>
   <data name="ExplicitDeletionConfirmationRequired" xml:space="preserve">
     <value>Explicit deletion confirmation is required.</value>
+  </data>
+  <data name="RowVersionRequiredForOptimisticConcurrency" xml:space="preserve">
+    <value>RowVersion must be provided for optimistic concurrency.</value>
+  </data>
+  <data name="LocaleRequired" xml:space="preserve">
+    <value>Locale must be provided.</value>
+  </data>
+  <data name="TimezoneRequired" xml:space="preserve">
+    <value>Timezone must be provided.</value>
+  </data>
+  <data name="CurrencyRequired" xml:space="preserve">
+    <value>Currency must be provided.</value>
+  </data>
+  <data name="VerificationCodeRequired" xml:space="preserve">
+    <value>Verification code is required.</value>
   </data>
   <data name="ActiveUserAccountNotFound" xml:space="preserve">
     <value>Active user account not found.</value>
@@ -628,6 +745,9 @@
   </data>
   <data name="AddressNotFound" xml:space="preserve">
     <value>Address not found.</value>
+  </data>
+  <data name="LinkedCustomerContextNotFound" xml:space="preserve">
+    <value>Linked CRM customer context not found.</value>
   </data>
   <data name="AddressNotOwnedByUser" xml:space="preserve">
     <value>Address not found or not owned by user.</value>
@@ -727,6 +847,9 @@
   </data>
   <data name="RequestPayloadRequired" xml:space="preserve">
     <value>Request payload is required.</value>
+  </data>
+  <data name="ShippingOptionsCouldNotBeCalculated" xml:space="preserve">
+    <value>Shipping options could not be calculated.</value>
   </data>
   <data name="InactiveReminderOutcomeInvalid" xml:space="preserve">
     <value>Outcome must be one of: Sent, Failed, Suppressed.</value>
@@ -935,6 +1058,9 @@
   <data name="LoyaltyAccountNotFoundForSpecifiedBusinessAndUser" xml:space="preserve">
     <value>Loyalty account not found for the specified business and user.</value>
   </data>
+  <data name="LoyaltyDashboardNotFoundForSpecifiedBusinessAndUser" xml:space="preserve">
+    <value>Loyalty dashboard not found for the specified business and user.</value>
+  </data>
   <data name="RedemptionNotFound" xml:space="preserve">
     <value>Redemption not found.</value>
   </data>
@@ -1010,16 +1136,154 @@
   <data name="SelectedRewardsMissing" xml:space="preserve">
     <value>Scan session does not contain any selected rewards.</value>
   </data>
+  <data name="SelectedRewardsInvalid" xml:space="preserve">
+    <value>Selected rewards are invalid for this scan session.</value>
+  </data>
   <data name="SelectedRewardsNoPointsRequired" xml:space="preserve">
     <value>Selected rewards do not require any points.</value>
+  </data>
+  <data name="OperationFailed" xml:space="preserve">
+    <value>Operation failed.</value>
+  </data>
+  <data name="BootstrapRequestFailed" xml:space="preserve">
+    <value>Bootstrap request failed.</value>
+  </data>
+  <data name="BootstrapPayloadEmpty" xml:space="preserve">
+    <value>Bootstrap payload is empty. This is a server bug.</value>
   </data>
   <data name="BusinessRequired" xml:space="preserve">
     <value>Business is required.</value>
   </data>
+  <data name="BusinessNameRequired" xml:space="preserve">
+    <value>Business name is required.</value>
+  </data>
+  <data name="BusinessCategoryKindInvalid" xml:space="preserve">
+    <value>Business category is invalid. It must match a known category value.</value>
+  </data>
+  <data name="BusinessMinRatingFiniteRange" xml:space="preserve">
+    <value>MinRating must be a finite number between 0 and 5.</value>
+  </data>
+  <data name="BusinessMinRatingRange" xml:space="preserve">
+    <value>MinRating must be between 0 and 5.</value>
+  </data>
+  <data name="BusinessNearRequiredWhenRadiusProvided" xml:space="preserve">
+    <value>Near must be provided when RadiusMeters is provided.</value>
+  </data>
+  <data name="BusinessRadiusMetersPositive" xml:space="preserve">
+    <value>RadiusMeters must be zero or a positive integer.</value>
+  </data>
+  <data name="BusinessOnboardingPayloadInvalid" xml:space="preserve">
+    <value>Invalid business onboarding payload.</value>
+  </data>
+  <data name="BusinessOwnerMembershipCreateFailed" xml:space="preserve">
+    <value>Business owner membership could not be created.</value>
+  </data>
+  <data name="MapBoundsRequired" xml:space="preserve">
+    <value>Map bounds are required.</value>
+  </data>
+  <data name="BusinessMembershipInactiveAccess" xml:space="preserve">
+    <value>Business membership is no longer active for this user.</value>
+  </data>
+  <data name="BusinessUserInactiveAccess" xml:space="preserve">
+    <value>User access is currently inactive.</value>
+  </data>
+  <data name="BusinessEmailConfirmationRequiredAccess" xml:space="preserve">
+    <value>User email confirmation is still required.</value>
+  </data>
+  <data name="BusinessUserLockedAccess" xml:space="preserve">
+    <value>User access is currently locked.</value>
+  </data>
+  <data name="BusinessPendingApprovalAccess" xml:space="preserve">
+    <value>Business approval is still pending.</value>
+  </data>
+  <data name="BusinessSuspendedAccess" xml:space="preserve">
+    <value>Business access is currently suspended.</value>
+  </data>
+  <data name="BusinessInactiveAccess" xml:space="preserve">
+    <value>Business access is currently inactive.</value>
+  </data>
+  <data name="BusinessSetupIncompleteAccess" xml:space="preserve">
+    <value>Business setup is still incomplete.</value>
+  </data>
   <data name="UserRequired" xml:space="preserve">
     <value>User is required.</value>
   </data>
+  <data name="RewardTypeInvalidAllowedValues" xml:space="preserve">
+    <value>RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.</value>
+  </data>
+  <data name="LoyaltyRewardTierCreateFailed" xml:space="preserve">
+    <value>Failed to create loyalty reward tier.</value>
+  </data>
+  <data name="LoyaltyRewardTierUpdateFailed" xml:space="preserve">
+    <value>Failed to update loyalty reward tier.</value>
+  </data>
+  <data name="RequestBodyRouteIdMismatch" xml:space="preserve">
+    <value>Request payload is required and route id must match body id.</value>
+  </data>
+  <data name="BusinessSubscriptionStatusRetrievalFailed" xml:space="preserve">
+    <value>Failed to retrieve business subscription status.</value>
+  </data>
+  <data name="SubscriptionCancellationUpdateFailed" xml:space="preserve">
+    <value>Failed to update subscription cancellation preference.</value>
+  </data>
+  <data name="CheckoutIntentCreationFailed" xml:space="preserve">
+    <value>Unable to create checkout intent.</value>
+  </data>
+  <data name="BillingCheckoutEndpointNotConfigured" xml:space="preserve">
+    <value>Billing checkout endpoint is not configured.</value>
+  </data>
   <data name="LoyaltyAccountAlreadyExistsForMemberInBusiness" xml:space="preserve">
     <value>A loyalty account already exists for this member in the selected business.</value>
+  </data>
+  <data name="StripeWebhookSignatureHeaderRequired" xml:space="preserve">
+    <value>Stripe-Signature header is required.</value>
+  </data>
+  <data name="StripeWebhookSecretNotConfigured" xml:space="preserve">
+    <value>Stripe webhook secret is not configured.</value>
+  </data>
+  <data name="StripeWebhookSignatureInvalid" xml:space="preserve">
+    <value>Stripe webhook signature is invalid.</value>
+  </data>
+  <data name="StripeWebhookPayloadInvalid" xml:space="preserve">
+    <value>Stripe webhook payload is invalid.</value>
+  </data>
+  <data name="StripeWebhookEventIdRequired" xml:space="preserve">
+    <value>Stripe webhook event id is required.</value>
+  </data>
+  <data name="StripeWebhookEventTypeRequired" xml:space="preserve">
+    <value>Stripe webhook event type is required.</value>
+  </data>
+  <data name="StripeWebhookProcessingFailed" xml:space="preserve">
+    <value>Stripe webhook processing failed.</value>
+  </data>
+  <data name="CarrierEventOccurredAtUtcRequired" xml:space="preserve">
+    <value>Carrier event occurredAtUtc is required.</value>
+  </data>
+  <data name="DhlWebhookAuthenticationNotConfigured" xml:space="preserve">
+    <value>DHL webhook authentication is not configured.</value>
+  </data>
+  <data name="DhlWebhookPayloadInvalid" xml:space="preserve">
+    <value>DHL webhook payload is invalid.</value>
+  </data>
+  <data name="DhlWebhookApiKeyInvalid" xml:space="preserve">
+    <value>DHL webhook API key is invalid.</value>
+  </data>
+  <data name="DhlWebhookSignatureInvalid" xml:space="preserve">
+    <value>DHL webhook signature is invalid.</value>
+  </data>
+  <data name="ShipmentNotFoundForCarrierCallback" xml:space="preserve">
+    <value>Shipment was not found for the carrier callback.</value>
+  </data>
+  <data name="DhlLabelGenerationNotEnabled" xml:space="preserve">
+    <value>DHL label generation is not enabled.</value>
+  </data>
+  <data name="DhlLabelGenerationNotConfigured" xml:space="preserve">
+    <value>DHL label generation is not fully configured.</value>
+  </data>
+  <data name="ShipmentNotFoundForLabelGeneration" xml:space="preserve">
+    <value>Shipment was not found for label generation.</value>
+  </data>
+  <data name="ShipmentCarrierMustBeDhlForLabelGeneration" xml:space="preserve">
+    <value>Only DHL shipments can generate carrier labels in the current phase.</value>
   </data>
 </root>

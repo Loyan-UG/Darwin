@@ -77,6 +77,25 @@ namespace Darwin.Application.Orders.Validators
         }
     }
 
+    public sealed class ApplyShipmentCarrierEventValidator : AbstractValidator<ApplyShipmentCarrierEventDto>
+    {
+        public ApplyShipmentCarrierEventValidator(IStringLocalizer<ValidationResource> localizer)
+        {
+            RuleFor(x => x.Carrier).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.ProviderShipmentReference).NotEmpty().MaximumLength(128);
+            RuleFor(x => x.TrackingNumber).MaximumLength(128).When(x => !string.IsNullOrWhiteSpace(x.TrackingNumber));
+            RuleFor(x => x.LabelUrl).MaximumLength(2048).When(x => !string.IsNullOrWhiteSpace(x.LabelUrl));
+            RuleFor(x => x.Service).MaximumLength(64).When(x => !string.IsNullOrWhiteSpace(x.Service));
+            RuleFor(x => x.CarrierEventKey).NotEmpty().MaximumLength(128);
+            RuleFor(x => x.OccurredAtUtc)
+                .Must(x => x != default)
+                .WithMessage(localizer["CarrierEventOccurredAtUtcRequired"]);
+            RuleFor(x => x.ProviderStatus).MaximumLength(64).When(x => !string.IsNullOrWhiteSpace(x.ProviderStatus));
+            RuleFor(x => x.ExceptionCode).MaximumLength(128).When(x => !string.IsNullOrWhiteSpace(x.ExceptionCode));
+            RuleFor(x => x.ExceptionMessage).MaximumLength(512).When(x => !string.IsNullOrWhiteSpace(x.ExceptionMessage));
+        }
+    }
+
     public sealed class UpdateOrderStatusValidator : AbstractValidator<UpdateOrderStatusDto>
     {
         public UpdateOrderStatusValidator(IStringLocalizer<ValidationResource> localizer)

@@ -34,6 +34,8 @@ namespace Darwin.Application.Billing.Commands
                 Status = dto.Status,
                 Provider = dto.Provider.Trim(),
                 ProviderTransactionRef = NormalizeOptional(dto.ProviderTransactionRef),
+                ProviderPaymentIntentRef = NormalizeOptional(dto.ProviderPaymentIntentRef),
+                ProviderCheckoutSessionRef = NormalizeOptional(dto.ProviderCheckoutSessionRef),
                 PaidAtUtc = dto.PaidAtUtc
             };
 
@@ -90,6 +92,8 @@ namespace Darwin.Application.Billing.Commands
             payment.Status = dto.Status;
             payment.Provider = dto.Provider.Trim();
             payment.ProviderTransactionRef = NormalizeOptional(dto.ProviderTransactionRef);
+            payment.ProviderPaymentIntentRef = NormalizeOptional(dto.ProviderPaymentIntentRef);
+            payment.ProviderCheckoutSessionRef = NormalizeOptional(dto.ProviderCheckoutSessionRef);
             payment.PaidAtUtc = dto.PaidAtUtc;
 
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);

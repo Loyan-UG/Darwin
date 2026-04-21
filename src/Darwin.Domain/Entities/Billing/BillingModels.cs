@@ -284,6 +284,18 @@ namespace Darwin.Domain.Entities.Billing
         public string? ProviderTransactionRef { get; set; }
 
         /// <summary>
+        /// Gets or sets the provider-side payment-intent reference when the gateway exposes one.
+        /// This is additive to <see cref="ProviderTransactionRef"/> so existing compatibility paths stay intact.
+        /// </summary>
+        public string? ProviderPaymentIntentRef { get; set; }
+
+        /// <summary>
+        /// Gets or sets the provider-side checkout/session reference when the gateway exposes one.
+        /// This is additive to <see cref="ProviderTransactionRef"/> so hosted-checkout and webhook correlation can evolve incrementally.
+        /// </summary>
+        public string? ProviderCheckoutSessionRef { get; set; }
+
+        /// <summary>
         /// Gets or sets the UTC timestamp when funds were actually paid or captured.
         /// </summary>
         public DateTime? PaidAtUtc { get; set; }

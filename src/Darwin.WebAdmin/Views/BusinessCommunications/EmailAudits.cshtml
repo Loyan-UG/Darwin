@@ -41,6 +41,13 @@
         "Single attempt" => T.T("CommunicationChainStatusSingleAttempt"),
         _ => string.IsNullOrWhiteSpace(statusMix) ? T.T("CommonUnclassified") : T.T(statusMix)
     };
+
+    string LogicalRecipientEmail(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>
+        string.IsNullOrWhiteSpace(item.IntendedRecipientEmail) ? item.RecipientEmail : item.IntendedRecipientEmail!;
+
+    bool HasRecipientOverride(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>
+        !string.IsNullOrWhiteSpace(item.IntendedRecipientEmail) &&
+        !string.Equals(item.IntendedRecipientEmail, item.RecipientEmail, StringComparison.OrdinalIgnoreCase);
 }
 
 <div id="business-communication-audits-workspace-shell">
@@ -650,7 +657,13 @@
             {
                 <tr>
                     <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>@item.RecipientEmail</td>
+                    <td>
+                        <div>@LogicalRecipientEmail(item)</div>
+                        @if (HasRecipientOverride(item))
+                        {
+                            <div class="small text-muted mt-1">@T.T("EffectiveRecipient"): <code>@item.RecipientEmail</code></div>
+                        }
+                    </td>
                     <td>@item.Subject</td>
                     <td>@FlowLabel(item.FlowKey)</td>
                     <td>
@@ -758,6 +771,18 @@
                                 }
                             </div>
                         }
+                        @if (!string.IsNullOrWhiteSpace(item.TemplateKey))
+                        {
+                            <div class="small text-muted mt-1">@T.T("TemplateKey"): <code>@item.TemplateKey</code></div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.CorrelationKey))
+                        {
+                            <div class="small text-muted">@T.T("Correlation"): <code>@item.CorrelationKey</code></div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.ProviderMessageId))
+                        {
+                            <div class="small text-muted">@T.T("ProviderMessageId"): <code>@item.ProviderMessageId</code></div>
+                        }
                     </td>
                     <td>
                         <div class="small">@item.RecommendedAction</div>
@@ -817,7 +842,7 @@
                         {
                             <div class="mt-2">
                                 <a asp-action="EmailAudits"
-                                   asp-route-recipientEmail="@item.RecipientEmail"
+                                   asp-route-recipientEmail="@LogicalRecipientEmail(item)"
                                    asp-route-flowKey="@item.FlowKey"
                                    asp-route-status=""
                                    asp-route-stalePendingOnly="false"
@@ -831,7 +856,7 @@
                                    asp-route-chainResolvedOnly="@Model.ChainResolvedOnly"
                                    asp-route-businessId="@item.BusinessId"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = item.RecipientEmail, flowKey = item.FlowKey, status = string.Empty, stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = false, chainFollowUpOnly = Model.ChainFollowUpOnly, chainResolvedOnly = Model.ChainResolvedOnly, businessId = item.BusinessId })"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = LogicalRecipientEmail(item), flowKey = item.FlowKey, status = string.Empty, stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = false, chainFollowUpOnly = Model.ChainFollowUpOnly, chainResolvedOnly = Model.ChainResolvedOnly, businessId = item.BusinessId })"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("OpenExactChain")</a>
                             </div>
@@ -839,8 +864,8 @@
                         @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                         {
                             <div class="mt-2 d-flex flex-wrap gap-2">
-                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" asp-route-query="@item.RecipientEmail" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, query = item.RecipientEmail, filter = "Open" })"
+                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" asp-route-query="@LogicalRecipientEmail(item)" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = "Open" })"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("BusinessCommunicationSearchInvitationAction")</a>
                                 <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
@@ -856,19 +881,19 @@
                         else if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) || string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
                         {
                             <div class="mt-2 d-flex flex-wrap gap-2">
-                                <a asp-controller="Users" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { q = item.RecipientEmail })"
+                                <a asp-controller="Users" asp-action="Index" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "Users", new { q = LogicalRecipientEmail(item) })"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("BusinessCommunicationOpenUsersAction")</a>
-                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = item.RecipientEmail })"
+                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = LogicalRecipientEmail(item) })"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                                 @if (item.BusinessId.HasValue)
                                 {
-                                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-query="@item.RecipientEmail" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, query = item.RecipientEmail, filter = "Attention" })"
+                                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-query="@LogicalRecipientEmail(item)" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = "Attention" })"
                                        hx-target="#business-communication-audits-workspace-shell"
                                        hx-swap="outerHTML">@T.T("CommunicationOpenMemberSupportAction")</a>
                                 }

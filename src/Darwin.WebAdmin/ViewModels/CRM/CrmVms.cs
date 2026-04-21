@@ -552,6 +552,8 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public long BalanceMinor { get; set; }
         public DateTime DueDateUtc { get; set; } = DateTime.UtcNow.AddDays(14);
         public DateTime? PaidAtUtc { get; set; }
+        public bool IsFinancialContentLocked { get; set; }
+        public string FinancialEditLockReason { get; set; } = string.Empty;
         public InvoiceRefundCreateVm Refund { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
@@ -566,11 +568,14 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public bool AllowReverseCharge { get; set; }
         public bool IssuerConfigured { get; set; }
         public string InvoiceIssuerLegalName { get; set; } = string.Empty;
+        public string InvoiceIssuerCountry { get; set; } = string.Empty;
         public bool InvoiceIssuerTaxIdConfigured { get; set; }
         public bool ArchiveReadinessComplete { get; set; }
         public string ArchiveReadinessLabel { get; set; } = string.Empty;
         public bool EInvoiceBaselineReady { get; set; }
         public string EInvoiceBaselineLabel { get; set; } = string.Empty;
+        public bool StructuredExportBaselineReady { get; set; }
+        public string StructuredExportBaselineLabel { get; set; } = string.Empty;
         public string ComplianceScopeNote { get; set; } = string.Empty;
     }
 

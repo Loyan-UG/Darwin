@@ -111,6 +111,7 @@ export type MemberOrderDetail = MemberOrderSummary & {
     carrier: string;
     service: string;
     trackingNumber?: string | null;
+    trackingUrl?: string | null;
     status: string;
     shippedAtUtc?: string | null;
     deliveredAtUtc?: string | null;

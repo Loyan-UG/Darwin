@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Settings.Commands;
 using Darwin.Application.Settings.DTOs;
+using Darwin.WebAdmin.Security;
 using Darwin.WebAdmin.ViewModels.Settings;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
     /// Admin controller for viewing and editing site-wide settings. Reads via cache,
     /// saves via Application handlers, and invalidates cache on success.
     /// </summary>
+    [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
     public sealed class SiteSettingsController : AdminBaseController
     {
         private readonly UpdateSiteSettingHandler _update;

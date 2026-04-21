@@ -31,7 +31,8 @@ namespace Darwin.Application.Shipping.Queries
 
             var q = _db.Set<ShippingMethod>().AsNoTracking()
                 .Include(m => m.Rates)
-                .Where(m => m.IsActive);
+                .Where(m => m.IsActive)
+                .Where(m => m.Carrier == "DHL");
 
             // Countries filter
             q = q.Where(m => m.CountriesCsv == null

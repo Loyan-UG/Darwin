@@ -1,3 +1,4 @@
+using Darwin.Application;
 using Darwin.Application.CRM.Queries;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
@@ -5,6 +6,7 @@ using Darwin.Application.Identity.Queries;
 using Darwin.Contracts.Profile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Profile;
 
@@ -23,6 +25,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
     private readonly SetCurrentUserDefaultAddressHandler _setCurrentUserDefaultAddressHandler;
     private readonly GetCurrentMemberCustomerProfileHandler _getCurrentMemberCustomerProfileHandler;
     private readonly GetCurrentMemberCustomerContextHandler _getCurrentMemberCustomerContextHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProfileAddressesController"/> class.
@@ -34,7 +37,8 @@ public sealed class ProfileAddressesController : ApiControllerBase
         DeleteCurrentUserAddressHandler deleteCurrentUserAddressHandler,
         SetCurrentUserDefaultAddressHandler setCurrentUserDefaultAddressHandler,
         GetCurrentMemberCustomerProfileHandler getCurrentMemberCustomerProfileHandler,
-        GetCurrentMemberCustomerContextHandler getCurrentMemberCustomerContextHandler)
+        GetCurrentMemberCustomerContextHandler getCurrentMemberCustomerContextHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getCurrentUserAddressesHandler = getCurrentUserAddressesHandler ?? throw new ArgumentNullException(nameof(getCurrentUserAddressesHandler));
         _createCurrentUserAddressHandler = createCurrentUserAddressHandler ?? throw new ArgumentNullException(nameof(createCurrentUserAddressHandler));
@@ -43,6 +47,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
         _setCurrentUserDefaultAddressHandler = setCurrentUserDefaultAddressHandler ?? throw new ArgumentNullException(nameof(setCurrentUserDefaultAddressHandler));
         _getCurrentMemberCustomerProfileHandler = getCurrentMemberCustomerProfileHandler ?? throw new ArgumentNullException(nameof(getCurrentMemberCustomerProfileHandler));
         _getCurrentMemberCustomerContextHandler = getCurrentMemberCustomerContextHandler ?? throw new ArgumentNullException(nameof(getCurrentMemberCustomerContextHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -74,7 +79,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var createResult = await _createCurrentUserAddressHandler.HandleAsync(new AddressCreateDto
@@ -112,12 +117,12 @@ public sealed class ProfileAddressesController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Address id must not be empty.");
+            return BadRequestProblem(_validationLocalizer["AddressIdRequired"]);
         }
 
         var result = await _updateCurrentUserAddressHandler.HandleAsync(new AddressEditDto
@@ -156,7 +161,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var result = await _deleteCurrentUserAddressHandler.HandleAsync(new AddressDeleteDto
@@ -179,7 +184,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var result = await _setCurrentUserDefaultAddressHandler
@@ -204,7 +209,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
     public async Task<IActionResult> GetLinkedCustomerAsync(CancellationToken ct = default)
     {
         var dto = await _getCurrentMemberCustomerProfileHandler.HandleAsync(ct).ConfigureAwait(false);
-        return dto is null ? NotFoundProblem("Linked CRM customer not found.") : Ok(MapCustomer(dto));
+        return dto is null ? NotFoundProblem(_validationLocalizer["LinkedCustomerNotFound"]) : Ok(MapCustomer(dto));
     }
 
     /// <summary>
@@ -217,7 +222,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
     public async Task<IActionResult> GetLinkedCustomerContextAsync(CancellationToken ct = default)
     {
         var dto = await _getCurrentMemberCustomerContextHandler.HandleAsync(ct).ConfigureAwait(false);
-        return dto is null ? NotFoundProblem("Linked CRM customer context not found.") : Ok(MapCustomerContext(dto));
+        return dto is null ? NotFoundProblem(_validationLocalizer["LinkedCustomerContextNotFound"]) : Ok(MapCustomerContext(dto));
     }
 
     private async Task<IActionResult> GetAddressByIdAsync(Guid id, CancellationToken ct)
@@ -229,7 +234,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
         }
 
         var address = result.Value.FirstOrDefault(x => x.Id == id);
-        return address is null ? NotFoundProblem("Address not found.") : Ok(MapAddress(address));
+        return address is null ? NotFoundProblem(_validationLocalizer["AddressNotFound"]) : Ok(MapAddress(address));
     }
 
     private static MemberAddress MapAddress(AddressListItemDto dto)

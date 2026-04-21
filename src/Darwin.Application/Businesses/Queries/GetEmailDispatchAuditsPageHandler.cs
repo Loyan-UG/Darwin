@@ -66,17 +66,21 @@ namespace Darwin.Application.Businesses.Queries
                 var q = query.Trim();
                 baseQuery = baseQuery.Where(x =>
                     x.Audit.RecipientEmail.Contains(q) ||
+                    (x.Audit.IntendedRecipientEmail != null && x.Audit.IntendedRecipientEmail.Contains(q)) ||
                     x.Audit.Subject.Contains(q) ||
                     x.Audit.Status.Contains(q) ||
                     x.Audit.Provider.Contains(q) ||
                     (x.Audit.FlowKey != null && x.Audit.FlowKey.Contains(q)) ||
+                    (x.Audit.TemplateKey != null && x.Audit.TemplateKey.Contains(q)) ||
+                    (x.Audit.CorrelationKey != null && x.Audit.CorrelationKey.Contains(q)) ||
+                    (x.Audit.ProviderMessageId != null && x.Audit.ProviderMessageId.Contains(q)) ||
                     (x.BusinessName != null && x.BusinessName.Contains(q)));
             }
 
             if (!string.IsNullOrWhiteSpace(recipientEmail))
             {
                 var normalizedRecipientEmail = recipientEmail.Trim();
-                baseQuery = baseQuery.Where(x => x.Audit.RecipientEmail == normalizedRecipientEmail);
+                baseQuery = baseQuery.Where(x => (x.Audit.IntendedRecipientEmail ?? x.Audit.RecipientEmail) == normalizedRecipientEmail);
             }
 
             if (!string.IsNullOrWhiteSpace(status))
@@ -113,10 +117,14 @@ namespace Darwin.Application.Businesses.Queries
                     Id = x.Audit.Id,
                     Provider = x.Audit.Provider,
                     FlowKey = x.Audit.FlowKey,
+                    TemplateKey = x.Audit.TemplateKey,
+                    CorrelationKey = x.Audit.CorrelationKey,
                     BusinessId = x.Audit.BusinessId,
                     BusinessName = x.BusinessName,
                     RecipientEmail = x.Audit.RecipientEmail,
+                    IntendedRecipientEmail = x.Audit.IntendedRecipientEmail,
                     Subject = x.Audit.Subject,
+                    ProviderMessageId = x.Audit.ProviderMessageId,
                     Status = x.Audit.Status,
                     AttemptedAtUtc = x.Audit.AttemptedAtUtc,
                     CompletedAtUtc = x.Audit.CompletedAtUtc,
@@ -127,11 +135,14 @@ namespace Darwin.Application.Businesses.Queries
 
             foreach (var item in baseItems)
             {
+                var chainRecipientEmail = string.IsNullOrWhiteSpace(item.IntendedRecipientEmail)
+                    ? item.RecipientEmail
+                    : item.IntendedRecipientEmail;
                 var priorRows = await _db.Set<EmailDispatchAudit>()
                     .AsNoTracking()
                     .Where(x =>
                         x.Id != item.Id &&
-                        x.RecipientEmail == item.RecipientEmail &&
+                        (x.IntendedRecipientEmail ?? x.RecipientEmail) == chainRecipientEmail &&
                         x.FlowKey == item.FlowKey &&
                         x.BusinessId == item.BusinessId &&
                         x.AttemptedAtUtc < item.AttemptedAtUtc)
@@ -266,6 +277,7 @@ namespace Darwin.Application.Businesses.Queries
                     x.FlowKey,
                     x.BusinessId,
                     x.RecipientEmail,
+                    x.IntendedRecipientEmail,
                     x.AttemptedAtUtc,
                     x.CompletedAtUtc
                 })
@@ -290,15 +302,15 @@ namespace Darwin.Application.Businesses.Queries
                 SlowCompletedCount = summaryRows.Count(
                     x => x.CompletedAtUtc.HasValue && (x.CompletedAtUtc.Value - x.AttemptedAtUtc).TotalSeconds > slowDeliveryThresholdSeconds),
                 RetriedFlowCount = summaryRows
-                    .GroupBy(x => new { x.FlowKey, x.BusinessId })
+                    .GroupBy(x => new { x.FlowKey, x.BusinessId, RecipientEmail = x.IntendedRecipientEmail ?? x.RecipientEmail })
                     .Count(g => g.Count() > 1 && !string.IsNullOrWhiteSpace(g.Key.FlowKey)),
                 PriorSuccessContextCount = summaryRows
-                    .GroupBy(x => new { x.FlowKey, x.BusinessId, x.Status })
+                    .GroupBy(x => new { x.FlowKey, x.BusinessId, RecipientEmail = x.IntendedRecipientEmail ?? x.RecipientEmail, x.Status })
                     .Where(g => string.Equals(g.Key.Status, "Sent", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(g.Key.FlowKey))
                     .Count(),
                 RepeatedFailureCount = summaryRows
                     .Where(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase))
-                    .GroupBy(x => new { x.FlowKey, x.BusinessId })
+                    .GroupBy(x => new { x.FlowKey, x.BusinessId, RecipientEmail = x.IntendedRecipientEmail ?? x.RecipientEmail })
                     .Count(g => g.Count() > 1 && !string.IsNullOrWhiteSpace(g.Key.FlowKey)),
                 RetryReadyCount = summaryRows.Count(x =>
                     IsSupportedRetryFlow(x.FlowKey) &&
@@ -310,7 +322,7 @@ namespace Darwin.Application.Businesses.Queries
                     x.AttemptedAtUtc > DateTime.UtcNow.Subtract(RetryCooldown)),
                 HighChainVolumeCount = summaryRows
                     .Where(x => !string.IsNullOrWhiteSpace(x.FlowKey) && x.AttemptedAtUtc >= recentThresholdUtc)
-                    .GroupBy(x => new { x.FlowKey, x.BusinessId, x.RecipientEmail })
+                    .GroupBy(x => new { x.FlowKey, x.BusinessId, RecipientEmail = x.IntendedRecipientEmail ?? x.RecipientEmail })
                     .Count(g => g.Count() >= 3)
             };
         }
@@ -377,7 +389,7 @@ namespace Darwin.Application.Businesses.Queries
         {
             var chainQuery = _db.Set<EmailDispatchAudit>()
                 .AsNoTracking()
-                .Where(x => x.RecipientEmail == recipientEmail);
+                .Where(x => (x.IntendedRecipientEmail ?? x.RecipientEmail) == recipientEmail);
 
             if (!string.IsNullOrWhiteSpace(flowKey))
             {
@@ -397,7 +409,11 @@ namespace Darwin.Application.Businesses.Queries
                     x.Status,
                     x.AttemptedAtUtc,
                     x.Provider,
+                    x.TemplateKey,
+                    x.CorrelationKey,
                     x.Subject,
+                    x.IntendedRecipientEmail,
+                    x.ProviderMessageId,
                     x.FailureMessage,
                     x.CompletedAtUtc
                 })
@@ -445,7 +461,11 @@ namespace Darwin.Application.Businesses.Queries
                         AttemptedAtUtc = x.AttemptedAtUtc,
                         Status = x.Status,
                         Provider = x.Provider,
+                        TemplateKey = x.TemplateKey,
+                        CorrelationKey = x.CorrelationKey,
                         Subject = x.Subject,
+                        IntendedRecipientEmail = x.IntendedRecipientEmail,
+                        ProviderMessageId = x.ProviderMessageId,
                         FailureMessage = x.FailureMessage,
                         CompletedAtUtc = x.CompletedAtUtc
                     })

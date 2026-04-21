@@ -27,10 +27,13 @@ namespace Darwin.Infrastructure.Extensions
             services.Configure<BusinessInvitationLinkOptions>(configuration.GetSection("BusinessOnboarding:InvitationMagicLink"));
             services.Configure<InactiveReminderPushGatewayOptions>(configuration.GetSection("Notifications:InactiveReminderPushGateway"));
 
+            services.AddScoped<SmtpEmailSender>();
             services.AddScoped<IEmailSender, SmtpEmailSender>();
             services.AddHttpClient(nameof(ProviderBackedSmsSender));
+            services.AddScoped<ProviderBackedSmsSender>();
             services.AddScoped<ISmsSender, ProviderBackedSmsSender>();
             services.AddHttpClient(nameof(MetaWhatsAppSender));
+            services.AddScoped<MetaWhatsAppSender>();
             services.AddScoped<IWhatsAppSender, MetaWhatsAppSender>();
             services.AddSingleton<IBusinessInvitationLinkBuilder, ConfigBusinessInvitationLinkBuilder>();
             services.AddHttpClient<HttpInactiveReminderDispatcher>();

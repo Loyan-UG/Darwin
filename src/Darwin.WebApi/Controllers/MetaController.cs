@@ -1,10 +1,12 @@
 ﻿using Darwin.Application.Abstractions.Services;
+using Darwin.Application;
 using Darwin.Application.Meta.Queries;
 using Darwin.Contracts.Meta;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Reflection;
@@ -29,6 +31,7 @@ namespace Darwin.WebApi.Controllers
         private readonly IClock _clock;
         private readonly ILogger<MetaController> _logger;
         private readonly GetAppBootstrapHandler _getAppBootstrap;
+        private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
 
         /// <summary>
@@ -44,12 +47,14 @@ namespace Darwin.WebApi.Controllers
             GetAppBootstrapHandler getAppBootstrap,
             IConfiguration configuration,
             IHostEnvironment hostEnvironment,
+            IStringLocalizer<ValidationResource> validationLocalizer,
             ILogger<MetaController> logger)
         {
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _getAppBootstrap = getAppBootstrap ?? throw new ArgumentNullException(nameof(getAppBootstrap));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _hostEnvironment = hostEnvironment ?? throw new ArgumentNullException(nameof(hostEnvironment));
+            _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -179,13 +184,13 @@ namespace Darwin.WebApi.Controllers
             if (!result.Succeeded)
             {
                 // Keep response intentionally small and consistent.
-                return BadRequest(new { error = result.Error ?? "Bootstrap request failed." });
+                return BadRequest(new { error = result.Error ?? _validationLocalizer["BootstrapRequestFailed"].Value });
             }
 
             if (result.Value is null)
             {
                 // Defensive: success with null payload should not happen, but we must be null-safe.
-                return BadRequest(new { error = "Bootstrap payload is empty. This is a server bug." });
+                return BadRequest(new { error = _validationLocalizer["BootstrapPayloadEmpty"].Value });
             }
 
             var dto = result.Value;

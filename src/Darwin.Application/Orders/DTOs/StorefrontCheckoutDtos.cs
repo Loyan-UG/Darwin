@@ -101,7 +101,7 @@ public sealed class CreateStorefrontPaymentIntentDto
     public string? OrderNumber { get; set; }
 
     /// <summary>Gets or sets the requested storefront payment provider label.</summary>
-    public string Provider { get; set; } = "DarwinCheckout";
+    public string Provider { get; set; } = "Stripe";
 }
 
 /// <summary>
@@ -116,10 +116,16 @@ public sealed class StorefrontPaymentIntentResultDto
     public Guid PaymentId { get; set; }
 
     /// <summary>Gets or sets the storefront payment provider label.</summary>
-    public string Provider { get; set; } = "DarwinCheckout";
+    public string Provider { get; set; } = "Stripe";
 
     /// <summary>Gets or sets the provider/session reference associated with the payment attempt.</summary>
     public string ProviderReference { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the provider-side payment-intent reference when available.</summary>
+    public string? ProviderPaymentIntentReference { get; set; }
+
+    /// <summary>Gets or sets the provider-side checkout/session reference when available.</summary>
+    public string? ProviderCheckoutSessionReference { get; set; }
 
     /// <summary>Gets or sets the amount in minor units.</summary>
     public long AmountMinor { get; set; }
@@ -153,6 +159,12 @@ public sealed class CompleteStorefrontPaymentDto
 
     /// <summary>Gets or sets the provider reference returned by the PSP.</summary>
     public string? ProviderReference { get; set; }
+
+    /// <summary>Gets or sets the optional provider-side payment-intent reference returned by the PSP.</summary>
+    public string? ProviderPaymentIntentReference { get; set; }
+
+    /// <summary>Gets or sets the optional provider-side checkout/session reference returned by the PSP.</summary>
+    public string? ProviderCheckoutSessionReference { get; set; }
 
     /// <summary>Gets or sets the requested payment outcome.</summary>
     public StorefrontPaymentOutcome Outcome { get; set; } = StorefrontPaymentOutcome.Succeeded;
@@ -300,6 +312,12 @@ public sealed class StorefrontOrderConfirmationPaymentDto
 
     /// <summary>Gets or sets the provider reference.</summary>
     public string? ProviderReference { get; set; }
+
+    /// <summary>Gets or sets the provider-side payment-intent reference when available.</summary>
+    public string? ProviderPaymentIntentReference { get; set; }
+
+    /// <summary>Gets or sets the provider-side checkout/session reference when available.</summary>
+    public string? ProviderCheckoutSessionReference { get; set; }
 
     /// <summary>Gets or sets the payment amount in minor units.</summary>
     public long AmountMinor { get; set; }

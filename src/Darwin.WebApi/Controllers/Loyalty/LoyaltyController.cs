@@ -1,3 +1,4 @@
+using Darwin.Application;
 using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.DTOs;
@@ -8,6 +9,7 @@ using Darwin.WebApi.Mappers;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Loyalty;
 
@@ -33,6 +35,7 @@ public sealed class LoyaltyController : ApiControllerBase
     private readonly GetMyPromotionsHandler _getMyPromotionsHandler;
     private readonly TrackPromotionInteractionHandler _trackPromotionInteractionHandler;
     private readonly ILoyaltyPresentationService _presentationService;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LoyaltyController"/> class.
@@ -50,7 +53,8 @@ public sealed class LoyaltyController : ApiControllerBase
         TrackPromotionInteractionHandler trackPromotionInteractionHandler,
         GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler,
         CreateLoyaltyAccountHandler createLoyaltyAccountHandler,
-        ILoyaltyPresentationService presentationService)
+        ILoyaltyPresentationService presentationService,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _prepareScanSessionHandler = prepareScanSessionHandler ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
         _getMyLoyaltyAccountsHandler = getMyLoyaltyAccountsHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountsHandler));
@@ -65,6 +69,7 @@ public sealed class LoyaltyController : ApiControllerBase
         _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
         _createLoyaltyAccountHandler = createLoyaltyAccountHandler ?? throw new ArgumentNullException(nameof(createLoyaltyAccountHandler));
         _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -80,12 +85,12 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (request.BusinessId == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         var dto = new PrepareScanSessionDto
@@ -177,7 +182,7 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (businessId == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         var result = await _getMyLoyaltyHistoryHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
@@ -201,7 +206,7 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (businessId == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         var result = await _getMyLoyaltyAccountForBusinessHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
@@ -211,7 +216,7 @@ public sealed class LoyaltyController : ApiControllerBase
         }
 
         return result.Value is null
-            ? NotFoundProblem("Loyalty account not found for the specified business and user.")
+            ? NotFoundProblem(_validationLocalizer["LoyaltyAccountNotFoundForSpecifiedBusinessAndUser"])
             : Ok(LoyaltyContractsMapper.ToContract(result.Value));
     }
 
@@ -227,7 +232,7 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (businessId == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         var result = await _getMyLoyaltyBusinessDashboardHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
@@ -237,7 +242,7 @@ public sealed class LoyaltyController : ApiControllerBase
         }
 
         return result.Value is null
-            ? NotFoundProblem("Loyalty dashboard not found for the specified business and user.")
+            ? NotFoundProblem(_validationLocalizer["LoyaltyDashboardNotFoundForSpecifiedBusinessAndUser"])
             : Ok(LoyaltyContractsMapper.ToContract(result.Value));
     }
 
@@ -252,7 +257,7 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (businessId == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         var result = await _getAvailableLoyaltyRewardsForBusinessHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
@@ -280,13 +285,13 @@ public sealed class LoyaltyController : ApiControllerBase
         var normalizedPage = page.GetValueOrDefault(1);
         if (normalizedPage <= 0)
         {
-            return BadRequestProblem("Page must be a positive integer.");
+            return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(20);
         if (normalizedPageSize <= 0 || normalizedPageSize > 200)
         {
-            return BadRequestProblem("PageSize must be between 1 and 200.");
+            return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And200"]);
         }
 
         var request = new MyLoyaltyBusinessListRequestDto
@@ -318,12 +323,12 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (request.BusinessId.HasValue && request.BusinessId.Value == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId must be a non-empty GUID when provided.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdValidWhenProvided"]);
         }
 
         var result = await _getMyPromotionsHandler
@@ -404,17 +409,17 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (request.BusinessId == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         if (string.IsNullOrWhiteSpace(request.Title))
         {
-            return BadRequestProblem("Title is required.");
+            return BadRequestProblem(_validationLocalizer["TitleRequired"]);
         }
 
         var result = await _trackPromotionInteractionHandler
@@ -450,17 +455,17 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (!request.BusinessId.HasValue || request.BusinessId.Value == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required and must be a non-empty GUID.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         if ((request.BeforeAtUtc is null) != (request.BeforeId is null))
         {
-            return BadRequestProblem("Invalid cursor. Both BeforeAtUtc and BeforeId must be provided together.");
+            return BadRequestProblem(_validationLocalizer["InvalidTimelineCursor"]);
         }
 
         var dto = new GetMyLoyaltyTimelinePageDto
@@ -501,7 +506,7 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (businessId == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         var result = await _createLoyaltyAccountHandler
@@ -528,7 +533,7 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         if (businessId == Guid.Empty)
         {
-            return BadRequestProblem("BusinessId is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
         var accountResult = await _getMyLoyaltyAccountForBusinessHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
@@ -540,7 +545,7 @@ public sealed class LoyaltyController : ApiControllerBase
         var account = accountResult.Value;
         if (account is null)
         {
-            return NotFoundProblem("Loyalty account not found for the specified business and user.");
+            return NotFoundProblem(_validationLocalizer["LoyaltyAccountNotFoundForSpecifiedBusinessAndUser"]);
         }
 
         var availableResult = await _getAvailableLoyaltyRewardsForBusinessHandler.HandleAsync(businessId, ct).ConfigureAwait(false);

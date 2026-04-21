@@ -221,7 +221,10 @@ namespace Darwin.Application.Orders.DTOs
         public Guid OrderId { get; set; }
         public string Carrier { get; set; } = string.Empty;
         public string Service { get; set; } = string.Empty;
+        public string? ProviderShipmentReference { get; set; }
         public string? TrackingNumber { get; set; }
+        public string? LabelUrl { get; set; }
+        public string? LastCarrierEventKey { get; set; }
         public int? TotalWeight { get; set; }
         public List<ShipmentLineCreateDto> Lines { get; set; } = new();
     }
@@ -232,16 +235,47 @@ namespace Darwin.Application.Orders.DTOs
         public int Quantity { get; set; }
     }
 
+    public sealed class ApplyShipmentCarrierEventDto
+    {
+        public string Carrier { get; set; } = string.Empty;
+        public string ProviderShipmentReference { get; set; } = string.Empty;
+        public string? TrackingNumber { get; set; }
+        public string? LabelUrl { get; set; }
+        public string? Service { get; set; }
+        public string CarrierEventKey { get; set; } = string.Empty;
+        public DateTime OccurredAtUtc { get; set; }
+        public string? ProviderStatus { get; set; }
+        public string? ExceptionCode { get; set; }
+        public string? ExceptionMessage { get; set; }
+    }
+
     public sealed class ShipmentDetailDto
     {
         public Guid Id { get; set; }
         public string Carrier { get; set; } = string.Empty;
         public string Service { get; set; } = string.Empty;
+        public string? ProviderShipmentReference { get; set; }
         public string? TrackingNumber { get; set; }
+        public string? TrackingUrl { get; set; }
+        public string? LabelUrl { get; set; }
         public int? TotalWeight { get; set; }
         public Darwin.Domain.Enums.ShipmentStatus Status { get; set; }
         public DateTime? ShippedAtUtc { get; set; }
         public DateTime? DeliveredAtUtc { get; set; }
+        public string? LastCarrierEventKey { get; set; }
+        public List<ShipmentCarrierEventListItemDto> RecentCarrierEvents { get; set; } = new();
+    }
+
+    public sealed class ShipmentCarrierEventListItemDto
+    {
+        public string CarrierEventKey { get; set; } = string.Empty;
+        public string? ProviderStatus { get; set; }
+        public string? ExceptionCode { get; set; }
+        public string? ExceptionMessage { get; set; }
+        public string? TrackingNumber { get; set; }
+        public string? LabelUrl { get; set; }
+        public string? Service { get; set; }
+        public DateTime OccurredAtUtc { get; set; }
     }
 
     public sealed class UpdateOrderStatusDto
@@ -325,8 +359,17 @@ namespace Darwin.Application.Orders.DTOs
         /// <summary>Service level (e.g., "Standard", "Express").</summary>
         public string Service { get; set; } = string.Empty;
 
+        /// <summary>Optional carrier-side shipment or label reference.</summary>
+        public string? ProviderShipmentReference { get; set; }
+
         /// <summary>Optional tracking number provided by the carrier.</summary>
         public string? TrackingNumber { get; set; }
+
+        /// <summary>Optional carrier tracking URL when the shipment is trackable in phase-1 flows.</summary>
+        public string? TrackingUrl { get; set; }
+
+        /// <summary>Optional carrier-hosted label/document URL for operator follow-up.</summary>
+        public string? LabelUrl { get; set; }
 
         /// <summary>Total weight of the shipment, unit decided by SiteSetting/UI.</summary>
         public int TotalWeight { get; set; }
@@ -348,12 +391,18 @@ namespace Darwin.Application.Orders.DTOs
         public int OpenAgeHours { get; set; }
         public int? InTransitAgeHours { get; set; }
         public DateTime? LastCarrierEventAtUtc { get; set; }
+        public string? LastCarrierEventKey { get; set; }
+        public List<ShipmentCarrierEventListItemDto> RecentCarrierEvents { get; set; } = new();
         public string TrackingState { get; set; } = string.Empty;
         public string ExceptionNote { get; set; } = string.Empty;
         public int AttentionDelayHours { get; set; }
         public int TrackingGraceHours { get; set; }
         public Guid? DefaultRefundPaymentId { get; set; }
         public bool HasRefundablePayment { get; set; }
+        public bool ProviderOperationQueued { get; set; }
+        public bool ProviderOperationFailed { get; set; }
+        public string? ProviderOperationType { get; set; }
+        public string? ProviderOperationFailureReason { get; set; }
 
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();

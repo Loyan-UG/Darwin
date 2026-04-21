@@ -33,5 +33,10 @@ namespace Darwin.WebAdmin.Controllers.Admin
         {
             TempData["Warning"] = T(key);
         }
+
+        protected void AddModelErrorMessage(string key)
+        {
+            ModelState.AddModelError(string.Empty, T(key));
+        }
     }
 }

@@ -93,6 +93,7 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderLine> OrderLines => Set<OrderLine>();
         public DbSet<Shipment> Shipments => Set<Shipment>();
+        public DbSet<ShipmentCarrierEvent> ShipmentCarrierEvents => Set<ShipmentCarrierEvent>();
         public DbSet<ShipmentLine> ShipmentLines => Set<ShipmentLine>();
         public DbSet<Refund> Refunds => Set<Refund>();
 
@@ -105,6 +106,10 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
         public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
         public DbSet<EventLog> EventLogs => Set<EventLog>();
+        public DbSet<EmailDispatchOperation> EmailDispatchOperations => Set<EmailDispatchOperation>();
+        public DbSet<ChannelDispatchOperation> ChannelDispatchOperations => Set<ChannelDispatchOperation>();
+        public DbSet<ProviderCallbackInboxMessage> ProviderCallbackInboxMessages => Set<ProviderCallbackInboxMessage>();
+        public DbSet<ShipmentProviderOperation> ShipmentProviderOperations => Set<ShipmentProviderOperation>();
         public DbSet<EmailDispatchAudit> EmailDispatchAudits => Set<EmailDispatchAudit>();
         public DbSet<ChannelDispatchAudit> ChannelDispatchAudits => Set<ChannelDispatchAudit>();
         public DbSet<RedirectRule> RedirectRules => Set<RedirectRule>();

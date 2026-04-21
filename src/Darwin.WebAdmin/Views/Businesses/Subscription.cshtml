@@ -5,6 +5,7 @@
     ViewData["Title"] = T.T("BusinessSubscriptionTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
     string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? "-" : T.T(status);
+    string LocalizeSubscriptionInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="business-subscription-workspace-shell">
@@ -508,7 +509,7 @@
                             </td>
                             <td>
                                 <span class="badge @(invoice.Status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Paid ? "bg-success" : invoice.Status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Uncollectible ? "bg-danger" : "bg-secondary")">
-                                    @invoice.Status
+                                    @LocalizeSubscriptionInvoiceStatus(invoice.Status)
                                 </span>
                                 @if (!string.IsNullOrWhiteSpace(invoice.FailureReason))
                                 {

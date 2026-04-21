@@ -5,7 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Queries
@@ -75,7 +78,10 @@ namespace Darwin.Application.Orders.Queries
                         .FirstOrDefault() ?? string.Empty,
                     Carrier = s.Carrier,
                     Service = s.Service,
+                    ProviderShipmentReference = s.ProviderShipmentReference,
                     TrackingNumber = s.TrackingNumber,
+                    TrackingUrl = ShipmentTrackingPresentation.ResolveTrackingUrl(s.Carrier, s.TrackingNumber),
+                    LabelUrl = s.LabelUrl,
                     TotalWeight = s.TotalWeight ?? 0,
                     Status = s.Status,
                     ShippedAtUtc = s.ShippedAtUtc,
@@ -90,16 +96,64 @@ namespace Darwin.Application.Orders.Queries
                         (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                         (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
                         ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc),
+                    LastCarrierEventAtUtc = s.DeliveredAtUtc ?? s.ShippedAtUtc ?? s.CreatedAtUtc,
+                    LastCarrierEventKey = s.LastCarrierEventKey,
                     AttentionDelayHours = attentionDelayHours,
                     TrackingGraceHours = trackingGraceHours,
+                    DefaultRefundPaymentId = _db.Set<Payment>()
+                        .Where(p => p.OrderId == s.OrderId &&
+                            (p.Status == PaymentStatus.Captured ||
+                             p.Status == PaymentStatus.Completed ||
+                             p.Status == PaymentStatus.Refunded))
+                        .OrderByDescending(p => p.PaidAtUtc ?? DateTime.MinValue)
+                        .Select(p => (Guid?)p.Id)
+                        .FirstOrDefault(),
                     NeedsCarrierReview =
                         s.Carrier == "DHL" &&
                         ((s.Service == null || s.Service == string.Empty) ||
+                         s.Status == Domain.Enums.ShipmentStatus.Returned ||
                          ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                           (s.TrackingNumber == null || s.TrackingNumber == string.Empty))),
+                    ProviderOperationQueued =
+                        _db.Set<ShipmentProviderOperation>().Any(op =>
+                            op.ShipmentId == s.Id &&
+                            !op.IsDeleted &&
+                            op.Provider == "DHL" &&
+                            op.Status == "Pending"),
+                    ProviderOperationFailed =
+                        _db.Set<ShipmentProviderOperation>().Any(op =>
+                            op.ShipmentId == s.Id &&
+                            !op.IsDeleted &&
+                            op.Provider == "DHL" &&
+                            op.Status == "Failed"),
+                    ProviderOperationType = _db.Set<ShipmentProviderOperation>()
+                        .Where(op => op.ShipmentId == s.Id &&
+                                     !op.IsDeleted &&
+                                     op.Provider == "DHL" &&
+                                     (op.Status == "Pending" || op.Status == "Failed"))
+                        .OrderByDescending(op => op.LastAttemptAtUtc ?? op.CreatedAtUtc)
+                        .Select(op => op.OperationType)
+                        .FirstOrDefault(),
+                    ProviderOperationFailureReason = _db.Set<ShipmentProviderOperation>()
+                        .Where(op => op.ShipmentId == s.Id &&
+                                     !op.IsDeleted &&
+                                     op.Provider == "DHL" &&
+                                     op.Status == "Failed")
+                        .OrderByDescending(op => op.LastAttemptAtUtc ?? op.CreatedAtUtc)
+                        .Select(op => op.FailureReason)
+                        .FirstOrDefault(),
                     RowVersion = s.RowVersion
                 })
                 .ToListAsync(ct);
+
+            await ShipmentCarrierEventProjection.PopulateRecentEventsAsync(_db, items, 3, ct).ConfigureAwait(false);
+
+            foreach (var item in items)
+            {
+                item.LastCarrierEventAtUtc = item.RecentCarrierEvents.FirstOrDefault()?.OccurredAtUtc ?? item.LastCarrierEventAtUtc;
+            }
+
+            ShipmentTrackingPresentation.Enrich(items, nowUtc);
 
             return (items, total);
         }

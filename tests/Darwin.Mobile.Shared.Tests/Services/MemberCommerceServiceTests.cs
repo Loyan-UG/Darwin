@@ -65,7 +65,7 @@ public sealed class MemberCommerceServiceTests
                 {
                     OrderId = Guid.Parse("99999999-8888-7777-6666-555555555555"),
                     PaymentId = Guid.Parse("12121212-3434-5656-7878-909090909090"),
-                    Provider = "DarwinCheckout",
+                    Provider = "Stripe",
                     ProviderReference = "pi_123",
                     Currency = "EUR",
                     AmountMinor = 2599,
@@ -83,7 +83,7 @@ public sealed class MemberCommerceServiceTests
             Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             new CreateStorefrontPaymentIntentRequest
             {
-                Provider = "DarwinCheckout"
+                Provider = "Stripe"
             },
             TestContext.Current.CancellationToken);
 

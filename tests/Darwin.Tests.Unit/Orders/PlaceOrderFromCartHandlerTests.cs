@@ -240,8 +240,8 @@ public sealed class PlaceOrderFromCartHandlerTests
         db.Set<ShippingMethod>().Add(new ShippingMethod
         {
             Id = shippingMethodId,
-            Name = "Hermes Standard",
-            Carrier = "Hermes",
+            Name = "DHL Standard",
+            Carrier = "DHL",
             Service = "Standard",
             CountriesCsv = "DE",
             Currency = "EUR",
@@ -280,7 +280,7 @@ public sealed class PlaceOrderFromCartHandlerTests
         order.BillingAddressJson.Should().Contain("Friedrichstrasse 12");
         order.ShippingAddressJson.Should().Contain("Unter den Linden 5");
         order.GrandTotalGrossMinor.Should().Be(3165);
-        order.ShippingMethodName.Should().Be("Hermes Standard");
+        order.ShippingMethodName.Should().Be("DHL Standard");
     }
 
     [Fact]

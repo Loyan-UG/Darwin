@@ -330,6 +330,12 @@
   <data name="ShippingMethodUpdatedMessage" xml:space="preserve">
     <value>Versandart aktualisiert.</value>
   </data>
+  <data name="ShippingMethodCreateFailedMessage" xml:space="preserve">
+    <value>Die Versandart kann derzeit nicht erstellt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="ShippingMethodUpdateFailedMessage" xml:space="preserve">
+    <value>Die Versandart kann derzeit nicht aktualisiert werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="ShippingMethodConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Neu laden und erneut versuchen.</value>
   </data>
@@ -1962,6 +1968,21 @@
   <data name="TrackingOverdueBadge" xml:space="preserve">
     <value>Tracking ueberfaellig</value>
   </data>
+  <data name="ProviderShipmentReference" xml:space="preserve">
+    <value>Provider Shipment Ref</value>
+  </data>
+  <data name="CarrierLabel" xml:space="preserve">
+    <value>Carrier Label</value>
+  </data>
+  <data name="CarrierLabelUrl" xml:space="preserve">
+    <value>Carrier Label URL</value>
+  </data>
+  <data name="GenerateCarrierLabel" xml:space="preserve">
+    <value>Carrier-Label erzeugen</value>
+  </data>
+  <data name="LastCarrierEventKey" xml:space="preserve">
+    <value>Last Carrier Event Key</value>
+  </data>
   <data name="ReturnedParcel" xml:space="preserve">
     <value>Retournierte Sendung</value>
   </data>
@@ -2844,6 +2865,15 @@
   <data name="BusinessCreateNextSteps" xml:space="preserve">
     <value>Business erstellt. Fuegen Sie als Naechstes einen Primaerstandort hinzu und weisen Sie einen Inhaber zu.</value>
   </data>
+  <data name="BusinessCreateFailed" xml:space="preserve">
+    <value>Das Business kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="BusinessUpdateFailed" xml:space="preserve">
+    <value>Das Business kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="BusinessSetupSaveFailed" xml:space="preserve">
+    <value>Das Business-Setup kann derzeit nicht gespeichert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="BusinessSupportCustomerTitle" xml:space="preserve">
     <value>CRM-Supportprofil</value>
   </data>
@@ -3189,8 +3219,23 @@
   <data name="TaxPolicyBaselineIncomplete" xml:space="preserve">
     <value>Baseline unvollstaendig</value>
   </data>
+  <data name="StructuredExportReadiness" xml:space="preserve">
+    <value>Bereitschaft für strukturierte Exporte</value>
+  </data>
+  <data name="TaxPolicyStructuredExportReady" xml:space="preserve">
+    <value>Baseline für strukturierten Export bereit</value>
+  </data>
+  <data name="TaxPolicyStructuredExportIncomplete" xml:space="preserve">
+    <value>Baseline für strukturierten Export unvollständig</value>
+  </data>
   <data name="TaxPolicyComplianceScopeNote" xml:space="preserve">
     <value>Phase 1 zeigt nur die Bereitschaft fuer Aussteller- und USt-Daten. Archiv- und E-Rechnungs-Workflows brauchen weiterhin tiefere Compliance-Implementierung.</value>
+  </data>
+  <data name="InvoiceFinancialEditLockReason" xml:space="preserve">
+    <value>Diese Rechnung ist kein Entwurf mehr. Finanzfelder sind hier gesperrt; verwenden Sie stattdessen Statuswechsel oder den Erstattungs-Workflow.</value>
+  </data>
+  <data name="InvoiceFinancialEditLockedMessage" xml:space="preserve">
+    <value>Nur Entwurfsrechnungen können im Standard-Editor geändert werden. Für gebuchte, bezahlte oder stornierte Rechnungen nutzen Sie Statuswechsel oder den Erstattungs-Workflow.</value>
   </data>
   <data name="RefundWorkflowNote" xml:space="preserve">
     <value>Nutze Rueckerstattung, wenn vereinnahmte Mittel zurueckgegeben werden muessen. Nutze Storno nur, wenn keine Mittel eingezogen wurden.</value>
@@ -3642,6 +3687,15 @@
   <data name="Correlation" xml:space="preserve">
     <value>Korrelation</value>
   </data>
+  <data name="TemplateKey" xml:space="preserve">
+    <value>Vorlagenschlüssel</value>
+  </data>
+  <data name="EffectiveRecipient" xml:space="preserve">
+    <value>Tatsächlicher Empfänger</value>
+  </data>
+  <data name="ProviderMessageId" xml:space="preserve">
+    <value>Anbieter-Nachrichten-ID</value>
+  </data>
   <data name="OperatorFollowUp" xml:space="preserve">
     <value>Operator-Nachverfolgung</value>
   </data>
@@ -3683,6 +3737,12 @@
   </data>
   <data name="ProviderRef" xml:space="preserve">
     <value>Provider-Ref</value>
+  </data>
+  <data name="ProviderPaymentIntentRef" xml:space="preserve">
+    <value>Payment-Intent-Ref</value>
+  </data>
+  <data name="ProviderCheckoutSessionRef" xml:space="preserve">
+    <value>Checkout-Session-Ref</value>
   </data>
   <data name="OpenAge" xml:space="preserve">
     <value>Offenes Alter</value>
@@ -3843,6 +3903,12 @@
   <data name="WarehouseUpdatedMessage" xml:space="preserve">
     <value>Lager aktualisiert.</value>
   </data>
+  <data name="WarehouseCreateFailedMessage" xml:space="preserve">
+    <value>Das Lager kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="WarehouseUpdateFailedMessage" xml:space="preserve">
+    <value>Das Lager kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="WarehouseConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Lager neu laden und erneut versuchen.</value>
   </data>
@@ -3855,6 +3921,12 @@
   <data name="SupplierUpdatedMessage" xml:space="preserve">
     <value>Lieferant aktualisiert.</value>
   </data>
+  <data name="SupplierCreateFailedMessage" xml:space="preserve">
+    <value>Der Lieferant kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="SupplierUpdateFailedMessage" xml:space="preserve">
+    <value>Der Lieferant kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="SupplierConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Lieferant neu laden und erneut versuchen.</value>
   </data>
@@ -3864,20 +3936,38 @@
   <data name="StockAdjustedMessage" xml:space="preserve">
     <value>Bestand angepasst.</value>
   </data>
+  <data name="StockAdjustFailedMessage" xml:space="preserve">
+    <value>Der Bestand kann derzeit nicht angepasst werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="StockReservedMessage" xml:space="preserve">
     <value>Bestand reserviert.</value>
+  </data>
+  <data name="StockReserveFailedMessage" xml:space="preserve">
+    <value>Der Bestand kann derzeit nicht reserviert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="ReservationReleasedMessage" xml:space="preserve">
     <value>Reservierung freigegeben.</value>
   </data>
+  <data name="ReservationReleaseFailedMessage" xml:space="preserve">
+    <value>Die Reservierung kann derzeit nicht freigegeben werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="ReturnReceiptProcessedMessage" xml:space="preserve">
     <value>Retoureneingang verarbeitet.</value>
+  </data>
+  <data name="ReturnReceiptProcessFailedMessage" xml:space="preserve">
+    <value>Der Retoureneingang kann derzeit nicht verarbeitet werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="StockLevelCreatedMessage" xml:space="preserve">
     <value>Bestandsposition erstellt.</value>
   </data>
   <data name="StockLevelUpdatedMessage" xml:space="preserve">
     <value>Bestandsposition aktualisiert.</value>
+  </data>
+  <data name="StockLevelCreateFailedMessage" xml:space="preserve">
+    <value>Die Bestandsposition kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="StockLevelUpdateFailedMessage" xml:space="preserve">
+    <value>Die Bestandsposition kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="StockLevelConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Bestandsposition neu laden und erneut versuchen.</value>
@@ -3891,6 +3981,12 @@
   <data name="StockTransferUpdatedMessage" xml:space="preserve">
     <value>Bestandstransfer aktualisiert.</value>
   </data>
+  <data name="StockTransferCreateFailedMessage" xml:space="preserve">
+    <value>Der Bestandstransfer kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="StockTransferUpdateFailedMessage" xml:space="preserve">
+    <value>Der Bestandstransfer kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="StockTransferConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Bestandstransfer neu laden und erneut versuchen.</value>
   </data>
@@ -3902,6 +3998,12 @@
   </data>
   <data name="PurchaseOrderUpdatedMessage" xml:space="preserve">
     <value>Bestellauftrag aktualisiert.</value>
+  </data>
+  <data name="PurchaseOrderCreateFailedMessage" xml:space="preserve">
+    <value>Der Bestellauftrag kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="PurchaseOrderUpdateFailedMessage" xml:space="preserve">
+    <value>Der Bestellauftrag kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="PurchaseOrderConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Bestellauftrag neu laden und erneut versuchen.</value>
@@ -3915,6 +4017,12 @@
   <data name="BillingPlanUpdatedMessage" xml:space="preserve">
     <value>Tarif aktualisiert.</value>
   </data>
+  <data name="BillingPlanCreateFailedMessage" xml:space="preserve">
+    <value>Der Tarif kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="BillingPlanUpdateFailedMessage" xml:space="preserve">
+    <value>Der Tarif kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="BillingPlanConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Tarif neu laden und erneut versuchen.</value>
   </data>
@@ -3926,6 +4034,12 @@
   </data>
   <data name="PaymentUpdatedMessage" xml:space="preserve">
     <value>Zahlung aktualisiert.</value>
+  </data>
+  <data name="PaymentCreateFailedMessage" xml:space="preserve">
+    <value>Die Zahlung kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="PaymentUpdateFailedMessage" xml:space="preserve">
+    <value>Die Zahlung kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="PaymentConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Zahlung neu laden und erneut versuchen.</value>
@@ -3939,6 +4053,12 @@
   <data name="FinancialAccountUpdatedMessage" xml:space="preserve">
     <value>Finanzkonto aktualisiert.</value>
   </data>
+  <data name="FinancialAccountCreateFailedMessage" xml:space="preserve">
+    <value>Das Finanzkonto kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="FinancialAccountUpdateFailedMessage" xml:space="preserve">
+    <value>Das Finanzkonto kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="FinancialAccountConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Finanzkonto neu laden und erneut versuchen.</value>
   </data>
@@ -3951,6 +4071,12 @@
   <data name="ExpenseUpdatedMessage" xml:space="preserve">
     <value>Ausgabe aktualisiert.</value>
   </data>
+  <data name="ExpenseCreateFailedMessage" xml:space="preserve">
+    <value>Die Ausgabe kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="ExpenseUpdateFailedMessage" xml:space="preserve">
+    <value>Die Ausgabe kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="ExpenseConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Ausgabe neu laden und erneut versuchen.</value>
   </data>
@@ -3962,6 +4088,12 @@
   </data>
   <data name="JournalEntryUpdatedMessage" xml:space="preserve">
     <value>Buchung aktualisiert.</value>
+  </data>
+  <data name="JournalEntryCreateFailedMessage" xml:space="preserve">
+    <value>Die Buchung kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
+  <data name="JournalEntryUpdateFailedMessage" xml:space="preserve">
+    <value>Die Buchung kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="JournalEntryConcurrencyMessage" xml:space="preserve">
     <value>Parallelitaetskonflikt. Buchung neu laden und erneut versuchen.</value>
@@ -4017,6 +4149,14 @@
     <value>Die Add-on-Gruppe wurde aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Add-on-Gruppe.</comment>
   </data>
+  <data name="AddOnGroupCreateFailed" xml:space="preserve">
+    <value>Die Add-on-Gruppe kann derzeit nicht erstellt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Erstellen einer Add-on-Gruppe fehlschlägt.</comment>
+  </data>
+  <data name="AddOnGroupUpdateFailed" xml:space="preserve">
+    <value>Die Add-on-Gruppe kann derzeit nicht aktualisiert werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Aktualisieren einer Add-on-Gruppe fehlschlägt.</comment>
+  </data>
   <data name="AddOnGroupDeleted" xml:space="preserve">
     <value>Die Add-on-Gruppe wurde gelöscht.</value>
     <comment>Erfolgsmeldung nach dem Löschen einer Add-on-Gruppe.</comment>
@@ -4037,9 +4177,17 @@
     <value>Mit Kategorien verknüpft.</value>
     <comment>Erfolgsmeldung nach dem Verknüpfen einer Add-on-Gruppe mit Kategorien.</comment>
   </data>
+  <data name="AddOnGroupAttachCategoriesFailed" xml:space="preserve">
+    <value>Die Verknüpfung der Add-on-Gruppe mit Kategorien ist derzeit nicht möglich. Bitte versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Verknüpfen einer Add-on-Gruppe mit Kategorien fehlschlägt.</comment>
+  </data>
   <data name="AddOnGroupAttachedToBrands" xml:space="preserve">
     <value>Mit Marken verknüpft.</value>
     <comment>Erfolgsmeldung nach dem Verknüpfen einer Add-on-Gruppe mit Marken.</comment>
+  </data>
+  <data name="AddOnGroupAttachBrandsFailed" xml:space="preserve">
+    <value>Die Verknüpfung der Add-on-Gruppe mit Marken ist derzeit nicht möglich. Bitte versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Verknüpfen einer Add-on-Gruppe mit Marken fehlschlägt.</comment>
   </data>
   <data name="AddOnGroupAttachVariantsFailed" xml:space="preserve">
     <value>Die Verknüpfung mit Varianten ist fehlgeschlagen.</value>
@@ -4060,6 +4208,14 @@
   <data name="BrandUpdated" xml:space="preserve">
     <value>Die Marke wurde aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Marke.</comment>
+  </data>
+  <data name="BrandCreateFailed" xml:space="preserve">
+    <value>Die Marke kann derzeit nicht erstellt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Erstellen einer Marke fehlschlägt.</comment>
+  </data>
+  <data name="BrandUpdateFailed" xml:space="preserve">
+    <value>Die Marke kann derzeit nicht aktualisiert werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Aktualisieren einer Marke fehlschlägt.</comment>
   </data>
   <data name="BrandConcurrencyConflict" xml:space="preserve">
     <value>Gleichzeitigkeitskonflikt. Die Marke wurde von einem anderen Prozess geändert. Laden Sie sie neu und versuchen Sie es erneut.</value>
@@ -4233,6 +4389,34 @@
     <value>Rechnung erstellt.</value>
     <comment>Erfolgsmeldung nach dem Erstellen einer Bestellrechnung.</comment>
   </data>
+  <data name="OrderPaymentAddFailed" xml:space="preserve">
+    <value>Die Zahlung kann derzeit nicht hinzugefügt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Hinzufügen einer Bestellzahlung fehlschlägt.</comment>
+  </data>
+  <data name="OrderShipmentAddFailed" xml:space="preserve">
+    <value>Die Sendung kann derzeit nicht hinzugefügt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Hinzufügen einer Bestellsendung fehlschlägt.</comment>
+  </data>
+  <data name="DhlLabelGenerated" xml:space="preserve">
+    <value>DHL-Label erzeugt.</value>
+    <comment>Erfolgsmeldung nach dem Erzeugen eines DHL-Labels für eine Sendung.</comment>
+  </data>
+  <data name="DhlLabelGenerationQueued" xml:space="preserve">
+    <value>DHL-Label-Erzeugung in die Hintergrundverarbeitung eingereiht.</value>
+    <comment>Erfolgsmeldung nach dem Einreihen einer DHL-Label-Erzeugung für die Hintergrundverarbeitung.</comment>
+  </data>
+  <data name="DhlLabelGenerationFailed" xml:space="preserve">
+    <value>Das DHL-Label kann derzeit nicht erzeugt werden. Prüfen Sie die DHL-Bereitschaft und die Sendungsdaten und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn die DHL-Label-Erzeugung in den Sendungsoberflächen fehlschlägt.</comment>
+  </data>
+  <data name="OrderRefundAddFailed" xml:space="preserve">
+    <value>Die Erstattung kann derzeit nicht hinzugefügt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Hinzufügen einer Bestellerstattung fehlschlägt.</comment>
+  </data>
+  <data name="OrderInvoiceCreateFailed" xml:space="preserve">
+    <value>Die Rechnung kann derzeit nicht erstellt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Erstellen einer Bestellrechnung fehlschlägt.</comment>
+  </data>
   <data name="ConcurrencyTokenMissing" xml:space="preserve">
     <value>Das Gleichzeitigkeitstoken fehlt.</value>
     <comment>Fehlermeldung, wenn ein erforderliches Gleichzeitigkeitstoken fehlt.</comment>
@@ -4240,6 +4424,10 @@
   <data name="OrderStatusUpdatedFormat" xml:space="preserve">
     <value>Bestellstatus wurde auf {0} aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Ändern eines Bestellstatus. Parameter 0 ist der neue Status.</comment>
+  </data>
+  <data name="OrderStatusUpdateFailed" xml:space="preserve">
+    <value>Der Bestellstatus kann derzeit nicht aktualisiert werden. Bitte versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Ändern eines Bestellstatus fehlschlägt.</comment>
   </data>
   <data name="LoyaltyProgramCreated" xml:space="preserve">
     <value>Treueprogramm erstellt.</value>
@@ -4252,6 +4440,14 @@
   <data name="LoyaltyProgramUpdated" xml:space="preserve">
     <value>Treueprogramm aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Aktualisieren eines Treueprogramms.</comment>
+  </data>
+  <data name="LoyaltyProgramCreateFailed" xml:space="preserve">
+    <value>Das Treueprogramm kann derzeit nicht erstellt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Erstellen eines Treueprogramms bei Validierung oder Verarbeitung fehlschlägt.</comment>
+  </data>
+  <data name="LoyaltyProgramUpdateFailed" xml:space="preserve">
+    <value>Das Treueprogramm kann derzeit nicht aktualisiert werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Aktualisieren eines Treueprogramms bei Validierung oder Verarbeitung fehlschlägt.</comment>
   </data>
   <data name="LoyaltyProgramDeleted" xml:space="preserve">
     <value>Treueprogramm gelöscht.</value>
@@ -4272,6 +4468,14 @@
   <data name="LoyaltyRewardTierUpdated" xml:space="preserve">
     <value>Prämienstufe aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Aktualisieren einer Treueprämienstufe.</comment>
+  </data>
+  <data name="LoyaltyRewardTierCreateFailed" xml:space="preserve">
+    <value>Die Prämienstufe kann derzeit nicht erstellt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Erstellen einer Treueprämienstufe bei Validierung oder Verarbeitung fehlschlägt.</comment>
+  </data>
+  <data name="LoyaltyRewardTierUpdateFailed" xml:space="preserve">
+    <value>Die Prämienstufe kann derzeit nicht aktualisiert werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Aktualisieren einer Treueprämienstufe bei Validierung oder Verarbeitung fehlschlägt.</comment>
   </data>
   <data name="LoyaltyRewardTierDeleted" xml:space="preserve">
     <value>Prämienstufe gelöscht.</value>
@@ -4389,17 +4593,29 @@
     <value>Unternehmen für den operativen Einsatz freigegeben.</value>
     <comment>Erfolgsmeldung nach der Freigabe eines Unternehmens.</comment>
   </data>
+  <data name="BusinessApproveFailed" xml:space="preserve">
+    <value>Das Unternehmen kann derzeit nicht freigegeben werden. Aktualisieren Sie die Seite und versuchen Sie es erneut.</value>
+  </data>
   <data name="BusinessSuspended" xml:space="preserve">
     <value>Unternehmen gesperrt.</value>
     <comment>Erfolgsmeldung nach dem Sperren eines Unternehmens.</comment>
+  </data>
+  <data name="BusinessSuspendFailed" xml:space="preserve">
+    <value>Das Unternehmen kann derzeit nicht gesperrt werden. Aktualisieren Sie die Seite und versuchen Sie es erneut.</value>
   </data>
   <data name="BusinessReactivated" xml:space="preserve">
     <value>Unternehmen reaktiviert.</value>
     <comment>Erfolgsmeldung nach dem Reaktivieren eines Unternehmens.</comment>
   </data>
+  <data name="BusinessReactivateFailed" xml:space="preserve">
+    <value>Das Unternehmen kann derzeit nicht reaktiviert werden. Aktualisieren Sie die Seite und versuchen Sie es erneut.</value>
+  </data>
   <data name="BusinessLocationCreated" xml:space="preserve">
     <value>Standort erstellt.</value>
     <comment>Erfolgsmeldung nach dem Erstellen eines Unternehmensstandorts.</comment>
+  </data>
+  <data name="BusinessLocationCreateFailed" xml:space="preserve">
+    <value>Der Standort kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="BusinessLocationNotFound" xml:space="preserve">
     <value>Standort nicht gefunden.</value>
@@ -4409,6 +4625,9 @@
     <value>Standort aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Aktualisieren eines Unternehmensstandorts.</comment>
   </data>
+  <data name="BusinessLocationUpdateFailed" xml:space="preserve">
+    <value>Der Standort kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="BusinessLocationConcurrencyConflict" xml:space="preserve">
     <value>Gleichzeitigkeitskonflikt. Laden Sie den Standort neu und versuchen Sie es erneut.</value>
     <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt während der Standortbearbeitung.</comment>
@@ -4417,17 +4636,29 @@
     <value>Einladung gesendet.</value>
     <comment>Erfolgsmeldung nach dem Senden einer Unternehmenseinladung.</comment>
   </data>
+  <data name="BusinessInvitationCreateFailed" xml:space="preserve">
+    <value>Die Unternehmenseinladung kann derzeit nicht erstellt werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="BusinessInvitationReissued" xml:space="preserve">
     <value>Einladung erneut ausgestellt und nochmals per E-Mail versendet.</value>
     <comment>Erfolgsmeldung nach dem erneuten Senden einer Unternehmenseinladung.</comment>
+  </data>
+  <data name="BusinessInvitationResendFailed" xml:space="preserve">
+    <value>Die Unternehmenseinladung kann derzeit nicht erneut gesendet werden. Aktualisieren Sie die Seite und versuchen Sie es erneut.</value>
   </data>
   <data name="BusinessInvitationRevoked" xml:space="preserve">
     <value>Einladung widerrufen.</value>
     <comment>Erfolgsmeldung nach dem Widerruf einer Unternehmenseinladung.</comment>
   </data>
+  <data name="BusinessInvitationRevokeFailed" xml:space="preserve">
+    <value>Die Unternehmenseinladung kann derzeit nicht widerrufen werden. Aktualisieren Sie die Seite und versuchen Sie es erneut.</value>
+  </data>
   <data name="BusinessMemberAssigned" xml:space="preserve">
     <value>Unternehmensmitglied zugewiesen.</value>
     <comment>Erfolgsmeldung nach dem Zuweisen eines Unternehmensmitglieds.</comment>
+  </data>
+  <data name="BusinessMemberCreateFailed" xml:space="preserve">
+    <value>Das Unternehmensmitglied kann derzeit nicht zugewiesen werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="BusinessMemberNotFound" xml:space="preserve">
     <value>Unternehmensmitglied nicht gefunden.</value>
@@ -4437,6 +4668,9 @@
     <value>Unternehmensmitglied aktualisiert.</value>
     <comment>Erfolgsmeldung nach dem Aktualisieren eines Unternehmensmitglieds.</comment>
   </data>
+  <data name="BusinessMemberUpdateFailed" xml:space="preserve">
+    <value>Das Unternehmensmitglied kann derzeit nicht aktualisiert werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
+  </data>
   <data name="BusinessMemberConcurrencyConflict" xml:space="preserve">
     <value>Gleichzeitigkeitskonflikt. Laden Sie die Mitgliedschaft neu und versuchen Sie es erneut.</value>
     <comment>Fehlermeldung bei einem Gleichzeitigkeitskonflikt während der Bearbeitung einer Mitgliedschaft.</comment>
@@ -4445,9 +4679,15 @@
     <value>Unternehmensmitglied entfernt.</value>
     <comment>Erfolgsmeldung nach dem Entfernen eines Unternehmensmitglieds.</comment>
   </data>
+  <data name="BusinessMemberDeleteFailed" xml:space="preserve">
+    <value>Das Unternehmensmitglied kann derzeit nicht entfernt werden. Aktualisieren Sie die Seite und versuchen Sie es erneut.</value>
+  </data>
   <data name="BusinessMemberRemovedOverride" xml:space="preserve">
     <value>Unternehmensmitglied unter kontrollierter Owner-Override-Regel entfernt.</value>
     <comment>Erfolgsmeldung nach dem Entfernen eines Unternehmensmitglieds mit Owner-Override.</comment>
+  </data>
+  <data name="BusinessMemberForceDeleteFailed" xml:space="preserve">
+    <value>Die Entfernung mit Owner-Override kann derzeit nicht abgeschlossen werden. Pruefen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
   </data>
   <data name="BusinessMemberActivationEmailSent" xml:space="preserve">
     <value>Aktivierungs-E-Mail gesendet.</value>
@@ -6970,10 +7210,34 @@
     <value>Das ist die aktuelle Multi-Channel-Audit-Basis. Sie deckt die live genutzten SMS- und WhatsApp-Familien für Telefonnummern-Verifizierung und operatorseitige Diagnostik ab, ohne einen vollständigen Outbox- oder generischen Notification-Bus vorzutäuschen.</value>
   </data>
   <data name="CommunicationTestEmailSentMessage" xml:space="preserve">
-    <value>Kommunikations-Test-E-Mail an {0} gesendet.</value>
+      <value>Kommunikations-Test-E-Mail an {0} gesendet.</value>
+    </data>
+  <data name="CommunicationTestEmailQueuedMessage" xml:space="preserve">
+      <value>Kommunikations-Test-E-Mail fuer {0} in die Warteschlange gestellt.</value>
+    </data>
+  <data name="CommunicationTestSmsQueuedMessage" xml:space="preserve">
+    <value>Kommunikations-Test-SMS fuer {0} in die Warteschlange gestellt.</value>
   </data>
   <data name="CommunicationTestSmsSentMessage" xml:space="preserve">
     <value>Kommunikations-Test-SMS an {0} gesendet.</value>
+  </data>
+  <data name="CommunicationTestWhatsAppQueuedMessage" xml:space="preserve">
+    <value>Kommunikations-Test-WhatsApp fuer {0} in die Warteschlange gestellt.</value>
+  </data>
+  <data name="CommunicationQueuedDispatchesLabel" xml:space="preserve">
+    <value>Worker-Warteschlange (ausstehend / fehlgeschlagen)</value>
+  </data>
+  <data name="CommunicationQueuedDispatchOperationLabel" xml:space="preserve">
+    <value>Worker-Warteschlange</value>
+  </data>
+  <data name="CommunicationQueuedDispatchAttempts" xml:space="preserve">
+    <value>Versuche: {0}</value>
+  </data>
+  <data name="CommunicationChannelAwaitingWorker" xml:space="preserve">
+    <value>Wartet auf Worker-Zustellung</value>
+  </data>
+  <data name="CommunicationChannelWorkerFailed" xml:space="preserve">
+    <value>Worker-Zustellung fehlgeschlagen</value>
   </data>
   <data name="CommunicationTestWhatsAppSentMessage" xml:space="preserve">
     <value>Kommunikations-Test-WhatsApp an {0} gesendet.</value>
@@ -10247,5 +10511,152 @@
   </data>
   <data name="PaymentSupportPlaybookStripeAction" xml:space="preserve">
     <value>Pruefen Sie die Stripe-Bereitschaft in der Zahlungsqueue und validieren Sie dann Provider-Referenz, Fehlergrund und verknuepften Auftrag bzw. Rechnung, bevor Sie den lokalen Status aendern.</value>
+  </data>
+  <data name="Occurred" xml:space="preserve">
+    <value>Eingetreten</value>
+  </data>
+  <data name="IdempotencyKey" xml:space="preserve">
+    <value>Idempotenzschluessel</value>
+  </data>
+  <data name="PaymentProviderAuditTrail" xml:space="preserve">
+    <value>Provider-Auditspur</value>
+  </data>
+  <data name="PaymentProviderAuditTrailEmpty" xml:space="preserve">
+    <value>Fuer diese Zahlung wurden noch keine Provider-Ereignisse erfasst.</value>
+  </data>
+  <data name="ProviderEvent" xml:space="preserve">
+    <value>Provider-Ereignis</value>
+  </data>
+  <data name="PaymentProviderEventCheckoutSessionCompleted" xml:space="preserve">
+    <value>Checkout-Session abgeschlossen</value>
+  </data>
+  <data name="PaymentProviderEventPaymentIntentSucceeded" xml:space="preserve">
+    <value>Payment Intent erfolgreich</value>
+  </data>
+  <data name="PaymentProviderEventPaymentIntentFailed" xml:space="preserve">
+    <value>Payment Intent fehlgeschlagen</value>
+  </data>
+  <data name="PaymentProviderEventPaymentIntentCanceled" xml:space="preserve">
+    <value>Payment Intent abgebrochen</value>
+  </data>
+  <data name="PaymentProviderEventChargeRefunded" xml:space="preserve">
+    <value>Charge rueckerstattet</value>
+  </data>
+  <data name="PaymentProviderEventInvoicePaid" xml:space="preserve">
+    <value>Rechnung bezahlt</value>
+  </data>
+  <data name="PaymentProviderEventInvoicePaymentFailed" xml:space="preserve">
+    <value>Rechnungszahlung fehlgeschlagen</value>
+  </data>
+  <data name="PaymentProviderEventSubscriptionUpdated" xml:space="preserve">
+    <value>Abonnement aktualisiert</value>
+  </data>
+  <data name="PaymentProviderEventSubscriptionDeleted" xml:space="preserve">
+    <value>Abonnement beendet</value>
+  </data>
+  <data name="PaymentProviderEventStripeWebhook" xml:space="preserve">
+    <value>Stripe-Webhook-Ereignis</value>
+  </data>
+  <data name="PaymentProviderEventCorrelationPaymentIntent" xml:space="preserve">
+    <value>Treffer ueber Payment Intent</value>
+  </data>
+  <data name="PaymentProviderEventCorrelationCheckoutSession" xml:space="preserve">
+    <value>Treffer ueber Checkout-Session</value>
+  </data>
+  <data name="PaymentProviderEventCorrelationProviderTransaction" xml:space="preserve">
+    <value>Treffer ueber Provider-Transaktion</value>
+  </data>
+  <data name="PaymentProviderEventCorrelationMultiple" xml:space="preserve">
+    <value>Treffer ueber mehrere Provider-Referenzen</value>
+  </data>
+  <data name="PaymentProviderEventCorrelationProviderReference" xml:space="preserve">
+    <value>Treffer ueber Provider-Referenz</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderTimelineTitle" xml:space="preserve">
+    <value>Auditspur der Provider-Ereignisse</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderTimelinePresentScope" xml:space="preserve">
+    <value>Webhook-gestuetzte Provider-Ereignisse liegen fuer diese Zahlung vor und koennen zur Pruefung von Stripe-Lifecycle-Abweichungen genutzt werden.</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderTimelinePresentAction" xml:space="preserve">
+    <value>Vergleichen Sie die neuesten Provider-Ereignisse mit Zahlungsstatus, Rueckerstattungsverlauf und Webhook-Anomalie-Queues, bevor Sie Finanzstatus manuell aendern.</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderTimelineMissingScope" xml:space="preserve">
+    <value>Es wurden noch keine korrelierten Provider-Ereignisse gefunden. Der Support sollte pruefen, ob jemals ein Stripe-Callback eingegangen ist oder weiterhin Provider-Korrelation fehlt.</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderTimelineMissingAction" xml:space="preserve">
+    <value>Pruefen Sie Provider-Referenzen und die Webhook-Exception-Queue, bevor Sie annehmen, dass diese Zahlung keine externe Lifecycle-Historie hat.</value>
+  </data>
+  <data name="FailureDiagnostics" xml:space="preserve">
+    <value>Fehlerdiagnostik</value>
+  </data>
+  <data name="WebhookRetrySafetySubscriptionInactive" xml:space="preserve">
+    <value>Inaktive Subscription</value>
+  </data>
+  <data name="WebhookRetrySafetyRecoveredAfterRetry" xml:space="preserve">
+    <value>Nach Retry wiederhergestellt</value>
+  </data>
+  <data name="WebhookRetrySafetyDeliveredWithoutRetry" xml:space="preserve">
+    <value>Ohne Retry zugestellt</value>
+  </data>
+  <data name="WebhookRetrySafetyRetryInFlight" xml:space="preserve">
+    <value>Retry laeuft noch</value>
+  </data>
+  <data name="WebhookRetrySafetyAwaitingFirstAttempt" xml:space="preserve">
+    <value>Wartet auf ersten Versuch</value>
+  </data>
+  <data name="WebhookRetrySafetyReceiverUnavailable" xml:space="preserve">
+    <value>Empfaenger nicht verfuegbar</value>
+  </data>
+  <data name="WebhookRetrySafetyReceiverRejected" xml:space="preserve">
+    <value>Empfaenger weist Callback ab</value>
+  </data>
+  <data name="WebhookRetrySafetyNoReceiverResponse" xml:space="preserve">
+    <value>Keine Antwort vom Empfaenger</value>
+  </data>
+  <data name="WebhookFailureDiagnosticSubscriptionInactive" xml:space="preserve">
+    <value>Die Callback-Subscription ist inaktiv. Retries stellen die Zustellung erst wieder her, wenn die Subscription erneut aktiviert wird.</value>
+  </data>
+  <data name="WebhookFailureDiagnosticRecoveredAfterRetry" xml:space="preserve">
+    <value>Der Callback hat sich nach einem oder mehreren Retries bereits erholt. Weitere Replays sind nicht noetig; die Zeile bleibt als Auditnachweis bestehen.</value>
+  </data>
+  <data name="WebhookFailureDiagnosticDeliveredWithoutRetry" xml:space="preserve">
+    <value>Der Callback wurde auf dem aktuellen Zustellpfad erfolgreich zugestellt.</value>
+  </data>
+  <data name="WebhookFailureDiagnosticRetryPending" xml:space="preserve">
+    <value>Der Callback ist nach frueheren Versuchen weiterhin offen; Empfaenger oder Provider-Grenze koennen noch instabil sein.</value>
+  </data>
+  <data name="WebhookFailureDiagnosticPendingFirstAttempt" xml:space="preserve">
+    <value>Der Callback ist eingereiht, aber der erste Zustellversuch wurde noch nicht abgeschlossen.</value>
+  </data>
+  <data name="WebhookFailureDiagnosticReceiver5xx" xml:space="preserve">
+    <value>Der Empfaenger hat mit 5xx geantwortet. Das spricht eher fuer eine Downstream-Instabilitaet als fuer ein lokales Validierungsproblem.</value>
+  </data>
+  <data name="WebhookFailureDiagnosticReceiver4xx" xml:space="preserve">
+    <value>Der Empfaenger hat mit 4xx geantwortet. Das deutet meist auf einen Vertrags-, Authentifizierungs- oder Payload-Fehler hin, den Retries allein nicht loesen.</value>
+  </data>
+  <data name="WebhookFailureDiagnosticNoHttpResponse" xml:space="preserve">
+    <value>Es wurde keine HTTP-Antwort erfasst. Vor einem Replay sollten Netzwerk, Timeout oder Erreichbarkeit des Empfaengers geprueft werden.</value>
+  </data>
+  <data name="WebhookEscalationHintSubscriptionInactive" xml:space="preserve">
+    <value>Aktivieren oder ersetzen Sie die Subscription, bevor Sie den Fehler als transienten Callback-Defekt behandeln.</value>
+  </data>
+  <data name="WebhookEscalationHintRecovered" xml:space="preserve">
+    <value>Diese Zeile dient nur noch als Auditnachweis; eine Eskalation ist nicht noetig, solange Zahlungs- oder Rueckerstattungsstatus nicht abweichen.</value>
+  </data>
+  <data name="WebhookEscalationHintStable" xml:space="preserve">
+    <value>Keine Eskalation noetig, solange Provider- und lokaler Lifecycle konsistent bleiben.</value>
+  </data>
+  <data name="WebhookEscalationHintReceiver5xx" xml:space="preserve">
+    <value>An den Empfaenger-Eigner eskalieren und Retries begrenzen; wiederholte 5xx-Callbacks sprechen fuer Downstream-Ausfall oder Instabilitaet.</value>
+  </data>
+  <data name="WebhookEscalationHintReceiver4xx" xml:space="preserve">
+    <value>Pruefen Sie Callback-Authentifizierung, Payload-Vertrag und Endpoint-Konfiguration vor einem Replay, weil 4xx-Antworten meist zuerst eine Korrektur verlangen.</value>
+  </data>
+  <data name="WebhookEscalationHintRetryInFlight" xml:space="preserve">
+    <value>Loesen Sie keinen manuellen Doppel-Callback aus, solange Retries noch aktiv sind, ausser der Payment-Support bestaetigt einen haengenden Zustand.</value>
+  </data>
+  <data name="WebhookEscalationHintNoResponse" xml:space="preserve">
+    <value>Pruefen Sie Netzwerkerreichbarkeit, TLS und Bereitschaft des Empfaengers, bevor Sie den Callback als Anwendungsfehler eskalieren.</value>
   </data>
 </root>

@@ -97,7 +97,8 @@ public sealed class RequestPhoneVerificationHandler
         }
 
         var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-        _db.Set<UserToken>().Add(new UserToken(user.Id, PhoneVerificationPurpose, code, expiresAtUtc));
+        var tokenEntity = new UserToken(user.Id, PhoneVerificationPurpose, code, expiresAtUtc);
+        _db.Set<UserToken>().Add(tokenEntity);
         await _db.SaveChangesAsync(ct);
 
         var placeholders = new Dictionary<string, string?>
@@ -136,7 +137,10 @@ public sealed class RequestPhoneVerificationHandler
                 ct,
                 new ChannelDispatchContext
                 {
-                    FlowKey = "PhoneVerification"
+                    FlowKey = "PhoneVerification",
+                    TemplateKey = "PhoneVerificationSms",
+                    CorrelationKey = tokenEntity.Id.ToString("N"),
+                    IntendedRecipientAddress = user.PhoneE164
                 });
             return Result.Ok();
         }
@@ -153,7 +157,10 @@ public sealed class RequestPhoneVerificationHandler
                 ct,
                 new ChannelDispatchContext
                 {
-                    FlowKey = "PhoneVerification"
+                    FlowKey = "PhoneVerification",
+                    TemplateKey = "PhoneVerificationWhatsApp",
+                    CorrelationKey = tokenEntity.Id.ToString("N"),
+                    IntendedRecipientAddress = user.PhoneE164
                 });
             return Result.Ok();
         }
@@ -176,7 +183,10 @@ public sealed class RequestPhoneVerificationHandler
                     ct,
                     new ChannelDispatchContext
                     {
-                        FlowKey = "PhoneVerification"
+                        FlowKey = "PhoneVerification",
+                        TemplateKey = "PhoneVerificationSms",
+                        CorrelationKey = tokenEntity.Id.ToString("N"),
+                        IntendedRecipientAddress = user.PhoneE164
                     });
                 return Result.Ok();
             }
@@ -193,7 +203,10 @@ public sealed class RequestPhoneVerificationHandler
                     ct,
                     new ChannelDispatchContext
                     {
-                        FlowKey = "PhoneVerification"
+                        FlowKey = "PhoneVerification",
+                        TemplateKey = "PhoneVerificationWhatsApp",
+                        CorrelationKey = tokenEntity.Id.ToString("N"),
+                        IntendedRecipientAddress = user.PhoneE164
                     });
                 return Result.Ok();
             }

@@ -1,5 +1,6 @@
 using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Application.Loyalty.Commands;
+using Darwin.Application;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Queries;
 using Darwin.Application.Businesses.Queries;
@@ -10,6 +11,7 @@ using Darwin.WebApi.Mappers;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using DomainLoyaltyRewardType = Darwin.Domain.Enums.LoyaltyRewardType;
 
 namespace Darwin.WebApi.Controllers.Business;
@@ -37,6 +39,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     private readonly SetCampaignActivationHandler _setCampaignActivationHandler;
     private readonly ILoyaltyPresentationService _presentationService;
     private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BusinessLoyaltyController"/> class.
@@ -56,7 +59,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         UpdateBusinessCampaignHandler updateBusinessCampaignHandler,
         SetCampaignActivationHandler setCampaignActivationHandler,
         ILoyaltyPresentationService presentationService,
-        GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler)
+        GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler ?? throw new ArgumentNullException(nameof(processScanSessionForBusinessHandler));
         _confirmAccrualFromSessionHandler = confirmAccrualFromSessionHandler ?? throw new ArgumentNullException(nameof(confirmAccrualFromSessionHandler));
@@ -73,6 +77,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         _setCampaignActivationHandler = setCampaignActivationHandler ?? throw new ArgumentNullException(nameof(setCampaignActivationHandler));
         _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
         _getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -142,7 +147,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
@@ -153,7 +158,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
 
         if (!TryParseRewardType(request.RewardType, out var rewardType))
         {
-            return BadRequestProblem("RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.");
+            return BadRequestProblem(_validationLocalizer["RewardTypeInvalidAllowedValues"]);
         }
 
         var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: true, ct).ConfigureAwait(false);
@@ -177,7 +182,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         }
         catch (FluentValidation.ValidationException ex)
         {
-            return BadRequestProblem(ex.Message);
+            return BadRequestProblem(_validationLocalizer["LoyaltyRewardTierCreateFailed"], ex.Message);
         }
     }
 
@@ -194,12 +199,12 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (request.RewardTierId == Guid.Empty)
         {
-            return BadRequestProblem("RewardTierId is required.");
+            return BadRequestProblem(_validationLocalizer["RewardTierIdCannotBeEmpty"]);
         }
 
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
@@ -210,13 +215,13 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
 
         if (!TryParseRewardType(request.RewardType, out var rewardType))
         {
-            return BadRequestProblem("RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.");
+            return BadRequestProblem(_validationLocalizer["RewardTypeInvalidAllowedValues"]);
         }
 
         var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: false, ct).ConfigureAwait(false);
         if (programId == Guid.Empty)
         {
-            return BadRequestProblem("No loyalty program was found for the current business.");
+            return BadRequestProblem(_validationLocalizer["LoyaltyProgramNotFound"]);
         }
 
         if (!await IsRewardTierOwnedByBusinessAsync(programId, request.RewardTierId, ct).ConfigureAwait(false))
@@ -245,7 +250,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         }
         catch (FluentValidation.ValidationException ex)
         {
-            return BadRequestProblem(ex.Message);
+            return BadRequestProblem(_validationLocalizer["LoyaltyRewardTierUpdateFailed"], ex.Message);
         }
     }
 
@@ -262,12 +267,12 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (request.RewardTierId == Guid.Empty)
         {
-            return BadRequestProblem("RewardTierId is required.");
+            return BadRequestProblem(_validationLocalizer["RewardTierIdCannotBeEmpty"]);
         }
 
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
@@ -279,7 +284,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: false, ct).ConfigureAwait(false);
         if (programId == Guid.Empty)
         {
-            return BadRequestProblem("No loyalty program was found for the current business.");
+            return BadRequestProblem(_validationLocalizer["LoyaltyProgramNotFound"]);
         }
 
         if (!await IsRewardTierOwnedByBusinessAsync(programId, request.RewardTierId, ct).ConfigureAwait(false))
@@ -311,12 +316,12 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
         {
-            return BadRequestProblem("ScanSessionToken is required.");
+            return BadRequestProblem(_validationLocalizer["ScanSessionTokenRequired"]);
         }
 
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
@@ -385,22 +390,22 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
         {
-            return BadRequestProblem("ScanSessionToken is required.");
+            return BadRequestProblem(_validationLocalizer["ScanSessionTokenRequired"]);
         }
 
         if (request.ScanSessionToken.Length > 4000)
         {
-            return BadRequestProblem("ScanSessionToken is too long.");
+            return BadRequestProblem(_validationLocalizer["ScanSessionTokenTooLong"]);
         }
 
         if (request.Points <= 0)
         {
-            return BadRequestProblem("Points must be greater than zero.");
+            return BadRequestProblem(_validationLocalizer["PointsPositiveInteger"]);
         }
 
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
@@ -446,17 +451,17 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
         {
-            return BadRequestProblem("ScanSessionToken is required.");
+            return BadRequestProblem(_validationLocalizer["ScanSessionTokenRequired"]);
         }
 
         if (request.ScanSessionToken.Length > 4000)
         {
-            return BadRequestProblem("ScanSessionToken is too long.");
+            return BadRequestProblem(_validationLocalizer["ScanSessionTokenTooLong"]);
         }
 
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
@@ -560,7 +565,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
 
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var result = await _createBusinessCampaignHandler.HandleAsync(new CreateBusinessCampaignDto
@@ -613,7 +618,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
 
         if (request is null || request.Id != id)
         {
-            return BadRequestProblem("Request body is required and route id must match body id.");
+            return BadRequestProblem(_validationLocalizer["RequestBodyRouteIdMismatch"]);
         }
 
         var result = await _updateBusinessCampaignHandler.HandleAsync(new UpdateBusinessCampaignDto
@@ -668,7 +673,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
 
         if (request is null || request.Id != id)
         {
-            return BadRequestProblem("Request body is required and route id must match body id.");
+            return BadRequestProblem(_validationLocalizer["RequestBodyRouteIdMismatch"]);
         }
 
         var result = await _setCampaignActivationHandler.HandleAsync(new SetCampaignActivationDto
@@ -703,12 +708,12 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         var accessState = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);
         if (accessState is null)
         {
-            return (false, Guid.Empty, NotFoundProblem("Business was not found."));
+            return (false, Guid.Empty, NotFoundProblem(_validationLocalizer["BusinessNotFound"]));
         }
 
         if (!accessState.IsBusinessClientAccessAllowed || !accessState.IsOperationsAllowed)
         {
-            return (false, Guid.Empty, Forbid(accessState.BlockingReason));
+            return (false, Guid.Empty, ForbiddenProblem(detail: BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(accessState, _validationLocalizer)));
         }
 
         return (true, businessId, null);
@@ -778,28 +783,64 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     /// </summary>
     private IActionResult MapScanFailure<T>(Result<T> result)
     {
-        var msg = (result.Error ?? "Operation failed.").Trim();
-        var text = msg.ToLowerInvariant();
+        var msg = string.IsNullOrWhiteSpace(result.Error)
+            ? _validationLocalizer["OperationFailed"].Value.Trim()
+            : result.Error!.Trim();
+        var normalized = NormalizeToken(msg);
 
-        if (text.Contains("expired") || text.Contains("consumed"))
+        if (normalized is "expired" or "scansessiontokenexpired" or "tokenalreadyconsumed" or "scansessiontokenalreadyconsumed")
         {
-            return ConflictProblem(msg);
+            return ConflictProblem(LocalizeScanFailureMessage(msg));
         }
 
-        if (text.Contains("not found"))
+        if (normalized is "accountnotfound" or "scansessiontokennotfound" or "loyaltyaccountnotfoundforscansession")
         {
-            return NotFoundProblem(msg);
+            return NotFoundProblem(LocalizeScanFailureMessage(msg));
         }
 
-        if (text.Contains("belongs to a different business") ||
-            text.Contains("bound to a different business") ||
-            text.Contains("does not belong to this business"))
+        if (normalized is "accountnotactive" or "noselections" or "invalidselections" or "insufficientpoints")
+        {
+            return BadRequestProblem(LocalizeScanFailureMessage(msg));
+        }
+
+        if (normalized is "scansessiontokenbusinessmismatch" ||
+            normalized.Contains("belongstoadifferentbusiness", StringComparison.Ordinal) ||
+            normalized.Contains("boundtoadifferentbusiness", StringComparison.Ordinal) ||
+            normalized.Contains("doesnotbelongtothisbusiness", StringComparison.Ordinal))
         {
             return Forbid();
         }
 
-        return ProblemFromResult(result);
+        if (normalized.Contains("expired", StringComparison.Ordinal) || normalized.Contains("consumed", StringComparison.Ordinal))
+        {
+            return ConflictProblem(LocalizeScanFailureMessage(msg));
+        }
+
+        if (normalized.Contains("notfound", StringComparison.Ordinal))
+        {
+            return NotFoundProblem(LocalizeScanFailureMessage(msg));
+        }
+
+        return ProblemFromResult(result, _validationLocalizer["OperationFailed"]);
     }
+
+    private string LocalizeScanFailureMessage(string message)
+    {
+        return NormalizeToken(message) switch
+        {
+            "expired" or "scansessiontokenexpired" => _validationLocalizer["ScanSessionTokenExpired"],
+            "tokenalreadyconsumed" or "scansessiontokenalreadyconsumed" => _validationLocalizer["ScanSessionTokenAlreadyConsumed"],
+            "accountnotfound" or "scansessiontokennotfound" or "loyaltyaccountnotfoundforscansession" => _validationLocalizer["LoyaltyAccountNotFoundForScanSession"],
+            "accountnotactive" => _validationLocalizer["LoyaltyAccountInactive"],
+            "noselections" => _validationLocalizer["SelectedRewardsMissing"],
+            "invalidselections" => _validationLocalizer["SelectedRewardsInvalid"],
+            "insufficientpoints" => _validationLocalizer["InsufficientPointsForSelectedRewards"],
+            _ => message
+        };
+    }
+
+    private static string NormalizeToken(string value)
+        => new string(value.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
 
     /// <summary>
     /// Returns a standardized conflict response for deterministic scan-session state failures.

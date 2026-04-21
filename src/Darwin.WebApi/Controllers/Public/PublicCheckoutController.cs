@@ -1,3 +1,4 @@
+using Darwin.Application;
 using Darwin.Application.Orders.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
@@ -6,6 +7,7 @@ using Darwin.Contracts.Orders;
 using Darwin.Contracts.Shipping;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Darwin.WebApi.Services;
 
 namespace Darwin.WebApi.Controllers.Public;
@@ -24,6 +26,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     private readonly CompleteStorefrontPaymentHandler _completeStorefrontPaymentHandler;
     private readonly GetStorefrontOrderConfirmationHandler _getStorefrontOrderConfirmationHandler;
     private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicCheckoutController"/> class.
@@ -34,7 +37,8 @@ public sealed class PublicCheckoutController : ApiControllerBase
         CreateStorefrontPaymentIntentHandler createStorefrontPaymentIntentHandler,
         CompleteStorefrontPaymentHandler completeStorefrontPaymentHandler,
         GetStorefrontOrderConfirmationHandler getStorefrontOrderConfirmationHandler,
-        StorefrontCheckoutUrlBuilder checkoutUrlBuilder)
+        StorefrontCheckoutUrlBuilder checkoutUrlBuilder,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
         _placeOrderFromCartHandler = placeOrderFromCartHandler ?? throw new ArgumentNullException(nameof(placeOrderFromCartHandler));
@@ -42,6 +46,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
         _completeStorefrontPaymentHandler = completeStorefrontPaymentHandler ?? throw new ArgumentNullException(nameof(completeStorefrontPaymentHandler));
         _getStorefrontOrderConfirmationHandler = getStorefrontOrderConfirmationHandler ?? throw new ArgumentNullException(nameof(getStorefrontOrderConfirmationHandler));
         _checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -55,7 +60,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         try
@@ -99,7 +104,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem("Checkout intent could not be created.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["CheckoutIntentCreationFailed"], ex.Message);
         }
     }
 
@@ -114,7 +119,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         try
@@ -169,7 +174,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem("Order could not be placed.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["OrderPlacementFailed"], ex.Message);
         }
     }
 
@@ -185,7 +190,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     {
         if (orderId == Guid.Empty)
         {
-            return BadRequestProblem("OrderId must not be empty.");
+            return BadRequestProblem(_validationLocalizer["OrderIdRequired"]);
         }
 
         try
@@ -195,12 +200,12 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 OrderId = orderId,
                 UserId = GetCurrentUserId(),
                 OrderNumber = request?.OrderNumber,
-                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "DarwinCheckout" : request.Provider.Trim()
+                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "Stripe" : request.Provider.Trim()
             }, ct).ConfigureAwait(false);
 
             var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, request?.OrderNumber, cancelled: false);
             var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, request?.OrderNumber, cancelled: true);
-            var checkoutUrl = _checkoutUrlBuilder.BuildGatewayUrl(result, returnUrl, cancelUrl);
+            var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);
 
             return Ok(new CreateStorefrontPaymentIntentResponse
             {
@@ -208,6 +213,8 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 PaymentId = result.PaymentId,
                 Provider = result.Provider,
                 ProviderReference = result.ProviderReference,
+                ProviderPaymentIntentReference = result.ProviderPaymentIntentReference,
+                ProviderCheckoutSessionReference = result.ProviderCheckoutSessionReference,
                 AmountMinor = result.AmountMinor,
                 Currency = result.Currency,
                 Status = result.Status.ToString(),
@@ -219,11 +226,11 @@ public sealed class PublicCheckoutController : ApiControllerBase
         }
         catch (InvalidOperationException ex) when (string.Equals(ex.Message, "Order not found.", StringComparison.Ordinal))
         {
-            return NotFoundProblem(ex.Message);
+            return NotFoundProblem(_validationLocalizer["OrderNotFound"]);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem("Payment intent could not be created.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["PaymentIntentCreationFailed"], ex.Message);
         }
     }
 
@@ -239,17 +246,17 @@ public sealed class PublicCheckoutController : ApiControllerBase
     {
         if (orderId == Guid.Empty || paymentId == Guid.Empty)
         {
-            return BadRequestProblem("OrderId and PaymentId must not be empty.");
+            return BadRequestProblem(_validationLocalizer["OrderIdAndPaymentIdAreRequired"]);
         }
 
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (!Enum.TryParse<StorefrontPaymentOutcome>(request.Outcome, ignoreCase: true, out var outcome))
         {
-            return BadRequestProblem("Outcome must be one of: Succeeded, Cancelled, Failed.");
+            return BadRequestProblem(_validationLocalizer["UnsupportedStorefrontPaymentOutcome"]);
         }
 
         try
@@ -261,6 +268,8 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 UserId = GetCurrentUserId(),
                 OrderNumber = request.OrderNumber,
                 ProviderReference = request.ProviderReference,
+                ProviderPaymentIntentReference = request.ProviderPaymentIntentReference,
+                ProviderCheckoutSessionReference = request.ProviderCheckoutSessionReference,
                 Outcome = outcome,
                 FailureReason = request.FailureReason
             }, ct).ConfigureAwait(false);
@@ -277,11 +286,13 @@ public sealed class PublicCheckoutController : ApiControllerBase
         catch (InvalidOperationException ex) when (string.Equals(ex.Message, "Order not found.", StringComparison.Ordinal) ||
                                                    string.Equals(ex.Message, "Payment not found for the order.", StringComparison.Ordinal))
         {
-            return NotFoundProblem(ex.Message);
+            return NotFoundProblem(string.Equals(ex.Message, "Order not found.", StringComparison.Ordinal)
+                ? _validationLocalizer["OrderNotFound"]
+                : _validationLocalizer["PaymentNotFoundForOrder"]);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem("Payment completion could not be applied.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["PaymentCompletionApplyFailed"], ex.Message);
         }
     }
 
@@ -296,7 +307,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     {
         if (orderId == Guid.Empty)
         {
-            return BadRequestProblem("OrderId must not be empty.");
+            return BadRequestProblem(_validationLocalizer["OrderIdRequired"]);
         }
 
         var confirmation = await _getStorefrontOrderConfirmationHandler.HandleAsync(new GetStorefrontOrderConfirmationDto
@@ -308,7 +319,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
 
         if (confirmation is null)
         {
-            return NotFoundProblem("Order confirmation not found.");
+            return NotFoundProblem(_validationLocalizer["OrderConfirmationNotFound"]);
         }
 
         return Ok(new StorefrontOrderConfirmationResponse
@@ -345,6 +356,8 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 CreatedAtUtc = payment.CreatedAtUtc,
                 Provider = payment.Provider,
                 ProviderReference = payment.ProviderReference,
+                ProviderPaymentIntentReference = payment.ProviderPaymentIntentReference,
+                ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionReference,
                 AmountMinor = payment.AmountMinor,
                 Currency = payment.Currency,
                 Status = payment.Status.ToString(),

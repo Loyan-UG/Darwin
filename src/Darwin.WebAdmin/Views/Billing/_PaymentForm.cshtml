@@ -21,6 +21,27 @@
         "Provider reference linked" => T.T("BillingProviderReferenceLinked"),
         _ => string.IsNullOrWhiteSpace(state) ? "-" : T.T(state)
     };
+    string LocalizeProviderEventType(string? eventType) => eventType switch
+    {
+        "StripeWebhook:checkout.session.completed" => T.T("PaymentProviderEventCheckoutSessionCompleted"),
+        "StripeWebhook:payment_intent.succeeded" => T.T("PaymentProviderEventPaymentIntentSucceeded"),
+        "StripeWebhook:payment_intent.payment_failed" => T.T("PaymentProviderEventPaymentIntentFailed"),
+        "StripeWebhook:payment_intent.canceled" => T.T("PaymentProviderEventPaymentIntentCanceled"),
+        "StripeWebhook:charge.refunded" => T.T("PaymentProviderEventChargeRefunded"),
+        "StripeWebhook:invoice.paid" => T.T("PaymentProviderEventInvoicePaid"),
+        "StripeWebhook:invoice.payment_failed" => T.T("PaymentProviderEventInvoicePaymentFailed"),
+        "StripeWebhook:customer.subscription.updated" => T.T("PaymentProviderEventSubscriptionUpdated"),
+        "StripeWebhook:customer.subscription.deleted" => T.T("PaymentProviderEventSubscriptionDeleted"),
+        _ => string.IsNullOrWhiteSpace(eventType) ? "-" : T.T("PaymentProviderEventStripeWebhook")
+    };
+    string LocalizeProviderEventCorrelation(string? correlationKind) => correlationKind switch
+    {
+        "PaymentIntent" => T.T("PaymentProviderEventCorrelationPaymentIntent"),
+        "CheckoutSession" => T.T("PaymentProviderEventCorrelationCheckoutSession"),
+        "ProviderTransaction" => T.T("PaymentProviderEventCorrelationProviderTransaction"),
+        "Multiple" => T.T("PaymentProviderEventCorrelationMultiple"),
+        _ => T.T("PaymentProviderEventCorrelationProviderReference")
+    };
 }
 
 @if (Model.OrderId.HasValue || Model.InvoiceId.HasValue || Model.CustomerId.HasValue || Model.UserId.HasValue)
@@ -167,6 +188,14 @@
                 <div class="fw-semibold">@LocalizeProviderReferenceState(Model.ProviderReferenceState)</div>
             </div>
             <div class="col-md-3">
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("ProviderPaymentIntentRef")</div>
+                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ProviderPaymentIntentRef) ? "-" : Model.ProviderPaymentIntentRef)</div>
+            </div>
+            <div class="col-md-3">
+                <div class="small text-uppercase text-muted fw-semibold">@T.T("ProviderCheckoutSessionRef")</div>
+                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ProviderCheckoutSessionRef) ? "-" : Model.ProviderCheckoutSessionRef)</div>
+            </div>
+            <div class="col-md-3">
                 <div class="small text-uppercase text-muted fw-semibold">@T.T("OpenAge")</div>
                 <div class="fw-semibold">@Model.OpenAgeHours h</div>
             </div>
@@ -217,6 +246,48 @@
                    hx-push-url="true">@T.T("OpenOrderPayments")</a>
             }
         </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>@T.T("PaymentProviderAuditTrail")</span>
+        <span class="badge text-bg-light">@Model.ProviderEvents.Count</span>
+    </div>
+    <div class="card-body">
+        @if (Model.ProviderEvents.Count == 0)
+        {
+            <div class="text-muted">@T.T("PaymentProviderAuditTrailEmpty")</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>@T.T("Occurred")</th>
+                            <th>@T.T("ProviderEvent")</th>
+                            <th>@T.T("Correlation")</th>
+                            <th>@T.T("IdempotencyKey")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.ProviderEvents)
+                    {
+                        <tr>
+                            <td>@item.OccurredAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@LocalizeProviderEventType(item.EventType)</td>
+                            <td>
+                                <div>@LocalizeProviderEventCorrelation(item.CorrelationKind)</div>
+                                <div class="small text-muted">@(string.IsNullOrWhiteSpace(item.CorrelationReference) ? "-" : item.CorrelationReference)</div>
+                            </td>
+                            <td><code>@(string.IsNullOrWhiteSpace(item.IdempotencyKey) ? "-" : item.IdempotencyKey)</code></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 </div>
 
@@ -356,6 +427,14 @@
     <div class="col-md-4">
         <label asp-for="ProviderTransactionRef" class="form-label"></label>
         <input asp-for="ProviderTransactionRef" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ProviderPaymentIntentRef" class="form-label"></label>
+        <input asp-for="ProviderPaymentIntentRef" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ProviderCheckoutSessionRef" class="form-label"></label>
+        <input asp-for="ProviderCheckoutSessionRef" class="form-control" />
     </div>
     <div class="col-md-4">
         <label asp-for="PaidAtUtc" class="form-label"></label>

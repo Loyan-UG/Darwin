@@ -49,6 +49,22 @@
                             <Label Text="{Binding SelectedOrder.ShippingMethodText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding SelectedOrder.HasShippingMethod}" />
                             <Label Text="{Binding SelectedOrder.PaymentsCountText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                             <Label Text="{Binding SelectedOrder.InvoicesCountText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding SelectedOrder.ShipmentSummaries}" IsVisible="{Binding SelectedOrder.HasShipments}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:MemberCommerceShipmentSummaryViewModel">
+                                        <Border Style="{StaticResource MutedCardBorderStyle}">
+                                            <VerticalStackLayout Spacing="4">
+                                                <Label Text="{Binding TitleText}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                                <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                                <Label Text="{Binding TrackingText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasTrackingText}" />
+                                                <Label Text="{Binding ShippedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasShippedAt}" />
+                                                <Label Text="{Binding DeliveredAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasDeliveredAt}" />
+                                                <Button Text="{x:Static res:AppResources.MemberCommerceOpenTrackingButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenOrderShipmentTrackingCommand}" CommandParameter="{Binding .}" IsVisible="{Binding HasTrackingLink}" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                             <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding SelectedOrder.LineSummaries}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate>

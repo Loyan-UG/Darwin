@@ -85,7 +85,8 @@ namespace Darwin.Application.Identity.Commands
             }
 
             var tokenValue = RandomTokenGenerator.UrlSafeToken(32);
-            _db.Set<UserToken>().Add(new UserToken(user.Id, EmailConfirmationPurpose, tokenValue, expiresAtUtc));
+            var tokenEntity = new UserToken(user.Id, EmailConfirmationPurpose, tokenValue, expiresAtUtc);
+            _db.Set<UserToken>().Add(tokenEntity);
             await _db.SaveChangesAsync(ct);
 
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
@@ -131,7 +132,10 @@ namespace Darwin.Application.Identity.Commands
                 ct,
                 new EmailDispatchContext
                 {
-                    FlowKey = "AccountActivation"
+                    FlowKey = "AccountActivation",
+                    TemplateKey = "AccountActivationEmail",
+                    CorrelationKey = tokenEntity.Id.ToString("N"),
+                    IntendedRecipientEmail = user.Email
                 });
             _logger.LogInformation("Email confirmation token issued for {Email}.", MaskEmail(user.Email));
             return Result.Ok();

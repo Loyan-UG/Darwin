@@ -14,6 +14,7 @@ using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Catalog.Services;             // IAddOnPricingService, AddOnPricingService
 using Darwin.Application.Common.Html;                  // IHtmlSanitizer + HtmlSanitizerFactory
 using Darwin.Application.Extensions;
+using Darwin.Application;
 using Darwin.Application.Loyalty.Queries;
 using Darwin.Application.Loyalty.Services;             // ScanSessionTokenResolver
 // Application types used to locate assemblies and for explicit registrations
@@ -34,8 +35,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Resources;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
@@ -106,9 +109,8 @@ namespace Darwin.WebApi.Extensions
             services.AddNotificationsInfrastructure(configuration);
             services.AddMemoryCache();
 
-            services.Configure<InactiveReminderWorkerOptions>(configuration.GetSection("InactiveReminderWorker"));
-            services.AddHostedService<InactiveReminderBackgroundService>();
             services.AddSingleton<StorefrontCheckoutUrlBuilder>();
+            services.TryAddSingleton<StripeWebhookSignatureVerifier>();
 
             // Loyalty presentation helpers used by WebApi mapping/presentation layer.
             services.AddLoyaltyPresentationServices();
@@ -267,9 +269,9 @@ namespace Darwin.WebApi.Extensions
             var signingKey = configuration["Jwt:SigningKey"];
             var clockSkewSecondsValue = configuration["Jwt:ClockSkewSeconds"];
 
-            if (string.IsNullOrWhiteSpace(issuer)) throw new InvalidOperationException("Configuration key 'Jwt:Issuer' is missing or empty.");
-            if (string.IsNullOrWhiteSpace(audience)) throw new InvalidOperationException("Configuration key 'Jwt:Audience' is missing or empty.");
-            if (string.IsNullOrWhiteSpace(signingKey)) throw new InvalidOperationException("Configuration key 'Jwt:SigningKey' is missing or empty.");
+            if (string.IsNullOrWhiteSpace(issuer)) throw new InvalidOperationException(GetValidationResourceText("JwtIssuerConfigurationMissing"));
+            if (string.IsNullOrWhiteSpace(audience)) throw new InvalidOperationException(GetValidationResourceText("JwtAudienceConfigurationMissing"));
+            if (string.IsNullOrWhiteSpace(signingKey)) throw new InvalidOperationException(GetValidationResourceText("JwtSigningKeyConfigurationMissing"));
 
             if (!int.TryParse(clockSkewSecondsValue, out var clockSkewSeconds) || clockSkewSeconds < 0) clockSkewSeconds = 60;
 
@@ -297,6 +299,12 @@ namespace Darwin.WebApi.Extensions
                         ClockSkew = TimeSpan.FromSeconds(clockSkewSeconds)
                     };
                 });
+        }
+
+        private static string GetValidationResourceText(string key)
+        {
+            var resourceManager = new ResourceManager("Darwin.Application.Resources.ValidationResource", typeof(ValidationResource).Assembly);
+            return resourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
         }
     }
 }

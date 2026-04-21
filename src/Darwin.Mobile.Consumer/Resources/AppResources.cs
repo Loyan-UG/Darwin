@@ -306,6 +306,11 @@ public static class AppResources
     public static string MemberCommerceOrderShippingMethodFormat => ResourceManager.GetString(nameof(MemberCommerceOrderShippingMethodFormat), Culture) ?? "Shipping: {0}";
     public static string MemberCommerceOrderPaymentsCountFormat => ResourceManager.GetString(nameof(MemberCommerceOrderPaymentsCountFormat), Culture) ?? "Payments: {0}";
     public static string MemberCommerceOrderInvoicesCountFormat => ResourceManager.GetString(nameof(MemberCommerceOrderInvoicesCountFormat), Culture) ?? "Invoices: {0}";
+    public static string MemberCommerceShipmentTitleFormat => ResourceManager.GetString(nameof(MemberCommerceShipmentTitleFormat), Culture) ?? "{0} / {1}";
+    public static string MemberCommerceShipmentTrackingFormat => ResourceManager.GetString(nameof(MemberCommerceShipmentTrackingFormat), Culture) ?? "Tracking: {0}";
+    public static string MemberCommerceShipmentShippedFormat => ResourceManager.GetString(nameof(MemberCommerceShipmentShippedFormat), Culture) ?? "Shipped: {0:yyyy-MM-dd HH:mm}";
+    public static string MemberCommerceShipmentDeliveredFormat => ResourceManager.GetString(nameof(MemberCommerceShipmentDeliveredFormat), Culture) ?? "Delivered: {0:yyyy-MM-dd HH:mm}";
+    public static string MemberCommerceOpenTrackingButton => ResourceManager.GetString(nameof(MemberCommerceOpenTrackingButton), Culture) ?? "Open tracking";
     public static string MemberCommerceInvoiceStatusFormat => ResourceManager.GetString(nameof(MemberCommerceInvoiceStatusFormat), Culture) ?? "Status: {0}";
     public static string MemberCommerceStatusCreated => ResourceManager.GetString(nameof(MemberCommerceStatusCreated), Culture) ?? "Created";
     public static string MemberCommerceStatusConfirmed => ResourceManager.GetString(nameof(MemberCommerceStatusConfirmed), Culture) ?? "Confirmed";
@@ -331,6 +336,7 @@ public static class AppResources
     public static string MemberCommerceInvoiceDetailLoadFailed => ResourceManager.GetString(nameof(MemberCommerceInvoiceDetailLoadFailed), Culture) ?? "Unable to load invoice detail.";
     public static string MemberCommercePaymentIntentFailed => ResourceManager.GetString(nameof(MemberCommercePaymentIntentFailed), Culture) ?? "Unable to start a payment retry right now.";
     public static string MemberCommerceDocumentDownloadFailed => ResourceManager.GetString(nameof(MemberCommerceDocumentDownloadFailed), Culture) ?? "Unable to download the document right now.";
+    public static string MemberCommerceTrackingOpenFailed => ResourceManager.GetString(nameof(MemberCommerceTrackingOpenFailed), Culture) ?? "Unable to open shipment tracking right now.";
     public static string MemberAddressesTitle => ResourceManager.GetString(nameof(MemberAddressesTitle), Culture) ?? "Address book";
     public static string MemberAddressesRefreshButton => ResourceManager.GetString(nameof(MemberAddressesRefreshButton), Culture) ?? "Refresh addresses";
     public static string MemberAddressesCreateButton => ResourceManager.GetString(nameof(MemberAddressesCreateButton), Culture) ?? "New address";

@@ -188,9 +188,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetSuccessMessage("BillingPlanCreatedMessage");
                 return RedirectOrHtmx(nameof(EditPlan), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BillingPlanCreateFailedMessage");
                 PopulateBillingPlanOptions(vm);
                 return RenderBillingPlanEditor(vm, isCreate: true);
             }
@@ -264,9 +264,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetErrorMessage("BillingPlanConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditPlan), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BillingPlanUpdateFailedMessage");
                 PopulateBillingPlanOptions(vm);
                 return RenderBillingPlanEditor(vm, isCreate: false);
             }
@@ -302,6 +302,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     Status = x.Status,
                     Provider = x.Provider,
                     ProviderTransactionRef = x.ProviderTransactionRef,
+                    ProviderPaymentIntentRef = x.ProviderPaymentIntentRef,
+                    ProviderCheckoutSessionRef = x.ProviderCheckoutSessionRef,
                     FailureReason = x.FailureReason,
                     PaidAtUtc = x.PaidAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
@@ -424,6 +426,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     LastAttemptAtUtc = x.LastAttemptAtUtc,
                     IdempotencyKey = x.IdempotencyKey,
                     IsActiveSubscription = x.IsActiveSubscription,
+                    RetrySafetyState = x.RetrySafetyState,
+                    FailureDiagnostics = x.FailureDiagnostics,
+                    EscalationHint = x.EscalationHint,
                     SuggestedOperatorAction = x.SuggestedOperatorAction,
                     SuggestedQueueTarget = x.SuggestedQueueTarget
                 }).ToList(),
@@ -454,6 +459,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     PaymentId = x.PaymentId,
                     PaymentProvider = x.PaymentProvider,
                     PaymentProviderReference = x.PaymentProviderReference,
+                    PaymentProviderPaymentIntentRef = x.PaymentProviderPaymentIntentRef,
+                    PaymentProviderCheckoutSessionRef = x.PaymentProviderCheckoutSessionRef,
                     PaymentStatus = x.PaymentStatus,
                     CustomerId = x.CustomerId,
                     CustomerDisplayName = x.CustomerDisplayName,
@@ -552,6 +559,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 !string.IsNullOrWhiteSpace(settings.InvoiceIssuerCountry);
             var archiveReady = issuerConfigured && issuerTaxIdConfigured && issuerAddressConfigured;
             var eInvoiceBaselineReady = archiveReady && settings.VatEnabled;
+            var structuredExportBaselineReady = archiveReady;
 
             return new TaxOperationsVm
             {
@@ -567,6 +575,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 ArchiveReadinessLabel = archiveReady ? T("TaxPolicyArchiveReady") : T("TaxPolicyArchiveIncomplete"),
                 EInvoiceBaselineReady = eInvoiceBaselineReady,
                 EInvoiceBaselineLabel = eInvoiceBaselineReady ? T("TaxPolicyBaselineReady") : T("TaxPolicyBaselineIncomplete"),
+                StructuredExportBaselineReady = structuredExportBaselineReady,
+                StructuredExportBaselineLabel = structuredExportBaselineReady ? T("TaxPolicyStructuredExportReady") : T("TaxPolicyStructuredExportIncomplete"),
                 ComplianceScopeNote = T("TaxPolicyComplianceScopeNote")
             };
         }
@@ -804,6 +814,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Status = vm.Status,
                 Provider = vm.Provider,
                 ProviderTransactionRef = vm.ProviderTransactionRef,
+                ProviderPaymentIntentRef = vm.ProviderPaymentIntentRef,
+                ProviderCheckoutSessionRef = vm.ProviderCheckoutSessionRef,
                 PaidAtUtc = vm.PaidAtUtc
             };
 
@@ -813,9 +825,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetSuccessMessage("PaymentCreatedMessage");
                 return RedirectOrHtmx(nameof(EditPayment), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("PaymentCreateFailedMessage");
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderPaymentEditor(vm, isCreate: true);
             }
@@ -861,6 +873,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Status = dto.Status,
                 Provider = dto.Provider,
                 ProviderTransactionRef = dto.ProviderTransactionRef,
+                ProviderPaymentIntentRef = dto.ProviderPaymentIntentRef,
+                ProviderCheckoutSessionRef = dto.ProviderCheckoutSessionRef,
                 PaidAtUtc = dto.PaidAtUtc,
                 RefundedAmountMinor = dto.RefundedAmountMinor,
                 NetCapturedAmountMinor = dto.NetCapturedAmountMinor,
@@ -873,6 +887,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     Status = x.Status,
                     CreatedAtUtc = x.CreatedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc
+                }).ToList(),
+                ProviderEvents = dto.ProviderEvents.Select(x => new PaymentProviderEventItemVm
+                {
+                    EventType = x.EventType,
+                    OccurredAtUtc = x.OccurredAtUtc,
+                    IdempotencyKey = x.IdempotencyKey,
+                    CorrelationKind = x.CorrelationKind,
+                    CorrelationReference = x.CorrelationReference
                 }).ToList(),
                 SupportPlaybooks = BuildPaymentSupportPlaybooks(dto)
             };
@@ -905,6 +927,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Status = vm.Status,
                 Provider = vm.Provider,
                 ProviderTransactionRef = vm.ProviderTransactionRef,
+                ProviderPaymentIntentRef = vm.ProviderPaymentIntentRef,
+                ProviderCheckoutSessionRef = vm.ProviderCheckoutSessionRef,
                 PaidAtUtc = vm.PaidAtUtc
             };
 
@@ -919,9 +943,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetErrorMessage("PaymentConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditPayment), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("PaymentUpdateFailedMessage");
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderPaymentEditor(vm, isCreate: false);
             }
@@ -934,10 +958,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 new()
                 {
                     Title = T("PaymentSupportPlaybookProviderCorrelationTitle"),
-                    ScopeNote = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef)
+                    ScopeNote = !HasProviderCorrelation(dto)
                         ? T("PaymentSupportPlaybookProviderCorrelationMissingScope")
                         : T("PaymentSupportPlaybookProviderCorrelationPresentScope"),
-                    OperatorAction = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef)
+                    OperatorAction = !HasProviderCorrelation(dto)
                         ? T("PaymentSupportPlaybookProviderCorrelationMissingAction")
                         : T("PaymentSupportPlaybookProviderCorrelationPresentAction")
                 },
@@ -952,8 +976,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     OperatorAction = !string.IsNullOrWhiteSpace(dto.FailureReason)
                         ? T("PaymentSupportPlaybookFailureAction")
                         : dto.Refunds.Count > 0
-                            ? T("PaymentSupportPlaybookRefundAction")
-                            : T("PaymentSupportPlaybookBaselineAction")
+                              ? T("PaymentSupportPlaybookRefundAction")
+                              : T("PaymentSupportPlaybookBaselineAction")
+                },
+                new()
+                {
+                    Title = T("PaymentSupportPlaybookProviderTimelineTitle"),
+                    ScopeNote = dto.ProviderEvents.Count > 0
+                        ? T("PaymentSupportPlaybookProviderTimelinePresentScope")
+                        : T("PaymentSupportPlaybookProviderTimelineMissingScope"),
+                    OperatorAction = dto.ProviderEvents.Count > 0
+                        ? T("PaymentSupportPlaybookProviderTimelinePresentAction")
+                        : T("PaymentSupportPlaybookProviderTimelineMissingAction")
                 }
             };
 
@@ -1044,9 +1078,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetSuccessMessage("FinancialAccountCreatedMessage");
                 return RedirectOrHtmx(nameof(EditFinancialAccount), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("FinancialAccountCreateFailedMessage");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderFinancialAccountEditor(vm, isCreate: true);
             }
@@ -1106,9 +1140,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetErrorMessage("FinancialAccountConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditFinancialAccount), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("FinancialAccountUpdateFailedMessage");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderFinancialAccountEditor(vm, isCreate: false);
             }
@@ -1194,9 +1228,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetSuccessMessage("ExpenseCreatedMessage");
                 return RedirectOrHtmx(nameof(EditExpense), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("ExpenseCreateFailedMessage");
                 await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderExpenseEditor(vm, isCreate: true);
             }
@@ -1260,9 +1294,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetErrorMessage("ExpenseConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditExpense), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("ExpenseUpdateFailedMessage");
                 await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderExpenseEditor(vm, isCreate: false);
             }
@@ -1360,9 +1394,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetSuccessMessage("JournalEntryCreatedMessage");
                 return RedirectOrHtmx(nameof(EditJournalEntry), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("JournalEntryCreateFailedMessage");
                 EnsureJournalEntryRows(vm);
                 await PopulateJournalEntryOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderJournalEntryEditor(vm, isCreate: true);
@@ -1439,9 +1473,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 SetErrorMessage("JournalEntryConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditJournalEntry), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("JournalEntryUpdateFailedMessage");
                 EnsureJournalEntryRows(vm);
                 await PopulateJournalEntryOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderJournalEntryEditor(vm, isCreate: false);
@@ -1493,6 +1527,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
 
             return isCreate ? View("CreatePayment", vm) : View("EditPayment", vm);
         }
+
+        private static bool HasProviderCorrelation(PaymentEditDto dto) =>
+            !string.IsNullOrWhiteSpace(dto.ProviderTransactionRef) ||
+            !string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentRef) ||
+            !string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionRef);
 
         private IActionResult RenderFinancialAccountEditor(FinancialAccountEditVm vm, bool isCreate)
         {

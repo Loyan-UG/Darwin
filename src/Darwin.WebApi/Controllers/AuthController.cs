@@ -1,4 +1,5 @@
 ﻿using Darwin.Application.Identity.Commands;
+using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Contracts.Identity;
@@ -6,6 +7,7 @@ using Darwin.Shared.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Security.Claims;
@@ -34,6 +36,7 @@ namespace Darwin.WebApi.Controllers
         private readonly RequestPasswordResetHandler _requestPasswordReset;
         private readonly ResetPasswordHandler _resetPassword;
         private readonly GetRoleIdByKeyHandler _getRoleIdByKey;
+        private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
         private readonly ILogger<AuthController> _logger;
 
         /// <summary>
@@ -54,6 +57,7 @@ namespace Darwin.WebApi.Controllers
             RequestPasswordResetHandler requestPasswordReset,
             ResetPasswordHandler resetPassword,
             GetRoleIdByKeyHandler getRoleIdByKey,
+            IStringLocalizer<ValidationResource> validationLocalizer,
             ILogger<AuthController> logger)
         {
             _loginWithPassword = loginWithPassword ?? throw new ArgumentNullException(nameof(loginWithPassword));
@@ -66,6 +70,7 @@ namespace Darwin.WebApi.Controllers
             _requestPasswordReset = requestPasswordReset ?? throw new ArgumentNullException(nameof(requestPasswordReset));
             _resetPassword = resetPassword ?? throw new ArgumentNullException(nameof(resetPassword));
             _getRoleIdByKey = getRoleIdByKey ?? throw new ArgumentNullException(nameof(getRoleIdByKey));
+            _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -85,7 +90,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             // Map Contracts → Application DTO
@@ -141,7 +146,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             var dto = new RefreshRequestDto
@@ -193,7 +198,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             var dto = new RevokeRefreshRequestDto
@@ -245,8 +250,8 @@ namespace Darwin.WebApi.Controllers
                 var problem = new Darwin.Contracts.Common.ProblemDetails
                 {
                     Status = 401,
-                    Title = "Unauthorized",
-                    Detail = "User identifier could not be resolved from the access token.",
+                    Title = _validationLocalizer["UnauthorizedTitle"],
+                    Detail = _validationLocalizer["AuthenticatedUserIdentifierNotResolved"],
                     Instance = HttpContext.Request?.Path.Value
                 };
 
@@ -298,7 +303,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             var dto = new UserCreateDto
@@ -375,7 +380,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             var userId = GetUserIdFromClaims(HttpContext.User);
@@ -384,8 +389,8 @@ namespace Darwin.WebApi.Controllers
                 var problem = new ProblemDetails
                 {
                     Status = 401,
-                    Title = "Unauthorized",
-                    Detail = "User identifier could not be resolved from the access token.",
+                    Title = _validationLocalizer["UnauthorizedTitle"],
+                    Detail = _validationLocalizer["AuthenticatedUserIdentifierNotResolved"],
                     Instance = HttpContext.Request?.Path.Value
                 };
                 _logger.LogWarning(
@@ -423,7 +428,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             try
@@ -455,7 +460,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             var result = await _confirmEmail.HandleAsync(
@@ -486,7 +491,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             var dto = new RequestPasswordResetDto
@@ -519,7 +524,7 @@ namespace Darwin.WebApi.Controllers
         {
             if (request is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             var dto = new ResetPasswordDto
@@ -592,12 +597,13 @@ namespace Darwin.WebApi.Controllers
         private IActionResult ProblemFromResult<T>(Result<T> result)
         {
             var status = 400;
+            var fallbackMessage = _validationLocalizer["OperationFailed"];
 
             var problem = new Darwin.Contracts.Common.ProblemDetails
             {
                 Status = status,
-                Title = "Request failed",
-                Detail = result.Error ?? "The operation could not be completed.",
+                Title = fallbackMessage,
+                Detail = result.Error ?? fallbackMessage,
                 Instance = HttpContext.Request?.Path.Value
             };
 

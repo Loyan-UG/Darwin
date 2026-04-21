@@ -805,7 +805,9 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)");
         controllerSource.Should().Contain("await _reactivateBusiness.HandleAsync(new BusinessLifecycleActionDto");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessReactivated\")");
-        controllerSource.Should().Contain("TempData[\"Error\"] = ex.Message;");
+        controllerSource.Should().Contain("SetErrorMessage(\"BusinessApproveFailed\");");
+        controllerSource.Should().Contain("SetErrorMessage(\"BusinessSuspendFailed\");");
+        controllerSource.Should().Contain("SetErrorMessage(\"BusinessReactivateFailed\");");
         controllerSource.Should().Contain("return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id });");
     }
 
@@ -845,7 +847,8 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("await _revokeBusinessInvitation.HandleAsync(new BusinessInvitationRevokeDto");
         controllerSource.Should().Contain("Note = T(\"BusinessInvitationRevokedFromWebAdminNote\")");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessInvitationRevoked\")");
-        controllerSource.Should().Contain("TempData[\"Error\"] = ex.Message;");
+        controllerSource.Should().Contain("SetErrorMessage(\"BusinessInvitationResendFailed\");");
+        controllerSource.Should().Contain("SetErrorMessage(\"BusinessInvitationRevokeFailed\");");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Invitations), new { businessId });");
     }
 
@@ -955,9 +958,9 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         source.Should().Contain("? T(\"BusinessCreateOwnerAssigned\")");
         source.Should().Contain(": T(\"BusinessCreateNextSteps\")");
         source.Should().Contain("? (cancelAtPeriodEnd ? T(\"BusinessSubscriptionCancelAtPeriodEndUpdated\") : T(\"BusinessSubscriptionRenewalRestored\"))");
-        source.Should().Contain(": (result.Error ?? T(\"BusinessSubscriptionCancelAtPeriodEndUpdateFailed\"))");
-        source.Should().Contain("result.Succeeded ? T(\"BusinessArchived\") : (result.Error ?? T(\"BusinessArchiveFailed\"))");
-        source.Should().Contain("result.Succeeded ? T(\"BusinessLocationArchived\") : (result.Error ?? T(\"BusinessLocationArchiveFailed\"))");
+        source.Should().Contain(": T(\"BusinessSubscriptionCancelAtPeriodEndUpdateFailed\")");
+        source.Should().Contain("result.Succeeded ? T(\"BusinessArchived\") : T(\"BusinessArchiveFailed\")");
+        source.Should().Contain("result.Succeeded ? T(\"BusinessLocationArchived\") : T(\"BusinessLocationArchiveFailed\")");
         source.Should().Contain("Note = T(\"BusinessInvitationRevokedFromWebAdminNote\")");
     }
 
@@ -1428,27 +1431,27 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("public async Task<IActionResult> SendMemberActivationEmail(");
         controllerSource.Should().Contain("var result = await _requestEmailConfirmation.HandleAsync(");
         controllerSource.Should().Contain("? T(\"BusinessMemberActivationEmailSent\")");
-        controllerSource.Should().Contain(": (result.Error ?? T(\"BusinessMemberActivationEmailFailed\"));");
+        controllerSource.Should().Contain(": T(\"BusinessMemberActivationEmailFailed\");");
 
         controllerSource.Should().Contain("public async Task<IActionResult> ConfirmMemberEmail(");
         controllerSource.Should().Contain("var result = await _confirmUserEmail.HandleAsync(new UserAdminActionDto");
         controllerSource.Should().Contain("? T(\"BusinessMemberEmailConfirmed\")");
-        controllerSource.Should().Contain(": (result.Error ?? T(\"BusinessMemberEmailConfirmFailed\"));");
+        controllerSource.Should().Contain(": T(\"BusinessMemberEmailConfirmFailed\");");
 
         controllerSource.Should().Contain("public async Task<IActionResult> SendMemberPasswordReset(");
         controllerSource.Should().Contain("var result = await _requestPasswordReset.HandleAsync(");
         controllerSource.Should().Contain("? T(\"BusinessMemberPasswordResetSent\")");
-        controllerSource.Should().Contain(": (result.Error ?? T(\"BusinessMemberPasswordResetFailed\"));");
+        controllerSource.Should().Contain(": T(\"BusinessMemberPasswordResetFailed\");");
 
         controllerSource.Should().Contain("public async Task<IActionResult> LockMemberUser(");
         controllerSource.Should().Contain("var result = await _lockUser.HandleAsync(new UserAdminActionDto");
         controllerSource.Should().Contain("? T(\"BusinessMemberAccountLocked\")");
-        controllerSource.Should().Contain(": (result.Error ?? T(\"BusinessMemberAccountLockFailed\"));");
+        controllerSource.Should().Contain(": T(\"BusinessMemberAccountLockFailed\");");
 
         controllerSource.Should().Contain("public async Task<IActionResult> UnlockMemberUser(");
         controllerSource.Should().Contain("var result = await _unlockUser.HandleAsync(new UserAdminActionDto");
         controllerSource.Should().Contain("? T(\"BusinessMemberAccountUnlocked\")");
-        controllerSource.Should().Contain(": (result.Error ?? T(\"BusinessMemberAccountUnlockFailed\"));");
+        controllerSource.Should().Contain(": T(\"BusinessMemberAccountUnlockFailed\");");
 
         controllerSource.Should().Contain("var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessMemberNotFound\");");
@@ -1473,7 +1476,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("RowVersion = rowVersion ?? Array.Empty<byte>(),");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessMemberRemovedOverride\");");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Members), new { businessId });");
-        controllerSource.Should().Contain("ModelState.AddModelError(string.Empty, ex.Message);");
+        controllerSource.Should().Contain("AddModelErrorMessage(\"BusinessMemberForceDeleteFailed\");");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(EditMember), new { id });");
     }
 

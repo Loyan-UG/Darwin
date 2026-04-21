@@ -7,14 +7,21 @@
     string LocalizeScanOutcome(string? outcome) => string.IsNullOrWhiteSpace(outcome) ? "-" : T.T(outcome);
     string LocalizeScanFailureReason(string? reason) => reason switch
     {
+        "TokenAlreadyConsumed" => T.T("TokenAlreadyConsumed"),
         "Token was consumed concurrently by another request." => T.T("TokenAlreadyConsumed"),
+        "AccountNotFound" => T.T("AccountNotFound"),
         "Loyalty account for scan session not found." => T.T("AccountNotFound"),
+        "AccountNotActive" => T.T("AccountNotActive"),
         "Loyalty account is not active." => T.T("AccountNotActive"),
+        "Expired" => T.T("Expired"),
         "Session expired before accrual confirmation." => T.T("Expired"),
         "Session expired before redemption confirmation." => T.T("Expired"),
         "Session expired before use." => T.T("Expired"),
+        "NoSelections" => T.T("NoSelections"),
         "Scan session does not contain any selected rewards." => T.T("NoSelections"),
+        "InvalidSelections" => T.T("InvalidSelections"),
         "Selected rewards do not require any points." => T.T("InvalidSelections"),
+        "InsufficientPoints" => T.T("InsufficientPoints"),
         "Account does not have enough points at confirmation time." => T.T("InsufficientPoints"),
         _ => string.IsNullOrWhiteSpace(reason) ? "-" : T.T(reason)
     };

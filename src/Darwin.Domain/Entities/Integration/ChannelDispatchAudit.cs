@@ -12,9 +12,13 @@ namespace Darwin.Domain.Entities.Integration
         public string Channel { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;
         public string? FlowKey { get; set; }
+        public string? TemplateKey { get; set; }
+        public string? CorrelationKey { get; set; }
         public Guid? BusinessId { get; set; }
         public string RecipientAddress { get; set; } = string.Empty;
+        public string? IntendedRecipientAddress { get; set; }
         public string MessagePreview { get; set; } = string.Empty;
+        public string? ProviderMessageId { get; set; }
         public string Status { get; set; } = "Pending";
         public DateTime AttemptedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }

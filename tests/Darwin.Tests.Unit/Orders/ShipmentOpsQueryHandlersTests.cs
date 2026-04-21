@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
+using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentAssertions;
@@ -138,6 +139,15 @@ public sealed class ShipmentOpsQueryHandlersTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Carrier).IsRequired();
                 builder.Property(x => x.Service).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<ShipmentProviderOperation>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Provider).IsRequired();
+                builder.Property(x => x.OperationType).IsRequired();
+                builder.Property(x => x.Status).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }

@@ -1,6 +1,8 @@
 using Darwin.Application.Common.DTOs;
 using Darwin.Contracts.Common;
+using Darwin.Application;
 using Darwin.Domain.Enums;
+using Microsoft.Extensions.Localization;
 using System.Security.Claims;
 
 namespace Darwin.WebApi.Controllers.Businesses;
@@ -57,6 +59,7 @@ internal static class BusinessControllerConventions
 
     public static bool TryParseBusinessCategoryKind(
         string? category,
+        IStringLocalizer<ValidationResource> localizer,
         out BusinessCategoryKind? kind,
         out string error)
     {
@@ -74,11 +77,11 @@ internal static class BusinessControllerConventions
             return true;
         }
 
-        error = "Invalid category value. It must match a known BusinessCategoryKind enum name.";
+        error = localizer["BusinessCategoryKindInvalid"];
         return false;
     }
 
-    public static (double? Value, string? Error) TryNormalizeMinRating(double? minRating)
+    public static (double? Value, string? Error) TryNormalizeMinRating(double? minRating, IStringLocalizer<ValidationResource> localizer)
     {
         if (!minRating.HasValue)
         {
@@ -87,12 +90,12 @@ internal static class BusinessControllerConventions
 
         if (double.IsNaN(minRating.Value) || double.IsInfinity(minRating.Value))
         {
-            return (null, "MinRating must be a finite number between 0 and 5.");
+            return (null, localizer["BusinessMinRatingFiniteRange"]);
         }
 
         if (minRating.Value < 0 || minRating.Value > 5)
         {
-            return (null, "MinRating must be between 0 and 5.");
+            return (null, localizer["BusinessMinRatingRange"]);
         }
 
         return (minRating.Value, null);
@@ -100,6 +103,7 @@ internal static class BusinessControllerConventions
 
     public static (GeoCoordinateDto? Coordinate, double? RadiusKm, string? Error) TryMapProximity(
         GeoCoordinateModel? near,
+        IStringLocalizer<ValidationResource> localizer,
         int? radiusMeters)
     {
         if (near is null && radiusMeters is null)
@@ -109,12 +113,12 @@ internal static class BusinessControllerConventions
 
         if (near is null)
         {
-            return (null, null, "Near must be provided when RadiusMeters is provided.");
+            return (null, null, localizer["BusinessNearRequiredWhenRadiusProvided"]);
         }
 
         if (radiusMeters.HasValue && radiusMeters.Value < 0)
         {
-            return (null, null, "RadiusMeters must be zero or a positive integer.");
+            return (null, null, localizer["BusinessRadiusMetersPositive"]);
         }
 
         var coordinate = new GeoCoordinateDto

@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Billing;
 using Darwin.Contracts.Billing;
+using Darwin.Application;
 using Darwin.WebApi.Controllers;
 using Darwin.Application.Businesses.Queries;
 using Darwin.WebApi.Controllers.Businesses;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Linq;
 using System.Threading;
@@ -29,6 +31,7 @@ public sealed class BillingController : ApiControllerBase
     private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntentHandler;
     private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;
     private readonly IConfiguration _configuration;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public BillingController(
         GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatusHandler,
@@ -36,7 +39,8 @@ public sealed class BillingController : ApiControllerBase
         GetBillingPlansHandler getBillingPlansHandler,
         CreateSubscriptionCheckoutIntentHandler createSubscriptionCheckoutIntentHandler,
         GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getBusinessSubscriptionStatusHandler = getBusinessSubscriptionStatusHandler ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionStatusHandler));
         _setCancelAtPeriodEndHandler = setCancelAtPeriodEndHandler ?? throw new ArgumentNullException(nameof(setCancelAtPeriodEndHandler));
@@ -44,6 +48,7 @@ public sealed class BillingController : ApiControllerBase
         _createSubscriptionCheckoutIntentHandler = createSubscriptionCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createSubscriptionCheckoutIntentHandler));
         _getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -69,7 +74,7 @@ public sealed class BillingController : ApiControllerBase
 
         if (!result.Succeeded || result.Value is null)
         {
-            return ProblemFromResult(result, "Failed to retrieve business subscription status.");
+            return ProblemFromResult(result, _validationLocalizer["BusinessSubscriptionStatusRetrievalFailed"]);
         }
 
         return Ok(MapStatus(result.Value));
@@ -94,7 +99,7 @@ public sealed class BillingController : ApiControllerBase
 
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var result = await _setCancelAtPeriodEndHandler
@@ -108,7 +113,7 @@ public sealed class BillingController : ApiControllerBase
 
         if (!result.Succeeded || result.Value is null)
         {
-            return ProblemFromResult(result, "Failed to update subscription cancellation preference.");
+            return ProblemFromResult(result, _validationLocalizer["SubscriptionCancellationUpdateFailed"]);
         }
 
         return Ok(new SetCancelAtPeriodEndResponse
@@ -183,7 +188,7 @@ public sealed class BillingController : ApiControllerBase
 
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var validation = await _createSubscriptionCheckoutIntentHandler
@@ -192,13 +197,13 @@ public sealed class BillingController : ApiControllerBase
 
         if (!validation.Succeeded)
         {
-            return ProblemFromResult(validation, "Unable to create checkout intent.");
+            return ProblemFromResult(validation, _validationLocalizer["CheckoutIntentCreationFailed"]);
         }
 
         var checkoutBaseUrl = _configuration["Billing:CheckoutBaseUrl"];
         if (string.IsNullOrWhiteSpace(checkoutBaseUrl) || !Uri.TryCreate(checkoutBaseUrl, UriKind.Absolute, out var baseUri))
         {
-            return BadRequestProblem("Billing checkout endpoint is not configured.");
+            return BadRequestProblem(_validationLocalizer["BillingCheckoutEndpointNotConfigured"]);
         }
 
         // Build query string via framework helpers so URL composition remains safe
@@ -254,17 +259,17 @@ public sealed class BillingController : ApiControllerBase
         var accessState = await _getCurrentBusinessAccessStateHandler.HandleAsync(businessId, userId, ct).ConfigureAwait(false);
         if (accessState is null)
         {
-            return (false, Guid.Empty, NotFoundProblem("Business was not found."));
+            return (false, Guid.Empty, NotFoundProblem(_validationLocalizer["BusinessNotFound"]));
         }
 
         if (!accessState.IsBusinessClientAccessAllowed)
         {
-            return (false, Guid.Empty, Forbid(accessState.BlockingReason));
+            return (false, Guid.Empty, ForbiddenProblem(detail: BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(accessState, _validationLocalizer)));
         }
 
         if (requireOperationsAllowed && !accessState.IsOperationsAllowed)
         {
-            return (false, Guid.Empty, Forbid(accessState.BlockingReason));
+            return (false, Guid.Empty, ForbiddenProblem(detail: BusinessAccessStateMessageLocalizer.LocalizeBlockingReason(accessState, _validationLocalizer)));
         }
 
         return (true, businessId, null);

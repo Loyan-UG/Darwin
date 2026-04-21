@@ -117,7 +117,7 @@ namespace Darwin.Application.Loyalty.Services
                 {
                     session.Status = LoyaltyScanStatus.Expired;
                     session.Outcome = "Expired";
-                    session.FailureReason = "Session expired before use.";
+                    session.FailureReason = "Expired";
                     await _db.SaveChangesAsync(ct).ConfigureAwait(false);
                 }
 

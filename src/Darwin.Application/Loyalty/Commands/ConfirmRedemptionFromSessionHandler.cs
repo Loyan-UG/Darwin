@@ -115,7 +115,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "TokenAlreadyConsumed";
-                session.FailureReason = "Token was consumed concurrently by another request.";
+                session.FailureReason = "TokenAlreadyConsumed";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmRedemptionResultDto>.Fail(_localizer["ScanSessionTokenAlreadyConsumed"]);
@@ -127,7 +127,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Expired;
                 session.Outcome = "Expired";
-                session.FailureReason = "Session expired before redemption confirmation.";
+                session.FailureReason = "Expired";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmRedemptionResultDto>.Fail(_localizer["ScanSessionExpired"]);
@@ -142,7 +142,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "AccountNotFound";
-                session.FailureReason = "Loyalty account for scan session not found.";
+                session.FailureReason = "AccountNotFound";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmRedemptionResultDto>.Fail(_localizer["LoyaltyAccountNotFoundForScanSession"]);
@@ -152,7 +152,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "AccountNotActive";
-                session.FailureReason = "Loyalty account is not active.";
+                session.FailureReason = "AccountNotActive";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmRedemptionResultDto>.Fail(_localizer["LoyaltyAccountInactive"]);
@@ -163,7 +163,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "NoSelections";
-                session.FailureReason = "Scan session does not contain any selected rewards.";
+                session.FailureReason = "NoSelections";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmRedemptionResultDto>.Fail(_localizer["SelectedRewardsMissing"]);
@@ -187,7 +187,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "InvalidSelections";
-                session.FailureReason = "Selected rewards do not require any points.";
+                session.FailureReason = "InvalidSelections";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmRedemptionResultDto>.Fail(_localizer["SelectedRewardsNoPointsRequired"]);
@@ -197,7 +197,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "InsufficientPoints";
-                session.FailureReason = "Account does not have enough points at confirmation time.";
+                session.FailureReason = "InsufficientPoints";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmRedemptionResultDto>.Fail(_localizer["InsufficientPointsForSelectedRewards"]);

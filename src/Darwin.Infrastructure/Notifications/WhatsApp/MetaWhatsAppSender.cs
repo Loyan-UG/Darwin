@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
@@ -53,8 +54,11 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
             Channel = "WhatsApp",
             Provider = "Meta",
             FlowKey = string.IsNullOrWhiteSpace(context?.FlowKey) ? null : context.FlowKey.Trim(),
+            TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim(),
+            CorrelationKey = string.IsNullOrWhiteSpace(context?.CorrelationKey) ? null : context.CorrelationKey.Trim(),
             BusinessId = context?.BusinessId,
             RecipientAddress = toPhoneE164,
+            IntendedRecipientAddress = string.IsNullOrWhiteSpace(context?.IntendedRecipientAddress) ? toPhoneE164 : context.IntendedRecipientAddress.Trim(),
             MessagePreview = BuildPreview(text),
             Status = "Pending",
             AttemptedAtUtc = attemptedAtUtc,
@@ -83,9 +87,9 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
             payload,
             ct);
 
+        var body = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
             audit.Status = "Failed";
             audit.CompletedAtUtc = DateTime.UtcNow;
             audit.FailureMessage = BuildFailure(body);
@@ -94,6 +98,7 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
             throw new InvalidOperationException("WhatsApp send failed.");
         }
 
+        audit.ProviderMessageId = ExtractProviderMessageId(body);
         audit.Status = "Sent";
         audit.CompletedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
@@ -114,5 +119,31 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
     {
         var value = string.IsNullOrWhiteSpace(body) ? "WhatsApp send failed." : body.Trim();
         return value.Length <= 2000 ? value : value[..2000];
+    }
+
+    private static string? ExtractProviderMessageId(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.TryGetProperty("messages", out var messagesElement) &&
+                messagesElement.ValueKind == JsonValueKind.Array &&
+                messagesElement.GetArrayLength() > 0 &&
+                messagesElement[0].TryGetProperty("id", out var idElement))
+            {
+                var id = idElement.GetString();
+                return string.IsNullOrWhiteSpace(id) ? null : id.Trim();
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        return null;
     }
 }

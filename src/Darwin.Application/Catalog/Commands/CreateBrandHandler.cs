@@ -19,10 +19,12 @@ namespace Darwin.Application.Catalog.Commands
     {
         private readonly IAppDbContext _db;
         private readonly BrandCreateDtoValidator _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public CreateBrandHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _localizer = localizer;
             _validator = new BrandCreateDtoValidator(localizer);
         }
 
@@ -36,7 +38,7 @@ namespace Darwin.Application.Catalog.Commands
             {
                 var slugExists = await _db.Set<Brand>().AnyAsync(b => b.Slug == dto.Slug, ct);
                 if (slugExists)
-                    throw new FluentValidation.ValidationException("Slug must be unique.");
+                    throw new FluentValidation.ValidationException(_localizer["BrandSlugMustBeUnique"]);
             }
 
             var sanitizer = HtmlSanitizerFactory.Create();

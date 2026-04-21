@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = T.T("WebhookDeliveries");
     string LocalizeWebhookStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeRetrySafetyState(string? state) => string.IsNullOrWhiteSpace(state) ? "-" : T.T(state);
 }
 
 <div id="billing-webhooks-workspace-shell">
@@ -239,13 +240,14 @@
                 <th>@T.T("Attempts")</th>
                 <th>@T.T("Timeline")</th>
                 <th>@T.T("Correlation")</th>
+                <th>@T.T("FailureDiagnostics")</th>
                 <th class="text-end">@T.T("OperatorFollowUp")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Deliveries.Count == 0)
         {
-            <tr><td colspan="7" class="text-center text-muted">@T.T("NoWebhookDeliveriesFound")</td></tr>
+            <tr><td colspan="8" class="text-center text-muted">@T.T("NoWebhookDeliveriesFound")</td></tr>
         }
         else
         {
@@ -292,6 +294,9 @@
                     <td>
                         <div class="small text-muted">@T.T("SubscriptionLabel") @item.SubscriptionId</div>
                         <div class="small text-muted">@item.IdempotencyKey</div>
+                        <div class="small mt-1">
+                            <span class="badge text-bg-light">@LocalizeRetrySafetyState(item.RetrySafetyState)</span>
+                        </div>
                         @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
                         {
                             <div class="small text-danger mt-1">@T.T("WebhookDisputeEscalationNote")</div>
@@ -302,6 +307,10 @@
                         {
                             <div class="small text-muted mt-1">@T.T("WebhookPaymentEvidenceNote")</div>
                         }
+                    </td>
+                    <td>
+                        <div>@T.T(item.FailureDiagnostics)</div>
+                        <div class="small text-muted mt-1">@T.T(item.EscalationHint)</div>
                     </td>
                     <td class="text-end">
                         <div class="d-flex justify-content-end gap-2 flex-wrap">

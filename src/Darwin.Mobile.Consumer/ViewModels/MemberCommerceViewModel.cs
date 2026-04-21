@@ -36,6 +36,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         ViewOrderCommand = new AsyncCommand<MemberCommerceOrderItemViewModel>(LoadOrderDetailAsync, CanLoadOrderDetail);
         RetryOrderPaymentCommand = new AsyncCommand(RetryOrderPaymentAsync, () => !IsBusy && SelectedOrder?.CanRetryPayment == true);
         CopyOrderDocumentCommand = new AsyncCommand(CopyOrderDocumentAsync, () => !IsBusy && SelectedOrder?.HasDocument == true);
+        OpenOrderShipmentTrackingCommand = new AsyncCommand<MemberCommerceShipmentSummaryViewModel>(OpenOrderShipmentTrackingAsync, CanOpenOrderShipmentTracking);
         ViewInvoiceCommand = new AsyncCommand<MemberCommerceInvoiceItemViewModel>(LoadInvoiceDetailAsync, CanLoadInvoiceDetail);
         RetryInvoicePaymentCommand = new AsyncCommand(RetryInvoicePaymentAsync, () => !IsBusy && SelectedInvoice?.CanRetryPayment == true);
         CopyInvoiceDocumentCommand = new AsyncCommand(CopyInvoiceDocumentAsync, () => !IsBusy && SelectedInvoice?.HasDocument == true);
@@ -70,6 +71,11 @@ public sealed class MemberCommerceViewModel : BaseViewModel
     /// Gets the order document copy command.
     /// </summary>
     public AsyncCommand CopyOrderDocumentCommand { get; }
+
+    /// <summary>
+    /// Gets the order shipment tracking command.
+    /// </summary>
+    public AsyncCommand<MemberCommerceShipmentSummaryViewModel> OpenOrderShipmentTrackingCommand { get; }
 
     /// <summary>
     /// Gets the invoice detail load command.
@@ -119,6 +125,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
                 OnPropertyChanged(nameof(HasSelectedOrder));
                 RetryOrderPaymentCommand.RaiseCanExecuteChanged();
                 CopyOrderDocumentCommand.RaiseCanExecuteChanged();
+                OpenOrderShipmentTrackingCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -239,6 +246,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
                 ViewInvoiceCommand.RaiseCanExecuteChanged();
                 RetryOrderPaymentCommand.RaiseCanExecuteChanged();
                 CopyOrderDocumentCommand.RaiseCanExecuteChanged();
+                OpenOrderShipmentTrackingCommand.RaiseCanExecuteChanged();
                 RetryInvoicePaymentCommand.RaiseCanExecuteChanged();
                 CopyInvoiceDocumentCommand.RaiseCanExecuteChanged();
             });
@@ -288,6 +296,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
                 ViewOrderCommand.RaiseCanExecuteChanged();
                 RetryOrderPaymentCommand.RaiseCanExecuteChanged();
                 CopyOrderDocumentCommand.RaiseCanExecuteChanged();
+                OpenOrderShipmentTrackingCommand.RaiseCanExecuteChanged();
             });
         }
     }
@@ -478,6 +487,41 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         }
     }
 
+    private bool CanOpenOrderShipmentTracking(MemberCommerceShipmentSummaryViewModel? shipment) =>
+        !IsBusy && shipment?.HasTrackingLink == true;
+
+    private async Task OpenOrderShipmentTrackingAsync(MemberCommerceShipmentSummaryViewModel? shipment)
+    {
+        if (shipment is null || !shipment.HasTrackingLink || string.IsNullOrWhiteSpace(shipment.TrackingUrl) || IsBusy)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            SuccessMessage = null;
+        });
+
+        try
+        {
+            await Browser.Default.OpenAsync(shipment.TrackingUrl, BrowserLaunchMode.SystemPreferred).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.MemberCommerceTrackingOpenFailed));
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                OpenOrderShipmentTrackingCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
     private static MemberCommerceOrderItemViewModel MapOrderSummary(MemberOrderSummary order)
     {
         return new MemberCommerceOrderItemViewModel
@@ -524,8 +568,32 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             PaymentsCountText = string.Format(AppResources.MemberCommerceOrderPaymentsCountFormat, order.Payments.Count),
             InvoicesCountText = string.Format(AppResources.MemberCommerceOrderInvoicesCountFormat, order.Invoices.Count),
             LineSummaries = order.Lines.Select(static line => $"{line.Name} x{line.Quantity}").ToArray(),
+            ShipmentSummaries = order.Shipments.Select(MapShipmentSummary).ToArray(),
             CanRetryPayment = order.Actions.CanRetryPayment,
             HasDocument = !string.IsNullOrWhiteSpace(order.Actions.DocumentPath)
+        };
+    }
+
+    private static MemberCommerceShipmentSummaryViewModel MapShipmentSummary(MemberOrderShipment shipment)
+    {
+        return new MemberCommerceShipmentSummaryViewModel
+        {
+            TitleText = string.Format(
+                CultureInfo.CurrentCulture,
+                AppResources.MemberCommerceShipmentTitleFormat,
+                shipment.Carrier,
+                shipment.Service),
+            StatusText = string.Format(AppResources.MemberCommerceOrderStatusFormat, LocalizeOrderStatus(shipment.Status)),
+            TrackingText = string.IsNullOrWhiteSpace(shipment.TrackingNumber)
+                ? null
+                : string.Format(AppResources.MemberCommerceShipmentTrackingFormat, shipment.TrackingNumber),
+            TrackingUrl = string.IsNullOrWhiteSpace(shipment.TrackingUrl) ? null : shipment.TrackingUrl,
+            ShippedAtText = shipment.ShippedAtUtc is null
+                ? null
+                : string.Format(AppResources.MemberCommerceShipmentShippedFormat, shipment.ShippedAtUtc.Value.ToLocalTime()),
+            DeliveredAtText = shipment.DeliveredAtUtc is null
+                ? null
+                : string.Format(AppResources.MemberCommerceShipmentDeliveredFormat, shipment.DeliveredAtUtc.Value.ToLocalTime())
         };
     }
 
@@ -654,12 +722,44 @@ public sealed class MemberCommerceOrderDetailViewModel
     public string InvoicesCountText { get; set; } = string.Empty;
     /// <summary>Gets or sets the purchased line summaries.</summary>
     public IReadOnlyList<string> LineSummaries { get; set; } = Array.Empty<string>();
+    /// <summary>Gets or sets the shipment summaries.</summary>
+    public IReadOnlyList<MemberCommerceShipmentSummaryViewModel> ShipmentSummaries { get; set; } = Array.Empty<MemberCommerceShipmentSummaryViewModel>();
     /// <summary>Gets or sets a value indicating whether retry payment is available.</summary>
     public bool CanRetryPayment { get; set; }
     /// <summary>Gets or sets a value indicating whether a document can be copied.</summary>
     public bool HasDocument { get; set; }
     /// <summary>Gets a value indicating whether a shipping-method label should be displayed.</summary>
     public bool HasShippingMethod => !string.IsNullOrWhiteSpace(ShippingMethodText);
+    /// <summary>Gets a value indicating whether shipment summaries should be displayed.</summary>
+    public bool HasShipments => ShipmentSummaries.Count > 0;
+}
+
+/// <summary>
+/// Read-only shipment summary model for member commerce order detail screens.
+/// </summary>
+public sealed class MemberCommerceShipmentSummaryViewModel
+{
+    /// <summary>Gets or sets the shipment title.</summary>
+    public string TitleText { get; set; } = string.Empty;
+    /// <summary>Gets or sets the shipment status display text.</summary>
+    public string StatusText { get; set; } = string.Empty;
+    /// <summary>Gets or sets the optional tracking text.</summary>
+    public string? TrackingText { get; set; }
+    /// <summary>Gets or sets the optional carrier tracking URL.</summary>
+    public string? TrackingUrl { get; set; }
+    /// <summary>Gets or sets the optional shipped-at display text.</summary>
+    public string? ShippedAtText { get; set; }
+    /// <summary>Gets or sets the optional delivered-at display text.</summary>
+    public string? DeliveredAtText { get; set; }
+
+    /// <summary>Gets a value indicating whether a tracking label should be displayed.</summary>
+    public bool HasTrackingText => !string.IsNullOrWhiteSpace(TrackingText);
+    /// <summary>Gets a value indicating whether a tracking link is available.</summary>
+    public bool HasTrackingLink => !string.IsNullOrWhiteSpace(TrackingUrl);
+    /// <summary>Gets a value indicating whether a shipped-at label should be displayed.</summary>
+    public bool HasShippedAt => !string.IsNullOrWhiteSpace(ShippedAtText);
+    /// <summary>Gets a value indicating whether a delivered-at label should be displayed.</summary>
+    public bool HasDeliveredAt => !string.IsNullOrWhiteSpace(DeliveredAtText);
 }
 
 /// <summary>

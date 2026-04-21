@@ -3,6 +3,7 @@ using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -41,15 +42,24 @@ namespace Darwin.Application.Billing.Queries
                         x.Status == PaymentStatus.Refunded ||
                         _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)),
                     PaymentQueueFilter.Unlinked => paymentsQuery.Where(x => !x.OrderId.HasValue && !x.InvoiceId.HasValue),
-                    PaymentQueueFilter.ProviderLinked => paymentsQuery.Where(x => x.ProviderTransactionRef != null && x.ProviderTransactionRef != string.Empty),
+                    PaymentQueueFilter.ProviderLinked => paymentsQuery.Where(x =>
+                        (x.ProviderTransactionRef != null && x.ProviderTransactionRef != string.Empty) ||
+                        (x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef != string.Empty) ||
+                        (x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef != string.Empty)),
                     PaymentQueueFilter.Stripe => paymentsQuery.Where(x => x.Provider == "Stripe"),
-                    PaymentQueueFilter.MissingProviderRef => paymentsQuery.Where(x => x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty),
+                    PaymentQueueFilter.MissingProviderRef => paymentsQuery.Where(x =>
+                        (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty) &&
+                        (x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty) &&
+                        (x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty)),
                     PaymentQueueFilter.FailedStripe => paymentsQuery.Where(x => x.Provider == "Stripe" && x.Status == PaymentStatus.Failed),
                     PaymentQueueFilter.NeedsReconciliation => paymentsQuery.Where(x =>
                         x.Status == PaymentStatus.Pending ||
                         x.Status == PaymentStatus.Authorized ||
                         x.Status == PaymentStatus.Failed ||
-                        (x.Provider == "Stripe" && (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty)) ||
+                        (x.Provider == "Stripe" &&
+                         (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty) &&
+                         (x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty) &&
+                         (x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty)) ||
                         _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)),
                     PaymentQueueFilter.DisputeFollowUp => paymentsQuery.Where(x =>
                         x.Provider == "Stripe" &&
@@ -67,6 +77,8 @@ namespace Darwin.Application.Billing.Queries
                     x.Provider.Contains(term) ||
                     x.Currency.Contains(term) ||
                     (x.ProviderTransactionRef != null && x.ProviderTransactionRef.Contains(term)) ||
+                    (x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef.Contains(term)) ||
+                    (x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef.Contains(term)) ||
                     (x.OrderId.HasValue && _db.Set<Order>().Any(o => o.Id == x.OrderId.Value && o.OrderNumber.Contains(term))) ||
                     (x.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
                         c.Id == x.CustomerId.Value &&
@@ -100,6 +112,8 @@ namespace Darwin.Application.Billing.Queries
                     Status = x.Status,
                     Provider = x.Provider,
                     ProviderTransactionRef = x.ProviderTransactionRef,
+                    ProviderPaymentIntentRef = x.ProviderPaymentIntentRef,
+                    ProviderCheckoutSessionRef = x.ProviderCheckoutSessionRef,
                     FailureReason = x.FailureReason,
                     PaidAtUtc = x.PaidAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
@@ -238,6 +252,8 @@ namespace Darwin.Application.Billing.Queries
                 item.OpenAgeHours = BillingPaymentTimelineFormatter.CalculateOpenAgeHours(item.CreatedAtUtc, item.PaidAtUtc);
                 item.ProviderReferenceState = BillingPaymentTimelineFormatter.ResolveProviderReferenceState(
                     item.ProviderTransactionRef,
+                    item.ProviderPaymentIntentRef,
+                    item.ProviderCheckoutSessionRef,
                     item.IsStripe,
                     item.Status,
                     item.RefundedAmountMinor);
@@ -246,7 +262,10 @@ namespace Darwin.Application.Billing.Queries
                     item.Status == PaymentStatus.Pending ||
                     item.Status == PaymentStatus.Authorized ||
                     item.RefundedAmountMinor > 0 ||
-                    (item.IsStripe && string.IsNullOrWhiteSpace(item.ProviderTransactionRef));
+                    (item.IsStripe &&
+                     string.IsNullOrWhiteSpace(item.ProviderTransactionRef) &&
+                     string.IsNullOrWhiteSpace(item.ProviderPaymentIntentRef) &&
+                     string.IsNullOrWhiteSpace(item.ProviderCheckoutSessionRef));
                 item.NeedsDisputeFollowUp =
                     item.IsStripe &&
                     (item.Status == PaymentStatus.Failed ||
@@ -298,16 +317,25 @@ namespace Darwin.Application.Billing.Queries
                 PendingCount = await payments.CountAsync(x => x.Status == PaymentStatus.Pending || x.Status == PaymentStatus.Authorized, ct).ConfigureAwait(false),
                 FailedCount = await payments.CountAsync(x => x.Status == PaymentStatus.Failed, ct).ConfigureAwait(false),
                 UnlinkedCount = await payments.CountAsync(x => !x.OrderId.HasValue && !x.InvoiceId.HasValue, ct).ConfigureAwait(false),
-                ProviderLinkedCount = await payments.CountAsync(x => x.ProviderTransactionRef != null && x.ProviderTransactionRef != string.Empty, ct).ConfigureAwait(false),
+                ProviderLinkedCount = await payments.CountAsync(x =>
+                    (x.ProviderTransactionRef != null && x.ProviderTransactionRef != string.Empty) ||
+                    (x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef != string.Empty) ||
+                    (x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef != string.Empty), ct).ConfigureAwait(false),
                 RefundedCount = refundedIds.Count,
                 StripeCount = await payments.CountAsync(x => x.Provider == "Stripe", ct).ConfigureAwait(false),
-                MissingProviderRefCount = await payments.CountAsync(x => x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty, ct).ConfigureAwait(false),
+                MissingProviderRefCount = await payments.CountAsync(x =>
+                    (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty) &&
+                    (x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty) &&
+                    (x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty), ct).ConfigureAwait(false),
                 FailedStripeCount = await payments.CountAsync(x => x.Provider == "Stripe" && x.Status == PaymentStatus.Failed, ct).ConfigureAwait(false),
                 NeedsReconciliationCount = await payments.CountAsync(x =>
                     x.Status == PaymentStatus.Pending ||
                     x.Status == PaymentStatus.Authorized ||
                     x.Status == PaymentStatus.Failed ||
-                    (x.Provider == "Stripe" && (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty)) ||
+                    (x.Provider == "Stripe" &&
+                     (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty) &&
+                     (x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty) &&
+                     (x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty)) ||
                     _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed), ct).ConfigureAwait(false),
                 DisputeFollowUpCount = await payments.CountAsync(x =>
                     x.Provider == "Stripe" &&
@@ -349,6 +377,8 @@ namespace Darwin.Application.Billing.Queries
                     Status = x.Status,
                     Provider = x.Provider,
                     ProviderTransactionRef = x.ProviderTransactionRef,
+                    ProviderPaymentIntentRef = x.ProviderPaymentIntentRef,
+                    ProviderCheckoutSessionRef = x.ProviderCheckoutSessionRef,
                     PaidAtUtc = x.PaidAtUtc,
                     FailureReason = x.FailureReason,
                     CreatedAtUtc = x.CreatedAtUtc,
@@ -416,6 +446,7 @@ namespace Darwin.Application.Billing.Queries
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+            dto.ProviderEvents = await GetProviderEventsAsync(dto, ct).ConfigureAwait(false);
             dto.LastFinancialEventAtUtc = BillingPaymentTimelineFormatter.ResolveLastFinancialEventAtUtc(
                 dto.CreatedAtUtc,
                 dto.PaidAtUtc,
@@ -423,6 +454,8 @@ namespace Darwin.Application.Billing.Queries
             dto.OpenAgeHours = BillingPaymentTimelineFormatter.CalculateOpenAgeHours(dto.CreatedAtUtc, dto.PaidAtUtc);
             dto.ProviderReferenceState = BillingPaymentTimelineFormatter.ResolveProviderReferenceState(
                 dto.ProviderTransactionRef,
+                dto.ProviderPaymentIntentRef,
+                dto.ProviderCheckoutSessionRef,
                 dto.IsStripe,
                 dto.Status,
                 dto.RefundedAmountMinor);
@@ -431,7 +464,10 @@ namespace Darwin.Application.Billing.Queries
                 dto.Status == PaymentStatus.Pending ||
                 dto.Status == PaymentStatus.Authorized ||
                 dto.RefundedAmountMinor > 0 ||
-                (dto.IsStripe && string.IsNullOrWhiteSpace(dto.ProviderTransactionRef));
+                (dto.IsStripe &&
+                 string.IsNullOrWhiteSpace(dto.ProviderTransactionRef) &&
+                 string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentRef) &&
+                 string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionRef));
             dto.NeedsDisputeFollowUp =
                 dto.IsStripe &&
                 (dto.Status == PaymentStatus.Failed ||
@@ -480,6 +516,60 @@ namespace Darwin.Application.Billing.Queries
 
             return dto;
         }
+
+        private async Task<List<PaymentProviderEventItemDto>> GetProviderEventsAsync(PaymentEditDto dto, CancellationToken ct)
+        {
+            if (!dto.IsStripe)
+            {
+                return new List<PaymentProviderEventItemDto>();
+            }
+
+            var paymentIntentRef = string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentRef) ? null : dto.ProviderPaymentIntentRef.Trim();
+            var checkoutSessionRef = string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionRef) ? null : dto.ProviderCheckoutSessionRef.Trim();
+            var providerTransactionRef = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef) ? null : dto.ProviderTransactionRef.Trim();
+
+            if (paymentIntentRef is null && checkoutSessionRef is null && providerTransactionRef is null)
+            {
+                return new List<PaymentProviderEventItemDto>();
+            }
+
+            var events = await _db.Set<EventLog>()
+                .AsNoTracking()
+                .Where(x =>
+                    !x.IsDeleted &&
+                    x.Type.StartsWith("StripeWebhook:") &&
+                    ((paymentIntentRef != null && EF.Functions.Like(x.PropertiesJson, $"%{paymentIntentRef}%")) ||
+                     (checkoutSessionRef != null && EF.Functions.Like(x.PropertiesJson, $"%{checkoutSessionRef}%")) ||
+                     (providerTransactionRef != null && EF.Functions.Like(x.PropertiesJson, $"%{providerTransactionRef}%"))))
+                .OrderByDescending(x => x.OccurredAtUtc)
+                .Take(12)
+                .Select(x => new
+                {
+                    EventType = x.Type,
+                    OccurredAtUtc = x.OccurredAtUtc,
+                    IdempotencyKey = x.IdempotencyKey,
+                    x.PropertiesJson
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            return events.Select(x => new PaymentProviderEventItemDto
+            {
+                EventType = x.EventType,
+                OccurredAtUtc = x.OccurredAtUtc,
+                IdempotencyKey = x.IdempotencyKey,
+                CorrelationKind = BillingProviderAuditFormatter.ResolveCorrelationKind(
+                    x.PropertiesJson,
+                    paymentIntentRef,
+                    checkoutSessionRef,
+                    providerTransactionRef),
+                CorrelationReference = BillingProviderAuditFormatter.ResolveCorrelationReference(
+                    x.PropertiesJson,
+                    paymentIntentRef,
+                    checkoutSessionRef,
+                    providerTransactionRef)
+            }).ToList();
+        }
     }
 
     public sealed class GetRefundsPageHandler
@@ -517,7 +607,9 @@ namespace Darwin.Application.Billing.Queries
                         x.Refund.Status == RefundStatus.Pending ||
                         x.Refund.Status == RefundStatus.Failed ||
                         (x.Payment.Provider == "Stripe" &&
-                         (x.Payment.ProviderTransactionRef == null || x.Payment.ProviderTransactionRef == string.Empty))),
+                         (x.Payment.ProviderTransactionRef == null || x.Payment.ProviderTransactionRef == string.Empty) &&
+                         (x.Payment.ProviderPaymentIntentRef == null || x.Payment.ProviderPaymentIntentRef == string.Empty) &&
+                         (x.Payment.ProviderCheckoutSessionRef == null || x.Payment.ProviderCheckoutSessionRef == string.Empty))),
                     _ => refundsQuery
                 };
             }
@@ -529,6 +621,8 @@ namespace Darwin.Application.Billing.Queries
                     x.Refund.Reason.Contains(term) ||
                     x.Payment.Provider.Contains(term) ||
                     (x.Payment.ProviderTransactionRef != null && x.Payment.ProviderTransactionRef.Contains(term)) ||
+                    (x.Payment.ProviderPaymentIntentRef != null && x.Payment.ProviderPaymentIntentRef.Contains(term)) ||
+                    (x.Payment.ProviderCheckoutSessionRef != null && x.Payment.ProviderCheckoutSessionRef.Contains(term)) ||
                     _db.Set<Order>().Any(o => o.Id == x.Refund.OrderId && o.OrderNumber.Contains(term)) ||
                     (x.Payment.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
                         c.Id == x.Payment.CustomerId.Value &&
@@ -551,6 +645,8 @@ namespace Darwin.Application.Billing.Queries
                     PaymentId = x.Refund.PaymentId,
                     PaymentProvider = x.Payment.Provider,
                     PaymentProviderReference = x.Payment.ProviderTransactionRef,
+                    PaymentProviderPaymentIntentRef = x.Payment.ProviderPaymentIntentRef,
+                    PaymentProviderCheckoutSessionRef = x.Payment.ProviderCheckoutSessionRef,
                     PaymentStatus = x.Payment.Status,
                     CustomerId = x.Payment.CustomerId,
                     AmountMinor = x.Refund.AmountMinor,
@@ -623,13 +719,18 @@ namespace Darwin.Application.Billing.Queries
                 item.OpenAgeHours = BillingRefundTimelineFormatter.CalculateOpenAgeHours(item.CreatedAtUtc, item.CompletedAtUtc);
                 item.ProviderReferenceState = BillingRefundTimelineFormatter.ResolveProviderReferenceState(
                     item.PaymentProviderReference,
+                    item.PaymentProviderPaymentIntentRef,
+                    item.PaymentProviderCheckoutSessionRef,
                     item.IsStripe,
                     item.Status,
                     item.PaymentStatus);
                 item.NeedsSupportAttention =
                     item.Status == RefundStatus.Pending ||
                     item.Status == RefundStatus.Failed ||
-                    (item.IsStripe && string.IsNullOrWhiteSpace(item.PaymentProviderReference));
+                    (item.IsStripe &&
+                     string.IsNullOrWhiteSpace(item.PaymentProviderReference) &&
+                     string.IsNullOrWhiteSpace(item.PaymentProviderPaymentIntentRef) &&
+                     string.IsNullOrWhiteSpace(item.PaymentProviderCheckoutSessionRef));
             }
         }
     }
@@ -658,7 +759,9 @@ namespace Darwin.Application.Billing.Queries
                     x.Refund.Status == RefundStatus.Pending ||
                     x.Refund.Status == RefundStatus.Failed ||
                     (x.Payment.Provider == "Stripe" &&
-                     (x.Payment.ProviderTransactionRef == null || x.Payment.ProviderTransactionRef == string.Empty)), ct).ConfigureAwait(false)
+                     (x.Payment.ProviderTransactionRef == null || x.Payment.ProviderTransactionRef == string.Empty) &&
+                     (x.Payment.ProviderPaymentIntentRef == null || x.Payment.ProviderPaymentIntentRef == string.Empty) &&
+                     (x.Payment.ProviderCheckoutSessionRef == null || x.Payment.ProviderCheckoutSessionRef == string.Empty)), ct).ConfigureAwait(false)
             };
         }
     }
@@ -1065,11 +1168,15 @@ namespace Darwin.Application.Billing.Queries
 
         public static string ResolveProviderReferenceState(
             string? providerTransactionRef,
+            string? providerPaymentIntentRef,
+            string? providerCheckoutSessionRef,
             bool isStripe,
             PaymentStatus status,
             long refundedAmountMinor)
         {
-            if (string.IsNullOrWhiteSpace(providerTransactionRef))
+            if (string.IsNullOrWhiteSpace(providerTransactionRef) &&
+                string.IsNullOrWhiteSpace(providerPaymentIntentRef) &&
+                string.IsNullOrWhiteSpace(providerCheckoutSessionRef))
             {
                 return isStripe ? "Stripe ref missing" : "Reference missing";
             }
@@ -1104,11 +1211,15 @@ namespace Darwin.Application.Billing.Queries
 
         public static string ResolveProviderReferenceState(
             string? providerReference,
+            string? providerPaymentIntentRef,
+            string? providerCheckoutSessionRef,
             bool isStripe,
             RefundStatus refundStatus,
             PaymentStatus paymentStatus)
         {
-            if (string.IsNullOrWhiteSpace(providerReference))
+            if (string.IsNullOrWhiteSpace(providerReference) &&
+                string.IsNullOrWhiteSpace(providerPaymentIntentRef) &&
+                string.IsNullOrWhiteSpace(providerCheckoutSessionRef))
             {
                 return isStripe ? "Stripe ref missing" : "Reference missing";
             }
@@ -1122,6 +1233,79 @@ namespace Darwin.Application.Billing.Queries
                     ? "Payment fully refunded on provider"
                     : "Provider reference linked"
             };
+        }
+    }
+
+    internal static class BillingProviderAuditFormatter
+    {
+        public static string ResolveCorrelationKind(
+            string propertiesJson,
+            string? paymentIntentRef,
+            string? checkoutSessionRef,
+            string? providerTransactionRef)
+        {
+            var hasPaymentIntent = Contains(propertiesJson, paymentIntentRef);
+            var hasCheckoutSession = Contains(propertiesJson, checkoutSessionRef);
+            var hasProviderTransaction = Contains(propertiesJson, providerTransactionRef);
+
+            var matchCount =
+                (hasPaymentIntent ? 1 : 0) +
+                (hasCheckoutSession ? 1 : 0) +
+                (hasProviderTransaction ? 1 : 0);
+
+            if (matchCount > 1)
+            {
+                return "Multiple";
+            }
+
+            if (hasPaymentIntent)
+            {
+                return "PaymentIntent";
+            }
+
+            if (hasCheckoutSession)
+            {
+                return "CheckoutSession";
+            }
+
+            if (hasProviderTransaction)
+            {
+                return "ProviderTransaction";
+            }
+
+            return "ProviderReference";
+        }
+
+        public static string ResolveCorrelationReference(
+            string propertiesJson,
+            string? paymentIntentRef,
+            string? checkoutSessionRef,
+            string? providerTransactionRef)
+        {
+            var matches = new List<string>(3);
+
+            if (Contains(propertiesJson, paymentIntentRef))
+            {
+                matches.Add(paymentIntentRef!);
+            }
+
+            if (Contains(propertiesJson, checkoutSessionRef) && !matches.Contains(checkoutSessionRef!))
+            {
+                matches.Add(checkoutSessionRef!);
+            }
+
+            if (Contains(propertiesJson, providerTransactionRef) && !matches.Contains(providerTransactionRef!))
+            {
+                matches.Add(providerTransactionRef!);
+            }
+
+            return matches.Count == 0 ? string.Empty : string.Join(", ", matches);
+        }
+
+        private static bool Contains(string propertiesJson, string? value)
+        {
+            return !string.IsNullOrWhiteSpace(value) &&
+                   propertiesJson.Contains(value, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

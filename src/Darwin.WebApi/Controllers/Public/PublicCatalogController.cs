@@ -1,9 +1,11 @@
+using Darwin.Application;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Catalog;
 using Darwin.Contracts.Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
 
@@ -17,6 +19,7 @@ public sealed class PublicCatalogController : ApiControllerBase
     private readonly GetPublishedCategoriesHandler _getPublishedCategoriesHandler;
     private readonly GetPublishedProductsPageHandler _getPublishedProductsPageHandler;
     private readonly GetPublishedProductBySlugHandler _getPublishedProductBySlugHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicCatalogController"/> class.
@@ -24,11 +27,13 @@ public sealed class PublicCatalogController : ApiControllerBase
     public PublicCatalogController(
         GetPublishedCategoriesHandler getPublishedCategoriesHandler,
         GetPublishedProductsPageHandler getPublishedProductsPageHandler,
-        GetPublishedProductBySlugHandler getPublishedProductBySlugHandler)
+        GetPublishedProductBySlugHandler getPublishedProductBySlugHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getPublishedCategoriesHandler = getPublishedCategoriesHandler ?? throw new ArgumentNullException(nameof(getPublishedCategoriesHandler));
         _getPublishedProductsPageHandler = getPublishedProductsPageHandler ?? throw new ArgumentNullException(nameof(getPublishedProductsPageHandler));
         _getPublishedProductBySlugHandler = getPublishedProductBySlugHandler ?? throw new ArgumentNullException(nameof(getPublishedProductBySlugHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -43,13 +48,13 @@ public sealed class PublicCatalogController : ApiControllerBase
         var normalizedPage = page.GetValueOrDefault(1);
         if (normalizedPage <= 0)
         {
-            return BadRequestProblem("Page must be a positive integer.");
+            return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(50);
         if (normalizedPageSize <= 0 || normalizedPageSize > 200)
         {
-            return BadRequestProblem("PageSize must be between 1 and 200.");
+            return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And200"]);
         }
 
         var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
@@ -87,13 +92,13 @@ public sealed class PublicCatalogController : ApiControllerBase
         var normalizedPage = page.GetValueOrDefault(1);
         if (normalizedPage <= 0)
         {
-            return BadRequestProblem("Page must be a positive integer.");
+            return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(24);
         if (normalizedPageSize <= 0 || normalizedPageSize > 200)
         {
-            return BadRequestProblem("PageSize must be between 1 and 200.");
+            return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And200"]);
         }
 
         var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
@@ -128,7 +133,7 @@ public sealed class PublicCatalogController : ApiControllerBase
             .ConfigureAwait(false);
 
         return dto is null
-            ? NotFoundProblem("Product not found.")
+            ? NotFoundProblem(_validationLocalizer["ProductNotFound"])
             : Ok(MapProductDetail(dto));
     }
 

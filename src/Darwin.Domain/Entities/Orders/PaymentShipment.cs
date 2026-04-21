@@ -13,11 +13,31 @@ namespace Darwin.Domain.Entities.Orders
         public ShipmentStatus Status { get; set; } = ShipmentStatus.Pending;
         public string Carrier { get; set; } = string.Empty;
         public string Service { get; set; } = string.Empty;
+        public string? ProviderShipmentReference { get; set; }
         public string? TrackingNumber { get; set; }
+        public string? LabelUrl { get; set; }
         public int? TotalWeight { get; set; }
         public DateTime? ShippedAtUtc { get; set; }
         public DateTime? DeliveredAtUtc { get; set; }
+        public string? LastCarrierEventKey { get; set; }
         public List<ShipmentLine> Lines { get; set; } = new();
+        public List<ShipmentCarrierEvent> CarrierEvents { get; set; } = new();
+    }
+
+    /// <summary>Carrier-originated or provider-synthesized lifecycle event for a shipment.</summary>
+    public sealed class ShipmentCarrierEvent : BaseEntity
+    {
+        public Guid ShipmentId { get; set; }
+        public string Carrier { get; set; } = string.Empty;
+        public string ProviderShipmentReference { get; set; } = string.Empty;
+        public string CarrierEventKey { get; set; } = string.Empty;
+        public string? ProviderStatus { get; set; }
+        public string? ExceptionCode { get; set; }
+        public string? ExceptionMessage { get; set; }
+        public string? TrackingNumber { get; set; }
+        public string? LabelUrl { get; set; }
+        public string? Service { get; set; }
+        public DateTime OccurredAtUtc { get; set; }
     }
 
     /// <summary>Join entity mapping a variant and quantity to a shipment.</summary>

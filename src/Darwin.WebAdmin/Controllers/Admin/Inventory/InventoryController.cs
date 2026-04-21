@@ -184,9 +184,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("WarehouseCreatedMessage");
                 return RedirectOrHtmx(nameof(EditWarehouse), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("WarehouseCreateFailedMessage");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderWarehouseEditor(vm, isCreate: true);
             }
@@ -248,9 +248,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetErrorMessage("WarehouseConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditWarehouse), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("WarehouseUpdateFailedMessage");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderWarehouseEditor(vm, isCreate: false);
             }
@@ -339,9 +339,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("SupplierCreatedMessage");
                 return RedirectOrHtmx(nameof(EditSupplier), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("SupplierCreateFailedMessage");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderSupplierEditor(vm, isCreate: true);
             }
@@ -405,9 +405,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetErrorMessage("SupplierConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditSupplier), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("SupplierUpdateFailedMessage");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 return RenderSupplierEditor(vm, isCreate: false);
             }
@@ -495,9 +495,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("StockAdjustedMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("StockAdjustFailedMessage");
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderAdjustStockEditor(vm);
             }
@@ -540,9 +540,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("StockReservedMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("StockReserveFailedMessage");
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderReserveStockEditor(vm);
             }
@@ -585,9 +585,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("ReservationReleasedMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("ReservationReleaseFailedMessage");
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderReleaseReservationEditor(vm);
             }
@@ -630,9 +630,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("ReturnReceiptProcessedMessage");
                 return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("ReturnReceiptProcessFailedMessage");
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderReturnReceiptEditor(vm);
             }
@@ -675,9 +675,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("StockLevelCreatedMessage");
                 return RedirectOrHtmx(nameof(EditStockLevel), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("StockLevelCreateFailedMessage");
                 await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
                 return RenderStockLevelEditor(vm, isCreate: true);
             }
@@ -743,9 +743,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetErrorMessage("StockLevelConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditStockLevel), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("StockLevelUpdateFailedMessage");
                 await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
                 return RenderStockLevelEditor(vm, isCreate: false);
             }
@@ -846,9 +846,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("StockTransferCreatedMessage");
                 return RedirectOrHtmx(nameof(EditStockTransfer), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("StockTransferCreateFailedMessage");
                 EnsureStockTransferRows(vm);
                 await PopulateStockTransferOptionsAsync(vm, null, ct).ConfigureAwait(false);
                 return RenderStockTransferEditor(vm, isCreate: true);
@@ -919,9 +919,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetErrorMessage("StockTransferConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditStockTransfer), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("StockTransferUpdateFailedMessage");
                 EnsureStockTransferRows(vm);
                 await PopulateStockTransferOptionsAsync(vm, null, ct).ConfigureAwait(false);
                 return RenderStockTransferEditor(vm, isCreate: false);
@@ -1025,9 +1025,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetSuccessMessage("PurchaseOrderCreatedMessage");
                 return RedirectOrHtmx(nameof(EditPurchaseOrder), new { id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("PurchaseOrderCreateFailedMessage");
                 EnsurePurchaseOrderRows(vm);
                 await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderPurchaseOrderEditor(vm, isCreate: true);
@@ -1106,9 +1106,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetErrorMessage("PurchaseOrderConcurrencyMessage");
                 return RedirectOrHtmx(nameof(EditPurchaseOrder), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("PurchaseOrderUpdateFailedMessage");
                 EnsurePurchaseOrderRows(vm);
                 await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderPurchaseOrderEditor(vm, isCreate: false);

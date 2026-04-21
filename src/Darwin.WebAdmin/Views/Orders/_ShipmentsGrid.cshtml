@@ -1,5 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderShipmentsPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string LocalizeShipmentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+}
 
 <div id="shipments-grid-content"
      hx-boost="true"
@@ -52,7 +55,39 @@
                                 }
                             </td>
                             <td>
-                                @(string.IsNullOrWhiteSpace(s.TrackingNumber) ? "-" : s.TrackingNumber)
+                                @if (string.IsNullOrWhiteSpace(s.TrackingNumber))
+                                {
+                                    @:-
+                                }
+                                else if (!string.IsNullOrWhiteSpace(s.TrackingUrl))
+                                {
+                                    <a href="@s.TrackingUrl" target="_blank" rel="noopener noreferrer">@s.TrackingNumber</a>
+                                    <div class="small mt-1">
+                                        <a href="@s.TrackingUrl" target="_blank" rel="noopener noreferrer">@T.T("Open")</a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @s.TrackingNumber
+                                }
+                                @if (!string.IsNullOrWhiteSpace(s.ProviderShipmentReference))
+                                {
+                                    <div class="small text-muted mt-1">@T.T("ProviderShipmentReference"): <code>@s.ProviderShipmentReference</code></div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(s.LabelUrl))
+                                {
+                                    <div class="small mt-1">
+                                        <a href="@s.LabelUrl" target="_blank" rel="noopener noreferrer">@T.T("CarrierLabel")</a>
+                                    </div>
+                                }
+                                else if (s.ProviderOperationQueued)
+                                {
+                                    <div><span class="badge text-bg-warning mt-1">@T.T("Pending")</span></div>
+                                }
+                                else if (s.ProviderOperationFailed)
+                                {
+                                    <div><span class="badge text-bg-danger mt-1">@T.T("Failed")</span></div>
+                                }
                                 <div class="small text-muted mt-1">@s.TrackingState</div>
                                 @if (s.TrackingOverdue)
                                 {
@@ -60,7 +95,7 @@
                                 }
                             </td>
                             <td>
-                                @s.Status
+                                @LocalizeShipmentStatus(s.Status)
                                 @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned)
                                 {
                                     <div><span class="badge text-bg-dark mt-1">@T.T("ReturnedParcel")</span></div>
@@ -84,6 +119,39 @@
                                 {
                                     <div class="small text-muted mt-1">@T.T("LastEvent") @s.LastCarrierEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                                 }
+                                @if (s.RecentCarrierEvents.Count > 0)
+                                {
+                                    <div class="small text-muted mt-2">
+                                        @foreach (var carrierEvent in s.RecentCarrierEvents)
+                                        {
+                                            <div class="mt-1">
+                                                <span>@carrierEvent.OccurredAtUtc.ToString("MM-dd HH:mm")</span>
+                                                <code>@carrierEvent.CarrierEventKey</code>
+                                                @if (!string.IsNullOrWhiteSpace(carrierEvent.ProviderStatus))
+                                                {
+                                                    <span>(@carrierEvent.ProviderStatus)</span>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(carrierEvent.ExceptionCode) || !string.IsNullOrWhiteSpace(carrierEvent.ExceptionMessage))
+                                                {
+                                                    <div class="text-danger">
+                                                        @if (!string.IsNullOrWhiteSpace(carrierEvent.ExceptionCode))
+                                                        {
+                                                            <code>@carrierEvent.ExceptionCode</code>
+                                                        }
+                                                        @if (!string.IsNullOrWhiteSpace(carrierEvent.ExceptionMessage))
+                                                        {
+                                                            <span>@carrierEvent.ExceptionMessage</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(s.LastCarrierEventKey))
+                                {
+                                    <div class="small text-muted mt-1">@T.T("LastCarrierEventKey") <code>@s.LastCarrierEventKey</code></div>
+                                }
                                 @if (!string.IsNullOrWhiteSpace(s.ExceptionNote))
                                 {
                                     <div class="small text-danger mt-1">@s.ExceptionNote</div>
@@ -94,6 +162,48 @@
                                 }
                             </td>
                             <td class="text-end">
+                                @if (!string.IsNullOrWhiteSpace(s.TrackingUrl))
+                                {
+                                    <a href="@s.TrackingUrl"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="btn btn-sm btn-outline-primary">
+                                        @T.T("Tracking")
+                                    </a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(s.LabelUrl))
+                                {
+                                    <a href="@s.LabelUrl"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        @T.T("CarrierLabel")
+                                    </a>
+                                }
+                                @if (s.IsDhl && string.IsNullOrWhiteSpace(s.LabelUrl) && !s.ProviderOperationQueued)
+                                {
+                                    <form asp-controller="Orders"
+                                          asp-action="GenerateDhlLabel"
+                                          method="post"
+                                          class="d-inline-block"
+                                          hx-post="@Url.Action("GenerateDhlLabel", "Orders")"
+                                          hx-target="#shipments-grid-content"
+                                          hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="shipmentId" value="@s.Id" />
+                                        <input type="hidden" name="orderId" value="@Model.OrderId" />
+                                        <input type="hidden" name="returnToQueue" value="false" />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                            @T.T("GenerateCarrierLabel")
+                                        </button>
+                                    </form>
+                                }
+                                else if (s.IsDhl && s.ProviderOperationQueued)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-warning" disabled>
+                                        @T.T("Pending")
+                                    </button>
+                                }
                                 @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned || s.NeedsCarrierReview)
                                 {
                                     <button class="btn btn-sm btn-outline-danger"
@@ -152,6 +262,10 @@
                                        hx-push-url="false">
                                         @T.T("StartRefund")
                                     </a>
+                                }
+                                @if (s.ProviderOperationFailed && !string.IsNullOrWhiteSpace(s.ProviderOperationFailureReason))
+                                {
+                                    <div class="small text-danger mt-1">@s.ProviderOperationFailureReason</div>
                                 }
                             </td>
                         </tr>

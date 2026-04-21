@@ -769,6 +769,21 @@
   <data name="MemberCommerceOrderInvoicesCountFormat" xml:space="preserve">
     <value>Rechnungen: {0}</value>
   </data>
+  <data name="MemberCommerceShipmentTitleFormat" xml:space="preserve">
+    <value>{0} / {1}</value>
+  </data>
+  <data name="MemberCommerceShipmentTrackingFormat" xml:space="preserve">
+    <value>Tracking: {0}</value>
+  </data>
+  <data name="MemberCommerceShipmentShippedFormat" xml:space="preserve">
+    <value>Versendet: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCommerceShipmentDeliveredFormat" xml:space="preserve">
+    <value>Zugestellt: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCommerceOpenTrackingButton" xml:space="preserve">
+    <value>Tracking oeffnen</value>
+  </data>
   <data name="MemberCommerceInvoiceStatusFormat" xml:space="preserve">
     <value>Status: {0}</value>
   </data>
@@ -843,6 +858,9 @@
   </data>
   <data name="MemberCommerceDocumentDownloadFailed" xml:space="preserve">
     <value>Das Dokument konnte derzeit nicht geladen werden.</value>
+  </data>
+  <data name="MemberCommerceTrackingOpenFailed" xml:space="preserve">
+    <value>Das Sendungs-Tracking kann derzeit nicht geoeffnet werden.</value>
   </data>
   <data name="MemberAddressesTitle" xml:space="preserve">
     <value>Adressbuch</value>

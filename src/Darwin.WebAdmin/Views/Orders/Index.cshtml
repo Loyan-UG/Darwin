@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("OrdersTitle");
+    string LocalizeOrderStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="orders-workspace-shell">
@@ -68,7 +69,7 @@
                 {
                     <tr>
                         <td>@o.OrderNumber</td>
-                        <td>@o.Status</td>
+                        <td>@LocalizeOrderStatus(o.Status)</td>
                         <td>@o.Currency @((o.GrandTotalGrossMinor / 100.0M).ToString("0.00"))</td>
                         <td>
                             <div class="small text-muted d-flex flex-column">

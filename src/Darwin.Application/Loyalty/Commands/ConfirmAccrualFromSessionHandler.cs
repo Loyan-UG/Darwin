@@ -128,7 +128,7 @@ namespace Darwin.Application.Loyalty.Commands
                 // Best-effort: mark the session as cancelled to aid debugging and analytics.
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "TokenAlreadyConsumed";
-                session.FailureReason = "Token was consumed concurrently by another request.";
+                session.FailureReason = "TokenAlreadyConsumed";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmAccrualResultDto>.Fail(_localizer["ScanSessionTokenAlreadyConsumed"]);
@@ -143,7 +143,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "AccountNotFound";
-                session.FailureReason = "Loyalty account for scan session not found.";
+                session.FailureReason = "AccountNotFound";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyAccountNotFoundForScanSession"]);
@@ -153,7 +153,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "AccountNotActive";
-                session.FailureReason = "Loyalty account is not active.";
+                session.FailureReason = "AccountNotActive";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyAccountInactive"]);
@@ -165,7 +165,7 @@ namespace Darwin.Application.Loyalty.Commands
             {
                 session.Status = LoyaltyScanStatus.Expired;
                 session.Outcome = "Expired";
-                session.FailureReason = "Session expired before accrual confirmation.";
+                session.FailureReason = "Expired";
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
                 return Result<ConfirmAccrualResultDto>.Fail(_localizer["ScanSessionExpired"]);

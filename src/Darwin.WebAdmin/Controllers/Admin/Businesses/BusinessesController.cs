@@ -498,9 +498,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                         : T("BusinessCreateNextSteps");
                 return RedirectOrHtmx(nameof(Edit), new { id = businessId });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessCreateFailed");
                 await PopulateBusinessFormOptionsAsync(vm, ct);
                 return RenderBusinessEditor(vm, isCreate: true);
             }
@@ -618,7 +618,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? (cancelAtPeriodEnd ? T("BusinessSubscriptionCancelAtPeriodEndUpdated") : T("BusinessSubscriptionRenewalRestored"))
-                : (result.Error ?? T("BusinessSubscriptionCancelAtPeriodEndUpdateFailed"));
+                : T("BusinessSubscriptionCancelAtPeriodEndUpdateFailed");
 
             return RedirectOrHtmx(nameof(Subscription), new { businessId });
         }
@@ -768,9 +768,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetErrorMessage("BusinessConcurrencyConflict");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessUpdateFailed");
                 await PopulateBusinessFormOptionsAsync(vm, ct);
                 return RenderBusinessEditor(vm, isCreate: false);
             }
@@ -827,9 +827,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetErrorMessage("BusinessConcurrencyConflict");
                 return RedirectOrHtmx(nameof(Setup), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessSetupSaveFailed");
                 await PopulateBusinessFormOptionsAsync(vm, ct);
                 return RenderBusinessSetupEditor(vm);
             }
@@ -865,7 +865,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] =
-                result.Succeeded ? T("BusinessArchived") : (result.Error ?? T("BusinessArchiveFailed"));
+                result.Succeeded ? T("BusinessArchived") : T("BusinessArchiveFailed");
 
             return RedirectOrHtmx(nameof(Index), new { });
         }
@@ -884,9 +884,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
                 SetSuccessMessage("BusinessApproved");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["Error"] = ex.Message;
+                SetErrorMessage("BusinessApproveFailed");
             }
 
             return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id });
@@ -907,9 +907,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
                 SetSuccessMessage("BusinessSuspended");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["Error"] = ex.Message;
+                SetErrorMessage("BusinessSuspendFailed");
             }
 
             return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id });
@@ -929,9 +929,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
                 SetSuccessMessage("BusinessReactivated");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["Error"] = ex.Message;
+                SetErrorMessage("BusinessReactivateFailed");
             }
 
             return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id });
@@ -1037,9 +1037,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetSuccessMessage("BusinessLocationCreated");
                 return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessLocationCreateFailed");
                 await PopulateBusinessContextAsync(vm, ct);
                 return RenderLocationEditor(vm, isCreate: true);
             }
@@ -1125,9 +1125,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetErrorMessage("BusinessLocationConcurrencyConflict");
                 return RedirectOrHtmx(nameof(EditLocation), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessLocationUpdateFailed");
                 await PopulateBusinessContextAsync(vm, ct);
                 return RenderLocationEditor(vm, isCreate: false);
             }
@@ -1144,7 +1144,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] =
-                result.Succeeded ? T("BusinessLocationArchived") : (result.Error ?? T("BusinessLocationArchiveFailed"));
+                result.Succeeded ? T("BusinessLocationArchived") : T("BusinessLocationArchiveFailed");
 
             return RedirectOrHtmx(nameof(Locations), new { businessId });
         }
@@ -1333,9 +1333,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetSuccessMessage("BusinessInvitationSent");
                 return RedirectOrHtmx(nameof(Invitations), new { businessId = vm.BusinessId });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessInvitationCreateFailed");
                 await PopulateBusinessContextAsync(vm, ct);
                 PopulateInvitationFormOptions(vm);
                 return RenderInvitationEditor(vm);
@@ -1355,9 +1355,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }, ct);
                 SetSuccessMessage("BusinessInvitationReissued");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["Error"] = ex.Message;
+                SetErrorMessage("BusinessInvitationResendFailed");
             }
 
             return RedirectOrHtmx(nameof(Invitations), new { businessId });
@@ -1376,9 +1376,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }, ct);
                 SetSuccessMessage("BusinessInvitationRevoked");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["Error"] = ex.Message;
+                SetErrorMessage("BusinessInvitationRevokeFailed");
             }
 
             return RedirectOrHtmx(nameof(Invitations), new { businessId });
@@ -1435,9 +1435,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetSuccessMessage("BusinessMemberAssigned");
                 return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessMemberCreateFailed");
                 await PopulateBusinessContextAsync(vm, ct);
                 await PopulateMemberFormOptionsAsync(vm, includeUserSelection: true, ct);
                 return RenderMemberEditor(vm, isCreate: true);
@@ -1563,9 +1563,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetErrorMessage("BusinessMemberConcurrencyConflict");
                 return RedirectOrHtmx(nameof(EditMember), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessMemberUpdateFailed");
                 await PopulateBusinessContextAsync(vm, ct);
                 await PopulateMemberFormOptionsAsync(vm, includeUserSelection: false, ct);
                 return RenderMemberEditor(vm, isCreate: false);
@@ -1586,9 +1586,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
                 SetSuccessMessage("BusinessMemberRemoved");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["Error"] = ex.Message;
+                SetErrorMessage("BusinessMemberDeleteFailed");
             }
 
             return RedirectOrHtmx(nameof(Members), new { businessId });
@@ -1617,9 +1617,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetSuccessMessage("BusinessMemberRemovedOverride");
                 return RedirectOrHtmx(nameof(Members), new { businessId });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BusinessMemberForceDeleteFailed");
                 return RedirectOrHtmx(nameof(EditMember), new { id });
             }
         }
@@ -1648,7 +1648,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? T("BusinessMemberActivationEmailSent")
-                : (result.Error ?? T("BusinessMemberActivationEmailFailed"));
+                : T("BusinessMemberActivationEmailFailed");
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1675,7 +1675,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? T("BusinessMemberEmailConfirmed")
-                : (result.Error ?? T("BusinessMemberEmailConfirmFailed"));
+                : T("BusinessMemberEmailConfirmFailed");
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1704,7 +1704,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? T("BusinessMemberPasswordResetSent")
-                : (result.Error ?? T("BusinessMemberPasswordResetFailed"));
+                : T("BusinessMemberPasswordResetFailed");
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1731,7 +1731,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? T("BusinessMemberAccountLocked")
-                : (result.Error ?? T("BusinessMemberAccountLockFailed"));
+                : T("BusinessMemberAccountLockFailed");
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }
@@ -1758,7 +1758,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? T("BusinessMemberAccountUnlocked")
-                : (result.Error ?? T("BusinessMemberAccountUnlockFailed"));
+                : T("BusinessMemberAccountUnlockFailed");
 
             return RedirectMemberSupport(returnToEdit, id, businessId);
         }

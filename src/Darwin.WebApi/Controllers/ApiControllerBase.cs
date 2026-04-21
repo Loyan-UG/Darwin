@@ -65,6 +65,28 @@ namespace Darwin.WebApi.Controllers
         }
 
         /// <summary>
+        /// Creates a consistent 403 (Forbidden) response using the shared contracts problem shape.
+        /// </summary>
+        /// <param name="title">Short summary of the problem.</param>
+        /// <param name="detail">Optional detail message.</param>
+        /// <returns>HTTP 403 response with <see cref="ContractProblemDetails"/> body.</returns>
+        protected IActionResult ForbiddenProblem(string title = "Forbidden", string? detail = null)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                throw new ArgumentException("Title is required.", nameof(title));
+
+            var problem = new ContractProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = title.Trim(),
+                Detail = string.IsNullOrWhiteSpace(detail) ? null : detail.Trim(),
+                Instance = HttpContext?.Request?.Path.Value
+            };
+
+            return StatusCode(StatusCodes.Status403Forbidden, problem);
+        }
+
+        /// <summary>
         /// Converts a failed non-generic <see cref="Result"/> into a standardized 400 response.
         /// </summary>
         /// <param name="result">Operation result.</param>

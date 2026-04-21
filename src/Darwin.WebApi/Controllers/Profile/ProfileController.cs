@@ -1,10 +1,12 @@
 ﻿using System;
+using Darwin.Application;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Contracts.Profile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Profile
 {
@@ -25,6 +27,7 @@ namespace Darwin.WebApi.Controllers.Profile
         private readonly RequestCurrentUserAccountDeletionHandler _requestCurrentUserAccountDeletionHandler;
         private readonly RequestPhoneVerificationHandler _requestPhoneVerificationHandler;
         private readonly ConfirmPhoneVerificationHandler _confirmPhoneVerificationHandler;
+        private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProfileController"/> class.
@@ -39,7 +42,8 @@ namespace Darwin.WebApi.Controllers.Profile
             UpdateCurrentUserPreferencesHandler updateCurrentUserPreferencesHandler,
             RequestCurrentUserAccountDeletionHandler requestCurrentUserAccountDeletionHandler,
             RequestPhoneVerificationHandler requestPhoneVerificationHandler,
-            ConfirmPhoneVerificationHandler confirmPhoneVerificationHandler)
+            ConfirmPhoneVerificationHandler confirmPhoneVerificationHandler,
+            IStringLocalizer<ValidationResource> validationLocalizer)
         {
             _getCurrentUserProfileHandler =
                 getCurrentUserProfileHandler ?? throw new ArgumentNullException(nameof(getCurrentUserProfileHandler));
@@ -61,6 +65,9 @@ namespace Darwin.WebApi.Controllers.Profile
 
             _confirmPhoneVerificationHandler =
                 confirmPhoneVerificationHandler ?? throw new ArgumentNullException(nameof(confirmPhoneVerificationHandler));
+
+            _validationLocalizer =
+                validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
         }
 
         /// <summary>
@@ -82,7 +89,7 @@ namespace Darwin.WebApi.Controllers.Profile
 
             // Defensive: even though Result<UserProfileEditDto> is non-nullable, we still guard against null.
             if (result.Value is null)
-                return NotFoundProblem("Profile not found.");
+                return NotFoundProblem(_validationLocalizer["ProfileNotFound"]);
 
             var value = result.Value;
 
@@ -131,7 +138,7 @@ namespace Darwin.WebApi.Controllers.Profile
 
             if (result.Value is null)
             {
-                return NotFoundProblem("Preferences not found.");
+                return NotFoundProblem(_validationLocalizer["PreferencesNotFound"]);
             }
 
             return Ok(new MemberPreferences
@@ -160,24 +167,24 @@ namespace Darwin.WebApi.Controllers.Profile
         public async Task<IActionResult> UpdateMe([FromBody] CustomerProfile? request, CancellationToken ct)
         {
             if (request is null)
-                return BadRequestProblem("Request body is required.");
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
 
             // API-level validation: keep it minimal but deterministic.
             // Application validators will do the deeper checks.
             if (request.Id == Guid.Empty)
-                return BadRequestProblem("Id must not be empty.");
+                return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
 
             if (request.RowVersion is null || request.RowVersion.Length == 0)
-                return BadRequestProblem("RowVersion must be provided for optimistic concurrency.");
+                return BadRequestProblem(_validationLocalizer["RowVersionRequiredForOptimisticConcurrency"]);
 
             if (string.IsNullOrWhiteSpace(request.Locale))
-                return BadRequestProblem("Locale must be provided.");
+                return BadRequestProblem(_validationLocalizer["LocaleRequired"]);
 
             if (string.IsNullOrWhiteSpace(request.Timezone))
-                return BadRequestProblem("Timezone must be provided.");
+                return BadRequestProblem(_validationLocalizer["TimezoneRequired"]);
 
             if (string.IsNullOrWhiteSpace(request.Currency))
-                return BadRequestProblem("Currency must be provided.");
+                return BadRequestProblem(_validationLocalizer["CurrencyRequired"]);
 
             // API-level minimal guards: keep null-safety, but leave real validation to Application validators.
             // Avoid passing nulls into Application DTO and keep strings deterministic.
@@ -242,7 +249,7 @@ namespace Darwin.WebApi.Controllers.Profile
         {
             if (request is null || string.IsNullOrWhiteSpace(request.Code))
             {
-                return BadRequestProblem("Verification code is required.");
+                return BadRequestProblem(_validationLocalizer["VerificationCodeRequired"]);
             }
 
             var result = await _confirmPhoneVerificationHandler.HandleAsync(
@@ -268,12 +275,12 @@ namespace Darwin.WebApi.Controllers.Profile
         {
             if (request is null)
             {
-                return BadRequestProblem("Request body is required.");
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             if (request.RowVersion is null || request.RowVersion.Length == 0)
             {
-                return BadRequestProblem("RowVersion must be provided for optimistic concurrency.");
+                return BadRequestProblem(_validationLocalizer["RowVersionRequiredForOptimisticConcurrency"]);
             }
 
             var result = await _updateCurrentUserPreferencesHandler.HandleAsync(new UpdateMemberPreferencesDto
@@ -309,12 +316,12 @@ namespace Darwin.WebApi.Controllers.Profile
         {
             if (request is null)
             {
-                return BadRequestProblem("Request body is required.");
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
             }
 
             if (!request.ConfirmIrreversibleDeletion)
             {
-                return BadRequestProblem("Explicit deletion confirmation is required.");
+                return BadRequestProblem(_validationLocalizer["ExplicitDeletionConfirmationRequired"]);
             }
 
             var result = await _requestCurrentUserAccountDeletionHandler

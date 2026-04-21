@@ -1,3 +1,4 @@
+using Darwin.Application;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
@@ -8,6 +9,7 @@ using Darwin.WebApi.Controllers.Businesses;
 using Darwin.WebApi.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Member;
 
@@ -26,6 +28,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
     private readonly UpsertBusinessReviewHandler _upsertBusinessReviewHandler;
     private readonly CreateBusinessHandler _createBusinessHandler;
     private readonly CreateBusinessMemberHandler _createBusinessMemberHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public MemberBusinessesController(
         GetBusinessPublicDetailWithMyAccountHandler getBusinessPublicDetailWithMyAccountHandler,
@@ -34,7 +37,8 @@ public sealed class MemberBusinessesController : ApiControllerBase
         ToggleBusinessFavoriteHandler toggleBusinessFavoriteHandler,
         UpsertBusinessReviewHandler upsertBusinessReviewHandler,
         CreateBusinessHandler createBusinessHandler,
-        CreateBusinessMemberHandler createBusinessMemberHandler)
+        CreateBusinessMemberHandler createBusinessMemberHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getBusinessPublicDetailWithMyAccountHandler = getBusinessPublicDetailWithMyAccountHandler ?? throw new ArgumentNullException(nameof(getBusinessPublicDetailWithMyAccountHandler));
         _getBusinessEngagementForMemberHandler = getBusinessEngagementForMemberHandler ?? throw new ArgumentNullException(nameof(getBusinessEngagementForMemberHandler));
@@ -43,6 +47,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
         _upsertBusinessReviewHandler = upsertBusinessReviewHandler ?? throw new ArgumentNullException(nameof(upsertBusinessReviewHandler));
         _createBusinessHandler = createBusinessHandler ?? throw new ArgumentNullException(nameof(createBusinessHandler));
         _createBusinessMemberHandler = createBusinessMemberHandler ?? throw new ArgumentNullException(nameof(createBusinessMemberHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     [HttpPost("onboarding")]
@@ -54,12 +59,12 @@ public sealed class MemberBusinessesController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         if (string.IsNullOrWhiteSpace(request.Name))
         {
-            return BadRequestProblem("Business name is required.");
+            return BadRequestProblem(_validationLocalizer["BusinessNameRequired"]);
         }
 
         if (!BusinessControllerConventions.TryGetCurrentUserId(User, out var userId))
@@ -67,13 +72,13 @@ public sealed class MemberBusinessesController : ApiControllerBase
             return StatusCode(StatusCodes.Status401Unauthorized, new Darwin.Contracts.Common.ProblemDetails
             {
                 Status = 401,
-                Title = "Unauthorized",
-                Detail = "User identifier could not be resolved from the access token.",
+                Title = _validationLocalizer["UnauthorizedTitle"],
+                Detail = _validationLocalizer["AuthenticatedUserIdentifierNotResolved"],
                 Instance = HttpContext.Request?.Path.Value
             });
         }
 
-        if (!BusinessControllerConventions.TryParseBusinessCategoryKind(request.CategoryKindKey, out var categoryKind, out var categoryError))
+        if (!BusinessControllerConventions.TryParseBusinessCategoryKind(request.CategoryKindKey, _validationLocalizer, out var categoryKind, out var categoryError))
         {
             return BadRequestProblem(categoryError);
         }
@@ -100,7 +105,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
         }
         catch (FluentValidation.ValidationException ex)
         {
-            return BadRequestProblem("Invalid business onboarding payload.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["BusinessOnboardingPayloadInvalid"], ex.Message);
         }
 
         Guid businessMemberId;
@@ -116,7 +121,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
         }
         catch (FluentValidation.ValidationException ex)
         {
-            return BadRequestProblem("Business owner membership could not be created.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["BusinessOwnerMembershipCreateFailed"], ex.Message);
         }
 
         return Ok(new BusinessOnboardingResponse
@@ -136,7 +141,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return NotFoundProblem("Business not found.");
+            return NotFoundProblem(_validationLocalizer["BusinessNotFound"]);
         }
 
         var result = await _getBusinessPublicDetailWithMyAccountHandler.HandleAsync(id, ct).ConfigureAwait(false);
@@ -148,7 +153,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
         var dto = result.Value;
         if (dto is null || dto.Business is null)
         {
-            return NotFoundProblem("Business not found.");
+            return NotFoundProblem(_validationLocalizer["BusinessNotFound"]);
         }
 
         return Ok(BusinessContractsMapper.ToContract(dto));
@@ -163,7 +168,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Business id must be a non-empty GUID.");
+            return BadRequestProblem(_validationLocalizer["BusinessIdValidWhenProvided"]);
         }
 
         var result = await _getBusinessEngagementForMemberHandler.HandleAsync(id, ct).ConfigureAwait(false);
@@ -254,7 +259,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         var result = await _upsertBusinessReviewHandler

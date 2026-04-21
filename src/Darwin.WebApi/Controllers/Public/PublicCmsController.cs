@@ -1,9 +1,11 @@
+using Darwin.Application;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Queries;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Cms;
 using Darwin.Contracts.Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
 
@@ -17,6 +19,7 @@ public sealed class PublicCmsController : ApiControllerBase
     private readonly GetPublishedPagesPageHandler _getPublishedPagesPageHandler;
     private readonly GetPublishedPageBySlugHandler _getPublishedPageBySlugHandler;
     private readonly GetPublicMenuByNameHandler _getPublicMenuByNameHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicCmsController"/> class.
@@ -24,11 +27,13 @@ public sealed class PublicCmsController : ApiControllerBase
     public PublicCmsController(
         GetPublishedPagesPageHandler getPublishedPagesPageHandler,
         GetPublishedPageBySlugHandler getPublishedPageBySlugHandler,
-        GetPublicMenuByNameHandler getPublicMenuByNameHandler)
+        GetPublicMenuByNameHandler getPublicMenuByNameHandler,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getPublishedPagesPageHandler = getPublishedPagesPageHandler ?? throw new ArgumentNullException(nameof(getPublishedPagesPageHandler));
         _getPublishedPageBySlugHandler = getPublishedPageBySlugHandler ?? throw new ArgumentNullException(nameof(getPublishedPageBySlugHandler));
         _getPublicMenuByNameHandler = getPublicMenuByNameHandler ?? throw new ArgumentNullException(nameof(getPublicMenuByNameHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -43,13 +48,13 @@ public sealed class PublicCmsController : ApiControllerBase
         var normalizedPage = page.GetValueOrDefault(1);
         if (normalizedPage <= 0)
         {
-            return BadRequestProblem("Page must be a positive integer.");
+            return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(20);
         if (normalizedPageSize <= 0 || normalizedPageSize > 200)
         {
-            return BadRequestProblem("PageSize must be between 1 and 200.");
+            return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And200"]);
         }
 
         var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
@@ -84,7 +89,7 @@ public sealed class PublicCmsController : ApiControllerBase
             .ConfigureAwait(false);
 
         return dto is null
-            ? NotFoundProblem("Page not found.")
+            ? NotFoundProblem(_validationLocalizer["PageNotFound"])
             : Ok(MapPageDetail(dto));
     }
 
@@ -102,7 +107,7 @@ public sealed class PublicCmsController : ApiControllerBase
             .ConfigureAwait(false);
 
         return dto is null
-            ? NotFoundProblem("Menu not found.")
+            ? NotFoundProblem(_validationLocalizer["MenuNotFound"])
             : Ok(MapMenu(dto));
     }
 

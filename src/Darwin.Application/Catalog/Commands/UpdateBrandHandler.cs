@@ -52,7 +52,7 @@ namespace Darwin.Application.Catalog.Commands
                 var slugExists = await _db.Set<Brand>()
                     .AnyAsync(b => b.Id != brand.Id && b.Slug == dto.Slug, ct);
                 if (slugExists)
-                    throw new FluentValidation.ValidationException("Slug must be unique.");
+                    throw new FluentValidation.ValidationException(_localizer["BrandSlugMustBeUnique"]);
             }
 
             brand.Slug = string.IsNullOrWhiteSpace(dto.Slug) ? null : dto.Slug.Trim();

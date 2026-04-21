@@ -150,19 +150,19 @@ public sealed class BusinessAccessStateDto
     };
 
     /// <summary>
-    /// Gets a human-readable reason that explains why operations are currently blocked.
+    /// Gets an optional stable blocking token or support-authored suspension reason.
     /// </summary>
     public string? BlockingReason => OperationalStatus switch
     {
-        _ when !HasActiveMembership => "Business membership is no longer active for this user.",
-        _ when !IsUserActive => "User access is currently inactive.",
-        _ when !IsUserEmailConfirmed => "User email confirmation is still required.",
-        _ when IsUserLockedOut => "User access is currently locked.",
-        BusinessOperationalStatus.PendingApproval => "Business approval is still pending.",
+        _ when !HasActiveMembership => "membership_inactive",
+        _ when !IsUserActive => "user_inactive",
+        _ when !IsUserEmailConfirmed => "email_confirmation_required",
+        _ when IsUserLockedOut => "user_locked",
+        BusinessOperationalStatus.PendingApproval => "business_pending_approval",
         BusinessOperationalStatus.Suspended when !string.IsNullOrWhiteSpace(SuspensionReason) => SuspensionReason,
-        BusinessOperationalStatus.Suspended => "Business access is currently suspended.",
-        _ when !IsActive => "Business access is currently inactive.",
-        _ when !IsSetupComplete => "Business setup is still incomplete.",
+        BusinessOperationalStatus.Suspended => "business_suspended",
+        _ when !IsActive => "business_inactive",
+        _ when !IsSetupComplete => "setup_incomplete",
         _ => null
     };
 }

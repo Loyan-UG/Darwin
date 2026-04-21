@@ -1,4 +1,5 @@
 using System.Text;
+using Darwin.Application;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
@@ -8,6 +9,7 @@ using Darwin.Domain.Enums;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Member;
 
@@ -23,6 +25,7 @@ public sealed class MemberOrdersController : ApiControllerBase
     private readonly GetMyOrderForViewHandler _getMyOrderForViewHandler;
     private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;
     private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MemberOrdersController"/> class.
@@ -31,12 +34,14 @@ public sealed class MemberOrdersController : ApiControllerBase
         GetMyOrdersPageHandler getMyOrdersPageHandler,
         GetMyOrderForViewHandler getMyOrderForViewHandler,
         CreateStorefrontPaymentIntentHandler createStorefrontPaymentIntentHandler,
-        StorefrontCheckoutUrlBuilder checkoutUrlBuilder)
+        StorefrontCheckoutUrlBuilder checkoutUrlBuilder,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getMyOrdersPageHandler = getMyOrdersPageHandler ?? throw new ArgumentNullException(nameof(getMyOrdersPageHandler));
         _getMyOrderForViewHandler = getMyOrderForViewHandler ?? throw new ArgumentNullException(nameof(getMyOrderForViewHandler));
         _createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));
         _checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -51,13 +56,13 @@ public sealed class MemberOrdersController : ApiControllerBase
         var normalizedPage = page.GetValueOrDefault(1);
         if (normalizedPage <= 0)
         {
-            return BadRequestProblem("Page must be a positive integer.");
+            return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(20);
         if (normalizedPageSize <= 0 || normalizedPageSize > 200)
         {
-            return BadRequestProblem("PageSize must be between 1 and 200.");
+            return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And200"]);
         }
 
         var (items, total) = await _getMyOrdersPageHandler
@@ -88,13 +93,13 @@ public sealed class MemberOrdersController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Id must not be empty.");
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
         var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);
         if (dto is null)
         {
-            return NotFoundProblem("Order not found.");
+            return NotFoundProblem(_validationLocalizer["OrderNotFound"]);
         }
 
         return Ok(MapDetail(dto));
@@ -112,18 +117,18 @@ public sealed class MemberOrdersController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Id must not be empty.");
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
         var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);
         if (dto is null)
         {
-            return NotFoundProblem("Order not found.");
+            return NotFoundProblem(_validationLocalizer["OrderNotFound"]);
         }
 
         if (!CanRetryPayment(dto))
         {
-            return BadRequestProblem("Order cannot accept a new payment attempt.");
+            return BadRequestProblem(_validationLocalizer["OrderCannotAcceptNewPaymentAttempt"]);
         }
 
         try
@@ -133,12 +138,12 @@ public sealed class MemberOrdersController : ApiControllerBase
                 OrderId = dto.Id,
                 UserId = GetCurrentUserId(),
                 OrderNumber = dto.OrderNumber,
-                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "DarwinCheckout" : request.Provider.Trim()
+                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "Stripe" : request.Provider.Trim()
             }, ct).ConfigureAwait(false);
 
             var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: false);
             var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: true);
-            var checkoutUrl = _checkoutUrlBuilder.BuildGatewayUrl(result, returnUrl, cancelUrl);
+            var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);
 
             return Ok(new CreateStorefrontPaymentIntentResponse
             {
@@ -146,6 +151,8 @@ public sealed class MemberOrdersController : ApiControllerBase
                 PaymentId = result.PaymentId,
                 Provider = result.Provider,
                 ProviderReference = result.ProviderReference,
+                ProviderPaymentIntentReference = result.ProviderPaymentIntentReference,
+                ProviderCheckoutSessionReference = result.ProviderCheckoutSessionReference,
                 AmountMinor = result.AmountMinor,
                 Currency = result.Currency,
                 Status = result.Status.ToString(),
@@ -157,7 +164,7 @@ public sealed class MemberOrdersController : ApiControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequestProblem("Payment intent could not be created.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["PaymentIntentCreationFailed"], ex.Message);
         }
     }
 
@@ -173,13 +180,13 @@ public sealed class MemberOrdersController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Id must not be empty.");
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
         var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);
         if (dto is null)
         {
-            return NotFoundProblem("Order not found.");
+            return NotFoundProblem(_validationLocalizer["OrderNotFound"]);
         }
 
         var fileName = $"order-{SanitizeFileToken(dto.OrderNumber)}.txt";
@@ -234,6 +241,8 @@ public sealed class MemberOrdersController : ApiControllerBase
                 CreatedAtUtc = payment.CreatedAtUtc,
                 Provider = payment.Provider,
                 ProviderReference = payment.ProviderReference,
+                ProviderPaymentIntentReference = payment.ProviderPaymentIntentReference,
+                ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionReference,
                 AmountMinor = payment.AmountMinor,
                 Currency = payment.Currency,
                 Status = payment.Status.ToString(),
@@ -245,6 +254,7 @@ public sealed class MemberOrdersController : ApiControllerBase
                 Carrier = shipment.Carrier,
                 Service = shipment.Service,
                 TrackingNumber = shipment.TrackingNumber,
+                TrackingUrl = shipment.TrackingUrl,
                 Status = shipment.Status.ToString(),
                 ShippedAtUtc = shipment.ShippedAtUtc,
                 DeliveredAtUtc = shipment.DeliveredAtUtc
@@ -335,7 +345,7 @@ public sealed class MemberOrdersController : ApiControllerBase
         builder.AppendLine("Shipments:");
         foreach (var shipment in dto.Shipments)
         {
-            builder.AppendLine($"- {shipment.Carrier} | {shipment.Service} | {shipment.Status} | Tracking: {shipment.TrackingNumber ?? "N/A"} | ShippedAtUtc: {shipment.ShippedAtUtc:O} | DeliveredAtUtc: {shipment.DeliveredAtUtc:O}");
+            builder.AppendLine($"- {shipment.Carrier} | {shipment.Service} | {shipment.Status} | Tracking: {shipment.TrackingNumber ?? "N/A"} | TrackingUrl: {shipment.TrackingUrl ?? "N/A"} | ShippedAtUtc: {shipment.ShippedAtUtc:O} | DeliveredAtUtc: {shipment.DeliveredAtUtc:O}");
         }
 
         builder.AppendLine();

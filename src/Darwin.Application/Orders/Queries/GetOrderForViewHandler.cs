@@ -72,11 +72,15 @@ namespace Darwin.Application.Orders.Queries
                         Id = s.Id,
                         Carrier = s.Carrier,
                         Service = s.Service,
+                        ProviderShipmentReference = s.ProviderShipmentReference,
                         TrackingNumber = s.TrackingNumber,
+                        TrackingUrl = ShipmentTrackingPresentation.ResolveTrackingUrl(s.Carrier, s.TrackingNumber),
+                        LabelUrl = s.LabelUrl,
                         TotalWeight = s.TotalWeight,
                         Status = s.Status,
                         ShippedAtUtc = s.ShippedAtUtc,
-                        DeliveredAtUtc = s.DeliveredAtUtc
+                        DeliveredAtUtc = s.DeliveredAtUtc,
+                        LastCarrierEventKey = s.LastCarrierEventKey
                     }).ToList()
                 })
                 .FirstOrDefaultAsync(ct);

@@ -430,6 +430,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 BalanceMinor = dto.BalanceMinor,
                 DueDateUtc = dto.DueDateUtc,
                 PaidAtUtc = dto.PaidAtUtc,
+                IsFinancialContentLocked = IsInvoiceFinancialContentLocked(dto.Status),
+                FinancialEditLockReason = IsInvoiceFinancialContentLocked(dto.Status) ? T("InvoiceFinancialEditLockReason") : string.Empty,
                 Refund = new InvoiceRefundCreateVm
                 {
                     InvoiceId = dto.Id,
@@ -448,6 +450,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditInvoice(InvoiceEditVm vm, CancellationToken ct = default)
         {
+            vm.IsFinancialContentLocked = IsInvoiceFinancialContentLocked(vm.Status);
+            vm.FinancialEditLockReason = vm.IsFinancialContentLocked ? T("InvoiceFinancialEditLockReason") : string.Empty;
+
             if (!ModelState.IsValid)
             {
                 await PopulateInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -456,6 +461,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
             try
             {
+                var existingInvoice = await _getInvoiceForEdit.HandleAsync(vm.Id, ct).ConfigureAwait(false);
+                if (existingInvoice is null)
+                {
+                    SetErrorMessage("InvoiceNotFoundMessage");
+                    return RedirectOrHtmx(nameof(Invoices), new { });
+                }
+
+                if (IsInvoiceFinancialContentLocked(existingInvoice.Status))
+                {
+                    SetErrorMessage("InvoiceFinancialEditLockedMessage");
+                    return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
+                }
+
                 await _updateInvoice.HandleAsync(new InvoiceEditDto
                 {
                     Id = vm.Id,
@@ -1275,12 +1293,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
         private void AddLocalizedModelError(string fallbackKey, Exception ex)
         {
-            ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(ex.Message) ? T(fallbackKey) : ex.Message);
+            ModelState.AddModelError(string.Empty, T(fallbackKey));
         }
 
         private void SetLocalizedError(string fallbackKey, Exception ex)
         {
-            TempData["Error"] = string.IsNullOrWhiteSpace(ex.Message) ? T(fallbackKey) : ex.Message;
+            TempData["Error"] = T(fallbackKey);
         }
 
         private static void EnsureCustomerAddressRows(CustomerEditVm vm)
@@ -1377,6 +1395,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 !string.IsNullOrWhiteSpace(dto.InvoiceIssuerCountry);
             var archiveReady = issuerConfigured && issuerTaxIdConfigured && issuerAddressConfigured;
             var eInvoiceBaselineReady = archiveReady && dto.VatEnabled;
+            var structuredExportBaselineReady = archiveReady;
 
             return new TaxPolicySnapshotVm
             {
@@ -1386,13 +1405,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 AllowReverseCharge = dto.AllowReverseCharge,
                 IssuerConfigured = issuerConfigured,
                 InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName ?? string.Empty,
+                InvoiceIssuerCountry = dto.InvoiceIssuerCountry ?? string.Empty,
                 InvoiceIssuerTaxIdConfigured = issuerTaxIdConfigured,
                 ArchiveReadinessComplete = archiveReady,
                 ArchiveReadinessLabel = archiveReady ? T("TaxPolicyArchiveReady") : T("TaxPolicyArchiveIncomplete"),
                 EInvoiceBaselineReady = eInvoiceBaselineReady,
                 EInvoiceBaselineLabel = eInvoiceBaselineReady ? T("TaxPolicyBaselineReady") : T("TaxPolicyBaselineIncomplete"),
+                StructuredExportBaselineReady = structuredExportBaselineReady,
+                StructuredExportBaselineLabel = structuredExportBaselineReady ? T("TaxPolicyStructuredExportReady") : T("TaxPolicyStructuredExportIncomplete"),
                 ComplianceScopeNote = T("TaxPolicyComplianceScopeNote")
             };
+        }
+
+        private static bool IsInvoiceFinancialContentLocked(Darwin.Domain.Enums.InvoiceStatus status)
+        {
+            return status is not Darwin.Domain.Enums.InvoiceStatus.Draft;
         }
 
         private IEnumerable<SelectListItem> BuildCustomerFilterItems(CustomerQueueFilter selectedFilter)

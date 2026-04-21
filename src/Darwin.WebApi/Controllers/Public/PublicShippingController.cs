@@ -1,9 +1,11 @@
+using Darwin.Application;
 using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Queries;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Shipping;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
 
@@ -16,13 +18,15 @@ namespace Darwin.WebApi.Controllers.Public;
 public sealed class PublicShippingController : ApiControllerBase
 {
     private readonly RateShipmentHandler _rateShipmentHandler;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicShippingController"/> class.
     /// </summary>
-    public PublicShippingController(RateShipmentHandler rateShipmentHandler)
+    public PublicShippingController(RateShipmentHandler rateShipmentHandler, IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _rateShipmentHandler = rateShipmentHandler ?? throw new ArgumentNullException(nameof(rateShipmentHandler));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -36,7 +40,7 @@ public sealed class PublicShippingController : ApiControllerBase
     {
         if (request is null)
         {
-            return BadRequestProblem("Request body is required.");
+            return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
         try
@@ -53,7 +57,7 @@ public sealed class PublicShippingController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem("Shipping options could not be calculated.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["ShippingOptionsCouldNotBeCalculated"], ex.Message);
         }
     }
 

@@ -57,8 +57,11 @@ namespace Darwin.Infrastructure.Notifications.Smtp
             {
                 Provider = "SMTP",
                 FlowKey = string.IsNullOrWhiteSpace(context?.FlowKey) ? null : context.FlowKey.Trim(),
+                TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim(),
+                CorrelationKey = string.IsNullOrWhiteSpace(context?.CorrelationKey) ? null : context.CorrelationKey.Trim(),
                 BusinessId = context?.BusinessId,
                 RecipientEmail = toEmail,
+                IntendedRecipientEmail = string.IsNullOrWhiteSpace(context?.IntendedRecipientEmail) ? toEmail : context.IntendedRecipientEmail.Trim(),
                 Subject = subject ?? string.Empty,
                 Status = "Pending",
                 AttemptedAtUtc = attemptedAtUtc,

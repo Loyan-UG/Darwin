@@ -1280,6 +1280,7 @@
   "shipmentsTitle": "Sendungen",
   "shipmentStatusLabel": "Status: {value}",
   "trackingLabel": "Tracking: {value}",
+  "trackShipmentCta": "Tracking oeffnen",
   "shippedLabel": "Versendet: {value}",
   "deliveredLabel": "Zugestellt: {value}",
   "noShipmentsMessage": "An diese Bestellung sind aktuell keine Sendungssnapshots angehaengt.",

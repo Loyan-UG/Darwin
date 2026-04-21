@@ -1,4 +1,5 @@
 using System.Text;
+using Darwin.Application;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.CRM.DTOs;
@@ -10,6 +11,7 @@ using Darwin.Domain.Enums;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Member;
 
@@ -25,6 +27,7 @@ public sealed class MemberInvoicesController : ApiControllerBase
     private readonly GetMyInvoiceDetailHandler _getMyInvoiceDetailHandler;
     private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;
     private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;
+    private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MemberInvoicesController"/> class.
@@ -33,12 +36,14 @@ public sealed class MemberInvoicesController : ApiControllerBase
         GetMyInvoicesPageHandler getMyInvoicesPageHandler,
         GetMyInvoiceDetailHandler getMyInvoiceDetailHandler,
         CreateStorefrontPaymentIntentHandler createStorefrontPaymentIntentHandler,
-        StorefrontCheckoutUrlBuilder checkoutUrlBuilder)
+        StorefrontCheckoutUrlBuilder checkoutUrlBuilder,
+        IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getMyInvoicesPageHandler = getMyInvoicesPageHandler ?? throw new ArgumentNullException(nameof(getMyInvoicesPageHandler));
         _getMyInvoiceDetailHandler = getMyInvoiceDetailHandler ?? throw new ArgumentNullException(nameof(getMyInvoiceDetailHandler));
         _createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));
         _checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));
+        _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
     /// <summary>
@@ -53,13 +58,13 @@ public sealed class MemberInvoicesController : ApiControllerBase
         var normalizedPage = page.GetValueOrDefault(1);
         if (normalizedPage <= 0)
         {
-            return BadRequestProblem("Page must be a positive integer.");
+            return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(20);
         if (normalizedPageSize <= 0 || normalizedPageSize > 200)
         {
-            return BadRequestProblem("PageSize must be between 1 and 200.");
+            return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And200"]);
         }
 
         var (items, total) = await _getMyInvoicesPageHandler
@@ -90,13 +95,13 @@ public sealed class MemberInvoicesController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Id must not be empty.");
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
         var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, ct).ConfigureAwait(false);
         if (dto is null)
         {
-            return NotFoundProblem("Invoice not found.");
+            return NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);
         }
 
         return Ok(MapDetail(dto));
@@ -114,23 +119,23 @@ public sealed class MemberInvoicesController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Id must not be empty.");
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
         var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, ct).ConfigureAwait(false);
         if (dto is null)
         {
-            return NotFoundProblem("Invoice not found.");
+            return NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);
         }
 
         if (!dto.OrderId.HasValue)
         {
-            return BadRequestProblem("Invoice is not linked to an order and cannot open a storefront payment flow.");
+            return BadRequestProblem(_validationLocalizer["InvoiceNotLinkedToOrderPaymentFlow"]);
         }
 
         if (!CanRetryPayment(dto))
         {
-            return BadRequestProblem("Invoice cannot accept a new payment attempt.");
+            return BadRequestProblem(_validationLocalizer["InvoiceCannotAcceptNewPaymentAttempt"]);
         }
 
         try
@@ -140,12 +145,12 @@ public sealed class MemberInvoicesController : ApiControllerBase
                 OrderId = dto.OrderId.Value,
                 UserId = GetCurrentUserId(),
                 OrderNumber = dto.OrderNumber,
-                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "DarwinCheckout" : request.Provider.Trim()
+                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "Stripe" : request.Provider.Trim()
             }, ct).ConfigureAwait(false);
 
             var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: false);
             var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: true);
-            var checkoutUrl = _checkoutUrlBuilder.BuildGatewayUrl(result, returnUrl, cancelUrl);
+            var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);
 
             return Ok(new CreateStorefrontPaymentIntentResponse
             {
@@ -164,7 +169,7 @@ public sealed class MemberInvoicesController : ApiControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequestProblem("Payment intent could not be created.", ex.Message);
+            return BadRequestProblem(_validationLocalizer["PaymentIntentCreationFailed"], ex.Message);
         }
     }
 
@@ -180,13 +185,13 @@ public sealed class MemberInvoicesController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Id must not be empty.");
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
         var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, ct).ConfigureAwait(false);
         if (dto is null)
         {
-            return NotFoundProblem("Invoice not found.");
+            return NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);
         }
 
         var fileName = $"invoice-{SanitizeFileToken(dto.OrderNumber ?? dto.Id.ToString("D"))}.txt";

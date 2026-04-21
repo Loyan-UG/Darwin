@@ -118,9 +118,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 SetSuccessMessage("BrandCreated");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BrandCreateFailed");
                 await EnsureTranslationsAsync(vm, ct);
                 return RenderBrandEditor(vm, isCreate: true);
             }
@@ -187,9 +187,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 SetErrorMessage("BrandConcurrencyConflict");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddModelErrorMessage("BrandUpdateFailed");
                 await EnsureTranslationsAsync(vm, ct);
                 return RenderBrandEditor(vm, isCreate: false);
             }
@@ -205,7 +205,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             Result result = await _softDelete.HandleAsync(dto, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] =
-                result.Succeeded ? T("BrandDeleted") : (result.Error ?? T("BrandDeleteFailed"));
+                result.Succeeded ? T("BrandDeleted") : T("BrandDeleteFailed");
 
             return RedirectOrHtmx(nameof(Index), new { });
         }
