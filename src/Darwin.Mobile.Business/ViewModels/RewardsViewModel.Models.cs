@@ -13,6 +13,7 @@ public sealed class RewardTierEditorItem
     public Guid RewardTierId { get; init; }
     public int PointsRequired { get; init; }
     public string RewardType { get; init; } = string.Empty;
+    public string LocalizedRewardType { get; init; } = string.Empty;
     public decimal? RewardValue { get; init; }
     public string? Description { get; init; }
     public bool AllowSelfRedemption { get; init; }
@@ -27,10 +28,36 @@ public sealed class RewardTierEditorItem
             RewardTierId = item.RewardTierId,
             PointsRequired = item.PointsRequired,
             RewardType = item.RewardType,
+            LocalizedRewardType = RewardTypeOption.ResolveLabel(item.RewardType),
             RewardValue = item.RewardValue,
             Description = item.Description,
             AllowSelfRedemption = item.AllowSelfRedemption,
             RowVersion = item.RowVersion ?? Array.Empty<byte>()
+        };
+    }
+}
+
+public sealed class RewardTypeOption
+{
+    public RewardTypeOption(string value, string label)
+    {
+        Value = value;
+        Label = label;
+    }
+
+    public string Value { get; }
+    public string Label { get; }
+
+    public override string ToString() => Label;
+
+    public static string ResolveLabel(string? value)
+    {
+        return value switch
+        {
+            "FreeItem" => AppResources.RewardsRewardTypeFreeItem,
+            "PercentDiscount" => AppResources.RewardsRewardTypePercentDiscount,
+            "AmountDiscount" => AppResources.RewardsRewardTypeAmountDiscount,
+            _ => AppResources.RewardsRewardTypeUnknown
         };
     }
 }
@@ -90,6 +117,8 @@ public sealed class CampaignStateFilterOption
 /// </summary>
 public sealed class CampaignAudienceFilterOption
 {
+    public const string UnknownAudienceKindKey = "__unknown";
+
     public CampaignAudienceFilterOption(string audienceKindKey, string label)
     {
         AudienceKindKey = audienceKindKey;
@@ -193,6 +222,11 @@ public sealed class BusinessCampaignEditorItem
         AppResources.RewardsCampaignChannelSummaryFormat,
         ResolveChannelLabel(Channels));
 
+    /// <summary>
+    /// Gets a localized campaign state label so list cards do not render raw contract tokens.
+    /// </summary>
+    public string LocalizedCampaignState => ResolveCampaignStateLabel(CampaignState);
+
     public string ActivationButtonText => IsActive ? AppResources.RewardsCampaignDeactivateButton : AppResources.RewardsCampaignActivateButton;
 
     public static BusinessCampaignEditorItem FromContract(BusinessCampaignItem item)
@@ -235,6 +269,18 @@ public sealed class BusinessCampaignEditorItem
         };
     }
 
+    private static string ResolveCampaignStateLabel(string? campaignState)
+    {
+        return campaignState switch
+        {
+            PromotionCampaignState.Draft => AppResources.RewardsCampaignStateFilterDraft,
+            PromotionCampaignState.Scheduled => AppResources.RewardsCampaignStateFilterScheduled,
+            PromotionCampaignState.Active => AppResources.RewardsCampaignStateFilterActive,
+            PromotionCampaignState.Expired => AppResources.RewardsCampaignStateFilterExpired,
+            _ => AppResources.RewardsCampaignStateUnknown
+        };
+    }
+
     /// <summary>
     /// Builds a concise audience/eligibility caption by parsing campaign targeting JSON.
     /// </summary>
@@ -262,7 +308,7 @@ public sealed class BusinessCampaignEditorItem
             using var document = JsonDocument.Parse(targetingJson);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
             {
-                return AppResources.RewardsCampaignAudienceSummaryDefault;
+                return AppResources.RewardsCampaignAudienceSummaryUnknown;
             }
 
             var root = document.RootElement;
@@ -298,7 +344,7 @@ public sealed class BusinessCampaignEditorItem
         }
         catch (JsonException)
         {
-            return AppResources.RewardsCampaignAudienceSummaryDefault;
+            return AppResources.RewardsCampaignAudienceSummaryUnknown;
         }
     }
 
@@ -310,7 +356,9 @@ public sealed class BusinessCampaignEditorItem
         if (explicitEligibilityRules is not null && explicitEligibilityRules.Count > 0)
         {
             var explicitAudienceKind = explicitEligibilityRules[0].AudienceKind;
-            return string.IsNullOrWhiteSpace(explicitAudienceKind) ? PromotionAudienceKind.JoinedMembers : explicitAudienceKind;
+            return string.IsNullOrWhiteSpace(explicitAudienceKind)
+                ? CampaignAudienceFilterOption.UnknownAudienceKindKey
+                : explicitAudienceKind;
         }
 
         if (string.IsNullOrWhiteSpace(targetingJson))
@@ -323,14 +371,14 @@ public sealed class BusinessCampaignEditorItem
             using var document = JsonDocument.Parse(targetingJson);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
             {
-                return PromotionAudienceKind.JoinedMembers;
+                return CampaignAudienceFilterOption.UnknownAudienceKindKey;
             }
 
-            return ResolveAudienceKind(document.RootElement) ?? PromotionAudienceKind.JoinedMembers;
+            return ResolveAudienceKind(document.RootElement) ?? CampaignAudienceFilterOption.UnknownAudienceKindKey;
         }
         catch (JsonException)
         {
-            return PromotionAudienceKind.JoinedMembers;
+            return CampaignAudienceFilterOption.UnknownAudienceKindKey;
         }
     }
 
@@ -379,7 +427,9 @@ public sealed class BusinessCampaignEditorItem
             return AppResources.RewardsCampaignAudienceDateWindow;
         }
 
-        return AppResources.RewardsCampaignAudienceJoinedMembers;
+        return string.IsNullOrWhiteSpace(audienceKind)
+            ? AppResources.RewardsCampaignAudienceJoinedMembers
+            : AppResources.RewardsCampaignAudienceUnknown;
     }
 
     /// <summary>

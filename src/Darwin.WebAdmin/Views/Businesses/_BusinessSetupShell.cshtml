@@ -46,8 +46,9 @@
         Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("BusinessEditorPendingApproval"),
         Darwin.Domain.Enums.BusinessOperationalStatus.Approved => T.T("BusinessEditorApproved"),
         Darwin.Domain.Enums.BusinessOperationalStatus.Suspended => T.T("BusinessEditorSuspended"),
-        _ => status.ToString()
+        _ => T.T(status.ToString())
     };
+    string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? "-" : T.T(status);
     var setupOverridePlaceholder =
         "{\"" + setupPrimaryCulture + "\":{\"BusinessSetupTitle\":\"Betriebs-Setup\"},\"" +
         setupSecondaryCulture + "\":{\"BusinessSetupTitle\":\"Business setup\"}}";
@@ -936,7 +937,7 @@
                         <div class="col-md-4">
                             <div class="border rounded p-3 h-100">
                                 <div class="text-muted small text-uppercase">@T.T("Status")</div>
-                                <div class="fw-semibold mt-1">@Model.Subscription.Status</div>
+                                <div class="fw-semibold mt-1">@SubscriptionStatusLabel(Model.Subscription.Status)</div>
                                 <div class="small text-muted mt-2">
                                     @if (Model.Subscription.CancelAtPeriodEnd)
                                     {

@@ -259,7 +259,7 @@ public sealed class SessionViewModel : BaseViewModel
 
         if (string.IsNullOrWhiteSpace(SessionToken))
         {
-            SetWarning("Invalid session token.");
+            SetWarning(AppResources.InvalidSessionToken);
             return;
         }
 
@@ -274,7 +274,7 @@ public sealed class SessionViewModel : BaseViewModel
             var result = await _loyaltyService.ProcessScanSessionForBusinessAsync(SessionToken, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                SetError(result.Error ?? "Failed to load session details.");
+                SetError(result.Error ?? AppResources.SessionLoadFailed);
                 return;
             }
 
@@ -284,7 +284,7 @@ public sealed class SessionViewModel : BaseViewModel
             CanConfirmAccrual = model.CanConfirmAccrual;
             CanConfirmRedemption = model.CanConfirmRedemption;
 
-            SetSuccess("Session loaded successfully.");
+            SetSuccess(AppResources.SessionLoadSuccess);
             await _activityTracker.RecordSessionLoadedAsync(CustomerName, CancellationToken.None).ConfigureAwait(false);
         }
         finally
@@ -305,7 +305,7 @@ public sealed class SessionViewModel : BaseViewModel
 
         if (!CanConfirmAccrual)
         {
-            SetWarning("Accrual is not allowed for this session.");
+            SetWarning(AppResources.AccrualNotAllowed);
             return;
         }
 
@@ -322,7 +322,7 @@ public sealed class SessionViewModel : BaseViewModel
 
         if (PointsToAccrue <= 0)
         {
-            SetWarning("Points must be greater than zero.");
+            SetWarning(AppResources.PointsMustBeGreaterThanZero);
             return;
         }
 
@@ -335,7 +335,7 @@ public sealed class SessionViewModel : BaseViewModel
             var result = await _loyaltyService.ConfirmAccrualAsync(SessionToken, PointsToAccrue, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                SetError(result.Error ?? "Failed to confirm accrual.");
+                SetError(result.Error ?? AppResources.FailedToConfirmAccrual);
                 return;
             }
 
@@ -344,7 +344,7 @@ public sealed class SessionViewModel : BaseViewModel
             CanConfirmAccrual = false;
             CanConfirmRedemption = false;
 
-            SetSuccess("Points accrual confirmed successfully.");
+            SetSuccess(AppResources.AccrualConfirmedSuccess);
             await _activityTracker.RecordAccrualConfirmedAsync(CustomerName, PointsToAccrue, CancellationToken.None).ConfigureAwait(false);
         }
         finally
@@ -365,7 +365,7 @@ public sealed class SessionViewModel : BaseViewModel
 
         if (!CanConfirmRedemption)
         {
-            SetWarning("Redemption is not allowed for this session.");
+            SetWarning(AppResources.RedemptionNotAllowed);
             return;
         }
 
@@ -389,7 +389,7 @@ public sealed class SessionViewModel : BaseViewModel
             var result = await _loyaltyService.ConfirmRedemptionAsync(SessionToken, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                SetError(result.Error ?? "Failed to confirm redemption.");
+                SetError(result.Error ?? AppResources.FailedToConfirmRedemption);
                 return;
             }
 
@@ -398,7 +398,7 @@ public sealed class SessionViewModel : BaseViewModel
             CanConfirmAccrual = false;
             CanConfirmRedemption = false;
 
-            SetSuccess("Reward redemption confirmed successfully.");
+            SetSuccess(AppResources.RedemptionConfirmedSuccess);
             var redeemedPoints = Math.Max(0, previousBalance - PointsBalance);
             await _activityTracker.RecordRedemptionConfirmedAsync(CustomerName, redeemedPoints, CancellationToken.None).ConfigureAwait(false);
         }

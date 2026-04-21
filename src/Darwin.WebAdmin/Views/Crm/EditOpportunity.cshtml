@@ -2,6 +2,18 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("EditOpportunity");
+    var interactionTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()
+        .Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+        {
+            Value = option.Value,
+            Text = T.T(option.Text)
+        });
+    var interactionChannelOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()
+        .Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+        {
+            Value = option.Value,
+            Text = T.T(option.Text)
+        });
 }
 
 <h1 class="mb-3">@T.T("EditOpportunity")</h1>
@@ -26,11 +38,11 @@
                     <input type="hidden" name="OpportunityId" value="@Model.Id" />
                     <div class="col-md-6">
                         <label class="form-label">@T.T("Type")</label>
-                        <select name="Type" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()"></select>
+                        <select name="Type" class="form-select" asp-items="interactionTypeOptions"></select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">@T.T("Channel")</label>
-                        <select name="Channel" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()"></select>
+                        <select name="Channel" class="form-select" asp-items="interactionChannelOptions"></select>
                     </div>
                     <div class="col-12">
                         <label class="form-label">@T.T("Subject")</label>

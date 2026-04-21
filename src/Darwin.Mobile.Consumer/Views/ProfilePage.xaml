@@ -46,21 +46,21 @@
                         <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Email}" IsReadOnly="True" Style="{StaticResource FormEntryStyle}" /></Border>
 
                         <Label Text="{x:Static res:AppResources.PhoneLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding PhoneE164}" Placeholder="+49123456789" Keyboard="Telephone" Style="{StaticResource FormEntryStyle}" /></Border>
+                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding PhoneE164}" Placeholder="{x:Static res:AppResources.ProfilePhonePlaceholder}" Keyboard="Telephone" Style="{StaticResource FormEntryStyle}" /></Border>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
                                 <Label Text="{x:Static res:AppResources.LocaleLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Locale}" Placeholder="de-DE" Style="{StaticResource FormEntryStyle}" /></Border>
+                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Locale}" Placeholder="{x:Static res:AppResources.ProfileLocalePlaceholder}" Style="{StaticResource FormEntryStyle}" /></Border>
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="1" Spacing="4">
                                 <Label Text="{x:Static res:AppResources.CurrencyLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Currency}" Placeholder="EUR" Style="{StaticResource FormEntryStyle}" /></Border>
+                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Currency}" Placeholder="{x:Static res:AppResources.ProfileCurrencyPlaceholder}" Style="{StaticResource FormEntryStyle}" /></Border>
                             </VerticalStackLayout>
                         </Grid>
 
                         <Label Text="{x:Static res:AppResources.TimezoneLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Timezone}" Placeholder="Europe/Berlin" Style="{StaticResource FormEntryStyle}" /></Border>
+                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Timezone}" Placeholder="{x:Static res:AppResources.ProfileTimezonePlaceholder}" Style="{StaticResource FormEntryStyle}" /></Border>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <Button Grid.Column="0"
@@ -72,6 +72,46 @@
                                     Style="{StaticResource OutlinedButtonStyle}"
                                     Clicked="OnAccountDeletionClicked" />
                         </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource CardBorderStyle}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="{x:Static res:AppResources.ProfilePhoneVerificationSectionTitle}"
+                               Style="{StaticResource SectionHeadingLabelStyle}" />
+                        <Label Text="{Binding PhoneVerificationReadinessText}"
+                               Style="{StaticResource BodyLabelStyle}" />
+                        <Label Text="{Binding PhoneVerificationStatusMessage}"
+                               Style="{StaticResource SecondaryBodyLabelStyle}"
+                               IsVisible="{Binding HasPhoneVerificationStatus}" />
+
+                        <VerticalStackLayout Spacing="4" IsVisible="{Binding PhoneNumberConfirmed, Converter={StaticResource InverseBoolConverter}}">
+                            <Label Text="{x:Static res:AppResources.ProfilePhoneVerificationChannelLabel}"
+                                   Style="{StaticResource CaptionLabelStyle}" />
+                            <Picker ItemsSource="{Binding PhoneVerificationChannelOptions}"
+                                    ItemDisplayBinding="{Binding DisplayName}"
+                                    SelectedItem="{Binding SelectedPhoneVerificationChannel}" />
+
+                            <Label Text="{x:Static res:AppResources.ProfilePhoneVerificationCodeLabel}"
+                                   Style="{StaticResource CaptionLabelStyle}" />
+                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                                <Entry Text="{Binding PhoneVerificationCode}"
+                                       Placeholder="{x:Static res:AppResources.ProfilePhoneVerificationCodePlaceholder}"
+                                       Keyboard="Numeric"
+                                       Style="{StaticResource FormEntryStyle}" />
+                            </Border>
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Button Grid.Column="0"
+                                        Text="{x:Static res:AppResources.ProfilePhoneVerificationRequestButton}"
+                                        Style="{StaticResource OutlinedButtonStyle}"
+                                        Command="{Binding RequestPhoneVerificationCommand}" />
+                                <Button Grid.Column="1"
+                                        Text="{x:Static res:AppResources.ProfilePhoneVerificationConfirmButton}"
+                                        Style="{StaticResource OutlinedButtonStyle}"
+                                        Command="{Binding ConfirmPhoneVerificationCommand}" />
+                            </Grid>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 

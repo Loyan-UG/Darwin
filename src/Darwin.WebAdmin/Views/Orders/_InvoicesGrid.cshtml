@@ -1,5 +1,9 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderInvoicesPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string LocalizeInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
+}
 
 <div id="invoices-grid-content"
      hx-boost="true"
@@ -67,7 +71,7 @@
                             <td>
                                 @if (item.CustomerTaxProfileType.HasValue)
                                 {
-                                    <span class="badge @(item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@item.CustomerTaxProfileType</span>
+                                    <span class="badge @(item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@LocalizeCustomerTaxProfileType(item.CustomerTaxProfileType)</span>
                                     @if (!string.IsNullOrWhiteSpace(item.CustomerVatId))
                                     {
                                         <div class="small text-muted">@item.CustomerVatId</div>
@@ -89,7 +93,7 @@
                                     <div class="small text-muted">@item.PaymentProviderReference</div>
                                     @if (item.PaymentStatus.HasValue)
                                     {
-                                        <div class="small text-muted">@item.PaymentStatus</div>
+                                        <div class="small text-muted">@LocalizeInvoiceStatus(item.PaymentStatus)</div>
                                     }
                                     <div class="mt-1">
                                         <a asp-controller="Billing"
@@ -122,7 +126,7 @@
                                     @T.T("Balance"): @item.Currency @((item.BalanceMinor / 100.0M).ToString("0.00"))
                                 </div>
                             </td>
-                            <td>@item.Status</td>
+                            <td>@LocalizeInvoiceStatus(item.Status)</td>
                             <td>@item.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
                             <td>
                                 @(item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")

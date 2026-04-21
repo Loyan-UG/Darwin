@@ -722,6 +722,29 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         brandsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
     }
 
+    [Fact]
+    public void MemberAndStorefrontPaymentSnapshots_Should_KeepCreatedAtUtcMappedForAttemptOrdering()
+    {
+        var memberOrdersSource = ReadWebApiFile(Path.Combine("Controllers", "Member", "MemberOrdersController.cs"));
+        var publicCheckoutSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "PublicCheckoutController.cs"));
+        var memberOrderContractsSource = ReadContractsFile(Path.Combine("Orders", "MemberOrderContracts.cs"));
+        var storefrontContractsSource = ReadContractsFile(Path.Combine("Orders", "StorefrontCheckoutContracts.cs"));
+
+        memberOrdersSource.Should().Contain("Payments = dto.Payments.Select(payment => new MemberOrderPayment");
+        memberOrdersSource.Should().Contain("CreatedAtUtc = payment.CreatedAtUtc,");
+        memberOrdersSource.Should().Contain("PaidAtUtc = payment.PaidAtUtc");
+
+        publicCheckoutSource.Should().Contain("Payments = confirmation.Payments.Select(payment => new StorefrontOrderConfirmationPayment");
+        publicCheckoutSource.Should().Contain("CreatedAtUtc = payment.CreatedAtUtc,");
+        publicCheckoutSource.Should().Contain("PaidAtUtc = payment.PaidAtUtc");
+
+        memberOrderContractsSource.Should().Contain("public DateTime CreatedAtUtc { get; set; }");
+        memberOrderContractsSource.Should().Contain("public DateTime? PaidAtUtc { get; set; }");
+
+        storefrontContractsSource.Should().Contain("public DateTime CreatedAtUtc { get; set; }");
+        storefrontContractsSource.Should().Contain("public DateTime? PaidAtUtc { get; set; }");
+    }
+
 
     [Fact]
     public void BusinessSetupWorkspace_Should_KeepMemberAndInvitationHelperLabelsSourceBacked()

@@ -49,6 +49,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
     private string _pointsRequiredInput = string.Empty;
     private string _selectedRewardType = RewardTypeFreeItem;
+    private RewardTypeOption? _selectedRewardTypeOption;
     private string? _rewardValueInput;
     private string? _descriptionInput;
     private bool _allowSelfRedemption;
@@ -100,12 +101,13 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
         RewardTiers = new ObservableCollection<RewardTierEditorItem>();
         Campaigns = new ObservableCollection<BusinessCampaignEditorItem>();
-        RewardTypeOptions = new ObservableCollection<string>
+        RewardTypeOptions = new ObservableCollection<RewardTypeOption>
         {
-            RewardTypeFreeItem,
-            RewardTypePercentDiscount,
-            RewardTypeAmountDiscount
+            new RewardTypeOption(RewardTypeFreeItem, AppResources.RewardsRewardTypeFreeItem),
+            new RewardTypeOption(RewardTypePercentDiscount, AppResources.RewardsRewardTypePercentDiscount),
+            new RewardTypeOption(RewardTypeAmountDiscount, AppResources.RewardsRewardTypeAmountDiscount)
         };
+        _selectedRewardTypeOption = RewardTypeOptions[0];
 
         CampaignChannelOptions = new ObservableCollection<CampaignChannelOption>
         {
@@ -128,7 +130,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
             new CampaignAudienceFilterOption(PromotionAudienceKind.JoinedMembers, AppResources.RewardsCampaignAudienceJoinedMembers),
             new CampaignAudienceFilterOption(PromotionAudienceKind.TierSegment, AppResources.RewardsCampaignAudienceTierSegment),
             new CampaignAudienceFilterOption(PromotionAudienceKind.PointsThreshold, AppResources.RewardsCampaignAudiencePointsThreshold),
-            new CampaignAudienceFilterOption(PromotionAudienceKind.DateWindow, AppResources.RewardsCampaignAudienceDateWindow)
+            new CampaignAudienceFilterOption(PromotionAudienceKind.DateWindow, AppResources.RewardsCampaignAudienceDateWindow),
+            new CampaignAudienceFilterOption(CampaignAudienceFilterOption.UnknownAudienceKindKey, AppResources.RewardsCampaignAudienceUnknown)
         };
 
         CampaignSortOptions = new ObservableCollection<CampaignSortOption>
@@ -206,7 +209,22 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Picker options for reward type contract values.
     /// </summary>
-    public ObservableCollection<string> RewardTypeOptions { get; }
+    public ObservableCollection<RewardTypeOption> RewardTypeOptions { get; }
+
+    /// <summary>
+    /// Localized picker option for reward type while preserving canonical API value.
+    /// </summary>
+    public RewardTypeOption? SelectedRewardTypeOption
+    {
+        get => _selectedRewardTypeOption;
+        set
+        {
+            if (SetProperty(ref _selectedRewardTypeOption, value))
+            {
+                _selectedRewardType = value?.Value ?? RewardTypeFreeItem;
+            }
+        }
+    }
 
     /// <summary>
     /// Picker options for campaign channel combinations supported in mobile editor.
@@ -393,13 +411,18 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Localized summary line for campaign audience KPI counters.
     /// </summary>
-    public string CampaignAudienceMetricsSummary => string.Format(
-        CultureInfo.InvariantCulture,
-        AppResources.RewardsCampaignAudienceMetricsFormat,
-        JoinedMembersCampaignCount,
-        TierSegmentCampaignCount,
-        PointsThresholdCampaignCount,
-        DateWindowCampaignCount);
+    public string CampaignAudienceMetricsSummary => string.Concat(
+        string.Format(
+            CultureInfo.InvariantCulture,
+            AppResources.RewardsCampaignAudienceMetricsFormat,
+            JoinedMembersCampaignCount,
+            TierSegmentCampaignCount,
+            PointsThresholdCampaignCount,
+            DateWindowCampaignCount),
+        " Aú ",
+        AppResources.RewardsCampaignAudienceUnknown,
+        ": ",
+        UnknownAudienceCampaignCount.ToString(CultureInfo.InvariantCulture));
 
     /// <summary>
     /// Localized timestamp text that indicates when the current diagnostics snapshot was produced.
@@ -549,6 +572,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
     public int DateWindowCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.DateWindow);
 
     /// <summary>
+    /// Gets count of campaigns with invalid, malformed, or unknown audience payloads from full campaign dataset.
+    /// </summary>
+    public int UnknownAudienceCampaignCount => CountCampaignsByAudienceKind(CampaignAudienceFilterOption.UnknownAudienceKindKey);
+
+    /// <summary>
     /// KPI chip text for all audiences.
     /// </summary>
     public string AllCampaignAudienceMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceFilterAll, TotalCampaignCount);
@@ -572,6 +600,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// KPI chip text for date-window audience.
     /// </summary>
     public string DateWindowCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceDateWindow, DateWindowCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for campaigns with unknown or invalid audience targeting.
+    /// </summary>
+    public string UnknownAudienceCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceUnknown, UnknownAudienceCampaignCount);
 
     /// <summary>
     /// Gets count of campaigns configured for in-app only delivery.
@@ -1008,7 +1041,9 @@ public sealed partial class RewardsViewModel : BaseViewModel
             _editingRowVersion = tier.RowVersion.ToArray();
 
             PointsRequiredInput = tier.PointsRequired.ToString();
-            SelectedRewardType = string.IsNullOrWhiteSpace(tier.RewardType) ? RewardTypeFreeItem : tier.RewardType;
+            var selectedRewardType = string.IsNullOrWhiteSpace(tier.RewardType) ? RewardTypeFreeItem : tier.RewardType;
+            SelectedRewardTypeOption = RewardTypeOptions.FirstOrDefault(option => string.Equals(option.Value, selectedRewardType, StringComparison.OrdinalIgnoreCase))
+                ?? RewardTypeOptions[0];
             RewardValueInput = tier.RewardValue?.ToString();
             DescriptionInput = tier.Description;
             AllowSelfRedemption = tier.AllowSelfRedemption;
@@ -1261,14 +1296,15 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
             var audienceKind = root.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
                 ? audienceElement.GetString()
-                : PromotionAudienceKind.JoinedMembers;
+                : null;
 
             CampaignTargetingHint = audienceKind switch
             {
                 PromotionAudienceKind.TierSegment => AppResources.RewardsCampaignTargetingHintTierSegment,
                 PromotionAudienceKind.PointsThreshold => AppResources.RewardsCampaignTargetingHintPointsThreshold,
                 PromotionAudienceKind.DateWindow => AppResources.RewardsCampaignTargetingHintDateWindow,
-                _ => AppResources.RewardsCampaignTargetingHintJoinedMembers
+                PromotionAudienceKind.JoinedMembers => AppResources.RewardsCampaignTargetingHintJoinedMembers,
+                _ => AppResources.RewardsCampaignTargetingHintUnknown
             };
         }
         catch (JsonException)
@@ -1308,7 +1344,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         var root = document.RootElement;
         var audienceKind = root.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
             ? audienceElement.GetString()
-            : PromotionAudienceKind.JoinedMembers;
+            : null;
 
         if (string.Equals(audienceKind, PromotionAudienceKind.TierSegment, StringComparison.OrdinalIgnoreCase))
         {
@@ -1435,7 +1471,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
             var audienceKind = document.RootElement.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
                 ? audienceElement.GetString()
-                : PromotionAudienceKind.JoinedMembers;
+                : null;
 
             if (string.Equals(audienceKind, PromotionAudienceKind.TierSegment, StringComparison.OrdinalIgnoreCase))
             {
@@ -1824,7 +1860,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return false;
         }
 
-        if (!RewardTypeOptions.Contains(SelectedRewardType, StringComparer.OrdinalIgnoreCase))
+        if (!RewardTypeOptions.Any(option => string.Equals(option.Value, SelectedRewardType, StringComparison.OrdinalIgnoreCase)))
         {
             validationMessage = AppResources.RewardsTypeValidation;
             return false;
@@ -1962,6 +1998,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(TierSegmentCampaignCount));
         OnPropertyChanged(nameof(PointsThresholdCampaignCount));
         OnPropertyChanged(nameof(DateWindowCampaignCount));
+        OnPropertyChanged(nameof(UnknownAudienceCampaignCount));
         OnPropertyChanged(nameof(CampaignAudienceMetricsSummary));
         OnPropertyChanged(nameof(InAppOnlyCampaignCount));
         OnPropertyChanged(nameof(InAppAndPushCampaignCount));
@@ -1972,6 +2009,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(TierSegmentCampaignMetricText));
         OnPropertyChanged(nameof(PointsThresholdCampaignMetricText));
         OnPropertyChanged(nameof(DateWindowCampaignMetricText));
+        OnPropertyChanged(nameof(UnknownAudienceCampaignMetricText));
         _campaignDiagnosticsSnapshotAtLocal = DateTimeOffset.Now;
         OnPropertyChanged(nameof(CampaignDiagnosticsSnapshotAtText));
         OnPropertyChanged(nameof(CampaignDiagnosticsFreshnessText));
@@ -2286,7 +2324,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         _editingRowVersion = Array.Empty<byte>();
 
         PointsRequiredInput = string.Empty;
-        SelectedRewardType = RewardTypeFreeItem;
+        SelectedRewardTypeOption = RewardTypeOptions[0];
         RewardValueInput = null;
         DescriptionInput = null;
         AllowSelfRedemption = false;

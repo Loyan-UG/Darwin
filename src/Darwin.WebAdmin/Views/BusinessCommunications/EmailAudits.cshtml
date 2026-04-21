@@ -10,7 +10,7 @@
         "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
         "AdminCommunicationTest" => T.T("CommunicationTemplateInventoryAdminTestFlow"),
         "PhoneVerification" => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
-        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : flowKey
+        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : T.T(flowKey)
     };
 
     string RetryPolicyStateLabel(string? retryPolicyState) => retryPolicyState switch
@@ -20,7 +20,7 @@
         "RateLimited" => T.T("EmailAuditsRetryRateLimitedLabel"),
         "Unsupported" => T.T("CommunicationEmailRetryPolicyUnsupported"),
         "Closed" => T.T("CommunicationEmailRetryPolicyClosed"),
-        _ => string.IsNullOrWhiteSpace(retryPolicyState) ? T.T("CommonUnclassified") : retryPolicyState
+        _ => string.IsNullOrWhiteSpace(retryPolicyState) ? T.T("CommonUnclassified") : T.T(retryPolicyState)
     };
 
     string DeliveryStatusLabel(string? status) => status switch
@@ -28,7 +28,7 @@
         "Sent" => T.T("Sent"),
         "Failed" => T.T("Failed"),
         "Pending" => T.T("Pending"),
-        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : status
+        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : T.T(status)
     };
 
     string ChainStatusMixLabel(string? statusMix) => statusMix switch
@@ -39,7 +39,7 @@
         "Pending-only chain" => T.T("CommunicationChainStatusPendingOnly"),
         "Success-only chain" => T.T("CommunicationChainStatusSuccessOnly"),
         "Single attempt" => T.T("CommunicationChainStatusSingleAttempt"),
-        _ => string.IsNullOrWhiteSpace(statusMix) ? T.T("CommonUnclassified") : statusMix
+        _ => string.IsNullOrWhiteSpace(statusMix) ? T.T("CommonUnclassified") : T.T(statusMix)
     };
 }
 

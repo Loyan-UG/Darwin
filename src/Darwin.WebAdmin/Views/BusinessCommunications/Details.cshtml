@@ -10,7 +10,7 @@
         "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
         "AdminCommunicationTest" => T.T("CommunicationTemplateInventoryAdminTestFlow"),
         "PhoneVerification" => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
-        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : flowKey
+        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : T.T(flowKey)
     };
 
     string OperationalStatusLabel(string? operationalStatus) => operationalStatus switch
@@ -18,7 +18,7 @@
         "PendingApproval" => T.T("PendingApproval"),
         "Approved" => T.T("Approved"),
         "Suspended" => T.T("Suspended"),
-        _ => string.IsNullOrWhiteSpace(operationalStatus) ? T.T("CommonUnclassified") : operationalStatus
+        _ => string.IsNullOrWhiteSpace(operationalStatus) ? T.T("CommonUnclassified") : T.T(operationalStatus)
     };
 
     string DeliveryStatusLabel(string? status) => status switch
@@ -26,7 +26,7 @@
         "Sent" => T.T("Sent"),
         "Failed" => T.T("Failed"),
         "Pending" => T.T("Pending"),
-        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : status
+        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : T.T(status)
     };
 
     string ChannelLabel(string? channel) => channel switch
@@ -34,7 +34,7 @@
         "SMS" => T.T("BusinessCommunicationSmsShort"),
         "WhatsApp" => T.T("BusinessCommunicationWhatsAppShort"),
         "Email" => T.T("CommunicationBuiltInFlowEmailChannel"),
-        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : channel
+        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : T.T(channel)
     };
 
     string MemberWorkspaceLabel() => T.T("Members");

@@ -77,6 +77,8 @@ namespace Darwin.Mobile.Shared.Api
         {
             public const string GetMe = "api/v1/member/profile/me";
             public const string UpdateMe = "api/v1/member/profile/me";
+            public const string RequestPhoneVerification = "api/v1/member/profile/me/phone/request-verification";
+            public const string ConfirmPhoneVerification = "api/v1/member/profile/me/phone/confirm";
             public const string GetAddresses = "api/v1/member/profile/addresses";
             public const string CreateAddress = "api/v1/member/profile/addresses";
             public static string UpdateAddress(Guid id) => $"api/v1/member/profile/addresses/{id:D}";

@@ -238,6 +238,18 @@
   <data name="RewardsHistoryLabel" xml:space="preserve">
     <value>Rewards history</value>
   </data>
+  <data name="RewardsTransactionTypeAccrual" xml:space="preserve">
+    <value>Accrual</value>
+  </data>
+  <data name="RewardsTransactionTypeRedemption" xml:space="preserve">
+    <value>Redemption</value>
+  </data>
+  <data name="RewardsTransactionTypeAdjustment" xml:space="preserve">
+    <value>Adjustment</value>
+  </data>
+  <data name="RewardsTransactionTypeUnknown" xml:space="preserve">
+    <value>Other transaction</value>
+  </data>
   <data name="RewardsNoHistoryMessage" xml:space="preserve">
     <value>No reward history available yet.</value>
   </data>
@@ -322,6 +334,18 @@
   <data name="ProfileSectionTitle" xml:space="preserve">
     <value>My profile</value>
   </data>
+  <data name="ProfilePhonePlaceholder" xml:space="preserve">
+    <value>+49123456789</value>
+  </data>
+  <data name="ProfileLocalePlaceholder" xml:space="preserve">
+    <value>de-DE</value>
+  </data>
+  <data name="ProfileCurrencyPlaceholder" xml:space="preserve">
+    <value>EUR</value>
+  </data>
+  <data name="ProfileTimezonePlaceholder" xml:space="preserve">
+    <value>Europe/Berlin</value>
+  </data>
   <data name="FirstNameLabel" xml:space="preserve">
     <value>First name</value>
   </data>
@@ -393,6 +417,54 @@
   </data>
   <data name="ProfilePushTokenAvailabilityUnknown" xml:space="preserve">
     <value>Push token status: unknown</value>
+  </data>
+  <data name="ProfilePhoneVerificationSectionTitle" xml:space="preserve">
+    <value>Phone verification</value>
+  </data>
+  <data name="ProfilePhoneVerificationConfirmed" xml:space="preserve">
+    <value>Your current phone number is verified.</value>
+  </data>
+  <data name="ProfilePhoneVerificationPending" xml:space="preserve">
+    <value>Your current phone number still needs verification before SMS and WhatsApp follow-up are fully ready.</value>
+  </data>
+  <data name="ProfilePhoneVerificationChannelLabel" xml:space="preserve">
+    <value>Verification channel</value>
+  </data>
+  <data name="ProfilePhoneVerificationSmsOption" xml:space="preserve">
+    <value>SMS</value>
+  </data>
+  <data name="ProfilePhoneVerificationWhatsAppOption" xml:space="preserve">
+    <value>WhatsApp</value>
+  </data>
+  <data name="ProfilePhoneVerificationCodeLabel" xml:space="preserve">
+    <value>Verification code</value>
+  </data>
+  <data name="ProfilePhoneVerificationCodePlaceholder" xml:space="preserve">
+    <value>Enter the code you received</value>
+  </data>
+  <data name="ProfilePhoneVerificationRequestButton" xml:space="preserve">
+    <value>Request code</value>
+  </data>
+  <data name="ProfilePhoneVerificationConfirmButton" xml:space="preserve">
+    <value>Confirm code</value>
+  </data>
+  <data name="ProfilePhoneVerificationPhoneRequired" xml:space="preserve">
+    <value>Add a phone number to your profile before requesting verification.</value>
+  </data>
+  <data name="ProfilePhoneVerificationCodeRequired" xml:space="preserve">
+    <value>Enter the verification code before confirming your phone number.</value>
+  </data>
+  <data name="ProfilePhoneVerificationCodeRequested" xml:space="preserve">
+    <value>A verification code was requested through {0}.</value>
+  </data>
+  <data name="ProfilePhoneVerificationRequestFailed" xml:space="preserve">
+    <value>Unable to request a verification code right now.</value>
+  </data>
+  <data name="ProfilePhoneVerificationConfirmSuccess" xml:space="preserve">
+    <value>Phone number confirmed successfully.</value>
+  </data>
+  <data name="ProfilePhoneVerificationConfirmFailed" xml:space="preserve">
+    <value>Phone verification could not be completed right now.</value>
   </data>
   <data name="ProfileAddressesSectionTitle" xml:space="preserve">
     <value>Saved addresses</value>
@@ -616,8 +688,41 @@
   <data name="MemberCustomerContextConsentRevokedAtFormat" xml:space="preserve">
     <value>Revoked at: {0:yyyy-MM-dd HH:mm}</value>
   </data>
+  <data name="MemberCustomerContextConsentTypeMarketingEmail" xml:space="preserve">
+    <value>Marketing email</value>
+  </data>
+  <data name="MemberCustomerContextConsentTypeTermsOfService" xml:space="preserve">
+    <value>Terms of service</value>
+  </data>
+  <data name="MemberCustomerContextConsentTypeUnknown" xml:space="preserve">
+    <value>Other consent</value>
+  </data>
   <data name="MemberCustomerContextInteractionTypeChannelFormat" xml:space="preserve">
     <value>{0} via {1}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionTypeCall" xml:space="preserve">
+    <value>Call</value>
+  </data>
+  <data name="MemberCustomerContextInteractionTypeMeeting" xml:space="preserve">
+    <value>Meeting</value>
+  </data>
+  <data name="MemberCustomerContextInteractionTypeOrder" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="MemberCustomerContextInteractionTypeSupport" xml:space="preserve">
+    <value>Support</value>
+  </data>
+  <data name="MemberCustomerContextInteractionTypeUnknown" xml:space="preserve">
+    <value>Other interaction</value>
+  </data>
+  <data name="MemberCustomerContextInteractionChannelChat" xml:space="preserve">
+    <value>Chat</value>
+  </data>
+  <data name="MemberCustomerContextInteractionChannelInPerson" xml:space="preserve">
+    <value>In person</value>
+  </data>
+  <data name="MemberCustomerContextInteractionChannelUnknown" xml:space="preserve">
+    <value>Other channel</value>
   </data>
   <data name="MemberCustomerContextInteractionSubjectFormat" xml:space="preserve">
     <value>Subject: {0}</value>
@@ -678,6 +783,45 @@
   </data>
   <data name="MemberCommerceInvoiceStatusFormat" xml:space="preserve">
     <value>Status: {0}</value>
+  </data>
+  <data name="MemberCommerceStatusCreated" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="MemberCommerceStatusConfirmed" xml:space="preserve">
+    <value>Confirmed</value>
+  </data>
+  <data name="MemberCommerceStatusPaid" xml:space="preserve">
+    <value>Paid</value>
+  </data>
+  <data name="MemberCommerceStatusPartiallyShipped" xml:space="preserve">
+    <value>Partially shipped</value>
+  </data>
+  <data name="MemberCommerceStatusShipped" xml:space="preserve">
+    <value>Shipped</value>
+  </data>
+  <data name="MemberCommerceStatusDelivered" xml:space="preserve">
+    <value>Delivered</value>
+  </data>
+  <data name="MemberCommerceStatusCancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="MemberCommerceStatusRefunded" xml:space="preserve">
+    <value>Refunded</value>
+  </data>
+  <data name="MemberCommerceStatusPartiallyRefunded" xml:space="preserve">
+    <value>Partially refunded</value>
+  </data>
+  <data name="MemberCommerceStatusCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="MemberCommerceStatusDraft" xml:space="preserve">
+    <value>Draft</value>
+  </data>
+  <data name="MemberCommerceStatusOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="MemberCommerceStatusUnknown" xml:space="preserve">
+    <value>Status update</value>
   </data>
   <data name="MemberCommerceInvoiceDueDateFormat" xml:space="preserve">
     <value>Due: {0:yyyy-MM-dd HH:mm}</value>
@@ -1033,6 +1177,18 @@
   <data name="BusinessRewardTypeFormat" xml:space="preserve">
     <value>Type: {0}</value>
   </data>
+  <data name="BusinessRewardTypeFreeItem" xml:space="preserve">
+    <value>Free item</value>
+  </data>
+  <data name="BusinessRewardTypePercentDiscount" xml:space="preserve">
+    <value>Percent discount</value>
+  </data>
+  <data name="BusinessRewardTypeAmountDiscount" xml:space="preserve">
+    <value>Amount discount</value>
+  </data>
+  <data name="BusinessRewardTypeUnknown" xml:space="preserve">
+    <value>Reward</value>
+  </data>
   <data name="BusinessRewardValueFormat" xml:space="preserve">
     <value>Value: {0}</value>
   </data>
@@ -1327,6 +1483,12 @@
   <data name="BusinessActiveFormat" xml:space="preserve">
     <value>Active: {0}</value>
   </data>
+  <data name="CommonYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="CommonNo" xml:space="preserve">
+    <value>No</value>
+  </data>
   <data name="DiscoverNearbyRadiusMetersFormat" xml:space="preserve">
     <value>{0} m</value>
   </data>
@@ -1335,6 +1497,15 @@
   </data>
   <data name="FeedPointsSpentFormat" xml:space="preserve">
     <value>Spent: {0} pts</value>
+  </data>
+  <data name="FeedTimelineKindPointsTransaction" xml:space="preserve">
+    <value>Points activity</value>
+  </data>
+  <data name="FeedTimelineKindRewardRedemption" xml:space="preserve">
+    <value>Reward redemption</value>
+  </data>
+  <data name="FeedTimelineKindUnknown" xml:space="preserve">
+    <value>Timeline activity</value>
   </data>
   <data name="QrBusinessFormat" xml:space="preserve">
     <value>Business: {0}</value>

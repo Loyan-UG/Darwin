@@ -1395,15 +1395,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
         }
 
-        private static IEnumerable<SelectListItem> BuildCustomerFilterItems(CustomerQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildCustomerFilterItems(CustomerQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All customers", CustomerQueueFilter.All.ToString(), selectedFilter == CustomerQueueFilter.All);
-            yield return new SelectListItem("Linked user", CustomerQueueFilter.LinkedUser.ToString(), selectedFilter == CustomerQueueFilter.LinkedUser);
-            yield return new SelectListItem("Needs segmentation", CustomerQueueFilter.NeedsSegmentation.ToString(), selectedFilter == CustomerQueueFilter.NeedsSegmentation);
-            yield return new SelectListItem("Has opportunities", CustomerQueueFilter.HasOpportunities.ToString(), selectedFilter == CustomerQueueFilter.HasOpportunities);
-            yield return new SelectListItem("B2B", CustomerQueueFilter.Business.ToString(), selectedFilter == CustomerQueueFilter.Business);
-            yield return new SelectListItem("B2B missing VAT ID", CustomerQueueFilter.MissingVatId.ToString(), selectedFilter == CustomerQueueFilter.MissingVatId);
-            yield return new SelectListItem("Uses platform locale fallback", CustomerQueueFilter.UsesPlatformLocaleFallback.ToString(), selectedFilter == CustomerQueueFilter.UsesPlatformLocaleFallback);
+            yield return new SelectListItem(T("AllCustomers"), CustomerQueueFilter.All.ToString(), selectedFilter == CustomerQueueFilter.All);
+            yield return new SelectListItem(T("LinkedUser"), CustomerQueueFilter.LinkedUser.ToString(), selectedFilter == CustomerQueueFilter.LinkedUser);
+            yield return new SelectListItem(T("NeedsSegmentation"), CustomerQueueFilter.NeedsSegmentation.ToString(), selectedFilter == CustomerQueueFilter.NeedsSegmentation);
+            yield return new SelectListItem(T("HasOpportunities"), CustomerQueueFilter.HasOpportunities.ToString(), selectedFilter == CustomerQueueFilter.HasOpportunities);
+            yield return new SelectListItem(T("B2B"), CustomerQueueFilter.Business.ToString(), selectedFilter == CustomerQueueFilter.Business);
+            yield return new SelectListItem(T("B2BMissingVatId"), CustomerQueueFilter.MissingVatId.ToString(), selectedFilter == CustomerQueueFilter.MissingVatId);
+            yield return new SelectListItem(T("UsesPlatformLocaleFallback"), CustomerQueueFilter.UsesPlatformLocaleFallback.ToString(), selectedFilter == CustomerQueueFilter.UsesPlatformLocaleFallback);
         }
 
         private static CustomerOpsSummaryVm BuildCustomerOpsSummary(IReadOnlyCollection<CustomerListItemDto> items)
@@ -1577,45 +1577,45 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             return View("Overview", vm);
         }
 
-        private static IEnumerable<SelectListItem> BuildLeadFilterItems(LeadQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildLeadFilterItems(LeadQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All leads", LeadQueueFilter.All.ToString(), selectedFilter == LeadQueueFilter.All);
-            yield return new SelectListItem("Qualified", LeadQueueFilter.Qualified.ToString(), selectedFilter == LeadQueueFilter.Qualified);
-            yield return new SelectListItem("Unassigned", LeadQueueFilter.Unassigned.ToString(), selectedFilter == LeadQueueFilter.Unassigned);
-            yield return new SelectListItem("Unconverted", LeadQueueFilter.Unconverted.ToString(), selectedFilter == LeadQueueFilter.Unconverted);
+            yield return new SelectListItem(T("AllLeads"), LeadQueueFilter.All.ToString(), selectedFilter == LeadQueueFilter.All);
+            yield return new SelectListItem(T("Qualified"), LeadQueueFilter.Qualified.ToString(), selectedFilter == LeadQueueFilter.Qualified);
+            yield return new SelectListItem(T("Unassigned"), LeadQueueFilter.Unassigned.ToString(), selectedFilter == LeadQueueFilter.Unassigned);
+            yield return new SelectListItem(T("Unconverted"), LeadQueueFilter.Unconverted.ToString(), selectedFilter == LeadQueueFilter.Unconverted);
         }
 
-        private static IEnumerable<SelectListItem> BuildOpportunityFilterItems(OpportunityQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildOpportunityFilterItems(OpportunityQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All opportunities", OpportunityQueueFilter.All.ToString(), selectedFilter == OpportunityQueueFilter.All);
-            yield return new SelectListItem("Open", OpportunityQueueFilter.Open.ToString(), selectedFilter == OpportunityQueueFilter.Open);
-            yield return new SelectListItem("Closing soon", OpportunityQueueFilter.ClosingSoon.ToString(), selectedFilter == OpportunityQueueFilter.ClosingSoon);
-            yield return new SelectListItem("High value", OpportunityQueueFilter.HighValue.ToString(), selectedFilter == OpportunityQueueFilter.HighValue);
+            yield return new SelectListItem(T("AllOpportunities"), OpportunityQueueFilter.All.ToString(), selectedFilter == OpportunityQueueFilter.All);
+            yield return new SelectListItem(T("Open"), OpportunityQueueFilter.Open.ToString(), selectedFilter == OpportunityQueueFilter.Open);
+            yield return new SelectListItem(T("ClosingSoon"), OpportunityQueueFilter.ClosingSoon.ToString(), selectedFilter == OpportunityQueueFilter.ClosingSoon);
+            yield return new SelectListItem(T("HighValue"), OpportunityQueueFilter.HighValue.ToString(), selectedFilter == OpportunityQueueFilter.HighValue);
         }
 
-        private static IEnumerable<SelectListItem> BuildSegmentFilterItems(CustomerSegmentQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildSegmentFilterItems(CustomerSegmentQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All segments", CustomerSegmentQueueFilter.All.ToString(), selectedFilter == CustomerSegmentQueueFilter.All);
-            yield return new SelectListItem("Empty", CustomerSegmentQueueFilter.Empty.ToString(), selectedFilter == CustomerSegmentQueueFilter.Empty);
-            yield return new SelectListItem("In use", CustomerSegmentQueueFilter.InUse.ToString(), selectedFilter == CustomerSegmentQueueFilter.InUse);
-            yield return new SelectListItem("Missing description", CustomerSegmentQueueFilter.MissingDescription.ToString(), selectedFilter == CustomerSegmentQueueFilter.MissingDescription);
+            yield return new SelectListItem(T("AllSegments"), CustomerSegmentQueueFilter.All.ToString(), selectedFilter == CustomerSegmentQueueFilter.All);
+            yield return new SelectListItem(T("Empty"), CustomerSegmentQueueFilter.Empty.ToString(), selectedFilter == CustomerSegmentQueueFilter.Empty);
+            yield return new SelectListItem(T("InUse"), CustomerSegmentQueueFilter.InUse.ToString(), selectedFilter == CustomerSegmentQueueFilter.InUse);
+            yield return new SelectListItem(T("MissingDescription"), CustomerSegmentQueueFilter.MissingDescription.ToString(), selectedFilter == CustomerSegmentQueueFilter.MissingDescription);
         }
 
-        private static List<CrmPlaybookVm> BuildSegmentPlaybooks()
+        private List<CrmPlaybookVm> BuildSegmentPlaybooks()
         {
             return new List<CrmPlaybookVm>
             {
                 new()
                 {
-                    Title = "Empty segments",
-                    ScopeNote = "Segments without members usually indicate unfinished segmentation logic or stale CRM taxonomy.",
-                    OperatorAction = "Review whether the segment should be assigned to customers, renamed, or retired before marketing and support rely on it."
+                    Title = T("CrmSegmentsPlaybookEmptyTitle"),
+                    ScopeNote = T("CrmSegmentsPlaybookEmptyScope"),
+                    OperatorAction = T("CrmSegmentsPlaybookEmptyAction")
                 },
                 new()
                 {
-                    Title = "Segments missing description",
-                    ScopeNote = "Missing operator context makes segmentation review and campaign targeting harder across CRM workflows.",
-                    OperatorAction = "Add a concise description so support, marketing, and admin operators understand why the segment exists and when to use it."
+                    Title = T("CrmSegmentsPlaybookMissingDescriptionTitle"),
+                    ScopeNote = T("CrmSegmentsPlaybookMissingDescriptionScope"),
+                    OperatorAction = T("CrmSegmentsPlaybookMissingDescriptionAction")
                 }
             };
         }

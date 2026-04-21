@@ -3,6 +3,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("TaxComplianceTitle");
+    string LocalizeTaxInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="billing-tax-compliance-workspace-shell">
@@ -154,7 +155,7 @@
                                 }
                             </td>
                             <td>@(item.OrderNumber ?? "-")</td>
-                            <td>@item.Status</td>
+                            <td>@LocalizeTaxInvoiceStatus(item.Status)</td>
                             <td>@item.Currency @((item.TotalGrossMinor / 100.0m).ToString("0.00"))</td>
                             <td>@string.Format(T.T("CreatedUtcValue"), item.DueDateUtc.ToString("yyyy-MM-dd HH:mm"))</td>
                             <td>

@@ -34,22 +34,22 @@
 
                     <Label Text="{x:Static res:AppResources.PhoneLabel}" Style="{StaticResource FormLabelStyle}" />
                     <Border Style="{StaticResource FormFieldBorderStyle}">
-                        <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" Placeholder="+49123456789" Style="{StaticResource FormEntryStyle}" />
+                        <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" Placeholder="{x:Static res:AppResources.ProfilePhonePlaceholder}" Style="{StaticResource FormEntryStyle}" />
                     </Border>
 
                     <Label Text="{x:Static res:AppResources.LocaleLabel}" Style="{StaticResource FormLabelStyle}" />
                     <Border Style="{StaticResource FormFieldBorderStyle}">
-                        <Entry Text="{Binding Locale}" Placeholder="de-DE" Style="{StaticResource FormEntryStyle}" />
+                        <Entry Text="{Binding Locale}" Placeholder="{x:Static res:AppResources.ProfileLocalePlaceholder}" Style="{StaticResource FormEntryStyle}" />
                     </Border>
 
                     <Label Text="{x:Static res:AppResources.TimezoneLabel}" Style="{StaticResource FormLabelStyle}" />
                     <Border Style="{StaticResource FormFieldBorderStyle}">
-                        <Entry Text="{Binding Timezone}" Placeholder="Europe/Berlin" Style="{StaticResource FormEntryStyle}" />
+                        <Entry Text="{Binding Timezone}" Placeholder="{x:Static res:AppResources.ProfileTimezonePlaceholder}" Style="{StaticResource FormEntryStyle}" />
                     </Border>
 
                     <Label Text="{x:Static res:AppResources.CurrencyLabel}" Style="{StaticResource FormLabelStyle}" />
                     <Border Style="{StaticResource FormFieldBorderStyle}">
-                        <Entry Text="{Binding Currency}" Placeholder="EUR" Style="{StaticResource FormEntryStyle}" />
+                        <Entry Text="{Binding Currency}" Placeholder="{x:Static res:AppResources.ProfileCurrencyPlaceholder}" Style="{StaticResource FormEntryStyle}" />
                     </Border>
 
                     <!-- Keep feedback directly above primary action for better visibility while keyboard is open. -->

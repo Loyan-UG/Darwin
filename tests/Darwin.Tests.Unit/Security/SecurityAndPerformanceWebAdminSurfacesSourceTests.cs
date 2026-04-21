@@ -6,6 +6,67 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 {
 
     [Fact]
+    public void WebAdminOperationalControlCenter_Should_KeepCoreAdminModulesReachable()
+    {
+        var homeSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Home", "HomeController.cs"));
+        var businessesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var communicationsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessCommunicationsController.cs"));
+        var mobileOpsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Mobile", "MobileOperationsController.cs"));
+        var siteSettingsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Settings", "SiteSettingsController.cs"));
+        var ordersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
+        var billingSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var crmSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
+        var inventorySource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Inventory", "InventoryController.cs"));
+        var loyaltySource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Loyalty", "LoyaltyController.cs"));
+        var mediaSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
+        var pagesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CMS", "PagesController.cs"));
+        var productsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "ProductsController.cs"));
+        var categoriesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "CategoriesController.cs"));
+        var brandsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "BrandsController.cs"));
+        var addOnGroupsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "AddOnGroupsController.cs"));
+        var usersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
+        var rolesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "RolesController.cs"));
+        var permissionsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "PermissionsController.cs"));
+        var shippingSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Shipping", "ShippingMethodsController.cs"));
+
+        homeSource.Should().Contain("public async Task<IActionResult> Index(");
+        businessesSource.Should().Contain("public async Task<IActionResult> Index(");
+        businessesSource.Should().Contain("public async Task<IActionResult> Create(");
+        businessesSource.Should().Contain("public async Task<IActionResult> Edit(");
+        businessesSource.Should().Contain("public async Task<IActionResult> Setup(");
+        businessesSource.Should().Contain("public async Task<IActionResult> Members(");
+        businessesSource.Should().Contain("public async Task<IActionResult> Invitations(");
+        businessesSource.Should().Contain("public async Task<IActionResult> ProvisionSupportCustomer(");
+        communicationsSource.Should().Contain("public async Task<IActionResult> Index(");
+        communicationsSource.Should().Contain("public async Task<IActionResult> Details(");
+        mobileOpsSource.Should().Contain("public async Task<IActionResult> Index(");
+        siteSettingsSource.Should().Contain("public async Task<IActionResult> Edit(");
+        ordersSource.Should().Contain("public async Task<IActionResult> Index(");
+        ordersSource.Should().Contain("public async Task<IActionResult> Details(");
+        billingSource.Should().Contain("public async Task<IActionResult> Plans(");
+        billingSource.Should().Contain("public async Task<IActionResult> Payments(");
+        crmSource.Should().Contain("public async Task<IActionResult> Index(");
+        crmSource.Should().Contain("public async Task<IActionResult> CreateCustomer(");
+        inventorySource.Should().Contain("public async Task<IActionResult> Warehouses(");
+        inventorySource.Should().Contain("public async Task<IActionResult> Suppliers(");
+        inventorySource.Should().Contain("public async Task<IActionResult> StockLevels(");
+        inventorySource.Should().Contain("public async Task<IActionResult> PurchaseOrders(");
+        loyaltySource.Should().Contain("public async Task<IActionResult> Programs(");
+        loyaltySource.Should().Contain("public async Task<IActionResult> Accounts(");
+        loyaltySource.Should().Contain("public async Task<IActionResult> Campaigns(");
+        mediaSource.Should().Contain("public async Task<IActionResult> Index(");
+        pagesSource.Should().Contain("public async Task<IActionResult> Index(");
+        productsSource.Should().Contain("public async Task<IActionResult> Index(");
+        categoriesSource.Should().Contain("public async Task<IActionResult> Index(");
+        brandsSource.Should().Contain("public async Task<IActionResult> Index(");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> Index(");
+        usersSource.Should().Contain("public async Task<IActionResult> Index(");
+        rolesSource.Should().Contain("public async Task<IActionResult> Index(");
+        permissionsSource.Should().Contain("public async Task<IActionResult> Index(");
+        shippingSource.Should().Contain("public async Task<IActionResult> Index(");
+    }
+
+    [Fact]
     public void MemberAndLoyaltyControllers_Should_RemainAuthenticated()
     {
         ReadWebApiFile(Path.Combine("Controllers", "Member", "MemberBusinessesController.cs"))
@@ -140,8 +201,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("await _updateBillingPlan.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("SetErrorMessage(\"BillingPlanConcurrencyMessage\");");
         source.Should().Contain("private async Task<BillingPlanOpsSummaryVm> BuildBillingPlanOpsSummaryVmAsync(CancellationToken ct)");
-        source.Should().Contain("private static List<ProviderPlaybookVm> BuildBillingPlanPlaybooks()");
-        source.Should().Contain("private static void PopulateBillingPlanOptions(BillingPlanEditVm vm)");
+        source.Should().Contain("private List<ProviderPlaybookVm> BuildBillingPlanPlaybooks()");
+        source.Should().Contain("Title = T(\"BillingPlansPlaybookActiveTitle\")");
+        source.Should().Contain("Title = T(\"BillingPlansPlaybookTrialTitle\")");
+        source.Should().Contain("private void PopulateBillingPlanOptions(BillingPlanEditVm vm)");
+        source.Should().Contain(".Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T(x.ToString()), x.ToString(), x == vm.Interval))");
         source.Should().Contain("private IActionResult RenderPlansWorkspace(BillingPlansListVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/Billing/Plans.cshtml\", vm);");
         source.Should().Contain("private IActionResult RenderBillingPlanEditor(BillingPlanEditVm vm, bool isCreate)");
@@ -210,7 +274,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("await _updatePayment.HandleAsync(dto, ct).ConfigureAwait(false);");
         source.Should().Contain("SetErrorMessage(\"PaymentConcurrencyMessage\");");
         source.Should().Contain("private async Task PopulatePaymentOptionsAsync(PaymentEditVm vm, CancellationToken ct)");
-        source.Should().Contain("private static List<PaymentSupportPlaybookVm> BuildPaymentSupportPlaybooks(PaymentEditDto dto)");
+        source.Should().Contain("private List<PaymentSupportPlaybookVm> BuildPaymentSupportPlaybooks(PaymentEditDto dto)");
+        source.Should().Contain("Title = T(\"PaymentSupportPlaybookProviderCorrelationTitle\")");
+        source.Should().Contain("Title = T(\"PaymentSupportPlaybookFailureRefundTitle\")");
+        source.Should().Contain("Title = T(\"PaymentSupportPlaybookStripeTitle\")");
         source.Should().Contain("private IActionResult RenderPaymentEditor(PaymentEditVm vm, bool isCreate)");
         source.Should().Contain("return PartialView(\"~/Views/Billing/_PaymentEditorShell.cshtml\", vm);");
 
@@ -260,6 +327,25 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("private IActionResult RedirectOrHtmx(string actionName, object routeValues)");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
         source.Should().Contain("private bool IsHtmxRequest()");
+    }
+
+
+    [Fact]
+    public void BillingFinancialAccountsView_Should_KeepLocalizedTypeAndWorkspaceContractsWired()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Views", "Billing", "FinancialAccounts.cshtml"));
+
+        source.Should().Contain("ViewData[\"Title\"] = T.T(\"FinancialAccountsTitle\");");
+        source.Should().Contain("string LocalizeAccountType(object? type) => type is null ? \"-\" : T.T(type.ToString() ?? string.Empty);");
+        source.Should().Contain("<h1 class=\"mb-3\">@T.T(\"FinancialAccountsTitle\")</h1>");
+        source.Should().Contain("placeholder=\"@T.T(\"SearchFinancialAccountsPlaceholder\")\"");
+        source.Should().Contain("@T.T(\"FinancialAccountsPlaybooksTitle\")");
+        source.Should().Contain("<th>@T.T(\"Type\")</th><th class=\"text-end\">@T.T(\"CommonActions\")</th>");
+        source.Should().Contain("@LocalizeAccountType(item.Type)");
+        source.Should().Contain("@T.T(\"FinancialAccountsCodeMissing\")");
+        source.Should().Contain("@T.T(\"JournalEntriesTitle\")");
+        source.Should().Contain("asp-action=\"FinancialAccounts\"");
+        source.Should().Contain("hx-target=\"#billing-financial-accounts-workspace-shell\"");
     }
 
 
@@ -909,6 +995,47 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("PhoneVerificationPreferredChannel = vm.PhoneVerificationPreferredChannel,");
     }
 
+    [Fact]
+    public void WebAdminLocalizationMetadataAndIdentityForms_Should_KeepResxBackedDisplayContractsWired()
+    {
+        var dependencyInjectionSource = ReadWebAdminFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+        var metadataProviderSource = ReadWebAdminFile(Path.Combine("Localization", "SharedDisplayMetadataProvider.cs"));
+        var metadataOptionsSource = ReadWebAdminFile(Path.Combine("Localization", "ConfigureDisplayMetadataLocalization.cs"));
+        var userVmsSource = ReadWebAdminFile(Path.Combine("ViewModels", "Identity", "UserVms.cs"));
+        var siteSettingVmSource = ReadWebAdminFile(Path.Combine("ViewModels", "Settings", "SiteSettingVm.cs"));
+
+        dependencyInjectionSource.Should().Contain("services.AddLocalization(options => options.ResourcesPath = \"Resources\");");
+        dependencyInjectionSource.Should().Contain("services.AddSingleton<IDisplayMetadataProvider, SharedDisplayMetadataProvider>();");
+        dependencyInjectionSource.Should().Contain("services.AddSingleton<IConfigureOptions<MvcOptions>, ConfigureDisplayMetadataLocalization>();");
+        dependencyInjectionSource.Should().Contain(".AddDataAnnotationsLocalization(options =>");
+        dependencyInjectionSource.Should().Contain("factory.Create(typeof(SharedResource));");
+
+        metadataProviderSource.Should().Contain("public sealed class SharedDisplayMetadataProvider : IDisplayMetadataProvider");
+        metadataProviderSource.Should().Contain("var displayAttribute = context.Attributes.OfType<DisplayAttribute>().FirstOrDefault();");
+        metadataProviderSource.Should().Contain("var resourceKey = displayAttribute.Name!;");
+        metadataProviderSource.Should().Contain("context.DisplayMetadata.DisplayName = () => _localizer[resourceKey];");
+
+        metadataOptionsSource.Should().Contain("public sealed class ConfigureDisplayMetadataLocalization : IConfigureOptions<MvcOptions>");
+        metadataOptionsSource.Should().Contain("options.ModelMetadataDetailsProviders.Add(_displayMetadataProvider);");
+
+        userVmsSource.Should().Contain("[Display(Name = \"Locale\")]");
+        userVmsSource.Should().Contain("[Display(Name = \"TimeZone\")]");
+        userVmsSource.Should().Contain("[Display(Name = \"Currency\")]");
+        userVmsSource.Should().Contain("[Display(Name = \"Email\")]");
+        userVmsSource.Should().Contain("[Display(Name = \"NewPassword\")]");
+        userVmsSource.Should().Contain("[Display(Name = \"ConfirmNewPassword\")]");
+        userVmsSource.Should().Contain("[MinLength(8, ErrorMessage = \"Password must be at least 8 characters.\")]");
+        userVmsSource.Should().Contain("[Compare(nameof(NewPassword), ErrorMessage = \"Passwords do not match.\")]");
+
+        siteSettingVmSource.Should().Contain("[Display(Name = \"SiteSettingDefaultCulture\"), Required, MaxLength(10)]");
+        siteSettingVmSource.Should().Contain("[Display(Name = \"SiteSettingSupportedCulturesCsv\"), Required]");
+        siteSettingVmSource.Should().Contain("[Display(Name = \"SiteSettingAdminTextOverridesJson\")]");
+        siteSettingVmSource.Should().Contain("[Display(Name = \"SiteSettingPhoneVerificationPreferredChannel\")]");
+        siteSettingVmSource.Should().Contain("[Display(Name = \"SiteSettingPhoneVerificationAllowFallback\")]");
+        siteSettingVmSource.Should().Contain("[Display(Name = \"SiteSettingBusinessInvitationEmailSubjectTemplate\")]");
+        siteSettingVmSource.Should().Contain("[Display(Name = \"SiteSettingPasswordResetEmailBodyTemplate\")]");
+    }
+
 
     [Fact]
     public void HomeCommunicationOpsCard_Should_KeepHeaderMetricsAndSelectedBusinessRailsWired()
@@ -1120,6 +1247,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("string CommunicationChannelLabel(string channel) => channel switch");
         source.Should().Contain("\"Sms\" => T.T(\"Sms\")");
         source.Should().Contain("\"WhatsApp\" => T.T(\"WhatsApp\")");
+        source.Should().Contain("_ => string.IsNullOrWhiteSpace(channel) ? T.T(\"CommonUnclassified\") : T.T(channel)");
         source.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
         source.Should().Contain("BusinessInvitationQueueFilter.Open => T.T(\"OpenInvitations\")");
         source.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open): <strong>@Model.OpenInvitationCount</strong>");
@@ -1128,6 +1256,19 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().NotContain("@T.T(\"OpenInvitations\"): <strong>@Model.OpenInvitationCount</strong>");
         source.Should().NotContain("<div class=\"text-muted small\">@T.T(\"Sms\")</div>");
         source.Should().NotContain("<div class=\"text-muted small\">@T.T(\"WhatsApp\")</div>");
+    }
+
+    [Fact]
+    public void HomeCommunicationOpsCard_Should_KeepLocalizedChannelFallbackContractsWired()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Views", "Home", "_CommunicationOpsCard.cshtml"));
+
+        source.Should().Contain("string CommunicationChannelLabel(string channel) => channel switch");
+        source.Should().Contain("\"SMS\" => T.T(\"SMS\")");
+        source.Should().Contain("\"WhatsApp\" => T.T(\"WhatsApp\")");
+        source.Should().Contain("_ => string.IsNullOrWhiteSpace(channel) ? T.T(\"CommonUnclassified\") : T.T(channel)");
+        source.Should().Contain("@CommunicationChannelLabel(\"SMS\")");
+        source.Should().Contain("@CommunicationChannelLabel(\"WhatsApp\")");
     }
 
 
@@ -1232,6 +1373,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "MobileOperations", "Index.cshtml"));
 
+        source.Should().Contain("string LocalizeMobilePlatform(object? platform) => platform is null ? \"-\" : T.T(platform.ToString() ?? string.Empty);");
         source.Should().Contain("<div class=\"card-header\">@T.T(\"DeviceFleetSnapshotTitle\")</div>");
         source.Should().Contain("@T.T(\"ActiveDevices\")");
         source.Should().Contain("@T.T(\"BusinessMemberDevices\")");
@@ -1248,6 +1390,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<select name=\"platform\" asp-items=\"Model.PlatformItems\" class=\"form-select\"></select>");
         source.Should().Contain("<select name=\"state\" asp-items=\"Model.StateItems\" class=\"form-select\"></select>");
         source.Should().Contain("@T.T(\"NoDevicesMatchCurrentFilters\")");
+        source.Should().Contain("@LocalizeMobilePlatform(item.Platform)");
         source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = item.UserId })\"");
         source.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\", new { q = item.UserEmail })\"");
         source.Should().Contain("hx-get=\"@Url.Action(\"ScanSessions\", \"Loyalty\", new { q = item.UserEmail })\"");
@@ -1316,6 +1459,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("new(T(\"MobileAllPlatforms\"), string.Empty, !selected.HasValue)");
         source.Should().Contain("Enum.GetValues<MobilePlatform>()");
         source.Should().Contain(".Where(x => x != MobilePlatform.Unknown)");
+        source.Should().Contain(".Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x))");
         source.Should().Contain("private List<SelectListItem> BuildStateItems(string? selected)");
         source.Should().Contain("new(T(\"MobileAllStates\"), string.Empty, string.IsNullOrWhiteSpace(selected))");
         source.Should().Contain("new(T(\"MobileStaleDevices\"), \"stale\", string.Equals(selected, \"stale\", StringComparison.OrdinalIgnoreCase))");
@@ -1408,6 +1552,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         shipmentsSource.Should().Contain("placeholder=\"@T.T(\"SearchShipmentsPlaceholder\")\"");
         shipmentsSource.Should().Contain("name=\"pageSize\" asp-items=\"Model.PageSizeItems\"");
         shipmentsSource.Should().Contain("@T.T(\"NoShipmentsFound\")");
+        shipmentsSource.Should().Contain("string LocalizeShipmentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        shipmentsSource.Should().Contain("@LocalizeShipmentStatus(item.Status)");
         shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = item.OrderId })\"");
         shipmentsSource.Should().Contain("asp-fragment=\"refunds\"");
         shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Dhl\" })\"");
@@ -1428,6 +1574,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         returnsSource.Should().Contain("placeholder=\"@T.T(\"ReturnsQueueSearchPlaceholder\")\"");
         returnsSource.Should().Contain("@T.T(\"AllReturnCases\")");
         returnsSource.Should().Contain("@T.T(\"NoReturnCases\")");
+        returnsSource.Should().Contain("string LocalizeReturnStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        returnsSource.Should().Contain("@LocalizeReturnStatus(item.Status)");
         returnsSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = item.OrderId })\"");
         returnsSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\", new { q = item.OrderNumber })\"");
         returnsSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = item.OrderId, paymentId = item.DefaultRefundPaymentId })\"");
@@ -1497,31 +1645,31 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
 
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildOrderFilterItems(OrderQueueFilter selectedFilter)");
-        source.Should().Contain("new SelectListItem(\"All orders\", OrderQueueFilter.All.ToString()");
-        source.Should().Contain("new SelectListItem(\"Open\", OrderQueueFilter.Open.ToString()");
-        source.Should().Contain("new SelectListItem(\"Payment issues\", OrderQueueFilter.PaymentIssues.ToString()");
-        source.Should().Contain("new SelectListItem(\"Fulfillment attention\", OrderQueueFilter.FulfillmentAttention.ToString()");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildPaymentFilterItems(PaymentQueueFilter selectedFilter)");
-        source.Should().Contain("new SelectListItem(\"All payments\", PaymentQueueFilter.All.ToString()");
-        source.Should().Contain("new SelectListItem(\"Failed\", PaymentQueueFilter.Failed.ToString()");
-        source.Should().Contain("new SelectListItem(\"Refunded\", PaymentQueueFilter.Refunded.ToString()");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildOrderFilterItems(OrderQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"AllOrders\"), OrderQueueFilter.All.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"Open\"), OrderQueueFilter.Open.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"PaymentIssues\"), OrderQueueFilter.PaymentIssues.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"FulfillmentAttention\"), OrderQueueFilter.FulfillmentAttention.ToString()");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildPaymentFilterItems(PaymentQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"AllPayments\"), PaymentQueueFilter.All.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"Failed\"), PaymentQueueFilter.Failed.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"Refunded\"), PaymentQueueFilter.Refunded.ToString()");
         source.Should().Contain("private IEnumerable<SelectListItem> BuildShipmentFilterItems(ShipmentQueueFilter selectedFilter)");
         source.Should().Contain("T(\"AllShipments\")");
         source.Should().Contain("T(\"PendingPacked\")");
         source.Should().Contain("T(\"MissingTracking\")");
         source.Should().Contain("T(\"TrackingOverdue\")");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)");
-        source.Should().Contain("new SelectListItem(\"All refunds\", RefundQueueFilter.All.ToString()");
-        source.Should().Contain("new SelectListItem(\"Pending\", RefundQueueFilter.Pending.ToString()");
-        source.Should().Contain("new SelectListItem(\"Completed\", RefundQueueFilter.Completed.ToString()");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"AllRefunds\"), RefundQueueFilter.All.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"Pending\"), RefundQueueFilter.Pending.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"Completed\"), RefundQueueFilter.Completed.ToString()");
         source.Should().Contain("private IEnumerable<SelectListItem> BuildReturnFilterItems(ReturnQueueFilter selectedFilter)");
         source.Should().Contain("T(\"AllReturnCases\")");
         source.Should().Contain("T(\"ReturnFollowUp\")");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildInvoiceFilterItems(InvoiceQueueFilter selectedFilter)");
-        source.Should().Contain("new SelectListItem(\"All invoices\", InvoiceQueueFilter.All.ToString()");
-        source.Should().Contain("new SelectListItem(\"Outstanding\", InvoiceQueueFilter.Outstanding.ToString()");
-        source.Should().Contain("new SelectListItem(\"Paid\", InvoiceQueueFilter.Paid.ToString()");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildInvoiceFilterItems(InvoiceQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"AllInvoices\"), InvoiceQueueFilter.All.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"Outstanding\"), InvoiceQueueFilter.Outstanding.ToString()");
+        source.Should().Contain("new SelectListItem(T(\"Paid\"), InvoiceQueueFilter.Paid.ToString()");
         source.Should().Contain("private static IEnumerable<SelectListItem> BuildPageSizeItems(int selectedPageSize)");
         source.Should().Contain("var sizes = new[] { 10, 20, 50, 100 }");
         source.Should().Contain("private void SetOrderHeader(OrderHeaderVm? header)");
@@ -1550,6 +1698,135 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("private bool IsHtmxRequest()");
         source.Should().Contain("Request.Headers[\"HX-Request\"]");
         source.Should().Contain("StringComparison.OrdinalIgnoreCase");
+    }
+
+
+    [Fact]
+    public void OrderDetailAndFinancialGrids_Should_KeepResourceBackedStatusContractsWired()
+    {
+        var detailsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "Details.cshtml"));
+        var invoicesSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_InvoicesGrid.cshtml"));
+        var refundsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "_RefundsGrid.cshtml"));
+
+        detailsSource.Should().Contain("string LocalizeOrderStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        detailsSource.Should().Contain("@LocalizeOrderStatus(Model.Status)");
+
+        invoicesSource.Should().Contain("string LocalizeInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        invoicesSource.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
+        invoicesSource.Should().Contain("@LocalizeInvoiceStatus(item.PaymentStatus)");
+        invoicesSource.Should().Contain("@LocalizeInvoiceStatus(item.Status)");
+        invoicesSource.Should().Contain("@LocalizeCustomerTaxProfileType(item.CustomerTaxProfileType)");
+
+        refundsSource.Should().Contain("string LocalizeRefundStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        refundsSource.Should().Contain("@LocalizeRefundStatus(item.PaymentStatus)");
+        refundsSource.Should().Contain("@LocalizeRefundStatus(item.Status)");
+    }
+
+
+    [Fact]
+    public void LowerTrafficBillingCrmInventoryAndSubscriptionViews_Should_KeepResourceBackedStatusContractsWired()
+    {
+        var subscriptionInvoicesSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "SubscriptionInvoices.cshtml"));
+        var crmLeadsSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "Leads.cshtml"));
+        var crmInvoicesSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "Invoices.cshtml"));
+        var crmLeadEditorSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "_LeadEditorShell.cshtml"));
+        var crmInvoiceEditorSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "_InvoiceEditorShell.cshtml"));
+        var paymentsSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Payments.cshtml"));
+        var billingRefundsSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Refunds.cshtml"));
+        var taxComplianceSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "TaxCompliance.cshtml"));
+        var webhooksSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Webhooks.cshtml"));
+        var paymentFormSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "_PaymentForm.cshtml"));
+        var purchaseOrdersSource = ReadWebAdminFile(Path.Combine("Views", "Inventory", "PurchaseOrders.cshtml"));
+        var stockTransfersSource = ReadWebAdminFile(Path.Combine("Views", "Inventory", "StockTransfers.cshtml"));
+
+        subscriptionInvoicesSource.Should().Contain("string LocalizeSubscriptionInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        subscriptionInvoicesSource.Should().Contain("@LocalizeSubscriptionInvoiceStatus(item.Status)");
+
+        crmLeadsSource.Should().Contain("string LocalizeLeadStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        crmLeadsSource.Should().Contain("@LocalizeLeadStatus(item.Status)");
+        crmInvoicesSource.Should().Contain("string LocalizeCrmInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        crmInvoicesSource.Should().Contain("@LocalizeCrmInvoiceStatus(item.Status)");
+        crmLeadEditorSource.Should().Contain("string LocalizeLeadStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        crmLeadEditorSource.Should().Contain("@LocalizeLeadStatus(Model.Status)");
+        crmInvoiceEditorSource.Should().Contain("string LocalizeCrmInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        crmInvoiceEditorSource.Should().Contain("@LocalizeCrmInvoiceStatus(Model.Status)");
+
+        paymentsSource.Should().Contain("string LocalizePaymentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        paymentsSource.Should().Contain("@LocalizePaymentStatus(item.Status)");
+        paymentsSource.Should().Contain("string LocalizeInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        paymentsSource.Should().Contain("string LocalizeProviderReferenceState(string? state) => state switch");
+        paymentsSource.Should().Contain("@LocalizeProviderReferenceState(item.ProviderReferenceState)");
+        paymentsSource.Should().Contain("@LocalizeInvoiceStatus(item.InvoiceStatus)");
+        billingRefundsSource.Should().Contain("string LocalizeRefundStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        billingRefundsSource.Should().Contain("@LocalizeRefundStatus(item.Status)");
+        billingRefundsSource.Should().Contain("string LocalizePaymentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        billingRefundsSource.Should().Contain("string LocalizeProviderReferenceState(string? state) => state switch");
+        billingRefundsSource.Should().Contain("@LocalizeProviderReferenceState(item.ProviderReferenceState)");
+        billingRefundsSource.Should().Contain("@LocalizePaymentStatus(item.PaymentStatus)");
+        taxComplianceSource.Should().Contain("string LocalizeTaxInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        taxComplianceSource.Should().Contain("@LocalizeTaxInvoiceStatus(item.Status)");
+        webhooksSource.Should().Contain("string LocalizeWebhookStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        webhooksSource.Should().Contain("@LocalizeWebhookStatus(item.Status)");
+        paymentFormSource.Should().Contain("string LocalizePaymentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        paymentFormSource.Should().Contain("@LocalizePaymentStatus(Model.Status)");
+        paymentFormSource.Should().Contain("string LocalizeInvoiceStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        paymentFormSource.Should().Contain("string LocalizeRefundStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        paymentFormSource.Should().Contain("string LocalizeProviderReferenceState(string? state) => state switch");
+        paymentFormSource.Should().Contain("@LocalizeInvoiceStatus(Model.InvoiceStatus)");
+        paymentFormSource.Should().Contain("@LocalizeProviderReferenceState(Model.ProviderReferenceState)");
+        paymentFormSource.Should().Contain("@LocalizeRefundStatus(refund.Status)");
+
+        purchaseOrdersSource.Should().Contain("string LocalizePurchaseOrderStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        purchaseOrdersSource.Should().Contain("@LocalizePurchaseOrderStatus(item.Status)");
+        stockTransfersSource.Should().Contain("string LocalizeStockTransferStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        stockTransfersSource.Should().Contain("@LocalizeStockTransferStatus(item.Status)");
+    }
+
+
+    [Fact]
+    public void BusinessCommunicationViews_Should_KeepResourceBackedFallbackLabelsWired()
+    {
+        var indexSource = ReadWebAdminFile(Path.Combine("Views", "BusinessCommunications", "Index.cshtml"));
+        var detailsSource = ReadWebAdminFile(Path.Combine("Views", "BusinessCommunications", "Details.cshtml"));
+        var emailAuditsSource = ReadWebAdminFile(Path.Combine("Views", "BusinessCommunications", "EmailAudits.cshtml"));
+        var channelAuditsSource = ReadWebAdminFile(Path.Combine("Views", "BusinessCommunications", "ChannelAudits.cshtml"));
+
+        indexSource.Should().Contain("_ => string.IsNullOrWhiteSpace(flowKey) ? T.T(\"CommonUnclassified\") : T.T(flowKey)");
+        indexSource.Should().Contain("_ => string.IsNullOrWhiteSpace(status) ? T.T(\"CommonUnclassified\") : T.T(status)");
+        indexSource.Should().Contain("_ => string.IsNullOrWhiteSpace(severity) ? T.T(\"CommonUnclassified\") : T.T(severity)");
+        indexSource.Should().Contain("_ => string.IsNullOrWhiteSpace(channel) ? T.T(\"CommonUnclassified\") : T.T(channel)");
+
+        detailsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(flowKey) ? T.T(\"CommonUnclassified\") : T.T(flowKey)");
+        detailsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(operationalStatus) ? T.T(\"CommonUnclassified\") : T.T(operationalStatus)");
+        detailsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(status) ? T.T(\"CommonUnclassified\") : T.T(status)");
+        detailsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(channel) ? T.T(\"CommonUnclassified\") : T.T(channel)");
+
+        emailAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(flowKey) ? T.T(\"CommonUnclassified\") : T.T(flowKey)");
+        emailAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(retryPolicyState) ? T.T(\"CommonUnclassified\") : T.T(retryPolicyState)");
+        emailAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(status) ? T.T(\"CommonUnclassified\") : T.T(status)");
+        emailAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(statusMix) ? T.T(\"CommonUnclassified\") : T.T(statusMix)");
+
+        channelAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(flowKey) ? T.T(\"CommonUnclassified\") : T.T(flowKey)");
+        channelAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(pressureState) ? T.T(\"CommonUnclassified\") : T.T(pressureState)");
+        channelAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(recoveryState) ? T.T(\"CommonUnclassified\") : T.T(recoveryState)");
+        channelAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(statusMix) ? T.T(\"CommonUnclassified\") : T.T(statusMix)");
+        channelAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(status) ? T.T(\"CommonUnclassified\") : T.T(status)");
+        channelAuditsSource.Should().Contain("_ => string.IsNullOrWhiteSpace(channel) ? T.T(\"CommonUnclassified\") : T.T(channel)");
+    }
+
+    [Fact]
+    public void BusinessSupportFailedEmailsFragment_Should_KeepResourceBackedFlowFallbackLabelsWired()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SupportQueueFailedEmails.cshtml"));
+
+        source.Should().Contain("string FlowLabel(string? flowKey) => flowKey switch");
+        source.Should().Contain("\"BusinessInvitation\" => T.T(\"CommunicationDetailsActiveFlowInvitation\")");
+        source.Should().Contain("\"AccountActivation\" => T.T(\"CommunicationDetailsActiveFlowActivation\")");
+        source.Should().Contain("\"PasswordReset\" => T.T(\"CommunicationTemplateInventoryPasswordResetFlow\")");
+        source.Should().Contain("\"AdminCommunicationTest\" => T.T(\"CommunicationTemplateInventoryAdminTestFlow\")");
+        source.Should().Contain("\"PhoneVerification\" => T.T(\"CommunicationTemplateInventoryPhoneVerificationFlow\")");
+        source.Should().Contain("_ => string.IsNullOrWhiteSpace(flowKey) ? T.T(\"CommonUnclassified\") : T.T(flowKey)");
+        source.Should().Contain("@FlowLabel(item.FlowKey)");
     }
 
 
@@ -1736,11 +2013,15 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("private async Task PopulateInventoryStockActionOptionsAsync(InventoryStockActionVm vm, CancellationToken ct)");
         source.Should().Contain("private async Task PopulateStockTransferOptionsAsync(StockTransferEditVm vm, Guid? businessId, CancellationToken ct)");
         source.Should().Contain("private async Task PopulatePurchaseOrderOptionsAsync(PurchaseOrderEditVm vm, CancellationToken ct)");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildStockLevelFilterItems(StockLevelQueueFilter selectedFilter)");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildPurchaseOrderFilterItems(PurchaseOrderQueueFilter selectedFilter)");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildStockTransferFilterItems(StockTransferQueueFilter selectedFilter)");
-        source.Should().Contain("private static List<InventoryOpsPlaybookVm> BuildStockTransferPlaybooks()");
-        source.Should().Contain("private static List<InventoryOpsPlaybookVm> BuildPurchaseOrderPlaybooks()");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildStockLevelFilterItems(StockLevelQueueFilter selectedFilter)");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildPurchaseOrderFilterItems(PurchaseOrderQueueFilter selectedFilter)");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildStockTransferFilterItems(StockTransferQueueFilter selectedFilter)");
+        source.Should().Contain("private List<InventoryOpsPlaybookVm> BuildStockTransferPlaybooks()");
+        source.Should().Contain("private List<InventoryOpsPlaybookVm> BuildPurchaseOrderPlaybooks()");
+        source.Should().Contain("Title = T(\"InventoryTransfersPlaybookDraftTitle\")");
+        source.Should().Contain("Title = T(\"InventoryTransfersPlaybookInTransitTitle\")");
+        source.Should().Contain("Title = T(\"InventoryPurchaseOrdersPlaybookDraftTitle\")");
+        source.Should().Contain("Title = T(\"InventoryPurchaseOrdersPlaybookIssuedTitle\")");
         source.Should().Contain("private IActionResult RedirectOrHtmx(string actionName, object routeValues)");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
         source.Should().Contain("private bool IsHtmxRequest()");
@@ -1760,14 +2041,14 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("Playbooks = BuildInventoryLedgerPlaybooks(),");
         source.Should().Contain("Items = dto.Items.Select(x => new InventoryLedgerItemVm");
         source.Should().Contain("return RenderVariantLedgerWorkspace(vm);");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildInventoryLedgerFilterItems(InventoryLedgerQueueFilter selectedFilter)");
-        source.Should().Contain("yield return new SelectListItem(\"All ledger entries\", InventoryLedgerQueueFilter.All.ToString(), selectedFilter == InventoryLedgerQueueFilter.All);");
-        source.Should().Contain("yield return new SelectListItem(\"Inbound\", InventoryLedgerQueueFilter.Inbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Inbound);");
-        source.Should().Contain("yield return new SelectListItem(\"Outbound\", InventoryLedgerQueueFilter.Outbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Outbound);");
-        source.Should().Contain("yield return new SelectListItem(\"Reservations\", InventoryLedgerQueueFilter.Reservations.ToString(), selectedFilter == InventoryLedgerQueueFilter.Reservations);");
-        source.Should().Contain("private static List<InventoryOpsPlaybookVm> BuildInventoryLedgerPlaybooks()");
-        source.Should().Contain("Title = \"Inbound review\"");
-        source.Should().Contain("Title = \"Outbound and reservation review\"");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildInventoryLedgerFilterItems(InventoryLedgerQueueFilter selectedFilter)");
+        source.Should().Contain("yield return new SelectListItem(T(\"AllLedgerEntries\"), InventoryLedgerQueueFilter.All.ToString(), selectedFilter == InventoryLedgerQueueFilter.All);");
+        source.Should().Contain("yield return new SelectListItem(T(\"Inbound\"), InventoryLedgerQueueFilter.Inbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Inbound);");
+        source.Should().Contain("yield return new SelectListItem(T(\"Outbound\"), InventoryLedgerQueueFilter.Outbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Outbound);");
+        source.Should().Contain("yield return new SelectListItem(T(\"Reservations\"), InventoryLedgerQueueFilter.Reservations.ToString(), selectedFilter == InventoryLedgerQueueFilter.Reservations);");
+        source.Should().Contain("private List<InventoryOpsPlaybookVm> BuildInventoryLedgerPlaybooks()");
+        source.Should().Contain("Title = T(\"InventoryLedgerPlaybookInboundTitle\")");
+        source.Should().Contain("Title = T(\"InventoryLedgerPlaybookOutboundTitle\")");
         source.Should().Contain("private IActionResult RenderVariantLedgerWorkspace(InventoryLedgerListVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/Inventory/VariantLedger.cshtml\", vm);");
         source.Should().Contain("return View(\"VariantLedger\", vm);");
@@ -2155,24 +2436,24 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("Title = \"CrmOpportunityClosingSoonPlaybookTitle\"");
         source.Should().Contain("Title = \"CrmOpportunityUnassignedPlaybookTitle\"");
         source.Should().Contain("Title = \"CrmOpportunityHighInteractionPlaybookTitle\"");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildLeadFilterItems(LeadQueueFilter selectedFilter)");
-        source.Should().Contain("new SelectListItem(\"Qualified\", LeadQueueFilter.Qualified.ToString(), selectedFilter == LeadQueueFilter.Qualified)");
-        source.Should().Contain("new SelectListItem(\"Unconverted\", LeadQueueFilter.Unconverted.ToString(), selectedFilter == LeadQueueFilter.Unconverted)");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildOpportunityFilterItems(OpportunityQueueFilter selectedFilter)");
-        source.Should().Contain("new SelectListItem(\"Closing soon\", OpportunityQueueFilter.ClosingSoon.ToString(), selectedFilter == OpportunityQueueFilter.ClosingSoon)");
-        source.Should().Contain("new SelectListItem(\"High value\", OpportunityQueueFilter.HighValue.ToString(), selectedFilter == OpportunityQueueFilter.HighValue)");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildLeadFilterItems(LeadQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"Qualified\"), LeadQueueFilter.Qualified.ToString(), selectedFilter == LeadQueueFilter.Qualified)");
+        source.Should().Contain("new SelectListItem(T(\"Unconverted\"), LeadQueueFilter.Unconverted.ToString(), selectedFilter == LeadQueueFilter.Unconverted)");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildOpportunityFilterItems(OpportunityQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"ClosingSoon\"), OpportunityQueueFilter.ClosingSoon.ToString(), selectedFilter == OpportunityQueueFilter.ClosingSoon)");
+        source.Should().Contain("new SelectListItem(T(\"HighValue\"), OpportunityQueueFilter.HighValue.ToString(), selectedFilter == OpportunityQueueFilter.HighValue)");
         source.Should().Contain("public async Task<IActionResult> Segments(int page = 1, int pageSize = 20, string? q = null, CustomerSegmentQueueFilter filter = CustomerSegmentQueueFilter.All, CancellationToken ct = default)");
         source.Should().Contain("var segmentSummary = await _getCustomerSegmentsPage.GetSummaryAsync(ct).ConfigureAwait(false);");
         source.Should().Contain("SegmentSummary = new CustomerSegmentOpsSummaryVm");
         source.Should().Contain("Playbooks = BuildSegmentPlaybooks(),");
         source.Should().Contain("FilterItems = BuildSegmentFilterItems(filter),");
         source.Should().Contain("return RenderSegmentsWorkspace(vm);");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildSegmentFilterItems(CustomerSegmentQueueFilter selectedFilter)");
-        source.Should().Contain("new SelectListItem(\"Empty\", CustomerSegmentQueueFilter.Empty.ToString(), selectedFilter == CustomerSegmentQueueFilter.Empty)");
-        source.Should().Contain("new SelectListItem(\"Missing description\", CustomerSegmentQueueFilter.MissingDescription.ToString(), selectedFilter == CustomerSegmentQueueFilter.MissingDescription)");
-        source.Should().Contain("private static List<CrmPlaybookVm> BuildSegmentPlaybooks()");
-        source.Should().Contain("Title = \"Empty segments\"");
-        source.Should().Contain("Title = \"Segments missing description\"");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildSegmentFilterItems(CustomerSegmentQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"Empty\"), CustomerSegmentQueueFilter.Empty.ToString(), selectedFilter == CustomerSegmentQueueFilter.Empty)");
+        source.Should().Contain("new SelectListItem(T(\"MissingDescription\"), CustomerSegmentQueueFilter.MissingDescription.ToString(), selectedFilter == CustomerSegmentQueueFilter.MissingDescription)");
+        source.Should().Contain("private List<CrmPlaybookVm> BuildSegmentPlaybooks()");
+        source.Should().Contain("Title = T(\"CrmSegmentsPlaybookEmptyTitle\")");
+        source.Should().Contain("Title = T(\"CrmSegmentsPlaybookMissingDescriptionTitle\")");
         source.Should().Contain("private IActionResult RenderSegmentsWorkspace(CustomerSegmentsListVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/Crm/Segments.cshtml\", vm);");
         source.Should().Contain("return View(\"Segments\", vm);");
@@ -2230,12 +2511,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
 
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildCustomerFilterItems(CustomerQueueFilter selectedFilter)");
-        source.Should().Contain("new SelectListItem(\"All customers\", CustomerQueueFilter.All.ToString(), selectedFilter == CustomerQueueFilter.All)");
-        source.Should().Contain("new SelectListItem(\"Linked user\", CustomerQueueFilter.LinkedUser.ToString(), selectedFilter == CustomerQueueFilter.LinkedUser)");
-        source.Should().Contain("new SelectListItem(\"Needs segmentation\", CustomerQueueFilter.NeedsSegmentation.ToString(), selectedFilter == CustomerQueueFilter.NeedsSegmentation)");
-        source.Should().Contain("new SelectListItem(\"Has opportunities\", CustomerQueueFilter.HasOpportunities.ToString(), selectedFilter == CustomerQueueFilter.HasOpportunities)");
-        source.Should().Contain("new SelectListItem(\"B2B missing VAT ID\", CustomerQueueFilter.MissingVatId.ToString(), selectedFilter == CustomerQueueFilter.MissingVatId)");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildCustomerFilterItems(CustomerQueueFilter selectedFilter)");
+        source.Should().Contain("new SelectListItem(T(\"AllCustomers\"), CustomerQueueFilter.All.ToString(), selectedFilter == CustomerQueueFilter.All)");
+        source.Should().Contain("new SelectListItem(T(\"LinkedUser\"), CustomerQueueFilter.LinkedUser.ToString(), selectedFilter == CustomerQueueFilter.LinkedUser)");
+        source.Should().Contain("new SelectListItem(T(\"NeedsSegmentation\"), CustomerQueueFilter.NeedsSegmentation.ToString(), selectedFilter == CustomerQueueFilter.NeedsSegmentation)");
+        source.Should().Contain("new SelectListItem(T(\"HasOpportunities\"), CustomerQueueFilter.HasOpportunities.ToString(), selectedFilter == CustomerQueueFilter.HasOpportunities)");
+        source.Should().Contain("new SelectListItem(T(\"B2BMissingVatId\"), CustomerQueueFilter.MissingVatId.ToString(), selectedFilter == CustomerQueueFilter.MissingVatId)");
         source.Should().Contain("private static CustomerOpsSummaryVm BuildCustomerOpsSummary(IReadOnlyCollection<CustomerListItemDto> items)");
         source.Should().Contain("LinkedUserCount = items.Count(x => x.UserId.HasValue),");
         source.Should().Contain("LocaleFallbackCount = items.Count(x => x.UsesPlatformLocaleFallback),");
@@ -2337,6 +2618,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "Customers.cshtml"));
 
+        source.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
         source.Should().Contain("<th>@T.T(\"Name\")</th>");
         source.Should().Contain("<th>@T.T(\"Email\")</th>");
         source.Should().Contain("<th>@T.T(\"Phone\")</th>");
@@ -2353,6 +2635,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@Model.PlatformDefaultCulture");
         source.Should().Contain("@T.T(\"UserLocale\")");
         source.Should().Contain("@T.T(\"VatIdMissing\")");
+        source.Should().Contain("@LocalizeCustomerTaxProfileType(item.TaxProfileType)");
         source.Should().Contain("@T.T(item.ModifiedAtUtc.HasValue ? \"Updated\" : \"Created\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.Id })\"");
         source.Should().Contain("@T.T(\"Edit\")");
@@ -2419,7 +2702,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<th>@T.T(\"UpdatedUtc\")</th>");
         source.Should().Contain("<th class=\"text-end\">@T.T(\"Actions\")</th>");
         source.Should().Contain("@T.T(\"NoLeadsFound\")");
-        source.Should().Contain("<span class=\"badge text-bg-light\">@item.Status</span>");
+        source.Should().Contain("string LocalizeLeadStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        source.Should().Contain("<span class=\"badge text-bg-light\">@LocalizeLeadStatus(item.Status)</span>");
         source.Should().Contain("@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? \"-\" : item.AssignedToUserDisplayName)");
         source.Should().Contain("@item.ModifiedAtUtc?.ToString(\"yyyy-MM-dd HH:mm\")");
         source.Should().Contain("@if (item.CustomerId.HasValue)");
@@ -2494,7 +2778,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<th>@T.T(\"UpdatedUtc\")</th>");
         source.Should().Contain("<th class=\"text-end\">@T.T(\"Actions\")</th>");
         source.Should().Contain("@T.T(\"NoOpportunitiesFound\")");
-        source.Should().Contain("<span class=\"badge text-bg-light\">@item.Stage</span>");
+        source.Should().Contain("string LocalizeOpportunityStage(object? stage) => stage is null ? \"-\" : T.T(stage.ToString() ?? string.Empty);");
+        source.Should().Contain("<span class=\"badge text-bg-light\">@LocalizeOpportunityStage(item.Stage)</span>");
         source.Should().Contain("@item.Currency @((item.EstimatedValueMinor / 100M).ToString(\"0.00\"))");
         source.Should().Contain("@item.ExpectedCloseDateUtc?.ToString(\"yyyy-MM-dd\")");
         source.Should().Contain("@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? \"-\" : item.AssignedToUserDisplayName)");
@@ -2622,6 +2907,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<th>@T.T(\"Due\")</th>");
         source.Should().Contain("<th class=\"text-end\">@T.T(\"Actions\")</th>");
         source.Should().Contain("@T.T(\"NoInvoicesFound\")");
+        source.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
         source.Should().Contain("<code>@item.Id</code>");
         source.Should().Contain("@T.T(\"Unlinked\")");
         source.Should().Contain("@T.T(\"VatIdMissing\")");
@@ -2641,6 +2927,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"Order\")");
         source.Should().Contain("fragment = \"payments\"");
         source.Should().Contain("@T.T(\"Payment\")");
+        source.Should().Contain("@LocalizeCustomerTaxProfileType(item.CustomerTaxProfileType)");
         source.Should().Contain("<form asp-action=\"TransitionInvoiceStatus\" method=\"post\" class=\"d-inline\">");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("<input type=\"hidden\" name=\"TargetStatus\" value=\"@Darwin.Domain.Enums.InvoiceStatus.Open\" />");
@@ -2659,12 +2946,14 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<div id=\"crm-customer-editor-shell\">");
         source.Should().Contain("var formAction = ViewData[\"FormAction\"]?.ToString() ?? \"EditCustomer\";");
         source.Should().Contain("var heading = formAction == \"CreateCustomer\" ? T.T(\"CreateCustomer\") : T.T(\"EditCustomer\");");
+        source.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
         source.Should().Contain("<h1 class=\"mb-3\">@heading</h1>");
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@if (Model.Id != Guid.Empty)");
         source.Should().Contain("@T.T(\"CustomerLinkedUser\")");
         source.Should().Contain("@T.T(\"Company\")");
         source.Should().Contain("@T.T(\"TaxProfile\")");
+        source.Should().Contain("@LocalizeCustomerTaxProfileType(Model.TaxProfileType)");
         source.Should().Contain("@T.T(\"TaxId\")");
         source.Should().Contain("@T.T(\"Locale\")");
         source.Should().Contain("@T.T(\"Segments\")");
@@ -2782,6 +3071,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"Interactions\")");
         source.Should().Contain("@T.T(\"OpportunityFollowUpWorkspace\")");
         source.Should().Contain("@T.T(\"OpportunityFollowUpWorkspaceNote\")");
+        source.Should().Contain("string LocalizeOpportunityStage(object? stage) => stage is null ? \"-\" : T.T(stage.ToString() ?? string.Empty);");
+        source.Should().Contain("<div class=\"fw-semibold\">@LocalizeOpportunityStage(Model.Stage)</div>");
         source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = Model.CustomerId })\"");
         source.Should().Contain("@T.T(\"OpenCustomer\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { q = Model.CustomerId })\"");
@@ -2827,7 +3118,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<input asp-for=\"Title\" class=\"form-control\" />");
         source.Should().Contain("<span asp-validation-for=\"Title\" class=\"text-danger\"></span>");
         source.Should().Contain("<label asp-for=\"Stage\" class=\"form-label\"></label>");
-        source.Should().Contain("Html.GetEnumSelectList<Darwin.Domain.Enums.OpportunityStage>()");
+        source.Should().Contain("var opportunityStageOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.OpportunityStage>().Select");
+        source.Should().Contain("Text = T.T(option.Text)");
+        source.Should().Contain("asp-for=\"Stage\" asp-items=\"opportunityStageOptions\" class=\"form-select\"");
         source.Should().Contain("<label asp-for=\"ExpectedCloseDateUtc\" class=\"form-label\"></label>");
         source.Should().Contain("<input asp-for=\"ExpectedCloseDateUtc\" class=\"form-control\" type=\"date\" />");
         source.Should().Contain("<label asp-for=\"EstimatedValueMinor\" class=\"form-label\"></label>");
@@ -2874,6 +3167,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "_CustomerForm.cshtml"));
 
         source.Should().Contain("@using Darwin.Application.Settings.DTOs");
+        source.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
         source.Should().Contain("<label asp-for=\"UserId\" class=\"form-label\"></label>");
         source.Should().Contain("<select asp-for=\"UserId\" asp-items=\"Model.UserOptions\" class=\"form-select\"></select>");
         source.Should().Contain("@T.T(\"LinkedUserOwnershipNote\")");
@@ -2881,7 +3175,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<input asp-for=\"CompanyName\" class=\"form-control\" />");
         source.Should().Contain("<span asp-validation-for=\"CompanyName\" class=\"text-danger\"></span>");
         source.Should().Contain("<label asp-for=\"TaxProfileType\" class=\"form-label\"></label>");
-        source.Should().Contain("Html.GetEnumSelectList<Darwin.Domain.Enums.CustomerTaxProfileType>()");
+        source.Should().Contain("var customerTaxProfileTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.CustomerTaxProfileType>().Select");
+        source.Should().Contain("Text = T.T(option.Text)");
+        source.Should().Contain("asp-for=\"TaxProfileType\" asp-items=\"customerTaxProfileTypeOptions\" class=\"form-select\"");
         source.Should().Contain("<span asp-validation-for=\"TaxProfileType\" class=\"text-danger\"></span>");
         source.Should().Contain("<label asp-for=\"VatId\" class=\"form-label\"></label>");
         source.Should().Contain("<input asp-for=\"VatId\" class=\"form-control\" />");
@@ -2892,6 +3188,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<label asp-for=\"Notes\" class=\"form-label\"></label>");
         source.Should().Contain("<textarea asp-for=\"Notes\" class=\"form-control\" rows=\"4\"></textarea>");
         source.Should().Contain("@if (!string.IsNullOrWhiteSpace(Model.EffectiveEmail) || !string.IsNullOrWhiteSpace(Model.EffectiveFirstName))");
+        source.Should().Contain("@T.T(\"TaxProfile\"): @LocalizeCustomerTaxProfileType(Model.TaxProfileType)");
         source.Should().Contain("<div class=\"alert alert-info mt-4 mb-0\">");
         source.Should().Contain("@T.T(\"EffectiveProfile\")");
         source.Should().Contain("@T.T(\"Name\"):");
@@ -2956,7 +3253,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<input asp-for=\"CompanyName\" class=\"form-control\" />");
         source.Should().Contain("<span asp-validation-for=\"CompanyName\" class=\"text-danger\"></span>");
         source.Should().Contain("<label asp-for=\"Status\" class=\"form-label\"></label>");
-        source.Should().Contain("Html.GetEnumSelectList<Darwin.Domain.Enums.LeadStatus>()");
+        source.Should().Contain("var leadStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.LeadStatus>().Select");
+        source.Should().Contain("Text = T.T(option.Text)");
+        source.Should().Contain("asp-for=\"Status\" asp-items=\"leadStatusOptions\" class=\"form-select\"");
         source.Should().Contain("<label asp-for=\"Email\" class=\"form-label\"></label>");
         source.Should().Contain("<input asp-for=\"Email\" class=\"form-control\" />");
         source.Should().Contain("<span asp-validation-for=\"Email\" class=\"text-danger\"></span>");
@@ -3082,11 +3381,13 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<th>@T.T(\"Subject\")</th>");
         source.Should().Contain("<th>@T.T(\"Content\")</th>");
         source.Should().Contain("<th>@T.T(\"CreatedAtUtc\")</th>");
+        source.Should().Contain("string LocalizeInteractionType(object? type) => type is null ? \"-\" : T.T(type.ToString() ?? string.Empty);");
+        source.Should().Contain("string LocalizeInteractionChannel(object? channel) => channel is null ? \"-\" : T.T(channel.ToString() ?? string.Empty);");
         source.Should().Contain("@if (Model.Items.Count == 0)");
         source.Should().Contain("@T.T(\"NoInteractionsYet\")");
         source.Should().Contain("foreach (var item in Model.Items)");
-        source.Should().Contain("@item.Type");
-        source.Should().Contain("@item.Channel");
+        source.Should().Contain("@LocalizeInteractionType(item.Type)");
+        source.Should().Contain("@LocalizeInteractionChannel(item.Channel)");
         source.Should().Contain("@item.Subject");
         source.Should().Contain("@item.Content");
         source.Should().Contain("@item.CreatedAtUtc.ToString(\"yyyy-MM-dd HH:mm:ss\")");
@@ -3117,8 +3418,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<th>@T.T(\"RevokedAtUtcShort\")</th>");
         source.Should().Contain("@if (Model.Items.Count == 0)");
         source.Should().Contain("@T.T(\"NoConsentHistory\")");
+        source.Should().Contain("string LocalizeConsentType(object? type) => type is null ? \"-\" : T.T(type.ToString() ?? string.Empty);");
         source.Should().Contain("foreach (var item in Model.Items)");
-        source.Should().Contain("@item.Type");
+        source.Should().Contain("@LocalizeConsentType(item.Type)");
         source.Should().Contain("@(item.Granted ? T.T(\"Granted\") : T.T(\"Revoked\"))");
         source.Should().Contain("@item.GrantedAtUtc.ToString(\"yyyy-MM-dd HH:mm:ss\")");
         source.Should().Contain("@(item.RevokedAtUtc?.ToString(\"yyyy-MM-dd HH:mm:ss\") ?? \"-\")");
@@ -3143,6 +3445,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"Order\"):");
         source.Should().Contain("@T.T(\"Customer\"):");
         source.Should().Contain("@T.T(\"VatIdMissing\")");
+        source.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
+        source.Should().Contain("@LocalizeCustomerTaxProfileType(Model.CustomerTaxProfileType)");
         source.Should().Contain("@T.T(\"QuickStatus\")");
         source.Should().Contain("hx-post=\"@Url.Action(\"TransitionInvoiceStatus\", \"Crm\")\"");
         source.Should().Contain("T.T(\"PostInvoice\")");
@@ -3196,7 +3500,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<label asp-for=\"PaymentId\" class=\"form-label\"></label>");
         source.Should().Contain("<select asp-for=\"PaymentId\" asp-items=\"Model.PaymentOptions\" class=\"form-select\"></select>");
         source.Should().Contain("@T.T(\"Current\"): @Model.PaymentSummary");
-        source.Should().Contain("Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>()");
+        source.Should().Contain("var invoiceStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>().Select");
+        source.Should().Contain("Text = T.T(option.Text)");
+        source.Should().Contain("asp-for=\"Status\" asp-items=\"invoiceStatusOptions\" class=\"form-select\"");
         source.Should().Contain("<label asp-for=\"Currency\" class=\"form-label\"></label>");
         source.Should().Contain("<label asp-for=\"DueDateUtc\" class=\"form-label\"></label>");
         source.Should().Contain("<label asp-for=\"PaidAtUtc\" class=\"form-label\"></label>");
@@ -3301,6 +3607,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("Title = T(\"LoyaltyProgramPlaybookSpendTitle\")");
         source.Should().Contain("private List<SelectListItem> BuildRewardTierFilterItems(LoyaltyRewardTierQueueFilter selected)");
         source.Should().Contain("new(T(\"LoyaltySelfRedemption\"), LoyaltyRewardTierQueueFilter.SelfRedemption.ToString(), selected == LoyaltyRewardTierQueueFilter.SelfRedemption)");
+        source.Should().Contain("new(T(\"MissingDescription\"), LoyaltyRewardTierQueueFilter.MissingDescription.ToString(), selected == LoyaltyRewardTierQueueFilter.MissingDescription)");
         source.Should().Contain("private List<LoyaltyOpsPlaybookVm> BuildRewardTierPlaybooks()");
         source.Should().Contain("Title = T(\"LoyaltyRewardTierPlaybookSelfTitle\")");
         source.Should().Contain("Title = T(\"LoyaltyRewardTierPlaybookCatalogTitle\")");
@@ -3350,11 +3657,19 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("private List<SelectListItem> BuildStatusItems(LoyaltyAccountStatus? selected)");
         source.Should().Contain("new(T(\"AllStatuses\"), string.Empty, !selected.HasValue)");
         source.Should().Contain("Enum.GetValues<LoyaltyAccountStatus>()");
+        source.Should().Contain(".Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x))");
         source.Should().Contain("private List<LoyaltyOpsPlaybookVm> BuildAccountPlaybooks()");
         source.Should().Contain("Title = T(\"LoyaltyAccountPlaybookSuspendedTitle\")");
         source.Should().Contain("Title = T(\"LoyaltyAccountPlaybookZeroBalanceTitle\")");
         source.Should().Contain("private List<SelectListItem> BuildCampaignFilterItems(LoyaltyCampaignQueueFilter selected)");
         source.Should().Contain("new(T(\"LoyaltyPushEnabled\"), LoyaltyCampaignQueueFilter.PushEnabled.ToString(), selected == LoyaltyCampaignQueueFilter.PushEnabled)");
+        source.Should().Contain("private List<SelectListItem> BuildModeItems(LoyaltyScanMode? selected)");
+        source.Should().Contain("Enum.GetValues<LoyaltyScanMode>()");
+        source.Should().Contain("private List<SelectListItem> BuildScanStatusItems(LoyaltyScanStatus? selected)");
+        source.Should().Contain("Enum.GetValues<LoyaltyScanStatus>()");
+        source.Should().Contain("private List<SelectListItem> BuildRedemptionStatusItems(LoyaltyRedemptionStatus? selected)");
+        source.Should().Contain("Enum.GetValues<LoyaltyRedemptionStatus>()");
+        source.Should().Contain(".Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x))");
         source.Should().Contain("private List<LoyaltyOpsPlaybookVm> BuildCampaignPlaybooks()");
         source.Should().Contain("Title = T(\"LoyaltyCampaignPlaybookWindowTitle\")");
         source.Should().Contain("Title = T(\"LoyaltyCampaignPlaybookPushTitle\")");
@@ -3826,7 +4141,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         formSource.Should().Contain("asp-validation-summary=\"ModelOnly\" class=\"text-danger\"");
         formSource.Should().Contain("asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\"");
         formSource.Should().Contain("asp-for=\"Name\" class=\"form-control\"");
-        formSource.Should().Contain("asp-for=\"AccrualMode\" asp-items=\"Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyAccrualMode>()\" class=\"form-select\"");
+        formSource.Should().Contain("var accrualModeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyAccrualMode>().Select");
+        formSource.Should().Contain("Text = T.T(option.Text)");
+        formSource.Should().Contain("asp-for=\"AccrualMode\" asp-items=\"accrualModeOptions\" class=\"form-select\"");
         formSource.Should().Contain("asp-for=\"PointsPerCurrencyUnit\" class=\"form-control\"");
         formSource.Should().Contain("textarea asp-for=\"RulesJson\" class=\"form-control\" rows=\"6\"></textarea>");
         formSource.Should().Contain("@T.T(\"LoyaltyRulesJsonHelp\")");
@@ -3838,14 +4155,27 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         formSource.Should().Contain("@T.T(\"LoyaltyRewardTiersTitle\")");
     }
 
+    [Fact]
+    public void LoyaltyCampaignEditorForm_Should_KeepLocalizedReadonlyCampaignStateContractsWired()
+    {
+        var formSource = ReadWebAdminFile(Path.Combine("Views", "Loyalty", "_CampaignForm.cshtml"));
+
+        formSource.Should().Contain("string LocalizeCampaignState(object? state) => state is null ? \"-\" : T.T(state.ToString() ?? string.Empty);");
+        formSource.Should().Contain("<input asp-for=\"CampaignState\" type=\"hidden\" />");
+        formSource.Should().Contain("<input value=\"@LocalizeCampaignState(Model.CampaignState)\" class=\"form-control\" readonly />");
+    }
+
 
     [Fact]
     public void LoyaltyRewardTiersWorkspace_Should_KeepShellSummaryQueueGridAndPagerContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Loyalty", "RewardTiers.cshtml"));
+        var sharedResourceSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
+        var sharedGermanResourceSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.de-DE.resx"));
 
         source.Should().Contain("id=\"loyalty-reward-tiers-workspace-shell\"");
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
+        source.Should().Contain("string LocalizeRewardType(object? rewardType) => rewardType is null ? \"-\" : T.T(rewardType.ToString() ?? string.Empty);");
         source.Should().Contain("@T.T(\"LoyaltyRewardTiersTitle\")");
         source.Should().Contain("@Model.ProgramName");
         source.Should().Contain("hx-get=\"@Url.Action(\"EditProgram\", \"Loyalty\", new { id = Model.LoyaltyProgramId })\"");
@@ -3881,6 +4211,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"Description\")");
         source.Should().Contain("@T.T(\"Actions\")");
         source.Should().Contain("@T.T(\"LoyaltyNoRewardTiersFound\")");
+        source.Should().Contain("@LocalizeRewardType(item.RewardType)");
         source.Should().Contain("item.AllowSelfRedemption ? T.T(\"Enabled\") : T.T(\"LoyaltyManual\")");
         source.Should().Contain("@T.T(\"LoyaltyMissingDescription\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"EditRewardTier\", \"Loyalty\", new { id = item.Id, loyaltyProgramId = item.LoyaltyProgramId })\"");
@@ -3890,6 +4221,32 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("asp-controller=\"Loyalty\"");
         source.Should().Contain("asp-action=\"RewardTiers\"");
         source.Should().Contain("asp-route-loyaltyProgramId=\"@Model.LoyaltyProgramId\"");
+
+        sharedResourceSource.Should().Contain("<data name=\"FreeItem\"");
+        sharedResourceSource.Should().Contain("<data name=\"PercentDiscount\"");
+        sharedResourceSource.Should().Contain("<data name=\"AmountDiscount\"");
+        sharedGermanResourceSource.Should().Contain("<data name=\"FreeItem\"");
+        sharedGermanResourceSource.Should().Contain("<data name=\"PercentDiscount\"");
+        sharedGermanResourceSource.Should().Contain("<data name=\"AmountDiscount\"");
+    }
+
+    [Fact]
+    public void LoyaltyProgramsWorkspace_Should_KeepLocalizedAccrualModeContractsWired()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Views", "Loyalty", "Programs.cshtml"));
+        var sharedResourceSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
+        var sharedGermanResourceSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.de-DE.resx"));
+
+        source.Should().Contain("string LocalizeAccrualMode(object? accrualMode) => accrualMode is null ? \"-\" : T.T(accrualMode.ToString() ?? string.Empty);");
+        source.Should().Contain("@LocalizeAccrualMode(item.AccrualMode)");
+        source.Should().Contain("item.AccrualMode == Darwin.Domain.Enums.LoyaltyAccrualMode.PerCurrencyUnit");
+
+        sharedResourceSource.Should().Contain("<data name=\"PerVisit\"");
+        sharedResourceSource.Should().Contain("<data name=\"PerCurrencyUnit\"");
+        sharedResourceSource.Should().Contain("<data name=\"AmountBased\"");
+        sharedGermanResourceSource.Should().Contain("<data name=\"PerVisit\"");
+        sharedGermanResourceSource.Should().Contain("<data name=\"PerCurrencyUnit\"");
+        sharedGermanResourceSource.Should().Contain("<data name=\"AmountBased\"");
     }
 
 
@@ -3916,7 +4273,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         formSource.Should().Contain("<input asp-for=\"ProgramName\" type=\"hidden\" />");
         formSource.Should().Contain("asp-validation-summary=\"ModelOnly\" class=\"text-danger\"");
         formSource.Should().Contain("asp-for=\"PointsRequired\" class=\"form-control\"");
-        formSource.Should().Contain("asp-for=\"RewardType\" asp-items=\"Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyRewardType>()\" class=\"form-select\"");
+        formSource.Should().Contain("var rewardTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyRewardType>().Select");
+        formSource.Should().Contain("Text = T.T(option.Text)");
+        formSource.Should().Contain("asp-for=\"RewardType\" asp-items=\"rewardTypeOptions\" class=\"form-select\"");
         formSource.Should().Contain("asp-for=\"RewardValue\" class=\"form-control\"");
         formSource.Should().Contain("textarea asp-for=\"Description\" class=\"form-control\" rows=\"3\"></textarea>");
         formSource.Should().Contain("textarea asp-for=\"MetadataJson\" class=\"form-control\" rows=\"4\"></textarea>");
@@ -3967,6 +4326,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@playbook.OperatorAction");
         source.Should().Contain("asp-route-status=\"@Darwin.Domain.Enums.LoyaltyAccountStatus.Active\"");
         source.Should().Contain("asp-route-status=\"@Darwin.Domain.Enums.LoyaltyAccountStatus.Suspended\"");
+        source.Should().Contain("string LocalizeAccountStatus(Darwin.Domain.Enums.LoyaltyAccountStatus status) => T.T(status.ToString());");
         source.Should().Contain("@T.T(\"Member\")");
         source.Should().Contain("@T.T(\"Status\")");
         source.Should().Contain("@T.T(\"Points\")");
@@ -3974,6 +4334,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"LastAccrual\")");
         source.Should().Contain("@T.T(\"Actions\")");
         source.Should().Contain("@T.T(\"LoyaltyNoAccountsFound\")");
+        source.Should().Contain("@LocalizeAccountStatus(item.Status)");
         source.Should().Contain("hx-get=\"@Url.Action(\"AccountDetails\", \"Loyalty\", new { id = item.Id })\"");
         source.Should().Contain("@T.T(\"Details\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"AdjustPoints\", \"Loyalty\", new { loyaltyAccountId = item.Id })\"");
@@ -4029,6 +4390,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         detailsSource.Should().Contain("name=\"rowVersion\" value=\"@Convert.ToBase64String(Model.RowVersion)\"");
         detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
         detailsSource.Should().Contain("@T.T(\"Back\")");
+        detailsSource.Should().Contain("string LocalizeAccountStatus(Darwin.Domain.Enums.LoyaltyAccountStatus status) => T.T(status.ToString());");
+        detailsSource.Should().Contain("string LocalizeRedemptionStatus(Darwin.Domain.Enums.LoyaltyRedemptionStatus status) => T.T(status.ToString());");
+        detailsSource.Should().Contain("string LocalizeScanStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        detailsSource.Should().Contain("string LocalizeScanOutcome(string? outcome) => string.IsNullOrWhiteSpace(outcome) ? \"-\" : T.T(outcome);");
+        detailsSource.Should().Contain("string LocalizeScanFailureReason(string? reason) => reason switch");
+        detailsSource.Should().Contain("\"Token was consumed concurrently by another request.\" => T.T(\"TokenAlreadyConsumed\")");
+        detailsSource.Should().Contain("\"Loyalty account for scan session not found.\" => T.T(\"AccountNotFound\")");
+        detailsSource.Should().Contain("\"Loyalty account is not active.\" => T.T(\"AccountNotActive\")");
+        detailsSource.Should().Contain("\"Session expired before redemption confirmation.\" => T.T(\"Expired\")");
+        detailsSource.Should().Contain("\"Scan session does not contain any selected rewards.\" => T.T(\"NoSelections\")");
+        detailsSource.Should().Contain("\"Selected rewards do not require any points.\" => T.T(\"InvalidSelections\")");
+        detailsSource.Should().Contain("\"Account does not have enough points at confirmation time.\" => T.T(\"InsufficientPoints\")");
         detailsSource.Should().Contain("@T.T(\"Status\")");
         detailsSource.Should().Contain("@T.T(\"Points\")");
         detailsSource.Should().Contain("@T.T(\"Lifetime\")");
@@ -4037,6 +4410,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         detailsSource.Should().Contain("@T.T(\"LoyaltyNoTransactionsFound\")");
         detailsSource.Should().Contain("@T.T(\"LoyaltyRecentRedemptions\")");
         detailsSource.Should().Contain("@T.T(\"LoyaltyNoRedemptionsFound\")");
+        detailsSource.Should().Contain("@LocalizeAccountStatus(Model.Status)");
+        detailsSource.Should().Contain("@LocalizeRedemptionStatus(item.Status)");
+        detailsSource.Should().Contain("@LocalizeScanStatus(item.ScanStatus)");
+        detailsSource.Should().Contain("@LocalizeScanOutcome(item.ScanOutcome)");
+        detailsSource.Should().Contain("LocalizeScanFailureReason(item.ScanFailureReason)");
         detailsSource.Should().Contain("hx-post=\"@Url.Action(\"ConfirmRedemption\", \"Loyalty\")\"");
         detailsSource.Should().Contain("@T.T(\"Confirm\")");
     }
@@ -4084,8 +4462,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"LoyaltyWindow\")");
         source.Should().Contain("@T.T(\"Actions\")");
         source.Should().Contain("@T.T(\"LoyaltyNoCampaignsFound\")");
+        source.Should().Contain("string LocalizeCampaignState(string? state) => string.IsNullOrWhiteSpace(state) ? \"-\" : T.T(state);");
         source.Should().Contain("T.T(\"LoyaltyInAppPlusPush\")");
         source.Should().Contain("T.T(\"LoyaltyInAppOnly\")");
+        source.Should().Contain("@LocalizeCampaignState(item.CampaignState)");
         source.Should().Contain("@T.T(\"LoyaltyPushEnabled\")");
         source.Should().Contain("@T.T(\"LoyaltyTo\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"EditCampaign\", \"Loyalty\", new { id = item.Id, businessId = item.BusinessId })\"");
@@ -4110,7 +4490,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         shellSource.Should().Contain("ViewData[\"IsCreate\"] as bool? == true");
         shellSource.Should().Contain("ViewData[\"Title\"] = isCreate ? T.T(\"LoyaltyCreateCampaign\") : T.T(\"LoyaltyEditCampaign\")");
         shellSource.Should().Contain("@(isCreate ? T.T(\"LoyaltyCreateCampaign\") : T.T(\"LoyaltyEditCampaign\"))");
-        shellSource.Should().Contain("@T.T(\"LoyaltyCurrentState\") @Model.CampaignState");
+        shellSource.Should().Contain("string LocalizeCampaignState(string? state) => string.IsNullOrWhiteSpace(state) ? \"-\" : T.T(state);");
+        shellSource.Should().Contain("@T.T(\"LoyaltyCurrentState\") @LocalizeCampaignState(Model.CampaignState)");
         shellSource.Should().Contain("<partial name=\"_CampaignForm\" model=\"Model\" />");
 
         formSource.Should().Contain("asp-action=\"@(ViewData[\"IsCreate\"] as bool? == true ? \"CreateCampaign\" : \"EditCampaign\")\"");
@@ -4128,7 +4509,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         formSource.Should().Contain("asp-for=\"Channels\" asp-items=\"Model.ChannelItems\" class=\"form-select\"");
         formSource.Should().Contain("asp-for=\"StartsAtUtc\" asp-format=\"{0:yyyy-MM-ddTHH:mm}\" type=\"datetime-local\" class=\"form-control\"");
         formSource.Should().Contain("asp-for=\"EndsAtUtc\" asp-format=\"{0:yyyy-MM-ddTHH:mm}\" type=\"datetime-local\" class=\"form-control\"");
-        formSource.Should().Contain("asp-for=\"CampaignState\" class=\"form-control\" readonly");
+        formSource.Should().Contain("string LocalizeCampaignState(object? state) => state is null ? \"-\" : T.T(state.ToString() ?? string.Empty);");
+        formSource.Should().Contain("<input asp-for=\"CampaignState\" type=\"hidden\" />");
+        formSource.Should().Contain("<input value=\"@LocalizeCampaignState(Model.CampaignState)\" class=\"form-control\" readonly />");
         formSource.Should().Contain("textarea asp-for=\"Body\" class=\"form-control\" rows=\"4\"></textarea>");
         formSource.Should().Contain("textarea asp-for=\"TargetingJson\" class=\"form-control\" rows=\"4\"></textarea>");
         formSource.Should().Contain("@T.T(\"LoyaltyTargetingJsonHelp\")");
@@ -4176,12 +4559,21 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         scanSource.Should().Contain("@T.T(\"Pending\")");
         scanSource.Should().Contain("@T.T(\"Completed\")");
         scanSource.Should().Contain("@T.T(\"Expired\")");
+        scanSource.Should().Contain("string LocalizeScanMode(object? mode) => mode is null ? \"-\" : T.T(mode.ToString() ?? string.Empty);");
+        scanSource.Should().Contain("string LocalizeScanStatus(Darwin.Domain.Enums.LoyaltyScanStatus status) => T.T(status.ToString());");
+        scanSource.Should().Contain("string LocalizeScanOutcome(string? outcome) => string.IsNullOrWhiteSpace(outcome) ? \"-\" : T.T(outcome);");
+        scanSource.Should().Contain("string LocalizeScanFailureReason(string? reason) => reason switch");
+        scanSource.Should().Contain("\"Session expired before use.\" => T.T(\"Expired\")");
         scanSource.Should().Contain("@T.T(\"LoyaltyClearQueueFilters\")");
         scanSource.Should().Contain("@T.T(\"Customer\")");
         scanSource.Should().Contain("@T.T(\"Mode\")");
         scanSource.Should().Contain("@T.T(\"Outcome\")");
         scanSource.Should().Contain("@T.T(\"Failure\")");
         scanSource.Should().Contain("@T.T(\"LoyaltyNoScanSessionsFound\")");
+        scanSource.Should().Contain("@LocalizeScanMode(item.Mode)");
+        scanSource.Should().Contain("@LocalizeScanStatus(item.Status)");
+        scanSource.Should().Contain("@LocalizeScanOutcome(item.Outcome)");
+        scanSource.Should().Contain("@LocalizeScanFailureReason(item.FailureReason)");
         scanSource.Should().Contain("@T.T(\"LoyaltyExp\")");
         scanSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { q = item.CustomerEmail })\"");
         scanSource.Should().Contain("asp-controller=\"Loyalty\"");
@@ -4217,6 +4609,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         redemptionsSource.Should().Contain("@T.T(\"Pending\")");
         redemptionsSource.Should().Contain("@T.T(\"Completed\")");
         redemptionsSource.Should().Contain("@T.T(\"Cancelled\")");
+        redemptionsSource.Should().Contain("string LocalizeRedemptionStatus(Darwin.Domain.Enums.LoyaltyRedemptionStatus status) => T.T(status.ToString());");
+        redemptionsSource.Should().Contain("string LocalizeScanStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        redemptionsSource.Should().Contain("string LocalizeScanOutcome(string? outcome) => string.IsNullOrWhiteSpace(outcome) ? \"-\" : T.T(outcome);");
+        redemptionsSource.Should().Contain("string LocalizeScanFailureReason(string? reason) => reason switch");
         redemptionsSource.Should().Contain("@T.T(\"Member\")");
         redemptionsSource.Should().Contain("@T.T(\"Reward\")");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyScan\")");
@@ -4224,6 +4620,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         redemptionsSource.Should().Contain("@T.T(\"Note\")");
         redemptionsSource.Should().Contain("@T.T(\"Actions\")");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyNoRedemptionsFound\")");
+        redemptionsSource.Should().Contain("@LocalizeRedemptionStatus(item.Status)");
+        redemptionsSource.Should().Contain("@LocalizeScanStatus(item.ScanStatus)");
+        redemptionsSource.Should().Contain("@LocalizeScanOutcome(item.ScanOutcome)");
+        redemptionsSource.Should().Contain("LocalizeScanFailureReason(item.ScanFailureReason)");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyPts\")");
         redemptionsSource.Should().Contain("hx-get=\"@Url.Action(\"AccountDetails\", \"Loyalty\", new { id = item.LoyaltyAccountId })\"");
         redemptionsSource.Should().Contain("@T.T(\"Account\")");
@@ -5010,11 +5410,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("RoleQueueFilter.DelegatedSupport => items.Where(IsDelegatedSupportRole),");
         source.Should().Contain("private static bool IsDelegatedSupportRole(RoleListItemVm item)");
         source.Should().Contain("return string.Equals(item.Key, \"business-support-admins\", StringComparison.OrdinalIgnoreCase);");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildRoleFilterItems(RoleQueueFilter selected)");
-        source.Should().Contain("new(\"All\", RoleQueueFilter.All.ToString(), selected == RoleQueueFilter.All),");
-        source.Should().Contain("new(\"System\", RoleQueueFilter.System.ToString(), selected == RoleQueueFilter.System),");
-        source.Should().Contain("new(\"Custom\", RoleQueueFilter.Custom.ToString(), selected == RoleQueueFilter.Custom),");
-        source.Should().Contain("new(\"Delegated Support\", RoleQueueFilter.DelegatedSupport.ToString(), selected == RoleQueueFilter.DelegatedSupport)");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildRoleFilterItems(RoleQueueFilter selected)");
+        source.Should().Contain("new(T(\"IdentityFilterAll\"), RoleQueueFilter.All.ToString(), selected == RoleQueueFilter.All),");
+        source.Should().Contain("new(T(\"IdentityFilterSystem\"), RoleQueueFilter.System.ToString(), selected == RoleQueueFilter.System),");
+        source.Should().Contain("new(T(\"IdentityFilterCustom\"), RoleQueueFilter.Custom.ToString(), selected == RoleQueueFilter.Custom),");
+        source.Should().Contain("new(T(\"IdentityFilterDelegatedSupport\"), RoleQueueFilter.DelegatedSupport.ToString(), selected == RoleQueueFilter.DelegatedSupport)");
         source.Should().Contain("private IActionResult RedirectOrHtmx(string actionName, object routeValues)");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
         source.Should().Contain("return new EmptyResult();");
@@ -5100,17 +5500,53 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("PermissionQueueFilter.DelegatedSupport => items.Where(IsDelegatedSupportPermission),");
         source.Should().Contain("private static bool IsDelegatedSupportPermission(PermissionListItemVm item)");
         source.Should().Contain("return string.Equals(item.Key, \"ManageBusinessSupport\", StringComparison.OrdinalIgnoreCase);");
-        source.Should().Contain("private static IEnumerable<SelectListItem> BuildPermissionFilterItems(PermissionQueueFilter selected)");
-        source.Should().Contain("new(\"All\", PermissionQueueFilter.All.ToString(), selected == PermissionQueueFilter.All),");
-        source.Should().Contain("new(\"System\", PermissionQueueFilter.System.ToString(), selected == PermissionQueueFilter.System),");
-        source.Should().Contain("new(\"Custom\", PermissionQueueFilter.Custom.ToString(), selected == PermissionQueueFilter.Custom),");
-        source.Should().Contain("new(\"Delegated Support\", PermissionQueueFilter.DelegatedSupport.ToString(), selected == PermissionQueueFilter.DelegatedSupport)");
+        source.Should().Contain("private IEnumerable<SelectListItem> BuildPermissionFilterItems(PermissionQueueFilter selected)");
+        source.Should().Contain("new(T(\"IdentityFilterAll\"), PermissionQueueFilter.All.ToString(), selected == PermissionQueueFilter.All),");
+        source.Should().Contain("new(T(\"IdentityFilterSystem\"), PermissionQueueFilter.System.ToString(), selected == PermissionQueueFilter.System),");
+        source.Should().Contain("new(T(\"IdentityFilterCustom\"), PermissionQueueFilter.Custom.ToString(), selected == PermissionQueueFilter.Custom),");
+        source.Should().Contain("new(T(\"IdentityFilterDelegatedSupport\"), PermissionQueueFilter.DelegatedSupport.ToString(), selected == PermissionQueueFilter.DelegatedSupport)");
         source.Should().Contain("private IActionResult RedirectOrHtmx(string actionName, object routeValues)");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
         source.Should().Contain("return new EmptyResult();");
         source.Should().Contain("return RedirectToAction(actionName, routeValues);");
         source.Should().Contain("private bool IsHtmxRequest()");
         source.Should().Contain("return string.Equals(Request.Headers[\"HX-Request\"], \"true\", StringComparison.OrdinalIgnoreCase);");
+    }
+
+
+    [Fact]
+    public void IdentityAdminVisibility_Should_KeepDelegatedSupportAndBusinessAwareSupportRailsWired()
+    {
+        var usersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
+        var rolesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "RolesController.cs"));
+        var permissionsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "PermissionsController.cs"));
+        var businessesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
+        var usersIndexSource = ReadWebAdminFile(Path.Combine("Views", "Users", "Index.cshtml"));
+        var businessMemberEditorSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessMemberEditorShell.cshtml"));
+
+        usersSource.Should().Contain("yield return new SelectListItem(T(\"UsersFilterMobileLinked\"), UserQueueFilter.MobileLinked.ToString(), selectedFilter == UserQueueFilter.MobileLinked);");
+        usersSource.Should().Contain("OpensMobileOperations = true");
+        usersIndexSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = \"MobileLinked\" })\"");
+        usersIndexSource.Should().Contain("@Model.Summary.MobileLinkedCount");
+
+        rolesSource.Should().Contain("return string.Equals(item.Key, \"business-support-admins\", StringComparison.OrdinalIgnoreCase);");
+        permissionsSource.Should().Contain("return string.Equals(item.Key, \"ManageBusinessSupport\", StringComparison.OrdinalIgnoreCase);");
+
+        businessesSource.Should().Contain("[PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]");
+        businessesSource.Should().Contain("public async Task<IActionResult> Members(");
+        businessesSource.Should().Contain("Playbooks = BuildBusinessMemberPlaybooks(businessId),");
+        businessesSource.Should().Contain("public async Task<IActionResult> SendMemberActivationEmail(");
+        businessesSource.Should().Contain("public async Task<IActionResult> ConfirmMemberEmail(");
+        businessesSource.Should().Contain("public async Task<IActionResult> SendMemberPasswordReset(");
+        businessesSource.Should().Contain("public async Task<IActionResult> LockMemberUser(");
+        businessesSource.Should().Contain("public async Task<IActionResult> UnlockMemberUser(");
+
+        businessMemberEditorSource.Should().Contain("@T.T(\"BusinessMemberSupportActionsTitle\")");
+        businessMemberEditorSource.Should().Contain("hx-post=\"@Url.Action(\"SendMemberActivationEmail\", \"Businesses\")\"");
+        businessMemberEditorSource.Should().Contain("hx-post=\"@Url.Action(\"ConfirmMemberEmail\", \"Businesses\")\"");
+        businessMemberEditorSource.Should().Contain("hx-post=\"@Url.Action(\"SendMemberPasswordReset\", \"Businesses\")\"");
+        businessMemberEditorSource.Should().Contain("hx-post=\"@Url.Action(\"LockMemberUser\", \"Businesses\")\"");
+        businessMemberEditorSource.Should().Contain("hx-post=\"@Url.Action(\"UnlockMemberUser\", \"Businesses\")\"");
     }
 
 
@@ -5578,6 +6014,25 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("<partial name=\"~/Views/Shared/_ConfirmDeleteModal.cshtml\" />");
     }
 
+    [Fact]
+    public void ProductEditorShellAndForm_Should_KeepLocalizedProductKindContractsWired()
+    {
+        var createShellSource = ReadWebAdminFile(Path.Combine("Views", "Products", "_ProductCreateEditorShell.cshtml"));
+        var editShellSource = ReadWebAdminFile(Path.Combine("Views", "Products", "_ProductEditEditorShell.cshtml"));
+        var formSource = ReadWebAdminFile(Path.Combine("Views", "Products", "_ProductForm.cshtml"));
+
+        createShellSource.Should().Contain("ViewData[\"Title\"] = T.T(\"CreateProduct\");");
+        createShellSource.Should().Contain("<partial name=\"_ProductForm\" model=\"Model\" />");
+
+        editShellSource.Should().Contain("ViewData[\"Title\"] = T.T(\"EditProduct\");");
+        editShellSource.Should().Contain("<partial name=\"_ProductForm\" model=\"Model\" />");
+
+        formSource.Should().Contain("var productKindOptions = Html.GetEnumSelectList<ProductKind>()");
+        formSource.Should().Contain("Text = T.T(option.Text)");
+        formSource.Should().Contain("asp-for=\"Kind\" class=\"form-select\"");
+        formSource.Should().Contain("asp-items=\"productKindOptions\"");
+    }
+
 
     [Fact]
     public void BusinessStaffAccessBadgeWorkspace_Should_KeepConstraintRemediationContractsWired()
@@ -5588,6 +6043,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         businessesSource.Should().Contain("public async Task<IActionResult> StaffAccessBadge(Guid id, CancellationToken ct = default)");
         businessesSource.Should().Contain("return RenderStaffAccessBadgeWorkspace(vm);");
 
+        badgeViewSource.Should().Contain("string LocalizeBusinessMemberRole(object? role) => role is null ? \"-\" : T.T(role.ToString() ?? string.Empty);");
         badgeViewSource.Should().Contain("@Model.Business.Name | @Model.UserDisplayName");
         badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgeIntro\")");
         badgeViewSource.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = Model.MembershipId })");
@@ -5606,6 +6062,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         badgeViewSource.Should().NotContain("<span class=\"text-danger\"> | @T.T(\"UsersLifecycleLockedBadge\")</span>");
         badgeViewSource.Should().Contain("@T.T(\"MobileOperationsTitle\")");
         badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgePayloadNote\")");
+        badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgeMemberRoleLabel\"): @LocalizeBusinessMemberRole(Model.Role)");
+        badgeViewSource.Should().Contain("@LocalizeBusinessMemberRole(Model.Role)");
         badgeViewSource.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = Model.MembershipId })");
         badgeViewSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = Model.UserId })");
         badgeViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id })");
@@ -5661,11 +6119,26 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         invitationsPreviewSource.Should().Contain("@T.T(\"OpenFailedInvitationEmails\")");
         invitationsPreviewSource.Should().Contain("filter = \"Pending\"");
         invitationsPreviewSource.Should().Contain("filter = \"Expired\"");
+        invitationsPreviewSource.Should().Contain("string LocalizeBusinessInvitationRole(object? role) => role is null ? \"-\" : T.T(role.ToString() ?? string.Empty);");
         invitationsPreviewSource.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
         invitationsPreviewSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         invitationsPreviewSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)");
+        invitationsPreviewSource.Should().Contain("@LocalizeBusinessInvitationRole(item.Role)");
         invitationsPreviewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"Pending\")</a>");
         invitationsPreviewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"Expired\")</a>");
+    }
+
+
+    [Fact]
+    public void BusinessMemberAndInvitationWorkspaces_Should_KeepLocalizedRoleDisplayContractsWired()
+    {
+        var membersSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Members.cshtml"));
+        var invitationsSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Invitations.cshtml"));
+
+        membersSource.Should().Contain("string LocalizeBusinessMemberRole(object? role) => role is null ? \"-\" : T.T(role.ToString() ?? string.Empty);");
+        membersSource.Should().Contain("@LocalizeBusinessMemberRole(item.Role)");
+        invitationsSource.Should().Contain("string LocalizeBusinessInvitationRole(object? role) => role is null ? \"-\" : T.T(role.ToString() ?? string.Empty);");
+        invitationsSource.Should().Contain("@LocalizeBusinessInvitationRole(item.Role)");
     }
 
 
@@ -5676,6 +6149,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         setupShellSource.Should().Contain("@T.T(\"OperationalStatus\")");
         setupShellSource.Should().Contain("operationalStatus = Model.OperationalStatus");
+        setupShellSource.Should().Contain("string BusinessLifecycleStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
+        setupShellSource.Should().Contain("_ => T.T(status.ToString())");
         setupShellSource.Should().Contain("@T.T(\"EditBusiness\")");
         setupShellSource.Should().Contain("string MemberWorkspaceLabel() => T.T(\"Members\")");
         setupShellSource.Should().Contain("@MemberWorkspaceLabel()");
@@ -5683,6 +6158,26 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         setupShellSource.Should().Contain("@T.T(\"OpenGlobalLocalization\")");
         setupShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+    }
+
+
+    [Fact]
+    public void BusinessOperationalStatusViews_Should_KeepResourceBackedStatusFallbacksWired()
+    {
+        var indexSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Index.cshtml"));
+        var readinessSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "MerchantReadiness.cshtml"));
+        var attentionSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SupportQueueAttentionBusinesses.cshtml"));
+
+        indexSource.Should().Contain("string BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
+        indexSource.Should().Contain("_ => T.T(status.ToString())");
+
+        readinessSource.Should().Contain("string BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
+        readinessSource.Should().Contain("_ => T.T(status.ToString())");
+        readinessSource.Should().Contain("string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? \"-\" : T.T(status);");
+        readinessSource.Should().Contain("SubscriptionStatusLabel(item.SubscriptionStatus)");
+
+        attentionSource.Should().Contain("string BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
+        attentionSource.Should().Contain("_ => T.T(status.ToString())");
     }
 
 
@@ -5719,6 +6214,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         setupShellSource.Should().Contain("@T.T(\"BusinessSubscriptionSnapshot\")");
         setupShellSource.Should().Contain("@T.T(\"NoActiveSubscriptionSnapshot\")");
+        setupShellSource.Should().Contain("string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? \"-\" : T.T(status);");
+        setupShellSource.Should().Contain("@SubscriptionStatusLabel(Model.Subscription.Status)");
         setupShellSource.Should().Contain("@Url.Action(\"Subscription\", \"Businesses\", new { businessId = Model.Id })");
         setupShellSource.Should().Contain("@Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Id })");
         setupShellSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Id })");
@@ -6256,6 +6753,14 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         editCustomerViewSource.Should().Contain("hx-get=\"@Url.Action(\"CustomerConsents\", \"Crm\", new { customerId = Model.Id })\"");
         editCustomerViewSource.Should().Contain("hx-post=\"@Url.Action(\"CustomerSegmentMemberships\", \"Crm\")\"");
         editCustomerViewSource.Should().Contain("hx-get=\"@Url.Action(\"CustomerSegmentMemberships\", \"Crm\", new { customerId = Model.Id })\"");
+        editCustomerViewSource.Should().Contain("var interactionTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()");
+        editCustomerViewSource.Should().Contain("var interactionChannelOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()");
+        editCustomerViewSource.Should().Contain("var consentTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.ConsentType>()");
+        editCustomerViewSource.Should().Contain("Text = T.T(option.Text)");
+        editCustomerViewSource.Should().Contain("option.Text == nameof(Darwin.Domain.Enums.ConsentType.Sms) ? T.T(\"SMS\") : T.T(option.Text)");
+        editCustomerViewSource.Should().Contain("asp-items=\"interactionTypeOptions\"");
+        editCustomerViewSource.Should().Contain("asp-items=\"interactionChannelOptions\"");
+        editCustomerViewSource.Should().Contain("asp-items=\"consentTypeOptions\"");
         editCustomerViewSource.Should().Contain("name=\"CustomerId\" value=\"@Model.Id\"");
         editCustomerViewSource.Should().Contain("asp-items=\"Model.SegmentOptions\"");
         editCustomerViewSource.Should().Contain("@section Scripts {");
@@ -6274,6 +6779,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         editLeadViewSource.Should().Contain("name=\"CopyNotesToCustomer\" value=\"true\" checked=\"checked\"");
         editLeadViewSource.Should().Contain("hx-post=\"@Url.Action(\"LeadInteractions\", \"Crm\")\"");
         editLeadViewSource.Should().Contain("hx-get=\"@Url.Action(\"LeadInteractions\", \"Crm\", new { leadId = Model.Id })\"");
+        editLeadViewSource.Should().Contain("var interactionTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()");
+        editLeadViewSource.Should().Contain("var interactionChannelOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()");
+        editLeadViewSource.Should().Contain("Text = T.T(option.Text)");
+        editLeadViewSource.Should().Contain("asp-items=\"interactionTypeOptions\"");
+        editLeadViewSource.Should().Contain("asp-items=\"interactionChannelOptions\"");
         editLeadViewSource.Should().Contain("@section Scripts {");
         editLeadViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
 
@@ -6283,6 +6793,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         editOpportunityViewSource.Should().Contain("<partial name=\"_OpportunityEditorShell\" model=\"Model\" />");
         editOpportunityViewSource.Should().Contain("hx-post=\"@Url.Action(\"OpportunityInteractions\", \"Crm\")\"");
         editOpportunityViewSource.Should().Contain("hx-get=\"@Url.Action(\"OpportunityInteractions\", \"Crm\", new { opportunityId = Model.Id })\"");
+        editOpportunityViewSource.Should().Contain("var interactionTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()");
+        editOpportunityViewSource.Should().Contain("var interactionChannelOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()");
+        editOpportunityViewSource.Should().Contain("Text = T.T(option.Text)");
+        editOpportunityViewSource.Should().Contain("asp-items=\"interactionTypeOptions\"");
+        editOpportunityViewSource.Should().Contain("asp-items=\"interactionChannelOptions\"");
         editOpportunityViewSource.Should().Contain("document.getElementById('addOpportunityLine')?.addEventListener('click'");
         editOpportunityViewSource.Should().Contain("template.innerHTML.replaceAll('__index__'");
         editOpportunityViewSource.Should().Contain("const button = event.target.closest('.remove-line');");

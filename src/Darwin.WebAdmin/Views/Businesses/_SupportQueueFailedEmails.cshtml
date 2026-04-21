@@ -8,7 +8,7 @@
         "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
         "AdminCommunicationTest" => T.T("CommunicationTemplateInventoryAdminTestFlow"),
         "PhoneVerification" => T.T("CommunicationTemplateInventoryPhoneVerificationFlow"),
-        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : flowKey
+        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : T.T(flowKey)
     };
     string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
     {

@@ -35,8 +35,9 @@
     {
         Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("PendingApproval"),
         Darwin.Domain.Enums.BusinessOperationalStatus.Suspended => T.T("Suspended"),
-        _ => status.ToString()
+        _ => T.T(status.ToString())
     };
+    string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? "-" : T.T(status);
 }
 
 <div id="merchant-readiness-workspace-shell">
@@ -569,7 +570,7 @@
                                            hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
                                            hx-target="#merchant-readiness-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@(!string.IsNullOrWhiteSpace(item.SubscriptionPlanName) ? item.SubscriptionPlanName : item.SubscriptionStatus)</a>
+                                           hx-push-url="true">@(!string.IsNullOrWhiteSpace(item.SubscriptionPlanName) ? item.SubscriptionPlanName : SubscriptionStatusLabel(item.SubscriptionStatus))</a>
                                     </div>
                                     <div class="small text-muted">
                                         <a asp-action="Subscription"
@@ -578,7 +579,7 @@
                                            hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
                                            hx-target="#merchant-readiness-workspace-shell"
                                            hx-swap="outerHTML"
-                                           hx-push-url="true">@item.SubscriptionStatus</a>
+                                           hx-push-url="true">@SubscriptionStatusLabel(item.SubscriptionStatus)</a>
                                     </div>
                                     @if (item.CancelAtPeriodEnd)
                                     {

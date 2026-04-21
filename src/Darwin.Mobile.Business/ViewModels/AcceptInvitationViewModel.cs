@@ -119,9 +119,19 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
     public string InvitationRole => _preview?.Role ?? string.Empty;
 
     /// <summary>
+    /// Localized display of the invited business role while preserving the canonical role value.
+    /// </summary>
+    public string InvitationRoleDisplay => LocalizeInvitationRole(_preview?.Role);
+
+    /// <summary>
     /// Effective invitation status from invitation preview.
     /// </summary>
     public string InvitationStatus => _preview?.Status ?? string.Empty;
+
+    /// <summary>
+    /// Localized display of the invitation status while preserving the canonical status value.
+    /// </summary>
+    public string InvitationStatusDisplay => LocalizeInvitationStatus(_preview?.Status);
 
     /// <summary>
     /// Localized display of the invitation expiration timestamp.
@@ -304,7 +314,9 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
         OnPropertyChanged(nameof(BusinessName));
         OnPropertyChanged(nameof(InvitedEmail));
         OnPropertyChanged(nameof(InvitationRole));
+        OnPropertyChanged(nameof(InvitationRoleDisplay));
         OnPropertyChanged(nameof(InvitationStatus));
+        OnPropertyChanged(nameof(InvitationStatusDisplay));
         OnPropertyChanged(nameof(InvitationExpiresAtDisplay));
         OnPropertyChanged(nameof(InvitationHint));
     }
@@ -348,4 +360,23 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
 
         return fallbackMessage;
     }
+
+    private static string LocalizeInvitationRole(string? role)
+        => role switch
+        {
+            "Owner" => AppResources.InvitationRoleOwner,
+            "Manager" => AppResources.InvitationRoleManager,
+            "Staff" => AppResources.InvitationRoleStaff,
+            _ => AppResources.InvitationRoleUnknown
+        };
+
+    private static string LocalizeInvitationStatus(string? status)
+        => status switch
+        {
+            "Pending" => AppResources.InvitationStatusPending,
+            "Accepted" => AppResources.InvitationStatusAccepted,
+            "Expired" => AppResources.InvitationStatusExpired,
+            "Revoked" => AppResources.InvitationStatusRevoked,
+            _ => AppResources.InvitationStatusUnknown
+        };
 }

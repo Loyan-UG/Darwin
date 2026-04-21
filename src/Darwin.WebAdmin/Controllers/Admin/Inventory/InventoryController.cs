@@ -1155,67 +1155,67 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             return RenderVariantLedgerWorkspace(vm);
         }
 
-        private static IEnumerable<SelectListItem> BuildInventoryLedgerFilterItems(InventoryLedgerQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildInventoryLedgerFilterItems(InventoryLedgerQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All ledger entries", InventoryLedgerQueueFilter.All.ToString(), selectedFilter == InventoryLedgerQueueFilter.All);
-            yield return new SelectListItem("Inbound", InventoryLedgerQueueFilter.Inbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Inbound);
-            yield return new SelectListItem("Outbound", InventoryLedgerQueueFilter.Outbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Outbound);
-            yield return new SelectListItem("Reservations", InventoryLedgerQueueFilter.Reservations.ToString(), selectedFilter == InventoryLedgerQueueFilter.Reservations);
+            yield return new SelectListItem(T("AllLedgerEntries"), InventoryLedgerQueueFilter.All.ToString(), selectedFilter == InventoryLedgerQueueFilter.All);
+            yield return new SelectListItem(T("Inbound"), InventoryLedgerQueueFilter.Inbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Inbound);
+            yield return new SelectListItem(T("Outbound"), InventoryLedgerQueueFilter.Outbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Outbound);
+            yield return new SelectListItem(T("Reservations"), InventoryLedgerQueueFilter.Reservations.ToString(), selectedFilter == InventoryLedgerQueueFilter.Reservations);
         }
 
-        private static List<InventoryOpsPlaybookVm> BuildInventoryLedgerPlaybooks()
+        private List<InventoryOpsPlaybookVm> BuildInventoryLedgerPlaybooks()
         {
             return new List<InventoryOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Inbound review",
-                    ScopeNote = "Inbound rows usually represent receipts, returns, or positive stock corrections that affect future availability.",
-                    OperatorAction = "Review reference ids and reason labels before assuming the increase is final, especially after supplier receipts or return handling."
+                    Title = T("InventoryLedgerPlaybookInboundTitle"),
+                    ScopeNote = T("InventoryLedgerPlaybookInboundScope"),
+                    OperatorAction = T("InventoryLedgerPlaybookInboundAction")
                 },
                 new()
                 {
-                    Title = "Outbound and reservation review",
-                    ScopeNote = "Outbound and reservation-heavy ledger history often explains low-stock alerts and order allocation pressure.",
-                    OperatorAction = "Compare reservation spikes with order and stock-level workflows before manually adjusting inventory so troubleshooting stays traceable."
+                    Title = T("InventoryLedgerPlaybookOutboundTitle"),
+                    ScopeNote = T("InventoryLedgerPlaybookOutboundScope"),
+                    OperatorAction = T("InventoryLedgerPlaybookOutboundAction")
                 }
             };
         }
 
-        private static List<InventoryOpsPlaybookVm> BuildStockTransferPlaybooks()
+        private List<InventoryOpsPlaybookVm> BuildStockTransferPlaybooks()
         {
             return new List<InventoryOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Draft transfer review",
-                    ScopeNote = "Draft transfers usually represent internal stock moves that still need warehouse confirmation before goods leave the source location.",
-                    OperatorAction = "Check warehouse ownership, line counts, and destination readiness before moving draft transfers into active handoff."
+                    Title = T("InventoryTransfersPlaybookDraftTitle"),
+                    ScopeNote = T("InventoryTransfersPlaybookDraftScope"),
+                    OperatorAction = T("InventoryTransfersPlaybookDraftAction")
                 },
                 new()
                 {
-                    Title = "In-transit follow-up",
-                    ScopeNote = "In-transit transfers affect availability at both ends and are the first place to review when warehouse counts look inconsistent.",
-                    OperatorAction = "Compare transfer age with receiving activity and reconcile any warehouse-level stock mismatch before manual adjustments."
+                    Title = T("InventoryTransfersPlaybookInTransitTitle"),
+                    ScopeNote = T("InventoryTransfersPlaybookInTransitScope"),
+                    OperatorAction = T("InventoryTransfersPlaybookInTransitAction")
                 }
             };
         }
 
-        private static List<InventoryOpsPlaybookVm> BuildPurchaseOrderPlaybooks()
+        private List<InventoryOpsPlaybookVm> BuildPurchaseOrderPlaybooks()
         {
             return new List<InventoryOpsPlaybookVm>
             {
                 new()
                 {
-                    Title = "Draft order cleanup",
-                    ScopeNote = "Draft purchase orders often indicate supplier planning work that is not yet committed and can create confusion during replenishment reviews.",
-                    OperatorAction = "Review old draft orders first, confirm supplier intent, and either issue or tidy them up before opening new replenishment cycles."
+                    Title = T("InventoryPurchaseOrdersPlaybookDraftTitle"),
+                    ScopeNote = T("InventoryPurchaseOrdersPlaybookDraftScope"),
+                    OperatorAction = T("InventoryPurchaseOrdersPlaybookDraftAction")
                 },
                 new()
                 {
-                    Title = "Issued and received follow-up",
-                    ScopeNote = "Issued orders should move toward receipt, while received orders should align with inbound stock and supplier accounting.",
-                    OperatorAction = "Prioritize issued orders that have been open too long, then verify received orders against stock receipts and supplier records."
+                    Title = T("InventoryPurchaseOrdersPlaybookIssuedTitle"),
+                    ScopeNote = T("InventoryPurchaseOrdersPlaybookIssuedScope"),
+                    OperatorAction = T("InventoryPurchaseOrdersPlaybookIssuedAction")
                 }
             };
         }
@@ -1361,28 +1361,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             return vm;
         }
 
-        private static IEnumerable<SelectListItem> BuildStockLevelFilterItems(StockLevelQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildStockLevelFilterItems(StockLevelQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All stock levels", StockLevelQueueFilter.All.ToString(), selectedFilter == StockLevelQueueFilter.All);
-            yield return new SelectListItem("Low stock", StockLevelQueueFilter.LowStock.ToString(), selectedFilter == StockLevelQueueFilter.LowStock);
-            yield return new SelectListItem("Reserved", StockLevelQueueFilter.Reserved.ToString(), selectedFilter == StockLevelQueueFilter.Reserved);
-            yield return new SelectListItem("In transit", StockLevelQueueFilter.InTransit.ToString(), selectedFilter == StockLevelQueueFilter.InTransit);
+            yield return new SelectListItem(T("AllStockLevels"), StockLevelQueueFilter.All.ToString(), selectedFilter == StockLevelQueueFilter.All);
+            yield return new SelectListItem(T("LowStock"), StockLevelQueueFilter.LowStock.ToString(), selectedFilter == StockLevelQueueFilter.LowStock);
+            yield return new SelectListItem(T("Reserved"), StockLevelQueueFilter.Reserved.ToString(), selectedFilter == StockLevelQueueFilter.Reserved);
+            yield return new SelectListItem(T("InTransit"), StockLevelQueueFilter.InTransit.ToString(), selectedFilter == StockLevelQueueFilter.InTransit);
         }
 
-        private static IEnumerable<SelectListItem> BuildPurchaseOrderFilterItems(PurchaseOrderQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildPurchaseOrderFilterItems(PurchaseOrderQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All purchase orders", PurchaseOrderQueueFilter.All.ToString(), selectedFilter == PurchaseOrderQueueFilter.All);
-            yield return new SelectListItem("Draft", PurchaseOrderQueueFilter.Draft.ToString(), selectedFilter == PurchaseOrderQueueFilter.Draft);
-            yield return new SelectListItem("Issued", PurchaseOrderQueueFilter.Issued.ToString(), selectedFilter == PurchaseOrderQueueFilter.Issued);
-            yield return new SelectListItem("Received", PurchaseOrderQueueFilter.Received.ToString(), selectedFilter == PurchaseOrderQueueFilter.Received);
+            yield return new SelectListItem(T("AllPurchaseOrders"), PurchaseOrderQueueFilter.All.ToString(), selectedFilter == PurchaseOrderQueueFilter.All);
+            yield return new SelectListItem(T("Draft"), PurchaseOrderQueueFilter.Draft.ToString(), selectedFilter == PurchaseOrderQueueFilter.Draft);
+            yield return new SelectListItem(T("Issued"), PurchaseOrderQueueFilter.Issued.ToString(), selectedFilter == PurchaseOrderQueueFilter.Issued);
+            yield return new SelectListItem(T("Received"), PurchaseOrderQueueFilter.Received.ToString(), selectedFilter == PurchaseOrderQueueFilter.Received);
         }
 
-        private static IEnumerable<SelectListItem> BuildStockTransferFilterItems(StockTransferQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildStockTransferFilterItems(StockTransferQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All transfers", StockTransferQueueFilter.All.ToString(), selectedFilter == StockTransferQueueFilter.All);
-            yield return new SelectListItem("Draft", StockTransferQueueFilter.Draft.ToString(), selectedFilter == StockTransferQueueFilter.Draft);
-            yield return new SelectListItem("In transit", StockTransferQueueFilter.InTransit.ToString(), selectedFilter == StockTransferQueueFilter.InTransit);
-            yield return new SelectListItem("Completed", StockTransferQueueFilter.Completed.ToString(), selectedFilter == StockTransferQueueFilter.Completed);
+            yield return new SelectListItem(T("AllTransfers"), StockTransferQueueFilter.All.ToString(), selectedFilter == StockTransferQueueFilter.All);
+            yield return new SelectListItem(T("Draft"), StockTransferQueueFilter.Draft.ToString(), selectedFilter == StockTransferQueueFilter.Draft);
+            yield return new SelectListItem(T("InTransit"), StockTransferQueueFilter.InTransit.ToString(), selectedFilter == StockTransferQueueFilter.InTransit);
+            yield return new SelectListItem(T("Completed"), StockTransferQueueFilter.Completed.ToString(), selectedFilter == StockTransferQueueFilter.Completed);
         }
 
         private IEnumerable<SelectListItem> BuildWarehouseFilterItems(WarehouseQueueFilter selectedFilter)

@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = T.T("BusinessMembersTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
+    string LocalizeBusinessMemberRole(object? role) => role is null ? "-" : T.T(role.ToString() ?? string.Empty);
     string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
     {
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
@@ -340,7 +341,7 @@
                             <span class="badge text-bg-danger ms-1">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</span>
                         }
                     </td>
-                    <td>@item.Role</td>
+                    <td>@LocalizeBusinessMemberRole(item.Role)</td>
                     <td class="text-center">
                         @if (item.IsActive)
                         {

@@ -1,11 +1,12 @@
 ﻿@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyRewardTierEditVm
+@{ var rewardTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyRewardType>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) }); }
 <form asp-action="@(ViewData["IsCreate"] as bool? == true ? "CreateRewardTier" : "EditRewardTier")" method="post" class="row g-3" hx-post="@Url.Action(ViewData["IsCreate"] as bool? == true ? "CreateRewardTier" : "EditRewardTier", "Loyalty")" hx-target="#loyalty-reward-tier-editor-shell" hx-swap="outerHTML">
 @Html.AntiForgeryToken()
 @if (ViewData["IsCreate"] as bool? != true) { <input asp-for="Id" type="hidden" /><input asp-for="RowVersion" type="hidden" /> }
 <input asp-for="LoyaltyProgramId" type="hidden" /><input asp-for="BusinessId" type="hidden" /><input asp-for="ProgramName" type="hidden" />
 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 <div class="col-md-3"><label asp-for="PointsRequired" class="form-label"></label><input asp-for="PointsRequired" class="form-control" /></div>
-<div class="col-md-3"><label asp-for="RewardType" class="form-label"></label><select asp-for="RewardType" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyRewardType>()" class="form-select"></select></div>
+<div class="col-md-3"><label asp-for="RewardType" class="form-label"></label><select asp-for="RewardType" asp-items="rewardTypeOptions" class="form-select"></select></div>
 <div class="col-md-3"><label asp-for="RewardValue" class="form-label"></label><input asp-for="RewardValue" class="form-control" /></div>
 <div class="col-12"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="3"></textarea></div>
 <div class="col-12"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control" rows="4"></textarea><div class="form-text">@T.T("LoyaltyRewardMetadataHelp")</div></div>

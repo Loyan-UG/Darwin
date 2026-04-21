@@ -67,7 +67,7 @@
                                Style="{StaticResource FormLabelStyle}" />
                         <Label Grid.Row="2"
                                Grid.Column="1"
-                               Text="{Binding InvitationRole}"
+                               Text="{Binding InvitationRoleDisplay}"
                                Style="{StaticResource BodyLabelStyle}"
                                LineBreakMode="WordWrap" />
 
@@ -84,7 +84,7 @@
 
                     <Label Text="{x:Static res:AppResources.InvitationStatusLabel}"
                            Style="{StaticResource FormLabelStyle}" />
-                    <Label Text="{Binding InvitationStatus}"
+                    <Label Text="{Binding InvitationStatusDisplay}"
                            Style="{StaticResource BodyLabelStyle}"
                            LineBreakMode="WordWrap" />
                 </VerticalStackLayout>

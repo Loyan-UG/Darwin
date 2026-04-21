@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSetupInvitationsPreviewVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
+    string LocalizeBusinessInvitationRole(object? role) => role is null ? "-" : T.T(role.ToString() ?? string.Empty);
     string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
     {
         Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
@@ -127,7 +128,7 @@ else
                                hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)</a>
                         }
                     </td>
-                    <td>@item.Role</td>
+                    <td>@LocalizeBusinessInvitationRole(item.Role)</td>
                 </tr>
             }
             </tbody>

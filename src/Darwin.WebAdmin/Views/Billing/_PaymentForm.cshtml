@@ -1,6 +1,27 @@
 @using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string LocalizePaymentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeRefundStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    var paymentStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.PaymentStatus>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
+    string LocalizeProviderReferenceState(string? state) => state switch
+    {
+        "Stripe ref missing" => T.T("BillingProviderStripeRefMissing"),
+        "Reference missing" => T.T("BillingProviderReferenceMissing"),
+        "Refund activity recorded" => T.T("BillingProviderRefundActivityRecorded"),
+        "Waiting for provider completion" => T.T("BillingProviderWaitingForCompletion"),
+        "Authorized on provider" => T.T("BillingProviderAuthorized"),
+        "Captured on provider" => T.T("BillingProviderCaptured"),
+        "Completed on provider" => T.T("BillingProviderCompleted"),
+        "Provider failure recorded" => T.T("BillingProviderFailureRecorded"),
+        "Refunded against provider ref" => T.T("BillingProviderRefundedAgainstReference"),
+        "Voided on provider" => T.T("BillingProviderVoided"),
+        "Provider reference linked" => T.T("BillingProviderReferenceLinked"),
+        _ => string.IsNullOrWhiteSpace(state) ? "-" : T.T(state)
+    };
+}
 
 @if (Model.OrderId.HasValue || Model.InvoiceId.HasValue || Model.CustomerId.HasValue || Model.UserId.HasValue)
 {
@@ -26,7 +47,7 @@
                     <strong>@T.T("Invoice"):</strong> <code>@Model.InvoiceId</code>
                     @if (Model.InvoiceStatus.HasValue)
                     {
-                        <span class="text-muted">(@Model.InvoiceStatus)</span>
+                        <span class="text-muted">(@LocalizeInvoiceStatus(Model.InvoiceStatus))</span>
                     }
                 </div>
             }
@@ -73,7 +94,7 @@
         <div class="card border-0 bg-light h-100">
             <div class="card-body py-3">
                 <div class="small text-uppercase text-muted fw-semibold">@T.T("Lifecycle")</div>
-                <div class="fs-5">@Model.Status</div>
+                <div class="fs-5">@LocalizePaymentStatus(Model.Status)</div>
                 <div class="small text-muted mt-1">@T.T("Created") @Model.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
                 @if (Model.PaidAtUtc.HasValue)
                 {
@@ -143,7 +164,7 @@
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="small text-uppercase text-muted fw-semibold">@T.T("ProviderRef")</div>
-                <div class="fw-semibold">@Model.ProviderReferenceState</div>
+                <div class="fw-semibold">@LocalizeProviderReferenceState(Model.ProviderReferenceState)</div>
             </div>
             <div class="col-md-3">
                 <div class="small text-uppercase text-muted fw-semibold">@T.T("OpenAge")</div>
@@ -274,7 +295,7 @@
                                 }
                             </td>
                             <td>@refund.Reason</td>
-                            <td>@refund.Status</td>
+                            <td>@LocalizeRefundStatus(refund.Status)</td>
                             <td class="text-end">@refund.Currency @((refund.AmountMinor / 100M).ToString("0.00"))</td>
                         </tr>
                     }
@@ -321,7 +342,7 @@
     </div>
     <div class="col-md-3">
         <label asp-for="Status" class="form-label"></label>
-        <select asp-for="Status" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.PaymentStatus>()" class="form-select"></select>
+        <select asp-for="Status" asp-items="paymentStatusOptions" class="form-select"></select>
     </div>
     <div class="col-md-3">
         <label asp-for="Currency" class="form-label"></label>
@@ -356,7 +377,7 @@
             <div class="form-text">
                 @if (Model.InvoiceStatus.HasValue)
                 {
-                    <span>@T.T("Status"): @Model.InvoiceStatus</span>
+                    <span>@T.T("Status"): @LocalizeInvoiceStatus(Model.InvoiceStatus)</span>
                 }
                 @if (Model.InvoiceTotalGrossMinor.HasValue)
                 {

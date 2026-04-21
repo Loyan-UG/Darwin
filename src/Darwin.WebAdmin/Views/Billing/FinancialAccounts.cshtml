@@ -5,6 +5,10 @@
     ViewData["Title"] = T.T("FinancialAccountsTitle");
 }
 
+@functions {
+    string LocalizeAccountType(object? type) => type is null ? "-" : T.T(type.ToString() ?? string.Empty);
+}
+
 <div id="billing-financial-accounts-workspace-shell">
 <h1 class="mb-3">@T.T("FinancialAccountsTitle")</h1>
 
@@ -128,7 +132,7 @@
                 <tr>
                     <td>@item.Code</td>
                     <td>@item.Name</td>
-                    <td>@item.Type</td>
+                    <td>@LocalizeAccountType(item.Type)</td>
                     <td class="text-end">
                         @if (string.IsNullOrWhiteSpace(item.Code))
                         {

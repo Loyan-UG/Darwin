@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = T.T("BusinessSubscriptionTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
+    string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? "-" : T.T(status);
 }
 
 <div id="business-subscription-workspace-shell">
@@ -52,7 +53,7 @@
             <div class="card-body">
                 <div class="text-muted small text-uppercase">@T.T("BusinessSubscriptionShort")</div>
                 <div class="fw-semibold mt-1">@(Model.Subscription.HasSubscription ? Model.Subscription.PlanName : T.T("BusinessSubscriptionNoActivePlan"))</div>
-                <div class="small text-muted mt-2">@Model.Subscription.Status</div>
+                <div class="small text-muted mt-2">@SubscriptionStatusLabel(Model.Subscription.Status)</div>
             </div>
         </div>
     </div>

@@ -3,6 +3,7 @@
 @{
     var isCreate = Model.Id == Guid.Empty;
     var formAction = (string?)ViewData["FormAction"] ?? (isCreate ? "CreateOpportunity" : "EditOpportunity");
+    string LocalizeOpportunityStage(object? stage) => stage is null ? "-" : T.T(stage.ToString() ?? string.Empty);
 }
 
 <div id="crm-opportunity-editor-shell">
@@ -15,7 +16,7 @@
                 <div class="row g-3 small">
                     <div class="col-md-3">
                         <div class="text-muted">@T.T("Stage")</div>
-                        <div class="fw-semibold">@Model.Stage</div>
+                        <div class="fw-semibold">@LocalizeOpportunityStage(Model.Stage)</div>
                     </div>
                     <div class="col-md-3">
                         <div class="text-muted">@T.T("Customer")</div>

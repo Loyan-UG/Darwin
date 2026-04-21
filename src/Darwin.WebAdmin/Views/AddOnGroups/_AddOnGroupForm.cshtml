@@ -1,5 +1,7 @@
 ﻿@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupEditorVm
 
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ var selectionModeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.AddOnSelectionMode>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) }); }
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
 <div class="card mb-3">
@@ -18,7 +20,7 @@
 
         <div class="col-md-3">
             <label asp-for="SelectionMode" class="form-label"></label>
-            <select asp-for="SelectionMode" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.AddOnSelectionMode>()"></select>
+            <select asp-for="SelectionMode" class="form-select" asp-items="selectionModeOptions"></select>
             <span asp-validation-for="SelectionMode" class="text-danger"></span>
         </div>
 

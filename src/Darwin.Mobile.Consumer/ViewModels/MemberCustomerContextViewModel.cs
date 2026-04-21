@@ -259,7 +259,7 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
                 {
                     Consents.Add(new MemberCustomerConsentItemViewModel
                     {
-                        Type = consent.Type,
+                        Type = LocalizeConsentType(consent.Type),
                         StatusText = consent.Granted
                             ? AppResources.MemberCustomerContextConsentStatusGranted
                             : AppResources.MemberCustomerContextConsentStatusRevoked,
@@ -275,7 +275,10 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
                 {
                     RecentInteractions.Add(new MemberCustomerInteractionItemViewModel
                     {
-                        TypeChannelText = string.Format(AppResources.MemberCustomerContextInteractionTypeChannelFormat, interaction.Type, interaction.Channel),
+                        TypeChannelText = string.Format(
+                            AppResources.MemberCustomerContextInteractionTypeChannelFormat,
+                            LocalizeInteractionType(interaction.Type),
+                            LocalizeInteractionChannel(interaction.Channel)),
                         SubjectText = string.IsNullOrWhiteSpace(interaction.Subject)
                             ? null
                             : string.Format(AppResources.MemberCustomerContextInteractionSubjectFormat, interaction.Subject),
@@ -326,6 +329,33 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
         OnPropertyChanged(nameof(HasConsents));
         OnPropertyChanged(nameof(HasRecentInteractions));
     }
+
+    private static string LocalizeConsentType(string? type) => type switch
+    {
+        "MarketingEmail" => AppResources.MemberCustomerContextConsentTypeMarketingEmail,
+        "Sms" => AppResources.ProfilePhoneVerificationSmsOption,
+        "TermsOfService" => AppResources.MemberCustomerContextConsentTypeTermsOfService,
+        _ => AppResources.MemberCustomerContextConsentTypeUnknown
+    };
+
+    private static string LocalizeInteractionType(string? type) => type switch
+    {
+        "Email" => AppResources.EmailLabel,
+        "Call" => AppResources.MemberCustomerContextInteractionTypeCall,
+        "Meeting" => AppResources.MemberCustomerContextInteractionTypeMeeting,
+        "Order" => AppResources.MemberCustomerContextInteractionTypeOrder,
+        "Support" => AppResources.MemberCustomerContextInteractionTypeSupport,
+        _ => AppResources.MemberCustomerContextInteractionTypeUnknown
+    };
+
+    private static string LocalizeInteractionChannel(string? channel) => channel switch
+    {
+        "Email" => AppResources.EmailLabel,
+        "Phone" => AppResources.PhoneLabel,
+        "Chat" => AppResources.MemberCustomerContextInteractionChannelChat,
+        "InPerson" => AppResources.MemberCustomerContextInteractionChannelInPerson,
+        _ => AppResources.MemberCustomerContextInteractionChannelUnknown
+    };
 }
 
 /// <summary>

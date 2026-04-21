@@ -82,11 +82,17 @@
   <data name="ErrorLabel" xml:space="preserve">
     <value>Fehler</value>
   </data>
-  <data name="FailedToConfirmAccrual" xml:space="preserve">
+<data name="FailedToConfirmAccrual" xml:space="preserve">
     <value>Punktegutschrift konnte nicht bestätigt werden.</value>
+  </data>
+  <data name="AccrualConfirmedSuccess" xml:space="preserve">
+    <value>Punktegutschrift erfolgreich bestätigt.</value>
   </data>
   <data name="FailedToConfirmRedemption" xml:space="preserve">
     <value>Einlösung konnte nicht bestätigt werden.</value>
+  </data>
+  <data name="RedemptionConfirmedSuccess" xml:space="preserve">
+    <value>Prämieneinlösung erfolgreich bestätigt.</value>
   </data>
   <data name="FailedToProcessScan" xml:space="preserve">
     <value>Scan konnte nicht verarbeitet werden.</value>
@@ -139,8 +145,17 @@
   <data name="LogoutButtonText" xml:space="preserve">
     <value>Abmelden</value>
   </data>
-  <data name="NoActiveSession" xml:space="preserve">
+<data name="NoActiveSession" xml:space="preserve">
     <value>Keine aktive Scan-Sitzung.</value>
+  </data>
+  <data name="InvalidSessionToken" xml:space="preserve">
+    <value>Ungültiges Sitzungs-Token.</value>
+  </data>
+  <data name="SessionLoadFailed" xml:space="preserve">
+    <value>Sitzungsdetails konnten nicht geladen werden.</value>
+  </data>
+  <data name="SessionLoadSuccess" xml:space="preserve">
+    <value>Sitzung erfolgreich geladen.</value>
   </data>
   <data name="NoQrDetected" xml:space="preserve">
     <value>Kein QR-Code erkannt. Bitte erneut versuchen.</value>
@@ -231,6 +246,30 @@
   </data>
   <data name="SubscriptionUnknownStatus" xml:space="preserve">
     <value>Unbekannter Status</value>
+  </data>
+  <data name="SubscriptionStatusTrialing" xml:space="preserve">
+    <value>Testphase</value>
+  </data>
+  <data name="SubscriptionStatusActive" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="SubscriptionStatusPastDue" xml:space="preserve">
+    <value>Ueberfaellig</value>
+  </data>
+  <data name="SubscriptionStatusCanceled" xml:space="preserve">
+    <value>Gekuendigt</value>
+  </data>
+  <data name="SubscriptionStatusUnpaid" xml:space="preserve">
+    <value>Unbezahlt</value>
+  </data>
+  <data name="SubscriptionStatusIncomplete" xml:space="preserve">
+    <value>Unvollstaendig</value>
+  </data>
+  <data name="SubscriptionStatusIncompleteExpired" xml:space="preserve">
+    <value>Unvollstaendig abgelaufen</value>
+  </data>
+  <data name="SubscriptionStatusPaused" xml:space="preserve">
+    <value>Pausiert</value>
   </data>
   <data name="SubscriptionDateUnknown" xml:space="preserve">
     <value>k. A.</value>
@@ -400,6 +439,18 @@
   <data name="ProfileSectionTitle" xml:space="preserve">
     <value>Mein Profil</value>
   </data>
+  <data name="ProfilePhonePlaceholder" xml:space="preserve">
+    <value>+49123456789</value>
+  </data>
+  <data name="ProfileLocalePlaceholder" xml:space="preserve">
+    <value>de-DE</value>
+  </data>
+  <data name="ProfileTimezonePlaceholder" xml:space="preserve">
+    <value>Europe/Berlin</value>
+  </data>
+  <data name="ProfileCurrencyPlaceholder" xml:space="preserve">
+    <value>EUR</value>
+  </data>
   <data name="FirstNameLabel" xml:space="preserve">
     <value>Vorname</value>
   </data>
@@ -507,6 +558,18 @@
   </data>
   <data name="RewardsTypePickerTitle" xml:space="preserve">
     <value>Prämientyp</value>
+  </data>
+  <data name="RewardsRewardTypeFreeItem" xml:space="preserve">
+    <value>Gratisartikel</value>
+  </data>
+  <data name="RewardsRewardTypePercentDiscount" xml:space="preserve">
+    <value>Prozentrabatt</value>
+  </data>
+  <data name="RewardsRewardTypeAmountDiscount" xml:space="preserve">
+    <value>Betragsrabatt</value>
+  </data>
+  <data name="RewardsRewardTypeUnknown" xml:space="preserve">
+    <value>PrÃ¤mie</value>
   </data>
   <data name="RewardsValuePlaceholder" xml:space="preserve">
     <value>Prämienwert (optional)</value>
@@ -700,6 +763,9 @@
   <data name="RewardsCampaignTargetingHintDateWindow" xml:space="preserve">
     <value>Datumsfenster-Vorlage: eligibleFromUtc und eligibleToUtc im ISO-8601-UTC-Format angeben.</value>
   </data>
+  <data name="RewardsCampaignTargetingHintUnknown" xml:space="preserve">
+    <value>Die Zielgruppenart ist unbekannt. Verwenden Sie eine unterstützte Vorlage oder korrigieren Sie die JSON-Nutzlast.</value>
+  </data>
   <data name="RewardsCampaignTargetingHintInvalid" xml:space="preserve">
     <value>Targeting-JSON ist ungültig. Vorlagen oder ein gültiges JSON-Objekt verwenden.</value>
   </data>
@@ -775,6 +841,9 @@
   <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
     <value>Abgelaufen</value>
   </data>
+  <data name="RewardsCampaignStateUnknown" xml:space="preserve">
+    <value>Unbekannter Status</value>
+  </data>
   <data name="RewardsCampaignAudienceFilterPickerTitle" xml:space="preserve">
     <value>Zielgruppenfilter</value>
   </data>
@@ -820,6 +889,9 @@
   <data name="RewardsCampaignAudienceSummaryDefault" xml:space="preserve">
     <value>Zielgruppe: alle teilnehmenden Mitglieder</value>
   </data>
+  <data name="RewardsCampaignAudienceSummaryUnknown" xml:space="preserve">
+    <value>Zielgruppe: unbekannt</value>
+  </data>
   <data name="RewardsCampaignAudienceSummaryFormat" xml:space="preserve">
     <value>Zielgruppe: {0}</value>
   </data>
@@ -837,6 +909,9 @@
   </data>
   <data name="RewardsCampaignAudienceDateWindow" xml:space="preserve">
     <value>Zeitfenster</value>
+  </data>
+  <data name="RewardsCampaignAudienceUnknown" xml:space="preserve">
+    <value>Unbekannte Zielgruppe</value>
   </data>
   <data name="RewardsCampaignEligibilityTierFormat" xml:space="preserve">
     <value>Tier: {0}</value>
@@ -1027,11 +1102,38 @@
   <data name="InvitationRoleLabel" xml:space="preserve">
     <value>Rolle</value>
   </data>
+  <data name="InvitationRoleOwner" xml:space="preserve">
+    <value>Inhaber</value>
+  </data>
+  <data name="InvitationRoleManager" xml:space="preserve">
+    <value>Manager</value>
+  </data>
+  <data name="InvitationRoleStaff" xml:space="preserve">
+    <value>Mitarbeiter</value>
+  </data>
+  <data name="InvitationRoleUnknown" xml:space="preserve">
+    <value>Unbekannte Rolle</value>
+  </data>
   <data name="InvitationInvitedEmailLabel" xml:space="preserve">
     <value>Eingeladene E-Mail</value>
   </data>
   <data name="InvitationStatusLabel" xml:space="preserve">
     <value>Status</value>
+  </data>
+  <data name="InvitationStatusPending" xml:space="preserve">
+    <value>Ausstehend</value>
+  </data>
+  <data name="InvitationStatusAccepted" xml:space="preserve">
+    <value>Angenommen</value>
+  </data>
+  <data name="InvitationStatusExpired" xml:space="preserve">
+    <value>Abgelaufen</value>
+  </data>
+  <data name="InvitationStatusRevoked" xml:space="preserve">
+    <value>Widerrufen</value>
+  </data>
+  <data name="InvitationStatusUnknown" xml:space="preserve">
+    <value>Unbekannter Status</value>
   </data>
   <data name="InvitationExpiresAtLabel" xml:space="preserve">
     <value>Gültig bis</value>
@@ -1273,8 +1375,17 @@
   <data name="DashboardActivityKindCampaignTargetingFixMetricsReset" xml:space="preserve">
     <value>Kampagnen-Quick-Fix-Metriken zurückgesetzt</value>
   </data>
+  <data name="DashboardActivityKindUnknown" xml:space="preserve">
+    <value>Aktualisierung der AktivitÃ¤t</value>
+  </data>
   <data name="RewardsOperatorRoleFormat" xml:space="preserve">
     <value>Betreiberrolle: {0}</value>
+  </data>
+  <data name="CommonYes" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="CommonNo" xml:space="preserve">
+    <value>Nein</value>
   </data>
   <data name="RewardsTierPointsFormat" xml:space="preserve">
     <value>{0} Punkte</value>

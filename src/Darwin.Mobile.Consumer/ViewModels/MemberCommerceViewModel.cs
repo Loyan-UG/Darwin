@@ -484,7 +484,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         {
             Id = order.Id,
             OrderNumber = order.OrderNumber,
-            StatusText = string.Format(AppResources.MemberCommerceOrderStatusFormat, order.Status),
+            StatusText = string.Format(AppResources.MemberCommerceOrderStatusFormat, LocalizeOrderStatus(order.Status)),
             CreatedAtText = string.Format(AppResources.MemberCommerceOrderCreatedFormat, order.CreatedAtUtc.ToLocalTime()),
             TotalText = string.Format(AppResources.MemberCommerceOrderTotalFormat, FormatMoney(order.GrandTotalGrossMinor, order.Currency))
         };
@@ -501,7 +501,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             Id = invoice.Id,
             ReferenceNumber = referenceNumber,
             BusinessName = invoice.BusinessName,
-            StatusText = string.Format(AppResources.MemberCommerceInvoiceStatusFormat, invoice.Status),
+            StatusText = string.Format(AppResources.MemberCommerceInvoiceStatusFormat, LocalizeInvoiceStatus(invoice.Status)),
             DueDateText = string.Format(AppResources.MemberCommerceInvoiceDueDateFormat, invoice.DueDateUtc.ToLocalTime()),
             TotalText = string.Format(AppResources.MemberCommerceInvoiceTotalFormat, FormatMoney(invoice.TotalGrossMinor, invoice.Currency)),
             BalanceText = string.Format(AppResources.MemberCommerceInvoiceBalanceFormat, FormatMoney(invoice.BalanceMinor, invoice.Currency))
@@ -515,7 +515,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             Id = order.Id,
             ReferenceNumber = order.OrderNumber,
             HeaderTitle = order.OrderNumber,
-            StatusText = string.Format(AppResources.MemberCommerceOrderStatusFormat, order.Status),
+            StatusText = string.Format(AppResources.MemberCommerceOrderStatusFormat, LocalizeOrderStatus(order.Status)),
             CreatedAtText = string.Format(AppResources.MemberCommerceOrderCreatedFormat, order.CreatedAtUtc.ToLocalTime()),
             TotalText = string.Format(AppResources.MemberCommerceOrderTotalFormat, FormatMoney(order.GrandTotalGrossMinor, order.Currency)),
             ShippingMethodText = string.IsNullOrWhiteSpace(order.ShippingMethodName)
@@ -540,7 +540,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             Id = invoice.Id,
             ReferenceNumber = referenceNumber,
             HeaderTitle = referenceNumber,
-            StatusText = string.Format(AppResources.MemberCommerceInvoiceStatusFormat, invoice.Status),
+            StatusText = string.Format(AppResources.MemberCommerceInvoiceStatusFormat, LocalizeInvoiceStatus(invoice.Status)),
             DueDateText = string.Format(AppResources.MemberCommerceInvoiceDueDateFormat, invoice.DueDateUtc.ToLocalTime()),
             TotalText = string.Format(AppResources.MemberCommerceInvoiceTotalFormat, FormatMoney(invoice.TotalGrossMinor, invoice.Currency)),
             BalanceText = string.Format(AppResources.MemberCommerceInvoiceBalanceFormat, FormatMoney(invoice.BalanceMinor, invoice.Currency)),
@@ -555,6 +555,36 @@ public sealed class MemberCommerceViewModel : BaseViewModel
     {
         var amount = amountMinor / 100m;
         return string.Format(CultureInfo.CurrentCulture, "{0:N2} {1}", amount, currency);
+    }
+
+    private static string LocalizeOrderStatus(string? status)
+    {
+        return status switch
+        {
+            "Created" => AppResources.MemberCommerceStatusCreated,
+            "Confirmed" => AppResources.MemberCommerceStatusConfirmed,
+            "Paid" => AppResources.MemberCommerceStatusPaid,
+            "PartiallyShipped" => AppResources.MemberCommerceStatusPartiallyShipped,
+            "Shipped" => AppResources.MemberCommerceStatusShipped,
+            "Delivered" => AppResources.MemberCommerceStatusDelivered,
+            "Cancelled" => AppResources.MemberCommerceStatusCancelled,
+            "Refunded" => AppResources.MemberCommerceStatusRefunded,
+            "PartiallyRefunded" => AppResources.MemberCommerceStatusPartiallyRefunded,
+            "Completed" => AppResources.MemberCommerceStatusCompleted,
+            _ => AppResources.MemberCommerceStatusUnknown
+        };
+    }
+
+    private static string LocalizeInvoiceStatus(string? status)
+    {
+        return status switch
+        {
+            "Draft" => AppResources.MemberCommerceStatusDraft,
+            "Open" => AppResources.MemberCommerceStatusOpen,
+            "Paid" => AppResources.MemberCommerceStatusPaid,
+            "Cancelled" => AppResources.MemberCommerceStatusCancelled,
+            _ => AppResources.MemberCommerceStatusUnknown
+        };
     }
 }
 

@@ -1,4 +1,6 @@
 @model Darwin.WebAdmin.ViewModels.CRM.LeadEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ var leadStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.LeadStatus>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) }); }
 
 <div class="row g-3">
     <div class="col-md-6">
@@ -18,7 +20,7 @@
     </div>
     <div class="col-md-6">
         <label asp-for="Status" class="form-label"></label>
-        <select asp-for="Status" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.LeadStatus>()" class="form-select"></select>
+        <select asp-for="Status" asp-items="leadStatusOptions" class="form-select"></select>
     </div>
     <div class="col-md-6">
         <label asp-for="Email" class="form-label"></label>

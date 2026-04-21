@@ -3,6 +3,23 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Payments");
+    string LocalizePaymentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeProviderReferenceState(string? state) => state switch
+    {
+        "Stripe ref missing" => T.T("BillingProviderStripeRefMissing"),
+        "Reference missing" => T.T("BillingProviderReferenceMissing"),
+        "Refund activity recorded" => T.T("BillingProviderRefundActivityRecorded"),
+        "Waiting for provider completion" => T.T("BillingProviderWaitingForCompletion"),
+        "Authorized on provider" => T.T("BillingProviderAuthorized"),
+        "Captured on provider" => T.T("BillingProviderCaptured"),
+        "Completed on provider" => T.T("BillingProviderCompleted"),
+        "Provider failure recorded" => T.T("BillingProviderFailureRecorded"),
+        "Refunded against provider ref" => T.T("BillingProviderRefundedAgainstReference"),
+        "Voided on provider" => T.T("BillingProviderVoided"),
+        "Provider reference linked" => T.T("BillingProviderReferenceLinked"),
+        _ => string.IsNullOrWhiteSpace(state) ? "-" : T.T(state)
+    };
 }
 
 <div id="billing-payments-workspace-shell">
@@ -356,8 +373,8 @@
                     <td>
                         <div class="fw-semibold">@item.Provider</div>
                         <div class="small text-muted">@item.ProviderTransactionRef</div>
-                        <div class="small text-muted">@item.ProviderReferenceState</div>
-                        <span class="badge text-bg-light mt-1">@item.Status</span>
+                        <div class="small text-muted">@LocalizeProviderReferenceState(item.ProviderReferenceState)</div>
+                        <span class="badge text-bg-light mt-1">@LocalizePaymentStatus(item.Status)</span>
                         @if (item.IsStripe)
                         {
                             <div><span class="badge text-bg-info mt-1">@T.T("Stripe")</span></div>
@@ -396,7 +413,7 @@
                             <div><code>@item.InvoiceId</code></div>
                             @if (item.InvoiceStatus.HasValue)
                             {
-                                <div class="small text-muted">@item.InvoiceStatus</div>
+                                <div class="small text-muted">@LocalizeInvoiceStatus(item.InvoiceStatus)</div>
                             }
                             @if (item.InvoiceTotalGrossMinor.HasValue)
                             {

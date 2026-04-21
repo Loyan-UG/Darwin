@@ -259,7 +259,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             : status.Provider;
         var statusName = string.IsNullOrWhiteSpace(status.Status)
             ? AppResources.SubscriptionUnknownStatus
-            : status.Status;
+            : ResolveSubscriptionStatusDisplayName(status.Status);
 
         SubscriptionSummaryText = string.Format(
             AppResources.SubscriptionStatusSummaryFormat,
@@ -281,6 +281,22 @@ public sealed class SubscriptionViewModel : BaseViewModel
         SubscriptionPolicyNotice = status.CancelAtPeriodEnd
             ? AppResources.SubscriptionReadOnlyCancellationNotice
             : AppResources.SubscriptionReadOnlyNotice;
+    }
+
+    private static string ResolveSubscriptionStatusDisplayName(string status)
+    {
+        return status switch
+        {
+            "Trialing" => AppResources.SubscriptionStatusTrialing,
+            "Active" => AppResources.SubscriptionStatusActive,
+            "PastDue" => AppResources.SubscriptionStatusPastDue,
+            "Canceled" => AppResources.SubscriptionStatusCanceled,
+            "Unpaid" => AppResources.SubscriptionStatusUnpaid,
+            "Incomplete" => AppResources.SubscriptionStatusIncomplete,
+            "IncompleteExpired" => AppResources.SubscriptionStatusIncompleteExpired,
+            "Paused" => AppResources.SubscriptionStatusPaused,
+            _ => AppResources.SubscriptionUnknownStatus
+        };
     }
 
     /// <summary>

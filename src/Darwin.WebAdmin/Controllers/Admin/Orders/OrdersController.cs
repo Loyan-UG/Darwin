@@ -906,19 +906,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             return RedirectOrHtmxDetails(vm.OrderId);
         }
 
-        private static IEnumerable<SelectListItem> BuildOrderFilterItems(OrderQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildOrderFilterItems(OrderQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All orders", OrderQueueFilter.All.ToString(), selectedFilter == OrderQueueFilter.All);
-            yield return new SelectListItem("Open", OrderQueueFilter.Open.ToString(), selectedFilter == OrderQueueFilter.Open);
-            yield return new SelectListItem("Payment issues", OrderQueueFilter.PaymentIssues.ToString(), selectedFilter == OrderQueueFilter.PaymentIssues);
-            yield return new SelectListItem("Fulfillment attention", OrderQueueFilter.FulfillmentAttention.ToString(), selectedFilter == OrderQueueFilter.FulfillmentAttention);
+            yield return new SelectListItem(T("AllOrders"), OrderQueueFilter.All.ToString(), selectedFilter == OrderQueueFilter.All);
+            yield return new SelectListItem(T("Open"), OrderQueueFilter.Open.ToString(), selectedFilter == OrderQueueFilter.Open);
+            yield return new SelectListItem(T("PaymentIssues"), OrderQueueFilter.PaymentIssues.ToString(), selectedFilter == OrderQueueFilter.PaymentIssues);
+            yield return new SelectListItem(T("FulfillmentAttention"), OrderQueueFilter.FulfillmentAttention.ToString(), selectedFilter == OrderQueueFilter.FulfillmentAttention);
         }
 
-        private static IEnumerable<SelectListItem> BuildPaymentFilterItems(PaymentQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildPaymentFilterItems(PaymentQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All payments", PaymentQueueFilter.All.ToString(), selectedFilter == PaymentQueueFilter.All);
-            yield return new SelectListItem("Failed", PaymentQueueFilter.Failed.ToString(), selectedFilter == PaymentQueueFilter.Failed);
-            yield return new SelectListItem("Refunded", PaymentQueueFilter.Refunded.ToString(), selectedFilter == PaymentQueueFilter.Refunded);
+            yield return new SelectListItem(T("AllPayments"), PaymentQueueFilter.All.ToString(), selectedFilter == PaymentQueueFilter.All);
+            yield return new SelectListItem(T("Failed"), PaymentQueueFilter.Failed.ToString(), selectedFilter == PaymentQueueFilter.Failed);
+            yield return new SelectListItem(T("Refunded"), PaymentQueueFilter.Refunded.ToString(), selectedFilter == PaymentQueueFilter.Refunded);
         }
 
         private IEnumerable<SelectListItem> BuildShipmentFilterItems(ShipmentQueueFilter selectedFilter)
@@ -936,11 +936,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem(T("ReturnFollowUp"), ShipmentQueueFilter.ReturnFollowUp.ToString(), selectedFilter == ShipmentQueueFilter.ReturnFollowUp);
         }
 
-        private static IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All refunds", RefundQueueFilter.All.ToString(), selectedFilter == RefundQueueFilter.All);
-            yield return new SelectListItem("Pending", RefundQueueFilter.Pending.ToString(), selectedFilter == RefundQueueFilter.Pending);
-            yield return new SelectListItem("Completed", RefundQueueFilter.Completed.ToString(), selectedFilter == RefundQueueFilter.Completed);
+            yield return new SelectListItem(T("AllRefunds"), RefundQueueFilter.All.ToString(), selectedFilter == RefundQueueFilter.All);
+            yield return new SelectListItem(T("Pending"), RefundQueueFilter.Pending.ToString(), selectedFilter == RefundQueueFilter.Pending);
+            yield return new SelectListItem(T("Completed"), RefundQueueFilter.Completed.ToString(), selectedFilter == RefundQueueFilter.Completed);
         }
 
         private IEnumerable<SelectListItem> BuildReturnFilterItems(ReturnQueueFilter selectedFilter)
@@ -950,11 +950,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem(T("CarrierReview"), ReturnQueueFilter.CarrierReview.ToString(), selectedFilter == ReturnQueueFilter.CarrierReview);
         }
 
-        private static IEnumerable<SelectListItem> BuildInvoiceFilterItems(InvoiceQueueFilter selectedFilter)
+        private IEnumerable<SelectListItem> BuildInvoiceFilterItems(InvoiceQueueFilter selectedFilter)
         {
-            yield return new SelectListItem("All invoices", InvoiceQueueFilter.All.ToString(), selectedFilter == InvoiceQueueFilter.All);
-            yield return new SelectListItem("Outstanding", InvoiceQueueFilter.Outstanding.ToString(), selectedFilter == InvoiceQueueFilter.Outstanding);
-            yield return new SelectListItem("Paid", InvoiceQueueFilter.Paid.ToString(), selectedFilter == InvoiceQueueFilter.Paid);
+            yield return new SelectListItem(T("AllInvoices"), InvoiceQueueFilter.All.ToString(), selectedFilter == InvoiceQueueFilter.All);
+            yield return new SelectListItem(T("Outstanding"), InvoiceQueueFilter.Outstanding.ToString(), selectedFilter == InvoiceQueueFilter.Outstanding);
+            yield return new SelectListItem(T("Paid"), InvoiceQueueFilter.Paid.ToString(), selectedFilter == InvoiceQueueFilter.Paid);
         }
 
         private static IEnumerable<SelectListItem> BuildPageSizeItems(int selectedPageSize)

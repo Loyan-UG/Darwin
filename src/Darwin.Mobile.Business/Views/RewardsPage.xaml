@@ -47,7 +47,7 @@
                             <Entry Placeholder="{x:Static res:AppResources.RewardsPointsPlaceholder}" Keyboard="Numeric" Text="{Binding PointsRequiredInput}" Style="{StaticResource FormEntryStyle}" />
                         </Border>
                         <Border Grid.Column="1" Style="{StaticResource FormFieldBorderStyle}">
-                            <Picker Title="{x:Static res:AppResources.RewardsTypePickerTitle}" ItemsSource="{Binding RewardTypeOptions}" SelectedItem="{Binding SelectedRewardType}" TextColor="{StaticResource BrushOnSurface}" />
+                            <Picker Title="{x:Static res:AppResources.RewardsTypePickerTitle}" ItemsSource="{Binding RewardTypeOptions}" ItemDisplayBinding="{Binding Label}" SelectedItem="{Binding SelectedRewardTypeOption}" TextColor="{StaticResource BrushOnSurface}" />
                         </Border>
                     </Grid>
                     <Border Style="{StaticResource FormFieldBorderStyle}">
@@ -83,11 +83,11 @@
                                     <VerticalStackLayout Spacing="6">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                             <Label Text="{Binding PointsRequired, StringFormat='{x:Static res:AppResources.RewardsTierPointsFormat}'}" Style="{StaticResource BodyLabelStyle}" />
-                                            <Label Grid.Column="1" Text="{Binding RewardType}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Grid.Column="1" Text="{Binding LocalizedRewardType}" Style="{StaticResource CaptionLabelStyle}" />
                                         </Grid>
                                         <Label Text="{Binding RewardValue, StringFormat='{x:Static res:AppResources.RewardsTierValueFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding RewardValue, Converter={StaticResource NullCheckConverter}}" />
                                         <Label Text="{Binding Description}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding Description, Converter={StaticResource NullCheckConverter}}" />
-                                        <Label Text="{Binding AllowSelfRedemption, StringFormat='{x:Static res:AppResources.RewardsTierSelfRedemptionFormat}'}" Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding AllowSelfRedemption, Converter={StaticResource LocalizedBooleanConverter}, StringFormat='{x:Static res:AppResources.RewardsTierSelfRedemptionFormat}'}" Style="{StaticResource CaptionLabelStyle}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -120,7 +120,7 @@
                         </Border>
                     </Grid>
                     <Border Style="{StaticResource FormFieldBorderStyle}">
-                        <Picker Title="{x:Static res:AppResources.RewardsCampaignChannelPickerTitle}" ItemsSource="{Binding CampaignChannelOptions}" SelectedItem="{Binding SelectedCampaignChannel}" TextColor="{StaticResource BrushOnSurface}" />
+                        <Picker Title="{x:Static res:AppResources.RewardsCampaignChannelPickerTitle}" ItemsSource="{Binding CampaignChannelOptions}" ItemDisplayBinding="{Binding Label}" SelectedItem="{Binding SelectedCampaignChannel}" TextColor="{StaticResource BrushOnSurface}" />
                     </Border>
                     <Border Style="{StaticResource MutedCardBorderStyle}">
                         <VerticalStackLayout Spacing="8">
@@ -227,14 +227,14 @@
                     </Border>
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Border Grid.Column="0" Style="{StaticResource FormFieldBorderStyle}">
-                            <Picker Title="{x:Static res:AppResources.RewardsCampaignStateFilterPickerTitle}" ItemsSource="{Binding CampaignStateFilterOptions}" SelectedItem="{Binding SelectedCampaignStateFilter}" TextColor="{StaticResource BrushOnSurface}" />
+                            <Picker Title="{x:Static res:AppResources.RewardsCampaignStateFilterPickerTitle}" ItemsSource="{Binding CampaignStateFilterOptions}" ItemDisplayBinding="{Binding Label}" SelectedItem="{Binding SelectedCampaignStateFilter}" TextColor="{StaticResource BrushOnSurface}" />
                         </Border>
                         <Border Grid.Column="1" Style="{StaticResource FormFieldBorderStyle}">
-                            <Picker Title="{x:Static res:AppResources.RewardsCampaignAudienceFilterPickerTitle}" ItemsSource="{Binding CampaignAudienceFilterOptions}" SelectedItem="{Binding SelectedCampaignAudienceFilter}" TextColor="{StaticResource BrushOnSurface}" />
+                            <Picker Title="{x:Static res:AppResources.RewardsCampaignAudienceFilterPickerTitle}" ItemsSource="{Binding CampaignAudienceFilterOptions}" ItemDisplayBinding="{Binding Label}" SelectedItem="{Binding SelectedCampaignAudienceFilter}" TextColor="{StaticResource BrushOnSurface}" />
                         </Border>
                     </Grid>
                     <Border Style="{StaticResource FormFieldBorderStyle}">
-                        <Picker Title="{x:Static res:AppResources.RewardsCampaignSortPickerTitle}" ItemsSource="{Binding CampaignSortOptions}" SelectedItem="{Binding SelectedCampaignSortOption}" TextColor="{StaticResource BrushOnSurface}" />
+                        <Picker Title="{x:Static res:AppResources.RewardsCampaignSortPickerTitle}" ItemsSource="{Binding CampaignSortOptions}" ItemDisplayBinding="{Binding Label}" SelectedItem="{Binding SelectedCampaignSortOption}" TextColor="{StaticResource BrushOnSurface}" />
                     </Border>
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Button Grid.Column="0" Text="{x:Static res:AppResources.RewardsCampaignClearSearchButton}" Command="{Binding ClearCampaignSearchCommand}" IsEnabled="{Binding HasCampaignSearchQuery}" Style="{StaticResource OutlinedButtonStyle}" />
@@ -278,7 +278,7 @@
                                     <VerticalStackLayout Spacing="6">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                             <Label Text="{Binding Title}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="WordWrap" />
-                                            <Label Grid.Column="1" Text="{Binding CampaignState, StringFormat='{x:Static res:AppResources.RewardsCampaignStateFormat}'}" Style="{StaticResource CaptionLabelStyle}" />
+                                            <Label Grid.Column="1" Text="{Binding LocalizedCampaignState, StringFormat='{x:Static res:AppResources.RewardsCampaignStateFormat}'}" Style="{StaticResource CaptionLabelStyle}" />
                                         </Grid>
                                         <Label Text="{Binding Name}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding AudienceSummary}" Style="{StaticResource CaptionLabelStyle}" />

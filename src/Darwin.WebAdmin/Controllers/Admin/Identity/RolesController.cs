@@ -188,14 +188,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             return string.Equals(item.Key, "business-support-admins", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static IEnumerable<SelectListItem> BuildRoleFilterItems(RoleQueueFilter selected)
+        private IEnumerable<SelectListItem> BuildRoleFilterItems(RoleQueueFilter selected)
         {
             return new List<SelectListItem>
             {
-                new("All", RoleQueueFilter.All.ToString(), selected == RoleQueueFilter.All),
-                new("System", RoleQueueFilter.System.ToString(), selected == RoleQueueFilter.System),
-                new("Custom", RoleQueueFilter.Custom.ToString(), selected == RoleQueueFilter.Custom),
-                new("Delegated Support", RoleQueueFilter.DelegatedSupport.ToString(), selected == RoleQueueFilter.DelegatedSupport)
+                new(T("IdentityFilterAll"), RoleQueueFilter.All.ToString(), selected == RoleQueueFilter.All),
+                new(T("IdentityFilterSystem"), RoleQueueFilter.System.ToString(), selected == RoleQueueFilter.System),
+                new(T("IdentityFilterCustom"), RoleQueueFilter.Custom.ToString(), selected == RoleQueueFilter.Custom),
+                new(T("IdentityFilterDelegatedSupport"), RoleQueueFilter.DelegatedSupport.ToString(), selected == RoleQueueFilter.DelegatedSupport)
             };
         }
 

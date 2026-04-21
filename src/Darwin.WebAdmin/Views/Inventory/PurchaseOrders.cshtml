@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("PurchaseOrders");
+    string LocalizePurchaseOrderStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="inventory-purchase-orders-workspace-shell">
@@ -142,7 +143,7 @@
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">@item.Status</span>
+                            <span class="badge text-bg-secondary">@LocalizePurchaseOrderStatus(item.Status)</span>
                         }
                     </td>
                     <td>@item.LineCount</td>

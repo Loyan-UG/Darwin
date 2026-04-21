@@ -178,6 +178,7 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         var eslintSource = ReadWebFrontendFile("eslint.config.mjs");
         var postCssSource = ReadWebFrontendFile("postcss.config.mjs");
         var envExampleSource = ReadWebFrontendFile(".env.example");
+        var cultureSwitcherSource = ReadWebFrontendFile(Path.Combine("src", "components", "shell", "culture-switcher.tsx"));
 
         middlewareSource.Should().Contain("REQUEST_CULTURE_HEADER");
         middlewareSource.Should().Contain("getSiteRuntimeConfig()");
@@ -218,6 +219,12 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         postCssSource.Should().Contain("const config = {");
         postCssSource.Should().Contain("\"@tailwindcss/postcss\": {}");
         postCssSource.Should().Contain("export default config;");
+
+        cultureSwitcherSource.Should().Contain("import { cloneSearchParams } from \"@/lib/query-params\";");
+        cultureSwitcherSource.Should().Contain("const params = cloneSearchParams(searchParams);");
+        cultureSwitcherSource.Should().Contain("params.delete(\"culture\");");
+        cultureSwitcherSource.Should().Contain("params.set(\"culture\", culture);");
+        cultureSwitcherSource.Should().Contain("const query = params.toString();");
 
         envExampleSource.Should().Contain("DARWIN_WEBAPI_BASE_URL=http://localhost:5134");
         envExampleSource.Should().Contain("DARWIN_WEB_SITE_URL=http://localhost:3000");
@@ -442,6 +449,9 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         var webPartTypesSource = ReadWebFrontendFile(Path.Combine("src", "web-parts", "types.ts"));
         var siteShellSource = ReadWebFrontendFile(Path.Combine("src", "components", "shell", "site-shell.tsx"));
         var shellTypesSource = ReadWebFrontendFile(Path.Combine("src", "features", "shell", "types.ts"));
+        var catalogCampaignWindowSource = ReadWebFrontendFile(Path.Combine("src", "components", "catalog", "catalog-campaign-window.tsx"));
+        var shoppingFollowUpSource = ReadWebFrontendFile(Path.Combine("src", "features", "storefront", "shopping-follow-up.ts"));
+        var homePagePartsSource = ReadWebFrontendFile(Path.Combine("src", "features", "home", "get-home-page-parts.ts"));
 
         themeRegistrySource.Should().Contain("cartzillaGroceryTheme");
         themeRegistrySource.Should().Contain("harborEditorialTheme");
@@ -547,6 +557,23 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         shellTypesSource.Should().Contain("primaryNavigation: ShellLink[];");
         shellTypesSource.Should().Contain("utilityLinks: ShellLink[];");
         shellTypesSource.Should().Contain("footerGroups: ShellLinkGroup[];");
+        catalogCampaignWindowSource.Should().Contain("export function CatalogCampaignWindow({");
+        catalogCampaignWindowSource.Should().Contain("const rankedProducts = sortProductsByOpportunity(products);");
+        catalogCampaignWindowSource.Should().Contain("const promotionLaneCards = summarizeCatalogPromotionLanes(rankedProducts).map(");
+        catalogCampaignWindowSource.Should().Contain("buildStorefrontCategoryCampaignCards(categories.slice(0, 2), {");
+        catalogCampaignWindowSource.Should().Contain("buildStorefrontProductCampaignCards(rankedProducts.slice(0, 2), {");
+        catalogCampaignWindowSource.Should().Contain("StorefrontCampaignBoard");
+        shoppingFollowUpSource.Should().Contain("export function filterProductsByExcludedCatalogPaths(");
+        shoppingFollowUpSource.Should().Contain("const excluded = new Set(excludedCatalogPaths);");
+        shoppingFollowUpSource.Should().Contain("!excluded.has(`/catalog/${product.slug}`)");
+        homePagePartsSource.Should().Contain("id: \"home-commerce-opportunity\"");
+        homePagePartsSource.Should().Contain("id: \"commerce-opportunity-cart\"");
+        homePagePartsSource.Should().Contain("id: `commerce-opportunity-product-${spotlightProduct.id}`");
+        homePagePartsSource.Should().Contain("id: `commerce-opportunity-category-${strongestCategoryOpportunity.category.id}`");
+        homePagePartsSource.Should().Contain("id: \"home-offer-board\"");
+        homePagePartsSource.Should().Contain("cartLinkedSlugs.size > 0");
+        homePagePartsSource.Should().Contain("formatResource(copy.offerBoardCartAwareDescription, {");
+        homePagePartsSource.Should().Contain("id: \"home-campaign-board\"");
     }
 
 
@@ -558,6 +585,7 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         var webApiUrlSource = ReadWebFrontendFile(Path.Combine("src", "lib", "webapi-url.ts"));
         var htmlFragmentSource = ReadWebFrontendFile(Path.Combine("src", "lib", "html-fragment.ts"));
         var formattingSource = ReadWebFrontendFile(Path.Combine("src", "lib", "formatting.ts"));
+        var queryParamsSource = ReadWebFrontendFile(Path.Combine("src", "lib", "query-params.ts"));
         var memberDashboardPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "account", "member-dashboard-page.tsx"));
         var loyaltyDiscoverySectionSource = ReadWebFrontendFile(Path.Combine("src", "components", "member", "loyalty-discovery-section.tsx"));
         var loyaltyOverviewPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "member", "loyalty-overview-page.tsx"));
@@ -634,6 +662,14 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         htmlFragmentSource.Should().Contain("/\\s(srcdoc)\\s*=\\s*(['\"])[\\s\\S]*?\\2/gi");
         htmlFragmentSource.Should().Contain("export function sanitizeHtmlFragment(value: string)");
 
+        queryParamsSource.Should().Contain("export function serializeQueryParams(");
+        queryParamsSource.Should().Contain("const searchParams = new URLSearchParams();");
+        queryParamsSource.Should().Contain("searchParams.set(key, String(value));");
+        queryParamsSource.Should().Contain("export function cloneSearchParams(");
+        queryParamsSource.Should().Contain("return new URLSearchParams(");
+        queryParamsSource.Should().Contain("export function buildQuerySuffix(");
+        queryParamsSource.Should().Contain("return serialized ? `?${serialized}` : \"\";");
+
         loyaltyPublicBusinessPageSource.Should().Contain("const safeExternalLinkProps = getSafeExternalLinkProps();");
         loyaltyPublicBusinessPageSource.Should().Contain("const heroImage = toWebApiUrl(");
         loyaltyPublicBusinessPageSource.Should().Contain("detail?.primaryImageUrl ?? detail?.galleryImageUrls?.[0] ?? detail?.imageUrls?.[0] ?? \"\",");
@@ -650,6 +686,11 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         cartPageSource.Should().Contain("const itemImageUrl = toWebApiUrl(item.display?.imageUrl ?? \"\");");
         cartPageSource.Should().Contain("const productImageUrl = toWebApiUrl(product.primaryImageUrl ?? \"\");");
         checkoutPageSource.Should().Contain("const itemImageUrl = toWebApiUrl(item.display?.imageUrl ?? \"\");");
+        checkoutPageSource.Should().Contain("copy.checkoutConfidenceTitle");
+        checkoutPageSource.Should().Contain("copy.checkoutAttentionTitle");
+        checkoutPageSource.Should().Contain("memberProfile?.phoneNumberConfirmed");
+        checkoutPageSource.Should().Contain("hasSavedAddresses");
+        checkoutPageSource.Should().Contain("copy.checkoutPaymentWindowTitle");
         orderDetailPageSource.Should().Contain("const documentUrl = toWebApiUrl(order.actions.documentPath);");
         orderDetailPageSource.Should().Contain("const safeExternalLinkProps = getSafeExternalLinkProps();");
         orderDetailPageSource.Should().Contain("href={documentUrl}");
@@ -731,6 +772,121 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         publicJsonRequestSource.Should().Contain("return buildPublicJsonExecutionNetworkFailureResult<T>(requestContext, error);");
     }
 
+    [Fact]
+    public void WebFrontendBrowseShellAndDiagnostics_Should_KeepNavigationHomeCmsCatalogAndApiSignalsWired()
+    {
+        var shellModelSource = ReadWebFrontendFile(Path.Combine("src", "features", "shell", "get-shell-model.ts"));
+        var shellMenuSource = ReadWebFrontendFile(Path.Combine("src", "features", "shell", "shell-menu.ts"));
+        var homePagePartsSource = ReadWebFrontendFile(Path.Combine("src", "features", "home", "get-home-page-parts.ts"));
+        var cmsPagesIndexSource = ReadWebFrontendFile(Path.Combine("src", "components", "cms", "cms-pages-index.tsx"));
+        var cmsPageDetailSource = ReadWebFrontendFile(Path.Combine("src", "components", "cms", "cms-page-detail.tsx"));
+        var catalogPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "catalog", "catalog-page.tsx"));
+        var productDetailPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "catalog", "product-detail-page.tsx"));
+        var apiDiagnosticsSource = ReadWebFrontendFile(Path.Combine("src", "lib", "api-diagnostics.ts"));
+        var packageJsonSource = ReadWebFrontendFile("package.json");
+
+        shellModelSource.Should().Contain("function normalizeLegacySeedHref(rawHref: string)");
+        shellModelSource.Should().Contain("if (pathname === \"/home\") {");
+        shellModelSource.Should().Contain("if (pathname === \"/c\") {");
+        shellModelSource.Should().Contain("if (legacyCmsSlugs.has(slug)) {");
+        shellModelSource.Should().Contain("function normalizeShellHref(rawHref: string)");
+        shellModelSource.Should().Contain("const sanitized = sanitizeAppPath(trimmed, \"/\");");
+        shellModelSource.Should().Contain("return sanitized === \"/\" && trimmed !== \"/\" ? null : sanitized;");
+        shellModelSource.Should().Contain("return toSafeHttpUrl(trimmed);");
+        shellModelSource.Should().Contain("getShellContext(culture, runtimeConfig.mainMenuName)");
+        shellModelSource.Should().Contain("menuSource: menu.menuSource,");
+
+        shellMenuSource.Should().Contain("export function mapMenuItemsToLinks(");
+        shellMenuSource.Should().Contain(".filter((item) => !item.parentId && item.url)");
+        shellMenuSource.Should().Contain("const primaryNavigation = cmsLinks.length > 0");
+        shellMenuSource.Should().Contain("const menuSource: ShellModel[\"menuSource\"] = cmsLinks.length > 0");
+        shellMenuSource.Should().Contain("input.menuResultStatus === \"ok\"");
+        shellMenuSource.Should().Contain("formatEmptyMenuMessage");
+        shellMenuSource.Should().Contain("formatNotFoundMenuMessage");
+
+        homePagePartsSource.Should().Contain("id: \"home-browse-readiness\"");
+        homePagePartsSource.Should().Contain("id: \"home-browse-readiness-cms\"");
+        homePagePartsSource.Should().Contain("id: \"home-browse-readiness-catalog\"");
+        homePagePartsSource.Should().Contain("id: \"home-stage-flow\"");
+        homePagePartsSource.Should().Contain("id: \"home-pair-panel\"");
+        homePagePartsSource.Should().Contain("id: \"home-agenda-columns\"");
+        homePagePartsSource.Should().Contain("id: \"home-journeys\"");
+        homePagePartsSource.Should().Contain("id: \"home-recovery-rail\"");
+        homePagePartsSource.Should().Contain("id: \"recovery-cms\"");
+        homePagePartsSource.Should().Contain("id: \"recovery-catalog\"");
+        homePagePartsSource.Should().Contain("id: \"recovery-account\"");
+        homePagePartsSource.Should().Contain("id: \"home-campaign-board\"");
+        homePagePartsSource.Should().Contain("buildStorefrontCategorySpotlightCards(");
+
+        cmsPagesIndexSource.Should().Contain("function buildCmsHref(");
+        cmsPagesIndexSource.Should().Contain("const pageStart = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;");
+        cmsPagesIndexSource.Should().Contain("const pageEnd =");
+        cmsPagesIndexSource.Should().Contain("const groupedPages = pages.reduce<");
+        cmsPagesIndexSource.Should().Contain("const spotlightPage = pages[0] ?? null;");
+        cmsPagesIndexSource.Should().Contain("const followUpPages = pages.slice(1, 4);");
+        cmsPagesIndexSource.Should().Contain("id: \"cms-groups\", label: copy.cmsGroupingTitle");
+        cmsPagesIndexSource.Should().Contain("id: \"cms-pagination\", label: copy.cmsPaginationTitle");
+        cmsPagesIndexSource.Should().Contain("href={localizeHref(`/cms/${spotlightPage.slug}`, culture)}");
+        cmsPagesIndexSource.Should().Contain("followUpPages.map((page, index) => (");
+        cmsPagesIndexSource.Should().Contain("href={localizeHref(\"/catalog\", culture)}");
+        cmsPagesIndexSource.Should().Contain("<CmsContinuationRail");
+        cmsPagesIndexSource.Should().Contain("description={copy.cmsCrossSurfaceMessage}");
+
+        cmsPageDetailSource.Should().Contain("const resolvedMessage = resolveLocalizedQueryMessage(message, copy);");
+        cmsPageDetailSource.Should().Contain("const contentSummary = page");
+        cmsPageDetailSource.Should().Contain("contentSummary?.html ?? sanitizeHtmlFragment(page.contentHtml)");
+        cmsPageDetailSource.Should().Contain("contentSummary && contentSummary.headings.length > 0");
+        cmsPageDetailSource.Should().Contain("contentSummary && contentSummary.wordCount >= 120");
+        cmsPageDetailSource.Should().Contain("const currentPagePosition = currentPageIndex >= 0 ? currentPageIndex + 1 : null;");
+        cmsPageDetailSource.Should().Contain("const previousPage =");
+        cmsPageDetailSource.Should().Contain("const nextPage =");
+        cmsPageDetailSource.Should().Contain("buildCmsReviewTargetHref(previousPage.slug, reviewWindow)");
+        cmsPageDetailSource.Should().Contain("buildCmsReviewTargetHref(nextPage.slug, reviewWindow)");
+        cmsPageDetailSource.Should().Contain("contentSummary.headings.map((heading) => (");
+        cmsPageDetailSource.Should().Contain("href={`#${heading.id}`}");
+        cmsPageDetailSource.Should().Contain("count: contentSummary.wordCount,");
+        cmsPageDetailSource.Should().Contain("headings={contentSummary?.headings ?? []}");
+        cmsPageDetailSource.Should().Contain("<CmsContinuationRail");
+        cmsPageDetailSource.Should().Contain("detailRouteSummaryMessage");
+
+        catalogPageSource.Should().Contain("const hasCmsFollowUp = cmsPages.length > 0;");
+        catalogPageSource.Should().Contain("CatalogContentCompositionWindow");
+        catalogPageSource.Should().Contain("copy.resultSummaryFilteredMessage");
+        catalogPageSource.Should().Contain("copy.resultSummaryMessage");
+        catalogPageSource.Should().Contain("copy.buyingGuideTitle");
+        catalogPageSource.Should().Contain("copy.firstPageCta");
+        catalogPageSource.Should().Contain("copy.lastPageCta");
+        catalogPageSource.Should().Contain("href={localizeHref(\"/account\", culture)}");
+        catalogPageSource.Should().Contain("href={localizeHref(\"/cms\", culture)}");
+
+        productDetailPageSource.Should().Contain("copy.productReferenceSlugLabel");
+        productDetailPageSource.Should().Contain("copy.productReferenceMediaLabel");
+        productDetailPageSource.Should().Contain("copy.productReferenceVariantsLabel");
+        productDetailPageSource.Should().Contain("<ProductStorefrontSupportWindow");
+        productDetailPageSource.Should().Contain("cmsPages={cmsPages}");
+        productDetailPageSource.Should().Contain("cmsPagesStatus={cmsPagesStatus ?? \"unknown\"}");
+        productDetailPageSource.Should().Contain("relatedProductsStatus && relatedProductsStatus !== \"ok\"");
+        productDetailPageSource.Should().Contain("copy.relatedProductsDegradedTitle");
+        productDetailPageSource.Should().Contain("copy.relatedProductsDegradedMessage");
+        productDetailPageSource.Should().Contain("buildCatalogReviewTargetHref(relatedProduct.slug, reviewWindow)");
+        productDetailPageSource.Should().Contain("const categoryHref = primaryCategory");
+        productDetailPageSource.Should().Contain("typeof product.compareAtPriceMinor === \"number\"");
+        productDetailPageSource.Should().Contain("const savingsPercent = hasOffer");
+        productDetailPageSource.Should().Contain("href={localizeHref(\"/cms\", culture)}");
+        productDetailPageSource.Should().Contain("href={localizeHref(`/cms/${page.slug}`, culture)}");
+
+        packageJsonSource.Should().Contain("\"test\": \"tsx --test src/**/*.test.ts\"");
+
+        apiDiagnosticsSource.Should().Contain("export type ApiDiagnostics = {");
+        apiDiagnosticsSource.Should().Contain("requestId?: string;");
+        apiDiagnosticsSource.Should().Contain("export function getResponseDiagnostics(");
+        apiDiagnosticsSource.Should().Contain("requestId: readHeader(response, [\"x-request-id\", \"request-id\", \"x-correlation-id\"]),");
+        apiDiagnosticsSource.Should().Contain("traceparent: readHeader(response, [\"traceparent\"]),");
+        apiDiagnosticsSource.Should().Contain("export function buildApiFailureDedupeKey(diagnostics: ApiDiagnostics)");
+        apiDiagnosticsSource.Should().Contain("diagnostics.requestId ?? \"no-request-id\"");
+        apiDiagnosticsSource.Should().Contain("console.error(\"Darwin.Web API failure\", {");
+    }
+
 
     [Fact]
     public void WebFrontendSessionCookieAndActionPrimitives_Should_KeepStatefulStorefrontAndMemberFlowsWired()
@@ -739,9 +895,18 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         var memberSessionCookiesSource = ReadWebFrontendFile(Path.Combine("src", "features", "member-session", "cookies.ts"));
         var cartCookiesSource = ReadWebFrontendFile(Path.Combine("src", "features", "cart", "cookies.ts"));
         var checkoutCookiesSource = ReadWebFrontendFile(Path.Combine("src", "features", "checkout", "cookies.ts"));
+        var scanSessionCookieSource = ReadWebFrontendFile(Path.Combine("src", "features", "member-portal", "scan-session-cookie.ts"));
+        var timeSource = ReadWebFrontendFile(Path.Combine("src", "lib", "time.ts"));
+        var addressJsonSource = ReadWebFrontendFile(Path.Combine("src", "lib", "address-json.ts"));
+        var loyaltyBusinessPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "member", "loyalty-business-page.tsx"));
+        var confirmationPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "checkout", "order-confirmation-page.tsx"));
+        var orderDetailPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "member", "order-detail-page.tsx"));
+        var checkoutHelpersSource = ReadWebFrontendFile(Path.Combine("src", "features", "checkout", "helpers.ts"));
         var accountActionsSource = ReadWebFrontendFile(Path.Combine("src", "features", "account", "actions.ts"));
+        var memberSessionActionsSource = ReadWebFrontendFile(Path.Combine("src", "features", "member-session", "actions.ts"));
         var cartActionsSource = ReadWebFrontendFile(Path.Combine("src", "features", "cart", "actions.ts"));
         var checkoutActionsSource = ReadWebFrontendFile(Path.Combine("src", "features", "checkout", "actions.ts"));
+        var memberPortalActionsSource = ReadWebFrontendFile(Path.Combine("src", "features", "member-portal", "actions.ts"));
 
         memberSessionServerSource.Should().Contain("import \"server-only\";");
         memberSessionServerSource.Should().Contain("clearMemberSession, getMemberAccessToken, getMemberRefreshToken, getMemberSession, writeMemberSession");
@@ -808,6 +973,71 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         checkoutCookiesSource.Should().Contain("JSON.stringify(state)");
         checkoutCookiesSource.Should().Contain("cookieStore.delete(STOREFRONT_PAYMENT_HANDOFF_COOKIE);");
 
+        scanSessionCookieSource.Should().Contain("const MEMBER_LOYALTY_SCAN_COOKIE = \"darwin-member-loyalty-scan\";");
+        scanSessionCookieSource.Should().Contain("function isPreparedMemberLoyaltyScanSession(");
+        scanSessionCookieSource.Should().Contain("isValidUtcTimestamp(session.expiresAtUtc)");
+        scanSessionCookieSource.Should().Contain("session.mode === \"Accrual\" || session.mode === \"Redemption\"");
+        scanSessionCookieSource.Should().Contain("Array.isArray(session.selectedRewardTierIds)");
+        scanSessionCookieSource.Should().Contain("if (!isPreparedMemberLoyaltyScanSession(parsed) || parsed.businessId !== businessId)");
+        scanSessionCookieSource.Should().Contain("if (isExpiredUtcTimestamp(parsed.expiresAtUtc))");
+        scanSessionCookieSource.Should().Contain("cookieStore.delete(MEMBER_LOYALTY_SCAN_COOKIE);");
+
+        timeSource.Should().Contain("export function parseUtcTimestamp(value: string | null | undefined)");
+        timeSource.Should().Contain("const parsed = new Date(value).getTime();");
+        timeSource.Should().Contain("export function isValidUtcTimestamp(value: string | null | undefined)");
+        timeSource.Should().Contain("return parseUtcTimestamp(value) !== null;");
+        timeSource.Should().Contain("export function isExpiredUtcTimestamp(");
+        timeSource.Should().Contain("return parsed === null || parsed <= now;");
+
+        addressJsonSource.Should().Contain("export function parseAddressJson(rawJson: string): ParsedAddress | null");
+        addressJsonSource.Should().Contain("const parsed = JSON.parse(rawJson) as unknown;");
+        addressJsonSource.Should().Contain("if (!parsed || typeof parsed !== \"object\")");
+        addressJsonSource.Should().Contain("fullName: typeof address.fullName === \"string\" ? address.fullName : undefined,");
+        addressJsonSource.Should().Contain("phoneE164:");
+        addressJsonSource.Should().Contain("typeof address.phoneE164 === \"string\" ? address.phoneE164 : null");
+
+        checkoutHelpersSource.Should().Contain("function parseStrictInteger(value: DraftValue)");
+        checkoutHelpersSource.Should().Contain("if (!/^-?\\d+$/.test(normalized)) {");
+        checkoutHelpersSource.Should().Contain("return Number.isSafeInteger(parsed) ? parsed : null;");
+        checkoutHelpersSource.Should().Contain("function parseStrictFiniteNumber(value: DraftValue)");
+        checkoutHelpersSource.Should().Contain("if (!/^-?\\d+(?:\\.\\d+)?$/.test(normalized)) {");
+        checkoutHelpersSource.Should().Contain("const parsed = Number(normalized);");
+        checkoutHelpersSource.Should().Contain("return Number.isFinite(parsed) ? parsed : null;");
+        checkoutHelpersSource.Should().Contain("function normalizeQuantityValue(value: DraftValue, fallback = 1)");
+        checkoutHelpersSource.Should().Contain("const parsed = parseStrictInteger(value);");
+        checkoutHelpersSource.Should().Contain("return parsed ?? fallback;");
+        checkoutHelpersSource.Should().Contain("const parsed = parseStrictFiniteNumber(raw);");
+
+        confirmationPageSource.Should().Contain("const billingAddress = parseAddressJson(confirmation.billingAddressJson);");
+        confirmationPageSource.Should().Contain("const shippingAddress = parseAddressJson(confirmation.shippingAddressJson);");
+        confirmationPageSource.Should().Contain("copy.nextStepsTitle");
+        confirmationPageSource.Should().Contain("copy.confirmationMemberWindowTitle");
+        confirmationPageSource.Should().Contain("copy.confirmationGuestWindowTitle");
+        confirmationPageSource.Should().Contain("copy.confirmationGuestOfferBoardTitle");
+        confirmationPageSource.Should().Contain("createStorefrontPaymentIntentAction");
+        orderDetailPageSource.Should().Contain("renderAddress(parseAddressJson(order.billingAddressJson), culture)");
+        orderDetailPageSource.Should().Contain("renderAddress(parseAddressJson(order.shippingAddressJson), culture)");
+
+        loyaltyBusinessPageSource.Should().Contain("function normalizeProgressPercent(value: number | string | null | undefined)");
+        loyaltyBusinessPageSource.Should().Contain("if (typeof value === \"string\" && /^-?\\d+(?:\\.\\d+)?$/.test(value.trim()))");
+        loyaltyBusinessPageSource.Should().Contain("return Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0;");
+        loyaltyBusinessPageSource.Should().Contain("const nextRewardProgressPercent = normalizeProgressPercent(");
+        loyaltyBusinessPageSource.Should().Contain("<MemberCrossSurfaceRail");
+        loyaltyBusinessPageSource.Should().Contain("qrCodeDataUrl ? (");
+        loyaltyBusinessPageSource.Should().Contain("preparedScanSession.mode.toLowerCase()");
+        memberPortalActionsSource.Should().Contain("export async function joinMemberLoyaltyBusinessAction(formData: FormData)");
+        memberPortalActionsSource.Should().Contain("const result = await joinCurrentMemberLoyaltyBusiness({");
+        memberPortalActionsSource.Should().Contain("redirect(buildAppQueryPath(\"/account/sign-in\", { returnPath }));");
+        memberPortalActionsSource.Should().Contain("toLocalizedQueryMessage(\"loyaltyMembershipCreatedMessage\")");
+        memberPortalActionsSource.Should().Contain("export async function prepareMemberLoyaltyScanSessionAction(formData: FormData)");
+        memberPortalActionsSource.Should().Contain("const result = await prepareCurrentMemberLoyaltyScanSession({");
+        memberPortalActionsSource.Should().Contain("await writePreparedMemberLoyaltyScanSession({");
+        memberPortalActionsSource.Should().Contain("deviceId: \"Darwin.Web\",");
+        memberPortalActionsSource.Should().Contain("toLocalizedQueryMessage(\"scanPreparedMessage\")");
+        memberPortalActionsSource.Should().Contain("export async function clearMemberLoyaltyScanSessionAction(formData: FormData)");
+        memberPortalActionsSource.Should().Contain("await clearPreparedMemberLoyaltyScanSession();");
+        memberPortalActionsSource.Should().Contain("toLocalizedQueryMessage(\"scanClearedMessage\")");
+
         accountActionsSource.Should().Contain("\"use server\";");
         accountActionsSource.Should().Contain("redirect } from \"next/navigation\"");
         accountActionsSource.Should().Contain("confirmMemberEmail");
@@ -841,6 +1071,25 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         accountActionsSource.Should().Contain("passwordResetFieldsRequiredMessage");
         accountActionsSource.Should().Contain("passwordResetFailedMessage");
         accountActionsSource.Should().Contain("passwordStatus: toLocalizedQueryMessage(\"passwordResetMessage\")");
+
+        memberSessionActionsSource.Should().Contain("\"use server\";");
+        memberSessionActionsSource.Should().Contain("loginMember, logoutMember");
+        memberSessionActionsSource.Should().Contain("clearMemberSession");
+        memberSessionActionsSource.Should().Contain("getMemberAccessToken");
+        memberSessionActionsSource.Should().Contain("getMemberRefreshToken");
+        memberSessionActionsSource.Should().Contain("writeMemberSession");
+        memberSessionActionsSource.Should().Contain("readNormalizedEmail, readTrimmedFormText");
+        memberSessionActionsSource.Should().Contain("buildAppQueryPath, sanitizeAppPath");
+        memberSessionActionsSource.Should().Contain("export async function signInMemberAction(formData: FormData)");
+        memberSessionActionsSource.Should().Contain("const returnPath = sanitizeAppPath(");
+        memberSessionActionsSource.Should().Contain("signInCredentialsRequiredMessage");
+        memberSessionActionsSource.Should().Contain("signInFailedMessage");
+        memberSessionActionsSource.Should().Contain("await writeMemberSession({");
+        memberSessionActionsSource.Should().Contain("redirect(returnPath);");
+        memberSessionActionsSource.Should().Contain("export async function signOutMemberAction()");
+        memberSessionActionsSource.Should().Contain("await logoutMember({");
+        memberSessionActionsSource.Should().Contain("await clearMemberSession();");
+        memberSessionActionsSource.Should().Contain("redirect(\"/account\");");
 
         cartActionsSource.Should().Contain("\"use server\";");
         cartActionsSource.Should().Contain("revalidatePath");
@@ -1181,6 +1430,16 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         confirmationFinalizeRouteSource.Should().Contain("const confirmationPath = buildLocalizedPath(");
         confirmationFinalizeRouteSource.Should().Contain("function applyRedirectParams(");
         confirmationFinalizeRouteSource.Should().Contain("const pathWithQuery = buildAppQueryPath(redirectUrl.pathname, params);");
+        confirmationFinalizeRouteSource.Should().Contain("function readCallbackOrderNumber(searchParams: URLSearchParams)");
+        confirmationFinalizeRouteSource.Should().Contain("function readProviderReference(searchParams: URLSearchParams)");
+        confirmationFinalizeRouteSource.Should().Contain("function readFailureReason(");
+        confirmationFinalizeRouteSource.Should().Contain("readSearchTextParam(searchParams.get(\"orderNumber\") ?? undefined, 64)");
+        confirmationFinalizeRouteSource.Should().Contain("searchParams.get(\"providerReference\") ?? undefined");
+        confirmationFinalizeRouteSource.Should().Contain("searchParams.get(\"failureReason\") ?? undefined, 240");
+        confirmationFinalizeRouteSource.Should().Contain("if (handoff && handoff.orderId !== orderId) {");
+        confirmationFinalizeRouteSource.Should().Contain("await clearStorefrontPaymentHandoff();");
+        confirmationFinalizeRouteSource.Should().Contain("providerReference: readProviderReference(searchParams) || handoff.providerReference,");
+        confirmationFinalizeRouteSource.Should().Contain("failureReason,");
         confirmationFinalizeRouteSource.Should().Contain("function resolveOutcome(searchParams: URLSearchParams)");
         confirmationFinalizeRouteSource.Should().Contain("if (searchParams.get(\"cancelled\") === \"true\") {");
         confirmationFinalizeRouteSource.Should().Contain("function readProviderReference(searchParams: URLSearchParams)");
@@ -1333,6 +1592,8 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         var registerRouteSource = ReadWebFrontendFile(Path.Combine("src", "app", "account", "register", "page.tsx"));
         var securityRouteSource = ReadWebFrontendFile(Path.Combine("src", "app", "account", "security", "page.tsx"));
         var signInRouteSource = ReadWebFrontendFile(Path.Combine("src", "app", "account", "sign-in", "page.tsx"));
+        var loyaltyRouteSource = ReadWebFrontendFile(Path.Combine("src", "app", "loyalty", "page.tsx"));
+        var loyaltyBusinessRouteSource = ReadWebFrontendFile(Path.Combine("src", "app", "loyalty", "[businessId]", "page.tsx"));
         var activationPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "account", "activation-page.tsx"));
         var addressesPageSource = ReadWebFrontendFile(Path.Combine("src", "components", "account", "addresses-page.tsx"));
         var profilePageSource = ReadWebFrontendFile(Path.Combine("src", "components", "account", "profile-page.tsx"));
@@ -1375,6 +1636,26 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         signInRouteSource.Should().Contain("getPublicSignInSeoMetadata");
         signInRouteSource.Should().Contain("signInError={readSearchParam(resolvedSearchParams?.signInError)}");
         signInRouteSource.Should().Contain("returnPath={sanitizeAppPath(readSearchParam(resolvedSearchParams?.returnPath), \"/account\")}");
+        loyaltyRouteSource.Should().Contain("getCurrentMemberLoyaltyOverview()");
+        loyaltyRouteSource.Should().Contain("getCurrentMemberLoyaltyBusinesses({");
+        loyaltyRouteSource.Should().Contain("getPublicBusinessesForDiscovery({");
+        loyaltyRouteSource.Should().Contain("getPublicBusinessCategoryKinds()");
+        loyaltyRouteSource.Should().Contain("readBoundedNumericSearchParam(resolvedSearchParams?.latitude");
+        loyaltyRouteSource.Should().Contain("readBoundedNumericSearchParam(");
+        loyaltyRouteSource.Should().Contain("hasActiveLoyaltyProgram: true,");
+        loyaltyRouteSource.Should().Contain("cmsPages={cmsPagesResult.data?.items ?? []}");
+        loyaltyRouteSource.Should().Contain("categories={categoriesResult.data?.items.slice(0, 3) ?? []}");
+        loyaltyBusinessRouteSource.Should().Contain("if (!session) {");
+        loyaltyBusinessRouteSource.Should().Contain("<LoyaltyPublicBusinessPage");
+        loyaltyBusinessRouteSource.Should().Contain("const memberBusinessResult = await getCurrentMemberBusinessWithMyAccount(businessId);");
+        loyaltyBusinessRouteSource.Should().Contain("!memberBusinessResult.data?.hasAccount");
+        loyaltyBusinessRouteSource.Should().Contain("getCurrentMemberLoyaltyBusinessDashboard(businessId)");
+        loyaltyBusinessRouteSource.Should().Contain("getCurrentMemberLoyaltyRewards(businessId)");
+        loyaltyBusinessRouteSource.Should().Contain("getCurrentMemberLoyaltyTimeline({");
+        loyaltyBusinessRouteSource.Should().Contain("getCurrentMemberPromotions({");
+        loyaltyBusinessRouteSource.Should().Contain("readPreparedMemberLoyaltyScanSession(businessId)");
+        loyaltyBusinessRouteSource.Should().Contain("? await createQrCodeDataUrl(preparedScanSession.scanSessionToken)");
+        loyaltyBusinessRouteSource.Should().Contain("<LoyaltyBusinessPage");
 
         addressesRouteSource.Should().Contain("AddressesPage");
         addressesRouteSource.Should().Contain("MemberAuthRequired");
@@ -1564,6 +1845,14 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         var catalogIndexSeoMetadataSource = ReadWebFrontendFile(Path.Combine("src", "features", "catalog", "server", "get-catalog-index-seo-metadata.ts"));
         var productSeoMetadataSource = ReadWebFrontendFile(Path.Combine("src", "features", "catalog", "server", "get-product-seo-metadata.ts"));
         var commerceSeoMetadataSource = ReadWebFrontendFile(Path.Combine("src", "features", "checkout", "server", "get-commerce-seo-metadata.ts"));
+        var publicCatalogApiSource = ReadWebFrontendFile(Path.Combine("src", "features", "catalog", "api", "public-catalog.ts"));
+        var publicCmsApiSource = ReadWebFrontendFile(Path.Combine("src", "features", "cms", "api", "public-cms.ts"));
+        var publicCheckoutApiSource = ReadWebFrontendFile(Path.Combine("src", "features", "checkout", "api", "public-checkout.ts"));
+        var memberPortalApiSource = ReadWebFrontendFile(Path.Combine("src", "features", "member-portal", "api", "member-portal.ts"));
+        var commerceRouteContextSource = ReadWebFrontendFile(Path.Combine("src", "features", "checkout", "server", "get-commerce-route-context.ts"));
+        var memberRouteContextSource = ReadWebFrontendFile(Path.Combine("src", "features", "member-portal", "server", "get-member-route-context.ts"));
+        var ordersRouteSource = ReadWebFrontendFile(Path.Combine("src", "app", "orders", "page.tsx"));
+        var invoicesRouteSource = ReadWebFrontendFile(Path.Combine("src", "app", "invoices", "page.tsx"));
         var memberRouteSeoMetadataSource = ReadWebFrontendFile(Path.Combine("src", "features", "member-portal", "server", "get-member-route-seo-metadata.ts"));
         var activationRecoveryPanelSource = ReadWebFrontendFile(Path.Combine("src", "components", "account", "activation-recovery-panel.tsx"));
         var publicAuthCompositionWindowSource = ReadWebFrontendFile(Path.Combine("src", "components", "account", "public-auth-composition-window.tsx"));
@@ -1572,6 +1861,12 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         var memberAuthRequiredSource = ReadWebFrontendFile(Path.Combine("src", "components", "member", "member-auth-required.tsx"));
         var memberCrossSurfaceRailSource = ReadWebFrontendFile(Path.Combine("src", "components", "member", "member-cross-surface-rail.tsx"));
         var loyaltySeoMetadataSource = ReadWebFrontendFile(Path.Combine("src", "features", "member-portal", "server", "get-loyalty-seo-metadata.ts"));
+        var storefrontContinuationContextSource = ReadWebFrontendFile(Path.Combine("src", "features", "storefront", "server", "get-storefront-continuation-context.ts"));
+        var publicStorefrontContextSource = ReadWebFrontendFile(Path.Combine("src", "features", "storefront", "server", "get-public-storefront-context.ts"));
+        var homeDiscoveryContextSource = ReadWebFrontendFile(Path.Combine("src", "features", "home", "server", "get-home-discovery-context.ts"));
+        var catalogRouteContextSource = ReadWebFrontendFile(Path.Combine("src", "features", "catalog", "server", "get-catalog-route-context.ts"));
+        var cmsRouteContextSource = ReadWebFrontendFile(Path.Combine("src", "features", "cms", "server", "get-cms-route-context.ts"));
+        var routeObservabilitySource = ReadWebFrontendFile(Path.Combine("src", "lib", "route-observability.ts"));
 
         accountPageContextSource.Should().Contain("export function summarizeAccountPageStorefrontSupport(");
         accountPageContextSource.Should().Contain("result.memberRouteContext?.storefrontContext ??");
@@ -1630,16 +1925,34 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         cmsSeoMetadataSource.Should().Contain("shared.cmsPageUnavailableTitle");
         cmsSeoMetadataSource.Should().Contain("shared.cmsFallbackMetaDescription");
         catalogIndexSeoMetadataSource.Should().Contain("const copy = getCatalogResource(culture);");
+        catalogIndexSeoMetadataSource.Should().Contain("return buildAppQueryPath(\"/catalog\", {");
         catalogIndexSeoMetadataSource.Should().Contain("title: copy.catalogMetaTitle,");
         catalogIndexSeoMetadataSource.Should().Contain("description: copy.catalogMetaDescription,");
         productSeoMetadataSource.Should().Contain("const copy = getCatalogResource(culture);");
         productSeoMetadataSource.Should().Contain("title: copy.productUnavailableMetaTitle,");
         productSeoMetadataSource.Should().Contain("copy.productFallbackMetaDescription");
+        productSeoMetadataSource.Should().Contain("imageUrl: product.media[0]?.url ?? product.primaryImageUrl,");
         commerceSeoMetadataSource.Should().Contain("const copy = getCommerceResource(culture);");
         commerceSeoMetadataSource.Should().Contain("return copy.cartMetaTitle;");
         commerceSeoMetadataSource.Should().Contain("return copy.checkoutMetaTitle;");
         commerceSeoMetadataSource.Should().Contain("return copy.confirmationMetaTitle;");
         commerceSeoMetadataSource.Should().Contain("return copy.mockCheckoutMetaTitle;");
+        publicCatalogApiSource.Should().Contain("import { buildQuerySuffix } from \"@/lib/query-params\";");
+        publicCatalogApiSource.Should().Contain("`/api/v1/public/catalog/categories${buildQuerySuffix({");
+        publicCatalogApiSource.Should().Contain("`/api/v1/public/catalog/products${buildQuerySuffix({");
+        publicCatalogApiSource.Should().Contain("`/api/v1/public/catalog/products/${encodeURIComponent(slug)}${buildQuerySuffix({");
+        publicCmsApiSource.Should().Contain("import { buildQuerySuffix } from \"@/lib/query-params\";");
+        publicCmsApiSource.Should().Contain("`/api/v1/public/cms/menus/${encodeURIComponent(name)}${buildQuerySuffix({");
+        publicCmsApiSource.Should().Contain("`/api/v1/public/cms/pages/${encodeURIComponent(slug)}${buildQuerySuffix({");
+        publicCmsApiSource.Should().Contain("`/api/v1/public/cms/pages${buildQuerySuffix({");
+        publicCheckoutApiSource.Should().Contain("import { buildQuerySuffix } from \"@/lib/query-params\";");
+        publicCheckoutApiSource.Should().Contain("`/api/v1/public/checkout/orders/${orderId}/confirmation${buildQuerySuffix({");
+        memberPortalApiSource.Should().Contain("import { buildQuerySuffix, serializeQueryParams } from \"@/lib/query-params\";");
+        memberPortalApiSource.Should().Contain("function buildPagedQuery(page?: number, pageSize?: number)");
+        memberPortalApiSource.Should().Contain("return buildQuerySuffix({");
+        memberPortalApiSource.Should().Contain("`/api/v1/member/loyalty/my/businesses?${serializeQueryParams({");
+        ordersRouteSource.Should().Contain("const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);");
+        invoicesRouteSource.Should().Contain("const safePage = readPositiveIntegerSearchParam(resolvedSearchParams?.page);");
         memberRouteSeoMetadataSource.Should().Contain("const copy = getMemberResource(culture);");
         memberRouteSeoMetadataSource.Should().Contain("return copy.profileMetaTitle;");
         memberRouteSeoMetadataSource.Should().Contain("return copy.preferencesMetaTitle;");
@@ -1693,6 +2006,43 @@ public sealed class SecurityAndPerformanceWebFrontendSourceTests : SecurityAndPe
         memberSummaryContextSource.Should().Contain("normalizeArgs: normalizePagingArgs");
         memberSummaryContextSource.Should().Contain("collection: \"orders\",");
         memberSummaryContextSource.Should().Contain("collection: \"invoices\",");
+        storefrontContinuationContextSource.Should().Contain("const getCachedStorefrontContinuationContext = createSharedContextLoader({");
+        storefrontContinuationContextSource.Should().Contain("kind: \"storefront-continuation\"");
+        storefrontContinuationContextSource.Should().Contain("operation: \"load-context\"");
+        storefrontContinuationContextSource.Should().Contain("getPublishedPages({ page: 1, pageSize: 3, culture })");
+        storefrontContinuationContextSource.Should().Contain("getPublicCategories(culture)");
+        storefrontContinuationContextSource.Should().Contain("getPublicProducts({ page: 1, pageSize: 3, culture })");
+        storefrontContinuationContextSource.Should().Contain("return getCachedStorefrontContinuationContext(culture);");
+        publicStorefrontContextSource.Should().Contain("const getCachedPublicStorefrontContext = createSharedContextLoader({");
+        publicStorefrontContextSource.Should().Contain("kind: \"public-storefront\"");
+        publicStorefrontContextSource.Should().Contain("operation: \"load-context\"");
+        publicStorefrontContextSource.Should().Contain("getStorefrontContinuationContext(culture)");
+        publicStorefrontContextSource.Should().Contain("getStorefrontShoppingContext()");
+        publicStorefrontContextSource.Should().Contain("return getCachedPublicStorefrontContext(culture);");
+        homeDiscoveryContextSource.Should().Contain("const loadHomeCoreContext = createObservedLoader({");
+        homeDiscoveryContextSource.Should().Contain("const getCachedHomeDiscoveryContext = createCachedObservedLoader({");
+        homeDiscoveryContextSource.Should().Contain("thresholdMs: 250,");
+        homeDiscoveryContextSource.Should().Contain("thresholdMs: 275,");
+        homeDiscoveryContextSource.Should().Contain("getPublicStorefrontContext(culture)");
+        homeDiscoveryContextSource.Should().Contain("return getCachedHomeDiscoveryContext(culture);");
+        commerceRouteContextSource.Should().Contain("thresholdMs: 300,");
+        commerceRouteContextSource.Should().Contain("thresholdMs: 325,");
+        commerceRouteContextSource.Should().Contain("commerceRouteStorefrontSupportFootprint:");
+        memberRouteContextSource.Should().Contain("thresholdMs: 275,");
+        memberRouteContextSource.Should().Contain("thresholdMs: 300,");
+        memberRouteContextSource.Should().Contain("memberRouteStorefrontSupportFootprint:");
+        catalogRouteContextSource.Should().Contain("const getCachedCatalogIndexRouteContext = createCachedObservedLoader({");
+        catalogRouteContextSource.Should().Contain("const getCachedCatalogDetailRouteContext = createCachedObservedLoader({");
+        catalogRouteContextSource.Should().Contain("thresholdMs: 325,");
+        catalogRouteContextSource.Should().Contain("getPublicStorefrontContext(culture)");
+        cmsRouteContextSource.Should().Contain("const getCachedCmsIndexRouteContext = createCachedObservedLoader({");
+        cmsRouteContextSource.Should().Contain("const getCachedCmsDetailRouteContext = createCachedObservedLoader({");
+        cmsRouteContextSource.Should().Contain("thresholdMs: 325,");
+        cmsRouteContextSource.Should().Contain("getPublicStorefrontContext(culture)");
+        routeObservabilitySource.Should().Contain("if (durationMs >= thresholdMs) {");
+        routeObservabilitySource.Should().Contain("warn(\"Darwin.Web slow operation\", diagnosticDetail);");
+        routeObservabilitySource.Should().Contain("else if (degradedStatuses.length > 0 && shouldLogDegradedOperations()) {");
+        routeObservabilitySource.Should().Contain("error(\"Darwin.Web failed operation\", {");
 
         activationRecoveryPanelSource.Should().Contain("requestEmailConfirmationAction");
         activationRecoveryPanelSource.Should().Contain("buildLocalizedAuthHref(");

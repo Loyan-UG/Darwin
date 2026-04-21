@@ -259,7 +259,7 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             BusinessActivityKind.CampaignTargetingFixApplied => AppResources.DashboardActivityKindCampaignTargetingFixApplied,
             BusinessActivityKind.CampaignTargetingFixNoChange => AppResources.DashboardActivityKindCampaignTargetingFixNoChange,
             BusinessActivityKind.CampaignTargetingFixMetricsReset => AppResources.DashboardActivityKindCampaignTargetingFixMetricsReset,
-            _ => kind.ToString()
+            _ => AppResources.DashboardActivityKindUnknown
         };
     }
 }

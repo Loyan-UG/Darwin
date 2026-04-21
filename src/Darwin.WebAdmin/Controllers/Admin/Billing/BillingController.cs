@@ -690,23 +690,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
         }
 
-        private static List<ProviderPlaybookVm> BuildBillingPlanPlaybooks()
+        private List<ProviderPlaybookVm> BuildBillingPlanPlaybooks()
         {
             return new List<ProviderPlaybookVm>
             {
                 new()
                 {
-                    Title = "Active plans in live use",
-                    ScopeNote = "Plan edits affect future subscription handoff and current support expectations for businesses already on those plans.",
-                    OperatorAction = "Review active-subscription count before changing price, trial, or availability so support knows whether a plan change is safe or rollout-sensitive.",
-                    SettingsDependency = "Business management website and Stripe readiness should already be configured before operators rely on plan handoff."
+                    Title = T("BillingPlansPlaybookActiveTitle"),
+                    ScopeNote = T("BillingPlansPlaybookActiveScope"),
+                    OperatorAction = T("BillingPlansPlaybookActiveAction"),
+                    SettingsDependency = T("BillingPlansPlaybookActiveDependency")
                 },
                 new()
                 {
-                    Title = "Trial and missing-feature plans",
-                    ScopeNote = "Trial-heavy or feature-empty plans usually indicate packaging debt rather than just pricing setup.",
-                    OperatorAction = "Normalize trial duration and enrich feature metadata before using the plan as a business-facing offer in onboarding or upgrade workflows.",
-                    SettingsDependency = "No extra provider secret is required, but external billing handoff depends on business-management website readiness."
+                    Title = T("BillingPlansPlaybookTrialTitle"),
+                    ScopeNote = T("BillingPlansPlaybookTrialScope"),
+                    OperatorAction = T("BillingPlansPlaybookTrialAction"),
+                    SettingsDependency = T("BillingPlansPlaybookTrialDependency")
                 }
             };
         }
@@ -927,33 +927,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
         }
 
-        private static List<PaymentSupportPlaybookVm> BuildPaymentSupportPlaybooks(PaymentEditDto dto)
+        private List<PaymentSupportPlaybookVm> BuildPaymentSupportPlaybooks(PaymentEditDto dto)
         {
             var items = new List<PaymentSupportPlaybookVm>
             {
                 new()
                 {
-                    Title = "Provider correlation",
+                    Title = T("PaymentSupportPlaybookProviderCorrelationTitle"),
                     ScopeNote = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef)
-                        ? "This payment does not have a provider reference yet."
-                        : "This payment already has a provider reference and should stay aligned with provider evidence.",
+                        ? T("PaymentSupportPlaybookProviderCorrelationMissingScope")
+                        : T("PaymentSupportPlaybookProviderCorrelationPresentScope"),
                     OperatorAction = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef)
-                        ? "Verify the real provider-side reference before treating this record as reconciled. If support confirms an offline/manual payment, keep the row documented clearly."
-                        : "Use the provider reference when matching support tickets, refunds, or invoice disputes. Avoid overwriting it unless the current value is clearly wrong."
+                        ? T("PaymentSupportPlaybookProviderCorrelationMissingAction")
+                        : T("PaymentSupportPlaybookProviderCorrelationPresentAction")
                 },
                 new()
                 {
-                    Title = "Failure and refund review",
+                    Title = T("PaymentSupportPlaybookFailureRefundTitle"),
                     ScopeNote = !string.IsNullOrWhiteSpace(dto.FailureReason)
-                        ? "This payment carries a recorded failure reason and needs operator review before assuming recovery."
+                        ? T("PaymentSupportPlaybookFailureScope")
                         : dto.Refunds.Count > 0
-                            ? "This payment already has refund activity and should be reviewed together with order/invoice context."
-                            : "Use this payment as the source of truth for payment, refund, and invoice coordination.",
+                            ? T("PaymentSupportPlaybookRefundScope")
+                            : T("PaymentSupportPlaybookBaselineScope"),
                     OperatorAction = !string.IsNullOrWhiteSpace(dto.FailureReason)
-                        ? "Review the linked order, invoice, and customer before changing status. Keep the failure note unless support has verified a corrected outcome."
+                        ? T("PaymentSupportPlaybookFailureAction")
                         : dto.Refunds.Count > 0
-                            ? "Review the refund timeline below and keep payment status, refund status, and invoice settlement aligned."
-                            : "If a refund or settlement issue appears later, start from this workspace and then follow the linked order or invoice."
+                            ? T("PaymentSupportPlaybookRefundAction")
+                            : T("PaymentSupportPlaybookBaselineAction")
                 }
             };
 
@@ -961,9 +961,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 items.Add(new PaymentSupportPlaybookVm
                 {
-                    Title = "Stripe-first support path",
-                    ScopeNote = "Stripe is the only phase-1 payment provider expected to be production-ready.",
-                    OperatorAction = "Check Stripe readiness from the payments queue, then validate provider reference, failure reason, and linked order/invoice before changing local status."
+                    Title = T("PaymentSupportPlaybookStripeTitle"),
+                    ScopeNote = T("PaymentSupportPlaybookStripeScope"),
+                    OperatorAction = T("PaymentSupportPlaybookStripeAction")
                 });
             }
 
@@ -1654,10 +1654,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
         }
 
-        private static void PopulateBillingPlanOptions(BillingPlanEditVm vm)
+        private void PopulateBillingPlanOptions(BillingPlanEditVm vm)
         {
             vm.IntervalItems = Enum.GetValues<BillingInterval>()
-                .Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(x.ToString(), x.ToString(), x == vm.Interval))
+                .Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T(x.ToString()), x.ToString(), x == vm.Interval))
                 .ToList();
         }
 

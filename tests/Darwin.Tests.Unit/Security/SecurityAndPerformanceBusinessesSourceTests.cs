@@ -1604,7 +1604,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("? (!string.IsNullOrWhiteSpace(settings.SmtpFromDisplayName) ? settings.SmtpFromDisplayName : settings.Title)");
         controllerSource.Should().Contain("vm.CommunicationReplyToEmail = string.IsNullOrWhiteSpace(vm.CommunicationReplyToEmail)");
         controllerSource.Should().Contain("vm.CategoryOptions = Enum.GetValues<BusinessCategoryKind>()");
-        controllerSource.Should().Contain(".Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Category == x))");
+        controllerSource.Should().Contain(".Select(x => new SelectListItem(T(x.ToString()), x.ToString(), vm.Category == x))");
         controllerSource.Should().Contain("vm.OwnerUserOptions = await _referenceData.GetUserOptionsAsync(vm.OwnerUserId, includeEmpty: true, ct);");
         controllerSource.Should().Contain("vm.CommunicationReadiness = await BuildBusinessCommunicationReadinessAsync(ct);");
         controllerSource.Should().Contain("vm.Subscription = await BuildBusinessSubscriptionSnapshotAsync(vm.Id, ct);");
@@ -1618,7 +1618,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
 
         controllerSource.Should().Contain("private async Task PopulateMemberFormOptionsAsync(BusinessMemberEditVm vm, bool includeUserSelection, CancellationToken ct)");
         controllerSource.Should().Contain("vm.RoleOptions = Enum.GetValues<BusinessMemberRole>()");
-        controllerSource.Should().Contain(".Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Role == x))");
+        controllerSource.Should().Contain(".Select(x => new SelectListItem(T(x.ToString()), x.ToString(), vm.Role == x))");
         controllerSource.Should().Contain("if (includeUserSelection)");
         controllerSource.Should().Contain("vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId == Guid.Empty ? null : vm.UserId, includeEmpty: false, ct);");
     }
@@ -1671,9 +1671,9 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("private static void PopulateInvitationFormOptions(BusinessInvitationCreateVm vm)");
+        controllerSource.Should().Contain("private void PopulateInvitationFormOptions(BusinessInvitationCreateVm vm)");
         controllerSource.Should().Contain("vm.RoleOptions = Enum.GetValues<BusinessMemberRole>()");
-        controllerSource.Should().Contain(".Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Role == x))");
+        controllerSource.Should().Contain(".Select(x => new SelectListItem(T(x.ToString()), x.ToString(), vm.Role == x))");
         controllerSource.Should().Contain(".ToList();");
     }
 
@@ -1815,7 +1815,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("private IEnumerable<SelectListItem> BuildBusinessStatusItems(BusinessOperationalStatus? selectedStatus)");
         controllerSource.Should().Contain("yield return new SelectListItem(T(\"AllStatuses\"), string.Empty, !selectedStatus.HasValue);");
         controllerSource.Should().Contain("foreach (var status in Enum.GetValues<BusinessOperationalStatus>())");
-        controllerSource.Should().Contain("yield return new SelectListItem(status.ToString(), status.ToString(), selectedStatus == status);");
+        controllerSource.Should().Contain("yield return new SelectListItem(T(status.ToString()), status.ToString(), selectedStatus == status);");
     }
 
 

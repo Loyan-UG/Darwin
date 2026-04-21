@@ -21,6 +21,16 @@ namespace Darwin.Mobile.Shared.Services.Profile
         Task<Result> UpdateMeAsync(CustomerProfile profile, CancellationToken ct);
 
         /// <summary>
+        /// Requests a phone verification code for the current authenticated user.
+        /// </summary>
+        Task<Result> RequestPhoneVerificationAsync(RequestPhoneVerificationRequest request, CancellationToken ct);
+
+        /// <summary>
+        /// Confirms the current authenticated user's phone verification code.
+        /// </summary>
+        Task<Result> ConfirmPhoneVerificationAsync(ConfirmPhoneVerificationRequest request, CancellationToken ct);
+
+        /// <summary>
         /// Loads the current user's privacy and communication preferences.
         /// </summary>
         Task<MemberPreferences?> GetPreferencesAsync(CancellationToken ct);

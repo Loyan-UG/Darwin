@@ -3,6 +3,19 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("RefundQueueTitle");
+    string LocalizeRefundStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizePaymentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeProviderReferenceState(string? state) => state switch
+    {
+        "Stripe ref missing" => T.T("BillingProviderStripeRefMissing"),
+        "Reference missing" => T.T("BillingProviderReferenceMissing"),
+        "Waiting for provider refund completion" => T.T("BillingProviderWaitingForRefundCompletion"),
+        "Refund recorded against provider ref" => T.T("BillingProviderRefundRecordedAgainstReference"),
+        "Provider-side refund failure needs review" => T.T("BillingProviderRefundFailureNeedsReview"),
+        "Payment fully refunded on provider" => T.T("BillingProviderPaymentFullyRefunded"),
+        "Provider reference linked" => T.T("BillingProviderReferenceLinked"),
+        _ => string.IsNullOrWhiteSpace(state) ? "-" : T.T(state)
+    };
 }
 
 <div id="billing-refunds-workspace-shell">
@@ -211,8 +224,8 @@
                         {
                             <div class="small text-muted">@item.PaymentProviderReference</div>
                         }
-                        <div class="small text-muted">@item.ProviderReferenceState</div>
-                        <div class="small">@item.PaymentStatus</div>
+                        <div class="small text-muted">@LocalizeProviderReferenceState(item.ProviderReferenceState)</div>
+                        <div class="small">@LocalizePaymentStatus(item.PaymentStatus)</div>
                         @if (item.IsStripe)
                         {
                             <div><span class="badge text-bg-info mt-1">@T.T("Stripe")</span></div>
@@ -246,7 +259,7 @@
                     </td>
                     <td>
                         <div>@item.Reason</div>
-                        <div class="small text-muted">@item.Status</div>
+                        <div class="small text-muted">@LocalizeRefundStatus(item.Status)</div>
                     </td>
                     <td>
                         <div class="small text-muted">@T.T("Created") @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>

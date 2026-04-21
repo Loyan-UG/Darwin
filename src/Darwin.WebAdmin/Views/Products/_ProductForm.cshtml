@@ -1,5 +1,13 @@
 @using Darwin.Domain.Enums
 @model Darwin.WebAdmin.ViewModels.Catalog.ProductEditorVm
+@{
+    var productKindOptions = Html.GetEnumSelectList<ProductKind>()
+        .Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+        {
+            Value = option.Value,
+            Text = T.T(option.Text)
+        });
+}
 
 <div class="card shadow-sm">
     <div class="card-body">
@@ -20,7 +28,7 @@
             <div class="col-md-4">
                 <label class="form-label">@T.T("Kind")</label>
                 <select asp-for="Kind" class="form-select"
-                        asp-items="Html.GetEnumSelectList<ProductKind>()"></select>
+                        asp-items="productKindOptions"></select>
             </div>
         </div>
 

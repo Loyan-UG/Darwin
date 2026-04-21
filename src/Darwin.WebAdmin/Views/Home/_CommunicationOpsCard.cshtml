@@ -5,7 +5,7 @@
     {
         "SMS" => T.T("SMS"),
         "WhatsApp" => T.T("WhatsApp"),
-        _ => channel
+        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : T.T(channel)
     };
 }
 

@@ -41,7 +41,7 @@
                            Style="{StaticResource SectionHeadingLabelStyle}"
                            LineBreakMode="WordWrap"
                            IsVisible="{Binding Business.LoyaltyProgramPublic, Converter={StaticResource NullCheckConverter}}" />
-                    <Label Text="{Binding Business.LoyaltyProgramPublic.IsActive, StringFormat={x:Static res:AppResources.BusinessActiveFormat}}"
+                    <Label Text="{Binding Business.LoyaltyProgramPublic.IsActive, Converter={StaticResource LocalizedBooleanConverter}, StringFormat={x:Static res:AppResources.BusinessActiveFormat}}"
                            Style="{StaticResource SecondaryBodyLabelStyle}"
                            IsVisible="{Binding Business.LoyaltyProgramPublic, Converter={StaticResource NullCheckConverter}}" />
 
@@ -154,7 +154,7 @@
                                     <VerticalStackLayout Spacing="4">
                                         <Label Text="{Binding PointsRequired, StringFormat={x:Static res:AppResources.BusinessPointsFormat}}"
                                                Style="{StaticResource BodyLabelStyle}" />
-                                        <Label Text="{Binding RewardType, StringFormat={x:Static res:AppResources.BusinessRewardTypeFormat}}"
+                                        <Label Text="{Binding RewardType, Converter={StaticResource BusinessRewardTypeConverter}, StringFormat={x:Static res:AppResources.BusinessRewardTypeFormat}}"
                                                Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding RewardValue, StringFormat={x:Static res:AppResources.BusinessRewardValueFormat}}"
                                                Style="{StaticResource SecondaryBodyLabelStyle}"
@@ -162,7 +162,7 @@
                                         <Label Text="{Binding Description}"
                                                Style="{StaticResource SecondaryBodyLabelStyle}"
                                                IsVisible="{Binding Description, Converter={StaticResource NullCheckConverter}}" />
-                                        <Label Text="{Binding AllowSelfRedemption, StringFormat={x:Static res:AppResources.BusinessSelfRedemptionFormat}}"
+                                        <Label Text="{Binding AllowSelfRedemption, Converter={StaticResource LocalizedBooleanConverter}, StringFormat={x:Static res:AppResources.BusinessSelfRedemptionFormat}}"
                                                Style="{StaticResource SecondaryBodyLabelStyle}" />
                                     </VerticalStackLayout>
                                 </Border>

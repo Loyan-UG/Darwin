@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CrmCustomersTitle");
+    string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
 }
 
 <div id="crm-customers-workspace-shell">
@@ -232,7 +233,7 @@
                         }
                     </td>
                     <td>
-                        <span class="badge @(item.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@item.TaxProfileType</span>
+                        <span class="badge @(item.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@LocalizeCustomerTaxProfileType(item.TaxProfileType)</span>
                         @if (!string.IsNullOrWhiteSpace(item.VatId))
                         {
                             <div class="small text-muted">@item.VatId</div>

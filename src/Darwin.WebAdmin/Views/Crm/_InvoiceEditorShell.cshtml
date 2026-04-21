@@ -1,5 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InvoiceEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string LocalizeCrmInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
+    var invoiceStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
+}
 
 <div id="crm-invoice-editor-shell">
     <h1 class="mb-3">@T.T("EditInvoice")</h1>
@@ -51,7 +56,7 @@
                 @if (Model.CustomerTaxProfileType.HasValue)
                 {
                     <div class="small mt-1">
-                        <span class="badge @(Model.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@Model.CustomerTaxProfileType</span>
+                        <span class="badge @(Model.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@LocalizeCustomerTaxProfileType(Model.CustomerTaxProfileType)</span>
                         @if (!string.IsNullOrWhiteSpace(Model.CustomerVatId))
                         {
                             <span class="text-muted ms-1">@Model.CustomerVatId</span>
@@ -113,7 +118,7 @@
                 </form>
 
                 <span class="badge text-bg-primary-subtle border border-primary-subtle text-primary-emphasis ms-auto">
-                    @T.T("Current"): @Model.Status
+                    @T.T("Current"): @LocalizeCrmInvoiceStatus(Model.Status)
                 </span>
             </div>
         </div>
@@ -385,7 +390,7 @@
             </div>
             <div class="col-md-3">
                 <label asp-for="Status" class="form-label"></label>
-                <select asp-for="Status" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>()" class="form-select"></select>
+                <select asp-for="Status" asp-items="invoiceStatusOptions" class="form-select"></select>
             </div>
             <div class="col-md-3">
                 <label asp-for="Currency" class="form-label"></label>

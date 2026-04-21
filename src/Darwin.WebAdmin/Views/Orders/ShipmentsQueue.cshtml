@@ -3,6 +3,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Shipments");
+    string LocalizeShipmentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="shipments-queue-workspace-shell">
@@ -265,7 +266,7 @@
                     <td>@item.TotalWeight</td>
                     <td>
                         <span class="badge text-bg-@(item.Status == Darwin.Domain.Enums.ShipmentStatus.Delivered ? "success" : item.Status == Darwin.Domain.Enums.ShipmentStatus.Shipped ? "primary" : "warning")">
-                            @item.Status
+                            @LocalizeShipmentStatus(item.Status)
                         </span>
                         @if (item.IsDhl)
                         {

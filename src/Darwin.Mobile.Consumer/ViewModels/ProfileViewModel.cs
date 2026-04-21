@@ -22,6 +22,13 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// </remarks>
 public sealed class ProfileViewModel : BaseViewModel
 {
+    public sealed class PhoneVerificationChannelOption
+    {
+        public required string Value { get; init; }
+
+        public required string DisplayName { get; init; }
+    }
+
     private readonly IProfileService _profileService;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
     private readonly IConsumerPushTokenProvider _pushTokenProvider;
@@ -38,8 +45,12 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _locale = ProfileContractDefaults.DefaultLocale;
     private string _timezone = ProfileContractDefaults.DefaultTimezone;
     private string _currency = ProfileContractDefaults.DefaultCurrency;
+    private bool _phoneNumberConfirmed;
+    private PhoneVerificationChannelOption _selectedPhoneVerificationChannel;
+    private string _phoneVerificationCode = string.Empty;
 
     private string? _successMessage;
+    private string? _phoneVerificationStatusMessage;
     private string _pushRegistrationStatus = AppResources.ProfilePushRegistrationStatusIdle;
     private string? _lastPushSyncAtText;
     private bool _isPushSyncBusy;
@@ -63,15 +74,33 @@ public sealed class ProfileViewModel : BaseViewModel
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
         _pushTokenProvider = pushTokenProvider ?? throw new ArgumentNullException(nameof(pushTokenProvider));
         _notificationPermissionService = notificationPermissionService ?? throw new ArgumentNullException(nameof(notificationPermissionService));
+        PhoneVerificationChannelOptions =
+        [
+            new PhoneVerificationChannelOption
+            {
+                Value = "Sms",
+                DisplayName = AppResources.ProfilePhoneVerificationSmsOption
+            },
+            new PhoneVerificationChannelOption
+            {
+                Value = "WhatsApp",
+                DisplayName = AppResources.ProfilePhoneVerificationWhatsAppOption
+            }
+        ];
+        _selectedPhoneVerificationChannel = PhoneVerificationChannelOptions[0];
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
+        RequestPhoneVerificationCommand = new AsyncCommand(RequestPhoneVerificationAsync, CanRunPhoneVerificationAction);
+        ConfirmPhoneVerificationCommand = new AsyncCommand(ConfirmPhoneVerificationAsync, CanRunPhoneVerificationAction);
         SyncPushRegistrationCommand = new AsyncCommand(SyncPushRegistrationAsync, () => !IsPushSyncBusy);
         OpenNotificationSettingsCommand = new AsyncCommand(OpenNotificationSettingsAsync);
     }
 
     public AsyncCommand RefreshCommand { get; }
     public AsyncCommand SaveProfileCommand { get; }
+    public AsyncCommand RequestPhoneVerificationCommand { get; }
+    public AsyncCommand ConfirmPhoneVerificationCommand { get; }
     public AsyncCommand SyncPushRegistrationCommand { get; }
     public AsyncCommand OpenNotificationSettingsCommand { get; }
 
@@ -117,6 +146,40 @@ public sealed class ProfileViewModel : BaseViewModel
         set => SetProperty(ref _currency, value);
     }
 
+    public bool PhoneNumberConfirmed
+    {
+        get => _phoneNumberConfirmed;
+        private set
+        {
+            if (SetProperty(ref _phoneNumberConfirmed, value))
+            {
+                OnPropertyChanged(nameof(PhoneVerificationReadinessText));
+                RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
+                ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public IReadOnlyList<PhoneVerificationChannelOption> PhoneVerificationChannelOptions { get; }
+
+    public PhoneVerificationChannelOption SelectedPhoneVerificationChannel
+    {
+        get => _selectedPhoneVerificationChannel;
+        set => SetProperty(ref _selectedPhoneVerificationChannel, value);
+    }
+
+    public string PhoneVerificationCode
+    {
+        get => _phoneVerificationCode;
+        set
+        {
+            if (SetProperty(ref _phoneVerificationCode, value))
+            {
+                ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
     public string? SuccessMessage
     {
         get => _successMessage;
@@ -130,6 +193,25 @@ public sealed class ProfileViewModel : BaseViewModel
     }
 
     public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
+
+    public string? PhoneVerificationStatusMessage
+    {
+        get => _phoneVerificationStatusMessage;
+        private set
+        {
+            if (SetProperty(ref _phoneVerificationStatusMessage, value))
+            {
+                OnPropertyChanged(nameof(HasPhoneVerificationStatus));
+            }
+        }
+    }
+
+    public bool HasPhoneVerificationStatus => !string.IsNullOrWhiteSpace(PhoneVerificationStatusMessage);
+
+    public string PhoneVerificationReadinessText =>
+        PhoneNumberConfirmed
+            ? AppResources.ProfilePhoneVerificationConfirmed
+            : AppResources.ProfilePhoneVerificationPending;
 
     public string PushRegistrationStatus
     {
@@ -326,6 +408,7 @@ public sealed class ProfileViewModel : BaseViewModel
                 FirstName = profile.FirstName ?? string.Empty;
                 LastName = profile.LastName ?? string.Empty;
                 PhoneE164 = profile.PhoneE164 ?? string.Empty;
+                PhoneNumberConfirmed = profile.PhoneNumberConfirmed;
                 Locale = string.IsNullOrWhiteSpace(profile.Locale) ? ProfileContractDefaults.DefaultLocale : profile.Locale;
                 Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? ProfileContractDefaults.DefaultTimezone : profile.Timezone;
                 Currency = string.IsNullOrWhiteSpace(profile.Currency) ? ProfileContractDefaults.DefaultCurrency : profile.Currency;
@@ -345,6 +428,8 @@ public sealed class ProfileViewModel : BaseViewModel
                 IsBusy = false;
                 SaveProfileCommand.RaiseCanExecuteChanged();
                 RefreshCommand.RaiseCanExecuteChanged();
+                RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
+                ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
             });
         }
     }
@@ -490,6 +575,117 @@ public sealed class ProfileViewModel : BaseViewModel
                 IsBusy = false;
                 SaveProfileCommand.RaiseCanExecuteChanged();
                 RefreshCommand.RaiseCanExecuteChanged();
+                RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
+                ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
+    private async Task RequestPhoneVerificationAsync()
+    {
+        if (!CanRunPhoneVerificationAction())
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(PhoneE164))
+        {
+            RunOnMain(() => PhoneVerificationStatusMessage = AppResources.ProfilePhoneVerificationPhoneRequired);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            PhoneVerificationStatusMessage = null;
+        });
+
+        try
+        {
+            var result = await _profileService.RequestPhoneVerificationAsync(
+                new RequestPhoneVerificationRequest { Channel = SelectedPhoneVerificationChannel.Value },
+                CancellationToken.None).ConfigureAwait(false);
+
+            RunOnMain(() =>
+            {
+                PhoneVerificationStatusMessage = result.Succeeded
+                    ? string.Format(AppResources.ProfilePhoneVerificationCodeRequested, SelectedPhoneVerificationChannel.DisplayName)
+                    : AppResources.ProfilePhoneVerificationRequestFailed;
+            });
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => PhoneVerificationStatusMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfilePhoneVerificationRequestFailed));
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                SaveProfileCommand.RaiseCanExecuteChanged();
+                RefreshCommand.RaiseCanExecuteChanged();
+                RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
+                ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
+    private async Task ConfirmPhoneVerificationAsync()
+    {
+        if (!CanRunPhoneVerificationAction())
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(PhoneVerificationCode))
+        {
+            RunOnMain(() => PhoneVerificationStatusMessage = AppResources.ProfilePhoneVerificationCodeRequired);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            PhoneVerificationStatusMessage = null;
+        });
+
+        try
+        {
+            var result = await _profileService.ConfirmPhoneVerificationAsync(
+                new ConfirmPhoneVerificationRequest { Code = PhoneVerificationCode.Trim() },
+                CancellationToken.None).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                RunOnMain(() => PhoneVerificationStatusMessage = AppResources.ProfilePhoneVerificationConfirmFailed);
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                PhoneVerificationCode = string.Empty;
+                PhoneVerificationStatusMessage = AppResources.ProfilePhoneVerificationConfirmSuccess;
+            });
+
+            _isLoaded = false;
+            await RefreshAsync().ConfigureAwait(false);
+            _isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => PhoneVerificationStatusMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfilePhoneVerificationConfirmFailed));
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                SaveProfileCommand.RaiseCanExecuteChanged();
+                RefreshCommand.RaiseCanExecuteChanged();
+                RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
+                ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
             });
         }
     }
@@ -620,6 +816,11 @@ public sealed class ProfileViewModel : BaseViewModel
                !string.IsNullOrWhiteSpace(Locale) &&
                !string.IsNullOrWhiteSpace(Timezone) &&
                !string.IsNullOrWhiteSpace(Currency);
+    }
+
+    private bool CanRunPhoneVerificationAction()
+    {
+        return !IsBusy && !PhoneNumberConfirmed;
     }
 
     private static string? Normalize(string? value)

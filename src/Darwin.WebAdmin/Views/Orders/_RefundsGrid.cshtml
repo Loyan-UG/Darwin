@@ -1,5 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderRefundsPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string LocalizeRefundStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+}
 
 <div id="refunds-grid-content"
      hx-boost="true"
@@ -67,11 +70,11 @@
                             <td>
                                 <div class="fw-semibold">@item.PaymentProvider</div>
                                 <div class="small text-muted">@item.PaymentProviderReference</div>
-                                <div class="small text-muted">@T.T("PaymentStatus"): @item.PaymentStatus</div>
+                                <div class="small text-muted">@T.T("PaymentStatus"): @LocalizeRefundStatus(item.PaymentStatus)</div>
                             </td>
                             <td>@item.Reason</td>
                             <td class="text-end">@item.Currency @((item.AmountMinor / 100.0M).ToString("0.00"))</td>
-                            <td>@item.Status</td>
+                            <td>@LocalizeRefundStatus(item.Status)</td>
                             <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
                             <td class="text-end">
                                 <a asp-controller="Billing"

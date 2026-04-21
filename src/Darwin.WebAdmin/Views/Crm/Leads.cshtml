@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CrmLeadsTitle");
+    string LocalizeLeadStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="crm-leads-workspace-shell">
@@ -145,7 +146,7 @@
                     <td>@item.CompanyName</td>
                     <td>@item.Email</td>
                     <td>@item.Phone</td>
-                    <td><span class="badge text-bg-light">@item.Status</span></td>
+                    <td><span class="badge text-bg-light">@LocalizeLeadStatus(item.Status)</span></td>
                     <td>@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? "-" : item.AssignedToUserDisplayName)</td>
                     <td>@item.InteractionCount</td>
                     <td>@item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>

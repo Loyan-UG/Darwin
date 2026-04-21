@@ -3,6 +3,7 @@
 @{
     var formAction = ViewData["FormAction"]?.ToString() ?? "EditCustomer";
     var heading = formAction == "CreateCustomer" ? T.T("CreateCustomer") : T.T("EditCustomer");
+    string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
 }
 
 <div id="crm-customer-editor-shell">
@@ -24,7 +25,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="text-muted">@T.T("TaxProfile")</div>
-                        <div class="fw-semibold">@Model.TaxProfileType</div>
+                        <div class="fw-semibold">@LocalizeCustomerTaxProfileType(Model.TaxProfileType)</div>
                     </div>
                     <div class="col-md-3">
                         <div class="text-muted">@T.T("TaxId")</div>

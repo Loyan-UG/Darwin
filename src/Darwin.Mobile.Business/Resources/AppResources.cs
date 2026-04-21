@@ -43,8 +43,14 @@ public static class AppResources
                                         ?? "No QR code detected. Please try again.";
     public static string NoActiveSession => ResourceManager.GetString(nameof(NoActiveSession), Culture)
                                           ?? "No active scan session.";
+    public static string InvalidSessionToken => ResourceManager.GetString(nameof(InvalidSessionToken), Culture)
+                                             ?? "Invalid session token.";
+    public static string SessionLoadFailed => ResourceManager.GetString(nameof(SessionLoadFailed), Culture)
+                                           ?? "Failed to load session details.";
+    public static string SessionLoadSuccess => ResourceManager.GetString(nameof(SessionLoadSuccess), Culture)
+                                            ?? "Session loaded successfully.";
     public static string AccrualNotAllowed => ResourceManager.GetString(nameof(AccrualNotAllowed), Culture)
-                                            ?? "Accrual is not allowed for this session.";
+                                             ?? "Accrual is not allowed for this session.";
     public static string RedemptionNotAllowed => ResourceManager.GetString(nameof(RedemptionNotAllowed), Culture)
                                                ?? "Redemption is not allowed for this session.";
     public static string PointsMustBeGreaterThanZero => ResourceManager.GetString(nameof(PointsMustBeGreaterThanZero), Culture)
@@ -53,8 +59,12 @@ public static class AppResources
                                               ?? "Failed to process scan.";
     public static string FailedToConfirmAccrual => ResourceManager.GetString(nameof(FailedToConfirmAccrual), Culture)
                                                  ?? "Failed to confirm accrual.";
+    public static string AccrualConfirmedSuccess => ResourceManager.GetString(nameof(AccrualConfirmedSuccess), Culture)
+                                                  ?? "Points accrual confirmed successfully.";
     public static string FailedToConfirmRedemption => ResourceManager.GetString(nameof(FailedToConfirmRedemption), Culture)
-                                                    ?? "Failed to confirm redemption.";
+                                                     ?? "Failed to confirm redemption.";
+    public static string RedemptionConfirmedSuccess => ResourceManager.GetString(nameof(RedemptionConfirmedSuccess), Culture)
+                                                     ?? "Reward redemption confirmed successfully.";
 
     // Login
     public static string LoginTitle => ResourceManager.GetString(nameof(LoginTitle), Culture) ?? "Login";
@@ -81,8 +91,17 @@ public static class AppResources
     public static string InvitationPreviewButton => ResourceManager.GetString(nameof(InvitationPreviewButton), Culture) ?? "Preview invitation";
     public static string InvitationBusinessLabel => ResourceManager.GetString(nameof(InvitationBusinessLabel), Culture) ?? "Business";
     public static string InvitationRoleLabel => ResourceManager.GetString(nameof(InvitationRoleLabel), Culture) ?? "Role";
+    public static string InvitationRoleOwner => ResourceManager.GetString(nameof(InvitationRoleOwner), Culture) ?? "Owner";
+    public static string InvitationRoleManager => ResourceManager.GetString(nameof(InvitationRoleManager), Culture) ?? "Manager";
+    public static string InvitationRoleStaff => ResourceManager.GetString(nameof(InvitationRoleStaff), Culture) ?? "Staff";
+    public static string InvitationRoleUnknown => ResourceManager.GetString(nameof(InvitationRoleUnknown), Culture) ?? "Unknown role";
     public static string InvitationInvitedEmailLabel => ResourceManager.GetString(nameof(InvitationInvitedEmailLabel), Culture) ?? "Invited email";
     public static string InvitationStatusLabel => ResourceManager.GetString(nameof(InvitationStatusLabel), Culture) ?? "Status";
+    public static string InvitationStatusPending => ResourceManager.GetString(nameof(InvitationStatusPending), Culture) ?? "Pending";
+    public static string InvitationStatusAccepted => ResourceManager.GetString(nameof(InvitationStatusAccepted), Culture) ?? "Accepted";
+    public static string InvitationStatusExpired => ResourceManager.GetString(nameof(InvitationStatusExpired), Culture) ?? "Expired";
+    public static string InvitationStatusRevoked => ResourceManager.GetString(nameof(InvitationStatusRevoked), Culture) ?? "Revoked";
+    public static string InvitationStatusUnknown => ResourceManager.GetString(nameof(InvitationStatusUnknown), Culture) ?? "Unknown status";
     public static string InvitationExpiresAtLabel => ResourceManager.GetString(nameof(InvitationExpiresAtLabel), Culture) ?? "Expires";
     public static string InvitationFirstNameRequired => ResourceManager.GetString(nameof(InvitationFirstNameRequired), Culture) ?? "First name is required.";
     public static string InvitationLastNameRequired => ResourceManager.GetString(nameof(InvitationLastNameRequired), Culture) ?? "Last name is required.";
@@ -135,6 +154,14 @@ public static class AppResources
     public static string SubscriptionUnknownPlan => ResourceManager.GetString(nameof(SubscriptionUnknownPlan), Culture) ?? "Unknown plan";
     public static string SubscriptionUnknownProvider => ResourceManager.GetString(nameof(SubscriptionUnknownProvider), Culture) ?? "Unknown provider";
     public static string SubscriptionUnknownStatus => ResourceManager.GetString(nameof(SubscriptionUnknownStatus), Culture) ?? "Unknown status";
+    public static string SubscriptionStatusTrialing => ResourceManager.GetString(nameof(SubscriptionStatusTrialing), Culture) ?? "Trialing";
+    public static string SubscriptionStatusActive => ResourceManager.GetString(nameof(SubscriptionStatusActive), Culture) ?? "Active";
+    public static string SubscriptionStatusPastDue => ResourceManager.GetString(nameof(SubscriptionStatusPastDue), Culture) ?? "Past due";
+    public static string SubscriptionStatusCanceled => ResourceManager.GetString(nameof(SubscriptionStatusCanceled), Culture) ?? "Canceled";
+    public static string SubscriptionStatusUnpaid => ResourceManager.GetString(nameof(SubscriptionStatusUnpaid), Culture) ?? "Unpaid";
+    public static string SubscriptionStatusIncomplete => ResourceManager.GetString(nameof(SubscriptionStatusIncomplete), Culture) ?? "Incomplete";
+    public static string SubscriptionStatusIncompleteExpired => ResourceManager.GetString(nameof(SubscriptionStatusIncompleteExpired), Culture) ?? "Incomplete expired";
+    public static string SubscriptionStatusPaused => ResourceManager.GetString(nameof(SubscriptionStatusPaused), Culture) ?? "Paused";
     public static string SubscriptionDateUnknown => ResourceManager.GetString(nameof(SubscriptionDateUnknown), Culture) ?? "N/A";
     public static string SubscriptionStatusSummaryFormat => ResourceManager.GetString(nameof(SubscriptionStatusSummaryFormat), Culture) ?? "Plan: {0} · Status: {1} · Provider: {2} · Price: {3}";
     public static string SubscriptionStatusDatesFormat => ResourceManager.GetString(nameof(SubscriptionStatusDatesFormat), Culture) ?? "Period end: {0} · Trial end: {1}";
@@ -163,6 +190,10 @@ public static class AppResources
 
     public static string ProfileTitle => ResourceManager.GetString(nameof(ProfileTitle), Culture) ?? "Profile";
     public static string ProfileSectionTitle => ResourceManager.GetString(nameof(ProfileSectionTitle), Culture) ?? "My profile";
+    public static string ProfilePhonePlaceholder => ResourceManager.GetString(nameof(ProfilePhonePlaceholder), Culture) ?? "+49123456789";
+    public static string ProfileLocalePlaceholder => ResourceManager.GetString(nameof(ProfileLocalePlaceholder), Culture) ?? "de-DE";
+    public static string ProfileTimezonePlaceholder => ResourceManager.GetString(nameof(ProfileTimezonePlaceholder), Culture) ?? "Europe/Berlin";
+    public static string ProfileCurrencyPlaceholder => ResourceManager.GetString(nameof(ProfileCurrencyPlaceholder), Culture) ?? "EUR";
     public static string FirstNameLabel => ResourceManager.GetString(nameof(FirstNameLabel), Culture) ?? "First name";
     public static string LastNameLabel => ResourceManager.GetString(nameof(LastNameLabel), Culture) ?? "Last name";
     public static string PhoneLabel => ResourceManager.GetString(nameof(PhoneLabel), Culture) ?? "Phone";
@@ -287,6 +318,7 @@ public static class AppResources
     public static string DashboardActivityKindCampaignTargetingFixApplied => ResourceManager.GetString(nameof(DashboardActivityKindCampaignTargetingFixApplied), Culture) ?? "Campaign targeting quick fix applied";
     public static string DashboardActivityKindCampaignTargetingFixNoChange => ResourceManager.GetString(nameof(DashboardActivityKindCampaignTargetingFixNoChange), Culture) ?? "Campaign targeting quick fix not needed";
     public static string DashboardActivityKindCampaignTargetingFixMetricsReset => ResourceManager.GetString(nameof(DashboardActivityKindCampaignTargetingFixMetricsReset), Culture) ?? "Campaign targeting quick-fix metrics reset";
+    public static string DashboardActivityKindUnknown => ResourceManager.GetString(nameof(DashboardActivityKindUnknown), Culture) ?? "Activity update";
 
 
     // Rewards editor
@@ -304,6 +336,10 @@ public static class AppResources
     public static string RewardsEditorEditingHint => ResourceManager.GetString(nameof(RewardsEditorEditingHint), Culture) ?? "You are editing an existing reward tier. Save to apply updates, or delete it if the offer is no longer valid.";
     public static string RewardsPointsPlaceholder => ResourceManager.GetString(nameof(RewardsPointsPlaceholder), Culture) ?? "Points required";
     public static string RewardsTypePickerTitle => ResourceManager.GetString(nameof(RewardsTypePickerTitle), Culture) ?? "Reward type";
+    public static string RewardsRewardTypeFreeItem => ResourceManager.GetString(nameof(RewardsRewardTypeFreeItem), Culture) ?? "Free item";
+    public static string RewardsRewardTypePercentDiscount => ResourceManager.GetString(nameof(RewardsRewardTypePercentDiscount), Culture) ?? "Percent discount";
+    public static string RewardsRewardTypeAmountDiscount => ResourceManager.GetString(nameof(RewardsRewardTypeAmountDiscount), Culture) ?? "Amount discount";
+    public static string RewardsRewardTypeUnknown => ResourceManager.GetString(nameof(RewardsRewardTypeUnknown), Culture) ?? "Reward";
     public static string RewardsValuePlaceholder => ResourceManager.GetString(nameof(RewardsValuePlaceholder), Culture) ?? "Reward value (optional)";
     public static string RewardsDescriptionPlaceholder => ResourceManager.GetString(nameof(RewardsDescriptionPlaceholder), Culture) ?? "Description (optional)";
     public static string RewardsAllowSelfRedemptionLabel => ResourceManager.GetString(nameof(RewardsAllowSelfRedemptionLabel), Culture) ?? "Allow self redemption";
@@ -344,6 +380,7 @@ public static class AppResources
     public static string RewardsCampaignTargetingHintTierSegment => ResourceManager.GetString(nameof(RewardsCampaignTargetingHintTierSegment), Culture) ?? "Tier preset: provide tier value, for example {\"audienceKind\":\"TierSegment\",\"tier\":\"Gold\"}.";
     public static string RewardsCampaignTargetingHintPointsThreshold => ResourceManager.GetString(nameof(RewardsCampaignTargetingHintPointsThreshold), Culture) ?? "Points preset: provide minimumPoints, for example {\"audienceKind\":\"PointsThreshold\",\"minimumPoints\":100}.";
     public static string RewardsCampaignTargetingHintDateWindow => ResourceManager.GetString(nameof(RewardsCampaignTargetingHintDateWindow), Culture) ?? "Date-window preset: provide eligibleFromUtc and eligibleToUtc in ISO-8601 UTC format.";
+    public static string RewardsCampaignTargetingHintUnknown => ResourceManager.GetString(nameof(RewardsCampaignTargetingHintUnknown), Culture) ?? "Audience kind is unknown. Use a supported preset or correct the JSON payload.";
     public static string RewardsCampaignTargetingHintInvalid => ResourceManager.GetString(nameof(RewardsCampaignTargetingHintInvalid), Culture) ?? "Targeting JSON is invalid. Use presets or a valid JSON object.";
     public static string RewardsCampaignTargetingSchemaTierMissing => ResourceManager.GetString(nameof(RewardsCampaignTargetingSchemaTierMissing), Culture) ?? "Tier audience requires a non-empty \"tier\" value.";
     public static string RewardsCampaignTargetingSchemaMinimumPointsMissing => ResourceManager.GetString(nameof(RewardsCampaignTargetingSchemaMinimumPointsMissing), Culture) ?? "Points audience requires a non-negative \"minimumPoints\" value.";
@@ -368,6 +405,7 @@ public static class AppResources
     public static string RewardsCampaignStateFilterScheduled => ResourceManager.GetString(nameof(RewardsCampaignStateFilterScheduled), Culture) ?? "Scheduled";
     public static string RewardsCampaignStateFilterActive => ResourceManager.GetString(nameof(RewardsCampaignStateFilterActive), Culture) ?? "Active";
     public static string RewardsCampaignStateFilterExpired => ResourceManager.GetString(nameof(RewardsCampaignStateFilterExpired), Culture) ?? "Expired";
+    public static string RewardsCampaignStateUnknown => ResourceManager.GetString(nameof(RewardsCampaignStateUnknown), Culture) ?? "Unknown state";
     public static string RewardsCampaignAudienceFilterPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignAudienceFilterPickerTitle), Culture) ?? "Audience filter";
     public static string RewardsCampaignAudienceFilterAll => ResourceManager.GetString(nameof(RewardsCampaignAudienceFilterAll), Culture) ?? "All audiences";
     public static string RewardsCampaignSortPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignSortPickerTitle), Culture) ?? "Sort by";
@@ -383,12 +421,14 @@ public static class AppResources
     public static string RewardsCampaignSelectionHint => ResourceManager.GetString(nameof(RewardsCampaignSelectionHint), Culture) ?? "Select an existing campaign below if you want to revise it instead of creating a new draft.";
     public static string RewardsCampaignFilterSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignFilterSummaryFormat), Culture) ?? "Showing {0} of {1} campaigns";
     public static string RewardsCampaignAudienceSummaryDefault => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryDefault), Culture) ?? "Audience: all joined members";
+    public static string RewardsCampaignAudienceSummaryUnknown => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryUnknown), Culture) ?? "Audience: unknown";
     public static string RewardsCampaignAudienceSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryFormat), Culture) ?? "Audience: {0}";
     public static string RewardsCampaignAudienceSummaryWithEligibilityFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryWithEligibilityFormat), Culture) ?? "Audience: {0} • {1}";
     public static string RewardsCampaignAudienceJoinedMembers => ResourceManager.GetString(nameof(RewardsCampaignAudienceJoinedMembers), Culture) ?? "joined members";
     public static string RewardsCampaignAudienceTierSegment => ResourceManager.GetString(nameof(RewardsCampaignAudienceTierSegment), Culture) ?? "tier segment";
     public static string RewardsCampaignAudiencePointsThreshold => ResourceManager.GetString(nameof(RewardsCampaignAudiencePointsThreshold), Culture) ?? "points threshold";
     public static string RewardsCampaignAudienceDateWindow => ResourceManager.GetString(nameof(RewardsCampaignAudienceDateWindow), Culture) ?? "date window";
+    public static string RewardsCampaignAudienceUnknown => ResourceManager.GetString(nameof(RewardsCampaignAudienceUnknown), Culture) ?? "unknown audience";
     public static string RewardsCampaignEligibilityTierFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityTierFormat), Culture) ?? "Tier: {0}";
     public static string RewardsCampaignEligibilityRangeFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityRangeFormat), Culture) ?? "Points {0}-{1}";
     public static string RewardsCampaignEligibilityMinFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityMinFormat), Culture) ?? "Points ≥ {0}";
@@ -412,6 +452,8 @@ public static class AppResources
     public static string RewardsCampaignDiagnosticsCopied => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsCopied), Culture) ?? "Campaign diagnostics copied to clipboard.";
     public static string RewardsCampaignDiagnosticsCopyFailed => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsCopyFailed), Culture) ?? "Unable to copy campaign diagnostics right now.";
     public static string RewardsOperatorRoleFormat => ResourceManager.GetString(nameof(RewardsOperatorRoleFormat), Culture) ?? "Operator role: {0}";
+    public static string CommonYes => ResourceManager.GetString(nameof(CommonYes), Culture) ?? "Yes";
+    public static string CommonNo => ResourceManager.GetString(nameof(CommonNo), Culture) ?? "No";
     public static string RewardsTierPointsFormat => ResourceManager.GetString(nameof(RewardsTierPointsFormat), Culture) ?? "{0} pts";
     public static string RewardsTierValueFormat => ResourceManager.GetString(nameof(RewardsTierValueFormat), Culture) ?? "Value: {0}";
     public static string RewardsTierSelfRedemptionFormat => ResourceManager.GetString(nameof(RewardsTierSelfRedemptionFormat), Culture) ?? "Self redemption: {0}";

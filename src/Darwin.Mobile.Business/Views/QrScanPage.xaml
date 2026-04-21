@@ -3,8 +3,9 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.Maui.Controls"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.QrScanPage"
-    Title="Scan"
+    Title="{x:Static res:AppResources.ScanTitle}"
     BackgroundColor="{StaticResource Neutral0}">
 
     <Grid>
@@ -15,7 +16,7 @@
                                        VerticalOptions="Fill" />
 
         <Grid VerticalOptions="End" Padding="16" BackgroundColor="#802C2416">
-            <Button Text="Cancel"
+            <Button Text="{x:Static res:AppResources.ScannerManualTokenCancel}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Clicked="OnCancelClicked" />
         </Grid>

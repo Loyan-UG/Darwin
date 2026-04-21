@@ -1,3 +1,7 @@
-﻿@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyCampaignEditVm
-@{ var isCreate = ViewData["IsCreate"] as bool? == true; ViewData["Title"] = isCreate ? T.T("LoyaltyCreateCampaign") : T.T("LoyaltyEditCampaign"); }
-<div id="loyalty-campaign-editor-shell"><div class="d-flex justify-content-between align-items-center mb-3"><div><h1 class="mb-1">@(isCreate ? T.T("LoyaltyCreateCampaign") : T.T("LoyaltyEditCampaign"))</h1>@if (!isCreate){<div class="text-muted">@T.T("LoyaltyCurrentState") @Model.CampaignState</div>}</div></div><partial name="_CampaignForm" model="Model" /></div>
+@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyCampaignEditVm
+@{
+    var isCreate = ViewData["IsCreate"] as bool? == true;
+    ViewData["Title"] = isCreate ? T.T("LoyaltyCreateCampaign") : T.T("LoyaltyEditCampaign");
+    string LocalizeCampaignState(string? state) => string.IsNullOrWhiteSpace(state) ? "-" : T.T(state);
+}
+<div id="loyalty-campaign-editor-shell"><div class="d-flex justify-content-between align-items-center mb-3"><div><h1 class="mb-1">@(isCreate ? T.T("LoyaltyCreateCampaign") : T.T("LoyaltyEditCampaign"))</h1>@if (!isCreate){<div class="text-muted">@T.T("LoyaltyCurrentState") @LocalizeCampaignState(Model.CampaignState)</div>}</div></div><partial name="_CampaignForm" model="Model" /></div>

@@ -75,6 +75,12 @@
   <data name="Email" xml:space="preserve">
     <value>E-Mail</value>
   </data>
+  <data name="Call" xml:space="preserve">
+    <value>Anruf</value>
+  </data>
+  <data name="Meeting" xml:space="preserve">
+    <value>Besprechung</value>
+  </data>
   <data name="Password" xml:space="preserve">
     <value>Passwort</value>
   </data>
@@ -89,6 +95,51 @@
   </data>
   <data name="Phone" xml:space="preserve">
     <value>Telefon</value>
+  </data>
+  <data name="Simple" xml:space="preserve">
+    <value>Einfach</value>
+  </data>
+  <data name="Variant" xml:space="preserve">
+    <value>Variante</value>
+  </data>
+  <data name="Bundle" xml:space="preserve">
+    <value>Bundle</value>
+  </data>
+  <data name="Digital" xml:space="preserve">
+    <value>Digital</value>
+  </data>
+  <data name="Service" xml:space="preserve">
+    <value>Service</value>
+  </data>
+  <data name="Trialing" xml:space="preserve">
+    <value>Testphase</value>
+  </data>
+  <data name="PastDue" xml:space="preserve">
+    <value>Ueberfaellig</value>
+  </data>
+  <data name="Canceled" xml:space="preserve">
+    <value>Gekuendigt</value>
+  </data>
+  <data name="Unpaid" xml:space="preserve">
+    <value>Unbezahlt</value>
+  </data>
+  <data name="IncompleteExpired" xml:space="preserve">
+    <value>Unvollstaendig abgelaufen</value>
+  </data>
+  <data name="Paused" xml:space="preserve">
+    <value>Pausiert</value>
+  </data>
+  <data name="Chat" xml:space="preserve">
+    <value>Chat</value>
+  </data>
+  <data name="InPerson" xml:space="preserve">
+    <value>Vor Ort</value>
+  </data>
+  <data name="MarketingEmail" xml:space="preserve">
+    <value>Marketing-E-Mail</value>
+  </data>
+  <data name="TermsOfService" xml:space="preserve">
+    <value>Nutzungsbedingungen</value>
   </data>
   <data name="NewEmail" xml:space="preserve">
     <value>Neue E-Mail</value>
@@ -637,6 +688,18 @@
     <value>die eingebaute Rolle business-support-admins ist nur für Einladungs- und Business-Member-Support gedacht. Freigabe, Sperrung, Owner-Overrides und Änderungen am Business-Lifecycle bleiben FullAdmin-only.</value>
   </data>
   <data name="DelegatedSupportBadge" xml:space="preserve">
+    <value>Delegierter Support</value>
+  </data>
+  <data name="IdentityFilterAll" xml:space="preserve">
+    <value>Alle</value>
+  </data>
+  <data name="IdentityFilterSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="IdentityFilterCustom" xml:space="preserve">
+    <value>Benutzerdefiniert</value>
+  </data>
+  <data name="IdentityFilterDelegatedSupport" xml:space="preserve">
     <value>Delegierter Support</value>
   </data>
   <data name="MobilePlaybookMemberLifecycleTitle" xml:space="preserve">
@@ -1284,6 +1347,15 @@
   <data name="Programs" xml:space="preserve">
     <value>Programme</value>
   </data>
+  <data name="PerVisit" xml:space="preserve">
+    <value>Pro Besuch</value>
+  </data>
+  <data name="PerCurrencyUnit" xml:space="preserve">
+    <value>Pro Waehrungseinheit</value>
+  </data>
+  <data name="AmountBased" xml:space="preserve">
+    <value>Pro Waehrungseinheit</value>
+  </data>
   <data name="Campaigns" xml:space="preserve">
     <value>Kampagnen</value>
   </data>
@@ -1614,6 +1686,18 @@
   <data name="FulfillmentAttention" xml:space="preserve">
     <value>Versand Aufmerksamkeit</value>
   </data>
+  <data name="AllOrders" xml:space="preserve">
+    <value>Alle Bestellungen</value>
+  </data>
+  <data name="AllPayments" xml:space="preserve">
+    <value>Alle Zahlungen</value>
+  </data>
+  <data name="AllRefunds" xml:space="preserve">
+    <value>Alle Rueckerstattungen</value>
+  </data>
+  <data name="AllInvoices" xml:space="preserve">
+    <value>Alle Rechnungen</value>
+  </data>
   <data name="ClearQueueFilters" xml:space="preserve">
     <value>Queue-Filter loeschen</value>
   </data>
@@ -1815,6 +1899,15 @@
   <data name="Cancelled" xml:space="preserve">
     <value>Storniert</value>
   </data>
+  <data name="Draft" xml:space="preserve">
+    <value>Entwurf</value>
+  </data>
+  <data name="Scheduled" xml:space="preserve">
+    <value>Geplant</value>
+  </data>
+  <data name="Expired" xml:space="preserve">
+    <value>Abgelaufen</value>
+  </data>
   <data name="Shipped" xml:space="preserve">
     <value>Versandt</value>
   </data>
@@ -1916,6 +2009,27 @@
   </data>
   <data name="Business" xml:space="preserve">
     <value>Unternehmen</value>
+  </data>
+  <data name="Consumer" xml:space="preserve">
+    <value>Verbraucher</value>
+  </data>
+  <data name="New" xml:space="preserve">
+    <value>Neu</value>
+  </data>
+  <data name="Qualification" xml:space="preserve">
+    <value>Qualifizierung</value>
+  </data>
+  <data name="Proposal" xml:space="preserve">
+    <value>Angebot</value>
+  </data>
+  <data name="Negotiation" xml:space="preserve">
+    <value>Verhandlung</value>
+  </data>
+  <data name="ClosedWon" xml:space="preserve">
+    <value>Gewonnen</value>
+  </data>
+  <data name="ClosedLost" xml:space="preserve">
+    <value>Verloren</value>
   </data>
   <data name="Category" xml:space="preserve">
     <value>Kategorie</value>
@@ -2028,6 +2142,9 @@
   <data name="LinkedUser" xml:space="preserve">
     <value>Verknuepfter Benutzer</value>
   </data>
+  <data name="AllCustomers" xml:space="preserve">
+    <value>Alle Kunden</value>
+  </data>
   <data name="NeedsSegmentation" xml:space="preserve">
     <value>Segmentierung noetig</value>
   </data>
@@ -2042,6 +2159,9 @@
   </data>
   <data name="B2BMissingVatId" xml:space="preserve">
     <value>B2B ohne USt-IdNr.</value>
+  </data>
+  <data name="UsesPlatformLocaleFallback" xml:space="preserve">
+    <value>Nutzt Plattform-Locale-Fallback</value>
   </data>
   <data name="And" xml:space="preserve">
     <value>und</value>
@@ -2085,6 +2205,30 @@
   <data name="Qualified" xml:space="preserve">
     <value>Qualifiziert</value>
   </data>
+  <data name="AllLeads" xml:space="preserve">
+    <value>Alle Leads</value>
+  </data>
+  <data name="Disqualified" xml:space="preserve">
+    <value>Disqualifiziert</value>
+  </data>
+  <data name="Converted" xml:space="preserve">
+    <value>Konvertiert</value>
+  </data>
+  <data name="Asset" xml:space="preserve">
+    <value>Aktiva</value>
+  </data>
+  <data name="Liability" xml:space="preserve">
+    <value>Verbindlichkeit</value>
+  </data>
+  <data name="Equity" xml:space="preserve">
+    <value>Eigenkapital</value>
+  </data>
+  <data name="Revenue" xml:space="preserve">
+    <value>Erloes</value>
+  </data>
+  <data name="Expense" xml:space="preserve">
+    <value>Aufwand</value>
+  </data>
   <data name="Unassigned" xml:space="preserve">
     <value>Nicht zugewiesen</value>
   </data>
@@ -2097,6 +2241,39 @@
   <data name="Owner" xml:space="preserve">
     <value>Verantwortlich</value>
   </data>
+  <data name="Manager" xml:space="preserve">
+    <value>Manager</value>
+  </data>
+  <data name="Staff" xml:space="preserve">
+    <value>Mitarbeiter</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="Cafe" xml:space="preserve">
+    <value>Cafe</value>
+  </data>
+  <data name="Restaurant" xml:space="preserve">
+    <value>Restaurant</value>
+  </data>
+  <data name="Bakery" xml:space="preserve">
+    <value>Bäckerei</value>
+  </data>
+  <data name="Supermarket" xml:space="preserve">
+    <value>Supermarkt</value>
+  </data>
+  <data name="SalonSpa" xml:space="preserve">
+    <value>Salon und Spa</value>
+  </data>
+  <data name="Fitness" xml:space="preserve">
+    <value>Fitness</value>
+  </data>
+  <data name="OtherRetail" xml:space="preserve">
+    <value>Sonstiger Einzelhandel</value>
+  </data>
+  <data name="Services" xml:space="preserve">
+    <value>Dienstleistungen</value>
+  </data>
   <data name="UpdatedUtc" xml:space="preserve">
     <value>Aktualisiert (UTC)</value>
   </data>
@@ -2108,6 +2285,9 @@
   </data>
   <data name="HighValue" xml:space="preserve">
     <value>Hoher Wert</value>
+  </data>
+  <data name="AllOpportunities" xml:space="preserve">
+    <value>Alle Verkaufschancen</value>
   </data>
   <data name="Title" xml:space="preserve">
     <value>Titel</value>
@@ -2210,6 +2390,15 @@
   </data>
   <data name="Completed" xml:space="preserve">
     <value>Abgeschlossen</value>
+  </data>
+  <data name="Closed" xml:space="preserve">
+    <value>Geschlossen</value>
+  </data>
+  <data name="Accrual" xml:space="preserve">
+    <value>Punktesammeln</value>
+  </data>
+  <data name="Redemption" xml:space="preserve">
+    <value>Einloesung</value>
   </data>
   <data name="NeedsSupport" xml:space="preserve">
     <value>Support noetig</value>
@@ -2400,11 +2589,26 @@
   <data name="LowStock" xml:space="preserve">
     <value>Niedriger Bestand</value>
   </data>
+  <data name="AllStockLevels" xml:space="preserve">
+    <value>Alle Bestandsstufen</value>
+  </data>
   <data name="Reserved" xml:space="preserve">
     <value>Reserviert</value>
   </data>
   <data name="InTransit" xml:space="preserve">
     <value>Unterwegs</value>
+  </data>
+  <data name="AllPurchaseOrders" xml:space="preserve">
+    <value>Alle Bestellungen</value>
+  </data>
+  <data name="AllTransfers" xml:space="preserve">
+    <value>Alle Transfers</value>
+  </data>
+  <data name="Issued" xml:space="preserve">
+    <value>Ausgegeben</value>
+  </data>
+  <data name="Received" xml:space="preserve">
+    <value>Empfangen</value>
   </data>
   <data name="NoStockLevels" xml:space="preserve">
     <value>Keine Bestandsstufen</value>
@@ -2552,6 +2756,63 @@
   </data>
   <data name="Inbound" xml:space="preserve">
     <value>Zugang</value>
+  </data>
+  <data name="InventoryLedgerPlaybookInboundTitle" xml:space="preserve">
+    <value>Zugangspruefung</value>
+  </data>
+  <data name="InventoryLedgerPlaybookInboundScope" xml:space="preserve">
+    <value>Zugangszeilen stehen meist fuer Wareneingaenge, Ruecksendungen oder positive Bestandskorrekturen, die die kuenftige Verfuegbarkeit beeinflussen.</value>
+  </data>
+  <data name="InventoryLedgerPlaybookInboundAction" xml:space="preserve">
+    <value>Pruefen Sie Referenz-IDs und Grundangaben, bevor Sie von einem finalen Bestandsanstieg ausgehen, besonders nach Lieferanten-Wareneingang oder Ruecknahmen.</value>
+  </data>
+  <data name="InventoryLedgerPlaybookOutboundTitle" xml:space="preserve">
+    <value>Abgangs- und Reservierungspruefung</value>
+  </data>
+  <data name="InventoryLedgerPlaybookOutboundScope" xml:space="preserve">
+    <value>Abgangs- und reservierungsintensive Ledger-Historie erklaert oft Low-Stock-Warnungen und Druck in der Auftragszuordnung.</value>
+  </data>
+  <data name="InventoryLedgerPlaybookOutboundAction" xml:space="preserve">
+    <value>Vergleichen Sie Reservierungsspitzen mit Bestell- und Bestands-Workflows, bevor Sie manuell korrigieren, damit Troubleshooting nachvollziehbar bleibt.</value>
+  </data>
+  <data name="InventoryTransfersPlaybookDraftTitle" xml:space="preserve">
+    <value>Pruefung von Transfer-Entwuerfen</value>
+  </data>
+  <data name="InventoryTransfersPlaybookDraftScope" xml:space="preserve">
+    <value>Transfer-Entwuerfe stehen meist fuer interne Bestandsbewegungen, die noch eine Lagerbestaetigung benoetigen, bevor Ware den Ursprungsort verlaesst.</value>
+  </data>
+  <data name="InventoryTransfersPlaybookDraftAction" xml:space="preserve">
+    <value>Pruefen Sie Lagerzustaendigkeit, Positionsanzahl und Zielbereitschaft, bevor Entwuerfe in einen aktiven Handoff uebergehen.</value>
+  </data>
+  <data name="InventoryTransfersPlaybookInTransitTitle" xml:space="preserve">
+    <value>Nachverfolgung laufender Transfers</value>
+  </data>
+  <data name="InventoryTransfersPlaybookInTransitScope" xml:space="preserve">
+    <value>Laufende Transfers beeinflussen die Verfuegbarkeit an beiden Enden und sind die erste Stelle bei unstimmigen Lagerbestaenden.</value>
+  </data>
+  <data name="InventoryTransfersPlaybookInTransitAction" xml:space="preserve">
+    <value>Vergleichen Sie Transferalter mit Wareneingangsaktivitaet und klaeren Sie Lagerabweichungen vor manuellen Korrekturen.</value>
+  </data>
+  <data name="InventoryPurchaseOrdersPlaybookDraftTitle" xml:space="preserve">
+    <value>Bereinigung von Bestellentwuerfen</value>
+  </data>
+  <data name="InventoryPurchaseOrdersPlaybookDraftScope" xml:space="preserve">
+    <value>Bestellentwuerfe deuten oft auf Lieferantenplanung hin, die noch nicht verbindlich ist und Nachschubpruefungen verunklaren kann.</value>
+  </data>
+  <data name="InventoryPurchaseOrdersPlaybookDraftAction" xml:space="preserve">
+    <value>Pruefen Sie zunaechst alte Entwuerfe, bestaetigen Sie Lieferantenabsicht und geben oder bereinigen Sie sie vor neuen Nachschubzyklen.</value>
+  </data>
+  <data name="InventoryPurchaseOrdersPlaybookIssuedTitle" xml:space="preserve">
+    <value>Nachverfolgung ausgegebener und empfangener Bestellungen</value>
+  </data>
+  <data name="InventoryPurchaseOrdersPlaybookIssuedScope" xml:space="preserve">
+    <value>Ausgegebene Bestellungen sollten zum Wareneingang fuehren, waehrend empfangene Bestellungen mit Zugangsbuchungen und Lieferantenabrechnung uebereinstimmen muessen.</value>
+  </data>
+  <data name="InventoryPurchaseOrdersPlaybookIssuedAction" xml:space="preserve">
+    <value>Priorisieren Sie lange offene ausgegebene Bestellungen und gleichen Sie empfangene Bestellungen mit Wareneingang und Lieferantenunterlagen ab.</value>
+  </data>
+  <data name="AllLedgerEntries" xml:space="preserve">
+    <value>Alle Ledger-Eintraege</value>
   </data>
   <data name="Outbound" xml:space="preserve">
     <value>Abgang</value>
@@ -2790,6 +3051,24 @@
   <data name="ShortDescription" xml:space="preserve">
     <value>Kurzbeschreibung</value>
   </data>
+  <data name="CrmSegmentsPlaybookEmptyTitle" xml:space="preserve">
+    <value>Leere Segmente</value>
+  </data>
+  <data name="CrmSegmentsPlaybookEmptyScope" xml:space="preserve">
+    <value>Segmente ohne Mitglieder deuten meist auf unvollstaendige Segmentierungslogik oder veraltete CRM-Taxonomie hin.</value>
+  </data>
+  <data name="CrmSegmentsPlaybookEmptyAction" xml:space="preserve">
+    <value>Pruefen Sie, ob das Segment Kunden zugewiesen, umbenannt oder stillgelegt werden sollte, bevor Marketing und Support sich darauf verlassen.</value>
+  </data>
+  <data name="CrmSegmentsPlaybookMissingDescriptionTitle" xml:space="preserve">
+    <value>Segmente ohne Beschreibung</value>
+  </data>
+  <data name="CrmSegmentsPlaybookMissingDescriptionScope" xml:space="preserve">
+    <value>Fehlender Operator-Kontext erschwert Segmentpruefung und Kampagnen-Targeting in CRM-Workflows.</value>
+  </data>
+  <data name="CrmSegmentsPlaybookMissingDescriptionAction" xml:space="preserve">
+    <value>Fuegen Sie eine kurze Beschreibung hinzu, damit Support, Marketing und Admin-Operatoren Zweck und Einsatz des Segments verstehen.</value>
+  </data>
   <data name="LocalizationOperationalDefaults" xml:space="preserve">
     <value>Lokalisierung und operative Standards</value>
   </data>
@@ -2813,6 +3092,9 @@
   </data>
   <data name="InUse" xml:space="preserve">
     <value>In Verwendung</value>
+  </data>
+  <data name="AllSegments" xml:space="preserve">
+    <value>Alle Segmente</value>
   </data>
   <data name="MissingDescription" xml:space="preserve">
     <value>Beschreibung fehlt</value>
@@ -8598,6 +8880,30 @@
   <data name="BillingPlansPlaybooksTitle" xml:space="preserve">
     <value>Abrechnungsplan-Playbooks</value>
   </data>
+  <data name="BillingPlansPlaybookActiveTitle" xml:space="preserve">
+    <value>Aktive Plaene im Live-Einsatz</value>
+  </data>
+  <data name="BillingPlansPlaybookActiveScope" xml:space="preserve">
+    <value>Planaenderungen wirken sich auf die kuenftige Abo-Uebergabe und die aktuellen Support-Erwartungen fuer Unternehmen aus, die diese Plaene bereits nutzen.</value>
+  </data>
+  <data name="BillingPlansPlaybookActiveAction" xml:space="preserve">
+    <value>Pruefen Sie vor Aenderungen an Preis, Testphase oder Verfuegbarkeit die Zahl aktiver Abonnements, damit der Support weiss, ob eine Planaenderung sicher oder rollout-sensibel ist.</value>
+  </data>
+  <data name="BillingPlansPlaybookActiveDependency" xml:space="preserve">
+    <value>Business-Management-Website und Stripe-Bereitschaft sollten bereits konfiguriert sein, bevor Betreiber sich auf die Planuebergabe verlassen.</value>
+  </data>
+  <data name="BillingPlansPlaybookTrialTitle" xml:space="preserve">
+    <value>Testplaene und Plaene ohne Funktionsumfang</value>
+  </data>
+  <data name="BillingPlansPlaybookTrialScope" xml:space="preserve">
+    <value>Plaene mit langen Testphasen oder ohne hinterlegte Funktionen deuten meist eher auf Packaging-Schulden als nur auf Preis-Setup hin.</value>
+  </data>
+  <data name="BillingPlansPlaybookTrialAction" xml:space="preserve">
+    <value>Vereinheitlichen Sie die Testdauer und ergaenzen Sie die Funktionsmetadaten, bevor der Plan in Onboarding- oder Upgrade-Workflows als geschaeftsseitiges Angebot genutzt wird.</value>
+  </data>
+  <data name="BillingPlansPlaybookTrialDependency" xml:space="preserve">
+    <value>Kein zusaetzliches Provider-Geheimnis ist erforderlich, aber die externe Abrechnungsuebergabe haengt von der Bereitschaft der Business-Management-Website ab.</value>
+  </data>
   <data name="BillingPlansQueueColumn" xml:space="preserve">
     <value>Queue</value>
   </data>
@@ -8900,6 +9206,30 @@
   </data>
   <data name="Revoked" xml:space="preserve">
     <value>Widerrufen</value>
+  </data>
+  <data name="TokenAlreadyConsumed" xml:space="preserve">
+    <value>Token bereits verbraucht</value>
+  </data>
+  <data name="AccountNotFound" xml:space="preserve">
+    <value>Konto nicht gefunden</value>
+  </data>
+  <data name="AccountNotActive" xml:space="preserve">
+    <value>Konto nicht aktiv</value>
+  </data>
+  <data name="NoSelections" xml:space="preserve">
+    <value>Keine Auswahl</value>
+  </data>
+  <data name="InvalidSelections" xml:space="preserve">
+    <value>Ungültige Auswahl</value>
+  </data>
+  <data name="InsufficientPoints" xml:space="preserve">
+    <value>Nicht genügend Punkte</value>
+  </data>
+  <data name="Redeemed" xml:space="preserve">
+    <value>Eingelöst</value>
+  </data>
+  <data name="Accrued" xml:space="preserve">
+    <value>Gutgeschrieben</value>
   </data>
   <data name="GrantedAtUtc" xml:space="preserve">
     <value>Erteilt am (UTC)</value>
@@ -9797,5 +10127,125 @@
   </data>
   <data name="ChannelAuditFailures24hInlineLabel" xml:space="preserve">
     <value>Fehler 24h</value>
+  </data>
+  <data name="FreeItem" xml:space="preserve">
+    <value>Gratisartikel</value>
+  </data>
+  <data name="PercentDiscount" xml:space="preserve">
+    <value>Prozentrabatt</value>
+  </data>
+  <data name="AmountDiscount" xml:space="preserve">
+    <value>Betragsrabatt</value>
+  </data>
+  <data name="BillingProviderStripeRefMissing" xml:space="preserve">
+    <value>Stripe-Referenz fehlt</value>
+  </data>
+  <data name="BillingProviderReferenceMissing" xml:space="preserve">
+    <value>Referenz fehlt</value>
+  </data>
+  <data name="BillingProviderRefundActivityRecorded" xml:space="preserve">
+    <value>Erstattungsaktivität erfasst</value>
+  </data>
+  <data name="BillingProviderWaitingForCompletion" xml:space="preserve">
+    <value>Warten auf Abschluss beim Anbieter</value>
+  </data>
+  <data name="BillingProviderAuthorized" xml:space="preserve">
+    <value>Beim Anbieter autorisiert</value>
+  </data>
+  <data name="BillingProviderCaptured" xml:space="preserve">
+    <value>Beim Anbieter eingezogen</value>
+  </data>
+  <data name="BillingProviderCompleted" xml:space="preserve">
+    <value>Beim Anbieter abgeschlossen</value>
+  </data>
+  <data name="BillingProviderFailureRecorded" xml:space="preserve">
+    <value>Anbieterfehler erfasst</value>
+  </data>
+  <data name="BillingProviderRefundedAgainstReference" xml:space="preserve">
+    <value>Gegen Anbieterreferenz erstattet</value>
+  </data>
+  <data name="BillingProviderVoided" xml:space="preserve">
+    <value>Beim Anbieter storniert</value>
+  </data>
+  <data name="BillingProviderReferenceLinked" xml:space="preserve">
+    <value>Anbieterreferenz verknüpft</value>
+  </data>
+  <data name="BillingProviderWaitingForRefundCompletion" xml:space="preserve">
+    <value>Warten auf Abschluss der Erstattung beim Anbieter</value>
+  </data>
+  <data name="BillingProviderRefundRecordedAgainstReference" xml:space="preserve">
+    <value>Erstattung gegen Anbieterreferenz erfasst</value>
+  </data>
+  <data name="BillingProviderRefundFailureNeedsReview" xml:space="preserve">
+    <value>Anbieterseitiger Erstattungsfehler muss geprüft werden</value>
+  </data>
+  <data name="BillingProviderPaymentFullyRefunded" xml:space="preserve">
+    <value>Zahlung beim Anbieter vollständig erstattet</value>
+  </data>
+  <data name="Voided" xml:space="preserve">
+    <value>Storniert</value>
+  </data>
+  <data name="Single" xml:space="preserve">
+    <value>Einzelauswahl</value>
+  </data>
+  <data name="Multiple" xml:space="preserve">
+    <value>Mehrfachauswahl</value>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="Week" xml:space="preserve">
+    <value>Woche</value>
+  </data>
+  <data name="Month" xml:space="preserve">
+    <value>Monat</value>
+  </data>
+  <data name="Year" xml:space="preserve">
+    <value>Jahr</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderCorrelationTitle" xml:space="preserve">
+    <value>Provider-Korrelation</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderCorrelationMissingScope" xml:space="preserve">
+    <value>Diese Zahlung hat noch keine Provider-Referenz.</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderCorrelationPresentScope" xml:space="preserve">
+    <value>Diese Zahlung hat bereits eine Provider-Referenz und sollte mit den Provider-Belegen konsistent bleiben.</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderCorrelationMissingAction" xml:space="preserve">
+    <value>Pruefen Sie die echte Provider-Referenz, bevor Sie diesen Datensatz als abgestimmt behandeln. Wenn der Support eine Offline- oder manuelle Zahlung bestaetigt, dokumentieren Sie die Zeile eindeutig.</value>
+  </data>
+  <data name="PaymentSupportPlaybookProviderCorrelationPresentAction" xml:space="preserve">
+    <value>Verwenden Sie die Provider-Referenz beim Abgleich von Support-Tickets, Rueckerstattungen oder Rechnungsstreitigkeiten. Ueberschreiben Sie sie nicht, solange der aktuelle Wert nicht klar falsch ist.</value>
+  </data>
+  <data name="PaymentSupportPlaybookFailureRefundTitle" xml:space="preserve">
+    <value>Fehler- und Rueckerstattungspruefung</value>
+  </data>
+  <data name="PaymentSupportPlaybookFailureScope" xml:space="preserve">
+    <value>Diese Zahlung traegt einen erfassten Fehlergrund und braucht eine Betreiberpruefung, bevor von einer erfolgreichen Wiederherstellung ausgegangen wird.</value>
+  </data>
+  <data name="PaymentSupportPlaybookRefundScope" xml:space="preserve">
+    <value>Diese Zahlung hat bereits Rueckerstattungsaktivitaet und sollte zusammen mit Auftrags- und Rechnungskontext geprueft werden.</value>
+  </data>
+  <data name="PaymentSupportPlaybookBaselineScope" xml:space="preserve">
+    <value>Nutzen Sie diese Zahlung als Referenzpunkt fuer Zahlungs-, Rueckerstattungs- und Rechnungskoordination.</value>
+  </data>
+  <data name="PaymentSupportPlaybookFailureAction" xml:space="preserve">
+    <value>Pruefen Sie den verknuepften Auftrag, die Rechnung und den Kunden, bevor Sie den Status aendern. Behalten Sie den Fehlerhinweis, solange der Support kein korrigiertes Ergebnis bestaetigt hat.</value>
+  </data>
+  <data name="PaymentSupportPlaybookRefundAction" xml:space="preserve">
+    <value>Pruefen Sie die Rueckerstattungszeitleiste unten und halten Sie Zahlungsstatus, Rueckerstattungsstatus und Rechnungsausgleich konsistent.</value>
+  </data>
+  <data name="PaymentSupportPlaybookBaselineAction" xml:space="preserve">
+    <value>Wenn spaeter ein Rueckerstattungs- oder Ausgleichsproblem auftaucht, starten Sie in diesem Workspace und folgen Sie dann dem verknuepften Auftrag oder der Rechnung.</value>
+  </data>
+  <data name="PaymentSupportPlaybookStripeTitle" xml:space="preserve">
+    <value>Stripe-zentrierter Supportpfad</value>
+  </data>
+  <data name="PaymentSupportPlaybookStripeScope" xml:space="preserve">
+    <value>Stripe ist der einzige Phase-1-Zahlungsanbieter, der produktionsreif erwartet wird.</value>
+  </data>
+  <data name="PaymentSupportPlaybookStripeAction" xml:space="preserve">
+    <value>Pruefen Sie die Stripe-Bereitschaft in der Zahlungsqueue und validieren Sie dann Provider-Referenz, Fehlergrund und verknuepften Auftrag bzw. Rechnung, bevor Sie den lokalen Status aendern.</value>
   </data>
 </root>

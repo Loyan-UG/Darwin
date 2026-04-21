@@ -1,4 +1,5 @@
 ﻿@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyCampaignEditVm
+@{ string LocalizeCampaignState(object? state) => state is null ? "-" : T.T(state.ToString() ?? string.Empty); }
 <form asp-action="@(ViewData["IsCreate"] as bool? == true ? "CreateCampaign" : "EditCampaign")" method="post" class="row g-3" hx-post="@Url.Action(ViewData["IsCreate"] as bool? == true ? "CreateCampaign" : "EditCampaign", "Loyalty")" hx-target="#loyalty-campaign-editor-shell" hx-swap="outerHTML">
 @Html.AntiForgeryToken()
 @if (ViewData["IsCreate"] as bool? != true) { <input asp-for="Id" type="hidden" /><input asp-for="RowVersion" type="hidden" /> }
@@ -12,7 +13,7 @@
 <div class="col-md-3"><label asp-for="Channels" class="form-label"></label><select asp-for="Channels" asp-items="Model.ChannelItems" class="form-select"></select></div>
 <div class="col-md-3"><label asp-for="StartsAtUtc" class="form-label"></label><input asp-for="StartsAtUtc" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" /></div>
 <div class="col-md-3"><label asp-for="EndsAtUtc" class="form-label"></label><input asp-for="EndsAtUtc" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" /></div>
-@if (ViewData["IsCreate"] as bool? != true) { <div class="col-md-3"><label asp-for="CampaignState" class="form-label"></label><input asp-for="CampaignState" class="form-control" readonly /></div> }
+@if (ViewData["IsCreate"] as bool? != true) { <div class="col-md-3"><label asp-for="CampaignState" class="form-label"></label><input asp-for="CampaignState" type="hidden" /><input value="@LocalizeCampaignState(Model.CampaignState)" class="form-control" readonly /></div> }
 <div class="col-12"><label asp-for="Body" class="form-label"></label><textarea asp-for="Body" class="form-control" rows="4"></textarea></div>
 <div class="col-12"><label asp-for="TargetingJson" class="form-label"></label><textarea asp-for="TargetingJson" class="form-control" rows="4"></textarea><div class="form-text">@T.T("LoyaltyTargetingJsonHelp")</div></div>
 <div class="col-12"><label asp-for="PayloadJson" class="form-label"></label><textarea asp-for="PayloadJson" class="form-control" rows="4"></textarea><div class="form-text">@T.T("LoyaltyPayloadJsonHelp")</div></div>

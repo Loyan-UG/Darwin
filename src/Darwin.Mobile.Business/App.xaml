@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:conv="clr-namespace:Darwin.Mobile.Shared.Converters;assembly=Darwin.Mobile.Shared"
+    xmlns:businessConv="clr-namespace:Darwin.Mobile.Business.Converters"
     x:Class="Darwin.Mobile.Business.App">
 
     <Application.Resources>
@@ -10,6 +11,7 @@
             <!-- Register the converter for use in XAML (ensure Darwin.Mobile.Shared assembly referenced by the Business app) -->
             <conv:InverseBoolConverter x:Key="InverseBoolConverter" />
             <conv:NullCheckConverter x:Key="NullCheckConverter" />
+            <businessConv:LocalizedBooleanConverter x:Key="LocalizedBooleanConverter" />
 
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />

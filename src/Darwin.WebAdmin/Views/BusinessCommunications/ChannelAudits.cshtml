@@ -11,7 +11,7 @@
         "BusinessInvitation" => T.T("CommunicationDetailsActiveFlowInvitation"),
         "AccountActivation" => T.T("CommunicationDetailsActiveFlowActivation"),
         "PasswordReset" => T.T("CommunicationTemplateInventoryPasswordResetFlow"),
-        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : flowKey
+        _ => string.IsNullOrWhiteSpace(flowKey) ? T.T("CommonUnclassified") : T.T(flowKey)
     };
 
     string ProviderPressureLabel(string? pressureState) => pressureState switch
@@ -19,7 +19,7 @@
         ChannelDispatchAuditVocabulary.PressureStates.Elevated => T.T("CommunicationProviderPressureElevated"),
         ChannelDispatchAuditVocabulary.PressureStates.Recovering => T.T("CommunicationProviderPressureRecovering"),
         ChannelDispatchAuditVocabulary.PressureStates.Stable => T.T("CommunicationProviderPressureStable"),
-        _ => string.IsNullOrWhiteSpace(pressureState) ? T.T("CommonUnclassified") : pressureState
+        _ => string.IsNullOrWhiteSpace(pressureState) ? T.T("CommonUnclassified") : T.T(pressureState)
     };
 
     string ProviderRecoveryLabel(string? recoveryState) => recoveryState switch
@@ -27,7 +27,7 @@
         ChannelDispatchAuditVocabulary.RecoveryStates.Recovered => T.T("CommunicationProviderRecoveryRecovered"),
         ChannelDispatchAuditVocabulary.RecoveryStates.StableSuccess => T.T("CommunicationProviderRecoveryStableSuccess"),
         ChannelDispatchAuditVocabulary.RecoveryStates.NoneYet => T.T("CommunicationProviderRecoveryNoneYet"),
-        _ => string.IsNullOrWhiteSpace(recoveryState) ? T.T("CommonUnclassified") : recoveryState
+        _ => string.IsNullOrWhiteSpace(recoveryState) ? T.T("CommonUnclassified") : T.T(recoveryState)
     };
 
     string ChainStatusMixLabel(string? statusMix) => statusMix switch
@@ -38,7 +38,7 @@
         ChannelDispatchAuditVocabulary.ChainStatusMixes.PendingOnly => T.T("CommunicationChainStatusPendingOnly"),
         ChannelDispatchAuditVocabulary.ChainStatusMixes.SuccessOnly => T.T("CommunicationChainStatusSuccessOnly"),
         ChannelDispatchAuditVocabulary.ChainStatusMixes.SingleAttempt => T.T("CommunicationChainStatusSingleAttempt"),
-        _ => string.IsNullOrWhiteSpace(statusMix) ? T.T("CommonUnclassified") : statusMix
+        _ => string.IsNullOrWhiteSpace(statusMix) ? T.T("CommonUnclassified") : T.T(statusMix)
     };
 
     string DeliveryStatusLabel(string? status) => status switch
@@ -46,7 +46,7 @@
         "Sent" => T.T("Sent"),
         "Failed" => T.T("Failed"),
         "Pending" => T.T("Pending"),
-        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : status
+        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : T.T(status)
     };
 
     string ChannelLabel(string? channel) => channel switch
@@ -54,7 +54,7 @@
         "SMS" => T.T("BusinessCommunicationSmsShort"),
         "WhatsApp" => T.T("BusinessCommunicationWhatsAppShort"),
         "Email" => T.T("CommunicationBuiltInFlowEmailChannel"),
-        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : channel
+        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : T.T(channel)
     };
 }
 

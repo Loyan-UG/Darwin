@@ -1783,7 +1783,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 : vm.CommunicationReplyToEmail;
 
             vm.CategoryOptions = Enum.GetValues<BusinessCategoryKind>()
-                .Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Category == x))
+                .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), vm.Category == x))
                 .ToList();
 
             vm.OwnerUserOptions = await _referenceData.GetUserOptionsAsync(vm.OwnerUserId, includeEmpty: true, ct);
@@ -1818,7 +1818,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private async Task PopulateMemberFormOptionsAsync(BusinessMemberEditVm vm, bool includeUserSelection, CancellationToken ct)
         {
             vm.RoleOptions = Enum.GetValues<BusinessMemberRole>()
-                .Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Role == x))
+                .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), vm.Role == x))
                 .ToList();
 
             if (includeUserSelection)
@@ -1886,10 +1886,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
         }
 
-        private static void PopulateInvitationFormOptions(BusinessInvitationCreateVm vm)
+        private void PopulateInvitationFormOptions(BusinessInvitationCreateVm vm)
         {
             vm.RoleOptions = Enum.GetValues<BusinessMemberRole>()
-                .Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Role == x))
+                .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), vm.Role == x))
                 .ToList();
         }
 
@@ -2088,7 +2088,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             foreach (var status in Enum.GetValues<BusinessOperationalStatus>())
             {
-                yield return new SelectListItem(status.ToString(), status.ToString(), selectedStatus == status);
+                yield return new SelectListItem(T(status.ToString()), status.ToString(), selectedStatus == status);
             }
         }
 

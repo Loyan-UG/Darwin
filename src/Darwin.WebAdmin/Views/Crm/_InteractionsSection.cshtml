@@ -1,5 +1,9 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InteractionsPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string LocalizeInteractionType(object? type) => type is null ? "-" : T.T(type.ToString() ?? string.Empty);
+    string LocalizeInteractionChannel(object? channel) => channel is null ? "-" : T.T(channel.ToString() ?? string.Empty);
+}
 
 <div hx-boost="true"
      hx-target="this"
@@ -27,8 +31,8 @@
                     foreach (var item in Model.Items)
                     {
                         <tr>
-                            <td>@item.Type</td>
-                            <td>@item.Channel</td>
+                            <td>@LocalizeInteractionType(item.Type)</td>
+                            <td>@LocalizeInteractionChannel(item.Channel)</td>
                             <td>@item.Subject</td>
                             <td>@item.Content</td>
                             <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>

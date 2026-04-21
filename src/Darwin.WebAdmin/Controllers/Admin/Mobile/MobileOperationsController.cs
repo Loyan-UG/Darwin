@@ -233,7 +233,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             var items = new List<SelectListItem> { new(T("MobileAllPlatforms"), string.Empty, !selected.HasValue) };
             items.AddRange(Enum.GetValues<MobilePlatform>()
                 .Where(x => x != MobilePlatform.Unknown)
-                .Select(x => new SelectListItem(x.ToString(), x.ToString(), selected == x)));
+                .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x)));
             return items;
         }
 

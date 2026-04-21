@@ -2,12 +2,17 @@
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:conv="clr-namespace:Darwin.Mobile.Shared.Converters;assembly=Darwin.Mobile.Shared"
+             xmlns:consumerConv="clr-namespace:Darwin.Mobile.Consumer.Converters"
              x:Class="Darwin.Mobile.Consumer.App">
     <Application.Resources>
         <ResourceDictionary>
             <!-- Converters -->
             <conv:InverseBoolConverter x:Key="InverseBoolConverter" />
             <conv:NullCheckConverter x:Key="NullCheckConverter" />
+            <consumerConv:BusinessRewardTypeConverter x:Key="BusinessRewardTypeConverter" />
+            <consumerConv:LoyaltyTimelineKindConverter x:Key="LoyaltyTimelineKindConverter" />
+            <consumerConv:LocalizedBooleanConverter x:Key="LocalizedBooleanConverter" />
+            <consumerConv:PointsTransactionTypeConverter x:Key="PointsTransactionTypeConverter" />
 
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />

@@ -3,6 +3,7 @@
 @{
     var isCreate = Model.Id == Guid.Empty;
     var formAction = (string?)ViewData["FormAction"] ?? (isCreate ? "CreateLead" : "EditLead");
+    string LocalizeLeadStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="crm-lead-editor-shell">
@@ -15,7 +16,7 @@
                 <div class="row g-3 small">
                     <div class="col-md-3">
                         <div class="text-muted">@T.T("Status")</div>
-                        <div class="fw-semibold">@Model.Status</div>
+                        <div class="fw-semibold">@LocalizeLeadStatus(Model.Status)</div>
                     </div>
                     <div class="col-md-3">
                         <div class="text-muted">@T.T("Owner")</div>

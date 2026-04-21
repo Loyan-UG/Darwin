@@ -1,6 +1,10 @@
 @using Darwin.Application.Settings.DTOs
 @model Darwin.WebAdmin.ViewModels.CRM.CustomerEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
+    var customerTaxProfileTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.CustomerTaxProfileType>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
+}
 
 <div class="row g-3">
     <div class="col-md-6">
@@ -17,7 +21,7 @@
 
     <div class="col-md-3">
         <label asp-for="TaxProfileType" class="form-label"></label>
-        <select asp-for="TaxProfileType" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.CustomerTaxProfileType>()" class="form-select"></select>
+        <select asp-for="TaxProfileType" asp-items="customerTaxProfileTypeOptions" class="form-select"></select>
         <span asp-validation-for="TaxProfileType" class="text-danger"></span>
     </div>
 
@@ -65,7 +69,7 @@
         @T.T("Name"): @($"{Model.EffectiveFirstName} {Model.EffectiveLastName}".Trim())<br />
         @T.T("Email"): @Model.EffectiveEmail<br />
         @T.T("Phone"): @Model.EffectivePhone<br />
-        @T.T("TaxProfile"): @Model.TaxProfileType
+        @T.T("TaxProfile"): @LocalizeCustomerTaxProfileType(Model.TaxProfileType)
         @if (!string.IsNullOrWhiteSpace(Model.VatId))
         {
             <><br />@T.T("TaxId"): @Model.VatId</>

@@ -1,6 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.CRM.ConsentsPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
+@functions {
+    string LocalizeConsentType(object? type) => type is null ? "-" : T.T(type.ToString() ?? string.Empty);
+}
+
 <div hx-boost="true"
      hx-target="this"
      hx-swap="outerHTML"
@@ -26,7 +30,7 @@
                     foreach (var item in Model.Items)
                     {
                         <tr>
-                            <td>@item.Type</td>
+                            <td>@LocalizeConsentType(item.Type)</td>
                             <td>@(item.Granted ? T.T("Granted") : T.T("Revoked"))</td>
                             <td>@item.GrantedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
                             <td>@(item.RevokedAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>

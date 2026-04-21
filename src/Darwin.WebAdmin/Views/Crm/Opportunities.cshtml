@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CrmOpportunitiesTitle");
+    string LocalizeOpportunityStage(object? stage) => stage is null ? "-" : T.T(stage.ToString() ?? string.Empty);
 }
 
 <div id="crm-opportunities-workspace-shell">
@@ -143,7 +144,7 @@
                 <tr>
                     <td>@item.Title</td>
                     <td>@item.CustomerDisplayName</td>
-                    <td><span class="badge text-bg-light">@item.Stage</span></td>
+                    <td><span class="badge text-bg-light">@LocalizeOpportunityStage(item.Stage)</span></td>
                     <td>@item.Currency @((item.EstimatedValueMinor / 100M).ToString("0.00"))</td>
                     <td>@item.ExpectedCloseDateUtc?.ToString("yyyy-MM-dd")</td>
                     <td>@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? "-" : item.AssignedToUserDisplayName)</td>

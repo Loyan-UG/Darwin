@@ -1868,7 +1868,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 "Sent" => T("Sent"),
                 "Failed" => T("Failed"),
                 "Pending" => T("Pending"),
-                _ => T("CommonUnclassified")
+                _ => string.IsNullOrWhiteSpace(status) ? T("CommonUnclassified") : T(status)
             };
         }
 
@@ -1880,7 +1880,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 "SmsWhatsApp" => T("CommunicationBuiltInFlowSmsWhatsAppChannel"),
                 "EmailSmsWhatsApp" => T("CommunicationBuiltInFlowEmailSmsWhatsAppChannel"),
                 "EmailSmsWhatsAppCompact" => T("CommunicationBuiltInFlowEmailSmsWhatsAppCompactChannel"),
-                _ => T("CommonUnclassified")
+                _ => string.IsNullOrWhiteSpace(channelGroup) ? T("CommonUnclassified") : T(channelGroup)
             };
         }
 
@@ -2054,7 +2054,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ChannelDispatchAuditVocabulary.ActionPolicyStates.RetryReady => T("CommunicationChannelActionPolicyRetryReady"),
                 ChannelDispatchAuditVocabulary.ActionPolicyStates.Ready => T("CommunicationChannelActionPolicyReady"),
                 ChannelDispatchAuditVocabulary.ActionPolicyStates.Unsupported => T("CommunicationChannelActionPolicyUnsupported"),
-                _ => state ?? string.Empty
+                _ => string.IsNullOrWhiteSpace(state) ? string.Empty : T(state)
             };
         }
 
@@ -2080,7 +2080,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return T("CommunicationChannelActionBlockedUnsupported");
             }
 
-            return item.ActionBlockedReason;
+            return T(item.ActionBlockedReason);
         }
 
         private string? BuildChannelAuditEscalationReason(ChannelDispatchAuditListItemDto item)
@@ -2100,7 +2100,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return T("CommunicationChannelEscalationAdminTest");
             }
 
-            return item.EscalationReason;
+            return T(item.EscalationReason);
         }
 
         private string BuildChannelProviderRecommendedAction(string recommendedAction)
@@ -2113,7 +2113,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedAdminTestStable => T("CommunicationChannelProviderRecommendedAdminTestStable"),
                 ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedGenericPending => T("CommunicationChannelProviderRecommendedGenericPending"),
                 ChannelDispatchAuditVocabulary.Guidance.ProviderRecommendedGenericStable => T("CommunicationChannelProviderRecommendedGenericStable"),
-                _ => recommendedAction
+                _ => string.IsNullOrWhiteSpace(recommendedAction) ? string.Empty : T(recommendedAction)
             };
         }
 
@@ -2127,7 +2127,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationAdminTestStable => T("CommunicationChannelProviderEscalationAdminTestStable"),
                 ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationGenericElevated => T("CommunicationChannelProviderEscalationGenericElevated"),
                 ChannelDispatchAuditVocabulary.Guidance.ProviderEscalationGenericStable => T("CommunicationChannelProviderEscalationGenericStable"),
-                _ => escalationHint
+                _ => string.IsNullOrWhiteSpace(escalationHint) ? string.Empty : T(escalationHint)
             };
         }
 
@@ -2140,7 +2140,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedAdminTest => T("CommunicationChannelChainRecommendedAdminTest"),
                 ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedGenericPending => T("CommunicationChannelChainRecommendedGenericPending"),
                 ChannelDispatchAuditVocabulary.Guidance.ChainRecommendedGenericStable => T("CommunicationChannelChainRecommendedGenericStable"),
-                _ => recommendedAction
+                _ => string.IsNullOrWhiteSpace(recommendedAction) ? string.Empty : T(recommendedAction)
             };
         }
 
@@ -2154,7 +2154,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ChannelDispatchAuditVocabulary.Guidance.ChainEscalationAdminTestStable => T("CommunicationChannelChainEscalationAdminTestStable"),
                 ChannelDispatchAuditVocabulary.Guidance.ChainEscalationGenericRecovered => T("CommunicationChannelChainEscalationGenericRecovered"),
                 ChannelDispatchAuditVocabulary.Guidance.ChainEscalationGenericBlocked => T("CommunicationChannelChainEscalationGenericBlocked"),
-                _ => escalationHint
+                _ => string.IsNullOrWhiteSpace(escalationHint) ? string.Empty : T(escalationHint)
             };
         }
 

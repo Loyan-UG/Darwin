@@ -4,6 +4,559 @@ namespace Darwin.Tests.Unit.Security;
 
 public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : SecurityAndPerformanceSourceTestBase
 {
+    [Fact]
+    public void MobileBusinessSessionFeedback_Should_KeepResourceBackedNonAdminContractsWired()
+    {
+        var appResourcesSource = ReadMobileBusinessFile(Path.Combine("Resources", "AppResources.cs"));
+        var sessionViewModelSource = ReadMobileBusinessFile(Path.Combine("ViewModels", "SessionViewModel.cs"));
+        var stringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.resx"));
+        var germanStringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        appResourcesSource.Should().Contain("public static string InvalidSessionToken =>");
+        appResourcesSource.Should().Contain("public static string SessionLoadFailed =>");
+        appResourcesSource.Should().Contain("public static string SessionLoadSuccess =>");
+        appResourcesSource.Should().Contain("public static string AccrualConfirmedSuccess =>");
+        appResourcesSource.Should().Contain("public static string RedemptionConfirmedSuccess =>");
+
+        sessionViewModelSource.Should().Contain("SetWarning(AppResources.InvalidSessionToken);");
+        sessionViewModelSource.Should().Contain("SetError(result.Error ?? AppResources.SessionLoadFailed);");
+        sessionViewModelSource.Should().Contain("SetSuccess(AppResources.SessionLoadSuccess);");
+        sessionViewModelSource.Should().Contain("SetWarning(AppResources.AccrualNotAllowed);");
+        sessionViewModelSource.Should().Contain("SetWarning(AppResources.PointsMustBeGreaterThanZero);");
+        sessionViewModelSource.Should().Contain("SetError(result.Error ?? AppResources.FailedToConfirmAccrual);");
+        sessionViewModelSource.Should().Contain("SetSuccess(AppResources.AccrualConfirmedSuccess);");
+        sessionViewModelSource.Should().Contain("SetWarning(AppResources.RedemptionNotAllowed);");
+        sessionViewModelSource.Should().Contain("SetError(result.Error ?? AppResources.FailedToConfirmRedemption);");
+        sessionViewModelSource.Should().Contain("SetSuccess(AppResources.RedemptionConfirmedSuccess);");
+
+        stringsSource.Should().Contain("<data name=\"InvalidSessionToken\"");
+        stringsSource.Should().Contain("<data name=\"SessionLoadFailed\"");
+        stringsSource.Should().Contain("<data name=\"SessionLoadSuccess\"");
+        stringsSource.Should().Contain("<data name=\"AccrualConfirmedSuccess\"");
+        stringsSource.Should().Contain("<data name=\"RedemptionConfirmedSuccess\"");
+
+        germanStringsSource.Should().Contain("<data name=\"InvalidSessionToken\"");
+        germanStringsSource.Should().Contain("<data name=\"SessionLoadFailed\"");
+        germanStringsSource.Should().Contain("<data name=\"SessionLoadSuccess\"");
+        germanStringsSource.Should().Contain("<data name=\"AccrualConfirmedSuccess\"");
+        germanStringsSource.Should().Contain("<data name=\"RedemptionConfirmedSuccess\"");
+    }
+
+
+    [Fact]
+    public void MobileBusinessDashboardActivityChrome_Should_KeepLocalizedUnknownActivityFallbackWired()
+    {
+        var trackerSource = ReadMobileBusinessFile(Path.Combine("Services", "Reporting", "BusinessActivityTracker.cs"));
+        var appResourcesSource = ReadMobileBusinessFile(Path.Combine("Resources", "AppResources.cs"));
+        var stringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.resx"));
+        var germanStringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        trackerSource.Should().Contain("BusinessActivityKind.CampaignTargetingFixMetricsReset => AppResources.DashboardActivityKindCampaignTargetingFixMetricsReset,");
+        trackerSource.Should().Contain("_ => AppResources.DashboardActivityKindUnknown");
+
+        appResourcesSource.Should().Contain("public static string DashboardActivityKindUnknown =>");
+
+        stringsSource.Should().Contain("<data name=\"DashboardActivityKindUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"DashboardActivityKindUnknown\"");
+    }
+
+
+    [Fact]
+    public void MobileBusinessRewardsChrome_Should_KeepLocalizedRewardTypeContractsWired()
+    {
+        var viewModelSource = ReadMobileBusinessFile(Path.Combine("ViewModels", "RewardsViewModel.cs"));
+        var modelsSource = ReadMobileBusinessFile(Path.Combine("ViewModels", "RewardsViewModel.Models.cs"));
+        var viewSource = ReadMobileBusinessFile(Path.Combine("Views", "RewardsPage.xaml"));
+        var appSource = ReadMobileBusinessFile("App.xaml");
+        var converterSource = ReadMobileBusinessFile(Path.Combine("Converters", "LocalizedBooleanConverter.cs"));
+        var appResourcesSource = ReadMobileBusinessFile(Path.Combine("Resources", "AppResources.cs"));
+        var stringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.resx"));
+        var germanStringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        viewModelSource.Should().Contain("RewardTypeOptions = new ObservableCollection<RewardTypeOption>");
+        viewModelSource.Should().Contain("new RewardTypeOption(RewardTypeFreeItem, AppResources.RewardsRewardTypeFreeItem)");
+        viewModelSource.Should().Contain("new RewardTypeOption(RewardTypePercentDiscount, AppResources.RewardsRewardTypePercentDiscount)");
+        viewModelSource.Should().Contain("new RewardTypeOption(RewardTypeAmountDiscount, AppResources.RewardsRewardTypeAmountDiscount)");
+        viewModelSource.Should().Contain("public RewardTypeOption? SelectedRewardTypeOption");
+        viewModelSource.Should().Contain("_selectedRewardType = value?.Value ?? RewardTypeFreeItem;");
+        viewModelSource.Should().Contain("RewardTypeOptions.Any(option => string.Equals(option.Value, SelectedRewardType, StringComparison.OrdinalIgnoreCase))");
+
+        modelsSource.Should().Contain("public string LocalizedRewardType { get; init; } = string.Empty;");
+        modelsSource.Should().Contain("LocalizedRewardType = RewardTypeOption.ResolveLabel(item.RewardType),");
+        modelsSource.Should().Contain("\"FreeItem\" => AppResources.RewardsRewardTypeFreeItem,");
+        modelsSource.Should().Contain("\"PercentDiscount\" => AppResources.RewardsRewardTypePercentDiscount,");
+        modelsSource.Should().Contain("\"AmountDiscount\" => AppResources.RewardsRewardTypeAmountDiscount,");
+        modelsSource.Should().Contain("_ => AppResources.RewardsRewardTypeUnknown");
+        modelsSource.Should().Contain("public string LocalizedCampaignState => ResolveCampaignStateLabel(CampaignState);");
+        modelsSource.Should().Contain("PromotionCampaignState.Draft => AppResources.RewardsCampaignStateFilterDraft,");
+        modelsSource.Should().Contain("PromotionCampaignState.Scheduled => AppResources.RewardsCampaignStateFilterScheduled,");
+        modelsSource.Should().Contain("PromotionCampaignState.Active => AppResources.RewardsCampaignStateFilterActive,");
+        modelsSource.Should().Contain("PromotionCampaignState.Expired => AppResources.RewardsCampaignStateFilterExpired,");
+        modelsSource.Should().Contain("_ => AppResources.RewardsCampaignStateUnknown");
+        modelsSource.Should().Contain("return string.IsNullOrWhiteSpace(audienceKind)");
+        modelsSource.Should().Contain("? AppResources.RewardsCampaignAudienceJoinedMembers");
+        modelsSource.Should().Contain(": AppResources.RewardsCampaignAudienceUnknown;");
+        modelsSource.Should().Contain("return AppResources.RewardsCampaignAudienceSummaryUnknown;");
+
+        appSource.Should().Contain("xmlns:businessConv=\"clr-namespace:Darwin.Mobile.Business.Converters\"");
+        appSource.Should().Contain("<businessConv:LocalizedBooleanConverter x:Key=\"LocalizedBooleanConverter\" />");
+        viewSource.Should().Contain("ItemDisplayBinding=\"{Binding Label}\"");
+        viewSource.Should().Contain("SelectedItem=\"{Binding SelectedRewardTypeOption}\"");
+        viewSource.Should().Contain("ItemsSource=\"{Binding CampaignChannelOptions}\" ItemDisplayBinding=\"{Binding Label}\" SelectedItem=\"{Binding SelectedCampaignChannel}\"");
+        viewSource.Should().Contain("ItemsSource=\"{Binding CampaignStateFilterOptions}\" ItemDisplayBinding=\"{Binding Label}\" SelectedItem=\"{Binding SelectedCampaignStateFilter}\"");
+        viewSource.Should().Contain("ItemsSource=\"{Binding CampaignAudienceFilterOptions}\" ItemDisplayBinding=\"{Binding Label}\" SelectedItem=\"{Binding SelectedCampaignAudienceFilter}\"");
+        viewSource.Should().Contain("ItemsSource=\"{Binding CampaignSortOptions}\" ItemDisplayBinding=\"{Binding Label}\" SelectedItem=\"{Binding SelectedCampaignSortOption}\"");
+        viewSource.Should().Contain("Text=\"{Binding LocalizedRewardType}\"");
+        viewSource.Should().Contain("Text=\"{Binding LocalizedCampaignState, StringFormat='{x:Static res:AppResources.RewardsCampaignStateFormat}'}\"");
+        viewSource.Should().Contain("Text=\"{Binding AllowSelfRedemption, Converter={StaticResource LocalizedBooleanConverter}, StringFormat='{x:Static res:AppResources.RewardsTierSelfRedemptionFormat}'}\"");
+        viewModelSource.Should().Contain("PromotionAudienceKind.JoinedMembers => AppResources.RewardsCampaignTargetingHintJoinedMembers,");
+        viewModelSource.Should().Contain(": null;");
+        viewModelSource.Should().Contain("_ => AppResources.RewardsCampaignTargetingHintUnknown");
+        modelsSource.Should().Contain("public sealed class CampaignChannelOption");
+        modelsSource.Should().Contain("public sealed class CampaignStateFilterOption");
+        modelsSource.Should().Contain("public sealed class CampaignAudienceFilterOption");
+        modelsSource.Should().Contain("public const string UnknownAudienceKindKey = \"__unknown\";");
+        modelsSource.Should().Contain("public sealed class CampaignSortOption");
+        modelsSource.Should().Contain("public string Label { get; }");
+        modelsSource.Should().Contain("public string DisplayName => Label;");
+        modelsSource.Should().Contain("? CampaignAudienceFilterOption.UnknownAudienceKindKey");
+        modelsSource.Should().Contain("return CampaignAudienceFilterOption.UnknownAudienceKindKey;");
+        converterSource.Should().Contain("public sealed class LocalizedBooleanConverter : Microsoft.Maui.Controls.IValueConverter");
+        converterSource.Should().Contain("true => AppResources.CommonYes,");
+        converterSource.Should().Contain("false => AppResources.CommonNo,");
+        viewModelSource.Should().Contain("new CampaignAudienceFilterOption(CampaignAudienceFilterOption.UnknownAudienceKindKey, AppResources.RewardsCampaignAudienceUnknown)");
+        viewModelSource.Should().Contain("public int UnknownAudienceCampaignCount => CountCampaignsByAudienceKind(CampaignAudienceFilterOption.UnknownAudienceKindKey);");
+        viewModelSource.Should().Contain("AppResources.RewardsCampaignAudienceUnknown,");
+        viewModelSource.Should().Contain("UnknownAudienceCampaignCount.ToString(CultureInfo.InvariantCulture)");
+        viewModelSource.Should().Contain("OnPropertyChanged(nameof(UnknownAudienceCampaignCount));");
+        viewModelSource.Should().Contain("OnPropertyChanged(nameof(UnknownAudienceCampaignMetricText));");
+
+        appResourcesSource.Should().Contain("public static string CommonYes =>");
+        appResourcesSource.Should().Contain("public static string CommonNo =>");
+        appResourcesSource.Should().Contain("public static string RewardsRewardTypeFreeItem =>");
+        appResourcesSource.Should().Contain("public static string RewardsRewardTypePercentDiscount =>");
+        appResourcesSource.Should().Contain("public static string RewardsRewardTypeAmountDiscount =>");
+        appResourcesSource.Should().Contain("public static string RewardsRewardTypeUnknown =>");
+        appResourcesSource.Should().Contain("public static string RewardsCampaignStateUnknown =>");
+        appResourcesSource.Should().Contain("public static string RewardsCampaignAudienceUnknown =>");
+        appResourcesSource.Should().Contain("public static string RewardsCampaignTargetingHintUnknown =>");
+        appResourcesSource.Should().Contain("public static string RewardsCampaignAudienceSummaryUnknown =>");
+
+        stringsSource.Should().Contain("<data name=\"CommonYes\"");
+        stringsSource.Should().Contain("<data name=\"CommonNo\"");
+        stringsSource.Should().Contain("<data name=\"RewardsRewardTypeFreeItem\"");
+        stringsSource.Should().Contain("<data name=\"RewardsRewardTypePercentDiscount\"");
+        stringsSource.Should().Contain("<data name=\"RewardsRewardTypeAmountDiscount\"");
+        stringsSource.Should().Contain("<data name=\"RewardsRewardTypeUnknown\"");
+        stringsSource.Should().Contain("<data name=\"RewardsCampaignStateUnknown\"");
+        stringsSource.Should().Contain("<data name=\"RewardsCampaignAudienceUnknown\"");
+        stringsSource.Should().Contain("<data name=\"RewardsCampaignTargetingHintUnknown\"");
+        stringsSource.Should().Contain("<data name=\"RewardsCampaignAudienceSummaryUnknown\"");
+
+        germanStringsSource.Should().Contain("<data name=\"CommonYes\"");
+        germanStringsSource.Should().Contain("<data name=\"CommonNo\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsRewardTypeFreeItem\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsRewardTypePercentDiscount\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsRewardTypeAmountDiscount\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsRewardTypeUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsCampaignStateUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsCampaignAudienceUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsCampaignTargetingHintUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsCampaignAudienceSummaryUnknown\"");
+    }
+
+    [Fact]
+    public void MobileBusinessOperatorRoleChrome_Should_KeepLocalizedAuthorizationRoleContractsWired()
+    {
+        var homeViewSource = ReadMobileBusinessFile(Path.Combine("Views", "HomePage.xaml"));
+        var homeViewModelSource = ReadMobileBusinessFile(Path.Combine("ViewModels", "HomeViewModel.cs"));
+        var authorizationServiceSource = ReadMobileBusinessFile(Path.Combine("Services", "Identity", "BusinessAuthorizationService.cs"));
+        var staffAccessBadgeSource = ReadMobileBusinessFile(Path.Combine("ViewModels", "StaffAccessBadgeViewModel.cs"));
+        var appResourcesSource = ReadMobileBusinessFile(Path.Combine("Resources", "AppResources.cs"));
+        var stringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.resx"));
+        var germanStringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        homeViewSource.Should().Contain("Text=\"{x:Static res:AppResources.HomeOperatorRoleLabel}\"");
+        homeViewSource.Should().Contain("Text=\"{Binding OperatorRole}\"");
+
+        homeViewModelSource.Should().Contain("private string _operatorRole = AppResources.HomeUnavailableValue;");
+        homeViewModelSource.Should().Contain("OperatorRole = authSnapshotResult.Succeeded && authSnapshotResult.Value is not null");
+        homeViewModelSource.Should().Contain("? authSnapshotResult.Value.RoleDisplayName");
+        homeViewModelSource.Should().Contain(": AppResources.HomeUnavailableValue;");
+
+        authorizationServiceSource.Should().Contain("public string RoleDisplayName { get; init; } = AppResources.AuthorizationRoleUnknown;");
+        authorizationServiceSource.Should().Contain("? AppResources.AuthorizationRoleAdministrator");
+        authorizationServiceSource.Should().Contain("? AppResources.AuthorizationRoleBusinessOperator");
+        authorizationServiceSource.Should().Contain("? AppResources.AuthorizationRoleBusinessOperatorLegacy");
+        authorizationServiceSource.Should().Contain(": AppResources.AuthorizationRoleRestricted");
+
+        staffAccessBadgeSource.Should().Contain("var role = authorizationResult.Succeeded && authorizationResult.Value is not null");
+        staffAccessBadgeSource.Should().Contain("? authorizationResult.Value.RoleDisplayName");
+        staffAccessBadgeSource.Should().Contain(": AppResources.StaffAccessBadgeUnknownRole;");
+        staffAccessBadgeSource.Should().Contain("OperatorRoleDisplay = string.Format(AppResources.StaffAccessBadgeRoleFormat, role);");
+
+        appResourcesSource.Should().Contain("public static string HomeOperatorRoleLabel =>");
+        appResourcesSource.Should().Contain("public static string AuthorizationRoleUnknown =>");
+        appResourcesSource.Should().Contain("public static string AuthorizationRoleAdministrator =>");
+        appResourcesSource.Should().Contain("public static string AuthorizationRoleBusinessOperator =>");
+        appResourcesSource.Should().Contain("public static string AuthorizationRoleBusinessOperatorLegacy =>");
+        appResourcesSource.Should().Contain("public static string AuthorizationRoleRestricted =>");
+        appResourcesSource.Should().Contain("public static string StaffAccessBadgeRoleFormat =>");
+
+        stringsSource.Should().Contain("<data name=\"HomeOperatorRoleLabel\"");
+        stringsSource.Should().Contain("<data name=\"AuthorizationRoleUnknown\"");
+        stringsSource.Should().Contain("<data name=\"AuthorizationRoleAdministrator\"");
+        stringsSource.Should().Contain("<data name=\"AuthorizationRoleBusinessOperator\"");
+        stringsSource.Should().Contain("<data name=\"AuthorizationRoleBusinessOperatorLegacy\"");
+        stringsSource.Should().Contain("<data name=\"AuthorizationRoleRestricted\"");
+        stringsSource.Should().Contain("<data name=\"StaffAccessBadgeRoleFormat\"");
+
+        germanStringsSource.Should().Contain("<data name=\"HomeOperatorRoleLabel\"");
+        germanStringsSource.Should().Contain("<data name=\"AuthorizationRoleUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"AuthorizationRoleAdministrator\"");
+        germanStringsSource.Should().Contain("<data name=\"AuthorizationRoleBusinessOperator\"");
+        germanStringsSource.Should().Contain("<data name=\"AuthorizationRoleBusinessOperatorLegacy\"");
+        germanStringsSource.Should().Contain("<data name=\"AuthorizationRoleRestricted\"");
+        germanStringsSource.Should().Contain("<data name=\"StaffAccessBadgeRoleFormat\"");
+    }
+
+
+    [Fact]
+    public void MobileConsumerCommerceChrome_Should_KeepLocalizedOrderAndInvoiceStatusContractsWired()
+    {
+        var viewModelSource = ReadMobileConsumerFile(Path.Combine("ViewModels", "MemberCommerceViewModel.cs"));
+        var appResourcesSource = ReadMobileConsumerFile(Path.Combine("Resources", "AppResources.cs"));
+        var stringsSource = ReadMobileConsumerFile(Path.Combine("Resources", "Strings.resx"));
+        var germanStringsSource = ReadMobileConsumerFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        viewModelSource.Should().Contain("StatusText = string.Format(AppResources.MemberCommerceOrderStatusFormat, LocalizeOrderStatus(order.Status))");
+        viewModelSource.Should().Contain("StatusText = string.Format(AppResources.MemberCommerceInvoiceStatusFormat, LocalizeInvoiceStatus(invoice.Status))");
+        viewModelSource.Should().Contain("\"Created\" => AppResources.MemberCommerceStatusCreated,");
+        viewModelSource.Should().Contain("\"Confirmed\" => AppResources.MemberCommerceStatusConfirmed,");
+        viewModelSource.Should().Contain("\"Paid\" => AppResources.MemberCommerceStatusPaid,");
+        viewModelSource.Should().Contain("\"PartiallyShipped\" => AppResources.MemberCommerceStatusPartiallyShipped,");
+        viewModelSource.Should().Contain("\"Shipped\" => AppResources.MemberCommerceStatusShipped,");
+        viewModelSource.Should().Contain("\"Delivered\" => AppResources.MemberCommerceStatusDelivered,");
+        viewModelSource.Should().Contain("\"Cancelled\" => AppResources.MemberCommerceStatusCancelled,");
+        viewModelSource.Should().Contain("\"Refunded\" => AppResources.MemberCommerceStatusRefunded,");
+        viewModelSource.Should().Contain("\"PartiallyRefunded\" => AppResources.MemberCommerceStatusPartiallyRefunded,");
+        viewModelSource.Should().Contain("\"Completed\" => AppResources.MemberCommerceStatusCompleted,");
+        viewModelSource.Should().Contain("\"Draft\" => AppResources.MemberCommerceStatusDraft,");
+        viewModelSource.Should().Contain("\"Open\" => AppResources.MemberCommerceStatusOpen,");
+        viewModelSource.Should().Contain("_ => AppResources.MemberCommerceStatusUnknown");
+
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusCreated =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusConfirmed =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusPaid =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusPartiallyShipped =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusShipped =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusDelivered =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusCancelled =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusRefunded =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusPartiallyRefunded =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusCompleted =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusDraft =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusOpen =>");
+        appResourcesSource.Should().Contain("public static string MemberCommerceStatusUnknown =>");
+
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusCreated\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusConfirmed\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusPaid\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusPartiallyShipped\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusShipped\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusDelivered\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusCancelled\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusRefunded\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusPartiallyRefunded\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusCompleted\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusDraft\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusOpen\"");
+        stringsSource.Should().Contain("<data name=\"MemberCommerceStatusUnknown\"");
+
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusCreated\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusConfirmed\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusPaid\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusPartiallyShipped\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusShipped\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusDelivered\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusCancelled\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusRefunded\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusPartiallyRefunded\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusCompleted\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusDraft\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusOpen\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCommerceStatusUnknown\"");
+    }
+
+
+    [Fact]
+    public void MobileProfileAndScanPlaceholders_Should_KeepResourceBackedNonAdminContractsWired()
+    {
+        var businessProfileViewSource = ReadMobileBusinessFile(Path.Combine("Views", "ProfilePage.xaml"));
+        var businessQrScanViewSource = ReadMobileBusinessFile(Path.Combine("Views", "QrScanPage.xaml"));
+        var businessAppResourcesSource = ReadMobileBusinessFile(Path.Combine("Resources", "AppResources.cs"));
+        var businessStringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.resx"));
+        var businessGermanStringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        var consumerProfileViewSource = ReadMobileConsumerFile(Path.Combine("Views", "ProfilePage.xaml"));
+        var consumerAppResourcesSource = ReadMobileConsumerFile(Path.Combine("Resources", "AppResources.cs"));
+        var consumerStringsSource = ReadMobileConsumerFile(Path.Combine("Resources", "Strings.resx"));
+        var consumerGermanStringsSource = ReadMobileConsumerFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        businessProfileViewSource.Should().Contain("Placeholder=\"{x:Static res:AppResources.ProfilePhonePlaceholder}\"");
+        businessProfileViewSource.Should().Contain("Placeholder=\"{x:Static res:AppResources.ProfileLocalePlaceholder}\"");
+        businessProfileViewSource.Should().Contain("Placeholder=\"{x:Static res:AppResources.ProfileTimezonePlaceholder}\"");
+        businessProfileViewSource.Should().Contain("Placeholder=\"{x:Static res:AppResources.ProfileCurrencyPlaceholder}\"");
+        businessQrScanViewSource.Should().Contain("Title=\"{x:Static res:AppResources.ScanTitle}\"");
+        businessQrScanViewSource.Should().Contain("Text=\"{x:Static res:AppResources.ScannerManualTokenCancel}\"");
+
+        businessAppResourcesSource.Should().Contain("public static string ProfilePhonePlaceholder =>");
+        businessAppResourcesSource.Should().Contain("public static string ProfileLocalePlaceholder =>");
+        businessAppResourcesSource.Should().Contain("public static string ProfileTimezonePlaceholder =>");
+        businessAppResourcesSource.Should().Contain("public static string ProfileCurrencyPlaceholder =>");
+
+        consumerProfileViewSource.Should().Contain("Placeholder=\"{x:Static res:AppResources.ProfilePhonePlaceholder}\"");
+        consumerProfileViewSource.Should().Contain("Placeholder=\"{x:Static res:AppResources.ProfileLocalePlaceholder}\"");
+        consumerProfileViewSource.Should().Contain("Placeholder=\"{x:Static res:AppResources.ProfileCurrencyPlaceholder}\"");
+        consumerProfileViewSource.Should().Contain("Placeholder=\"{x:Static res:AppResources.ProfileTimezonePlaceholder}\"");
+        consumerProfileViewSource.Should().Contain("ItemsSource=\"{Binding PhoneVerificationChannelOptions}\"");
+        consumerProfileViewSource.Should().Contain("ItemDisplayBinding=\"{Binding DisplayName}\"");
+        consumerProfileViewSource.Should().Contain("SelectedItem=\"{Binding SelectedPhoneVerificationChannel}\"");
+
+        consumerAppResourcesSource.Should().Contain("public static string ProfilePhonePlaceholder =>");
+        consumerAppResourcesSource.Should().Contain("public static string ProfileLocalePlaceholder =>");
+        consumerAppResourcesSource.Should().Contain("public static string ProfileCurrencyPlaceholder =>");
+        consumerAppResourcesSource.Should().Contain("public static string ProfileTimezonePlaceholder =>");
+        consumerAppResourcesSource.Should().Contain("public static string ProfilePhoneVerificationSmsOption =>");
+        consumerAppResourcesSource.Should().Contain("public static string ProfilePhoneVerificationWhatsAppOption =>");
+
+        businessStringsSource.Should().Contain("<data name=\"ProfilePhonePlaceholder\"");
+        businessStringsSource.Should().Contain("<data name=\"ProfileLocalePlaceholder\"");
+        businessStringsSource.Should().Contain("<data name=\"ProfileTimezonePlaceholder\"");
+        businessStringsSource.Should().Contain("<data name=\"ProfileCurrencyPlaceholder\"");
+        businessGermanStringsSource.Should().Contain("<data name=\"ProfilePhonePlaceholder\"");
+        businessGermanStringsSource.Should().Contain("<data name=\"ProfileLocalePlaceholder\"");
+        businessGermanStringsSource.Should().Contain("<data name=\"ProfileTimezonePlaceholder\"");
+        businessGermanStringsSource.Should().Contain("<data name=\"ProfileCurrencyPlaceholder\"");
+
+        consumerStringsSource.Should().Contain("<data name=\"ProfilePhonePlaceholder\"");
+        consumerStringsSource.Should().Contain("<data name=\"ProfileLocalePlaceholder\"");
+        consumerStringsSource.Should().Contain("<data name=\"ProfileCurrencyPlaceholder\"");
+        consumerStringsSource.Should().Contain("<data name=\"ProfileTimezonePlaceholder\"");
+        consumerStringsSource.Should().Contain("<data name=\"ProfilePhoneVerificationSmsOption\"");
+        consumerStringsSource.Should().Contain("<data name=\"ProfilePhoneVerificationWhatsAppOption\"");
+        consumerGermanStringsSource.Should().Contain("<data name=\"ProfilePhonePlaceholder\"");
+        consumerGermanStringsSource.Should().Contain("<data name=\"ProfileLocalePlaceholder\"");
+        consumerGermanStringsSource.Should().Contain("<data name=\"ProfileCurrencyPlaceholder\"");
+        consumerGermanStringsSource.Should().Contain("<data name=\"ProfileTimezonePlaceholder\"");
+        consumerGermanStringsSource.Should().Contain("<data name=\"ProfilePhoneVerificationSmsOption\"");
+        consumerGermanStringsSource.Should().Contain("<data name=\"ProfilePhoneVerificationWhatsAppOption\"");
+    }
+
+
+    [Fact]
+    public void MobileConsumerRewardsHistoryChrome_Should_KeepLocalizedTransactionTypeContractsWired()
+    {
+        var appSource = ReadMobileConsumerFile("App.xaml");
+        var rewardsPageSource = ReadMobileConsumerFile(Path.Combine("Views", "RewardsPage.xaml"));
+        var converterSource = ReadMobileConsumerFile(Path.Combine("Converters", "PointsTransactionTypeConverter.cs"));
+        var timelineKindConverterSource = ReadMobileConsumerFile(Path.Combine("Converters", "LoyaltyTimelineKindConverter.cs"));
+        var feedPageSource = ReadMobileConsumerFile(Path.Combine("Views", "FeedPage.xaml"));
+        var businessDetailPageSource = ReadMobileConsumerFile(Path.Combine("Views", "BusinessDetailPage.xaml"));
+        var businessRewardConverterSource = ReadMobileConsumerFile(Path.Combine("Converters", "BusinessRewardTypeConverter.cs"));
+        var localizedBooleanConverterSource = ReadMobileConsumerFile(Path.Combine("Converters", "LocalizedBooleanConverter.cs"));
+        var appResourcesSource = ReadMobileConsumerFile(Path.Combine("Resources", "AppResources.cs"));
+        var stringsSource = ReadMobileConsumerFile(Path.Combine("Resources", "Strings.resx"));
+        var germanStringsSource = ReadMobileConsumerFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        appSource.Should().Contain("xmlns:consumerConv=\"clr-namespace:Darwin.Mobile.Consumer.Converters\"");
+        appSource.Should().Contain("<consumerConv:BusinessRewardTypeConverter x:Key=\"BusinessRewardTypeConverter\" />");
+        appSource.Should().Contain("<consumerConv:LoyaltyTimelineKindConverter x:Key=\"LoyaltyTimelineKindConverter\" />");
+        appSource.Should().Contain("<consumerConv:LocalizedBooleanConverter x:Key=\"LocalizedBooleanConverter\" />");
+        appSource.Should().Contain("<consumerConv:PointsTransactionTypeConverter x:Key=\"PointsTransactionTypeConverter\" />");
+        rewardsPageSource.Should().Contain("Text=\"{Binding Type, Converter={StaticResource PointsTransactionTypeConverter}}\"");
+        feedPageSource.Should().Contain("Text=\"{Binding Kind, Converter={StaticResource LoyaltyTimelineKindConverter}}\"");
+        businessDetailPageSource.Should().Contain("Text=\"{Binding Business.LoyaltyProgramPublic.IsActive, Converter={StaticResource LocalizedBooleanConverter}, StringFormat={x:Static res:AppResources.BusinessActiveFormat}}\"");
+        businessDetailPageSource.Should().Contain("Text=\"{Binding RewardType, Converter={StaticResource BusinessRewardTypeConverter}, StringFormat={x:Static res:AppResources.BusinessRewardTypeFormat}}\"");
+        businessDetailPageSource.Should().Contain("Text=\"{Binding AllowSelfRedemption, Converter={StaticResource LocalizedBooleanConverter}, StringFormat={x:Static res:AppResources.BusinessSelfRedemptionFormat}}\"");
+        businessRewardConverterSource.Should().Contain("public sealed class BusinessRewardTypeConverter : Microsoft.Maui.Controls.IValueConverter");
+        businessRewardConverterSource.Should().Contain("\"FreeItem\" => AppResources.BusinessRewardTypeFreeItem,");
+        businessRewardConverterSource.Should().Contain("\"PercentDiscount\" => AppResources.BusinessRewardTypePercentDiscount,");
+        businessRewardConverterSource.Should().Contain("\"AmountDiscount\" => AppResources.BusinessRewardTypeAmountDiscount,");
+        businessRewardConverterSource.Should().Contain("_ => AppResources.BusinessRewardTypeUnknown");
+        timelineKindConverterSource.Should().Contain("public sealed class LoyaltyTimelineKindConverter : Microsoft.Maui.Controls.IValueConverter");
+        timelineKindConverterSource.Should().Contain("LoyaltyTimelineEntryKind.PointsTransaction => AppResources.FeedTimelineKindPointsTransaction,");
+        timelineKindConverterSource.Should().Contain("LoyaltyTimelineEntryKind.RewardRedemption => AppResources.FeedTimelineKindRewardRedemption,");
+        timelineKindConverterSource.Should().Contain("_ => AppResources.FeedTimelineKindUnknown");
+        localizedBooleanConverterSource.Should().Contain("public sealed class LocalizedBooleanConverter : Microsoft.Maui.Controls.IValueConverter");
+        localizedBooleanConverterSource.Should().Contain("true => AppResources.CommonYes,");
+        localizedBooleanConverterSource.Should().Contain("false => AppResources.CommonNo,");
+        converterSource.Should().Contain("public sealed class PointsTransactionTypeConverter : IValueConverter");
+        converterSource.Should().Contain("\"Accrual\" => AppResources.RewardsTransactionTypeAccrual,");
+        converterSource.Should().Contain("\"Redemption\" => AppResources.RewardsTransactionTypeRedemption,");
+        converterSource.Should().Contain("\"Adjustment\" => AppResources.RewardsTransactionTypeAdjustment,");
+        converterSource.Should().Contain("_ => AppResources.RewardsTransactionTypeUnknown");
+        appResourcesSource.Should().Contain("public static string CommonYes =>");
+        appResourcesSource.Should().Contain("public static string CommonNo =>");
+        appResourcesSource.Should().Contain("public static string BusinessRewardTypeFreeItem =>");
+        appResourcesSource.Should().Contain("public static string BusinessRewardTypePercentDiscount =>");
+        appResourcesSource.Should().Contain("public static string BusinessRewardTypeAmountDiscount =>");
+        appResourcesSource.Should().Contain("public static string BusinessRewardTypeUnknown =>");
+        appResourcesSource.Should().Contain("public static string FeedTimelineKindPointsTransaction =>");
+        appResourcesSource.Should().Contain("public static string FeedTimelineKindRewardRedemption =>");
+        appResourcesSource.Should().Contain("public static string FeedTimelineKindUnknown =>");
+        appResourcesSource.Should().Contain("public static string RewardsTransactionTypeAccrual =>");
+        appResourcesSource.Should().Contain("public static string RewardsTransactionTypeRedemption =>");
+        appResourcesSource.Should().Contain("public static string RewardsTransactionTypeAdjustment =>");
+        appResourcesSource.Should().Contain("public static string RewardsTransactionTypeUnknown =>");
+        stringsSource.Should().Contain("<data name=\"CommonYes\"");
+        stringsSource.Should().Contain("<data name=\"CommonNo\"");
+        stringsSource.Should().Contain("<data name=\"BusinessRewardTypeFreeItem\"");
+        stringsSource.Should().Contain("<data name=\"BusinessRewardTypePercentDiscount\"");
+        stringsSource.Should().Contain("<data name=\"BusinessRewardTypeAmountDiscount\"");
+        stringsSource.Should().Contain("<data name=\"BusinessRewardTypeUnknown\"");
+        stringsSource.Should().Contain("<data name=\"FeedTimelineKindPointsTransaction\"");
+        stringsSource.Should().Contain("<data name=\"FeedTimelineKindRewardRedemption\"");
+        stringsSource.Should().Contain("<data name=\"FeedTimelineKindUnknown\"");
+        stringsSource.Should().Contain("<data name=\"RewardsTransactionTypeAccrual\"");
+        stringsSource.Should().Contain("<data name=\"RewardsTransactionTypeRedemption\"");
+        stringsSource.Should().Contain("<data name=\"RewardsTransactionTypeAdjustment\"");
+        stringsSource.Should().Contain("<data name=\"RewardsTransactionTypeUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"CommonYes\"");
+        germanStringsSource.Should().Contain("<data name=\"CommonNo\"");
+        germanStringsSource.Should().Contain("<data name=\"BusinessRewardTypeFreeItem\"");
+        germanStringsSource.Should().Contain("<data name=\"BusinessRewardTypePercentDiscount\"");
+        germanStringsSource.Should().Contain("<data name=\"BusinessRewardTypeAmountDiscount\"");
+        germanStringsSource.Should().Contain("<data name=\"BusinessRewardTypeUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"FeedTimelineKindPointsTransaction\"");
+        germanStringsSource.Should().Contain("<data name=\"FeedTimelineKindRewardRedemption\"");
+        germanStringsSource.Should().Contain("<data name=\"FeedTimelineKindUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsTransactionTypeAccrual\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsTransactionTypeRedemption\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsTransactionTypeAdjustment\"");
+        germanStringsSource.Should().Contain("<data name=\"RewardsTransactionTypeUnknown\"");
+    }
+
+
+    [Fact]
+    public void MobileConsumerCustomerContextChrome_Should_KeepLocalizedConsentAndInteractionTokenContractsWired()
+    {
+        var viewModelSource = ReadMobileConsumerFile(Path.Combine("ViewModels", "MemberCustomerContextViewModel.cs"));
+        var appResourcesSource = ReadMobileConsumerFile(Path.Combine("Resources", "AppResources.cs"));
+        var stringsSource = ReadMobileConsumerFile(Path.Combine("Resources", "Strings.resx"));
+        var germanStringsSource = ReadMobileConsumerFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        viewModelSource.Should().Contain("Type = LocalizeConsentType(consent.Type),");
+        viewModelSource.Should().Contain("LocalizeInteractionType(interaction.Type)");
+        viewModelSource.Should().Contain("LocalizeInteractionChannel(interaction.Channel)");
+        viewModelSource.Should().Contain("\"MarketingEmail\" => AppResources.MemberCustomerContextConsentTypeMarketingEmail,");
+        viewModelSource.Should().Contain("\"Sms\" => AppResources.ProfilePhoneVerificationSmsOption,");
+        viewModelSource.Should().Contain("\"TermsOfService\" => AppResources.MemberCustomerContextConsentTypeTermsOfService,");
+        viewModelSource.Should().Contain("_ => AppResources.MemberCustomerContextConsentTypeUnknown");
+        viewModelSource.Should().Contain("\"Call\" => AppResources.MemberCustomerContextInteractionTypeCall,");
+        viewModelSource.Should().Contain("\"Meeting\" => AppResources.MemberCustomerContextInteractionTypeMeeting,");
+        viewModelSource.Should().Contain("\"Order\" => AppResources.MemberCustomerContextInteractionTypeOrder,");
+        viewModelSource.Should().Contain("\"Support\" => AppResources.MemberCustomerContextInteractionTypeSupport,");
+        viewModelSource.Should().Contain("_ => AppResources.MemberCustomerContextInteractionTypeUnknown");
+        viewModelSource.Should().Contain("\"Phone\" => AppResources.PhoneLabel,");
+        viewModelSource.Should().Contain("\"Chat\" => AppResources.MemberCustomerContextInteractionChannelChat,");
+        viewModelSource.Should().Contain("\"InPerson\" => AppResources.MemberCustomerContextInteractionChannelInPerson,");
+        viewModelSource.Should().Contain("_ => AppResources.MemberCustomerContextInteractionChannelUnknown");
+
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextConsentTypeMarketingEmail =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextConsentTypeTermsOfService =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextConsentTypeUnknown =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextInteractionTypeCall =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextInteractionTypeMeeting =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextInteractionTypeOrder =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextInteractionTypeSupport =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextInteractionTypeUnknown =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextInteractionChannelChat =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextInteractionChannelInPerson =>");
+        appResourcesSource.Should().Contain("public static string MemberCustomerContextInteractionChannelUnknown =>");
+
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextConsentTypeMarketingEmail\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextConsentTypeTermsOfService\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextConsentTypeUnknown\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeCall\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeMeeting\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeOrder\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeSupport\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeUnknown\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionChannelChat\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionChannelInPerson\"");
+        stringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionChannelUnknown\"");
+
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextConsentTypeMarketingEmail\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextConsentTypeTermsOfService\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextConsentTypeUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeCall\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeMeeting\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeOrder\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeSupport\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionTypeUnknown\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionChannelChat\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionChannelInPerson\"");
+        germanStringsSource.Should().Contain("<data name=\"MemberCustomerContextInteractionChannelUnknown\"");
+    }
+
+
+    [Fact]
+    public void MobileBusinessInvitationPreviewChrome_Should_KeepLocalizedRoleAndStatusDisplayContractsWired()
+    {
+        var invitationViewModelSource = ReadMobileBusinessFile(Path.Combine("ViewModels", "AcceptInvitationViewModel.cs"));
+        var invitationViewSource = ReadMobileBusinessFile(Path.Combine("Views", "AcceptInvitationPage.xaml"));
+        var appResourcesSource = ReadMobileBusinessFile(Path.Combine("Resources", "AppResources.cs"));
+        var stringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.resx"));
+        var germanStringsSource = ReadMobileBusinessFile(Path.Combine("Resources", "Strings.de.resx"));
+
+        invitationViewModelSource.Should().Contain("public string InvitationRoleDisplay => LocalizeInvitationRole(_preview?.Role);");
+        invitationViewModelSource.Should().Contain("public string InvitationStatusDisplay => LocalizeInvitationStatus(_preview?.Status);");
+        invitationViewModelSource.Should().Contain("OnPropertyChanged(nameof(InvitationRoleDisplay));");
+        invitationViewModelSource.Should().Contain("OnPropertyChanged(nameof(InvitationStatusDisplay));");
+        invitationViewModelSource.Should().Contain("\"Owner\" => AppResources.InvitationRoleOwner,");
+        invitationViewModelSource.Should().Contain("\"Manager\" => AppResources.InvitationRoleManager,");
+        invitationViewModelSource.Should().Contain("\"Staff\" => AppResources.InvitationRoleStaff,");
+        invitationViewModelSource.Should().Contain("_ => AppResources.InvitationRoleUnknown");
+        invitationViewModelSource.Should().Contain("\"Pending\" => AppResources.InvitationStatusPending,");
+        invitationViewModelSource.Should().Contain("\"Accepted\" => AppResources.InvitationStatusAccepted,");
+        invitationViewModelSource.Should().Contain("\"Expired\" => AppResources.InvitationStatusExpired,");
+        invitationViewModelSource.Should().Contain("\"Revoked\" => AppResources.InvitationStatusRevoked,");
+        invitationViewModelSource.Should().Contain("_ => AppResources.InvitationStatusUnknown");
+        invitationViewModelSource.Should().Contain("string.Equals(InvitationStatus, \"Pending\", StringComparison.OrdinalIgnoreCase)");
+
+        invitationViewSource.Should().Contain("Text=\"{Binding InvitationRoleDisplay}\"");
+        invitationViewSource.Should().Contain("Text=\"{Binding InvitationStatusDisplay}\"");
+
+        appResourcesSource.Should().Contain("public static string InvitationRoleOwner =>");
+        appResourcesSource.Should().Contain("public static string InvitationRoleManager =>");
+        appResourcesSource.Should().Contain("public static string InvitationRoleStaff =>");
+        appResourcesSource.Should().Contain("public static string InvitationRoleUnknown =>");
+        appResourcesSource.Should().Contain("public static string InvitationStatusPending =>");
+        appResourcesSource.Should().Contain("public static string InvitationStatusAccepted =>");
+        appResourcesSource.Should().Contain("public static string InvitationStatusExpired =>");
+        appResourcesSource.Should().Contain("public static string InvitationStatusRevoked =>");
+        appResourcesSource.Should().Contain("public static string InvitationStatusUnknown =>");
+
+        stringsSource.Should().Contain("<data name=\"InvitationRoleOwner\"");
+        stringsSource.Should().Contain("<data name=\"InvitationRoleManager\"");
+        stringsSource.Should().Contain("<data name=\"InvitationRoleStaff\"");
+        stringsSource.Should().Contain("<data name=\"InvitationRoleUnknown\"");
+        stringsSource.Should().Contain("<data name=\"InvitationStatusPending\"");
+        stringsSource.Should().Contain("<data name=\"InvitationStatusAccepted\"");
+        stringsSource.Should().Contain("<data name=\"InvitationStatusExpired\"");
+        stringsSource.Should().Contain("<data name=\"InvitationStatusUnknown\"");
+        stringsSource.Should().Contain("<data name=\"InvitationStatusRevoked\"");
+
+        germanStringsSource.Should().Contain("<data name=\"InvitationRoleOwner\"");
+        germanStringsSource.Should().Contain("<data name=\"InvitationRoleManager\"");
+        germanStringsSource.Should().Contain("<data name=\"InvitationRoleStaff\"");
+        germanStringsSource.Should().Contain("<data name=\"InvitationStatusPending\"");
+        germanStringsSource.Should().Contain("<data name=\"InvitationStatusAccepted\"");
+        germanStringsSource.Should().Contain("<data name=\"InvitationStatusExpired\"");
+        germanStringsSource.Should().Contain("<data name=\"InvitationStatusRevoked\"");
+    }
+
 
     [Fact]
     public void BusinessesMetaAndProfileAddressesControllers_Should_KeepBoundaryContracts()
@@ -167,6 +720,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         subscriptionViewSource.Should().Contain("@T.T(\"BusinessSubscriptionNoActivePlans\")");
         subscriptionViewSource.Should().Contain("@T.T(\"BusinessSubscriptionResolvePrerequisites\")");
         subscriptionViewSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+
+        var mobileBusinessSubscriptionVmSource = ReadMobileBusinessFile(Path.Combine("ViewModels", "SubscriptionViewModel.cs"));
+        mobileBusinessSubscriptionVmSource.Should().Contain("ResolveSubscriptionStatusDisplayName(status.Status)");
+        mobileBusinessSubscriptionVmSource.Should().Contain("\"Trialing\" => AppResources.SubscriptionStatusTrialing");
+        mobileBusinessSubscriptionVmSource.Should().Contain("\"Active\" => AppResources.SubscriptionStatusActive");
+        mobileBusinessSubscriptionVmSource.Should().Contain("\"PastDue\" => AppResources.SubscriptionStatusPastDue");
+        mobileBusinessSubscriptionVmSource.Should().Contain("\"Canceled\" => AppResources.SubscriptionStatusCanceled");
+        mobileBusinessSubscriptionVmSource.Should().Contain("\"Unpaid\" => AppResources.SubscriptionStatusUnpaid");
+        mobileBusinessSubscriptionVmSource.Should().Contain("\"Incomplete\" => AppResources.SubscriptionStatusIncomplete");
+        mobileBusinessSubscriptionVmSource.Should().Contain("\"IncompleteExpired\" => AppResources.SubscriptionStatusIncompleteExpired");
+        mobileBusinessSubscriptionVmSource.Should().Contain("\"Paused\" => AppResources.SubscriptionStatusPaused");
     }
 
 
@@ -2159,7 +2723,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         formSource.Should().Contain("asp-for=\"UserId\" asp-items=\"Model.UserOptions\" class=\"form-select\"");
         formSource.Should().Contain("asp-for=\"AmountMinor\" class=\"form-control\"");
         formSource.Should().Contain("asp-for=\"Currency\" class=\"form-control\"");
-        formSource.Should().Contain("asp-for=\"Status\" asp-items=\"Html.GetEnumSelectList<Darwin.Domain.Enums.PaymentStatus>()\" class=\"form-select\"");
+        formSource.Should().Contain("var paymentStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.PaymentStatus>().Select");
+        formSource.Should().Contain("Text = T.T(option.Text)");
+        formSource.Should().Contain("asp-for=\"Status\" asp-items=\"paymentStatusOptions\" class=\"form-select\"");
         formSource.Should().Contain("asp-for=\"Provider\" class=\"form-control\"");
         formSource.Should().Contain("asp-for=\"ProviderTransactionRef\" class=\"form-control\"");
         formSource.Should().Contain("asp-for=\"PaidAtUtc\" type=\"datetime-local\" class=\"form-control\"");
@@ -2281,7 +2847,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         accountFormSource.Should().Contain("asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\"");
         accountFormSource.Should().Contain("asp-for=\"Code\" class=\"form-control\"");
-        accountFormSource.Should().Contain("asp-for=\"Type\" asp-items=\"Html.GetEnumSelectList<Darwin.Domain.Enums.AccountType>()\" class=\"form-select\"");
+        accountFormSource.Should().Contain("var accountTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.AccountType>().Select");
+        accountFormSource.Should().Contain("Text = T.T(option.Text)");
+        accountFormSource.Should().Contain("asp-for=\"Type\" asp-items=\"accountTypeOptions\" class=\"form-select\"");
         accountFormSource.Should().Contain("asp-for=\"Name\" class=\"form-control\"");
         accountFormSource.Should().Contain("asp-validation-for=\"Name\" class=\"text-danger\"");
 
@@ -2764,7 +3332,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgePreviewTitle\")");
         source.Should().Contain("src=\"@Model.BadgeImageDataUrl\"");
         source.Should().Contain("alt=\"@T.T(\"BusinessStaffAccessBadgeQrAlt\")\"");
-        source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeMemberRoleLabel\"): @Model.Role");
+        source.Should().Contain("string LocalizeBusinessMemberRole(object? role) => role is null ? \"-\" : T.T(role.ToString() ?? string.Empty);");
+        source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeMemberRoleLabel\"): @LocalizeBusinessMemberRole(Model.Role)");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeContextTitle\")");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeIssuedAtLabel\")");
         source.Should().Contain("@Model.IssuedAtUtc.ToString(\"yyyy-MM-dd HH:mm:ss\") UTC");
@@ -3220,7 +3789,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         formSource.Should().Contain("asp-for=\"Currency\"");
         formSource.Should().Contain("maxlength=\"3\"");
         formSource.Should().Contain("asp-for=\"SelectionMode\"");
-        formSource.Should().Contain("Html.GetEnumSelectList<Darwin.Domain.Enums.AddOnSelectionMode>()");
+        formSource.Should().Contain("var selectionModeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.AddOnSelectionMode>().Select");
+        formSource.Should().Contain("Text = T.T(option.Text)");
+        formSource.Should().Contain("asp-items=\"selectionModeOptions\"");
         formSource.Should().Contain("asp-for=\"MinSelections\"");
         formSource.Should().Contain("asp-for=\"MaxSelections\"");
         formSource.Should().Contain("asp-for=\"IsGlobal\"");
@@ -3298,6 +3869,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         subscriptionViewSource.Should().Contain("name=\"subscriptionId\" value=\"@Model.Subscription.SubscriptionId\"");
         subscriptionViewSource.Should().Contain("name=\"rowVersion\" value=\"@Convert.ToBase64String(Model.Subscription.RowVersion)\"");
         subscriptionViewSource.Should().Contain("name=\"cancelAtPeriodEnd\" value=\"@((!Model.Subscription.CancelAtPeriodEnd).ToString().ToLowerInvariant())\"");
+        subscriptionViewSource.Should().Contain("string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? \"-\" : T.T(status);");
+        subscriptionViewSource.Should().Contain("@SubscriptionStatusLabel(Model.Subscription.Status)");
         subscriptionViewSource.Should().Contain("BusinessSubscriptionRestoreRenewal");
         subscriptionViewSource.Should().Contain("BusinessSubscriptionCancelAtPeriodEndAction");
         subscriptionViewSource.Should().Contain("@T.T(\"BusinessSubscriptionOpenBillingWebsite\")");

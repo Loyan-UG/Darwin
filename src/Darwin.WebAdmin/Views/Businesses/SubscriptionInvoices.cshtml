@@ -3,6 +3,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BusinessSubscriptionInvoicesTitle");
+    string LocalizeSubscriptionInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="business-subscription-invoices-workspace-shell">
@@ -364,7 +365,7 @@
                     </td>
                     <td>
                         <span class="badge @(item.Status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Paid ? "bg-success" : item.Status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Uncollectible ? "bg-danger" : "bg-secondary")">
-                            @item.Status
+                            @LocalizeSubscriptionInvoiceStatus(item.Status)
                         </span>
                         @if (!string.IsNullOrWhiteSpace(item.FailureReason))
                         {

@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = T.T("BusinessInvitationsTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
+    string LocalizeBusinessInvitationRole(object? role) => role is null ? "-" : T.T(role.ToString() ?? string.Empty);
 
     string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
     {
@@ -294,7 +295,7 @@
                             <div class="small text-muted">@item.Note</div>
                         }
                     </td>
-                    <td>@item.Role</td>
+                    <td>@LocalizeBusinessInvitationRole(item.Role)</td>
                     <td>
                         @switch (item.Status)
                         {

@@ -119,14 +119,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             return string.Equals(item.Key, "ManageBusinessSupport", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static IEnumerable<SelectListItem> BuildPermissionFilterItems(PermissionQueueFilter selected)
+        private IEnumerable<SelectListItem> BuildPermissionFilterItems(PermissionQueueFilter selected)
         {
             return new List<SelectListItem>
             {
-                new("All", PermissionQueueFilter.All.ToString(), selected == PermissionQueueFilter.All),
-                new("System", PermissionQueueFilter.System.ToString(), selected == PermissionQueueFilter.System),
-                new("Custom", PermissionQueueFilter.Custom.ToString(), selected == PermissionQueueFilter.Custom),
-                new("Delegated Support", PermissionQueueFilter.DelegatedSupport.ToString(), selected == PermissionQueueFilter.DelegatedSupport)
+                new(T("IdentityFilterAll"), PermissionQueueFilter.All.ToString(), selected == PermissionQueueFilter.All),
+                new(T("IdentityFilterSystem"), PermissionQueueFilter.System.ToString(), selected == PermissionQueueFilter.System),
+                new(T("IdentityFilterCustom"), PermissionQueueFilter.Custom.ToString(), selected == PermissionQueueFilter.Custom),
+                new(T("IdentityFilterDelegatedSupport"), PermissionQueueFilter.DelegatedSupport.ToString(), selected == PermissionQueueFilter.DelegatedSupport)
             };
         }
 

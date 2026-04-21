@@ -3,6 +3,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("WebhookDeliveries");
+    string LocalizeWebhookStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
 <div id="billing-webhooks-workspace-shell">
@@ -260,7 +261,7 @@
                     </td>
                     <td><code>@item.CallbackUrl</code></td>
                     <td>
-                        <span class="badge @(item.Status == "Succeeded" ? "bg-success" : item.Status == "Failed" ? "bg-danger" : "bg-warning text-dark")">@item.Status</span>
+                        <span class="badge @(item.Status == "Succeeded" ? "bg-success" : item.Status == "Failed" ? "bg-danger" : "bg-warning text-dark")">@LocalizeWebhookStatus(item.Status)</span>
                         @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
                         {
                             <div><span class="badge text-bg-dark mt-1">@T.T("DisputeSignal")</span></div>

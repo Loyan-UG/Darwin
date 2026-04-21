@@ -2,6 +2,8 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Invoices");
+    string LocalizeCrmInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
 }
 
 <div id="crm-invoices-workspace-shell">
@@ -169,7 +171,7 @@
                         <td>
                             @if (item.CustomerTaxProfileType.HasValue)
                             {
-                                <span class="badge @(item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@item.CustomerTaxProfileType</span>
+                                <span class="badge @(item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@LocalizeCustomerTaxProfileType(item.CustomerTaxProfileType)</span>
                                 @if (!string.IsNullOrWhiteSpace(item.CustomerVatId))
                                 {
                                     <div class="small text-muted">@item.CustomerVatId</div>
@@ -197,7 +199,7 @@
                                 @T.T("Balance"): @item.Currency @((item.BalanceMinor / 100.0M).ToString("0.00"))
                             </div>
                         </td>
-                        <td>@item.Status</td>
+                        <td>@LocalizeCrmInvoiceStatus(item.Status)</td>
                         <td>@item.DueDateUtc.ToString("yyyy-MM-dd")</td>
                         <td class="text-end">
                             <a asp-action="EditInvoice" asp-route-id="@item.Id" hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.Id })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Open")</a>

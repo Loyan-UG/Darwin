@@ -240,7 +240,7 @@
                                                     Grid.RowSpan="2"
                                                     Style="{StaticResource MutedCardBorderStyle}"
                                                     Padding="10,8">
-                                                <Label Text="{Binding Type}"
+                                                <Label Text="{Binding Type, Converter={StaticResource PointsTransactionTypeConverter}}"
                                                        FontAttributes="Bold"
                                                        TextColor="{StaticResource BrushPrimaryPressed}" />
                                             </Border>

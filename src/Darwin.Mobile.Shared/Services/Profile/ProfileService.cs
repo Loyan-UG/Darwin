@@ -74,6 +74,32 @@ public sealed class ProfileService : IProfileService
     }
 
     /// <summary>
+    /// Requests a phone verification code using the canonical member-profile endpoint.
+    /// </summary>
+    public async Task<Result> RequestPhoneVerificationAsync(RequestPhoneVerificationRequest request, CancellationToken ct)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        return await _api.PostNoContentAsync(ApiRoutes.Profile.RequestPhoneVerification, request, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Confirms a phone verification code using the canonical member-profile endpoint.
+    /// </summary>
+    public async Task<Result> ConfirmPhoneVerificationAsync(ConfirmPhoneVerificationRequest request, CancellationToken ct)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var result = await _api.PostNoContentAsync(ApiRoutes.Profile.ConfirmPhoneVerification, request, ct).ConfigureAwait(false);
+        if (result.Succeeded)
+        {
+            await RemoveProfileReadCachesAsync(ct).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Retrieves the current user's privacy and communication preferences.
     /// </summary>
     public async Task<MemberPreferences?> GetPreferencesAsync(CancellationToken ct)

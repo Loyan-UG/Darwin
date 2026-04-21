@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = T.T("BusinessStaffAccessBadgeTitle");
     var isLocked = Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow;
+    string LocalizeBusinessMemberRole(object? role) => role is null ? "-" : T.T(role.ToString() ?? string.Empty);
     string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
     {
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
@@ -125,7 +126,7 @@
                 <img src="@Model.BadgeImageDataUrl" alt="@T.T("BusinessStaffAccessBadgeQrAlt")" class="img-fluid border rounded p-3 bg-white" style="max-width:320px" />
                 <div class="mt-3 fw-semibold">@Model.UserDisplayName</div>
                 <div class="text-muted small">@Model.UserEmail</div>
-                <div class="small text-muted mt-2">@T.T("BusinessStaffAccessBadgeMemberRoleLabel"): @Model.Role</div>
+                <div class="small text-muted mt-2">@T.T("BusinessStaffAccessBadgeMemberRoleLabel"): @LocalizeBusinessMemberRole(Model.Role)</div>
             </div>
         </div>
     </div>
@@ -140,7 +141,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="small text-muted text-uppercase">@T.T("BusinessStaffAccessBadgeMemberRoleLabel")</div>
-                        <div class="fw-semibold">@Model.Role</div>
+                        <div class="fw-semibold">@LocalizeBusinessMemberRole(Model.Role)</div>
                     </div>
                     <div class="col-md-6">
                         <div class="small text-muted text-uppercase">@T.T("BusinessStaffAccessBadgeIssuedAtLabel")</div>

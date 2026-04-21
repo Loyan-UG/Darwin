@@ -3,6 +3,7 @@
     ViewData["Title"] = T.T("MobileOperationsTitle");
     var readyText = T.T("Ready");
     var missingText = T.T("Missing");
+    string LocalizeMobilePlatform(object? platform) => platform is null ? "-" : T.T(platform.ToString() ?? string.Empty);
 
     string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
     {
@@ -22,7 +23,7 @@
     {
         "Sms" => T.T("Sms"),
         "WhatsApp" => T.T("WhatsApp"),
-        _ => channel
+        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : T.T(channel)
     };
 
     string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
@@ -202,7 +203,7 @@
                         foreach (var item in Model.RecentVersions)
                         {
                             <tr>
-                                <td>@item.Platform</td>
+                                <td>@LocalizeMobilePlatform(item.Platform)</td>
                                 <td>@item.AppVersion</td>
                                 <td>@item.DeviceCount</td>
                                 <td>@(item.LastSeenAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
@@ -310,7 +311,7 @@
                             <div>@item.UserDisplayName</div>
                             <div class="small text-muted">@item.UserEmail</div>
                         </td>
-                        <td>@item.Platform</td>
+                        <td>@LocalizeMobilePlatform(item.Platform)</td>
                         <td>
                             <div>@(item.AppVersion ?? "-")</div>
                             <div class="small text-muted">@(item.DeviceModel ?? T.T("UnknownDevice"))</div>

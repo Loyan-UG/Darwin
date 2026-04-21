@@ -1,6 +1,7 @@
 ﻿@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyProgramsListVm
 @{
     ViewData["Title"] = T.T("LoyaltyProgramsTitle");
+    string LocalizeAccrualMode(object? accrualMode) => accrualMode is null ? "-" : T.T(accrualMode.ToString() ?? string.Empty);
 }
 
 <div id="loyalty-programs-workspace-shell">
@@ -75,7 +76,7 @@
                 {
                     <tr>
                         <td>@item.Name</td>
-                        <td>@item.AccrualMode</td>
+                        <td>@LocalizeAccrualMode(item.AccrualMode)</td>
                         <td>
                             <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? T.T("Active") : T.T("Inactive"))</span>
                             @if (item.AccrualMode == Darwin.Domain.Enums.LoyaltyAccrualMode.PerCurrencyUnit)

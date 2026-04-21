@@ -57,7 +57,7 @@
                                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
                                     <VerticalStackLayout Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                            <Label Text="{Binding Kind}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                            <Label Text="{Binding Kind, Converter={StaticResource LoyaltyTimelineKindConverter}}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
                                             <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="10,8">
                                                 <VerticalStackLayout Spacing="2" IsVisible="{Binding PointsDelta, Converter={StaticResource NullCheckConverter}}">
                                                     <Label Text="{x:Static res:AppResources.PointsLabel}"

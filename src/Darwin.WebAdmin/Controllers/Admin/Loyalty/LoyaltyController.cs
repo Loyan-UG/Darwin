@@ -1002,7 +1002,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             };
 
             items.AddRange(Enum.GetValues<LoyaltyAccountStatus>()
-                .Select(x => new SelectListItem(x.ToString(), x.ToString(), selected == x)));
+                .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x)));
 
             return items;
         }
@@ -1025,7 +1025,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             {
                 new(T("LoyaltyAllRewardTiers"), LoyaltyRewardTierQueueFilter.All.ToString(), selected == LoyaltyRewardTierQueueFilter.All),
                 new(T("LoyaltySelfRedemption"), LoyaltyRewardTierQueueFilter.SelfRedemption.ToString(), selected == LoyaltyRewardTierQueueFilter.SelfRedemption),
-                new("Missing description", LoyaltyRewardTierQueueFilter.MissingDescription.ToString(), selected == LoyaltyRewardTierQueueFilter.MissingDescription),
+                new(T("MissingDescription"), LoyaltyRewardTierQueueFilter.MissingDescription.ToString(), selected == LoyaltyRewardTierQueueFilter.MissingDescription),
                 new(T("LoyaltyDiscountRewards"), LoyaltyRewardTierQueueFilter.DiscountRewards.ToString(), selected == LoyaltyRewardTierQueueFilter.DiscountRewards),
                 new(T("LoyaltyFreeItem"), LoyaltyRewardTierQueueFilter.FreeItem.ToString(), selected == LoyaltyRewardTierQueueFilter.FreeItem)
             };
@@ -1177,7 +1177,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             };
 
             items.AddRange(Enum.GetValues<LoyaltyScanMode>()
-                .Select(x => new SelectListItem(x.ToString(), x.ToString(), selected == x)));
+                .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x)));
 
             return items;
         }
@@ -1190,7 +1190,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             };
 
             items.AddRange(Enum.GetValues<LoyaltyScanStatus>()
-                .Select(x => new SelectListItem(x.ToString(), x.ToString(), selected == x)));
+                .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x)));
 
             return items;
         }
@@ -1203,7 +1203,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             };
 
             items.AddRange(Enum.GetValues<LoyaltyRedemptionStatus>()
-                .Select(x => new SelectListItem(x.ToString(), x.ToString(), selected == x)));
+                .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x)));
 
             return items;
         }
