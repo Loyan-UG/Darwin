@@ -123,9 +123,11 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         public int PendingApprovalBusinessCount { get; set; }
         public int SuspendedBusinessCount { get; set; }
         public int MissingOwnerBusinessCount { get; set; }
+        public int PendingInvitationCount { get; set; }
         public int OpenInvitationCount { get; set; }
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }
+        public int SelectedBusinessPendingInvitationCount { get; set; }
         public int SelectedBusinessOpenInvitationCount { get; set; }
         public int SelectedBusinessPendingActivationCount { get; set; }
         public int SelectedBusinessLockedMemberCount { get; set; }

@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = T.T("BusinessStaffAccessBadgeTitle");
     var isLocked = Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow;
+    Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter? backToMembersFilter =
+        isLocked ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked :
+        !Model.EmailConfirmed ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation :
+        !Model.IsActive ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention :
+        null;
     string LocalizeBusinessMemberRole(object? role) => role is null ? "-" : T.T(role.ToString() ?? string.Empty);
     string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
     {
@@ -60,8 +65,11 @@
         </a>
         <a asp-action="Members"
            asp-route-businessId="@Model.Business.Id"
+           asp-route-filter="@backToMembersFilter"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-get="@(backToMembersFilter.HasValue
+               ? Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = backToMembersFilter })
+               : Url.Action("Members", "Businesses", new { businessId = Model.Business.Id }))"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML">
             <i class="fa-solid fa-arrow-left"></i> @T.T("BackToMembersAction")
@@ -100,8 +108,11 @@
         </a>
         <a asp-action="Members"
            asp-route-businessId="@Model.Business.Id"
+           asp-route-filter="@backToMembersFilter"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-get="@(backToMembersFilter.HasValue
+               ? Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = backToMembersFilter })
+               : Url.Action("Members", "Businesses", new { businessId = Model.Business.Id }))"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -200,10 +211,10 @@
                             {
                                 <a asp-controller="Users"
                                    asp-action="Index"
-                                   asp-route-filter="Locked"
+                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                                    asp-route-q="@Model.UserEmail"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = "Locked", q = Model.UserEmail })"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = Model.UserEmail })"
                                    hx-target="#business-staff-access-badge-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
@@ -258,8 +269,11 @@
             </a>
             <a asp-action="Members"
                asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@backToMembersFilter"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+               hx-get="@(backToMembersFilter.HasValue
+                   ? Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = backToMembersFilter })
+                   : Url.Action("Members", "Businesses", new { businessId = Model.Business.Id }))"
                hx-target="#business-staff-access-badge-shell"
                hx-swap="outerHTML"
                hx-push-url="true">

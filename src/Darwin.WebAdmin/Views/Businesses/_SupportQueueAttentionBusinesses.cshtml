@@ -136,8 +136,9 @@
                                     <div class="small">
                                         <a asp-action="Members"
                                            asp-route-businessId="@item.Id"
+                                           asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                                            class="text-muted text-decoration-none"
-                                           hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id })"
+                                           hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                                            hx-target="#business-support-queue-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>
@@ -184,9 +185,9 @@
                                     <div class="small">
                                         <a asp-action="Invitations"
                                            asp-route-businessId="@item.Id"
-                                           asp-route-filter="Open"
+                                           asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                                            class="text-muted text-decoration-none"
-                                           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id, filter = "Open" })"
+                                           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                                            hx-target="#business-support-queue-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@item.InvitationCount @InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>
@@ -216,17 +217,17 @@
                                    hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                                 <a asp-action="Members"
                                    asp-route-businessId="@item.Id"
-                                   asp-route-filter="Attention"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id, filter = "Attention" })"
+                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
                                 <a asp-action="Invitations"
                                    asp-route-businessId="@item.Id"
-                                   asp-route-filter="Open"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id, filter = "Open" })"
+                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Invites")</a>

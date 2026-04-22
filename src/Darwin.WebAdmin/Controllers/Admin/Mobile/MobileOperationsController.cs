@@ -77,6 +77,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                 TimeZone = settings.TimeZone,
                 AttentionBusinessCount = support.AttentionBusinessCount,
                 PendingApprovalBusinessCount = support.PendingApprovalBusinessCount,
+                PendingInvitationCount = support.PendingInvitationCount,
                 OpenInvitationCount = support.OpenInvitationCount,
                 PendingActivationMemberCount = support.PendingActivationMemberCount,
                 LockedMemberCount = support.LockedMemberCount,

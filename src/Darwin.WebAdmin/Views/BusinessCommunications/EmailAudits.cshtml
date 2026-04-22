@@ -48,6 +48,21 @@
     bool HasRecipientOverride(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>
         !string.IsNullOrWhiteSpace(item.IntendedRecipientEmail) &&
         !string.Equals(item.IntendedRecipientEmail, item.RecipientEmail, StringComparison.OrdinalIgnoreCase);
+
+    string BusinessDisplayName(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>
+        !string.IsNullOrWhiteSpace(item.BusinessName) ? item.BusinessName : item.BusinessId?.ToString() ?? T.T("NotApplicable");
+
+    Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter? InvitationWorkspaceFilter(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>
+        string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase)
+            ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending
+            : null;
+
+    Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter? MemberWorkspaceFilter(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>
+        string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase)
+            ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation
+            : string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase)
+                ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention
+                : null;
 }
 
 <div id="business-communication-audits-workspace-shell">
@@ -672,7 +687,7 @@
                             <a asp-action="Details" asp-route-businessId="@item.BusinessId"
                                hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
                                hx-target="#business-communication-audits-workspace-shell"
-                               hx-swap="outerHTML">@(!string.IsNullOrWhiteSpace(item.BusinessName) ? item.BusinessName : item.BusinessId.ToString())</a>
+                               hx-swap="outerHTML">@BusinessDisplayName(item)</a>
                         }
                         else
                         {
@@ -863,9 +878,12 @@
                         }
                         @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                         {
+                            var invitationWorkspaceFilter = InvitationWorkspaceFilter(item);
                             <div class="mt-2 d-flex flex-wrap gap-2">
-                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" asp-route-query="@LogicalRecipientEmail(item)" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = "Open" })"
+                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" asp-route-query="@LogicalRecipientEmail(item)" asp-route-filter="@invitationWorkspaceFilter" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@(invitationWorkspaceFilter.HasValue
+                                       ? Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = invitationWorkspaceFilter })
+                                       : Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item) }))"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("BusinessCommunicationSearchInvitationAction")</a>
                                 <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
@@ -880,6 +898,7 @@
                         }
                         else if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) || string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
                         {
+                            var memberWorkspaceFilter = MemberWorkspaceFilter(item);
                             <div class="mt-2 d-flex flex-wrap gap-2">
                                 <a asp-controller="Users" asp-action="Index" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Index", "Users", new { q = LogicalRecipientEmail(item) })"
@@ -892,8 +911,10 @@
                                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                                 @if (item.BusinessId.HasValue)
                                 {
-                                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-query="@LogicalRecipientEmail(item)" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = "Attention" })"
+                                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-query="@LogicalRecipientEmail(item)" asp-route-filter="@memberWorkspaceFilter" class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@(memberWorkspaceFilter.HasValue
+                                           ? Url.Action("Members", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = memberWorkspaceFilter })
+                                           : Url.Action("Members", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item) }))"
                                        hx-target="#business-communication-audits-workspace-shell"
                                        hx-swap="outerHTML">@T.T("CommunicationOpenMemberSupportAction")</a>
                                 }

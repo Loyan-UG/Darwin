@@ -239,7 +239,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("public async Task<IActionResult> EditLocation(Guid id, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> EditLocation(Guid id, int page = 1, int pageSize = 20, string? query = null, BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All, CancellationToken ct = default)");
         controllerSource.Should().Contain("var dto = await _getBusinessLocationForEdit.HandleAsync(id, ct);");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessLocationNotFound\");");
         controllerSource.Should().Contain("var business = await LoadBusinessContextAsync(dto.BusinessId, ct);");
@@ -247,6 +247,10 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("var vm = new BusinessLocationEditVm");
         controllerSource.Should().Contain("Id = dto.Id,");
         controllerSource.Should().Contain("BusinessId = dto.BusinessId,");
+        controllerSource.Should().Contain("Page = page,");
+        controllerSource.Should().Contain("PageSize = pageSize,");
+        controllerSource.Should().Contain("Query = query ?? string.Empty,");
+        controllerSource.Should().Contain("Filter = filter,");
         controllerSource.Should().Contain("RowVersion = dto.RowVersion,");
         controllerSource.Should().Contain("Name = dto.Name,");
         controllerSource.Should().Contain("AddressLine1 = dto.AddressLine1,");
@@ -271,12 +275,16 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("public async Task<IActionResult> CreateLocation(Guid businessId, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> CreateLocation(Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All, CancellationToken ct = default)");
         controllerSource.Should().Contain("var business = await LoadBusinessContextAsync(businessId, ct);");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessNotFound\");");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Index), new { });");
         controllerSource.Should().Contain("return RenderLocationEditor(new BusinessLocationEditVm");
         controllerSource.Should().Contain("BusinessId = businessId,");
+        controllerSource.Should().Contain("Page = page,");
+        controllerSource.Should().Contain("PageSize = pageSize,");
+        controllerSource.Should().Contain("Query = query ?? string.Empty,");
+        controllerSource.Should().Contain("Filter = filter,");
         controllerSource.Should().Contain("CountryCode = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault,");
         controllerSource.Should().Contain("Business = business");
         controllerSource.Should().Contain("}, isCreate: true);");
@@ -300,7 +308,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("public async Task<IActionResult> EditMember(Guid id, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> EditMember(Guid id, int page = 1, int pageSize = 20, string? query = null, BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All, CancellationToken ct = default)");
         controllerSource.Should().Contain("var dto = await _getBusinessMemberForEdit.HandleAsync(id, ct);");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessMemberNotFound\");");
         controllerSource.Should().Contain("var business = await LoadBusinessContextAsync(dto.BusinessId, ct);");
@@ -309,6 +317,10 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("Id = dto.Id,");
         controllerSource.Should().Contain("BusinessId = dto.BusinessId,");
         controllerSource.Should().Contain("UserId = dto.UserId,");
+        controllerSource.Should().Contain("Page = page,");
+        controllerSource.Should().Contain("PageSize = pageSize,");
+        controllerSource.Should().Contain("Query = query ?? string.Empty,");
+        controllerSource.Should().Contain("Filter = filter,");
         controllerSource.Should().Contain("RowVersion = dto.RowVersion,");
         controllerSource.Should().Contain("UserDisplayName = dto.UserDisplayName,");
         controllerSource.Should().Contain("UserEmail = dto.UserEmail,");
@@ -329,12 +341,16 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("public async Task<IActionResult> CreateMember(Guid businessId, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> CreateMember(Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All, CancellationToken ct = default)");
         controllerSource.Should().Contain("var business = await LoadBusinessContextAsync(businessId, ct);");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessNotFound\");");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Index), new { });");
         controllerSource.Should().Contain("var vm = new BusinessMemberEditVm");
         controllerSource.Should().Contain("BusinessId = businessId,");
+        controllerSource.Should().Contain("Page = page,");
+        controllerSource.Should().Contain("PageSize = pageSize,");
+        controllerSource.Should().Contain("Query = query ?? string.Empty,");
+        controllerSource.Should().Contain("Filter = filter,");
         controllerSource.Should().Contain("Role = BusinessMemberRole.Owner,");
         controllerSource.Should().Contain("IsActive = true,");
         controllerSource.Should().Contain("Business = business");
@@ -360,11 +376,15 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("public async Task<IActionResult> CreateInvitation(Guid businessId, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> CreateInvitation(Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessInvitationQueueFilter filter = BusinessInvitationQueueFilter.All, CancellationToken ct = default)");
         controllerSource.Should().Contain("var business = await LoadBusinessContextAsync(businessId, ct);");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessNotFound\");");
         controllerSource.Should().Contain("var vm = new BusinessInvitationCreateVm");
         controllerSource.Should().Contain("BusinessId = businessId,");
+        controllerSource.Should().Contain("Page = page,");
+        controllerSource.Should().Contain("PageSize = pageSize,");
+        controllerSource.Should().Contain("Query = query ?? string.Empty,");
+        controllerSource.Should().Contain("Filter = filter,");
         controllerSource.Should().Contain("Business = business,");
         controllerSource.Should().Contain("Role = BusinessMemberRole.Owner,");
         controllerSource.Should().Contain("ExpiresInDays = 7");
@@ -386,7 +406,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("BusinessId = vm.BusinessId,");
         controllerSource.Should().Contain("Coordinate = BuildCoordinate(vm),");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessLocationCreated\");");
-        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId });");
+        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });");
     }
 
 
@@ -404,7 +424,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("Role = vm.Role,");
         controllerSource.Should().Contain("IsActive = vm.IsActive");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessMemberAssigned\");");
-        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId });");
+        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });");
     }
 
 
@@ -423,7 +443,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("ExpiresInDays = vm.ExpiresInDays,");
         controllerSource.Should().Contain("Note = vm.Note");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessInvitationSent\");");
-        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Invitations), new { businessId = vm.BusinessId });");
+        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Invitations), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });");
     }
 
 
@@ -915,6 +935,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("MissingPrimaryLocationBusinessCount = summary.MissingPrimaryLocationBusinessCount,");
         controllerSource.Should().Contain("MissingContactEmailBusinessCount = summary.MissingContactEmailBusinessCount,");
         controllerSource.Should().Contain("MissingLegalNameBusinessCount = summary.MissingLegalNameBusinessCount,");
+        controllerSource.Should().Contain("PendingInvitationCount = summary.PendingInvitationCount,");
         controllerSource.Should().Contain("OpenInvitationCount = summary.OpenInvitationCount,");
         controllerSource.Should().Contain("PendingActivationMemberCount = summary.PendingActivationMemberCount,");
         controllerSource.Should().Contain("LockedMemberCount = summary.LockedMemberCount");
@@ -999,6 +1020,20 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         supportQueueViewSource.Should().Contain(">@playbook.FollowUpLabel</a>");
         indexViewSource.Should().Contain("@Url.Action(\"Index\", \"Businesses\", new { operationalStatus = \"Suspended\" })");
         indexViewSource.Should().Contain("hx-push-url=\"true\">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)</a>");
+        indexViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
+        indexViewSource.Should().Contain("asp-route-filter=\"@(item.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        indexViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })");
+        indexViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))");
+        indexViewSource.Should().Contain("asp-route-filter=\"@(item.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
+        indexViewSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
+        indexViewSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id }))");
+        var readinessViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "MerchantReadiness.cshtml"));
+        readinessViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
+        readinessViewSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
+        readinessViewSource.Should().Contain("asp-route-filter=\"@(item.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        readinessViewSource.Should().Contain("asp-route-filter=\"@(item.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
+        readinessViewSource.Should().Contain("string SubscriptionPlanDisplay(string? planName, string? status) => !string.IsNullOrWhiteSpace(planName)");
+        readinessViewSource.Should().Contain("hx-push-url=\"true\">@SubscriptionPlanDisplay(item.SubscriptionPlanName, item.SubscriptionStatus)</a>");
     }
 
 
@@ -1012,8 +1047,11 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         source.Should().Contain("<h1 class=\"mb-1\"><i class=\"fa-solid fa-location-dot me-2\"></i>@T.T(\"BusinessLocationsTitle\")</h1>");
         source.Should().Contain("@T.T(\"BusinessMembersBackToBusinessAction\")");
         source.Should().Contain("@InvitationWorkspaceLabel()");
+        source.Should().Contain("asp-route-filter=\"@(Model.Business.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
+        source.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
+        source.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Business.Id }))");
         source.Should().Contain("@T.T(\"BusinessLocationsAddLocationAction\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateLocation\", \"Businesses\", new { businessId = Model.Business.Id })\"");
+        source.Should().Contain("hx-get=\"@Url.Action(\"CreateLocation\", \"Businesses\", new { businessId = Model.Business.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })\"");
         source.Should().Contain("hx-get=\"@Url.Action(\"Locations\", \"Businesses\")\"");
         source.Should().Contain("name=\"businessId\" value=\"@Model.Business.Id\"");
         source.Should().Contain("name=\"query\" value=\"@Model.Query\"");
@@ -1028,7 +1066,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         source.Should().Contain("@T.T(\"Actions\")");
         source.Should().Contain("@T.T(\"BusinessLocationsAddressMissingBadge\")");
         source.Should().Contain("@T.T(\"BusinessLocationsCoordinatesMissingBadge\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditLocation\", \"Businesses\", new { id = item.Id })\"");
+        source.Should().Contain("hx-get=\"@Url.Action(\"EditLocation\", \"Businesses\", new { id = item.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })\"");
         source.Should().Contain("@T.T(\"CommonEdit\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })\"");
         source.Should().Contain("@T.T(\"Setup\")");
@@ -1130,7 +1168,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         source.Should().Contain("@T.T(\"BusinessMembersBackToBusinessAction\")");
         source.Should().Contain("@T.T(\"BusinessMembersOwnerOverrideAuditAction\")");
         source.Should().Contain("@T.T(\"BusinessMembersAssignMemberAction\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateMember\", \"Businesses\", new { businessId = Model.Business.Id })\"");
+        source.Should().Contain("hx-get=\"@Url.Action(\"CreateMember\", \"Businesses\", new { businessId = Model.Business.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })\"");
         source.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\")\"");
         source.Should().Contain("name=\"businessId\" value=\"@Model.Business.Id\"");
         source.Should().Contain("name=\"query\" value=\"@Model.Query\"");
@@ -1145,7 +1183,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         source.Should().Contain("@T.T(\"Actions\")");
         source.Should().Contain("@T.T(\"BusinessMembersBadgeAction\")");
         source.Should().Contain("hx-get=\"@Url.Action(\"StaffAccessBadge\", \"Businesses\", new { id = item.Id })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditMember\", \"Businesses\", new { id = item.Id })\"");
+        source.Should().Contain("hx-get=\"@Url.Action(\"EditMember\", \"Businesses\", new { id = item.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })\"");
         source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = item.UserId })\"");
         source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { q = item.UserEmail })\"");
         source.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\", new { q = item.UserEmail })\"");
@@ -1248,7 +1286,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         invitationsViewSource.Should().NotContain("@T.T(\"Revoked\")</span>");
         invitationsViewSource.Should().NotContain("@T.T(\"Expired\")</span>");
           invitationsViewSource.Should().Contain("@T.T(\"BusinessInvitationsEmptyState\")");
-          invitationsViewSource.Should().Contain("@Url.Action(\"CreateInvitation\", \"Businesses\", new { businessId = Model.Business.Id })");
+          invitationsViewSource.Should().Contain("@Url.Action(\"CreateInvitation\", \"Businesses\", new { businessId = Model.Business.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
           invitationsViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })");
           invitationsViewSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
           invitationsViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
@@ -1272,7 +1310,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         source.Should().Contain("@T.T(\"BusinessMembersBackToBusinessAction\")");
         source.Should().Contain("@T.T(\"Setup\")");
         source.Should().Contain("@T.T(\"BusinessInvitationsInviteUserAction\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateInvitation\", \"Businesses\", new { businessId = Model.Business.Id })\"");
+        source.Should().Contain("hx-get=\"@Url.Action(\"CreateInvitation\", \"Businesses\", new { businessId = Model.Business.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })\"");
         source.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\")\"");
         source.Should().Contain("name=\"businessId\" value=\"@Model.Business.Id\"");
         source.Should().Contain("name=\"query\" value=\"@Model.Query\"");
@@ -1331,7 +1369,8 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         auditsViewSource.Should().Contain(">@playbook.QueueActionLabel</a>");
         auditsViewSource.Should().Contain(">@playbook.FollowUpLabel</a>");
         auditsViewSource.Should().Contain("OpenUserAction");
-        auditsViewSource.Should().Contain("CommonMembers");
+          auditsViewSource.Should().Contain("CommonMembers");
+          auditsViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
         auditsViewSource.Should().Contain("@T.T(\"BusinessOwnerOverrideAuditsIntro\")");
         auditsViewSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
         auditsViewSource.Should().Contain("@T.T(\"BusinessOwnerOverrideAuditsEmptyState\")");
@@ -1456,10 +1495,10 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessMemberNotFound\");");
         controllerSource.Should().Contain("TempData[result.Succeeded ? \"Success\" : \"Error\"] = result.Succeeded");
-        controllerSource.Should().Contain("return RedirectMemberSupport(returnToEdit, id, businessId);");
-        controllerSource.Should().Contain("private IActionResult RedirectMemberSupport(bool returnToEdit, Guid membershipId, Guid businessId)");
-        controllerSource.Should().Contain("? RedirectOrHtmx(nameof(EditMember), new { id = membershipId })");
-        controllerSource.Should().Contain(": RedirectOrHtmx(nameof(Members), new { businessId });");
+        controllerSource.Should().Contain("return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);");
+        controllerSource.Should().Contain("private IActionResult RedirectMemberSupport(bool returnToEdit, Guid membershipId, Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All)");
+        controllerSource.Should().Contain("? RedirectOrHtmx(nameof(EditMember), new { id = membershipId, page, pageSize, query, filter })");
+        controllerSource.Should().Contain(": RedirectOrHtmx(nameof(Members), new { businessId, page, pageSize, query, filter });");
     }
 
 
@@ -1965,16 +2004,18 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         auditsViewSource.Should().Contain("name=\"query\" value=\"@Model.Query\"");
         auditsViewSource.Should().Contain("placeholder=\"@T.T(\"BusinessOwnerOverrideAuditsSearchPlaceholder\")\"");
         auditsViewSource.Should().Contain("@T.T(\"BusinessOwnerOverrideAuditsIntro\")");
+        auditsViewSource.Should().Contain("string ActorDisplayName(string? actorDisplayName) => string.IsNullOrWhiteSpace(actorDisplayName)");
         auditsViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
         auditsViewSource.Should().Contain("hx-target=\"#business-owner-override-audits-workspace-shell\"");
         auditsViewSource.Should().Contain("@playbook.QueueActionLabel");
         auditsViewSource.Should().Contain("@playbook.FollowUpLabel");
         auditsViewSource.Should().Contain("@T.T(\"BusinessOwnerOverrideAuditsEmptyState\")");
-        auditsViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id })");
+          auditsViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
         auditsViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })");
         auditsViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
         auditsViewSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
         auditsViewSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = item.AffectedUserId })");
+        auditsViewSource.Should().Contain("<td>@ActorDisplayName(item.ActorDisplayName)</td>");
         auditsViewSource.Should().Contain("item.ActionKind == Darwin.Domain.Enums.BusinessOwnerOverrideActionKind.ForceRemove");
         auditsViewSource.Should().Contain("@T.T(\"BusinessOwnerOverrideForceRemove\")");
         auditsViewSource.Should().Contain("@T.T(\"BusinessOwnerOverrideDemoteDeactivate\")");

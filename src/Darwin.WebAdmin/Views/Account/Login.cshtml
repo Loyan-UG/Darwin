@@ -30,7 +30,7 @@
 </form>
 
 <fieldset class="d-none">
-    <form id="passkey-form" method="post" action="/account/webauthn/finish-login">
+    <form id="passkey-form" method="post" action="@Url.Action("WebAuthnFinishLogin", "Account")">
         @Html.AntiForgeryToken()
         <input type="hidden" name="challengeTokenId" id="challengeTokenId" />
         <input type="hidden" name="clientResponseJson" id="clientResponseJson" />

@@ -39,6 +39,44 @@
 
     string MemberWorkspaceLabel() => T.T("Members");
     string InvitationWorkspaceLabel() => T.T("Invitations");
+    var memberWorkspaceFilter = Model.PendingActivationMemberCount > 0
+        ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation
+        : Model.LockedMemberCount > 0
+            ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked
+            : (Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter?)null;
+    var invitationWorkspaceFilter = Model.PendingInvitationCount > 0
+        ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending
+        : Model.OpenInvitationCount > 0
+            ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open
+            : (Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter?)null;
+    string MemberWorkspaceActionLabel() => memberWorkspaceFilter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
+        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked => T.T("UsersFilterLocked"),
+        _ => T.T("BusinessCommunicationOpenMemberSupportAction")
+    };
+    string InvitationDebtSummaryLabel() => Model.PendingInvitationCount > 0
+        ? T.T("BusinessSupportPendingInvitationsLabel")
+        : T.T("BusinessCommunicationOpenInvitationsLabel");
+    int InvitationDebtCount() => Model.PendingInvitationCount > 0
+        ? Model.PendingInvitationCount
+        : Model.OpenInvitationCount;
+    string InvitationWorkspaceActionLabel() => invitationWorkspaceFilter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
+        _ => T.T("BusinessCommunicationOpenInvitationsAction")
+    };
+    string InvitationAuditActionLabel() => invitationWorkspaceFilter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
+        _ => T.T("BusinessCommunicationViewInvitationAuditsAction")
+    };
+    string ValueOrMissing(string? value) => string.IsNullOrWhiteSpace(value)
+        ? T.T("CommonMissingBadge")
+        : value;
+    string DependencyBadgeStatusLabel(bool configured) => configured
+        ? T.T("CommonReadyBadge")
+        : T.T("CommonMissingBadge");
 }
 
 <div id="business-communication-profile-shell">
@@ -68,13 +106,17 @@
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("OpenSetup")</a>
-        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-filter="@memberWorkspaceFilter" class="btn btn-outline-secondary"
+           hx-get="@(memberWorkspaceFilter.HasValue
+               ? Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = memberWorkspaceFilter })
+               : Url.Action("Members", "Businesses", new { businessId = Model.Id }))"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@MemberWorkspaceLabel()</a>
-        <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+        <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-filter="@invitationWorkspaceFilter" class="btn btn-outline-secondary"
+           hx-get="@(invitationWorkspaceFilter.HasValue
+               ? Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = invitationWorkspaceFilter })
+               : Url.Action("Invitations", "Businesses", new { businessId = Model.Id }))"
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@InvitationWorkspaceLabel()</a>
@@ -88,9 +130,9 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-4">@T.T("CommonLegalName")</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.LegalName) ? T.T("CommonMissingBadge") : Model.LegalName)</dd>
+                    <dd class="col-sm-8">@ValueOrMissing(Model.LegalName)</dd>
                     <dt class="col-sm-4">@T.T("CommonContactEmail")</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.ContactEmail) ? T.T("CommonMissingBadge") : Model.ContactEmail)</dd>
+                    <dd class="col-sm-8">@ValueOrMissing(Model.ContactEmail)</dd>
                     <dt class="col-sm-4">@T.T("CommonCulture")</dt>
                     <dd class="col-sm-8">@Model.DefaultCulture</dd>
                     <dt class="col-sm-4">@T.T("CommonTimeZone")</dt>
@@ -113,11 +155,11 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-4">@T.T("BusinessCommunicationSupportShort")</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.SupportEmail) ? T.T("CommonMissingBadge") : Model.SupportEmail)</dd>
+                    <dd class="col-sm-8">@ValueOrMissing(Model.SupportEmail)</dd>
                     <dt class="col-sm-4">@T.T("BusinessCommunicationSenderShort")</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.CommunicationSenderName) ? T.T("CommonMissingBadge") : Model.CommunicationSenderName)</dd>
+                    <dd class="col-sm-8">@ValueOrMissing(Model.CommunicationSenderName)</dd>
                     <dt class="col-sm-4">@T.T("BusinessCommunicationReplyToShort")</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.CommunicationReplyToEmail) ? T.T("CommonMissingBadge") : Model.CommunicationReplyToEmail)</dd>
+                    <dd class="col-sm-8">@ValueOrMissing(Model.CommunicationReplyToEmail)</dd>
                 </dl>
             </div>
         </div>
@@ -126,7 +168,7 @@
         <div class="card h-100">
             <div class="card-header">@T.T("BusinessCommunicationProfileSupportSignalsTitle")</div>
             <div class="card-body">
-                <div class="mb-2">@T.T("BusinessCommunicationOpenInvitationsLabel"): <strong>@Model.OpenInvitationCount</strong></div>
+                <div class="mb-2">@InvitationDebtSummaryLabel(): <strong>@InvitationDebtCount()</strong></div>
                 <div class="mb-2">@T.T("BusinessCommunicationPendingActivationMembersLabel"): <strong>@Model.PendingActivationMemberCount</strong></div>
                 <div>@T.T("BusinessCommunicationLockedMembersLabel"): <strong>@Model.LockedMemberCount</strong></div>
             </div>
@@ -155,10 +197,10 @@
             <div class="card-header">@T.T("BusinessCommunicationGlobalDependencyReadinessTitle")</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge @(Model.EmailTransportConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("SMTP") @(Model.EmailTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
-                    <span class="badge @(Model.SmsTransportConfigured ? "text-bg-success" : "text-bg-warning")">@ChannelLabel("SMS") @(Model.SmsTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
-                    <span class="badge @(Model.WhatsAppTransportConfigured ? "text-bg-success" : "text-bg-warning")">@ChannelLabel("WhatsApp") @(Model.WhatsAppTransportConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
-                    <span class="badge @(Model.AdminAlertRoutingConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("BusinessCommunicationAdminAlertsShort") @(Model.AdminAlertRoutingConfigured ? T.T("CommonReadyBadge") : T.T("CommonMissingBadge"))</span>
+                    <span class="badge @(Model.EmailTransportConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("SMTP") @DependencyBadgeStatusLabel(Model.EmailTransportConfigured)</span>
+                    <span class="badge @(Model.SmsTransportConfigured ? "text-bg-success" : "text-bg-warning")">@ChannelLabel("SMS") @DependencyBadgeStatusLabel(Model.SmsTransportConfigured)</span>
+                    <span class="badge @(Model.WhatsAppTransportConfigured ? "text-bg-success" : "text-bg-warning")">@ChannelLabel("WhatsApp") @DependencyBadgeStatusLabel(Model.WhatsAppTransportConfigured)</span>
+                    <span class="badge @(Model.AdminAlertRoutingConfigured ? "text-bg-success" : "text-bg-warning")">@T.T("BusinessCommunicationAdminAlertsShort") @DependencyBadgeStatusLabel(Model.AdminAlertRoutingConfigured)</span>
                 </div>
                 <div class="mt-3">
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary"
@@ -302,7 +344,7 @@
                 <div class="small text-muted mt-3">
                     @T.T("BusinessCommunicationCurrentFlowsNote")
                 </div>
-                @if (Model.OpenInvitationCount > 0)
+                @if (invitationWorkspaceFilter.HasValue)
                 {
                     <div class="mt-3">
                     <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary"
@@ -310,7 +352,7 @@
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
-                        @T.T("BusinessCommunicationViewInvitationAuditsAction")
+                            @InvitationAuditActionLabel()
                     </a>
                     </div>
                 }
@@ -335,14 +377,18 @@
                        hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML">@T.T("CommonOpenSetupAction")</a>
-                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = "Attention" })"
+                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-filter="@memberWorkspaceFilter" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@(memberWorkspaceFilter.HasValue
+                           ? Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = memberWorkspaceFilter })
+                           : Url.Action("Members", "Businesses", new { businessId = Model.Id }))"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">@T.T("BusinessCommunicationOpenMemberSupportAction")</a>
-                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = "Open" })"
+                       hx-swap="outerHTML">@MemberWorkspaceActionLabel()</a>
+                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-filter="@invitationWorkspaceFilter" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@(invitationWorkspaceFilter.HasValue
+                           ? Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = invitationWorkspaceFilter })
+                           : Url.Action("Invitations", "Businesses", new { businessId = Model.Id }))"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">@T.T("BusinessCommunicationOpenInvitationsAction")</a>
+                       hx-swap="outerHTML">@InvitationWorkspaceActionLabel()</a>
                 </div>
             </div>
         </div>
@@ -438,15 +484,19 @@
                                         <div class="mt-2 d-flex flex-wrap gap-2">
                                             @if (string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-query="@item.RecipientEmail" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
-                                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail, filter = "Open" })"
+                                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-query="@item.RecipientEmail" asp-route-filter="@invitationWorkspaceFilter" class="btn btn-sm btn-outline-secondary"
+                                                   hx-get="@(invitationWorkspaceFilter.HasValue
+                                                       ? Url.Action("Invitations", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail, filter = invitationWorkspaceFilter })
+                                                       : Url.Action("Invitations", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail }))"
                                                    hx-target="#business-communication-profile-shell"
                                                    hx-swap="outerHTML">@T.T("BusinessCommunicationSearchInvitationAction")</a>
                                             }
                                             else if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) || string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-query="@item.RecipientEmail" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
-                                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail, filter = "Attention" })"
+                                                <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-query="@item.RecipientEmail" asp-route-filter="@memberWorkspaceFilter" class="btn btn-sm btn-outline-secondary"
+                                                   hx-get="@(memberWorkspaceFilter.HasValue
+                                                       ? Url.Action("Members", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail, filter = memberWorkspaceFilter })
+                                                       : Url.Action("Members", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail }))"
                                                    hx-target="#business-communication-profile-shell"
                                                    hx-swap="outerHTML">@T.T("BusinessCommunicationMemberSupportAction")</a>
                                                 <a asp-controller="Users" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
@@ -513,8 +563,8 @@
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MobileOperationsTitle")</a>
-                    <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -596,8 +646,8 @@
                                            hx-target="#business-communication-profile-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("MobileOperationsTitle")</a>
-                                        <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-secondary"
-                                           hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                                        <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-sm btn-outline-secondary"
+                                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
                                            hx-target="#business-communication-profile-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -802,15 +852,19 @@
                                         }
                                         @if (item.OperatorActionTarget == "Invitations")
                                         {
-                                            <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
-                                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                                            <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-filter="@invitationWorkspaceFilter" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@(invitationWorkspaceFilter.HasValue
+                                                   ? Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = invitationWorkspaceFilter })
+                                                   : Url.Action("Invitations", "Businesses", new { businessId = Model.Id }))"
                                                hx-target="#business-communication-profile-shell"
                                                hx-swap="outerHTML">@item.OperatorActionLabel</a>
                                         }
                                         else if (item.OperatorActionTarget == "Users")
                                         {
-                                            <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
-                                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                                            <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-filter="@memberWorkspaceFilter" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@(memberWorkspaceFilter.HasValue
+                                                   ? Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = memberWorkspaceFilter })
+                                                   : Url.Action("Members", "Businesses", new { businessId = Model.Id }))"
                                                hx-target="#business-communication-profile-shell"
                                                hx-swap="outerHTML">@item.OperatorActionLabel</a>
                                         }
@@ -884,15 +938,19 @@
                                         }
                                         @if (item.OperatorActionTarget == "Invitations")
                                         {
-                                            <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
-                                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                                            <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-filter="@invitationWorkspaceFilter" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@(invitationWorkspaceFilter.HasValue
+                                                   ? Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = invitationWorkspaceFilter })
+                                                   : Url.Action("Invitations", "Businesses", new { businessId = Model.Id }))"
                                                hx-target="#business-communication-profile-shell"
                                                hx-swap="outerHTML">@item.OperatorActionLabel</a>
                                         }
                                         else if (item.OperatorActionTarget == "Users")
                                         {
-                                            <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
-                                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                                            <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-filter="@memberWorkspaceFilter" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@(memberWorkspaceFilter.HasValue
+                                                   ? Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = memberWorkspaceFilter })
+                                                   : Url.Action("Members", "Businesses", new { businessId = Model.Id }))"
                                                hx-target="#business-communication-profile-shell"
                                                hx-swap="outerHTML">@item.OperatorActionLabel</a>
                                         }

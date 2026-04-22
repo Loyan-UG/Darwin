@@ -68,6 +68,10 @@ namespace Darwin.Application.Businesses.Queries
 
             var attentionCount = await attentionBusinessQuery.CountAsync(ct).ConfigureAwait(false);
 
+            var pendingInvitationsCount = await _db.Set<BusinessInvitation>().AsNoTracking()
+                .CountAsync(x => x.Status == BusinessInvitationStatus.Pending, ct)
+                .ConfigureAwait(false);
+
             var openInvitationsCount = await _db.Set<BusinessInvitation>().AsNoTracking()
                 .CountAsync(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired, ct)
                 .ConfigureAwait(false);
@@ -97,6 +101,7 @@ namespace Darwin.Application.Businesses.Queries
                 MissingPrimaryLocationBusinessCount = missingPrimaryLocationCount,
                 MissingContactEmailBusinessCount = missingContactEmailCount,
                 MissingLegalNameBusinessCount = missingLegalNameCount,
+                PendingInvitationCount = pendingInvitationsCount,
                 AttentionBusinessCount = attentionCount,
                 OpenInvitationCount = openInvitationsCount,
                 PendingActivationMemberCount = pendingActivationCount,
@@ -106,6 +111,10 @@ namespace Darwin.Application.Businesses.Queries
             if (selectedBusinessId.HasValue)
             {
                 var businessId = selectedBusinessId.Value;
+
+                dto.SelectedBusinessPendingInvitationCount = await _db.Set<BusinessInvitation>().AsNoTracking()
+                    .CountAsync(x => x.BusinessId == businessId && x.Status == BusinessInvitationStatus.Pending, ct)
+                    .ConfigureAwait(false);
 
                 dto.SelectedBusinessOpenInvitationCount = await _db.Set<BusinessInvitation>().AsNoTracking()
                     .CountAsync(x => x.BusinessId == businessId && (x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired), ct)

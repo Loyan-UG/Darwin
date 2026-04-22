@@ -24,14 +24,17 @@
                 <div class="d-flex gap-2 flex-wrap mt-2">
                     <a asp-action="Members"
                        asp-route-businessId="@Model.BusinessId"
+                       asp-route-filter="@(Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+                       hx-get="@(Model.Business.ActiveOwnerCount > 0
+                           ? Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })
+                           : Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("CommonMembers")</a>
                     <a asp-action="Members"
                        asp-route-businessId="@Model.BusinessId"
-                       asp-route-filter="PendingActivation"
+                       asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
                        class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
                        hx-target="#business-member-editor-shell"
@@ -96,8 +99,12 @@
     </button>
     <a asp-action="Members"
        asp-route-businessId="@Model.BusinessId"
+       asp-route-page="@Model.Page"
+       asp-route-pageSize="@Model.PageSize"
+       asp-route-query="@Model.Query"
+       asp-route-filter="@Model.Filter"
        class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
        hx-target="#business-member-editor-shell"
        hx-swap="outerHTML">@T.T("Cancel")</a>
 </div>

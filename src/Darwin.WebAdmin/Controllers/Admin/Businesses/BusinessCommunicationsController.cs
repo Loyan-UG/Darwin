@@ -299,6 +299,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 OperationalAlertEmailsEnabled = profile.OperationalAlertEmailsEnabled,
                 MissingSupportEmail = profile.MissingSupportEmail,
                 MissingSenderIdentity = profile.MissingSenderIdentity,
+                PendingInvitationCount = profile.PendingInvitationCount,
                 OpenInvitationCount = profile.OpenInvitationCount,
                 PendingActivationMemberCount = profile.PendingActivationMemberCount,
                 LockedMemberCount = profile.LockedMemberCount,

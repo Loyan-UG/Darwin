@@ -297,7 +297,7 @@
                         <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("DeviceDiagnostics")</a>
                         @if (canManageIdentity)
                         {
-                            <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-primary">@T.T("DashboardOpenMobileLinkedUsersAction")</a>
+                            <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-sm btn-outline-primary">@T.T("DashboardOpenMobileLinkedUsersAction")</a>
                         }
                         <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("SupportQueue")</a>
                         <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("Communications")</a>
@@ -335,7 +335,7 @@
             @if (canManageIdentity)
             {
                 <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary">@T.T("DashboardQuickLinkUsersAction")</a>
-                <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-outline-primary">@T.T("DashboardQuickLinkMobileLinkedUsersAction")</a>
+                <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-outline-primary">@T.T("DashboardQuickLinkMobileLinkedUsersAction")</a>
                 <a asp-controller="SiteSettings" asp-action="Edit" class="btn btn-outline-primary">@T.T("DashboardQuickLinkSettingsAction")</a>
             }
         </div>

@@ -103,9 +103,7 @@ namespace Darwin.WebAdmin.Controllers
                     return RedirectToAction(nameof(LoginTwoFactor));
                 }
 
-                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.FailureReason)
-                    ? _text.T("InvalidCredentialsMessage")
-                    : result.FailureReason!);
+                AddLocalizedModelError("InvalidCredentialsMessage");
 
                 ViewData["ReturnUrl"] = returnUrl;
                 return View("Login");
@@ -131,9 +129,10 @@ namespace Darwin.WebAdmin.Controllers
             if (!TempData.TryGetValue("2fa_user", out var idObj) || idObj is null)
                 return RedirectToAction(nameof(Login));
 
-            ViewData["RememberMe"] = TempData.TryGetValue("remember", out var r) && (string?)r == "1";
-            ViewData["ReturnUrl"] = (string?)TempData["return"] ?? string.Empty;
-            ViewData["TwoFaUserId"] = idObj.ToString();
+            PrepareTwoFactorViewState(
+                idObj.ToString(),
+                TempData.TryGetValue("remember", out var r) && (string?)r == "1",
+                (string?)TempData["return"] ?? string.Empty);
             return View();
         }
 
@@ -153,13 +152,15 @@ namespace Darwin.WebAdmin.Controllers
             if (!Guid.TryParse(userId, out var uid))
             {
                 ModelState.AddModelError(string.Empty, _text.T("InvalidTwoFactorFlowMessage"));
+                PrepareTwoFactorViewState(userId, rememberMe, returnUrl);
                 return View("LoginTwoFactor");
             }
 
             var verify = await _verifyTotp.HandleAsync(new TotpVerifyDto { UserId = uid, Code = code }, ct);
             if (!verify.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(verify.Error) ? _text.T("InvalidCodeMessage") : verify.Error!);
+                AddLocalizedModelError("InvalidCodeMessage");
+                PrepareTwoFactorViewState(userId, rememberMe, returnUrl);
                 return View("LoginTwoFactor");
             }
 
@@ -167,6 +168,7 @@ namespace Darwin.WebAdmin.Controllers
             if (!stampRes.Succeeded || string.IsNullOrWhiteSpace(stampRes.Value))
             {
                 ModelState.AddModelError(string.Empty, _text.T("UnableToCompleteSignInMessage"));
+                PrepareTwoFactorViewState(userId, rememberMe, returnUrl);
                 return View("LoginTwoFactor");
             }
 
@@ -183,7 +185,7 @@ namespace Darwin.WebAdmin.Controllers
         {
             var res = await _webauthnBegin.HandleAsync(new WebAuthnBeginLoginDto { UserId = userId }, ct);
             if (!res.Succeeded || res.Value is null)
-                return BadRequest(new { error = string.IsNullOrWhiteSpace(res.Error) ? _text.T("FailedToBeginPasskeyLoginMessage") : res.Error });
+                return BadRequestLocalizedError("FailedToBeginPasskeyLoginMessage");
 
             return Json(new { challengeTokenId = res.Value.ChallengeTokenId, options = res.Value.OptionsJson });
         }
@@ -209,7 +211,7 @@ namespace Darwin.WebAdmin.Controllers
             }, ct);
 
             if (!res.Succeeded)
-                return BadRequest(new { error = string.IsNullOrWhiteSpace(res.Error) ? _text.T("PasskeyLoginFailedMessage") : res.Error });
+                return BadRequestLocalizedError("PasskeyLoginFailedMessage");
 
             var stampRes = await _getSecurityStamp.HandleAsync(userId, ct);
             if (!stampRes.Succeeded || string.IsNullOrWhiteSpace(stampRes.Value))
@@ -284,7 +286,7 @@ namespace Darwin.WebAdmin.Controllers
             var result = await _register.HandleAsync(create, defaultRoleId, ct);
             if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.Error) ? _text.T("RegistrationFailedMessage") : result.Error!);
+                AddLocalizedModelError("RegistrationFailedMessage");
                 ViewData["ReturnUrl"] = returnUrl;
                 ViewData["DefaultCurrency"] = defaultCurrency;
                 ViewData["DefaultLocale"] = defaultLocale;
@@ -334,6 +336,23 @@ namespace Darwin.WebAdmin.Controllers
                 ExpiresUtc = persistent ? DateTimeOffset.UtcNow.AddDays(30) : (DateTimeOffset?)null
             };
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props);
+        }
+
+        private void AddLocalizedModelError(string fallbackKey)
+        {
+            ModelState.AddModelError(string.Empty, _text.T(fallbackKey));
+        }
+
+        private BadRequestObjectResult BadRequestLocalizedError(string fallbackKey)
+        {
+            return BadRequest(new { error = _text.T(fallbackKey) });
+        }
+
+        private void PrepareTwoFactorViewState(string? userId, bool rememberMe, string? returnUrl)
+        {
+            ViewData["RememberMe"] = rememberMe;
+            ViewData["ReturnUrl"] = returnUrl ?? string.Empty;
+            ViewData["TwoFaUserId"] = userId ?? string.Empty;
         }
 
         /// <summary>

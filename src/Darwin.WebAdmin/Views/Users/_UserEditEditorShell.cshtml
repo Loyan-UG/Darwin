@@ -5,7 +5,9 @@
     var addressesSection = ViewBag.AddressesSection as Darwin.WebAdmin.ViewModels.Identity.UserAddressesSectionVm;
 }
 
-<div id="user-edit-editor-shell">
+<div id="user-edit-editor-shell"
+     data-add-address-title="@T.T("AddAddress")"
+     data-edit-address-title="@T.T("EditAddress")">
     <h2>@T.T("EditUserTitle")</h2>
 
     <div class="card mb-4">
@@ -44,8 +46,13 @@
                asp-action="ChangeEmail"
                asp-route-id="@Model.Id"
                asp-route-currentEmail="@Model.Email"
+               asp-route-returnToIndex="@Model.ReturnToIndex"
+               asp-route-q="@Model.Query"
+               asp-route-filter="@Model.Filter"
+               asp-route-page="@Model.Page"
+               asp-route-pageSize="@Model.PageSize"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("ChangeEmail", "Users", new { id = Model.Id, currentEmail = Model.Email })"
+               hx-get="@Url.Action("ChangeEmail", "Users", new { id = Model.Id, currentEmail = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML">
                 <i class="fa fa-envelope"></i> @T.T("ChangeEmail")
@@ -54,8 +61,13 @@
                asp-action="ChangePassword"
                asp-route-id="@Model.Id"
                asp-route-email="@Model.Email"
+               asp-route-returnToIndex="@Model.ReturnToIndex"
+               asp-route-q="@Model.Query"
+               asp-route-filter="@Model.Filter"
+               asp-route-page="@Model.Page"
+               asp-route-pageSize="@Model.PageSize"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("ChangePassword", "Users", new { id = Model.Id, email = Model.Email })"
+               hx-get="@Url.Action("ChangePassword", "Users", new { id = Model.Id, email = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML">
                 <i class="fa fa-key"></i> @T.T("ChangePassword")
@@ -178,6 +190,11 @@
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="RowVersion" />
         <input type="hidden" asp-for="Email" />
+        <input type="hidden" asp-for="ReturnToIndex" />
+        <input type="hidden" asp-for="Query" />
+        <input type="hidden" asp-for="Filter" />
+        <input type="hidden" asp-for="Page" />
+        <input type="hidden" asp-for="PageSize" />
         <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
 
         <partial name="_UserProfileFields" model="Model" />
@@ -191,12 +208,28 @@
 
         <div class="col-12">
             <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> @T.T("Save")</button>
-            <a asp-controller="Users"
-               asp-action="Index"
-               class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Index", "Users")"
-               hx-target="#user-edit-editor-shell"
-               hx-swap="outerHTML">@T.T("Back")</a>
+            @if (Model.ReturnToIndex)
+            {
+                <a asp-controller="Users"
+                   asp-action="Index"
+                   asp-route-q="@Model.Query"
+                   asp-route-filter="@Model.Filter"
+                   asp-route-page="@Model.Page"
+                   asp-route-pageSize="@Model.PageSize"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Index", "Users", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                   hx-target="#user-edit-editor-shell"
+                   hx-swap="outerHTML">@T.T("Back")</a>
+            }
+            else
+            {
+                <a asp-controller="Users"
+                   asp-action="Index"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Index", "Users")"
+                   hx-target="#user-edit-editor-shell"
+                   hx-swap="outerHTML">@T.T("Back")</a>
+            }
         </div>
     </form>
 
@@ -221,6 +254,9 @@
 
       window.darwinAdmin.initUserEditScreen = window.darwinAdmin.initUserEditScreen || function (root) {
         if (!root) return;
+
+        const addAddressTitle = root.dataset.addAddressTitle || 'Address';
+        const editAddressTitle = root.dataset.editAddressTitle || 'Address';
 
         const modal = root.querySelector('#addressEditModal');
         if (modal && !modal.dataset.addressModalBound) {
@@ -266,7 +302,7 @@
               form.querySelector('input[name="IsDefaultBilling"]').checked = false;
               form.querySelector('input[name="IsDefaultShipping"]').checked = false;
 
-              if (title) title.textContent = 'Add Address';
+              if (title) title.textContent = addAddressTitle;
             } else {
               if (idInput) { idInput.value = btn.getAttribute('data-id') || ''; setName(idInput, 'Id'); }
               if (rvInput) { rvInput.value = btn.getAttribute('data-rowversion') || ''; setName(rvInput, 'RowVersion'); }
@@ -283,7 +319,7 @@
               form.querySelector('input[name="IsDefaultBilling"]').checked = btn.getAttribute('data-defaultbilling') === 'true';
               form.querySelector('input[name="IsDefaultShipping"]').checked = btn.getAttribute('data-defaultshipping') === 'true';
 
-              if (title) title.textContent = 'Edit Address';
+              if (title) title.textContent = editAddressTitle;
             }
           });
         }

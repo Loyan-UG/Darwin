@@ -31,6 +31,12 @@
         Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
         _ => T.T("Invitations")
     };
+    string InvitationDebtSummaryLabel(int pendingInvitationCount) => pendingInvitationCount > 0
+        ? T.T("BusinessSupportPendingInvitationsLabel")
+        : InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open);
+    int InvitationDebtCount(int pendingInvitationCount, int openInvitationCount) => pendingInvitationCount > 0
+        ? pendingInvitationCount
+        : openInvitationCount;
 }
 
 <div id="mobile-operations-workspace-shell">
@@ -56,8 +62,8 @@
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("LoyaltyScanSessionsTitle")</a>
-        <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+        <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -142,7 +148,7 @@
             <div class="card-body">
                 <div class="mb-2">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention): <strong>@Model.AttentionBusinessCount</strong></div>
                 <div class="mb-2">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval): <strong>@Model.PendingApprovalBusinessCount</strong></div>
-                <div class="mb-2">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open): <strong>@Model.OpenInvitationCount</strong></div>
+                <div class="mb-2">@InvitationDebtSummaryLabel(Model.PendingInvitationCount): <strong>@InvitationDebtCount(Model.PendingInvitationCount, Model.OpenInvitationCount)</strong></div>
                 <div class="mb-2">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation): <strong>@Model.PendingActivationMemberCount</strong></div>
                 <div class="mb-2">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked): <strong>@Model.LockedMemberCount</strong></div>
                 <div>@T.T("BusinessesRequiringEmailSetup"): <strong>@Model.BusinessesRequiringEmailSetupCount</strong></div>
@@ -152,18 +158,18 @@
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("SupportQueue")</a>
-                    <a asp-controller="Users" asp-action="Index" asp-route-filter="Unconfirmed" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
-                    <a asp-controller="Users" asp-action="Index" asp-route-filter="Locked" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+                       hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
-                       hx-push-url="true">@T.T("UsersFilterLocked")</a>
-                    <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                       hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>

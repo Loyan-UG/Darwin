@@ -21,6 +21,7 @@ namespace Darwin.WebAdmin.ViewModels.Mobile
         public string? TimeZone { get; set; }
         public int AttentionBusinessCount { get; set; }
         public int PendingApprovalBusinessCount { get; set; }
+        public int PendingInvitationCount { get; set; }
         public int OpenInvitationCount { get; set; }
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }

@@ -16,8 +16,9 @@
     <div class="d-flex gap-2 flex-wrap mt-3">
         <a asp-action="Members"
            asp-route-businessId="@Model.BusinessId"
+           asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
            hx-target="#business-setup-shell"
            hx-swap="outerHTML">@T.T("BusinessSetupOpenMembersAction")</a>
         <a asp-controller="MobileOperations"
@@ -36,8 +37,9 @@ else
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="Members"
                asp-route-businessId="@Model.BusinessId"
+               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML">@T.T("BusinessSetupOpenMembersAction")</a>
             <a asp-controller="MobileOperations"
@@ -126,10 +128,10 @@ else
                         {
                             <a asp-controller="Users"
                                asp-action="Index"
-                               asp-route-filter="Locked"
+                               asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                                asp-route-q="@item.UserEmail"
                                class="badge text-bg-danger ms-1 text-decoration-none"
-                               hx-get="@Url.Action("Index", "Users", new { filter = "Locked", q = item.UserEmail })"
+                               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = item.UserEmail })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@MemberAttentionStatusLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>

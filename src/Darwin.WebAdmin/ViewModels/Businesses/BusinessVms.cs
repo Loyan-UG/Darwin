@@ -108,6 +108,7 @@ public sealed class MerchantReadinessPlaybookVm
         public int MissingPrimaryLocationBusinessCount { get; set; }
         public int MissingContactEmailBusinessCount { get; set; }
         public int MissingLegalNameBusinessCount { get; set; }
+        public int PendingInvitationCount { get; set; }
         public int OpenInvitationCount { get; set; }
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }
@@ -403,6 +404,10 @@ public sealed class BusinessSubscriptionInvoicesListVm
     {
         public Guid Id { get; set; }
         public Guid BusinessId { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public string Query { get; set; } = string.Empty;
+        public BusinessLocationQueueFilter Filter { get; set; } = BusinessLocationQueueFilter.All;
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string Name { get; set; } = string.Empty;
         public string? AddressLine1 { get; set; }
@@ -482,6 +487,10 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public Guid Id { get; set; }
         public Guid BusinessId { get; set; }
         public Guid UserId { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public string Query { get; set; } = string.Empty;
+        public BusinessMemberSupportFilter Filter { get; set; } = BusinessMemberSupportFilter.All;
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string UserDisplayName { get; set; } = string.Empty;
         public string UserEmail { get; set; } = string.Empty;
@@ -577,6 +586,10 @@ public sealed class BusinessSubscriptionInvoicesListVm
     public sealed class BusinessInvitationCreateVm
     {
         public Guid BusinessId { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public string Query { get; set; } = string.Empty;
+        public BusinessInvitationQueueFilter Filter { get; set; } = BusinessInvitationQueueFilter.All;
         public string Email { get; set; } = string.Empty;
         public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
         public int ExpiresInDays { get; set; } = 7;
@@ -602,6 +615,7 @@ public sealed class BusinessSubscriptionInvoicesListVm
     {
         public Guid BusinessId { get; set; }
         public int OpenCount { get; set; }
+        public int PendingCount { get; set; }
         public List<BusinessInvitationListItemVm> Items { get; set; } = new();
     }
 

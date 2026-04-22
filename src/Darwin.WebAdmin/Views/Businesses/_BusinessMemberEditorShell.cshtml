@@ -19,8 +19,12 @@
         </div>
         <a asp-action="Members"
            asp-route-businessId="@Model.BusinessId"
+           asp-route-page="@Model.Page"
+           asp-route-pageSize="@Model.PageSize"
+           asp-route-query="@Model.Query"
+           asp-route-filter="@Model.Filter"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
            hx-target="#business-member-editor-shell"
            hx-swap="outerHTML">@T.T("BackToMembersAction")</a>
     </div>
@@ -130,6 +134,10 @@
                             <input type="hidden" name="id" value="@Model.Id" />
                             <input type="hidden" name="businessId" value="@Model.BusinessId" />
                             <input type="hidden" name="returnToEdit" value="true" />
+                            <input type="hidden" name="page" value="@Model.Page" />
+                            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                            <input type="hidden" name="query" value="@Model.Query" />
+                            <input type="hidden" name="filter" value="@Model.Filter" />
                             <button type="submit" class="btn btn-outline-primary">
                                 <i class="fa-solid fa-paper-plane"></i> @T.T("BusinessMemberSendActivationAction")
                             </button>
@@ -144,6 +152,10 @@
                             <input type="hidden" name="id" value="@Model.Id" />
                             <input type="hidden" name="businessId" value="@Model.BusinessId" />
                             <input type="hidden" name="returnToEdit" value="true" />
+                            <input type="hidden" name="page" value="@Model.Page" />
+                            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                            <input type="hidden" name="query" value="@Model.Query" />
+                            <input type="hidden" name="filter" value="@Model.Filter" />
                             <button type="submit" class="btn btn-outline-success">
                                 <i class="fa-solid fa-check"></i> @T.T("BusinessMemberConfirmEmailAction")
                             </button>
@@ -159,6 +171,10 @@
                         <input type="hidden" name="id" value="@Model.Id" />
                         <input type="hidden" name="businessId" value="@Model.BusinessId" />
                         <input type="hidden" name="returnToEdit" value="true" />
+                        <input type="hidden" name="page" value="@Model.Page" />
+                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                        <input type="hidden" name="query" value="@Model.Query" />
+                        <input type="hidden" name="filter" value="@Model.Filter" />
                         <button type="submit" class="btn btn-outline-warning">
                             <i class="fa-solid fa-key"></i> @T.T("BusinessMemberSendResetAction")
                         </button>
@@ -175,6 +191,10 @@
                             <input type="hidden" name="id" value="@Model.Id" />
                             <input type="hidden" name="businessId" value="@Model.BusinessId" />
                             <input type="hidden" name="returnToEdit" value="true" />
+                            <input type="hidden" name="page" value="@Model.Page" />
+                            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                            <input type="hidden" name="query" value="@Model.Query" />
+                            <input type="hidden" name="filter" value="@Model.Filter" />
                             <button type="submit" class="btn btn-outline-success">
                                 <i class="fa-solid fa-lock-open"></i> @T.T("UsersUnlockAction")
                             </button>
@@ -192,6 +212,10 @@
                             <input type="hidden" name="id" value="@Model.Id" />
                             <input type="hidden" name="businessId" value="@Model.BusinessId" />
                             <input type="hidden" name="returnToEdit" value="true" />
+                            <input type="hidden" name="page" value="@Model.Page" />
+                            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                            <input type="hidden" name="query" value="@Model.Query" />
+                            <input type="hidden" name="filter" value="@Model.Filter" />
                             <button type="submit" class="btn btn-outline-danger">
                                 <i class="fa-solid fa-lock"></i> @T.T("UsersLockAction")
                             </button>
@@ -209,6 +233,10 @@
           hx-swap="outerHTML">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="BusinessId" />
+        <input type="hidden" asp-for="Page" />
+        <input type="hidden" asp-for="PageSize" />
+        <input type="hidden" asp-for="Query" />
+        <input type="hidden" asp-for="Filter" />
         @if (!isCreate)
         {
             <input type="hidden" asp-for="Id" />
@@ -222,8 +250,12 @@
     <div class="d-flex gap-2 flex-wrap mt-4">
         <a asp-action="Members"
            asp-route-businessId="@Model.BusinessId"
+           asp-route-page="@Model.Page"
+           asp-route-pageSize="@Model.PageSize"
+           asp-route-query="@Model.Query"
+           asp-route-filter="@Model.Filter"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
            hx-target="#business-member-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("CommonMembers")</a>

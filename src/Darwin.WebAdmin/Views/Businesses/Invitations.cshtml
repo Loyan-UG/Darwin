@@ -44,8 +44,11 @@
            hx-push-url="true">@T.T("MobileOperationsTitle")</a>
         <a asp-action="Members"
            asp-route-businessId="@Model.Business.Id"
+           asp-route-filter="@(Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-get="@(Model.Business.ActiveOwnerCount > 0
+               ? Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })
+               : Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
            hx-target="#business-invitations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@MemberWorkspaceLabel()</a>
@@ -68,8 +71,12 @@
         }
         <a asp-action="CreateInvitation"
            asp-route-businessId="@Model.Business.Id"
+           asp-route-page="@Model.Page"
+           asp-route-pageSize="@Model.PageSize"
+           asp-route-query="@Model.Query"
+           asp-route-filter="@Model.Filter"
            class="btn btn-primary"
-           hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Business.Id })"
+           hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Business.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
            hx-target="#business-invitations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -255,8 +262,12 @@
                     <div class="d-flex gap-2 flex-wrap justify-content-center mt-3">
                         <a asp-action="CreateInvitation"
                            asp-route-businessId="@Model.Business.Id"
+                           asp-route-page="@Model.Page"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-query="@Model.Query"
+                           asp-route-filter="@Model.Filter"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Business.Id })"
+                           hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Business.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
                            hx-target="#business-invitations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BusinessInvitationsInviteUserAction")</a>
@@ -327,6 +338,10 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="query" value="@Model.Query" />
+                                <input type="hidden" name="filter" value="@Model.Filter" />
                                 <button type="submit" class="btn btn-sm btn-outline-primary">
                                     <i class="fa-solid fa-paper-plane"></i> @T.T("Resend")
                                 </button>
@@ -343,6 +358,10 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="query" value="@Model.Query" />
+                                <input type="hidden" name="filter" value="@Model.Filter" />
                                 <button type="submit" class="btn btn-sm btn-outline-danger">
                                     <i class="fa-solid fa-ban"></i> @T.T("Revoke")
                                 </button>

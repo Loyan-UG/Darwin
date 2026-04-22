@@ -206,17 +206,17 @@
            hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)</a>
         <a asp-controller="Users"
            asp-action="Index"
-           asp-route-filter="Unconfirmed"
+           asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
         <a asp-controller="Users"
            asp-action="Index"
-           asp-route-filter="Locked"
+           asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>

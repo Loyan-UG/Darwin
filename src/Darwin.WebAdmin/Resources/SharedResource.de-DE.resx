@@ -177,6 +177,24 @@
   <data name="PasskeyLoginFailedMessage" xml:space="preserve">
     <value>Passkey-Anmeldung fehlgeschlagen.</value>
   </data>
+  <data name="AdminTextOverrideExampleGermanLogout" xml:space="preserve">
+    <value>Abmelden</value>
+  </data>
+  <data name="AdminTextOverrideExampleEnglishLogout" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="AdminTextOverrideExampleKey" xml:space="preserve">
+    <value>Schluessel</value>
+  </data>
+  <data name="AdminTextOverrideExampleValue" xml:space="preserve">
+    <value>Wert</value>
+  </data>
+  <data name="BusinessSetupTitleExampleGerman" xml:space="preserve">
+    <value>Betriebs-Setup</value>
+  </data>
+  <data name="BusinessSetupTitleExampleEnglish" xml:space="preserve">
+    <value>Business setup</value>
+  </data>
   <data name="RegistrationFailedMessage" xml:space="preserve">
     <value>Registrierung fehlgeschlagen.</value>
   </data>
@@ -3030,6 +3048,9 @@
   <data name="Checklist" xml:space="preserve">
     <value>Checkliste</value>
   </data>
+  <data name="BusinessSetupChecklistCounts" xml:space="preserve">
+    <value>{0} Owner, {1} Primary Locations</value>
+  </data>
   <data name="Complete" xml:space="preserve">
     <value>Vollstaendig</value>
   </data>
@@ -3290,6 +3311,9 @@
   </data>
   <data name="AddAddress" xml:space="preserve">
     <value>Adresse hinzufuegen</value>
+  </data>
+  <data name="EditAddress" xml:space="preserve">
+    <value>Adresse bearbeiten</value>
   </data>
   <data name="AddressLine1" xml:space="preserve">
     <value>Adresszeile 1</value>
@@ -6015,6 +6039,9 @@
   <data name="BusinessSetupInvitationsPreviewOpenCount" xml:space="preserve">
     <value>{0} offene Einladung(en)</value>
   </data>
+  <data name="BusinessSetupInvitationsPreviewPendingCount" xml:space="preserve">
+    <value>{0} ausstehende Einladung(en)</value>
+  </data>
   <data name="BusinessSetupInvitationsPreviewExpiresAt" xml:space="preserve">
     <value>Laeuft ab {0} UTC</value>
   </data>
@@ -6116,6 +6143,9 @@
   </data>
   <data name="BusinessSupportOpenInvitationsLabel" xml:space="preserve">
     <value>Offene Einladungen</value>
+  </data>
+  <data name="BusinessSupportPendingInvitationsLabel" xml:space="preserve">
+    <value>Ausstehende Einladungen</value>
   </data>
   <data name="BusinessSupportPendingActivationLabel" xml:space="preserve">
     <value>Ausstehende Aktivierung</value>
@@ -9318,6 +9348,18 @@
   <data name="Copied" xml:space="preserve">
     <value>Kopiert</value>
   </data>
+  <data name="PageEditorPlaceholder" xml:space="preserve">
+    <value>Inhalt hier schreiben...</value>
+  </data>
+  <data name="PageImageUploadFailed" xml:space="preserve">
+    <value>Bildupload fehlgeschlagen.</value>
+  </data>
+  <data name="PageEditorQuillNotLoaded" xml:space="preserve">
+    <value>Quill ist nicht geladen. Stellen Sie sicher, dass quill.js vor diesem Abschnitt in _Layout eingebunden ist.</value>
+  </data>
+  <data name="PageEditorUploadFailedError" xml:space="preserve">
+    <value>Upload fehlgeschlagen.</value>
+  </data>
   <data name="File" xml:space="preserve">
     <value>Datei</value>
   </data>
@@ -10658,5 +10700,17 @@
   </data>
   <data name="WebhookEscalationHintNoResponse" xml:space="preserve">
     <value>Pruefen Sie Netzwerkerreichbarkeit, TLS und Bereitschaft des Empfaengers, bevor Sie den Callback als Anwendungsfehler eskalieren.</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="SiteSettingsTransactionalEmailSubjectPrefixPlaceholder" xml:space="preserve">
+    <value>[Darwin]</value>
+  </data>
+  <data name="BusinessBrandPrimaryColorPlaceholder" xml:space="preserve">
+    <value>#0055AA</value>
+  </data>
+  <data name="BusinessBrandSecondaryColorPlaceholder" xml:space="preserve">
+    <value>#FFCC00</value>
   </data>
 </root>

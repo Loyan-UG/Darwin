@@ -21,6 +21,11 @@
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="CurrentEmail" />
+        <input type="hidden" asp-for="ReturnToIndex" />
+        <input type="hidden" asp-for="Query" />
+        <input type="hidden" asp-for="Filter" />
+        <input type="hidden" asp-for="Page" />
+        <input type="hidden" asp-for="PageSize" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
         <div class="card mb-3">
@@ -62,15 +67,33 @@
             </div>
 
             <div class="card-footer d-flex justify-content-between">
-                <a asp-controller="Users"
-                   asp-action="Edit"
-                   asp-route-id="@Model.Id"
-                   class="btn btn-outline-secondary"
-                   hx-get="@Url.Action("Edit", "Users", new { id = Model.Id })"
-                   hx-target="#user-change-email-editor-shell"
-                   hx-swap="outerHTML">
-                    <i class="fa fa-arrow-left"></i> @T.T("Back")
-                </a>
+                @if (Model.ReturnToIndex)
+                {
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-q="@Model.Query"
+                       asp-route-filter="@Model.Filter"
+                       asp-route-page="@Model.Page"
+                       asp-route-pageSize="@Model.PageSize"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                       hx-target="#user-change-email-editor-shell"
+                       hx-swap="outerHTML">
+                        <i class="fa fa-arrow-left"></i> @T.T("Back")
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Users"
+                       asp-action="Edit"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("Edit", "Users", new { id = Model.Id })"
+                       hx-target="#user-change-email-editor-shell"
+                       hx-swap="outerHTML">
+                        <i class="fa fa-arrow-left"></i> @T.T("Back")
+                    </a>
+                }
                 <button type="submit" class="btn btn-primary">
                     <i class="fa fa-check"></i> @T.T("Save")
                 </button>

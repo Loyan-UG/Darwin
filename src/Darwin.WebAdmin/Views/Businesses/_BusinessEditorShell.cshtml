@@ -9,6 +9,7 @@
         _ => T.T("Invitations")
     };
     string MemberWorkspaceLabel() => T.T("Members");
+    string ChecklistBooleanLabel(bool isComplete) => isComplete ? T.T("Yes") : T.T("No");
 }
 
 <div id="business-editor-shell">
@@ -22,8 +23,11 @@
             <div class="d-flex gap-2">
                 <a asp-action="Members"
                    asp-route-businessId="@Model.Id"
+                   asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                    class="btn btn-outline-secondary"
-                   hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                   hx-get="@(Model.ActiveOwnerCount > 0
+                       ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
+                       : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
                    hx-target="#business-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">
@@ -58,8 +62,11 @@
                 </a>
                 <a asp-action="Invitations"
                    asp-route-businessId="@Model.Id"
+                   asp-route-filter="@(Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)"
                    class="btn btn-outline-secondary"
-                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                   hx-get="@(Model.InvitationCount > 0
+                       ? Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })
+                       : Url.Action("Invitations", "Businesses", new { businessId = Model.Id }))"
                    hx-target="#business-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">
@@ -84,8 +91,11 @@
                     <div class="mt-2">
                         <a asp-action="Members"
                            asp-route-businessId="@Model.Id"
+                           asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                           hx-get="@(Model.ActiveOwnerCount > 0
+                               ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
+                               : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
                            hx-target="#business-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@MemberWorkspaceLabel()</a>
@@ -99,8 +109,11 @@
                     <div class="mt-2">
                         <a asp-action="Members"
                            asp-route-businessId="@Model.Id"
+                           asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                           hx-get="@(Model.ActiveOwnerCount > 0
+                               ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
+                               : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
                            hx-target="#business-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CommonMembers")</a>
@@ -129,8 +142,9 @@
                     <div class="mt-2">
                         <a asp-action="Invitations"
                            asp-route-businessId="@Model.Id"
+                           asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                            hx-target="#business-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>
@@ -239,16 +253,16 @@
 
             <div class="row g-2 mt-2">
                 <div class="col-md-6">
-                    <div class="small">@((Model.ActiveOwnerCount > 0) ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorActiveOwnerAssigned")</div>
+                    <div class="small">@ChecklistBooleanLabel(Model.ActiveOwnerCount > 0) - @T.T("BusinessEditorActiveOwnerAssigned")</div>
                 </div>
                 <div class="col-md-6">
-                    <div class="small">@((Model.PrimaryLocationCount > 0) ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorPrimaryLocationConfigured")</div>
+                    <div class="small">@ChecklistBooleanLabel(Model.PrimaryLocationCount > 0) - @T.T("BusinessEditorPrimaryLocationConfigured")</div>
                 </div>
                 <div class="col-md-6">
-                    <div class="small">@(Model.HasContactEmailConfigured ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorContactEmailConfigured")</div>
+                    <div class="small">@ChecklistBooleanLabel(Model.HasContactEmailConfigured) - @T.T("BusinessEditorContactEmailConfigured")</div>
                 </div>
                 <div class="col-md-6">
-                    <div class="small">@(Model.HasLegalNameConfigured ? T.T("Yes") : T.T("No")) - @T.T("BusinessEditorLegalBusinessNameConfigured")</div>
+                    <div class="small">@ChecklistBooleanLabel(Model.HasLegalNameConfigured) - @T.T("BusinessEditorLegalBusinessNameConfigured")</div>
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap mt-3">
@@ -342,8 +356,9 @@
                 {
                     <a asp-action="Invitations"
                        asp-route-businessId="@Model.Id"
+                       asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                        hx-target="#business-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">

@@ -15,9 +15,11 @@ namespace Darwin.Application.Businesses.DTOs
         public int MissingPrimaryLocationBusinessCount { get; set; }
         public int MissingContactEmailBusinessCount { get; set; }
         public int MissingLegalNameBusinessCount { get; set; }
+        public int PendingInvitationCount { get; set; }
         public int OpenInvitationCount { get; set; }
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }
+        public int SelectedBusinessPendingInvitationCount { get; set; }
         public int SelectedBusinessOpenInvitationCount { get; set; }
         public int SelectedBusinessPendingActivationCount { get; set; }
         public int SelectedBusinessLockedMemberCount { get; set; }

@@ -661,6 +661,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("Name = profile.Name,");
         controllerSource.Should().Contain("LegalName = profile.LegalName,");
         controllerSource.Should().Contain("OperationalStatus = profile.OperationalStatus,");
+        controllerSource.Should().Contain("PendingInvitationCount = profile.PendingInvitationCount,");
         controllerSource.Should().Contain("OpenInvitationCount = profile.OpenInvitationCount,");
         controllerSource.Should().Contain("PendingActivationMemberCount = profile.PendingActivationMemberCount,");
         controllerSource.Should().Contain("LockedMemberCount = profile.LockedMemberCount,");
@@ -1334,9 +1335,33 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         detailsViewSource.Should().Contain("@foreach (var flow in Model.ActiveFlowNames)");
         detailsViewSource.Should().Contain("@T.T(\"BusinessCommunicationRecommendedNextActionsTitle\")");
         detailsViewSource.Should().Contain("@foreach (var action in Model.RecommendedActions)");
-        detailsViewSource.Should().Contain("@T.T(\"BusinessCommunicationViewInvitationAuditsAction\")");
-        detailsViewSource.Should().Contain("@T.T(\"BusinessCommunicationOpenMemberSupportAction\")");
-        detailsViewSource.Should().Contain("@T.T(\"BusinessCommunicationOpenInvitationsAction\")");
+        detailsViewSource.Should().Contain("T.T(\"BusinessCommunicationViewInvitationAuditsAction\")");
+        detailsViewSource.Should().Contain("T.T(\"Pending\")");
+        detailsViewSource.Should().Contain("if (invitationWorkspaceFilter.HasValue)");
+        detailsViewSource.Should().Contain("string MemberWorkspaceActionLabel() => memberWorkspaceFilter switch");
+        detailsViewSource.Should().Contain("BusinessMemberSupportFilter.PendingActivation => T.T(\"PendingActivation\")");
+        detailsViewSource.Should().Contain("BusinessMemberSupportFilter.Locked => T.T(\"UsersFilterLocked\")");
+        detailsViewSource.Should().Contain("string InvitationDebtSummaryLabel() => Model.PendingInvitationCount > 0");
+        detailsViewSource.Should().Contain("int InvitationDebtCount() => Model.PendingInvitationCount > 0");
+        detailsViewSource.Should().Contain("string InvitationWorkspaceActionLabel() => invitationWorkspaceFilter switch");
+        detailsViewSource.Should().Contain("string InvitationAuditActionLabel() => invitationWorkspaceFilter switch");
+        detailsViewSource.Should().Contain("string ValueOrMissing(string? value) => string.IsNullOrWhiteSpace(value)");
+        detailsViewSource.Should().Contain("string DependencyBadgeStatusLabel(bool configured) => configured");
+        detailsViewSource.Should().Contain("T.T(\"BusinessCommunicationOpenMemberSupportAction\")");
+        detailsViewSource.Should().Contain("hx-swap=\"outerHTML\">@MemberWorkspaceActionLabel()</a>");
+        detailsViewSource.Should().Contain("T.T(\"BusinessCommunicationOpenInvitationsAction\")");
+        detailsViewSource.Should().Contain("@InvitationDebtSummaryLabel(): <strong>@InvitationDebtCount()</strong>");
+        detailsViewSource.Should().Contain("@InvitationWorkspaceActionLabel()</a>");
+        detailsViewSource.Should().Contain("@InvitationAuditActionLabel()");
+        detailsViewSource.Should().Contain("<dd class=\"col-sm-8\">@ValueOrMissing(Model.LegalName)</dd>");
+        detailsViewSource.Should().Contain("<dd class=\"col-sm-8\">@ValueOrMissing(Model.ContactEmail)</dd>");
+        detailsViewSource.Should().Contain("<dd class=\"col-sm-8\">@ValueOrMissing(Model.SupportEmail)</dd>");
+        detailsViewSource.Should().Contain("<dd class=\"col-sm-8\">@ValueOrMissing(Model.CommunicationSenderName)</dd>");
+        detailsViewSource.Should().Contain("<dd class=\"col-sm-8\">@ValueOrMissing(Model.CommunicationReplyToEmail)</dd>");
+        detailsViewSource.Should().Contain("@T.T(\"SMTP\") @DependencyBadgeStatusLabel(Model.EmailTransportConfigured)");
+        detailsViewSource.Should().Contain("@ChannelLabel(\"SMS\") @DependencyBadgeStatusLabel(Model.SmsTransportConfigured)");
+        detailsViewSource.Should().Contain("@ChannelLabel(\"WhatsApp\") @DependencyBadgeStatusLabel(Model.WhatsAppTransportConfigured)");
+        detailsViewSource.Should().Contain("@T.T(\"BusinessCommunicationAdminAlertsShort\") @DependencyBadgeStatusLabel(Model.AdminAlertRoutingConfigured)");
         detailsViewSource.Should().Contain("string MemberWorkspaceLabel() => T.T(\"Members\")");
         detailsViewSource.Should().Contain("hx-push-url=\"true\">@MemberWorkspaceLabel()</a>");
         detailsViewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"Members\")</a>");
@@ -1677,7 +1702,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
 
         attentionFragmentSource.Should().Contain("string InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch");
         attentionFragmentSource.Should().Contain("@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)");
-        attentionFragmentSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = \"Open\" })");
+        attentionFragmentSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
         attentionFragmentSource.Should().NotContain("@item.InvitationCount @T.T(\"PendingInvites\")");
     }
 
@@ -1739,7 +1764,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
 
         failedEmailsViewSource.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
         failedEmailsViewSource.Should().Contain("string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch");
-        failedEmailsViewSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)");
+        failedEmailsViewSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         failedEmailsViewSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         failedEmailsViewSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         failedEmailsViewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"OpenInvitations\")</a>");
@@ -1776,8 +1801,10 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         merchantReadinessViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = item.Id })");
         merchantReadinessViewSource.Should().Contain("@Url.Action(\"Subscription\", \"Businesses\", new { businessId = item.Id })");
         merchantReadinessViewSource.Should().Contain("@Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = item.Id })");
-        merchantReadinessViewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })");
-        merchantReadinessViewSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id })");
+        merchantReadinessViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })");
+        merchantReadinessViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
+        merchantReadinessViewSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
+        merchantReadinessViewSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id })");
         merchantReadinessViewSource.Should().Contain("@Url.Action(\"OwnerOverrideAudits\", \"Businesses\", new { businessId = item.Id })");
         merchantReadinessViewSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = item.Id })");
         merchantReadinessViewSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = item.Id })");
@@ -1834,10 +1861,12 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         merchantReadinessViewSource.Should().Contain("@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)");
         merchantReadinessViewSource.Should().Contain("@Url.Action(\"Index\", \"Businesses\", new { operationalStatus = \"PendingApproval\" })");
         merchantReadinessViewSource.Should().Contain("@Url.Action(\"Index\", \"Businesses\", new { operationalStatus = \"Suspended\" })");
-        merchantReadinessViewSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = \"Unconfirmed\" })");
-        merchantReadinessViewSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = \"Locked\" })");
+        merchantReadinessViewSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })");
+        merchantReadinessViewSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })");
         merchantReadinessViewSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         merchantReadinessViewSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
+        merchantReadinessViewSource.Should().Contain("asp-route-filter=\"@(item.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        merchantReadinessViewSource.Should().Contain("asp-route-filter=\"@(item.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
         merchantReadinessViewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"UsersFilterUnconfirmed\")</a>");
         merchantReadinessViewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"UsersFilterLocked\")</a>");
         merchantReadinessViewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"PendingInvites\")</a>");
@@ -1909,12 +1938,17 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         source.Should().Contain("BusinessMemberSupportFilter.Attention => T.T(\"NeedsAttention\")");
         source.Should().Contain("BusinessMemberSupportFilter.PendingActivation => T.T(\"PendingActivation\")");
         source.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
-        source.Should().Contain("BusinessInvitationQueueFilter.Open => T.T(\"OpenInvitations\")");
+        source.Should().Contain("BusinessInvitationQueueFilter.Open => T.T(\"BusinessSupportOpenInvitationsLabel\")");
+        source.Should().Contain("string InvitationDebtSummaryLabel(int pendingInvitationCount) => pendingInvitationCount > 0");
+        source.Should().Contain("int InvitationDebtCount(int pendingInvitationCount, int openInvitationCount) => pendingInvitationCount > 0");
         source.Should().Contain("string BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
         source.Should().Contain("BusinessOperationalStatus.PendingApproval => T.T(\"PendingApproval\")");
         source.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
         source.Should().Contain("@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)");
-        source.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)");
+        source.Should().Contain("T.T(\"BusinessSupportPendingInvitationsLabel\")");
+        source.Should().Contain("InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)");
+        source.Should().Contain("@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)");
+        source.Should().Contain("@InvitationDebtCount(Model.BusinessSupport.PendingInvitationCount, Model.BusinessSupport.OpenInvitationCount)");
         source.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         source.Should().NotContain("<div class=\"text-muted small\">@T.T(\"NeedsAttention\")</div>");
         source.Should().NotContain("<div class=\"text-muted small\">@T.T(\"PendingApproval\")</div>");
@@ -1937,15 +1971,26 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         source.Should().Contain("@if (Model.SelectedBusinessId.HasValue)");
         source.Should().Contain("@T.T(\"BusinessSupportCurrentSnapshotLabel\")");
         source.Should().Contain("@Model.SelectedBusinessLabel");
-        source.Should().Contain("@T.T(\"BusinessSupportOpenInvitationsLabel\")");
+        source.Should().Contain("string InvitationDebtSummaryLabel(int pendingInvitationCount) => pendingInvitationCount > 0");
+        source.Should().Contain("int InvitationDebtCount(int pendingInvitationCount, int openInvitationCount) => pendingInvitationCount > 0");
+        source.Should().Contain("string InvitationActionLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
+        source.Should().Contain("T.T(\"BusinessSupportOpenInvitationsLabel\")");
+        source.Should().Contain("T.T(\"BusinessSupportPendingInvitationsLabel\")");
         source.Should().Contain("@T.T(\"BusinessSupportPendingActivationLabel\")");
         source.Should().Contain("@T.T(\"BusinessSupportLockedMembersLabel\")");
-        source.Should().Contain("asp-route-filter=\"PendingActivation\"");
+        source.Should().Contain("Model.BusinessSupport.SelectedBusinessPendingInvitationCount > 0");
+        source.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation\"");
         source.Should().Contain("@T.T(\"BusinessSupportOpenPendingActivationAction\")");
-        source.Should().Contain("asp-route-filter=\"Locked\"");
+        source.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked\"");
         source.Should().Contain("@T.T(\"BusinessSupportOpenLockedMembersAction\")");
-        source.Should().Contain("asp-route-filter=\"Open\"");
-        source.Should().Contain("@T.T(\"BusinessSetupOpenInvitationsAction\")");
+        source.Should().Contain("Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending");
+        source.Should().Contain("Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open");
+        source.Should().Contain("T.T(\"BusinessSetupOpenInvitationsAction\")");
+        source.Should().Contain("T.T(\"Pending\")");
+        source.Should().Contain("@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)");
+        source.Should().Contain("@InvitationDebtSummaryLabel(Model.BusinessSupport.SelectedBusinessPendingInvitationCount)");
+        source.Should().Contain("@InvitationDebtCount(Model.BusinessSupport.SelectedBusinessPendingInvitationCount, Model.BusinessSupport.SelectedBusinessOpenInvitationCount)");
+        source.Should().Contain("@InvitationActionLabel(selectedBusinessInvitationFilter)");
     }
 
 
@@ -2053,7 +2098,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
 
         summaryViewSource.Should().Contain("<div class=\"text-muted small\">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</div>");
         summaryViewSource.Should().Contain("@Model.LockedMemberCount");
-        summaryViewSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = \"Locked\" })");
+        summaryViewSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })");
         summaryViewSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"PasswordReset\" })");
         summaryViewSource.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\")");
         summaryViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
@@ -2258,7 +2303,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         summaryViewSource.Should().Contain("<div class=\"text-muted small\">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</div>");
         summaryViewSource.Should().Contain("@Model.PendingActivationMemberCount");
         summaryViewSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AccountActivation\" })");
-        summaryViewSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = \"Unconfirmed\" })");
+        summaryViewSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })");
         summaryViewSource.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\")");
         summaryViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
         summaryViewSource.Should().Contain("hx-push-url=\"true\">@T.T(\"OpenFailedActivationEmails\")</a>");
@@ -2298,7 +2343,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         var summaryViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SupportQueueSummary.cshtml"));
 
         summaryViewSource.Should().Contain("<div class=\"text-muted small\">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</div>");
-        summaryViewSource.Should().Contain("@Model.OpenInvitationCount");
+        summaryViewSource.Should().Contain("@Model.PendingInvitationCount");
         summaryViewSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"BusinessInvitation\" })");
         summaryViewSource.Should().Contain("@Url.Action(\"Index\", \"Businesses\", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites })");
         summaryViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
@@ -2397,7 +2442,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
     {
         var failedEmailsSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SupportQueueFailedEmails.cshtml"));
 
-        failedEmailsSource.Should().Contain("hx-push-url=\"true\">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</a>");
+        failedEmailsSource.Should().Contain("hx-push-url=\"true\">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>");
         failedEmailsSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"OpenInvitations\")</a>");
     }
 
@@ -2425,7 +2470,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
 
         failedEmailsSource.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
         failedEmailsSource.Should().Contain("string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch");
-        failedEmailsSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)");
+        failedEmailsSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         failedEmailsSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         failedEmailsSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         failedEmailsSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"OpenInvitations\")</a>");
@@ -2498,13 +2543,13 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         var indexViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Index.cshtml"));
 
         indexViewSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
-        indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = \"Unconfirmed\" })\"");
+        indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })\"");
         indexViewSource.Should().Contain("hx-push-url=\"true\">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>");
         indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AccountActivation\" })\"");
         indexViewSource.Should().Contain("hx-push-url=\"true\">@T.T(\"OpenFailedActivationEmails\")</a>");
         indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\")\"");
         indexViewSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
-        indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = \"Locked\" })\"");
+        indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })\"");
         indexViewSource.Should().Contain("hx-push-url=\"true\">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>");
         indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"PasswordReset\" })\"");
         indexViewSource.Should().Contain("hx-push-url=\"true\">@T.T(\"OpenFailedPasswordResets\")</a>");
@@ -2675,7 +2720,9 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
     {
         var indexViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Index.cshtml"));
 
-        indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })\"");
+        indexViewSource.Should().Contain("asp-route-filter=\"@(item.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        indexViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })");
+        indexViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))");
         indexViewSource.Should().Contain("hx-push-url=\"true\">");
         indexViewSource.Should().Contain("string MemberWorkspaceLabel() => T.T(\"Members\")");
         indexViewSource.Should().Contain("@MemberWorkspaceLabel()");
@@ -2685,7 +2732,9 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         indexViewSource.Should().Contain("@T.T(\"SubscriptionInvoicesTitle\")");
         indexViewSource.Should().Contain("string InvitationWorkspaceLabel() => T.T(\"Invitations\")");
         indexViewSource.Should().Contain("@InvitationWorkspaceLabel()");
-        indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id })\"");
+        indexViewSource.Should().Contain("asp-route-filter=\"@(item.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
+        indexViewSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
+        indexViewSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id }))");
     }
 
 
@@ -2821,7 +2870,9 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         merchantReadinessViewSource.Should().Contain("@if (setupMissing)");
         merchantReadinessViewSource.Should().Contain("hx-get=\"@Url.Action(\"Setup\", \"Businesses\", new { id = item.Id })\"");
         merchantReadinessViewSource.Should().Contain("@T.T(\"MerchantReadinessSetupMissing\")</a>");
-        merchantReadinessViewSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })\"");
+        merchantReadinessViewSource.Should().Contain("asp-route-filter=\"@(item.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        merchantReadinessViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })");
+        merchantReadinessViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
         merchantReadinessViewSource.Should().Contain("string MemberWorkspaceLabel() => T.T(\"Members\")");
         merchantReadinessViewSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>");
         merchantReadinessViewSource.Should().Contain("hx-get=\"@Url.Action(\"Locations\", \"Businesses\", new { businessId = item.Id })\"");
@@ -2851,9 +2902,13 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         merchantReadinessViewSource.Should().Contain("@T.T(\"Subscription\")");
         merchantReadinessViewSource.Should().Contain("hx-get=\"@Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = item.Id })\"");
         merchantReadinessViewSource.Should().Contain("@T.T(\"SubscriptionInvoicesTitle\")");
-        merchantReadinessViewSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })\"");
+        merchantReadinessViewSource.Should().Contain("asp-route-filter=\"@(item.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        merchantReadinessViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })");
+        merchantReadinessViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
         merchantReadinessViewSource.Should().Contain("@MemberWorkspaceLabel()");
-        merchantReadinessViewSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id })\"");
+        merchantReadinessViewSource.Should().Contain("asp-route-filter=\"@(item.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
+        merchantReadinessViewSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
+        merchantReadinessViewSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id })");
         merchantReadinessViewSource.Should().Contain("string InvitationWorkspaceLabel() => T.T(\"Invitations\")");
         merchantReadinessViewSource.Should().Contain("@InvitationWorkspaceLabel()");
         merchantReadinessViewSource.Should().Contain("hx-get=\"@Url.Action(\"OwnerOverrideAudits\", \"Businesses\", new { businessId = item.Id })\"");
@@ -3026,7 +3081,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         summaryViewSource.Should().Contain("<div class=\"row g-3 mb-4\">");
         summaryViewSource.Should().Contain("@Model.AttentionBusinessCount");
         summaryViewSource.Should().Contain("@Model.PendingApprovalBusinessCount");
-        summaryViewSource.Should().Contain("@Model.OpenInvitationCount");
+        summaryViewSource.Should().Contain("@Model.PendingInvitationCount");
         summaryViewSource.Should().Contain("@Model.PendingActivationMemberCount");
         summaryViewSource.Should().Contain("@Model.ApprovedInactiveBusinessCount");
         summaryViewSource.Should().Contain("@Model.MissingPrimaryLocationBusinessCount");
@@ -3194,18 +3249,19 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         attentionFragmentSource.Should().Contain("string BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
         attentionFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Businesses\", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })\"");
         attentionFragmentSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)");
-        attentionFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id })\"");
+        attentionFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })\"");
         attentionFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Locations\", \"Businesses\", new { businessId = item.Id })\"");
         attentionFragmentSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)");
         attentionFragmentSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)");
         attentionFragmentSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)");
         attentionFragmentSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)");
-        attentionFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = \"Open\" })\"");
+        attentionFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })\"");
         attentionFragmentSource.Should().Contain("@item.InvitationCount @InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>");
         attentionFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Setup\", \"Businesses\", new { id = item.Id })\"");
         attentionFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"Setup\")</a>");
         attentionFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"MerchantReadinessTitle\")</a>");
         attentionFragmentSource.Should().Contain("hx-push-url=\"true\">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>");
+        attentionFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })\"");
         attentionFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"Invites\")</a>");
         attentionFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"Locations\")</a>");
         attentionFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"CommunicationOps\")</a>");
@@ -3289,9 +3345,10 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = item.BusinessId })\"");
         failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { q = item.RecipientEmail })\"");
         failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = item.FlowKey, businessId = item.BusinessId })\"");
+        failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })\"");
         failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Setup\", \"Businesses\", new { id = item.BusinessId })\"");
         failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Locations\", \"Businesses\", new { businessId = item.BusinessId })\"");
-        failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = item.BusinessId, filter = \"Attention\" })\"");
+        failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = item.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })\"");
         failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = item.BusinessId })\"");
         failedEmailsFragmentSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = item.BusinessId })\"");
         failedEmailsFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"Edit\")</a>");
@@ -3311,7 +3368,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         failedEmailsFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"ExpensesTitle\")</a>");
         failedEmailsFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"JournalEntriesTitle\")</a>");
         failedEmailsFragmentSource.Should().Contain("hx-push-url=\"true\">@T.T(\"OwnerOverrideAuditTitle\")</a>");
-        failedEmailsFragmentSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)");
+        failedEmailsFragmentSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         failedEmailsFragmentSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         failedEmailsFragmentSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         failedEmailsFragmentSource.Should().Contain("hx-push-url=\"true\">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>");
@@ -3413,13 +3470,24 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         emailAuditsViewSource.Should().Contain("asp-route-chainResolvedOnly=\"true\"");
         emailAuditsViewSource.Should().Contain("hx-post=\"@Url.Action(\"RetryEmailAudit\", \"BusinessCommunications\")\"");
         emailAuditsViewSource.Should().Contain("string LogicalRecipientEmail(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>");
+        emailAuditsViewSource.Should().Contain("string BusinessDisplayName(Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditListItemVm item) =>");
+        emailAuditsViewSource.Should().Contain("BusinessInvitationQueueFilter? InvitationWorkspaceFilter");
+        emailAuditsViewSource.Should().Contain("BusinessMemberSupportFilter? MemberWorkspaceFilter");
+        emailAuditsViewSource.Should().Contain("BusinessInvitationQueueFilter.Pending");
+        emailAuditsViewSource.Should().Contain("BusinessMemberSupportFilter.PendingActivation");
+        emailAuditsViewSource.Should().Contain("BusinessMemberSupportFilter.Attention");
         emailAuditsViewSource.Should().Contain("@T.T(\"EffectiveRecipient\")");
         emailAuditsViewSource.Should().Contain("@T.T(\"TemplateKey\")");
         emailAuditsViewSource.Should().Contain("@T.T(\"ProviderMessageId\")");
+        emailAuditsViewSource.Should().Contain("hx-swap=\"outerHTML\">@BusinessDisplayName(item)</a>");
         emailAuditsViewSource.Should().Contain("asp-route-recipientEmail=\"@LogicalRecipientEmail(item)\"");
         emailAuditsViewSource.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-q=\"@LogicalRecipientEmail(item)\"");
         emailAuditsViewSource.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Invitations\"");
+        emailAuditsViewSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = invitationWorkspaceFilter })");
+        emailAuditsViewSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item) }))");
         emailAuditsViewSource.Should().Contain("asp-controller=\"MobileOperations\" asp-action=\"Index\" asp-route-q=\"@LogicalRecipientEmail(item)\"");
+        emailAuditsViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = memberWorkspaceFilter })");
+        emailAuditsViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item) }))");
         emailAuditsViewSource.Should().Contain("asp-controller=\"SiteSettings\" asp-action=\"Edit\" asp-fragment=\"site-settings-communications-policy\"");
         emailAuditsViewSource.Should().Contain("<pager page=\"Model.Page\"");
         emailAuditsViewSource.Should().Contain("asp-action=\"EmailAudits\"");
@@ -3450,7 +3518,8 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         channelAuditsViewSource.Should().Contain("@string.Format(T.T(\"CommunicationQueuedDispatchAttempts\"), item.QueueAttemptCount)");
         channelAuditsViewSource.Should().Contain("asp-route-recipientAddress=\"@LogicalRecipientAddress(item)\"");
         channelAuditsViewSource.Should().Contain("asp-controller=\"MobileOperations\" asp-action=\"Index\"");
-        channelAuditsViewSource.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-filter=\"MobileLinked\"");
+        channelAuditsViewSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })\"");
+        channelAuditsViewSource.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-filter=\"@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked\"");
         channelAuditsViewSource.Should().Contain("asp-controller=\"SiteSettings\" asp-action=\"Edit\" asp-fragment=\"site-settings-communications-policy\"");
         channelAuditsViewSource.Should().Contain("asp-route-provider=\"@item.Provider\"");
         channelAuditsViewSource.Should().Contain("asp-route-recipientAddress=\"@LogicalRecipientAddress(item)\"");
@@ -3480,6 +3549,17 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         indexViewSource.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         indexViewSource.Should().Contain("name=\"pageSize\" class=\"form-select\"");
         indexViewSource.Should().Contain("name=\"setupOnly\" value=\"true\"");
+        indexViewSource.Should().Contain("string ValueOrLabel(string? value, string missingLabel) => string.IsNullOrWhiteSpace(value)");
+        indexViewSource.Should().Contain("string SupportEmailBadgeClass(string? supportEmail) => string.IsNullOrWhiteSpace(supportEmail)");
+        indexViewSource.Should().Contain("string SupportEmailLabel(string? supportEmail) => string.IsNullOrWhiteSpace(supportEmail)");
+        indexViewSource.Should().Contain("string DependencyStatusLabel(bool configured, string configuredLabel, string missingLabel) => configured");
+        indexViewSource.Should().Contain("@DependencyStatusLabel(Model.Transport.EmailTransportConfigured, \"Ready\", \"NeedsSetup\")");
+        indexViewSource.Should().Contain("@DependencyStatusLabel(Model.Transport.SmsTransportConfigured, \"Ready\", \"NotReady\")");
+        indexViewSource.Should().Contain("@DependencyStatusLabel(Model.Transport.WhatsAppTransportConfigured, \"Ready\", \"NotReady\")");
+        indexViewSource.Should().Contain("@DependencyStatusLabel(Model.Transport.AdminAlertRoutingConfigured, \"Configured\", \"Missing\")");
+        indexViewSource.Should().Contain("<span class=\"@SupportEmailBadgeClass(item.SupportEmail)\">@SupportEmailLabel(item.SupportEmail)</span>");
+        indexViewSource.Should().Contain("<div>@ValueOrLabel(item.CommunicationSenderName, \"BusinessCommunicationMissingSenderName\")</div>");
+        indexViewSource.Should().Contain("<div class=\"small text-muted\">@ValueOrLabel(item.CommunicationReplyToEmail, \"BusinessCommunicationMissingReplyTo\")</div>");
         indexViewSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"BusinessCommunications\")\"");
         indexViewSource.Should().Contain("asp-action=\"Details\" asp-route-businessId=\"@item.Id\"");
         indexViewSource.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Setup\" asp-route-id=\"@item.Id\"");
@@ -3493,8 +3573,21 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         detailsViewSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })\"");
         detailsViewSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })\"");
         detailsViewSource.Should().Contain("hx-get=\"@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Id })\"");
-        detailsViewSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })\"");
-        detailsViewSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id })\"");
+        detailsViewSource.Should().Contain("var memberWorkspaceFilter = Model.PendingActivationMemberCount > 0");
+        detailsViewSource.Should().Contain("? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation");
+        detailsViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = memberWorkspaceFilter })");
+        detailsViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id }))");
+        detailsViewSource.Should().Contain("var invitationWorkspaceFilter = Model.PendingInvitationCount > 0");
+        detailsViewSource.Should().Contain("? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending");
+        detailsViewSource.Should().Contain("? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open");
+        detailsViewSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = invitationWorkspaceFilter })");
+        detailsViewSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id }))");
+        detailsViewSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, query = item.RecipientEmail, filter = invitationWorkspaceFilter })");
+        detailsViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, query = item.RecipientEmail, filter = memberWorkspaceFilter })");
+        detailsViewSource.Should().Contain("T.T(\"BusinessSupportPendingInvitationsLabel\")");
+        detailsViewSource.Should().Contain("if (invitationWorkspaceFilter.HasValue)");
+        detailsViewSource.Should().Contain("T.T(\"BusinessCommunicationViewInvitationAuditsAction\")");
+        detailsViewSource.Should().Contain("T.T(\"Pending\")");
         detailsViewSource.Should().Contain("@T.T(\"BusinessCommunicationProfileBusinessProfileTitle\")");
         detailsViewSource.Should().Contain("@T.T(\"BusinessCommunicationProfileSenderDefaultsTitle\")");
         detailsViewSource.Should().Contain("@T.T(\"BusinessCommunicationProfileSupportSignalsTitle\")");

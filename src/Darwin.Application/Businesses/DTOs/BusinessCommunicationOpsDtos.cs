@@ -66,6 +66,7 @@ namespace Darwin.Application.Businesses.DTOs
         public bool OperationalAlertEmailsEnabled { get; set; }
         public bool MissingSupportEmail { get; set; }
         public bool MissingSenderIdentity { get; set; }
+        public int PendingInvitationCount { get; set; }
         public int OpenInvitationCount { get; set; }
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }

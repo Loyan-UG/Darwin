@@ -10,10 +10,23 @@
 
     string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
     {
-        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("OpenInvitations"),
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("BusinessSupportOpenInvitationsLabel"),
         _ => T.T("Invitations")
     };
-
+    string InvitationDebtSummaryLabel(int pendingInvitationCount) => pendingInvitationCount > 0
+        ? T.T("BusinessSupportPendingInvitationsLabel")
+        : InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open);
+    int InvitationDebtCount(int pendingInvitationCount, int openInvitationCount) => pendingInvitationCount > 0
+        ? pendingInvitationCount
+        : openInvitationCount;
+    var selectedBusinessInvitationFilter = Model.BusinessSupport.SelectedBusinessPendingInvitationCount > 0
+        ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending
+        : Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open;
+    string InvitationActionLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
+    {
+        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
+        _ => T.T("BusinessSetupOpenInvitationsAction")
+    };
     string BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch
     {
         Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("PendingApproval"),
@@ -57,8 +70,8 @@
             </div>
             <div class="col-6">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</div>
-                    <div class="fs-4 fw-semibold">@Model.BusinessSupport.OpenInvitationCount</div>
+                    <div class="text-muted small">@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)</div>
+                    <div class="fs-4 fw-semibold">@InvitationDebtCount(Model.BusinessSupport.PendingInvitationCount, Model.BusinessSupport.OpenInvitationCount)</div>
                 </div>
             </div>
             <div class="col-6">
@@ -83,16 +96,16 @@
                 <div class="text-muted small">@T.T("BusinessSupportCurrentSnapshotLabel")</div>
                 <div class="fw-semibold mt-1">@Model.SelectedBusinessLabel</div>
                 <div class="small text-muted mt-2">
-                    @T.T("BusinessSupportOpenInvitationsLabel"): <strong>@Model.BusinessSupport.SelectedBusinessOpenInvitationCount</strong>
+                    @InvitationDebtSummaryLabel(Model.BusinessSupport.SelectedBusinessPendingInvitationCount): <strong>@InvitationDebtCount(Model.BusinessSupport.SelectedBusinessPendingInvitationCount, Model.BusinessSupport.SelectedBusinessOpenInvitationCount)</strong>
                     <span class="mx-2">|</span>
                     @T.T("BusinessSupportPendingActivationLabel"): <strong>@Model.BusinessSupport.SelectedBusinessPendingActivationCount</strong>
                     <span class="mx-2">|</span>
                     @T.T("BusinessSupportLockedMembersLabel"): <strong>@Model.BusinessSupport.SelectedBusinessLockedMemberCount</strong>
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="PendingActivation" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenPendingActivationAction")</a>
-                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="Locked" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenLockedMembersAction")</a>
-                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="Open" class="btn btn-sm btn-outline-primary">@T.T("BusinessSetupOpenInvitationsAction")</a>
+                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenPendingActivationAction")</a>
+                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenLockedMembersAction")</a>
+                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@selectedBusinessInvitationFilter" class="btn btn-sm btn-outline-primary">@InvitationActionLabel(selectedBusinessInvitationFilter)</a>
                 </div>
             </div>
         }

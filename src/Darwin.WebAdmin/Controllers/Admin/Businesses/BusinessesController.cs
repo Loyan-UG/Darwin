@@ -713,6 +713,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 BusinessId = businessId,
                 OpenCount = items.Count(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired),
+                PendingCount = items.Count(x => x.Status == BusinessInvitationStatus.Pending),
                 Items = openInvitations
             });
         }
@@ -989,7 +990,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> CreateLocation(Guid businessId, CancellationToken ct = default)
+        public async Task<IActionResult> CreateLocation(Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
@@ -1001,6 +1002,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return RenderLocationEditor(new BusinessLocationEditVm
             {
                 BusinessId = businessId,
+                Page = page,
+                PageSize = pageSize,
+                Query = query ?? string.Empty,
+                Filter = filter,
                 CountryCode = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCountryDefault,
                 Business = business
             }, isCreate: true);
@@ -1035,7 +1040,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }, ct);
 
                 SetSuccessMessage("BusinessLocationCreated");
-                return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId });
+                  return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
             }
             catch (Exception)
             {
@@ -1047,7 +1052,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> EditLocation(Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> EditLocation(Guid id, int page = 1, int pageSize = 20, string? query = null, BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All, CancellationToken ct = default)
         {
             var dto = await _getBusinessLocationForEdit.HandleAsync(id, ct);
             if (dto is null)
@@ -1063,11 +1068,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var vm = new BusinessLocationEditVm
-            {
-                Id = dto.Id,
-                BusinessId = dto.BusinessId,
-                RowVersion = dto.RowVersion,
+              var vm = new BusinessLocationEditVm
+              {
+                  Id = dto.Id,
+                  BusinessId = dto.BusinessId,
+                  Page = page,
+                  PageSize = pageSize,
+                  Query = query ?? string.Empty,
+                  Filter = filter,
+                  RowVersion = dto.RowVersion,
                 Name = dto.Name,
                 AddressLine1 = dto.AddressLine1,
                 AddressLine2 = dto.AddressLine2,
@@ -1118,12 +1127,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }, ct);
 
                 SetSuccessMessage("BusinessLocationUpdated");
-                return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId });
+                  return RedirectOrHtmx(nameof(Locations), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
             }
             catch (DbUpdateConcurrencyException)
             {
                 SetErrorMessage("BusinessLocationConcurrencyConflict");
-                return RedirectOrHtmx(nameof(EditLocation), new { id = vm.Id });
+                  return RedirectOrHtmx(nameof(EditLocation), new { id = vm.Id, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
             }
             catch (Exception)
             {
@@ -1288,7 +1297,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
-        public async Task<IActionResult> CreateInvitation(Guid businessId, CancellationToken ct = default)
+        public async Task<IActionResult> CreateInvitation(Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessInvitationQueueFilter filter = BusinessInvitationQueueFilter.All, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
@@ -1297,12 +1306,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var vm = new BusinessInvitationCreateVm
-            {
-                BusinessId = businessId,
-                Business = business,
-                Role = BusinessMemberRole.Owner,
-                ExpiresInDays = 7
+              var vm = new BusinessInvitationCreateVm
+              {
+                  BusinessId = businessId,
+                  Page = page,
+                  PageSize = pageSize,
+                  Query = query ?? string.Empty,
+                  Filter = filter,
+                  Business = business,
+                  Role = BusinessMemberRole.Owner,
+                  ExpiresInDays = 7
             };
             PopulateInvitationFormOptions(vm);
             return RenderInvitationEditor(vm);
@@ -1331,7 +1344,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }, ct);
 
                 SetSuccessMessage("BusinessInvitationSent");
-                return RedirectOrHtmx(nameof(Invitations), new { businessId = vm.BusinessId });
+                  return RedirectOrHtmx(nameof(Invitations), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
             }
             catch (Exception)
             {
@@ -1386,7 +1399,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> CreateMember(Guid businessId, CancellationToken ct = default)
+        public async Task<IActionResult> CreateMember(Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
@@ -1398,6 +1411,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var vm = new BusinessMemberEditVm
             {
                 BusinessId = businessId,
+                Page = page,
+                PageSize = pageSize,
+                Query = query ?? string.Empty,
+                Filter = filter,
                 Role = BusinessMemberRole.Owner,
                 IsActive = true,
                 Business = business
@@ -1433,7 +1450,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }
 
                 SetSuccessMessage("BusinessMemberAssigned");
-                return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId });
+                return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
             }
             catch (Exception)
             {
@@ -1446,7 +1463,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> EditMember(Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> EditMember(Guid id, int page = 1, int pageSize = 20, string? query = null, BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All, CancellationToken ct = default)
         {
             var dto = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (dto is null)
@@ -1467,6 +1484,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Id = dto.Id,
                 BusinessId = dto.BusinessId,
                 UserId = dto.UserId,
+                Page = page,
+                PageSize = pageSize,
+                Query = query ?? string.Empty,
+                Filter = filter,
                 RowVersion = dto.RowVersion,
                 UserDisplayName = dto.UserDisplayName,
                 UserEmail = dto.UserEmail,
@@ -1556,12 +1577,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }
 
                 SetSuccessMessage("BusinessMemberUpdated");
-                return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId });
+                return RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
             }
             catch (DbUpdateConcurrencyException)
             {
                 SetErrorMessage("BusinessMemberConcurrencyConflict");
-                return RedirectOrHtmx(nameof(EditMember), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditMember), new { id = vm.Id, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
             }
             catch (Exception)
             {
@@ -1630,13 +1651,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] Guid id,
             [FromForm] Guid businessId,
             [FromForm] bool returnToEdit = false,
+            [FromForm] int page = 1,
+            [FromForm] int pageSize = 20,
+            [FromForm] string? query = null,
+            [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
                 SetErrorMessage("BusinessMemberNotFound");
-                return RedirectMemberSupport(returnToEdit, id, businessId);
+                return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
             }
 
             var result = await _requestEmailConfirmation.HandleAsync(
@@ -1650,7 +1675,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ? T("BusinessMemberActivationEmailSent")
                 : T("BusinessMemberActivationEmailFailed");
 
-            return RedirectMemberSupport(returnToEdit, id, businessId);
+            return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1659,13 +1684,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] Guid id,
             [FromForm] Guid businessId,
             [FromForm] bool returnToEdit = false,
+            [FromForm] int page = 1,
+            [FromForm] int pageSize = 20,
+            [FromForm] string? query = null,
+            [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
                 SetErrorMessage("BusinessMemberNotFound");
-                return RedirectMemberSupport(returnToEdit, id, businessId);
+                return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
             }
 
             var result = await _confirmUserEmail.HandleAsync(new UserAdminActionDto
@@ -1677,7 +1706,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ? T("BusinessMemberEmailConfirmed")
                 : T("BusinessMemberEmailConfirmFailed");
 
-            return RedirectMemberSupport(returnToEdit, id, businessId);
+            return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1686,13 +1715,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] Guid id,
             [FromForm] Guid businessId,
             [FromForm] bool returnToEdit = false,
+            [FromForm] int page = 1,
+            [FromForm] int pageSize = 20,
+            [FromForm] string? query = null,
+            [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
                 SetErrorMessage("BusinessMemberNotFound");
-                return RedirectMemberSupport(returnToEdit, id, businessId);
+                return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
             }
 
             var result = await _requestPasswordReset.HandleAsync(
@@ -1706,7 +1739,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ? T("BusinessMemberPasswordResetSent")
                 : T("BusinessMemberPasswordResetFailed");
 
-            return RedirectMemberSupport(returnToEdit, id, businessId);
+            return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1715,13 +1748,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] Guid id,
             [FromForm] Guid businessId,
             [FromForm] bool returnToEdit = false,
+            [FromForm] int page = 1,
+            [FromForm] int pageSize = 20,
+            [FromForm] string? query = null,
+            [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
                 SetErrorMessage("BusinessMemberNotFound");
-                return RedirectMemberSupport(returnToEdit, id, businessId);
+                return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
             }
 
             var result = await _lockUser.HandleAsync(new UserAdminActionDto
@@ -1733,7 +1770,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ? T("BusinessMemberAccountLocked")
                 : T("BusinessMemberAccountLockFailed");
 
-            return RedirectMemberSupport(returnToEdit, id, businessId);
+            return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1742,13 +1779,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] Guid id,
             [FromForm] Guid businessId,
             [FromForm] bool returnToEdit = false,
+            [FromForm] int page = 1,
+            [FromForm] int pageSize = 20,
+            [FromForm] string? query = null,
+            [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
                 SetErrorMessage("BusinessMemberNotFound");
-                return RedirectMemberSupport(returnToEdit, id, businessId);
+                return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
             }
 
             var result = await _unlockUser.HandleAsync(new UserAdminActionDto
@@ -1760,7 +1801,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ? T("BusinessMemberAccountUnlocked")
                 : T("BusinessMemberAccountUnlockFailed");
 
-            return RedirectMemberSupport(returnToEdit, id, businessId);
+            return RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
         }
 
         private async Task PopulateBusinessFormOptionsAsync(BusinessEditVm vm, CancellationToken ct)
@@ -2075,11 +2116,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return View("StaffAccessBadge", vm);
         }
 
-        private IActionResult RedirectMemberSupport(bool returnToEdit, Guid membershipId, Guid businessId)
+        private IActionResult RedirectMemberSupport(bool returnToEdit, Guid membershipId, Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All)
         {
             return returnToEdit
-                ? RedirectOrHtmx(nameof(EditMember), new { id = membershipId })
-                : RedirectOrHtmx(nameof(Members), new { businessId });
+                ? RedirectOrHtmx(nameof(EditMember), new { id = membershipId, page, pageSize, query, filter })
+                : RedirectOrHtmx(nameof(Members), new { businessId, page, pageSize, query, filter });
         }
 
         private IEnumerable<SelectListItem> BuildBusinessStatusItems(BusinessOperationalStatus? selectedStatus)
@@ -2501,6 +2542,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 MissingPrimaryLocationBusinessCount = summary.MissingPrimaryLocationBusinessCount,
                 MissingContactEmailBusinessCount = summary.MissingContactEmailBusinessCount,
                 MissingLegalNameBusinessCount = summary.MissingLegalNameBusinessCount,
+                PendingInvitationCount = summary.PendingInvitationCount,
                 OpenInvitationCount = summary.OpenInvitationCount,
                 PendingActivationMemberCount = summary.PendingActivationMemberCount,
                 LockedMemberCount = summary.LockedMemberCount

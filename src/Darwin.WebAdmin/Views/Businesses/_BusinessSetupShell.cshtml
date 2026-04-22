@@ -41,6 +41,9 @@
     string CommunicationChannelLabel(string channel) => string.Equals(channel, "WhatsApp", StringComparison.OrdinalIgnoreCase)
         ? T.T("BusinessCommunicationWhatsAppShort")
         : T.T("SMS");
+    string DependencyStatusLabel(bool configured, string configuredLabel, string missingLabel) => configured
+        ? T.T(configuredLabel)
+        : T.T(missingLabel);
     string BusinessLifecycleStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch
     {
         Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("BusinessEditorPendingApproval"),
@@ -50,8 +53,8 @@
     };
     string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? "-" : T.T(status);
     var setupOverridePlaceholder =
-        "{\"" + setupPrimaryCulture + "\":{\"BusinessSetupTitle\":\"Betriebs-Setup\"},\"" +
-        setupSecondaryCulture + "\":{\"BusinessSetupTitle\":\"Business setup\"}}";
+        "{\"" + setupPrimaryCulture + "\":{\"BusinessSetupTitle\":\"" + T.T("BusinessSetupTitleExampleGerman") + "\"},\"" +
+        setupSecondaryCulture + "\":{\"BusinessSetupTitle\":\"" + T.T("BusinessSetupTitleExampleEnglish") + "\"}}";
 }
 
 <div id="business-setup-shell">
@@ -72,8 +75,11 @@
             </a>
             <a asp-action="Members"
                asp-route-businessId="@Model.Id"
+               asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+               hx-get="@(Model.ActiveOwnerCount > 0
+                   ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
+                   : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -90,12 +96,13 @@
             </a>
             <a asp-action="Invitations"
                asp-route-businessId="@Model.Id"
+               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
-                <i class="fa-solid fa-envelope"></i> @InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)
+                <i class="fa-solid fa-envelope"></i> @InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)
             </a>
             <a asp-action="Subscription"
                asp-route-businessId="@Model.Id"
@@ -195,12 +202,15 @@
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small text-uppercase">@T.T("Checklist")</div>
                 <div class="fw-semibold mt-1">@(checklistComplete ? T.T("Complete") : T.T("Incomplete"))</div>
-                <div class="small text-muted mt-2">@Model.ActiveOwnerCount owner(s), @Model.PrimaryLocationCount primary location(s)</div>
+                <div class="small text-muted mt-2">@string.Format(T.T("BusinessSetupChecklistCounts"), Model.ActiveOwnerCount, Model.PrimaryLocationCount)</div>
                 <div class="d-flex gap-2 flex-wrap mt-3">
                     <a asp-action="Members"
                        asp-route-businessId="@Model.Id"
+                       asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@(Model.ActiveOwnerCount > 0
+                           ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
+                           : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@MemberWorkspaceLabel()</a>
@@ -270,8 +280,9 @@
                 {
                     <a asp-action="Members"
                        asp-route-businessId="@Model.Id"
+                       asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>
@@ -679,11 +690,11 @@
                     </div>
                     <div class="col-md-6">
                         <label asp-for="BrandPrimaryColorHex" class="form-label">@T.T("PrimaryBrandColor")</label>
-                        <input asp-for="BrandPrimaryColorHex" class="form-control" placeholder="#0055AA" />
+                        <input asp-for="BrandPrimaryColorHex" class="form-control" placeholder="@T.T("BusinessBrandPrimaryColorPlaceholder")" />
                     </div>
                     <div class="col-md-6">
                         <label asp-for="BrandSecondaryColorHex" class="form-label">@T.T("SecondaryBrandColor")</label>
-                        <input asp-for="BrandSecondaryColorHex" class="form-control" placeholder="#FFCC00" />
+                        <input asp-for="BrandSecondaryColorHex" class="form-control" placeholder="@T.T("BusinessBrandSecondaryColorPlaceholder")" />
                     </div>
                 </div>
                 <div class="d-flex gap-2 flex-wrap mt-3">
@@ -789,7 +800,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="fw-semibold">@T.T("EmailDelivery")</div>
                                 <span class="badge @(Model.CommunicationReadiness.EmailTransportConfigured ? "bg-success" : "bg-warning text-dark")">
-                                    @(Model.CommunicationReadiness.EmailTransportConfigured ? T.T("Ready") : T.T("NeedsSetup"))
+                                    @DependencyStatusLabel(Model.CommunicationReadiness.EmailTransportConfigured, "Ready", "NeedsSetup")
                                 </span>
                             </div>
                             <div class="small text-muted">@Model.CommunicationReadiness.EmailTransportSummary</div>
@@ -818,7 +829,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="fw-semibold">@T.T("SmsDelivery")</div>
                                 <span class="badge @(Model.CommunicationReadiness.SmsTransportConfigured ? "bg-success" : "bg-secondary")">
-                                    @(Model.CommunicationReadiness.SmsTransportConfigured ? T.T("Ready") : T.T("NotReady"))
+                                    @DependencyStatusLabel(Model.CommunicationReadiness.SmsTransportConfigured, "Ready", "NotReady")
                                 </span>
                             </div>
                             <div class="small text-muted">@Model.CommunicationReadiness.SmsTransportSummary</div>
@@ -847,7 +858,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="fw-semibold">@T.T("WhatsAppDelivery")</div>
                                 <span class="badge @(Model.CommunicationReadiness.WhatsAppTransportConfigured ? "bg-success" : "bg-secondary")">
-                                    @(Model.CommunicationReadiness.WhatsAppTransportConfigured ? T.T("Ready") : T.T("NotReady"))
+                                    @DependencyStatusLabel(Model.CommunicationReadiness.WhatsAppTransportConfigured, "Ready", "NotReady")
                                 </span>
                             </div>
                             <div class="small text-muted">@Model.CommunicationReadiness.WhatsAppTransportSummary</div>
@@ -876,7 +887,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="fw-semibold">@T.T("AdminAlertRouting")</div>
                                 <span class="badge @((Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured) ? "bg-success" : "bg-warning text-dark")">
-                                    @((Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured) ? T.T("Configured") : T.T("Missing"))
+                                    @DependencyStatusLabel(Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured, "Configured", "Missing")
                                 </span>
                             </div>
                             <div class="small text-muted">@Model.CommunicationReadiness.AdminRoutingSummary</div>
@@ -1103,8 +1114,11 @@
                     </a>
                     <a asp-action="Members"
                        asp-route-businessId="@Model.Id"
+                       asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@(Model.ActiveOwnerCount > 0
+                           ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
+                           : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -1112,12 +1126,13 @@
                     </a>
                     <a asp-action="Invitations"
                        asp-route-businessId="@Model.Id"
+                       asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
-                        <i class="fa-solid fa-list-check"></i> @InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)
+                        <i class="fa-solid fa-list-check"></i> @InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)
                     </a>
                     <a asp-action="OwnerOverrideAudits"
                        asp-route-businessId="@Model.Id"
@@ -1180,8 +1195,9 @@
                         <div class="d-flex gap-2 flex-wrap">
                             <a asp-action="Members"
                                asp-route-businessId="@Model.Id"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@MemberWorkspaceLabel()</a>
@@ -1205,15 +1221,16 @@
             <div class="col-lg-6">
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                        <span>@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</span>
+                        <span>@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</span>
                         <div class="d-flex gap-2 flex-wrap">
                             <a asp-action="Invitations"
                                asp-route-businessId="@Model.Id"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</a>
+                               hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
                             <a asp-action="SupportQueue"
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("SupportQueue", "Businesses")"
@@ -1312,9 +1329,9 @@
                                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                                 <a asp-controller="Users"
                                    asp-action="Index"
-                                   asp-route-filter="Locked"
+                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>

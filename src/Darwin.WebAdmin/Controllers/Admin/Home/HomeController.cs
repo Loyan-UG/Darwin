@@ -231,9 +231,11 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 PendingApprovalBusinessCount = dto.PendingApprovalBusinessCount,
                 SuspendedBusinessCount = dto.SuspendedBusinessCount,
                 MissingOwnerBusinessCount = dto.MissingOwnerBusinessCount,
+                PendingInvitationCount = dto.PendingInvitationCount,
                 OpenInvitationCount = dto.OpenInvitationCount,
                 PendingActivationMemberCount = dto.PendingActivationMemberCount,
                 LockedMemberCount = dto.LockedMemberCount,
+                SelectedBusinessPendingInvitationCount = dto.SelectedBusinessPendingInvitationCount,
                 SelectedBusinessOpenInvitationCount = dto.SelectedBusinessOpenInvitationCount,
                 SelectedBusinessPendingActivationCount = dto.SelectedBusinessPendingActivationCount,
                 SelectedBusinessLockedMemberCount = dto.SelectedBusinessLockedMemberCount

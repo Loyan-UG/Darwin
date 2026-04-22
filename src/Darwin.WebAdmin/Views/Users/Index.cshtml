@@ -8,14 +8,14 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">@T.T("UsersPageTitle")</h2>
         <div class="d-flex gap-2 flex-wrap">
-            <a asp-controller="Users" asp-action="Index" asp-route-filter="Unconfirmed" class="btn btn-outline-warning btn-sm"
-               hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterUnconfirmed")</a>
-            <a asp-controller="Users" asp-action="Index" asp-route-filter="Locked" class="btn btn-outline-danger btn-sm"
-               hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterLocked")</a>
-            <a asp-controller="Users" asp-action="Index" asp-route-filter="Inactive" class="btn btn-outline-secondary btn-sm"
-               hx-get="@Url.Action("Index", "Users", new { filter = "Inactive" })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterInactive")</a>
-            <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-outline-info btn-sm"
-               hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterMobileLinked")</a>
+            <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed" class="btn btn-outline-warning btn-sm"
+               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterUnconfirmed")</a>
+            <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked" class="btn btn-outline-danger btn-sm"
+               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterLocked")</a>
+            <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive" class="btn btn-outline-secondary btn-sm"
+               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterInactive")</a>
+        <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-outline-info btn-sm"
+           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterMobileLinked")</a>
             <a asp-controller="Users"
                asp-action="Create"
                class="btn btn-primary"
@@ -35,9 +35,9 @@
                 <div class="mt-2">
                     <a asp-controller="Users"
                        asp-action="Index"
-                       asp-route-filter="All"
+                       asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.All"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = "All" })"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.All })"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersPageTitle")</a>
@@ -51,9 +51,9 @@
                 <div class="mt-2 d-flex gap-2 flex-wrap">
                     <a asp-controller="Users"
                        asp-action="Index"
-                       asp-route-filter="Unconfirmed"
+                       asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
@@ -76,9 +76,9 @@
                 <div class="mt-2 d-flex gap-2 flex-wrap">
                     <a asp-controller="Users"
                        asp-action="Index"
-                       asp-route-filter="Locked"
+                       asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                        class="btn btn-sm btn-outline-danger"
-                       hx-get="@Url.Action("Index", "Users", new { filter = "Locked" })"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterLocked")</a>
@@ -310,8 +310,13 @@
                             <a asp-controller="Users"
                                asp-action="Edit"
                                asp-route-id="@u.Id"
+                               asp-route-returnToIndex="true"
+                               asp-route-q="@Model.Query"
+                               asp-route-filter="@Model.Filter"
+                               asp-route-page="@Model.Page"
+                               asp-route-pageSize="@Model.PageSize"
                                class="btn btn-sm btn-outline-primary"
-                               hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                               hx-get="@Url.Action("Edit", "Users", new { id = u.Id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML">
                                 <i class="fa fa-pen"></i> @T.T("UsersEditAction")
@@ -322,8 +327,13 @@
                                asp-action="ChangeEmail"
                                asp-route-id="@u.Id"
                                asp-route-currentEmail="@u.Email"
+                               asp-route-returnToIndex="true"
+                               asp-route-q="@Model.Query"
+                               asp-route-filter="@Model.Filter"
+                               asp-route-page="@Model.Page"
+                               asp-route-pageSize="@Model.PageSize"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("ChangeEmail", "Users", new { id = u.Id, currentEmail = u.Email })"
+                               hx-get="@Url.Action("ChangeEmail", "Users", new { id = u.Id, currentEmail = u.Email, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML">
                                 <i class="fa fa-envelope"></i> @T.T("UsersEmailAction")
@@ -334,8 +344,13 @@
                                asp-action="ChangePassword"
                                asp-route-id="@u.Id"
                                asp-route-email="@u.Email"
+                               asp-route-returnToIndex="true"
+                               asp-route-q="@Model.Query"
+                               asp-route-filter="@Model.Filter"
+                               asp-route-page="@Model.Page"
+                               asp-route-pageSize="@Model.PageSize"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("ChangePassword", "Users", new { id = u.Id, email = u.Email })"
+                               hx-get="@Url.Action("ChangePassword", "Users", new { id = u.Id, email = u.Email, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML">
                                 <i class="fa fa-key"></i> @T.T("UsersPasswordAction")

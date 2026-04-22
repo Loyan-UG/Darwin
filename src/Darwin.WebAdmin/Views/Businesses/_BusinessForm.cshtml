@@ -168,8 +168,11 @@
            hx-push-url="true">@T.T("BusinessFormBackToList")</a>
         <a asp-action="Members"
            asp-route-businessId="@Model.Id"
+           asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+           hx-get="@(Model.ActiveOwnerCount > 0
+               ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
+               : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
            hx-target="#business-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BusinessFormManageMembers")</a>
@@ -182,8 +185,11 @@
            hx-push-url="true">@T.T("BusinessFormManageLocations")</a>
         <a asp-action="Invitations"
            asp-route-businessId="@Model.Id"
+           asp-route-filter="@(Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+           hx-get="@(Model.InvitationCount > 0
+               ? Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })
+               : Url.Action("Invitations", "Businesses", new { businessId = Model.Id }))"
            hx-target="#business-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BusinessFormManageInvitations")</a>

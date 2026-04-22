@@ -193,7 +193,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// Loads user and addresses for editing. Email and roles are NOT editable here.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> Edit(Guid id, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var result = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!result.Succeeded || result.Value is null)
@@ -218,7 +218,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 Currency = u.Currency,
                 Timezone = u.Timezone,
                 PhoneE164 = u.PhoneE164,
-                IsActive = u.IsActive
+                IsActive = u.IsActive,
+                ReturnToIndex = returnToIndex,
+                Query = q ?? string.Empty,
+                Filter = filter,
+                Page = page,
+                PageSize = pageSize
                 // NOTE: IsSystem is intentionally NOT part of UserEditVm per model.
             };
 
@@ -259,7 +264,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             }
 
             SetSuccessMessage("UserUpdatedMessage");
-            return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
+            return RedirectOrHtmx(nameof(Edit), new { id = vm.Id, returnToIndex = vm.ReturnToIndex, q = vm.Query, filter = vm.Filter, page = vm.Page, pageSize = vm.PageSize });
         }
 
 
@@ -270,14 +275,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// The current email is displayed read-only (supplied via query string to avoid extra round-trip).
         /// </summary>
         [HttpGet]
-        public IActionResult ChangeEmail([FromRoute] Guid id, [FromQuery] string? currentEmail = null)
+        public IActionResult ChangeEmail([FromRoute] Guid id, [FromQuery] string? currentEmail = null, [FromQuery] bool returnToIndex = false, [FromQuery] string? q = null, [FromQuery] UserQueueFilter filter = UserQueueFilter.All, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             // Prepare view model with the user id. NewEmail is intentionally left blank to force admin input.
             var vm = new UserChangeEmailVm
             {
                 Id = id,
                 CurrentEmail = currentEmail ?? string.Empty,
-                NewEmail = string.Empty
+                NewEmail = string.Empty,
+                ReturnToIndex = returnToIndex,
+                Query = q ?? string.Empty,
+                Filter = filter,
+                Page = page,
+                PageSize = pageSize
             };
             return RenderChangeEmailEditor(vm);
         }
@@ -308,7 +318,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             }
 
             SetSuccessMessage("EmailChangeRequestedMessage");
-            return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
+            return RedirectToUsersWorkspaceOrEdit(vm.Id, vm.ReturnToIndex, vm.Query, vm.Filter, vm.Page, vm.PageSize);
         }
 
         /// <summary>
@@ -418,12 +428,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// <param name="id">Target user id.</param>
         /// <param name="email">Optional email to display; provided by the caller to avoid extra round-trips.</param>
         [HttpGet]
-        public IActionResult ChangePassword(Guid id, string? email = null)
+        public IActionResult ChangePassword(Guid id, string? email = null, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20)
         {
             var vm = new UserChangePasswordVm
             {
                 Id = id,
-                Email = email ?? string.Empty
+                Email = email ?? string.Empty,
+                ReturnToIndex = returnToIndex,
+                Query = q ?? string.Empty,
+                Filter = filter,
+                Page = page,
+                PageSize = pageSize
             };
             return RenderChangePasswordEditor(vm);
         }
@@ -465,7 +480,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 return RenderChangePasswordEditor(vm);
             }
 
-            return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
+            return RedirectToUsersWorkspaceOrEdit(vm.Id, vm.ReturnToIndex, vm.Query, vm.Filter, vm.Page, vm.PageSize);
         }
 
 

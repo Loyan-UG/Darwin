@@ -528,8 +528,8 @@
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MobileOperationsTitle")</a>
-                    <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" asp-route-query="@Model.RecipientAddress" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked", query = Model.RecipientAddress })"
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" asp-route-query="@Model.RecipientAddress" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked, query = Model.RecipientAddress })"
                        hx-target="#business-communication-channel-audits-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -1075,19 +1075,19 @@
                                    hx-target="#business-communication-channel-audits-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
-                                <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
-                                   hx-target="#business-communication-channel-audits-shell"
-                                   hx-swap="outerHTML"
-                                   hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
+                    <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
+                       hx-target="#business-communication-channel-audits-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
                             </div>
                         }
                         else if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) || string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
                         {
                             <div class="small text-muted mt-2">@T.T("ChannelAuditIdentityLifecycleNote")</div>
                             <div class="mt-2 d-flex flex-wrap gap-2">
-                                <a asp-controller="Users" asp-action="Index" asp-route-filter="Unconfirmed" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+                                <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
                                    hx-target="#business-communication-channel-audits-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>

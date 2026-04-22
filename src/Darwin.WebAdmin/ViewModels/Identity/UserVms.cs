@@ -146,6 +146,16 @@ namespace Darwin.WebAdmin.ViewModels.Identity
     {
         public Guid Id { get; set; }
 
+        public bool ReturnToIndex { get; set; }
+
+        public string Query { get; set; } = string.Empty;
+
+        public UserQueueFilter Filter { get; set; } = UserQueueFilter.All;
+
+        public int Page { get; set; } = 1;
+
+        public int PageSize { get; set; } = 20;
+
         /// <summary>Concurrency token to detect conflicting updates.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
@@ -206,6 +216,16 @@ namespace Darwin.WebAdmin.ViewModels.Identity
     {
         public Guid Id { get; set; }
 
+        public bool ReturnToIndex { get; set; }
+
+        public string Query { get; set; } = string.Empty;
+
+        public UserQueueFilter Filter { get; set; } = UserQueueFilter.All;
+
+        public int Page { get; set; } = 1;
+
+        public int PageSize { get; set; } = 20;
+
         /// <summary>
         /// Current email displayed back to the operator so invalid submissions can re-render without losing context.
         /// </summary>
@@ -238,6 +258,16 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         /// </summary>
         [Required]
         public Guid Id { get; set; }
+
+        public bool ReturnToIndex { get; set; }
+
+        public string Query { get; set; } = string.Empty;
+
+        public UserQueueFilter Filter { get; set; } = UserQueueFilter.All;
+
+        public int Page { get; set; } = 1;
+
+        public int PageSize { get; set; } = 20;
 
         /// <summary>
         /// Email is shown on the page for visual verification (to avoid changing the wrong user's password).

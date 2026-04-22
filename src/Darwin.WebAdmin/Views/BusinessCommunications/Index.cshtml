@@ -38,6 +38,18 @@
         "Email" => T.T("CommunicationBuiltInFlowEmailChannel"),
         _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : T.T(channel)
     };
+    string ValueOrLabel(string? value, string missingLabel) => string.IsNullOrWhiteSpace(value)
+        ? T.T(missingLabel)
+        : value;
+    string SupportEmailBadgeClass(string? supportEmail) => string.IsNullOrWhiteSpace(supportEmail)
+        ? "badge text-bg-warning"
+        : string.Empty;
+    string SupportEmailLabel(string? supportEmail) => string.IsNullOrWhiteSpace(supportEmail)
+        ? T.T("CommonMissingBadge")
+        : supportEmail;
+    string DependencyStatusLabel(bool configured, string configuredLabel, string missingLabel) => configured
+        ? T.T(configuredLabel)
+        : T.T(missingLabel);
 }
 
 <div id="business-communications-workspace-shell">
@@ -114,25 +126,25 @@
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("EmailTransport")</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.EmailTransportConfigured ? T.T("Ready") : T.T("NeedsSetup"))</div>
+            <div class="fw-semibold mt-1">@DependencyStatusLabel(Model.Transport.EmailTransportConfigured, "Ready", "NeedsSetup")</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("SmsTransport")</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.SmsTransportConfigured ? T.T("Ready") : T.T("NotReady"))</div>
+            <div class="fw-semibold mt-1">@DependencyStatusLabel(Model.Transport.SmsTransportConfigured, "Ready", "NotReady")</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("WhatsAppTransport")</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.WhatsAppTransportConfigured ? T.T("Ready") : T.T("NotReady"))</div>
+            <div class="fw-semibold mt-1">@DependencyStatusLabel(Model.Transport.WhatsAppTransportConfigured, "Ready", "NotReady")</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("AdminAlertRouting")</div>
-            <div class="fw-semibold mt-1">@(Model.Transport.AdminAlertRoutingConfigured ? T.T("Configured") : T.T("Missing"))</div>
+            <div class="fw-semibold mt-1">@DependencyStatusLabel(Model.Transport.AdminAlertRoutingConfigured, "Configured", "Missing")</div>
         </div>
     </div>
 </div>
@@ -245,9 +257,9 @@
                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                 <a asp-controller="Users"
                    asp-action="Index"
-                   asp-route-filter="MobileLinked"
+                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
                    hx-target="#business-communications-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -404,9 +416,9 @@
                                            hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                                         <a asp-controller="Users"
                                            asp-action="Index"
-                                           asp-route-filter="MobileLinked"
+                                           asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked"
                                            class="btn btn-sm btn-outline-dark"
-                                           hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -966,18 +978,11 @@
                         }
                     </td>
                     <td>
-                        @if (string.IsNullOrWhiteSpace(item.SupportEmail))
-                        {
-                            <span class="badge text-bg-warning">@T.T("CommonMissingBadge")</span>
-                        }
-                        else
-                        {
-                            <span>@item.SupportEmail</span>
-                        }
+                        <span class="@SupportEmailBadgeClass(item.SupportEmail)">@SupportEmailLabel(item.SupportEmail)</span>
                     </td>
                     <td>
-                        <div>@(string.IsNullOrWhiteSpace(item.CommunicationSenderName) ? T.T("BusinessCommunicationMissingSenderName") : item.CommunicationSenderName)</div>
-                        <div class="small text-muted">@(string.IsNullOrWhiteSpace(item.CommunicationReplyToEmail) ? T.T("BusinessCommunicationMissingReplyTo") : item.CommunicationReplyToEmail)</div>
+                        <div>@ValueOrLabel(item.CommunicationSenderName, "BusinessCommunicationMissingSenderName")</div>
+                        <div class="small text-muted">@ValueOrLabel(item.CommunicationReplyToEmail, "BusinessCommunicationMissingReplyTo")</div>
                     </td>
                     <td>
                         @if (item.CustomerEmailNotificationsEnabled)

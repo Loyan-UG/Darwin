@@ -9,11 +9,11 @@
         : Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture;
     var adminSecondaryCulture = adminOverrideCultures.Length > 1 ? adminOverrideCultures[1] : adminPrimaryCulture;
     var adminOverridesPlaceholder =
-        "{\"" + adminPrimaryCulture + "\":{\"Logout\":\"Abmelden\"},\"" +
-        adminSecondaryCulture + "\":{\"Logout\":\"Sign out\"}}";
+        "{\"" + adminPrimaryCulture + "\":{\"Logout\":\"" + T.T("AdminTextOverrideExampleGermanLogout") + "\"},\"" +
+        adminSecondaryCulture + "\":{\"Logout\":\"" + T.T("AdminTextOverrideExampleEnglishLogout") + "\"}}";
     var adminOverridesExample =
-        "{\"" + adminPrimaryCulture + "\":{\"Key\":\"Value\"},\"" +
-        adminSecondaryCulture + "\":{\"Key\":\"Value\"}}";
+        "{\"" + adminPrimaryCulture + "\":{\"" + T.T("AdminTextOverrideExampleKey") + "\":\"" + T.T("AdminTextOverrideExampleValue") + "\"},\"" +
+        adminSecondaryCulture + "\":{\"" + T.T("AdminTextOverrideExampleKey") + "\":\"" + T.T("AdminTextOverrideExampleValue") + "\"}}";
 
     string CommunicationChannelLabel(string channel) => channel switch
     {
@@ -443,9 +443,9 @@
                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                 <a asp-controller="Users"
                    asp-action="Index"
-                   asp-route-filter="MobileLinked"
+                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })"
+                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
                    hx-target="#site-settings-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -1015,7 +1015,7 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="TransactionalEmailSubjectPrefix" class="form-label"></label>
-                    <input asp-for="TransactionalEmailSubjectPrefix" class="form-control" placeholder="[Darwin]" />
+                    <input asp-for="TransactionalEmailSubjectPrefix" class="form-control" placeholder="@T.T("SiteSettingsTransactionalEmailSubjectPrefixPlaceholder")" />
                     <span asp-validation-for="TransactionalEmailSubjectPrefix" class="text-danger"></span>
                     <div class="form-text">@T.T("BusinessCommunicationPhaseOneImplicationSubjectPrefix")</div>
                 </div>

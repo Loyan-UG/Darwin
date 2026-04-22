@@ -146,9 +146,9 @@
                                 <a asp-controller="Businesses"
                                    asp-action="Members"
                                    asp-route-businessId="@item.BusinessId"
-                                   asp-route-filter="Attention"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, filter = "Attention" })"
+                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
@@ -257,12 +257,12 @@
                             {
                                 <a asp-action="Invitations"
                                    asp-route-businessId="@item.BusinessId"
-                                   asp-route-filter="Open"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                                    class="btn btn-sm btn-outline-primary"
-                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, filter = "Open" })"
+                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
-                                   hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)</a>
+                                   hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
                                 <a asp-action="MerchantReadiness"
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("MerchantReadiness", "Businesses")"
@@ -274,17 +274,17 @@
                             {
                                 <a asp-action="Members"
                                    asp-route-businessId="@item.BusinessId"
-                                   asp-route-filter="PendingActivation"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
                                    class="btn btn-sm btn-outline-primary"
-                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, filter = "PendingActivation" })"
+                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("OpenMembers")</a>
                                 <a asp-controller="Users"
                                    asp-action="Index"
-                                   asp-route-filter="Unconfirmed"
+                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = "Unconfirmed" })"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
@@ -314,10 +314,10 @@
                                    hx-push-url="true">@T.T("OpenUsers")</a>
                                 <a asp-controller="Users"
                                    asp-action="Index"
-                                   asp-route-filter="Locked"
+                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                                    asp-route-q="@item.RecipientEmail"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = "Locked", q = item.RecipientEmail })"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = item.RecipientEmail })"
                                    hx-target="#business-support-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>

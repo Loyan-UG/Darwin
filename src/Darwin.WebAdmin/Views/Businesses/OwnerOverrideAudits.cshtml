@@ -2,6 +2,9 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BusinessOwnerOverrideAuditsTitle");
+    string ActorDisplayName(string? actorDisplayName) => string.IsNullOrWhiteSpace(actorDisplayName)
+        ? T.T("CommonSystemUnknown")
+        : actorDisplayName;
 }
 
 <div id="business-owner-override-audits-workspace-shell">
@@ -20,8 +23,9 @@
            hx-push-url="true">@T.T("CommonSetup")</a>
         <a asp-action="Members"
            asp-route-businessId="@Model.Business.Id"
+           asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
            hx-target="#business-owner-override-audits-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("CommonMembers")</a>
@@ -33,8 +37,9 @@
     <div class="d-flex gap-2 flex-wrap mt-3">
         <a asp-action="Members"
            asp-route-businessId="@Model.Business.Id"
+           asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
            hx-target="#business-owner-override-audits-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("CommonMembers")</a>
@@ -161,8 +166,9 @@
                     <div class="d-flex gap-2 flex-wrap justify-content-center mt-3">
                         <a asp-action="Members"
                            asp-route-businessId="@Model.Business.Id"
+                           asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+                           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                            hx-target="#business-owner-override-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CommonMembers")</a>
@@ -203,7 +209,7 @@
                             <span class="badge text-bg-warning">@T.T("BusinessOwnerOverrideDemoteDeactivate")</span>
                         }
                     </td>
-                    <td>@(string.IsNullOrWhiteSpace(item.ActorDisplayName) ? T.T("CommonSystemUnknown") : item.ActorDisplayName)</td>
+                    <td>@ActorDisplayName(item.ActorDisplayName)</td>
                     <td>@item.Reason</td>
                     <td class="text-end">
                         <div class="d-flex flex-wrap justify-content-end gap-2">
@@ -217,8 +223,9 @@
                                hx-push-url="true">@T.T("OpenUserAction")</a>
                             <a asp-action="Members"
                                asp-route-businessId="@Model.Business.Id"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
                                hx-target="#business-owner-override-audits-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CommonMembers")</a>

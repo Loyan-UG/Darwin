@@ -11,6 +11,12 @@
         Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Revoked => T.T("Revoked"),
         _ => T.T("BusinessInvitationsAllLabel")
     };
+    var invitationWorkspaceFilter = Model.PendingCount > 0
+        ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending
+        : Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open;
+    var invitationWorkspaceCountLabel = Model.PendingCount > 0
+        ? string.Format(T.T("BusinessSetupInvitationsPreviewPendingCount"), Model.PendingCount)
+        : string.Format(T.T("BusinessSetupInvitationsPreviewOpenCount"), Model.OpenCount);
 }
 
 @if (Model.OpenCount == 0)
@@ -19,10 +25,11 @@
     <div class="d-flex gap-2 flex-wrap mt-3">
         <a asp-action="Invitations"
            asp-route-businessId="@Model.BusinessId"
+           asp-route-filter="@invitationWorkspaceFilter"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
+           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = invitationWorkspaceFilter })"
            hx-target="#business-setup-shell"
-           hx-swap="outerHTML">@T.T("BusinessSetupOpenInvitationsAction")</a>
+           hx-swap="outerHTML">@InvitationQueueLabel(invitationWorkspaceFilter)</a>
         <a asp-controller="MobileOperations"
            asp-action="Index"
            class="btn btn-sm btn-outline-secondary"
@@ -35,14 +42,15 @@
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="fw-semibold">@string.Format(T.T("BusinessSetupInvitationsPreviewOpenCount"), Model.OpenCount)</div>
+        <div class="fw-semibold">@invitationWorkspaceCountLabel</div>
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="Invitations"
                asp-route-businessId="@Model.BusinessId"
+               asp-route-filter="@invitationWorkspaceFilter"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
+               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = invitationWorkspaceFilter })"
                hx-target="#business-setup-shell"
-               hx-swap="outerHTML">@T.T("BusinessSetupOpenInvitationsAction")</a>
+               hx-swap="outerHTML">@InvitationQueueLabel(invitationWorkspaceFilter)</a>
             <a asp-controller="MobileOperations"
                asp-action="Index"
                class="btn btn-sm btn-outline-secondary"
@@ -83,13 +91,13 @@ else
                         <div class="d-flex gap-2 flex-wrap mt-2">
                             <a asp-action="Invitations"
                                asp-route-businessId="@Model.BusinessId"
-                               asp-route-filter="Open"
-                               asp-route-q="@item.Email"
+                               asp-route-filter="@invitationWorkspaceFilter"
+                               asp-route-query="@item.Email"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = "Open", q = item.Email })"
+                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = invitationWorkspaceFilter, query = item.Email })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("BusinessSetupOpenInvitationsAction")</a>
+                               hx-push-url="true">@InvitationQueueLabel(invitationWorkspaceFilter)</a>
                             <a asp-controller="BusinessCommunications"
                                asp-action="EmailAudits"
                                asp-route-status="Failed"
@@ -107,10 +115,10 @@ else
                         {
                             <a asp-action="Invitations"
                                asp-route-businessId="@Model.BusinessId"
-                               asp-route-filter="Pending"
-                               asp-route-q="@item.Email"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
+                               asp-route-query="@item.Email"
                                class="badge text-bg-primary text-decoration-none"
-                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = "Pending", q = item.Email })"
+                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending, query = item.Email })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
@@ -119,10 +127,10 @@ else
                         {
                             <a asp-action="Invitations"
                                asp-route-businessId="@Model.BusinessId"
-                               asp-route-filter="Expired"
-                               asp-route-q="@item.Email"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired"
+                               asp-route-query="@item.Email"
                                class="badge text-bg-warning text-decoration-none"
-                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = "Expired", q = item.Email })"
+                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired, query = item.Email })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)</a>

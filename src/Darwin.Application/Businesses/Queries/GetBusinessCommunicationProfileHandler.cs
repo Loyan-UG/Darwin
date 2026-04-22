@@ -48,6 +48,7 @@ namespace Darwin.Application.Businesses.Queries
                     OperationalAlertEmailsEnabled = x.OperationalAlertEmailsEnabled,
                     MissingSupportEmail = string.IsNullOrWhiteSpace(x.SupportEmail),
                     MissingSenderIdentity = string.IsNullOrWhiteSpace(x.CommunicationSenderName) || string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail),
+                    PendingInvitationCount = x.Invitations.Count(i => i.Status == BusinessInvitationStatus.Pending),
                     OpenInvitationCount = x.Invitations.Count(i => i.Status == BusinessInvitationStatus.Pending || i.Status == BusinessInvitationStatus.Expired)
                 })
                 .SingleOrDefaultAsync(ct)

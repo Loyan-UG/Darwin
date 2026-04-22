@@ -2,417 +2,553 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoicesListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    ViewData["Title"] = T.T("BusinessSubscriptionInvoicesTitle");
-    string LocalizeSubscriptionInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string InvoiceTitleText() => T.T("BusinessSubscriptionInvoicesTitle");
+    string InvoiceBusinessNameText() => Model.Business.Name;
+    string InvoiceSubtitleText() => InvoiceBusinessNameText();
+    string InvoicePlaybookSectionTitleText() => T.T("BusinessSubscriptionBillingPlaybooksTitle");
+    string InvoiceEmptyStateMessageText() => T.T("BusinessSubscriptionInvoicesEmptyState");
+    string InvoiceSummaryTotalLabelText() => T.T("CommonTotal");
+    string InvoiceSummaryCountText(int count) => count.ToString();
+    string InvoiceSummaryTotalCountText() => InvoiceSummaryCountText(Model.Summary.TotalCount);
+    string InvoiceSummaryOpenCountText() => InvoiceSummaryCountText(Model.Summary.OpenCount);
+    string InvoiceSummaryPaidCountText() => InvoiceSummaryCountText(Model.Summary.PaidCount);
+    string InvoiceSummaryDraftCountText() => InvoiceSummaryCountText(Model.Summary.DraftCount);
+    string InvoiceSummaryUncollectibleCountText() => InvoiceSummaryCountText(Model.Summary.UncollectibleCount);
+    string InvoiceSummaryStripeCountText() => InvoiceSummaryCountText(Model.Summary.StripeCount);
+    string InvoiceSummaryOverdueCountText() => InvoiceSummaryCountText(Model.Summary.OverdueCount);
+    string InvoiceSummaryPdfMissingCountText() => InvoiceSummaryCountText(Model.Summary.PdfMissingCount);
+    string InvoiceTitleHeadingText() => InvoiceTitleText();
+    string InvoiceSubtitleHeadingText() => InvoiceSubtitleText();
+    ViewData["Title"] = InvoiceTitleText();
+    string InvoiceStatusText(Darwin.Domain.Enums.SubscriptionInvoiceStatus status) => T.T(status.ToString());
+    string InvoiceRowPlanNameText(string? planName) => string.IsNullOrWhiteSpace(planName) ? "-" : planName;
+    string InvoiceRowProviderText(string? provider) => string.IsNullOrWhiteSpace(provider) ? "-" : provider;
+    string InvoiceRowPlanCodeText(string? planCode) => string.IsNullOrWhiteSpace(planCode) ? "-" : planCode;
+    string InvoiceRowProviderInvoiceIdText(string? providerInvoiceId) => string.IsNullOrWhiteSpace(providerInvoiceId) ? "-" : providerInvoiceId;
+    string InvoiceRowFailureReasonText(string? failureReason) => string.IsNullOrWhiteSpace(failureReason) ? "-" : failureReason;
+    string InvoiceRowStatusText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => InvoiceStatusText(item.Status);
+    string InvoiceRowStatusBadgeClass(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => $"{InvoiceBadgeClass()} {InvoiceBadgeToneClass(item.Status)}";
+    string InvoiceRowAmountText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => InvoiceAmountText(item.Currency, item.TotalMinor);
+    string InvoiceRowIssuedTimelineText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => InvoiceIssuedTimelineText(item.IssuedAtUtc);
+    string InvoiceRowDueTimelineText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => InvoiceDueTimelineText(item.DueAtUtc);
+    string InvoiceRowPaidTimelineText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => InvoicePaidTimelineText(item.PaidAtUtc);
+    bool InvoiceRowHasFailureReason(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => !string.IsNullOrWhiteSpace(item.FailureReason);
+    bool InvoiceRowHasStripeSignal(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => item.IsStripe;
+    bool InvoiceRowHasOverdueSignal(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => item.IsOverdue;
+    bool InvoiceRowHasPdfMissingSignal(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => !item.HasPdfUrl;
+    bool InvoiceRowHasHostedAction(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => item.HasHostedInvoiceUrl;
+    bool InvoiceRowHasPdfAction(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => item.HasPdfUrl;
+    string InvoiceRowPaymentsHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => InvoiceRowPaymentsActionHref(item.ProviderInvoiceId);
+    string InvoiceRowHostedActionHref(string? hostedInvoiceUrl) => string.IsNullOrWhiteSpace(hostedInvoiceUrl) ? string.Empty : hostedInvoiceUrl;
+    string InvoiceRowPdfActionHref(string? pdfUrl) => string.IsNullOrWhiteSpace(pdfUrl) ? string.Empty : pdfUrl;
+    string InvoiceToolbarSecondaryButtonClass() => "btn btn-outline-secondary";
+    string InvoiceToolbarDangerButtonClass() => "btn btn-outline-danger";
+    string InvoiceToolbarActionsRailClass() => "d-flex gap-2 flex-wrap";
+string InvoicePageHeaderClass() => "d-flex justify-content-between align-items-start mb-3";
+string InvoicePageTitleClass() => "mb-1";
+string InvoicePageSubtitleClass() => "text-muted mb-0";
+string InvoiceSummaryGridClass() => "row g-3 mb-3";
+string InvoiceSummaryColumnClass() => "col-md-2";
+string InvoiceSummaryTileClass() => "border rounded p-3 h-100";
+string InvoiceSummaryLabelClass() => "text-muted small";
+string InvoiceSummaryValueClass() => "fs-4 fw-semibold";
+string InvoiceSummaryActionsClass() => "mt-2";
+string InvoicePlaybookCardClass() => "card mb-3";
+string InvoicePlaybookHeaderClass() => "card-header";
+string InvoicePlaybookBodyClass() => "card-body";
+    string InvoiceQueueChipBaseClass() => "btn btn-sm";
+    string InvoiceRowButtonClass() => "btn btn-outline-secondary";
+    string InvoiceEmptyStateButtonClass() => "btn btn-sm btn-outline-secondary";
+    string InvoiceFilterSubmitButtonClass() => "btn btn-outline-secondary";
+    string InvoiceFailureTextClass() => "small text-danger mt-1";
+    string InvoiceOverdueSignalBadgeShellClass() => "badge bg-danger mt-1";
+    string InvoicePdfMissingSignalBadgeShellClass() => "badge bg-warning text-dark mt-1";
+    string InvoiceStripeSignalBadgeShellClass() => "badge text-bg-info mt-1";
+    string InvoiceRowActionsClass() => "btn-group btn-group-sm";
+    string InvoiceBadgeClass() => "badge";
+    string InvoiceBadgeToneClass(Darwin.Domain.Enums.SubscriptionInvoiceStatus status) => status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Paid ? "bg-success" : status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Uncollectible ? "bg-danger" : "bg-secondary";
+string InvoiceTimelineTextClass() => "small text-muted";
+string InvoiceMetaTextClass() => "small text-muted";
+string InvoiceValueTextClass() => "fw-semibold";
+string InvoiceTableWrapperClass() => "table-responsive";
+string InvoiceTableClass() => "table table-sm table-striped align-middle";
+string InvoiceTableHeaderClass() => "table-light";
+int InvoiceTableColumnTotal() => 6;
+string InvoiceEmptyStateButtonsRailClass() => "d-flex gap-2 flex-wrap justify-content-center mt-3";
+string InvoicePlaybookButtonsRailClass() => "d-flex gap-2 flex-wrap";
+string InvoiceQueueFilterRailClass() => "d-flex gap-2 flex-wrap mb-3";
+string InvoiceFilterFieldsRailClass() => "d-flex gap-2";
+    string InvoiceFilterMethod() => "get";
+    string InvoiceFilterBusinessFieldName() => "businessId";
+    string InvoiceFilterQueryName() => "query";
+    string InvoiceFilterQueueName() => "filter";
+    string InvoiceHiddenFieldType() => "hidden";
+    string InvoiceQueryFieldType() => "text";
+    string InvoiceSubmitButtonType() => "submit";
+string InvoiceFilterToolbarClass() => "d-flex justify-content-between align-items-center mb-3";
+string InvoiceTableActionsClass() => "text-end";
+    string InvoiceEmptyTableStateCellClass() => "text-center text-muted py-4";
+    string InvoiceFilterQueryClass() => "form-control";
+    string InvoiceFilterSelectClass() => "form-select";
+    Guid InvoicePageBusinessIdValue() => Model.Business.Id;
+    Guid InvoiceFilterBusinessIdValue() => InvoicePageBusinessIdValue();
+    System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> InvoiceFilterQueueItems() => Model.FilterItems;
+    string InvoiceFilterQueryValue() => Model.Query ?? string.Empty;
+    BusinessSubscriptionInvoiceQueueFilter InvoiceSelectedQueueFilter() => Model.Filter;
+    bool InvoiceHasRows() => Model.Items.Count > 0;
+    System.Collections.Generic.IReadOnlyList<Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm> InvoiceRowItems() => Model.Items;
+    string InvoiceRootId() => "business-subscription-invoices-workspace-shell";
+    string InvoiceRootTarget() => $"#{InvoiceRootId()}";
+    string InvoiceRootSwap() => "outerHTML";
+    string InvoicePushUrlValue() => "true";
+    string InvoiceExternalTarget() => "_blank";
+    string InvoiceExternalRel() => "noopener noreferrer";
+    string InvoiceToolbarIconGlyphClass(string iconName) => $"fa-solid {iconName}";
+    string InvoiceAmountText(string currency, long totalMinor) => $"{currency} {(totalMinor / 100M).ToString("0.00")}";
+    string InvoiceTimestampText(DateTime? timestampUtc) => timestampUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-";
+    string InvoiceIssuedTimelineText(DateTime? timestampUtc) => string.Format(T.T("CommonIssuedAt"), InvoiceTimestampText(timestampUtc));
+    string InvoiceDueTimelineText(DateTime? timestampUtc) => string.Format(T.T("CommonDueAt"), InvoiceTimestampText(timestampUtc));
+    string InvoicePaidTimelineText(DateTime? timestampUtc) => string.Format(T.T("CommonPaidAt"), InvoiceTimestampText(timestampUtc));
+    string InvoiceSubscriptionActionText() => T.T("BusinessSubscriptionShort");
+    string InvoicePaymentsActionText() => T.T("CommonPayments");
+    string InvoiceRefundsActionText() => T.T("RefundQueue");
+    string InvoicePaymentSettingsActionText() => T.T("PaymentSettings");
+    string InvoiceSupportQueueActionText() => T.T("BusinessSupportQueueTitle");
+    string InvoiceMerchantReadinessActionText() => T.T("MerchantReadinessTitle");
+    string InvoiceHostedActionText() => T.T("CommonHosted");
+    string InvoicePdfActionText() => T.T("CommonPdf");
+    string InvoiceProviderColumnHeaderText() => T.T("CommonProvider");
+    string InvoicePlanColumnHeaderText() => T.T("CommonPlan");
+    string InvoiceStatusColumnHeaderText() => T.T("CommonStatus");
+    string InvoiceAmountColumnHeaderText() => T.T("CommonAmount");
+    string InvoiceTimelineColumnHeaderText() => T.T("CommonTimeline");
+    string InvoiceActionsColumnHeaderText() => T.T("CommonActions");
+    string InvoiceFilterPlaceholderText() => T.T("BusinessSubscriptionInvoicesSearchPlaceholder");
+    string InvoiceFilterSubmitText() => T.T("CommonFilter");
+    string InvoiceFilterResetText() => T.T("CommonReset");
+    string InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter filter) => filter switch
+    {
+        BusinessSubscriptionInvoiceQueueFilter.All => T.T("CommonAll"),
+        BusinessSubscriptionInvoiceQueueFilter.Open => T.T("CommonOpen"),
+        BusinessSubscriptionInvoiceQueueFilter.Paid => T.T("CommonPaid"),
+        BusinessSubscriptionInvoiceQueueFilter.Draft => T.T("CommonDraft"),
+        BusinessSubscriptionInvoiceQueueFilter.Uncollectible => T.T("CommonUncollectible"),
+        _ => InvoiceSignalFilterText(filter)
+    };
+    string InvoicePlaybookActionText(BusinessSubscriptionInvoiceQueueFilter filter) => filter switch
+    {
+        BusinessSubscriptionInvoiceQueueFilter.Open => T.T("BusinessSubscriptionBillingPlaybookOpenInvoices"),
+        BusinessSubscriptionInvoiceQueueFilter.Uncollectible => T.T("BusinessSubscriptionBillingPlaybookUncollectible"),
+        BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing => T.T("BusinessSubscriptionBillingPlaybookMissingHostedLink"),
+        BusinessSubscriptionInvoiceQueueFilter.Overdue => T.T("BusinessSubscriptionBillingPlaybookOverdue"),
+        BusinessSubscriptionInvoiceQueueFilter.PdfMissing => T.T("BusinessSubscriptionBillingPlaybookMissingPdf"),
+        _ => InvoiceQueueFilterText(filter)
+    };
+    string InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter filter) => filter switch
+    {
+        BusinessSubscriptionInvoiceQueueFilter.Paid => "btn btn-sm btn-outline-success",
+        BusinessSubscriptionInvoiceQueueFilter.Open => "btn btn-sm btn-outline-warning",
+        BusinessSubscriptionInvoiceQueueFilter.PdfMissing => "btn btn-sm btn-outline-warning",
+        BusinessSubscriptionInvoiceQueueFilter.Uncollectible => "btn btn-sm btn-outline-danger",
+        BusinessSubscriptionInvoiceQueueFilter.Overdue => "btn btn-sm btn-outline-danger",
+        BusinessSubscriptionInvoiceQueueFilter.Stripe => "btn btn-sm btn-outline-info",
+        _ => "btn btn-sm btn-outline-secondary"
+    };
+    string InvoiceQueueChipClass(BusinessSubscriptionInvoiceQueueFilter activeFilter, BusinessSubscriptionInvoiceQueueFilter filter) => filter switch
+    {
+        BusinessSubscriptionInvoiceQueueFilter.All => $"{InvoiceQueueChipBaseClass()} {(activeFilter == filter ? "btn-dark" : "btn-outline-dark")}",
+        BusinessSubscriptionInvoiceQueueFilter.Open => $"{InvoiceQueueChipBaseClass()} {(activeFilter == filter ? "btn-warning" : "btn-outline-warning")}",
+        BusinessSubscriptionInvoiceQueueFilter.PdfMissing => $"{InvoiceQueueChipBaseClass()} {(activeFilter == filter ? "btn-warning" : "btn-outline-warning")}",
+        BusinessSubscriptionInvoiceQueueFilter.Overdue => $"{InvoiceQueueChipBaseClass()} {(activeFilter == filter ? "btn-danger" : "btn-outline-danger")}",
+        BusinessSubscriptionInvoiceQueueFilter.Uncollectible => $"{InvoiceQueueChipBaseClass()} {(activeFilter == filter ? "btn-danger" : "btn-outline-danger")}",
+        BusinessSubscriptionInvoiceQueueFilter.Stripe => $"{InvoiceQueueChipBaseClass()} {(activeFilter == filter ? "btn-info text-dark" : "btn-outline-info")}",
+        _ => InvoiceQueueChipBaseClass()
+    };
+    string InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter filter) => filter switch
+    {
+        BusinessSubscriptionInvoiceQueueFilter.Stripe => T.T("CommonStripe"),
+        BusinessSubscriptionInvoiceQueueFilter.Overdue => T.T("CommonOverdue"),
+        BusinessSubscriptionInvoiceQueueFilter.PdfMissing => T.T("CommonPdfMissing"),
+        _ => T.T("CommonStatus")
+    };
+    string InvoiceSubscriptionActionHref() => Url.Action("Subscription", "Businesses", new { businessId = InvoicePageBusinessIdValue() }) ?? string.Empty;
+    string InvoiceQueueActionHref() => Url.Action("SubscriptionInvoices", "Businesses", new { businessId = InvoicePageBusinessIdValue() }) ?? string.Empty;
+    string InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter filter) => Url.Action("SubscriptionInvoices", "Businesses", new { businessId = InvoicePageBusinessIdValue(), filter }) ?? string.Empty;
+    string InvoicePaymentsActionHref() => Url.Action("Payments", "Billing", new { businessId = InvoicePageBusinessIdValue() }) ?? string.Empty;
+    string InvoiceRowPaymentsActionHref(string? providerInvoiceId) => Url.Action("Payments", "Billing", new { businessId = InvoicePageBusinessIdValue(), q = providerInvoiceId }) ?? string.Empty;
+    string InvoiceRefundsActionHref() => Url.Action("Refunds", "Billing", new { businessId = InvoicePageBusinessIdValue() }) ?? string.Empty;
+    string InvoicePaymentSettingsActionFragment() => "site-settings-payments";
+    string InvoicePaymentSettingsActionHref() => Url.Action("Edit", "SiteSettings", new { fragment = InvoicePaymentSettingsActionFragment() }) ?? string.Empty;
+    string InvoiceSupportQueueActionHref() => Url.Action("SupportQueue", "Businesses") ?? string.Empty;
+    string InvoiceMerchantReadinessActionHref() => Url.Action("MerchantReadiness", "Businesses") ?? string.Empty;
 }
 
-<div id="business-subscription-invoices-workspace-shell">
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div id="@InvoiceRootId()">
+<div class="@InvoicePageHeaderClass()">
     <div>
-        <h1 class="mb-1">@T.T("BusinessSubscriptionInvoicesTitle")</h1>
-        <p class="text-muted mb-0">@Model.Business.Name</p>
+<h1 class="@InvoicePageTitleClass()">@InvoiceTitleHeadingText()</h1>
+<p class="@InvoicePageSubtitleClass()">@InvoiceSubtitleHeadingText()</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Subscription"
-           asp-route-businessId="@Model.Business.Id"
-           class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Business.Id })"
-           hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">
-            <i class="fa-solid fa-credit-card"></i> @T.T("BusinessSubscriptionShort")
+    <div class="@InvoiceToolbarActionsRailClass()">
+        <a href="@InvoiceSubscriptionActionHref()"
+           class="@InvoiceToolbarSecondaryButtonClass()"
+           hx-get="@InvoiceSubscriptionActionHref()"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">
+            <i class="@InvoiceToolbarIconGlyphClass("fa-credit-card")"></i> @InvoiceSubscriptionActionText()
         </a>
-        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id })"
-           hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">
-            <i class="fa-solid fa-money-bill-wave"></i> @T.T("CommonPayments")
+        <a href="@InvoicePaymentsActionHref()" class="@InvoiceToolbarSecondaryButtonClass()"
+           hx-get="@InvoicePaymentsActionHref()"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">
+            <i class="@InvoiceToolbarIconGlyphClass("fa-money-bill-wave")"></i> @InvoicePaymentsActionText()
         </a>
-        <a asp-controller="Billing" asp-action="Refunds" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-danger"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.Business.Id })"
-           hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">
-            <i class="fa-solid fa-rotate-left"></i> @T.T("RefundQueue")
+        <a href="@InvoiceRefundsActionHref()" class="@InvoiceToolbarDangerButtonClass()"
+           hx-get="@InvoiceRefundsActionHref()"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">
+            <i class="@InvoiceToolbarIconGlyphClass("fa-rotate-left")"></i> @InvoiceRefundsActionText()
         </a>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
-           hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">
-            <i class="fa-solid fa-sliders"></i> @T.T("PaymentSettings")
+        <a href="@InvoicePaymentSettingsActionHref()" class="@InvoiceToolbarSecondaryButtonClass()"
+           hx-get="@InvoicePaymentSettingsActionHref()"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">
+            <i class="@InvoiceToolbarIconGlyphClass("fa-sliders")"></i> @InvoicePaymentSettingsActionText()
         </a>
     </div>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommonTotal")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
-            <div class="mt-2">
-                <a asp-action="SubscriptionInvoices"
-                   asp-route-businessId="@Model.Business.Id"
-                   class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
-                   hx-target="#business-subscription-invoices-workspace-shell"
-                   hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("CommonAll")</a>
+<div class="@InvoiceSummaryGridClass()">
+    <div class="@InvoiceSummaryColumnClass()">
+<div class="@InvoiceSummaryTileClass()">
+<div class="@InvoiceSummaryLabelClass()">@InvoiceSummaryTotalLabelText()</div>
+<div class="@InvoiceSummaryValueClass()">@InvoiceSummaryTotalCountText()</div>
+<div class="@InvoiceSummaryActionsClass()">
+                <a href="@InvoiceQueueActionHref()"
+                   class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.All)"
+                   hx-get="@InvoiceQueueActionHref()"
+                   hx-target="@InvoiceRootTarget()"
+                   hx-swap="@InvoiceRootSwap()"
+                   hx-push-url="@InvoicePushUrlValue()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.All)</a>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommonOpen")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.OpenCount</div>
-            <div class="mt-2">
-                <a asp-action="SubscriptionInvoices"
-                   asp-route-businessId="@Model.Business.Id"
-                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Open"
-                   class="btn btn-sm btn-outline-warning"
-                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Open })"
-                   hx-target="#business-subscription-invoices-workspace-shell"
-                   hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("CommonOpen")</a>
+    <div class="@InvoiceSummaryColumnClass()">
+<div class="@InvoiceSummaryTileClass()">
+<div class="@InvoiceSummaryLabelClass()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Open)</div>
+<div class="@InvoiceSummaryValueClass()">@InvoiceSummaryOpenCountText()</div>
+<div class="@InvoiceSummaryActionsClass()">
+                <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Open)"
+                   class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Open)"
+                   hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Open)"
+                   hx-target="@InvoiceRootTarget()"
+                   hx-swap="@InvoiceRootSwap()"
+                   hx-push-url="@InvoicePushUrlValue()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Open)</a>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommonPaid")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.PaidCount</div>
-            <div class="mt-2">
-                <a asp-action="SubscriptionInvoices"
-                   asp-route-businessId="@Model.Business.Id"
-                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Paid"
-                   class="btn btn-sm btn-outline-success"
-                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Paid })"
-                   hx-target="#business-subscription-invoices-workspace-shell"
-                   hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("CommonPaid")</a>
+    <div class="@InvoiceSummaryColumnClass()">
+<div class="@InvoiceSummaryTileClass()">
+<div class="@InvoiceSummaryLabelClass()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Paid)</div>
+<div class="@InvoiceSummaryValueClass()">@InvoiceSummaryPaidCountText()</div>
+<div class="@InvoiceSummaryActionsClass()">
+                <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Paid)"
+                   class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Paid)"
+                   hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Paid)"
+                   hx-target="@InvoiceRootTarget()"
+                   hx-swap="@InvoiceRootSwap()"
+                   hx-push-url="@InvoicePushUrlValue()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Paid)</a>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommonDraft")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.DraftCount</div>
-            <div class="mt-2">
-                <a asp-action="SubscriptionInvoices"
-                   asp-route-businessId="@Model.Business.Id"
-                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Draft"
-                   class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Draft })"
-                   hx-target="#business-subscription-invoices-workspace-shell"
-                   hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("CommonDraft")</a>
+    <div class="@InvoiceSummaryColumnClass()">
+<div class="@InvoiceSummaryTileClass()">
+<div class="@InvoiceSummaryLabelClass()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Draft)</div>
+<div class="@InvoiceSummaryValueClass()">@InvoiceSummaryDraftCountText()</div>
+<div class="@InvoiceSummaryActionsClass()">
+                <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Draft)"
+                   class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Draft)"
+                   hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Draft)"
+                   hx-target="@InvoiceRootTarget()"
+                   hx-swap="@InvoiceRootSwap()"
+                   hx-push-url="@InvoicePushUrlValue()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Draft)</a>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommonUncollectible")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.UncollectibleCount</div>
-            <div class="mt-2">
-                <a asp-action="SubscriptionInvoices"
-                   asp-route-businessId="@Model.Business.Id"
-                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Uncollectible"
-                   class="btn btn-sm btn-outline-danger"
-                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Uncollectible })"
-                   hx-target="#business-subscription-invoices-workspace-shell"
-                   hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("CommonUncollectible")</a>
+    <div class="@InvoiceSummaryColumnClass()">
+<div class="@InvoiceSummaryTileClass()">
+<div class="@InvoiceSummaryLabelClass()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)</div>
+<div class="@InvoiceSummaryValueClass()">@InvoiceSummaryUncollectibleCountText()</div>
+<div class="@InvoiceSummaryActionsClass()">
+                <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+                   class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+                   hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+                   hx-target="@InvoiceRootTarget()"
+                   hx-swap="@InvoiceRootSwap()"
+                   hx-push-url="@InvoicePushUrlValue()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)</a>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommonStripe")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.StripeCount</div>
-            <div class="mt-2">
-                <a asp-action="SubscriptionInvoices"
-                   asp-route-businessId="@Model.Business.Id"
-                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Stripe"
-                   class="btn btn-sm btn-outline-info"
-                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Stripe })"
-                   hx-target="#business-subscription-invoices-workspace-shell"
-                   hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("CommonStripe")</a>
+    <div class="@InvoiceSummaryColumnClass()">
+<div class="@InvoiceSummaryTileClass()">
+<div class="@InvoiceSummaryLabelClass()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.Stripe)</div>
+<div class="@InvoiceSummaryValueClass()">@InvoiceSummaryStripeCountText()</div>
+<div class="@InvoiceSummaryActionsClass()">
+                <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Stripe)"
+                   class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Stripe)"
+                   hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Stripe)"
+                   hx-target="@InvoiceRootTarget()"
+                   hx-swap="@InvoiceRootSwap()"
+                   hx-push-url="@InvoicePushUrlValue()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.Stripe)</a>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommonOverdue")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.OverdueCount</div>
-            <div class="mt-2">
-                <a asp-action="SubscriptionInvoices"
-                   asp-route-businessId="@Model.Business.Id"
-                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Overdue"
-                   class="btn btn-sm btn-outline-danger"
-                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Overdue })"
-                   hx-target="#business-subscription-invoices-workspace-shell"
-                   hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("CommonOverdue")</a>
+    <div class="@InvoiceSummaryColumnClass()">
+<div class="@InvoiceSummaryTileClass()">
+<div class="@InvoiceSummaryLabelClass()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.Overdue)</div>
+<div class="@InvoiceSummaryValueClass()">@InvoiceSummaryOverdueCountText()</div>
+<div class="@InvoiceSummaryActionsClass()">
+                <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+                   class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+                   hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+                   hx-target="@InvoiceRootTarget()"
+                   hx-swap="@InvoiceRootSwap()"
+                   hx-push-url="@InvoicePushUrlValue()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.Overdue)</a>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommonPdfMissing")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.PdfMissingCount</div>
-            <div class="mt-2">
-                <a asp-action="SubscriptionInvoices"
-                   asp-route-businessId="@Model.Business.Id"
-                   asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.PdfMissing"
-                   class="btn btn-sm btn-outline-warning"
-                   hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.PdfMissing })"
-                   hx-target="#business-subscription-invoices-workspace-shell"
-                   hx-swap="outerHTML"
-                   hx-push-url="true">@T.T("CommonPdfMissing")</a>
+    <div class="@InvoiceSummaryColumnClass()">
+<div class="@InvoiceSummaryTileClass()">
+<div class="@InvoiceSummaryLabelClass()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)</div>
+<div class="@InvoiceSummaryValueClass()">@InvoiceSummaryPdfMissingCountText()</div>
+<div class="@InvoiceSummaryActionsClass()">
+                <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+                   class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+                   hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+                   hx-target="@InvoiceRootTarget()"
+                   hx-swap="@InvoiceRootSwap()"
+                   hx-push-url="@InvoicePushUrlValue()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)</a>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card mb-3">
-    <div class="card-header">@T.T("BusinessSubscriptionBillingPlaybooksTitle")</div>
-    <div class="card-body">
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="SubscriptionInvoices"
-               asp-route-businessId="@Model.Business.Id"
-               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Open"
-               class="btn btn-sm btn-outline-warning"
-               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Open })"
-               hx-target="#business-subscription-invoices-workspace-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookOpenInvoices")</a>
-            <a asp-action="SubscriptionInvoices"
-               asp-route-businessId="@Model.Business.Id"
-               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Uncollectible"
-               class="btn btn-sm btn-outline-danger"
-               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Uncollectible })"
-               hx-target="#business-subscription-invoices-workspace-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookUncollectible")</a>
-            <a asp-action="SubscriptionInvoices"
-               asp-route-businessId="@Model.Business.Id"
-               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing"
-               class="btn btn-sm btn-outline-warning"
-               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing })"
-               hx-target="#business-subscription-invoices-workspace-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookMissingHostedLink")</a>
-            <a asp-action="SubscriptionInvoices"
-               asp-route-businessId="@Model.Business.Id"
-               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Overdue"
-               class="btn btn-sm btn-outline-danger"
-               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Overdue })"
-               hx-target="#business-subscription-invoices-workspace-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookOverdue")</a>
-            <a asp-action="SubscriptionInvoices"
-               asp-route-businessId="@Model.Business.Id"
-               asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.PdfMissing"
-               class="btn btn-sm btn-outline-warning"
-               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.PdfMissing })"
-               hx-target="#business-subscription-invoices-workspace-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true">@T.T("BusinessSubscriptionBillingPlaybookMissingPdf")</a>
+<div class="@InvoicePlaybookCardClass()">
+<div class="@InvoicePlaybookHeaderClass()">@InvoicePlaybookSectionTitleText()</div>
+<div class="@InvoicePlaybookBodyClass()">
+<div class="@InvoicePlaybookButtonsRailClass()">
+            <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Open)"
+               class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Open)"
+               hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Open)"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoicePlaybookActionText(BusinessSubscriptionInvoiceQueueFilter.Open)</a>
+            <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+               class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+               hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoicePlaybookActionText(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)</a>
+            <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing)"
+               class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing)"
+               hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing)"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoicePlaybookActionText(BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing)</a>
+            <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+               class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+               hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoicePlaybookActionText(BusinessSubscriptionInvoiceQueueFilter.Overdue)</a>
+            <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+               class="@InvoiceQueueButtonClass(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+               hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoicePlaybookActionText(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)</a>
         </div>
     </div>
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="SubscriptionInvoices"
-          method="get"
-          hx-get="@Url.Action("SubscriptionInvoices", "Businesses")"
-          hx-target="#business-subscription-invoices-workspace-shell"
-          hx-swap="outerHTML"
-          hx-push-url="true"
-          class="d-flex gap-2">
-        <input type="hidden" name="businessId" value="@Model.Business.Id" />
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessSubscriptionInvoicesSearchPlaceholder")">
-        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> @T.T("CommonFilter")</button>
-        <a asp-action="SubscriptionInvoices"
-           asp-route-businessId="@Model.Business.Id"
-           class="btn btn-outline-secondary"
-           hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
-           hx-target="#business-subscription-invoices-workspace-shell"
-           hx-swap="outerHTML"
-           hx-push-url="true">@T.T("CommonReset")</a>
+<div class="@InvoiceFilterToolbarClass()">
+    <form action="@InvoiceQueueActionHref()"
+          method="@InvoiceFilterMethod()"
+          hx-get="@InvoiceQueueActionHref()"
+      hx-target="@InvoiceRootTarget()"
+      hx-swap="@InvoiceRootSwap()"
+      hx-push-url="@InvoicePushUrlValue()"
+class="@InvoiceFilterFieldsRailClass()">
+        <input type="@InvoiceHiddenFieldType()" name="@InvoiceFilterBusinessFieldName()" value="@InvoiceFilterBusinessIdValue()" />
+        <input type="@InvoiceQueryFieldType()" name="@InvoiceFilterQueryName()" value="@InvoiceFilterQueryValue()" class="@InvoiceFilterQueryClass()" placeholder="@InvoiceFilterPlaceholderText()">
+        <select name="@InvoiceFilterQueueName()" asp-items="@InvoiceFilterQueueItems()" class="@InvoiceFilterSelectClass()"></select>
+        <button class="@InvoiceFilterSubmitButtonClass()" type="@InvoiceSubmitButtonType()"><i class="@InvoiceToolbarIconGlyphClass("fa-filter")"></i> @InvoiceFilterSubmitText()</button>
+        <a href="@InvoiceQueueActionHref()"
+           class="@InvoiceFilterSubmitButtonClass()"
+           hx-get="@InvoiceQueueActionHref()"
+       hx-target="@InvoiceRootTarget()"
+       hx-swap="@InvoiceRootSwap()"
+       hx-push-url="@InvoicePushUrlValue()">@InvoiceFilterResetText()</a>
     </form>
 </div>
 
-<div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="SubscriptionInvoices"
-       asp-route-businessId="@Model.Business.Id"
-       class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.All ? "btn-dark" : "btn-outline-dark")"
-       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
-       hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">@T.T("CommonAll")</a>
-    <a asp-action="SubscriptionInvoices"
-       asp-route-businessId="@Model.Business.Id"
-       asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Open"
-       class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.Open ? "btn-warning" : "btn-outline-warning")"
-       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Open })"
-       hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">@T.T("CommonOpen")</a>
-    <a asp-action="SubscriptionInvoices"
-       asp-route-businessId="@Model.Business.Id"
-       asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Overdue"
-       class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.Overdue ? "btn-danger" : "btn-outline-danger")"
-       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Overdue })"
-       hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">@T.T("CommonOverdue")</a>
-    <a asp-action="SubscriptionInvoices"
-       asp-route-businessId="@Model.Business.Id"
-       asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.PdfMissing"
-       class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.PdfMissing ? "btn-warning" : "btn-outline-warning")"
-       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.PdfMissing })"
-       hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">@T.T("CommonPdfMissing")</a>
-    <a asp-action="SubscriptionInvoices"
-       asp-route-businessId="@Model.Business.Id"
-       asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Stripe"
-       class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.Stripe ? "btn-info text-dark" : "btn-outline-info")"
-       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Stripe })"
-       hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">@T.T("CommonStripe")</a>
-    <a asp-action="SubscriptionInvoices"
-       asp-route-businessId="@Model.Business.Id"
-       asp-route-filter="@BusinessSubscriptionInvoiceQueueFilter.Uncollectible"
-       class="btn btn-sm @(Model.Filter == BusinessSubscriptionInvoiceQueueFilter.Uncollectible ? "btn-danger" : "btn-outline-danger")"
-       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = BusinessSubscriptionInvoiceQueueFilter.Uncollectible })"
-       hx-target="#business-subscription-invoices-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">@T.T("CommonUncollectible")</a>
+<div class="@InvoiceQueueFilterRailClass()">
+    <a href="@InvoiceQueueActionHref()"
+       class="@InvoiceQueueChipClass(InvoiceSelectedQueueFilter(), BusinessSubscriptionInvoiceQueueFilter.All)"
+       hx-get="@InvoiceQueueActionHref()"
+       hx-target="@InvoiceRootTarget()"
+       hx-swap="@InvoiceRootSwap()"
+       hx-push-url="@InvoicePushUrlValue()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.All)</a>
+    <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Open)"
+       class="@InvoiceQueueChipClass(InvoiceSelectedQueueFilter(), BusinessSubscriptionInvoiceQueueFilter.Open)"
+       hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Open)"
+       hx-target="@InvoiceRootTarget()"
+       hx-swap="@InvoiceRootSwap()"
+       hx-push-url="@InvoicePushUrlValue()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Open)</a>
+    <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+       class="@InvoiceQueueChipClass(InvoiceSelectedQueueFilter(), BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+       hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+       hx-target="@InvoiceRootTarget()"
+       hx-swap="@InvoiceRootSwap()"
+       hx-push-url="@InvoicePushUrlValue()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.Overdue)</a>
+    <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+       class="@InvoiceQueueChipClass(InvoiceSelectedQueueFilter(), BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+       hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+       hx-target="@InvoiceRootTarget()"
+       hx-swap="@InvoiceRootSwap()"
+       hx-push-url="@InvoicePushUrlValue()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)</a>
+    <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Stripe)"
+       class="@InvoiceQueueChipClass(InvoiceSelectedQueueFilter(), BusinessSubscriptionInvoiceQueueFilter.Stripe)"
+       hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Stripe)"
+       hx-target="@InvoiceRootTarget()"
+       hx-swap="@InvoiceRootSwap()"
+       hx-push-url="@InvoicePushUrlValue()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.Stripe)</a>
+    <a href="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+       class="@InvoiceQueueChipClass(InvoiceSelectedQueueFilter(), BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+       hx-get="@InvoiceQueueActionHrefFor(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+       hx-target="@InvoiceRootTarget()"
+       hx-swap="@InvoiceRootSwap()"
+       hx-push-url="@InvoicePushUrlValue()">@InvoiceQueueFilterText(BusinessSubscriptionInvoiceQueueFilter.Uncollectible)</a>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-sm table-striped align-middle">
-        <thead>
+<div class="@InvoiceTableWrapperClass()">
+    <table class="@InvoiceTableClass()">
+<thead class="@InvoiceTableHeaderClass()">
             <tr>
-                <th>@T.T("CommonProvider")</th>
-                <th>@T.T("CommonPlan")</th>
-                <th>@T.T("CommonStatus")</th>
-                <th>@T.T("CommonAmount")</th>
-                <th>@T.T("CommonTimeline")</th>
-                <th class="text-end">@T.T("CommonActions")</th>
+                <th>@InvoiceProviderColumnHeaderText()</th>
+                <th>@InvoicePlanColumnHeaderText()</th>
+                <th>@InvoiceStatusColumnHeaderText()</th>
+                <th>@InvoiceAmountColumnHeaderText()</th>
+                <th>@InvoiceTimelineColumnHeaderText()</th>
+<th class="@InvoiceTableActionsClass()">@InvoiceActionsColumnHeaderText()</th>
             </tr>
         </thead>
         <tbody>
-        @if (Model.Items.Count == 0)
+        @if (!InvoiceHasRows())
         {
             <tr>
-                <td colspan="6" class="text-center text-muted py-4">
-                    <div>@T.T("BusinessSubscriptionInvoicesEmptyState")</div>
-                    <div class="d-flex gap-2 flex-wrap justify-content-center mt-3">
-                        <a asp-action="Subscription"
-                           asp-route-businessId="@Model.Business.Id"
-                           class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Business.Id })"
-                           hx-target="#business-subscription-invoices-workspace-shell"
-                           hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("BusinessSubscriptionShort")</a>
-                        <a asp-controller="Billing"
-                           asp-action="Payments"
-                           asp-route-businessId="@Model.Business.Id"
-                           class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id })"
-                           hx-target="#business-subscription-invoices-workspace-shell"
-                           hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("CommonPayments")</a>
-                        <a asp-action="SupportQueue"
-                           class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("SupportQueue", "Businesses")"
-                           hx-target="#business-subscription-invoices-workspace-shell"
-                           hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
-                        <a asp-action="MerchantReadiness"
-                           class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
-                           hx-target="#business-subscription-invoices-workspace-shell"
-                           hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                <td colspan="@InvoiceTableColumnTotal()" class="@InvoiceEmptyTableStateCellClass()">
+                    <div>@InvoiceEmptyStateMessageText()</div>
+<div class="@InvoiceEmptyStateButtonsRailClass()">
+                        <a href="@InvoiceSubscriptionActionHref()"
+                           class="@InvoiceEmptyStateButtonClass()"
+                           hx-get="@InvoiceSubscriptionActionHref()"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoiceSubscriptionActionText()</a>
+                        <a href="@InvoicePaymentsActionHref()"
+                           class="@InvoiceEmptyStateButtonClass()"
+                           hx-get="@InvoicePaymentsActionHref()"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoicePaymentsActionText()</a>
+                        <a href="@InvoiceSupportQueueActionHref()"
+                           class="@InvoiceEmptyStateButtonClass()"
+                           hx-get="@InvoiceSupportQueueActionHref()"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoiceSupportQueueActionText()</a>
+                        <a href="@InvoiceMerchantReadinessActionHref()"
+                           class="@InvoiceEmptyStateButtonClass()"
+                           hx-get="@InvoiceMerchantReadinessActionHref()"
+           hx-target="@InvoiceRootTarget()"
+           hx-swap="@InvoiceRootSwap()"
+           hx-push-url="@InvoicePushUrlValue()">@InvoiceMerchantReadinessActionText()</a>
                     </div>
                 </td>
             </tr>
         }
         else
         {
-            foreach (var item in Model.Items)
+            foreach (var item in InvoiceRowItems())
             {
                 <tr>
                     <td>
-                        <div class="fw-semibold">@item.Provider</div>
-                        <div class="small text-muted">@item.ProviderInvoiceId</div>
-                        @if (item.IsStripe)
+<div class="@InvoiceValueTextClass()">@InvoiceRowProviderText(item.Provider)</div>
+<div class="@InvoiceMetaTextClass()">@InvoiceRowProviderInvoiceIdText(item.ProviderInvoiceId)</div>
+                        @if (InvoiceRowHasStripeSignal(item))
                         {
-                            <div><span class="badge text-bg-info mt-1">@T.T("CommonStripe")</span></div>
+                            <div><span class="@InvoiceStripeSignalBadgeShellClass()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.Stripe)</span></div>
                         }
                     </td>
                     <td>
-                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(item.PlanName) ? "-" : item.PlanName)</div>
-                        <div class="small text-muted">@item.PlanCode</div>
+<div class="@InvoiceValueTextClass()">@InvoiceRowPlanNameText(item.PlanName)</div>
+<div class="@InvoiceMetaTextClass()">@InvoiceRowPlanCodeText(item.PlanCode)</div>
                     </td>
                     <td>
-                        <span class="badge @(item.Status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Paid ? "bg-success" : item.Status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Uncollectible ? "bg-danger" : "bg-secondary")">
-                            @LocalizeSubscriptionInvoiceStatus(item.Status)
+                        <span class="@InvoiceRowStatusBadgeClass(item)">
+                            @InvoiceRowStatusText(item)
                         </span>
-                        @if (!string.IsNullOrWhiteSpace(item.FailureReason))
+                        @if (InvoiceRowHasFailureReason(item))
                         {
-                            <div class="small text-danger mt-1">@item.FailureReason</div>
+                            <div class="@InvoiceFailureTextClass()">@InvoiceRowFailureReasonText(item.FailureReason)</div>
                         }
-                        @if (item.IsOverdue)
+                        @if (InvoiceRowHasOverdueSignal(item))
                         {
-                            <div><span class="badge bg-danger mt-1">@T.T("CommonOverdue")</span></div>
+                            <div><span class="@InvoiceOverdueSignalBadgeShellClass()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.Overdue)</span></div>
                         }
-                        @if (!item.HasPdfUrl)
+                        @if (InvoiceRowHasPdfMissingSignal(item))
                         {
-                            <div><span class="badge bg-warning text-dark mt-1">@T.T("CommonPdfMissing")</span></div>
+                            <div><span class="@InvoicePdfMissingSignalBadgeShellClass()">@InvoiceSignalFilterText(BusinessSubscriptionInvoiceQueueFilter.PdfMissing)</span></div>
                         }
                     </td>
-                    <td>@item.Currency @((item.TotalMinor / 100M).ToString("0.00"))</td>
+                    <td>@InvoiceRowAmountText(item)</td>
                     <td>
-                        <div>@string.Format(T.T("CommonIssuedAt"), item.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm"))</div>
-                        <div class="small text-muted">@string.Format(T.T("CommonDueAt"), item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
-                        <div class="small text-muted">@string.Format(T.T("CommonPaidAt"), item.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                        <div>@InvoiceRowIssuedTimelineText(item)</div>
+<div class="@InvoiceTimelineTextClass()">@InvoiceRowDueTimelineText(item)</div>
+<div class="@InvoiceTimelineTextClass()">@InvoiceRowPaidTimelineText(item)</div>
                     </td>
-                    <td class="text-end">
-                        <div class="btn-group btn-group-sm">
-                            @if (item.HasHostedInvoiceUrl)
+<td class="@InvoiceTableActionsClass()">
+                        <div class="@InvoiceRowActionsClass()">
+                            @if (InvoiceRowHasHostedAction(item))
                             {
-                                <a href="@item.HostedInvoiceUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">@T.T("CommonHosted")</a>
+                                <a href="@InvoiceRowHostedActionHref(item.HostedInvoiceUrl)" target="@InvoiceExternalTarget()" rel="@InvoiceExternalRel()" class="@InvoiceRowButtonClass()">@InvoiceHostedActionText()</a>
                             }
-                            @if (item.HasPdfUrl)
+                            @if (InvoiceRowHasPdfAction(item))
                             {
-                                <a href="@item.PdfUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">@T.T("CommonPdf")</a>
+                                <a href="@InvoiceRowPdfActionHref(item.PdfUrl)" target="@InvoiceExternalTarget()" rel="@InvoiceExternalRel()" class="@InvoiceRowButtonClass()">@InvoicePdfActionText()</a>
                             }
-                            <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" asp-route-q="@item.ProviderInvoiceId" class="btn btn-outline-secondary"
-                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id, q = item.ProviderInvoiceId })"
-                               hx-target="#business-subscription-invoices-workspace-shell"
-                               hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("CommonPayments")</a>
-                            <a asp-action="SupportQueue"
-                               class="btn btn-outline-secondary"
-                               hx-get="@Url.Action("SupportQueue", "Businesses")"
-                               hx-target="#business-subscription-invoices-workspace-shell"
-                               hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
-                            <a asp-action="MerchantReadiness"
-                               class="btn btn-outline-secondary"
-                               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
-                               hx-target="#business-subscription-invoices-workspace-shell"
-                               hx-swap="outerHTML"
-                               hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                            <a href="@InvoiceRowPaymentsHref(item)" class="@InvoiceRowButtonClass()"
+                               hx-get="@InvoiceRowPaymentsHref(item)"
+                           hx-target="@InvoiceRootTarget()"
+                           hx-swap="@InvoiceRootSwap()"
+                           hx-push-url="@InvoicePushUrlValue()">@InvoicePaymentsActionText()</a>
+                            <a href="@InvoiceSupportQueueActionHref()"
+                               class="@InvoiceRowButtonClass()"
+                               hx-get="@InvoiceSupportQueueActionHref()"
+                           hx-target="@InvoiceRootTarget()"
+                           hx-swap="@InvoiceRootSwap()"
+                           hx-push-url="@InvoicePushUrlValue()">@InvoiceSupportQueueActionText()</a>
+                            <a href="@InvoiceMerchantReadinessActionHref()"
+                               class="@InvoiceRowButtonClass()"
+                               hx-get="@InvoiceMerchantReadinessActionHref()"
+                           hx-target="@InvoiceRootTarget()"
+                           hx-swap="@InvoiceRootSwap()"
+                           hx-push-url="@InvoicePushUrlValue()">@InvoiceMerchantReadinessActionText()</a>
                         </div>
                     </td>
                 </tr>
@@ -422,3 +558,13 @@
     </table>
 </div>
 </div>
+
+
+
+
+
+
+
+
+
+
