@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("InventoryReserveStockTitle");
+    string StockLevelsUrl(Guid? businessId, Guid? warehouseId) => Url.Action("StockLevels", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
 }
 
 <div id="inventory-reserve-stock-editor-shell">
@@ -64,7 +65,7 @@
             <div class="mt-4 d-flex gap-2">
                 <button type="submit" class="btn btn-warning">@T.T("InventoryReserveStockTitle")</button>
                 <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
-                   hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })"
+                   hx-get="@StockLevelsUrl(Model.BusinessId, Model.WarehouseId)"
                    hx-target="#inventory-reserve-stock-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("InventoryBackToStockLevels")</a>

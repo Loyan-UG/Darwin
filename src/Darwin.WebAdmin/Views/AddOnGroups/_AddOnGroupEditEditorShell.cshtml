@@ -20,15 +20,3 @@
         <partial name="_AddOnGroupForm" model="Model" />
     </form>
 </div>
-
-<script>
-    (function () {
-      const shell = document.getElementById('add-on-group-editor-shell');
-      if (!shell) return;
-      const currency = shell.querySelector('#Currency');
-      if (currency && !currency.dataset.uppercaseBound) {
-        currency.dataset.uppercaseBound = 'true';
-        currency.addEventListener('input', function () { this.value = this.value.toUpperCase(); });
-      }
-    })();
-</script>

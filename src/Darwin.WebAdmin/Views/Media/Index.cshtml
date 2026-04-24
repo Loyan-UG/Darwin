@@ -3,6 +3,9 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Media");
+    string MediaCreateUrl() => Url.Action("Create", "Media") ?? string.Empty;
+    string MediaIndexUrl(string? filter = null) => Url.Action("Index", "Media", string.IsNullOrWhiteSpace(filter) ? null : new { filter }) ?? string.Empty;
+    string MediaEditUrl(Guid id) => Url.Action("Edit", "Media", new { id }) ?? string.Empty;
 }
 <div id="media-workspace-shell">
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
@@ -13,7 +16,7 @@
 
     <a asp-action="Create"
        class="btn btn-primary"
-       hx-get="@Url.Action("Create", "Media")"
+       hx-get="@MediaCreateUrl()"
        hx-target="#media-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">
@@ -23,15 +26,15 @@
 
 <div class="d-flex gap-2 flex-wrap mb-3">
     <a asp-action="Index" asp-route-filter="MissingAlt" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.MissingAlt ? "btn-warning" : "btn-outline-warning")"
-       hx-get="@Url.Action("Index", "Media", new { filter = "MissingAlt" })" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaMissingAlt")</a>
+       hx-get="@MediaIndexUrl("MissingAlt")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaMissingAlt")</a>
     <a asp-action="Index" asp-route-filter="MissingTitle" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.MissingTitle ? "btn-dark" : "btn-outline-dark")"
-       hx-get="@Url.Action("Index", "Media", new { filter = "MissingTitle" })" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaMissingTitle")</a>
+       hx-get="@MediaIndexUrl("MissingTitle")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaMissingTitle")</a>
     <a asp-action="Index" asp-route-filter="EditorAssets" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.EditorAssets ? "btn-info" : "btn-outline-info")"
-       hx-get="@Url.Action("Index", "Media", new { filter = "EditorAssets" })" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaEditorAssets")</a>
+       hx-get="@MediaIndexUrl("EditorAssets")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaEditorAssets")</a>
     <a asp-action="Index" asp-route-filter="LibraryAssets" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.LibraryAssets ? "btn-secondary" : "btn-outline-secondary")"
-       hx-get="@Url.Action("Index", "Media", new { filter = "LibraryAssets" })" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaLibraryAssets")</a>
+       hx-get="@MediaIndexUrl("LibraryAssets")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaLibraryAssets")</a>
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("Index", "Media")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("ClearQueueFilters")</a>
+       hx-get="@MediaIndexUrl()" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="row g-3 mb-3">
@@ -97,7 +100,7 @@
 <form asp-action="Index"
       method="get"
       class="row g-2 mb-3"
-      hx-get="@Url.Action("Index", "Media")"
+      hx-get="@MediaIndexUrl()"
       hx-target="#media-workspace-shell"
       hx-swap="outerHTML"
       hx-push-url="true">
@@ -114,7 +117,7 @@
     </div>
     <div class="col-sm-auto">
         <a asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Media")"
+           hx-get="@MediaIndexUrl()"
            hx-target="#media-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Reset")</a>
@@ -168,17 +171,17 @@
                         </div>
                         <div class="input-group input-group-sm mt-auto">
                             <input type="text" value="@item.Url" class="form-control" readonly />
-                            <button type="button" class="btn btn-outline-secondary js-copy-media-url" data-url="@item.Url">@T.T("Copy")</button>
+                            <button type="button" class="btn btn-outline-secondary js-copy-media-url" data-copy-media-url data-url="@item.Url" data-copy-label="@T.T("Copy")" data-copied-label="@T.T("Copied")">@T.T("Copy")</button>
                         </div>
                     </div>
                     <div class="card-footer bg-white d-flex gap-2 justify-content-end">
-                        <a href="@item.Url" target="_blank" rel="noreferrer" class="btn btn-sm btn-outline-dark">
+                        <a href="@item.Url" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-dark">
                             <i class="fa fa-up-right-from-square"></i> @T.T("Open")
                         </a>
                         @if (string.IsNullOrWhiteSpace(item.Alt))
                         {
                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("Edit", "Media", new { id = item.Id })"
+                               hx-get="@MediaEditUrl(item.Id)"
                                hx-target="#media-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -188,7 +191,7 @@
                         @if (string.IsNullOrWhiteSpace(item.Title))
                         {
                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark"
-                               hx-get="@Url.Action("Edit", "Media", new { id = item.Id })"
+                               hx-get="@MediaEditUrl(item.Id)"
                                hx-target="#media-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -196,7 +199,7 @@
                             </a>
                         }
                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "Media", new { id = item.Id })"
+                           hx-get="@MediaEditUrl(item.Id)"
                            hx-target="#media-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -208,10 +211,11 @@
                                 data-bs-target="#confirmDeleteModal"
                                 data-action="@Url.Action("Delete", "Media")"
                                 data-id="@item.Id"
+                                data-rowversion="@Convert.ToBase64String(item.RowVersion)"
                                 data-name="@(!string.IsNullOrWhiteSpace(item.Title) ? item.Title : item.OriginalFileName)"
                                 data-hx-target="#media-workspace-shell"
                                 data-hx-swap="outerHTML"
-                                data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
+                               >
                             <i class="fa fa-trash"></i> @T.T("Delete")
                         </button>
                     </div>
@@ -236,22 +240,3 @@
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 </div>
-
-@section Scripts {
-    <script>
-        document.querySelectorAll('.js-copy-media-url').forEach(function (button) {
-            button.addEventListener('click', async function () {
-                const url = button.getAttribute('data-url') || '';
-                if (!url || !navigator.clipboard) {
-                    return;
-                }
-
-                await navigator.clipboard.writeText(url);
-                button.textContent = '@T.T("Copied")';
-                window.setTimeout(function () {
-                    button.textContent = '@T.T("Copy")';
-                }, 1500);
-            });
-        });
-    </script>
-}

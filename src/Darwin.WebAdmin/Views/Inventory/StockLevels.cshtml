@@ -2,6 +2,14 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("StockLevelsTitle");
+    string StockLevelsUrl(object? businessId = null, object? warehouseId = null, string? q = null, string? filter = null) => Url.Action("StockLevels", "Inventory", new { businessId, warehouseId, q, filter }) ?? string.Empty;
+    string CreateStockLevelUrl(object? businessId = null, object? warehouseId = null) => Url.Action("CreateStockLevel", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
+    string AdjustStockUrl(Guid stockLevelId, object? businessId = null) => Url.Action("AdjustStock", "Inventory", new { stockLevelId, businessId }) ?? string.Empty;
+    string ReserveStockUrl(Guid stockLevelId, object? businessId = null) => Url.Action("ReserveStock", "Inventory", new { stockLevelId, businessId }) ?? string.Empty;
+    string ReleaseReservationUrl(Guid stockLevelId, object? businessId = null) => Url.Action("ReleaseReservation", "Inventory", new { stockLevelId, businessId }) ?? string.Empty;
+    string ReturnReceiptUrl(Guid stockLevelId, object? businessId = null) => Url.Action("ReturnReceipt", "Inventory", new { stockLevelId, businessId }) ?? string.Empty;
+    string VariantLedgerUrl(Guid variantId, Guid? warehouseId) => Url.Action("VariantLedger", "Inventory", new { variantId, warehouseId }) ?? string.Empty;
+    string EditStockLevelUrl(Guid id) => Url.Action("EditStockLevel", "Inventory", new { id }) ?? string.Empty;
 }
 
 <div id="inventory-stock-levels-workspace-shell">
@@ -9,7 +17,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="StockLevels" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("StockLevels", "Inventory")"
+          hx-get="@StockLevelsUrl()"
           hx-target="#inventory-stock-levels-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -19,13 +27,13 @@
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })"
+           hx-get="@StockLevelsUrl(Model.BusinessId, Model.WarehouseId)"
            hx-target="#inventory-stock-levels-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Reset")</a>
     </form>
     <a asp-action="CreateStockLevel" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary"
-       hx-get="@Url.Action("CreateStockLevel", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })"
+       hx-get="@CreateStockLevelUrl(Model.BusinessId, Model.WarehouseId)"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("NewStockLevel")</a>
@@ -33,22 +41,22 @@
 
 <div class="d-flex gap-2 flex-wrap mb-3">
     <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="LowStock" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.LowStock ? "btn-danger" : "btn-outline-danger")"
-       hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "LowStock" })"
+       hx-get="@StockLevelsUrl(Model.BusinessId, Model.WarehouseId, Model.Query, "LowStock")"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("LowStock")</a>
     <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reserved" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.Reserved ? "btn-warning" : "btn-outline-warning")"
-       hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Reserved" })"
+       hx-get="@StockLevelsUrl(Model.BusinessId, Model.WarehouseId, Model.Query, "Reserved")"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Reserved")</a>
     <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="InTransit" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.InTransit ? "btn-info" : "btn-outline-info")"
-       hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "InTransit" })"
+       hx-get="@StockLevelsUrl(Model.BusinessId, Model.WarehouseId, Model.Query, "InTransit")"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("InTransit")</a>
     <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query })"
+       hx-get="@StockLevelsUrl(Model.BusinessId, Model.WarehouseId, Model.Query)"
        hx-target="#inventory-stock-levels-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("ClearQueueFilters")</a>
@@ -73,32 +81,32 @@
                     <td>@item.ReorderPoint</td>
                     <td class="text-end">
                         <a asp-action="AdjustStock" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-success"
-                           hx-get="@Url.Action("AdjustStock", "Inventory", new { stockLevelId = item.Id, businessId = Model.BusinessId })"
+                           hx-get="@AdjustStockUrl(item.Id, Model.BusinessId)"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Adjust")</a>
                         <a asp-action="ReserveStock" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("ReserveStock", "Inventory", new { stockLevelId = item.Id, businessId = Model.BusinessId })"
+                           hx-get="@ReserveStockUrl(item.Id, Model.BusinessId)"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Reserve")</a>
                         <a asp-action="ReleaseReservation" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("ReleaseReservation", "Inventory", new { stockLevelId = item.Id, businessId = Model.BusinessId })"
+                           hx-get="@ReleaseReservationUrl(item.Id, Model.BusinessId)"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Release")</a>
                         <a asp-action="ReturnReceipt" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("ReturnReceipt", "Inventory", new { stockLevelId = item.Id, businessId = Model.BusinessId })"
+                           hx-get="@ReturnReceiptUrl(item.Id, Model.BusinessId)"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Return")</a>
                         <a asp-action="VariantLedger" asp-route-variantId="@item.ProductVariantId" asp-route-warehouseId="@item.WarehouseId" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = item.ProductVariantId, warehouseId = item.WarehouseId })"
+                           hx-get="@VariantLedgerUrl(item.ProductVariantId, item.WarehouseId)"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Ledger")</a>
                         <a asp-action="EditStockLevel" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EditStockLevel", "Inventory", new { id = item.Id })"
+                           hx-get="@EditStockLevelUrl(item.Id)"
                            hx-target="#inventory-stock-levels-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Edit")</a>

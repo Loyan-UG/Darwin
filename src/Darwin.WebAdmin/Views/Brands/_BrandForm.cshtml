@@ -1,4 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.BrandEditVm
+@{
+    string BrandsIndexUrl() => Url.Action("Index", "Brands") ?? string.Empty;
+}
 
 <div class="card shadow-sm">
     <div class="card-body">
@@ -55,7 +58,7 @@
     <div class="card-footer text-end">
         <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
         <a asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Brands")"
+           hx-get="@BrandsIndexUrl()"
            hx-target="#brands-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Back")</a>

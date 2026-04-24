@@ -1,6 +1,14 @@
 ﻿@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupsListVm
 @{
     ViewData["Title"] = T.T("AddOnGroups");
+
+    string AddOnGroupsIndexUrl() => Url.Action("Index", "AddOnGroups") ?? string.Empty;
+    string CreateAddOnGroupUrl() => Url.Action("Create", "AddOnGroups") ?? string.Empty;
+    string EditAddOnGroupUrl(Guid id) => Url.Action("Edit", "AddOnGroups", new { id }) ?? string.Empty;
+    string AttachAddOnGroupToVariantsUrl(Guid id) => Url.Action("AttachToVariants", "AddOnGroups", new { id }) ?? string.Empty;
+    string AttachAddOnGroupToProductsUrl(Guid id) => Url.Action("AttachToProducts", "AddOnGroups", new { id }) ?? string.Empty;
+    string AttachAddOnGroupToCategoriesUrl(Guid id) => Url.Action("AttachToCategories", "AddOnGroups", new { id }) ?? string.Empty;
+    string AttachAddOnGroupToBrandsUrl(Guid id) => Url.Action("AttachToBrands", "AddOnGroups", new { id }) ?? string.Empty;
 }
 
 <div id="add-on-groups-workspace-shell">
@@ -44,7 +52,7 @@
 </div>
 
 <form method="get" class="row g-2 mb-3"
-      hx-get="@Url.Action("Index", "AddOnGroups")"
+      hx-get="@AddOnGroupsIndexUrl()"
       hx-target="#add-on-groups-workspace-shell"
       hx-swap="outerHTML"
       hx-push-url="true">
@@ -57,14 +65,14 @@
     <div class="col-auto">
         <button class="btn btn-outline-primary"><i class="fa fa-search"></i> @T.T("Search")</button>
         <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "AddOnGroups")"
+           hx-get="@AddOnGroupsIndexUrl()"
            hx-target="#add-on-groups-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Reset")</a>
     </div>
     <div class="col-auto ms-auto">
         <a asp-controller="AddOnGroups" asp-action="Create" class="btn btn-primary"
-           hx-get="@Url.Action("Create", "AddOnGroups")"
+           hx-get="@CreateAddOnGroupUrl()"
            hx-target="#add-on-groups-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -111,7 +119,7 @@
                 <th class="text-center">@T.T("Options")</th>
                 <th class="text-center">@T.T("Attachments")</th>
                 <th>@T.T("Modified")</th>
-                <th class="text-end" style="width:420px">@T.T("Actions")</th>
+                    <th class="text-end admin-w-420">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
@@ -137,19 +145,19 @@
                         <td>@g.ModifiedAtUtc?.ToLocalTime()</td>
                         <td class="text-end">
                             <a asp-controller="AddOnGroups" asp-action="Edit" asp-route-id="@g.Id" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "AddOnGroups", new { id = g.Id })"
+                               hx-get="@EditAddOnGroupUrl(g.Id)"
                                hx-target="#add-on-groups-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
                                 <i class="fa fa-pen"></i> @T.T("Edit")
                             </a>
                             <div class="btn-group">
-                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToVariants" asp-route-id="@g.Id" hx-get="@Url.Action("AttachToVariants", "AddOnGroups", new { id = g.Id })" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-sitemap"></i> @T.T("Variants")</a>
-                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToProducts" asp-route-id="@g.Id" hx-get="@Url.Action("AttachToProducts", "AddOnGroups", new { id = g.Id })" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-box"></i> @T.T("Products")</a>
-                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToCategories" asp-route-id="@g.Id" hx-get="@Url.Action("AttachToCategories", "AddOnGroups", new { id = g.Id })" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-tags"></i> @T.T("Categories")</a>
-                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToBrands" asp-route-id="@g.Id" hx-get="@Url.Action("AttachToBrands", "AddOnGroups", new { id = g.Id })" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-industry"></i> @T.T("Brands")</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToVariants" asp-route-id="@g.Id" hx-get="@AttachAddOnGroupToVariantsUrl(g.Id)" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-sitemap"></i> @T.T("Variants")</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToProducts" asp-route-id="@g.Id" hx-get="@AttachAddOnGroupToProductsUrl(g.Id)" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-box"></i> @T.T("Products")</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToCategories" asp-route-id="@g.Id" hx-get="@AttachAddOnGroupToCategoriesUrl(g.Id)" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-tags"></i> @T.T("Categories")</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AddOnGroups" asp-action="AttachToBrands" asp-route-id="@g.Id" hx-get="@AttachAddOnGroupToBrandsUrl(g.Id)" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true"><i class="fa fa-industry"></i> @T.T("Brands")</a>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="@Url.Action("Delete", "AddOnGroups")" data-id="@g.Id" data-name="@g.Name" data-rowversion="@Convert.ToBase64String(g.RowVersion)" data-hx-target="#add-on-groups-workspace-shell" data-hx-swap="outerHTML" data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="@Url.Action("Delete", "AddOnGroups")" data-id="@g.Id" data-name="@g.Name" data-rowversion="@Convert.ToBase64String(g.RowVersion)" data-hx-target="#add-on-groups-workspace-shell" data-hx-swap="outerHTML">
                                 <i class="fa fa-trash"></i> @T.T("Delete")
                             </button>
                         </td>

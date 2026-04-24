@@ -192,7 +192,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 AttentionOnly = attentionOnly,
                 ReadinessFilter = readinessFilter,
                 Summary = MapSupportSummaryVm(summary),
-                Playbooks = BuildMerchantReadinessPlaybooks(),
+                Playbooks = BuildMerchantReadinessPlaybooks(null),
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 OperationalStatusItems = BuildBusinessStatusItems(operationalStatus),
                 Items = items.Select(x => new BusinessListItemVm
@@ -221,10 +221,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
-        public async Task<IActionResult> SupportQueue(CancellationToken ct = default)
+        public async Task<IActionResult> SupportQueue(Guid? businessId = null, CancellationToken ct = default)
         {
-            var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
-            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, readinessFilter: null, ct).ConfigureAwait(false);
+            var summary = await _getBusinessSupportSummary.HandleAsync(businessId, ct).ConfigureAwait(false);
+            var attentionBusinesses = await BuildSupportQueueAttentionBusinessesAsync(businessId, ct).ConfigureAwait(false);
             var (failedEmails, _, _) = await _getEmailDispatchAuditsPage
                 .HandleAsync(
                     page: 1,
@@ -238,12 +238,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     priorSuccessOnly: false,
                     retryReadyOnly: false,
                     retryBlockedOnly: false,
-                    businessId: null,
+                    businessId: businessId,
                     ct: ct)
                 .ConfigureAwait(false);
 
             var vm = new BusinessSupportQueueVm
             {
+                BusinessId = businessId,
                 Summary = new BusinessSupportSummaryVm
                 {
                     AttentionBusinessCount = summary.AttentionBusinessCount,
@@ -258,25 +259,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     PendingActivationMemberCount = summary.PendingActivationMemberCount,
                     LockedMemberCount = summary.LockedMemberCount
                 },
-                AttentionBusinesses = attentionBusinesses.Select(x => new BusinessListItemVm
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    LegalName = x.LegalName,
-                    Category = x.Category,
-                    IsActive = x.IsActive,
-                    OperationalStatus = x.OperationalStatus,
-                    MemberCount = x.MemberCount,
-                    ActiveOwnerCount = x.ActiveOwnerCount,
-                    LocationCount = x.LocationCount,
-                    PrimaryLocationCount = x.PrimaryLocationCount,
-                    InvitationCount = x.InvitationCount,
-                    HasContactEmailConfigured = x.HasContactEmailConfigured,
-                    HasLegalNameConfigured = x.HasLegalNameConfigured,
-                    CreatedAtUtc = x.CreatedAtUtc,
-                    ModifiedAtUtc = x.ModifiedAtUtc,
-                    RowVersion = x.RowVersion
-                }).ToList(),
+                AttentionBusinesses = attentionBusinesses,
                 FailedEmails = failedEmails.Select(x => new BusinessSupportFailedEmailVm
                 {
                     Id = x.Id,
@@ -289,7 +272,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FailureMessage = x.FailureMessage,
                     RecommendedAction = BuildSupportAuditRecommendedAction(x)
                 }).ToList(),
-                Playbooks = BuildMerchantReadinessPlaybooks()
+                Playbooks = BuildMerchantReadinessPlaybooks(businessId)
             };
 
             return RenderSupportQueueWorkspace(vm);
@@ -297,10 +280,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
-        public async Task<IActionResult> MerchantReadiness(CancellationToken ct = default)
+        public async Task<IActionResult> MerchantReadiness(Guid? businessId = null, CancellationToken ct = default)
         {
-            var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
-            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 12, null, null, true, readinessFilter: null, ct).ConfigureAwait(false);
+            var summary = await _getBusinessSupportSummary.HandleAsync(businessId, ct).ConfigureAwait(false);
+            var attentionBusinesses = await BuildMerchantReadinessBusinessesAsync(businessId, ct).ConfigureAwait(false);
 
             var items = new List<MerchantReadinessItemVm>();
             foreach (var business in attentionBusinesses)
@@ -328,9 +311,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             var vm = new MerchantReadinessWorkspaceVm
             {
+                BusinessId = businessId,
                 Summary = MapSupportSummaryVm(summary),
                 Items = items,
-                Playbooks = BuildMerchantReadinessPlaybooks()
+                Playbooks = BuildMerchantReadinessPlaybooks(businessId)
             };
 
             return RenderMerchantReadinessWorkspace(vm);
@@ -338,10 +322,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
-        public async Task<IActionResult> SupportQueueSummaryFragment(CancellationToken ct = default)
+        public async Task<IActionResult> SupportQueueSummaryFragment(Guid? businessId = null, CancellationToken ct = default)
         {
-            var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
-            return PartialView("~/Views/Businesses/_SupportQueueSummary.cshtml", MapSupportSummaryVm(summary));
+            var summary = await _getBusinessSupportSummary.HandleAsync(businessId, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Businesses/_SupportQueueSummary.cshtml", new BusinessSupportQueueVm
+            {
+                BusinessId = businessId,
+                Summary = MapSupportSummaryVm(summary)
+            });
         }
 
         [HttpGet]
@@ -370,6 +358,87 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }).ToList();
 
             return PartialView("~/Views/Businesses/_SupportQueueAttentionBusinesses.cshtml", vm);
+        }
+
+        private async Task<List<BusinessListItemVm>> BuildSupportQueueAttentionBusinessesAsync(Guid? businessId, CancellationToken ct)
+        {
+            if (businessId.HasValue)
+            {
+                var business = await _getBusinessForEdit.HandleAsync(businessId.Value, ct).ConfigureAwait(false);
+                return business is null ? new List<BusinessListItemVm>() : new List<BusinessListItemVm> { MapBusinessListItemVm(business) };
+            }
+
+            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, readinessFilter: null, ct).ConfigureAwait(false);
+            return attentionBusinesses.Select(x => new BusinessListItemVm
+            {
+                Id = x.Id,
+                Name = x.Name,
+                LegalName = x.LegalName,
+                Category = x.Category,
+                IsActive = x.IsActive,
+                OperationalStatus = x.OperationalStatus,
+                MemberCount = x.MemberCount,
+                ActiveOwnerCount = x.ActiveOwnerCount,
+                LocationCount = x.LocationCount,
+                PrimaryLocationCount = x.PrimaryLocationCount,
+                InvitationCount = x.InvitationCount,
+                HasContactEmailConfigured = x.HasContactEmailConfigured,
+                HasLegalNameConfigured = x.HasLegalNameConfigured,
+                CreatedAtUtc = x.CreatedAtUtc,
+                ModifiedAtUtc = x.ModifiedAtUtc,
+                RowVersion = x.RowVersion
+            }).ToList();
+        }
+
+        private async Task<List<BusinessListItemVm>> BuildMerchantReadinessBusinessesAsync(Guid? businessId, CancellationToken ct)
+        {
+            if (businessId.HasValue)
+            {
+                var business = await _getBusinessForEdit.HandleAsync(businessId.Value, ct).ConfigureAwait(false);
+                return business is null ? new List<BusinessListItemVm>() : new List<BusinessListItemVm> { MapBusinessListItemVm(business) };
+            }
+
+            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 12, null, null, true, readinessFilter: null, ct).ConfigureAwait(false);
+            return attentionBusinesses.Select(x => new BusinessListItemVm
+            {
+                Id = x.Id,
+                Name = x.Name,
+                LegalName = x.LegalName,
+                Category = x.Category,
+                IsActive = x.IsActive,
+                OperationalStatus = x.OperationalStatus,
+                MemberCount = x.MemberCount,
+                ActiveOwnerCount = x.ActiveOwnerCount,
+                LocationCount = x.LocationCount,
+                PrimaryLocationCount = x.PrimaryLocationCount,
+                InvitationCount = x.InvitationCount,
+                HasContactEmailConfigured = x.HasContactEmailConfigured,
+                HasLegalNameConfigured = x.HasLegalNameConfigured,
+                CreatedAtUtc = x.CreatedAtUtc,
+                ModifiedAtUtc = x.ModifiedAtUtc,
+                RowVersion = x.RowVersion
+            }).ToList();
+        }
+
+        private static BusinessListItemVm MapBusinessListItemVm(BusinessEditDto business)
+        {
+            return new BusinessListItemVm
+            {
+                Id = business.Id,
+                Name = business.Name,
+                LegalName = business.LegalName,
+                Category = business.Category,
+                IsActive = business.IsActive,
+                OperationalStatus = business.OperationalStatus,
+                MemberCount = business.MemberCount,
+                ActiveOwnerCount = business.ActiveOwnerCount,
+                LocationCount = business.LocationCount,
+                PrimaryLocationCount = business.PrimaryLocationCount,
+                InvitationCount = business.InvitationCount,
+                HasContactEmailConfigured = business.HasContactEmailConfigured,
+                HasLegalNameConfigured = business.HasLegalNameConfigured,
+                RowVersion = business.RowVersion
+            };
         }
 
         [HttpGet]
@@ -1901,24 +1970,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             var adminEmailRoutingConfigured = !string.IsNullOrWhiteSpace(settings.AdminAlertEmailsCsv);
             var adminSmsRoutingConfigured = !string.IsNullOrWhiteSpace(settings.AdminAlertSmsRecipientsCsv);
-            var failedEmailAuditQuery = _db.Set<EmailDispatchAudit>()
-                .AsNoTracking()
-                .Where(x => x.BusinessId == businessId && x.Status == "Failed");
-
-            var failedInvitationCount = await failedEmailAuditQuery
-                .CountAsync(x => x.FlowKey == "BusinessInvitation", ct)
-                .ConfigureAwait(false);
-
-            var failedActivationCount = await failedEmailAuditQuery
-                .CountAsync(x => x.FlowKey == "AccountActivation", ct)
-                .ConfigureAwait(false);
-
-            var failedPasswordResetCount = await failedEmailAuditQuery
-                .CountAsync(x => x.FlowKey == "PasswordReset", ct)
-                .ConfigureAwait(false);
-
-            var failedAdminTestCount = await failedEmailAuditQuery
-                .CountAsync(x => x.FlowKey == "AdminCommunicationTest", ct)
+            var failedEmailSummary = await _getEmailDispatchAuditsPage
+                .GetSummaryAsync(businessId, ct)
                 .ConfigureAwait(false);
 
             return new BusinessCommunicationReadinessVm
@@ -1943,10 +1996,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 AdminRoutingSummary = adminEmailRoutingConfigured || adminSmsRoutingConfigured
                     ? T("BusinessCommunicationReadinessAdminRoutingConfiguredSummary")
                     : T("BusinessCommunicationReadinessAdminRoutingMissingSummary"),
-                FailedInvitationCount = failedInvitationCount,
-                FailedActivationCount = failedActivationCount,
-                FailedPasswordResetCount = failedPasswordResetCount,
-                FailedAdminTestCount = failedAdminTestCount
+                FailedInvitationCount = failedEmailSummary.FailedInvitationCount,
+                FailedActivationCount = failedEmailSummary.FailedActivationCount,
+                FailedPasswordResetCount = failedEmailSummary.FailedPasswordResetCount,
+                FailedAdminTestCount = failedEmailSummary.FailedAdminTestCount
             };
         }
 
@@ -2192,7 +2245,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     QueueActionLabel = T("PendingActivation"),
                     QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.PendingActivation }) ?? string.Empty,
                     FollowUpLabel = T("MobileOperationsTitle"),
-                    FollowUpUrl = Url.Action("Index", "MobileOperations") ?? string.Empty
+                    FollowUpUrl = Url.Action("Index", "MobileOperations", new { businessId }) ?? string.Empty
                 },
                 new()
                 {
@@ -2265,7 +2318,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     QueueActionLabel = T("Pending"),
                     QueueActionUrl = Url.Action("Invitations", "Businesses", new { businessId, filter = BusinessInvitationQueueFilter.Pending }) ?? string.Empty,
                     FollowUpLabel = T("BusinessSupportQueueTitle"),
-                    FollowUpUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty
+                    FollowUpUrl = Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty
                 },
                 new()
                 {
@@ -2306,7 +2359,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     QueueActionLabel = T("CommonMembers"),
                     QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.Attention }) ?? string.Empty,
                     FollowUpLabel = T("BusinessSupportQueueTitle"),
-                    FollowUpUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty
+                    FollowUpUrl = Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty
                 },
                 new()
                 {
@@ -2316,7 +2369,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     QueueActionLabel = T("NeedsAttention"),
                     QueueActionUrl = Url.Action("Members", "Businesses", new { businessId, filter = BusinessMemberSupportFilter.Attention }) ?? string.Empty,
                     FollowUpLabel = T("MerchantReadinessTitle"),
-                    FollowUpUrl = Url.Action("MerchantReadiness", "Businesses") ?? string.Empty
+                    FollowUpUrl = Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty
                 },
                 new()
                 {
@@ -2600,7 +2653,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return T("BusinessSupportAuditGenericAction");
         }
 
-        private List<MerchantReadinessPlaybookVm> BuildMerchantReadinessPlaybooks()
+        private List<MerchantReadinessPlaybookVm> BuildMerchantReadinessPlaybooks(Guid? businessId)
         {
             return new List<MerchantReadinessPlaybookVm>
             {
@@ -2612,7 +2665,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     QueueActionLabel = T("PendingApproval"),
                     QueueActionUrl = Url.Action("Index", "Businesses", new { operationalStatus = BusinessOperationalStatus.PendingApproval }) ?? string.Empty,
                     FollowUpLabel = T("BusinessSupportQueueTitle"),
-                    FollowUpUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty
+                    FollowUpUrl = Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty
                 },
                 new()
                 {
@@ -2622,7 +2675,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     QueueActionLabel = T("NeedsAttention"),
                     QueueActionUrl = Url.Action("Index", "Businesses", new { attentionOnly = true }) ?? string.Empty,
                     FollowUpLabel = T("CommonSetup"),
-                    FollowUpUrl = Url.Action("MerchantReadiness", "Businesses") ?? string.Empty
+                    FollowUpUrl = Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty
                 },
                 new()
                 {
@@ -2720,7 +2773,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     QueueActionLabel = T("BusinessSubscriptionOpenInvoiceQueue"),
                     QueueActionUrl = Url.Action("SubscriptionInvoices", "Businesses", new { businessId, filter = BusinessSubscriptionInvoiceQueueFilter.All }) ?? string.Empty,
                     FollowUpLabel = T("BusinessSupportQueueTitle"),
-                    FollowUpUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty
+                    FollowUpUrl = Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty
                 });
             }
 

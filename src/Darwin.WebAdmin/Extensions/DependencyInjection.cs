@@ -57,12 +57,14 @@ using Darwin.WebAdmin.Services.Seo;
 using Darwin.WebAdmin.Services.Settings;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
+using System.Net;
 using System.Reflection;
 
 namespace Darwin.WebAdmin.Extensions
@@ -99,6 +101,27 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetMobileDevicesPageHandler>();
             services.AddScoped<ClearUserDevicePushTokenHandler>();
             services.AddScoped<DeactivateUserDeviceHandler>();
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.ForwardLimit = 1;
+
+                foreach (var proxy in config.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? Array.Empty<string>())
+                {
+                    if (IPAddress.TryParse(proxy, out var address))
+                    {
+                        options.KnownProxies.Add(address);
+                    }
+                }
+
+                foreach (var network in config.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? Array.Empty<string>())
+                {
+                    if (System.Net.IPNetwork.TryParse(network, out var ipNetwork))
+                    {
+                        options.KnownIPNetworks.Add(ipNetwork);
+                    }
+                }
+            });
 
             // Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
             // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
@@ -130,6 +153,7 @@ namespace Darwin.WebAdmin.Extensions
                     options.Cookie.Name = "Darwin.Auth";
                     options.Cookie.HttpOnly = true;
                     options.Cookie.SameSite = SameSiteMode.Lax;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                     options.SlidingExpiration = true;
                     options.ExpireTimeSpan = TimeSpan.FromDays(30);
 
@@ -181,6 +205,7 @@ namespace Darwin.WebAdmin.Extensions
 
             // --- Identity: Users (Admin) ---
             services.AddScoped<GetUsersPageHandler>();
+            services.AddScoped<GetUserOpsSummaryHandler>();
             services.AddScoped<GetUserForEditHandler>();
             services.AddScoped<UpdateUserHandler>();
             services.AddScoped<CreateUserHandler>();
@@ -478,8 +503,15 @@ namespace Darwin.WebAdmin.Extensions
 
 
 
-            // Anti-forgery defaults for Admin forms
-            services.AddAntiforgery();
+            // Anti-forgery defaults for Admin forms and HTMX mutations.
+            services.AddAntiforgery(options =>
+            {
+                options.HeaderName = "RequestVerificationToken";
+                options.Cookie.Name = "Darwin.AntiForgery";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            });
 
             // HTML Sanitizer using our factory (singleton across the app)
             services.AddSingleton<IHtmlSanitizer>(_ => HtmlSanitizerFactory.Create());

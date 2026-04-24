@@ -635,10 +635,10 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         locationsViewSource.Should().Contain("hx-push-url=\"true\">@InvitationWorkspaceLabel()</a>");
         locationsViewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"Invitations\")</a>");
         locationsViewSource.Should().Contain("@T.T(\"BusinessLocationsEmptyState\")");
-        locationsViewSource.Should().Contain("@Url.Action(\"CreateLocation\", \"Businesses\", new { businessId = Model.Business.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
-        locationsViewSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id })");
-        locationsViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
-        locationsViewSource.Should().Contain("@Url.Action(\"EditLocation\", \"Businesses\", new { id = item.Id, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
+        locationsViewSource.Should().Contain("@CreateLocationUrl(Model.Business.Id, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
+        locationsViewSource.Should().Contain("@BusinessSetupUrl(Model.Business.Id)");
+        locationsViewSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Business.Id)");
+        locationsViewSource.Should().Contain("@EditLocationUrl(item.Id, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
           locationsViewSource.Should().Contain("@T.T(\"CommonEdit\")");
           locationsViewSource.Should().Contain("@T.T(\"Setup\")");
           locationsViewSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
@@ -748,8 +748,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         subscriptionInvoicesViewSource.Should().Contain("string InvoiceRowPaymentsHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm item) => InvoiceRowPaymentsActionHref(item.ProviderInvoiceId);");
         subscriptionInvoicesViewSource.Should().Contain("hx-get=\"@InvoicePaymentsActionHref()\"");
         subscriptionInvoicesViewSource.Should().Contain("hx-get=\"@InvoiceRowPaymentsHref(item)\"");
-        subscriptionInvoicesViewSource.Should().Contain("string InvoiceSupportQueueActionHref() => Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty;");
-        subscriptionInvoicesViewSource.Should().Contain("string InvoiceMerchantReadinessActionHref() => Url.Action(\"MerchantReadiness\", \"Businesses\") ?? string.Empty;");
+        subscriptionInvoicesViewSource.Should().Contain("string InvoiceSupportQueueActionHref() => Url.Action(\"SupportQueue\", \"Businesses\", new { businessId = Model.Business.Id }) ?? string.Empty;");
+        subscriptionInvoicesViewSource.Should().Contain("string InvoiceMerchantReadinessActionHref() => Url.Action(\"MerchantReadiness\", \"Businesses\", new { businessId = Model.Business.Id }) ?? string.Empty;");
         subscriptionInvoicesViewSource.Should().Contain("hx-get=\"@InvoiceSupportQueueActionHref()\"");
         subscriptionInvoicesViewSource.Should().Contain("hx-get=\"@InvoiceMerchantReadinessActionHref()\"");
         subscriptionInvoicesViewSource.Should().Contain("@InvoiceSubscriptionActionText()");
@@ -817,7 +817,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         controllerSource.Should().Contain("WhyItMatters = T(\"BusinessSubscriptionPlaybookNoActivePlanWhyItMatters\")");
         controllerSource.Should().Contain("OperatorAction = T(\"BusinessSubscriptionPlaybookNoActivePlanAction\")");
         controllerSource.Should().Contain("FollowUpLabel = T(\"BusinessSupportQueueTitle\")");
-        controllerSource.Should().Contain("FollowUpUrl = Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty");
+        controllerSource.Should().Contain("FollowUpUrl = Url.Action(\"SupportQueue\", \"Businesses\", new { businessId }) ?? string.Empty");
         controllerSource.Should().Contain("Status = T(\"Unavailable\")");
         controllerSource.Should().Contain("CheckoutReadinessLabel = validation.Succeeded ? T(\"BusinessSubscriptionCheckoutReady\") : (validation.Error ?? T(\"NotReady\"))");
         controllerSource.Should().Contain("? T(\"BusinessSubscriptionManageCurrentPlan\")");
@@ -849,8 +849,8 @@ subscriptionViewSource.Should().Contain("string SubscriptionWorkspaceFrameSwapVa
         subscriptionViewSource.Should().Contain("string SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Business.Id, filter }) ?? string.Empty;");
         subscriptionViewSource.Should().Contain("string SubscriptionPaymentsActionHref() => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id }) ?? string.Empty;");
         subscriptionViewSource.Should().Contain("string SubscriptionPaymentsSearchActionHref(string? providerInvoiceId) => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id, q = providerInvoiceId }) ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionMerchantReadinessActionHref() => Url.Action(\"MerchantReadiness\", \"Businesses\") ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionSupportQueueActionHref() => Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionMerchantReadinessActionHref() => Url.Action(\"MerchantReadiness\", \"Businesses\", new { businessId = Model.Business.Id }) ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionSupportQueueActionHref() => Url.Action(\"SupportQueue\", \"Businesses\", new { businessId = Model.Business.Id }) ?? string.Empty;");
 subscriptionViewSource.Should().Contain("hx-target=\"@SubscriptionWorkspaceFrameTarget()\"");
 subscriptionViewSource.Should().Contain("hx-push-url=\"@SubscriptionWorkspaceFramePushUrlValue()\"");
 subscriptionViewSource.Should().Contain("hx-swap=\"@SubscriptionWorkspaceFrameSwapValue()\"");
@@ -917,6 +917,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         sectionSource.Should().Contain("hx-post=\"@Url.Action(\"SetDefaultAddress\", \"Users\")\"");
         sectionSource.Should().Contain("hx-vals='{\"id\":\"@a.Id\",\"userId\":\"@userId\",\"kind\":\"Billing\"}'");
         sectionSource.Should().Contain("hx-vals='{\"id\":\"@a.Id\",\"userId\":\"@userId\",\"kind\":\"Shipping\"}'");
+        sectionSource.Should().Contain("data-refresh-alerts");
         sectionSource.Should().Contain("data-action=\"@Url.Action(\"EditAddress\", \"Users\")\"");
         sectionSource.Should().Contain("data-rowversion=\"@(a.RowVersion is null ? \"\" : Convert.ToBase64String(a.RowVersion))\"");
         sectionSource.Should().Contain("data-action=\"@Url.Action(\"DeleteAddress\", \"Users\")\"");
@@ -926,7 +927,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         modalSource.Should().Contain("id=\"addressEditModal\"");
         modalSource.Should().Contain("id=\"addressEditForm\"");
         modalSource.Should().Contain("hx-target=\"#addresses-section\"");
-        modalSource.Should().Contain("window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideAddressModal();");
+        modalSource.Should().Contain("data-refresh-alerts");
+        modalSource.Should().Contain("data-hide-address-modal");
         modalSource.Should().Contain("id=\"addrId\"");
         modalSource.Should().Contain("id=\"addrRowVersion\"");
         modalSource.Should().Contain("id=\"addrUserId\" name=\"UserId\"");
@@ -1001,7 +1003,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         loginSource.Should().Contain("name=\"rememberMe\" value=\"true\"");
         loginSource.Should().Contain("id=\"passkey-btn\"");
         loginSource.Should().Contain("@T.T(\"LoginWithPasskey\")");
-        loginSource.Should().Contain("alert('@T.T(\"PasskeyPreparing\")');");
+        loginSource.Should().Contain(@"data-passkey-preparing-label=""@T.T(""PasskeyPreparing"")""");
+        loginSource.Should().NotContain("alert('@T.T(\"PasskeyPreparing\")');");
         loginSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
 
         twoFactorSource.Should().Contain("ViewData[\"Title\"] = T.T(\"LoginTwoFactorTitle\")");
@@ -1069,10 +1072,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("name=\"userId\" id=\"userId\"");
         source.Should().Contain("name=\"rememberMe\" value=\"true\"");
         source.Should().Contain("name=\"returnUrl\" value=\"@returnUrl\"");
-        source.Should().Contain("<button id=\"passkey-btn\" class=\"btn btn-secondary mt-2\" type=\"button\">@T.T(\"LoginWithPasskey\")</button>");
+        source.Should().Contain(@"<button id=""passkey-btn"" class=""btn btn-secondary mt-2"" type=""button"" data-passkey-preparing-label=""@T.T(""PasskeyPreparing"")"">@T.T(""LoginWithPasskey"")</button>");
         source.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
-        source.Should().Contain("document.getElementById('passkey-btn')?.addEventListener('click', () => {");
-        source.Should().Contain("alert('@T.T(\"PasskeyPreparing\")');");
+        source.Should().NotContain("document.getElementById('passkey-btn')?.addEventListener('click', () => {");
+        source.Should().NotContain("alert('@T.T(\"PasskeyPreparing\")');");
     }
 
 
@@ -1141,6 +1144,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
     {
         var alertsSource = ReadWebAdminFile(Path.Combine("Views", "Shared", "_Alerts.cshtml"));
         var confirmDeleteSource = ReadWebAdminFile(Path.Combine("Views", "Shared", "_ConfirmDeleteModal.cshtml"));
+        var adminCoreSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "admin-core.js"));
+        var dynamicLinesSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "dynamic-lines.js"));
 
         alertsSource.Should().Contain("@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T");
         alertsSource.Should().Contain("string? success = TempData[\"Success\"] as string;");
@@ -1171,23 +1176,21 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         confirmDeleteSource.Should().Contain("name=\"userId\"");
         confirmDeleteSource.Should().Contain("@T.T(\"Cancel\")");
         confirmDeleteSource.Should().Contain("@T.T(\"Delete\")");
-        confirmDeleteSource.Should().Contain("const modalEl = document.getElementById('confirmDeleteModal');");
-        confirmDeleteSource.Should().Contain("const form     = document.getElementById('confirmDeleteForm');");
-        confirmDeleteSource.Should().Contain("modalEl.addEventListener('show.bs.modal'");
-        confirmDeleteSource.Should().Contain("let actionUrl = btn.getAttribute('data-action');");
-        confirmDeleteSource.Should().Contain("const area = btn.getAttribute('data-area');");
-        confirmDeleteSource.Should().Contain("const ctrl = btn.getAttribute('data-controller');");
-        confirmDeleteSource.Should().Contain("const act  = btn.getAttribute('data-action') || 'Delete';");
-        confirmDeleteSource.Should().Contain("const hxTarget = btn.getAttribute('data-hx-target');");
-        confirmDeleteSource.Should().Contain("const hxSwap = btn.getAttribute('data-hx-swap') || 'innerHTML';");
-        confirmDeleteSource.Should().Contain("const hxSuccess = btn.getAttribute('data-hx-success');");
-        confirmDeleteSource.Should().Contain("form.setAttribute('action', actionUrl);");
-        confirmDeleteSource.Should().Contain("form.setAttribute('hx-post', actionUrl);");
-        confirmDeleteSource.Should().Contain("form.setAttribute('hx-target', hxTarget);");
-        confirmDeleteSource.Should().Contain("form.setAttribute('hx-swap', hxSwap);");
-        confirmDeleteSource.Should().Contain("form.setAttribute('hx-on::after-request', 'if(event.detail.successful){ ' + hxSuccess + ' }');");
-        confirmDeleteSource.Should().Contain("form.removeAttribute('hx-post');");
-        confirmDeleteSource.Should().Contain("form.removeAttribute('hx-on::after-request');");
+        confirmDeleteSource.Should().NotContain("<script>");
+
+        adminCoreSource.Should().Contain("window.darwinAdmin.configureConfirmDeleteModal = function (event)");
+        adminCoreSource.Should().Contain("const modalEl = event.target;");
+        adminCoreSource.Should().Contain("const form = document.getElementById('confirmDeleteForm');");
+        adminCoreSource.Should().Contain("const actionUrl = button.getAttribute('data-action');");
+        adminCoreSource.Should().Contain("const hxTarget = button.getAttribute('data-hx-target');");
+        adminCoreSource.Should().Contain("const hxSwap = button.getAttribute('data-hx-swap') || 'innerHTML';");
+        adminCoreSource.Should().Contain("form.setAttribute('action', actionUrl);");
+        adminCoreSource.Should().Contain("form.setAttribute('hx-post', actionUrl);");
+        adminCoreSource.Should().Contain("form.setAttribute('hx-target', hxTarget);");
+        adminCoreSource.Should().Contain("form.setAttribute('hx-swap', hxSwap);");
+        adminCoreSource.Should().Contain("document.addEventListener('show.bs.modal', window.darwinAdmin.configureConfirmDeleteModal);");
+        adminCoreSource.Should().Contain("event.detail.elt.id === 'confirmDeleteForm'");
+        adminCoreSource.Should().Contain("window.darwinAdmin.hideModal('confirmDeleteModal');");
     }
 
 
@@ -1195,6 +1198,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
     public void SharedLayout_Should_KeepGlobalNavigationCultureLogoutAndHtmxContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Shared", "_Layout.cshtml"));
+        var adminCoreSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "admin-core.js"));
+        var dynamicLinesSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "dynamic-lines.js"));
+        var shippingMethodsSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "shipping-methods.js"));
+        var mediaSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "media.js"));
 
         source.Should().Contain("@using Microsoft.AspNetCore.Antiforgery");
         source.Should().Contain("@inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms");
@@ -1205,10 +1212,11 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("var languageOptions = T.GetSupportedLanguageOptions();");
         source.Should().Contain("var returnUrl = $\"{Context?.Request?.Path}{Context?.Request?.QueryString}\";");
         source.Should().Contain("<title>@ViewData[\"Title\"] - @T.T(\"DarwinAdmin\")</title>");
+        source.Should().Contain("<body class=\"bg-light\" data-alerts-url=\"@Url.Action(\"AlertsFragment\", \"Home\")\">");
         source.Should().Contain("<form asp-controller=\"Culture\" asp-action=\"SetCulture\" method=\"post\" class=\"d-inline-flex align-items-center gap-2\">");
         source.Should().Contain("<input type=\"hidden\" name=\"returnUrl\" value=\"@returnUrl\" />");
         source.Should().Contain("<label for=\"admin-culture-switcher\" class=\"small text-muted mb-0\">@T.T(\"Language\")</label>");
-        source.Should().Contain("<select id=\"admin-culture-switcher\" name=\"culture\" class=\"form-select form-select-sm\" onchange=\"this.form.submit()\">");
+        source.Should().Contain("<select id=\"admin-culture-switcher\" name=\"culture\" class=\"form-select form-select-sm\" data-culture-switcher>");
         source.Should().Contain("selected=\"@(string.Equals(currentCulture, option.Culture, StringComparison.OrdinalIgnoreCase))\"");
         source.Should().Contain("<form method=\"post\" action=\"/account/logout\" class=\"d-inline\">");
         source.Should().Contain("@T.T(\"Logout\")");
@@ -1234,20 +1242,44 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("asp-controller=\"Roles\" asp-action=\"Index\"");
         source.Should().Contain("asp-controller=\"Permissions\" asp-action=\"Index\"");
         source.Should().Contain("asp-controller=\"SiteSettings\" asp-action=\"Edit\"");
-        source.Should().Contain("window.darwinAdmin.initBootstrapUi = function (root)");
-        source.Should().Contain("bootstrap.Popover.getOrCreateInstance(el);");
-        source.Should().Contain("bootstrap.Tooltip.getOrCreateInstance(el);");
-        source.Should().Contain("window.darwinAdmin.refreshAlerts = function (url)");
-        source.Should().Contain("const targetUrl = url || '@Url.Action(\"AlertsFragment\", \"Home\")';");
-        source.Should().Contain("htmx.ajax('GET', targetUrl, '#alerts-container');");
-        source.Should().Contain("window.darwinAdmin.hideModal = function (modalId)");
-        source.Should().Contain("document.addEventListener('DOMContentLoaded', function ()");
-        source.Should().Contain("document.body.addEventListener('htmx:configRequest', function (event)");
-        source.Should().Contain("const tokenInput = document.querySelector('input[name=\"__RequestVerificationToken\"]');");
-        source.Should().Contain("event.detail.headers['RequestVerificationToken'] = token;");
-        source.Should().Contain("document.body.addEventListener('htmx:afterSwap', function (event)");
-        source.Should().Contain("window.darwinAdmin.initBootstrapUi(event.target);");
+        source.Should().Contain("<script src=\"~/js/admin-core.js\" asp-append-version=\"true\"></script>");
+        source.Should().Contain("<script src=\"~/js/dynamic-lines.js\" asp-append-version=\"true\"></script>");
+        source.Should().Contain("<script src=\"~/js/shipping-methods.js\" asp-append-version=\"true\"></script>");
+        source.Should().Contain("<script src=\"~/js/media.js\" asp-append-version=\"true\"></script>");
         source.Should().Contain("@RenderSection(\"Scripts\", required: false)");
+
+        adminCoreSource.Should().Contain("window.darwinAdmin.initBootstrapUi = function (root)");
+        adminCoreSource.Should().Contain("bootstrap.Popover.getOrCreateInstance(el);");
+        adminCoreSource.Should().Contain("bootstrap.Tooltip.getOrCreateInstance(el);");
+        adminCoreSource.Should().Contain("window.darwinAdmin.refreshAlerts = function (url)");
+        adminCoreSource.Should().Contain("const targetUrl = url || document.body.dataset.alertsUrl;");
+        adminCoreSource.Should().Contain("htmx.ajax('GET', targetUrl, '#alerts-container');");
+        adminCoreSource.Should().Contain("window.darwinAdmin.hideModal = function (modalId)");
+        adminCoreSource.Should().Contain("document.addEventListener('DOMContentLoaded', function ()");
+        adminCoreSource.Should().Contain("document.addEventListener('change', function (event)");
+        adminCoreSource.Should().Contain("const switcher = event.target.closest('[data-culture-switcher]');");
+        adminCoreSource.Should().Contain("switcher.form.submit();");
+        adminCoreSource.Should().Contain("document.body.addEventListener('htmx:configRequest', function (event)");
+        adminCoreSource.Should().Contain("const tokenInput = document.querySelector('input[name=\"__RequestVerificationToken\"]');");
+        adminCoreSource.Should().Contain("event.detail.headers.RequestVerificationToken = token;");
+        adminCoreSource.Should().Contain("document.body.addEventListener('htmx:afterSwap', function (event)");
+        adminCoreSource.Should().Contain("window.darwinAdmin.initBootstrapUi(event.target);");
+
+        dynamicLinesSource.Should().Contain("event.target.closest('[data-dynamic-lines-add]')");
+        dynamicLinesSource.Should().Contain("data-dynamic-lines-container");
+        dynamicLinesSource.Should().Contain("data-dynamic-lines-template");
+        dynamicLinesSource.Should().Contain("template.innerHTML.replaceAll('__index__', index.toString())");
+        dynamicLinesSource.Should().Contain("event.target.closest('[data-dynamic-lines-remove]')");
+
+        shippingMethodsSource.Should().Contain("window.darwinAdmin.initShippingMethodForm = function ()");
+        shippingMethodsSource.Should().Contain("event.target.closest('[data-shipping-rate-add]')");
+        shippingMethodsSource.Should().Contain("event.target.closest('[data-shipping-rate-remove]')");
+        shippingMethodsSource.Should().Contain("window.darwinAdmin.removeShippingRateRow(removeButton);");
+        shippingMethodsSource.Should().Contain("replace(/Rates\\[\\d+\\]/, 'Rates[' + index + ']')");
+
+        mediaSource.Should().Contain("event.target.closest('[data-copy-media-url]')");
+        mediaSource.Should().Contain("navigator.clipboard.writeText(url);");
+        mediaSource.Should().Contain("data-copied-label");
     }
 
 
@@ -1255,12 +1287,17 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
     public void SharedAuthLayout_Should_KeepCultureSwitcherAndAuthShellContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Shared", "_AuthLayout.cshtml"));
+        var adminCoreSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "admin-core.js"));
 
         source.Should().Contain("@using System.Globalization");
         source.Should().Contain("@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T");
         source.Should().Contain("var currentCulture = CultureInfo.CurrentUICulture?.Name ?? Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture;");
         source.Should().Contain("var languageOptions = T.GetSupportedLanguageOptions();");
-        source.Should().Contain("var returnUrl = $\"{Context?.Request?.Path}{Context?.Request?.QueryString}\";");
+        source.Should().Contain("var requestPath = Context?.Request?.Path.Value ?? \"/account/login\";");
+        source.Should().Contain("var requestedReturnUrl = Context?.Request?.Query[\"returnUrl\"].ToString();");
+        source.Should().Contain("var returnUrl = Url.IsLocalUrl(requestedReturnUrl)");
+        source.Should().Contain("? $\"{requestPath}?returnUrl={Uri.EscapeDataString(requestedReturnUrl)}\"");
+        source.Should().Contain(": requestPath;");
         source.Should().Contain("<html lang=\"@currentCulture\">");
         source.Should().Contain("<title>@ViewData[\"Title\"] - @T.T(\"DarwinAdmin\")</title>");
         source.Should().Contain("asp-controller=\"Account\" asp-action=\"Login\"");
@@ -1269,13 +1306,18 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("<input type=\"hidden\" name=\"returnUrl\" value=\"@returnUrl\" />");
         source.Should().Contain("<label for=\"auth-culture-switcher\" class=\"small text-muted mb-0\">@T.T(\"Language\")</label>");
-        source.Should().Contain("<select id=\"auth-culture-switcher\" name=\"culture\" class=\"form-select form-select-sm\" onchange=\"this.form.submit()\">");
+        source.Should().Contain("<select id=\"auth-culture-switcher\" name=\"culture\" class=\"form-select form-select-sm\" data-culture-switcher>");
         source.Should().Contain("selected=\"@(string.Equals(currentCulture, option.Culture, StringComparison.OrdinalIgnoreCase))\"");
         source.Should().Contain("<div class=\"card shadow-sm border-0\">");
         source.Should().Contain("<div class=\"card-body p-4 p-lg-5\">");
         source.Should().Contain("@RenderBody()");
-        source.Should().Contain("<script src=\"https://unpkg.com/htmx.org@2.0.4\" crossorigin=\"anonymous\"></script>");
+        source.Should().Contain("<script src=\"~/lib/htmx/htmx.min.js\" asp-append-version=\"true\"></script>");
+        source.Should().Contain("<script src=\"~/js/admin-core.js\" asp-append-version=\"true\"></script>");
         source.Should().Contain("@RenderSection(\"Scripts\", required: false)");
+
+        adminCoreSource.Should().Contain("document.addEventListener('change', function (event)");
+        adminCoreSource.Should().Contain("const switcher = event.target.closest('[data-culture-switcher]');");
+        adminCoreSource.Should().Contain("switcher.form.submit();");
     }
 
 
@@ -1399,9 +1441,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         viewImportsSource.Should().Contain("@addTagHelper *, Darwin.WebAdmin");
 
         validationSource.Should().Contain("@* Client-side validation scripts (loaded on pages that include this partial) *@");
-        validationSource.Should().Contain("jquery-validation@1.19.5/dist/jquery.validate.min.js");
-        validationSource.Should().Contain("jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js");
-        validationSource.Should().Contain("crossorigin=\"anonymous\"");
+        validationSource.Should().Contain("<script src=\"~/lib/jquery-validation/jquery.validate.min.js\" asp-append-version=\"true\"></script>");
+        validationSource.Should().Contain("<script src=\"~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js\" asp-append-version=\"true\"></script>");
+        validationSource.Should().NotContain("https://");
+        validationSource.Should().NotContain("crossorigin=\"anonymous\"");
 
         viewStartSource.Should().Contain("Layout = \"~/Views/Shared/_Layout.cshtml\";");
         accountViewStartSource.Should().Contain("Layout = \"~/Views/Shared/_AuthLayout.cshtml\";");
@@ -2152,10 +2195,14 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         detailsSource.Should().Contain("name=\"RowVersion\" value=\"@Convert.ToBase64String(Model.RowVersion)\"");
         detailsSource.Should().Contain("name=\"WarehouseId\"");
         detailsSource.Should().Contain("name=\"NewStatus\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"AddPayment\", \"Orders\", new { orderId = Model.Id })\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"AddShipment\", \"Orders\", new { orderId = Model.Id })\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = Model.Id })\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"CreateInvoice\", \"Orders\", new { orderId = Model.Id })\"");
+        detailsSource.Should().Contain("string AddPaymentUrl(Guid orderId) => Url.Action(\"AddPayment\", \"Orders\", new { orderId }) ?? string.Empty;");
+        detailsSource.Should().Contain("string AddShipmentUrl(Guid orderId) => Url.Action(\"AddShipment\", \"Orders\", new { orderId }) ?? string.Empty;");
+        detailsSource.Should().Contain("string AddRefundUrl(Guid orderId, Guid? paymentId = null) => Url.Action(\"AddRefund\", \"Orders\", new { orderId, paymentId }) ?? string.Empty;");
+        detailsSource.Should().Contain("string CreateInvoiceUrl(Guid orderId) => Url.Action(\"CreateInvoice\", \"Orders\", new { orderId }) ?? string.Empty;");
+        detailsSource.Should().Contain("hx-get=\"@AddPaymentUrl(Model.Id)\"");
+        detailsSource.Should().Contain("hx-get=\"@AddShipmentUrl(Model.Id)\"");
+        detailsSource.Should().Contain("hx-get=\"@AddRefundUrl(Model.Id)\"");
+        detailsSource.Should().Contain("hx-get=\"@CreateInvoiceUrl(Model.Id)\"");
         detailsSource.Should().Contain("id=\"order-operation-shell\"");
         detailsSource.Should().Contain("@T.T(\"TaxPriceSnapshot\")");
         detailsSource.Should().Contain("@T.T(\"CurrentTaxPolicy\")");
@@ -2167,10 +2214,14 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         detailsSource.Should().Contain("data-bs-target=\"#shipments\"");
         detailsSource.Should().Contain("data-bs-target=\"#refunds\"");
         detailsSource.Should().Contain("data-bs-target=\"#invoices\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Orders\", new { orderId = Model.Id })\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Shipments\", \"Orders\", new { orderId = Model.Id })\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Orders\", new { orderId = Model.Id })\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Orders\", new { orderId = Model.Id })\"");
+        detailsSource.Should().Contain("string OrderPaymentsUrl(Guid orderId) => Url.Action(\"Payments\", \"Orders\", new { orderId }) ?? string.Empty;");
+        detailsSource.Should().Contain("string OrderShipmentsUrl(Guid orderId) => Url.Action(\"Shipments\", \"Orders\", new { orderId }) ?? string.Empty;");
+        detailsSource.Should().Contain("string OrderRefundsUrl(Guid orderId) => Url.Action(\"Refunds\", \"Orders\", new { orderId }) ?? string.Empty;");
+        detailsSource.Should().Contain("string OrderInvoicesUrl(Guid orderId) => Url.Action(\"Invoices\", \"Orders\", new { orderId }) ?? string.Empty;");
+        detailsSource.Should().Contain("hx-get=\"@OrderPaymentsUrl(Model.Id)\"");
+        detailsSource.Should().Contain("hx-get=\"@OrderShipmentsUrl(Model.Id)\"");
+        detailsSource.Should().Contain("hx-get=\"@OrderRefundsUrl(Model.Id)\"");
+        detailsSource.Should().Contain("hx-get=\"@OrderInvoicesUrl(Model.Id)\"");
 
         addPaymentSource.Should().Contain("<partial name=\"~/Views/Orders/_PaymentCreateShell.cshtml\" model=\"Model\" />");
         addPaymentSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
@@ -2190,7 +2241,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         paymentShellSource.Should().Contain("asp-for=\"Currency\"");
         paymentShellSource.Should().Contain("asp-for=\"Status\"");
         paymentShellSource.Should().Contain("asp-for=\"FailureReason\"");
-        paymentShellSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = Model.OrderId })\"");
+        paymentShellSource.Should().Contain("string OrderDetailsUrl(Guid id) => Url.Action(\"Details\", \"Orders\", new { id }) ?? string.Empty;");
+        paymentShellSource.Should().Contain("hx-get=\"@OrderDetailsUrl(Model.OrderId)\"");
 
         shipmentShellSource.Should().Contain("id=\"order-shipment-shell\"");
         shipmentShellSource.Should().Contain("hx-post=\"@Url.Action(\"AddShipment\", \"Orders\")\"");
@@ -2205,7 +2257,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shipmentShellSource.Should().Contain("@T.T(\"ShipmentLines\")");
         shipmentShellSource.Should().Contain("asp-for=\"Lines[i].OrderLineId\"");
         shipmentShellSource.Should().Contain("asp-for=\"Lines[i].Quantity\"");
-        shipmentShellSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = Model.OrderId })\"");
+        shipmentShellSource.Should().Contain("string OrderDetailsUrl(Guid id) => Url.Action(\"Details\", \"Orders\", new { id }) ?? string.Empty;");
+        shipmentShellSource.Should().Contain("hx-get=\"@OrderDetailsUrl(Model.OrderId)\"");
 
         refundShellSource.Should().Contain("id=\"order-refund-shell\"");
         refundShellSource.Should().Contain("hx-post=\"@Url.Action(\"AddRefund\", \"Orders\")\"");
@@ -2214,7 +2267,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         refundShellSource.Should().Contain("asp-for=\"AmountMinor\"");
         refundShellSource.Should().Contain("asp-for=\"Currency\"");
         refundShellSource.Should().Contain("asp-for=\"Reason\"");
-        refundShellSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = Model.OrderId })\"");
+        refundShellSource.Should().Contain("string OrderDetailsUrl(Guid id) => Url.Action(\"Details\", \"Orders\", new { id }) ?? string.Empty;");
+        refundShellSource.Should().Contain("hx-get=\"@OrderDetailsUrl(Model.OrderId)\"");
 
         invoiceShellSource.Should().Contain("id=\"order-invoice-shell\"");
         invoiceShellSource.Should().Contain("hx-post=\"@Url.Action(\"CreateInvoice\", \"Orders\")\"");
@@ -2223,7 +2277,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         invoiceShellSource.Should().Contain("asp-for=\"CustomerId\" asp-items=\"Model.CustomerOptions\"");
         invoiceShellSource.Should().Contain("asp-for=\"PaymentId\" asp-items=\"Model.PaymentOptions\"");
         invoiceShellSource.Should().Contain("asp-for=\"DueAtUtc\" type=\"datetime-local\"");
-        invoiceShellSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = Model.OrderId })\"");
+        invoiceShellSource.Should().Contain("string OrderDetailsUrl(Guid id) => Url.Action(\"Details\", \"Orders\", new { id }) ?? string.Empty;");
+        invoiceShellSource.Should().Contain("hx-get=\"@OrderDetailsUrl(Model.OrderId)\"");
         invoiceShellSource.Should().Contain("@T.T(\"CreateInvoice\")");
     }
 
@@ -2246,8 +2301,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         paymentsSource.Should().Contain("@T.T(\"Refunded\")");
         paymentsSource.Should().Contain("@T.T(\"NoPayments\")");
         paymentsSource.Should().Contain("@T.T(\"Net\")");
-        paymentsSource.Should().Contain("hx-get=\"@Url.Action(\"EditPayment\", \"Billing\", new { id = p.Id })\"");
-        paymentsSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = Model.OrderId, paymentId = p.Id })\"");
+        paymentsSource.Should().Contain("string EditPaymentUrl(Guid id) => Url.Action(\"EditPayment\", \"Billing\", new { id }) ?? string.Empty;");
+        paymentsSource.Should().Contain("string AddRefundUrl(Guid orderId, Guid paymentId) => Url.Action(\"AddRefund\", \"Orders\", new { orderId, paymentId }) ?? string.Empty;");
+        paymentsSource.Should().Contain("hx-get=\"@EditPaymentUrl(p.Id)\"");
+        paymentsSource.Should().Contain("hx-get=\"@AddRefundUrl(Model.OrderId, p.Id)\"");
         paymentsSource.Should().Contain("asp-route-orderId=\"@Model.OrderId\"");
         paymentsSource.Should().Contain("asp-route-filter=\"@Model.Filter\"");
         paymentsSource.Should().Contain("hx-target=\"#payments-grid-content\"");
@@ -2270,9 +2327,12 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shipmentsSource.Should().Contain("<a href=\"@s.TrackingUrl\" target=\"_blank\" rel=\"noopener noreferrer\">@s.TrackingNumber</a>");
         shipmentsSource.Should().Contain("href=\"@s.TrackingUrl\"");
         shipmentsSource.Should().Contain("data-bs-target=\"#refunds\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Dhl\" })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })\"");
+        shipmentsSource.Should().Contain("string ShippingMethodsUrl(string filter) => Url.Action(\"Index\", \"ShippingMethods\", new { filter }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("string ShippingSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action(\"AddRefund\", \"Orders\", new { orderId, paymentId }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@ShippingMethodsUrl(\"Dhl\")\"");
+        shipmentsSource.Should().Contain("hx-get=\"@ShippingSettingsUrl()\"");
+        shipmentsSource.Should().Contain("hx-get=\"@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)\"");
         shipmentsSource.Should().Contain("asp-route-orderId=\"@Model.OrderId\"");
         shipmentsSource.Should().Contain("asp-route-filter=\"@Model.Filter\"");
         shipmentsSource.Should().Contain("hx-target=\"#shipments-grid-content\"");
@@ -2287,10 +2347,12 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         refundsSource.Should().Contain("@T.T(\"ReturnedShipmentFollowUpOpen\")");
         refundsSource.Should().Contain("@T.T(\"ReturnedShipmentFollowUpNote\")");
         refundsSource.Should().Contain("data-bs-target=\"#shipments\"");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })\"");
+        refundsSource.Should().Contain("string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action(\"AddRefund\", \"Orders\", new { orderId, paymentId }) ?? string.Empty;");
+        refundsSource.Should().Contain("hx-get=\"@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)\"");
         refundsSource.Should().Contain("@T.T(\"NoRefunds\")");
         refundsSource.Should().Contain("@T.T(\"PaymentStatus\")");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"EditPayment\", \"Billing\", new { id = item.PaymentId })\"");
+        refundsSource.Should().Contain("string EditPaymentUrl(Guid id) => Url.Action(\"EditPayment\", \"Billing\", new { id }) ?? string.Empty;");
+        refundsSource.Should().Contain("hx-get=\"@EditPaymentUrl(item.PaymentId)\"");
         refundsSource.Should().Contain("asp-route-orderId=\"@Model.OrderId\"");
         refundsSource.Should().Contain("asp-route-filter=\"@Model.Filter\"");
         refundsSource.Should().Contain("hx-target=\"#refunds-grid-content\"");
@@ -2303,9 +2365,12 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         invoicesSource.Should().Contain("@T.T(\"Paid\")");
         invoicesSource.Should().Contain("@T.T(\"NoInvoices\")");
         invoicesSource.Should().Contain("@T.T(\"VatIdMissing\")");
-        invoicesSource.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.CustomerId.Value })\"");
-        invoicesSource.Should().Contain("hx-get=\"@Url.Action(\"EditPayment\", \"Billing\", new { id = item.PaymentId.Value })\"");
-        invoicesSource.Should().Contain("hx-get=\"@Url.Action(\"EditInvoice\", \"Crm\", new { id = item.Id })\"");
+        invoicesSource.Should().Contain("string EditCustomerUrl(Guid id) => Url.Action(\"EditCustomer\", \"Crm\", new { id }) ?? string.Empty;");
+        invoicesSource.Should().Contain("string EditPaymentUrl(Guid id) => Url.Action(\"EditPayment\", \"Billing\", new { id }) ?? string.Empty;");
+        invoicesSource.Should().Contain("string EditInvoiceUrl(Guid id) => Url.Action(\"EditInvoice\", \"Crm\", new { id }) ?? string.Empty;");
+        invoicesSource.Should().Contain("hx-get=\"@EditCustomerUrl(item.CustomerId.Value)\"");
+        invoicesSource.Should().Contain("hx-get=\"@EditPaymentUrl(item.PaymentId.Value)\"");
+        invoicesSource.Should().Contain("hx-get=\"@EditInvoiceUrl(item.Id)\"");
         invoicesSource.Should().Contain("@T.T(\"Net\")");
         invoicesSource.Should().Contain("@T.T(\"Tax\")");
         invoicesSource.Should().Contain("@T.T(\"Gross\")");
@@ -2327,7 +2392,9 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shellSource.Should().Contain("var isCreate = (bool?)ViewData[\"IsCreate\"] ?? false;");
         shellSource.Should().Contain("@(isCreate ? T.T(\"CreateShippingMethod\") : T.T(\"EditShippingMethod\"))");
         shellSource.Should().Contain("@T.T(\"ShippingMethodEditorIntro\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\")\"");
+        shellSource.Should().Contain("string ShippingMethodsGlobalIndexUrl() => Url.Action(\"Index\", \"ShippingMethods\") ?? string.Empty;");
+        shellSource.Should().Contain("string CreateShippingMethodUrl() => Url.Action(\"Create\", \"ShippingMethods\") ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@ShippingMethodsGlobalIndexUrl()\"");
         shellSource.Should().Contain("@T.T(\"Back\")");
         shellSource.Should().Contain("asp-action=\"@(isCreate ? \"Create\" : \"Edit\")\"");
         shellSource.Should().Contain("hx-post=\"@Url.Action(isCreate ? \"Create\" : \"Edit\", \"ShippingMethods\")\"");
@@ -2346,7 +2413,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         formSource.Should().Contain("asp-for=\"Currency\" class=\"form-control\" placeholder=\"@T.T(\"ShippingMethodCurrencyPlaceholder\")\" maxlength=\"3\"");
         formSource.Should().Contain("asp-for=\"IsActive\" class=\"form-check-input\"");
         formSource.Should().Contain("@T.T(\"RateTiers\")");
-        formSource.Should().Contain("window.darwinAdmin.addShippingRateRow()");
+        formSource.Should().Contain("data-shipping-rate-add");
         formSource.Should().Contain("@T.T(\"AddRate\")");
         formSource.Should().Contain("id=\"shipping-rates-table\"");
         formSource.Should().Contain("id=\"shipping-rate-rows\"");
@@ -2355,7 +2422,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         formSource.Should().Contain("name=\"Rates[@i].MaxSubtotalNetMinor\"");
         formSource.Should().Contain("name=\"Rates[@i].PriceMinor\"");
         formSource.Should().Contain("name=\"Rates[@i].SortOrder\"");
-        formSource.Should().Contain("window.darwinAdmin.removeShippingRateRow(this)");
+        formSource.Should().Contain("data-shipping-rate-remove");
         formSource.Should().Contain("@T.T(\"ShippingRateTiersHelp\")");
         formSource.Should().Contain("id=\"shipping-rate-row-template\"");
         formSource.Should().Contain("Rates[__index__].Id");
@@ -2363,13 +2430,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         formSource.Should().Contain("Rates[__index__].MaxSubtotalNetMinor");
         formSource.Should().Contain("Rates[__index__].PriceMinor");
         formSource.Should().Contain("Rates[__index__].SortOrder");
-        formSource.Should().Contain("window.darwinAdmin.initShippingMethodForm = function ()");
-        formSource.Should().Contain("renumberShippingRateRows()");
-        formSource.Should().Contain("replace(/Rates\\[\\d+\\]/, 'Rates[' + index + ']')");
-        formSource.Should().Contain("if (!tbody.querySelector('[data-rate-row]'))");
-        formSource.Should().Contain("window.darwinAdmin.initShippingMethodForm();");
+        formSource.Should().NotContain("<script>");
         formSource.Should().Contain("@T.T(\"Save\")");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\")\"");
+        formSource.Should().Contain("string ShippingMethodsGlobalIndexUrl() => Url.Action(\"Index\", \"ShippingMethods\") ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@ShippingMethodsGlobalIndexUrl()\"");
         formSource.Should().Contain("@T.T(\"Cancel\")");
     }
 
@@ -2381,14 +2445,16 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         source.Should().Contain("id=\"inventory-warehouses-workspace-shell\"");
         source.Should().Contain("@T.T(\"WarehousesTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Warehouses\", \"Inventory\")\"");
+        source.Should().Contain("string WarehousesUrl(object? businessId = null, string? q = null, string? filter = null) => Url.Action(\"Warehouses\", \"Inventory\", new { businessId, q, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@WarehousesUrl()\"");
         source.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         source.Should().Contain("name=\"q\" value=\"@Model.Query\"");
         source.Should().Contain("@T.T(\"SearchWarehousesPlaceholder\")");
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"Filter\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateWarehouse\", \"Inventory\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string CreateWarehouseUrl(object? businessId = null) => Url.Action(\"CreateWarehouse\", \"Inventory\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateWarehouseUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"NewWarehouse\")");
         source.Should().Contain("asp-route-filter=\"Default\"");
         source.Should().Contain("asp-route-filter=\"NoStockLevels\"");
@@ -2411,8 +2477,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("@T.T(\"NoWarehousesFound\")");
         source.Should().Contain("@T.T(\"Standard\")");
         source.Should().Contain("@T.T(\"Empty\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"StockLevels\", \"Inventory\", new { businessId = Model.BusinessId, warehouseId = item.Id })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditWarehouse\", \"Inventory\", new { id = item.Id })\"");
+        source.Should().Contain("string StockLevelsUrl(object? businessId = null, object? warehouseId = null) => Url.Action(\"StockLevels\", \"Inventory\", new { businessId, warehouseId }) ?? string.Empty;");
+        source.Should().Contain("string EditWarehouseUrl(Guid id) => Url.Action(\"EditWarehouse\", \"Inventory\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@StockLevelsUrl(Model.BusinessId, item.Id)\"");
+        source.Should().Contain("hx-get=\"@EditWarehouseUrl(item.Id)\"");
         source.Should().Contain("asp-controller=\"Inventory\"");
         source.Should().Contain("asp-action=\"Warehouses\"");
         source.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
@@ -2438,7 +2506,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shellSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         shellSource.Should().Contain("<partial name=\"_WarehouseForm\" model=\"Model\" />");
         shellSource.Should().Contain("@T.T(\"Save\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Warehouses\", \"Inventory\", new { businessId = Model.BusinessId })\"");
+        shellSource.Should().Contain("string WarehousesUrl(Guid? businessId) => Url.Action(\"Warehouses\", \"Inventory\", new { businessId }) ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@WarehousesUrl(Model.BusinessId)\"");
         shellSource.Should().Contain("@T.T(\"Back\")");
 
         formSource.Should().Contain("asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\"");
@@ -2457,14 +2526,16 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         source.Should().Contain("id=\"inventory-suppliers-workspace-shell\"");
         source.Should().Contain("@T.T(\"Suppliers\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Suppliers\", \"Inventory\")\"");
+        source.Should().Contain("string SuppliersUrl(object? businessId = null, string? q = null, string? filter = null) => Url.Action(\"Suppliers\", \"Inventory\", new { businessId, q, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@SuppliersUrl()\"");
         source.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         source.Should().Contain("name=\"q\" value=\"@Model.Query\"");
         source.Should().Contain("@T.T(\"SearchSuppliersPlaceholder\")");
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"Filter\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateSupplier\", \"Inventory\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string CreateSupplierUrl(object? businessId = null) => Url.Action(\"CreateSupplier\", \"Inventory\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateSupplierUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"NewSupplier\")");
         source.Should().Contain("asp-route-filter=\"MissingAddress\"");
         source.Should().Contain("asp-route-filter=\"HasPurchaseOrders\"");
@@ -2488,8 +2559,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("@T.T(\"NoSuppliersFound\")");
         source.Should().Contain("@T.T(\"MissingAddressBadge\")");
         source.Should().Contain("@T.T(\"Active\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"PurchaseOrders\", \"Inventory\", new { businessId = Model.BusinessId, q = item.Name })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditSupplier\", \"Inventory\", new { id = item.Id })\"");
+        source.Should().Contain("string PurchaseOrdersUrl(object? businessId = null, string? q = null) => Url.Action(\"PurchaseOrders\", \"Inventory\", new { businessId, q }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@PurchaseOrdersUrl(Model.BusinessId, item.Name)\"");
+        source.Should().Contain("string EditSupplierUrl(Guid id) => Url.Action(\"EditSupplier\", \"Inventory\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditSupplierUrl(item.Id)\"");
         source.Should().Contain("asp-controller=\"Inventory\"");
         source.Should().Contain("asp-action=\"Suppliers\"");
         source.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
@@ -2515,7 +2588,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shellSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         shellSource.Should().Contain("<partial name=\"_SupplierForm\" model=\"Model\" />");
         shellSource.Should().Contain("@T.T(\"Save\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Suppliers\", \"Inventory\", new { businessId = Model.BusinessId })\"");
+        shellSource.Should().Contain("string SuppliersUrl(Guid? businessId) => Url.Action(\"Suppliers\", \"Inventory\", new { businessId }) ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@SuppliersUrl(Model.BusinessId)\"");
         shellSource.Should().Contain("@T.T(\"Back\")");
 
         formSource.Should().Contain("asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\"");
@@ -2581,7 +2655,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         source.Should().Contain("id=\"inventory-stock-levels-workspace-shell\"");
         source.Should().Contain("@T.T(\"StockLevelsTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"StockLevels\", \"Inventory\")\"");
+        source.Should().Contain("string StockLevelsUrl(object? businessId = null, object? warehouseId = null, string? q = null, string? filter = null) => Url.Action(\"StockLevels\", \"Inventory\", new { businessId, warehouseId, q, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@StockLevelsUrl()\"");
         source.Should().Contain("name=\"businessId\" value=\"@Model.BusinessId\"");
         source.Should().Contain("name=\"warehouseId\" asp-items=\"Model.WarehouseOptions\"");
         source.Should().Contain("name=\"q\" value=\"@Model.Query\"");
@@ -2589,7 +2664,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"Filter\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateStockLevel\", \"Inventory\", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })\"");
+        source.Should().Contain("string CreateStockLevelUrl(object? businessId = null, object? warehouseId = null) => Url.Action(\"CreateStockLevel\", \"Inventory\", new { businessId, warehouseId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateStockLevelUrl(Model.BusinessId, Model.WarehouseId)\"");
         source.Should().Contain("@T.T(\"NewStockLevel\")");
         source.Should().Contain("asp-route-filter=\"LowStock\"");
         source.Should().Contain("asp-route-filter=\"Reserved\"");
@@ -2601,17 +2677,23 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("@T.T(\"ReorderPoint\")");
         source.Should().Contain("@T.T(\"Actions\")");
         source.Should().Contain("@T.T(\"NoStockLevelsFound\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"AdjustStock\", \"Inventory\", new { stockLevelId = item.Id, businessId = Model.BusinessId })\"");
+        source.Should().Contain("string AdjustStockUrl(Guid stockLevelId, object? businessId = null) => Url.Action(\"AdjustStock\", \"Inventory\", new { stockLevelId, businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@AdjustStockUrl(item.Id, Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"Adjust\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ReserveStock\", \"Inventory\", new { stockLevelId = item.Id, businessId = Model.BusinessId })\"");
+        source.Should().Contain("string ReserveStockUrl(Guid stockLevelId, object? businessId = null) => Url.Action(\"ReserveStock\", \"Inventory\", new { stockLevelId, businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ReserveStockUrl(item.Id, Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"Reserve\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ReleaseReservation\", \"Inventory\", new { stockLevelId = item.Id, businessId = Model.BusinessId })\"");
+        source.Should().Contain("string ReleaseReservationUrl(Guid stockLevelId, object? businessId = null) => Url.Action(\"ReleaseReservation\", \"Inventory\", new { stockLevelId, businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ReleaseReservationUrl(item.Id, Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"Release\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ReturnReceipt\", \"Inventory\", new { stockLevelId = item.Id, businessId = Model.BusinessId })\"");
+        source.Should().Contain("string ReturnReceiptUrl(Guid stockLevelId, object? businessId = null) => Url.Action(\"ReturnReceipt\", \"Inventory\", new { stockLevelId, businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ReturnReceiptUrl(item.Id, Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"Return\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"VariantLedger\", \"Inventory\", new { variantId = item.ProductVariantId, warehouseId = item.WarehouseId })\"");
+        source.Should().Contain("string VariantLedgerUrl(Guid variantId, Guid? warehouseId) => Url.Action(\"VariantLedger\", \"Inventory\", new { variantId, warehouseId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@VariantLedgerUrl(item.ProductVariantId, item.WarehouseId)\"");
         source.Should().Contain("@T.T(\"Ledger\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditStockLevel\", \"Inventory\", new { id = item.Id })\"");
+        source.Should().Contain("string EditStockLevelUrl(Guid id) => Url.Action(\"EditStockLevel\", \"Inventory\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditStockLevelUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Edit\")");
         source.Should().Contain("asp-controller=\"Inventory\"");
         source.Should().Contain("asp-action=\"StockLevels\"");
@@ -2640,7 +2722,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shellSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         shellSource.Should().Contain("<partial name=\"_StockLevelForm\" model=\"Model\" />");
         shellSource.Should().Contain("@(isCreate ? T.T(\"Create\") : T.T(\"Save\"))");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"StockLevels\", \"Inventory\", new { warehouseId = Model.WarehouseId })\"");
+        shellSource.Should().Contain("string StockLevelsUrl(Guid? warehouseId) => Url.Action(\"StockLevels\", \"Inventory\", new { warehouseId }) ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@StockLevelsUrl(Model.WarehouseId)\"");
         shellSource.Should().Contain("@T.T(\"Back\")");
 
         formSource.Should().Contain("asp-for=\"WarehouseId\" asp-items=\"Model.WarehouseOptions\" class=\"form-select\"");
@@ -2660,7 +2743,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         source.Should().Contain("id=\"inventory-stock-transfers-workspace-shell\"");
         source.Should().Contain("@T.T(\"StockTransfersTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"StockTransfers\", \"Inventory\")\"");
+        source.Should().Contain("string StockTransfersUrl(object? businessId = null, object? warehouseId = null, string? q = null, string? filter = null) => Url.Action(\"StockTransfers\", \"Inventory\", new { businessId, warehouseId, q, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@StockTransfersUrl()\"");
         source.Should().Contain("name=\"businessId\" value=\"@ViewBag.BusinessId\"");
         source.Should().Contain("name=\"warehouseId\" asp-items=\"Model.WarehouseOptions\"");
         source.Should().Contain("name=\"q\" value=\"@Model.Query\"");
@@ -2668,7 +2752,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"Filter\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateStockTransfer\", \"Inventory\", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })\"");
+        source.Should().Contain("string CreateStockTransferUrl(object? businessId = null, object? warehouseId = null) => Url.Action(\"CreateStockTransfer\", \"Inventory\", new { businessId, warehouseId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateStockTransferUrl(ViewBag.BusinessId, Model.WarehouseId)\"");
         source.Should().Contain("@T.T(\"NewTransfer\")");
         source.Should().Contain("asp-route-filter=\"Draft\"");
         source.Should().Contain("asp-route-filter=\"InTransit\"");
@@ -2694,7 +2779,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("@T.T(\"NoStockTransfersFound\")");
         source.Should().Contain("T.T(\"InTransit\")");
         source.Should().Contain("T.T(\"Completed\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditStockTransfer\", \"Inventory\", new { id = item.Id })\"");
+        source.Should().Contain("string EditStockTransferUrl(Guid id) => Url.Action(\"EditStockTransfer\", \"Inventory\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditStockTransferUrl(item.Id)\"");
         source.Should().Contain("asp-controller=\"Inventory\"");
         source.Should().Contain("asp-action=\"StockTransfers\"");
         source.Should().Contain("asp-route-businessId=\"@ViewBag.BusinessId\"");
@@ -2721,7 +2807,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shellSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         shellSource.Should().Contain("<partial name=\"_StockTransferForm\" model=\"Model\" />");
         shellSource.Should().Contain("@T.T(\"Save\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"StockTransfers\", \"Inventory\", new { warehouseId = Model.FromWarehouseId })\"");
+        shellSource.Should().Contain("string StockTransfersUrl(Guid? warehouseId) => Url.Action(\"StockTransfers\", \"Inventory\", new { warehouseId }) ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@StockTransfersUrl(Model.FromWarehouseId)\"");
         shellSource.Should().Contain("@T.T(\"Back\")");
 
         formSource.Should().Contain("asp-for=\"FromWarehouseId\" asp-items=\"Model.WarehouseOptions\" class=\"form-select\"");
@@ -2761,7 +2848,13 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("@item.Title");
         source.Should().Contain("@item.ScopeNote");
         source.Should().Contain("@item.OperatorAction");
-        source.Should().Contain("hx-get=\"@Url.Action(\"VariantLedger\", \"Inventory\")\"");
+        source.Should().Contain("string VariantLedgerUrl(object? variantId = null, object? warehouseId = null, string? filter = null) => Url.Action(\"VariantLedger\", \"Inventory\", new { variantId, warehouseId, filter }) ?? string.Empty;");
+        source.Should().Contain("string StockLevelsUrl(object? warehouseId = null) => Url.Action(\"StockLevels\", \"Inventory\", new { warehouseId }) ?? string.Empty;");
+        source.Should().Contain("string StockTransfersUrl(object? warehouseId = null) => Url.Action(\"StockTransfers\", \"Inventory\", new { warehouseId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@VariantLedgerUrl()\"");
+        source.Should().Contain("hx-get=\"@VariantLedgerUrl(Model.VariantId, Model.WarehouseId, \"Inbound\")\"");
+        source.Should().Contain("hx-get=\"@StockLevelsUrl(Model.WarehouseId)\"");
+        source.Should().Contain("hx-get=\"@StockTransfersUrl(Model.WarehouseId)\"");
         source.Should().Contain("name=\"variantId\" value=\"@Model.VariantId\"");
         source.Should().Contain("name=\"warehouseId\" value=\"@Model.WarehouseId\"");
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
@@ -2798,7 +2891,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         workspaceSource.Should().Contain("id=\"billing-plans-workspace-shell\"");
         workspaceSource.Should().Contain("@T.T(\"BillingPlansTitle\")");
         workspaceSource.Should().Contain("@T.T(\"BillingPlansIntro\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"CreatePlan\", \"Billing\")\"");
+        workspaceSource.Should().Contain("string CreatePlanUrl() => Url.Action(\"CreatePlan\", \"Billing\") ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@CreatePlanUrl()\"");
         workspaceSource.Should().Contain("@T.T(\"BillingPlansCreatePlan\")");
         workspaceSource.Should().Contain("@Model.Summary.TotalCount");
         workspaceSource.Should().Contain("@Model.Summary.ActiveCount");
@@ -2810,7 +2904,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         workspaceSource.Should().Contain("@T.T(\"BillingPlansQueueColumn\")");
         workspaceSource.Should().Contain("@T.T(\"BillingPlansScopeColumn\")");
         workspaceSource.Should().Contain("@T.T(\"OperatorAction\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"Plans\", \"Billing\")\"");
+        workspaceSource.Should().Contain("string GlobalBillingPlansUrl() => Url.Action(\"Plans\", \"Billing\") ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@GlobalBillingPlansUrl()\"");
+        workspaceSource.Should().Contain("string BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter? queue = null) => Url.Action(\"Plans\", \"Billing\", new { queue }) ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive)\"");
         workspaceSource.Should().Contain("@T.T(\"BillingPlansSearchPlaceholder\")");
         workspaceSource.Should().Contain("name=\"pageSize\" value=\"@Model.PageSize\"");
         workspaceSource.Should().Contain("@T.T(\"CommonSearch\")");
@@ -2821,7 +2918,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         workspaceSource.Should().Contain("@T.T(\"BillingPlansUsageColumn\")");
         workspaceSource.Should().Contain("@T.T(\"BillingPlansUpdatedColumn\")");
         workspaceSource.Should().Contain("@T.T(\"BillingPlansEmptyState\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"EditPlan\", \"Billing\", new { id = item.Id })\"");
+        workspaceSource.Should().Contain("string EditPlanUrl(Guid id) => Url.Action(\"EditPlan\", \"Billing\", new { id }) ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@EditPlanUrl(item.Id)\"");
         workspaceSource.Should().Contain("@T.T(\"CommonEdit\")");
         workspaceSource.Should().Contain("asp-controller=\"Billing\"");
         workspaceSource.Should().Contain("asp-action=\"Plans\"");
@@ -2830,7 +2928,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         shellSource.Should().Contain("BillingPlanEditorCreateTitle");
         shellSource.Should().Contain("BillingPlanEditorEditTitle");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Plans\", \"Billing\")\"");
+        shellSource.Should().Contain("string GlobalBillingPlansUrl() => Url.Action(\"Plans\", \"Billing\") ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@GlobalBillingPlansUrl()\"");
         shellSource.Should().Contain("@T.T(\"BillingPlanEditorBackToPlans\")");
         shellSource.Should().Contain("@T.T(\"BillingPlanEditorActiveSubscriptions\")");
         shellSource.Should().Contain("@T.T(\"CommonStatus\")");
@@ -2856,7 +2955,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         formSource.Should().Contain("@T.T(\"BillingPlanFormFeaturesHelp\")");
         formSource.Should().Contain("asp-for=\"IsActive\" class=\"form-check-input\"");
         formSource.Should().Contain("@(isCreate ? T.T(\"BillingPlansCreatePlan\") : T.T(\"BillingPlanFormSaveChanges\"))");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"Plans\", \"Billing\")\"");
+        formSource.Should().Contain("string GlobalBillingPlansUrl() => Url.Action(\"Plans\", \"Billing\") ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@GlobalBillingPlansUrl()\"");
         formSource.Should().Contain("@T.T(\"Cancel\")");
     }
 
@@ -2872,15 +2972,19 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         workspaceSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         workspaceSource.Should().Contain("@T.T(\"Payments\")");
         workspaceSource.Should().Contain("@T.T(\"StripeReadiness\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-payments\" })\"");
+        workspaceSource.Should().Contain("string PaymentSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-payments\" }) ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@PaymentSettingsUrl()\"");
         workspaceSource.Should().Contain("@T.T(\"OpenPaymentSettings\")");
         workspaceSource.Should().Contain("@T.T(\"TaxInvoicingReadiness\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"TaxCompliance\", \"Billing\")\"");
+        workspaceSource.Should().Contain("string GlobalTaxComplianceUrl() => Url.Action(\"TaxCompliance\", \"Billing\") ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@GlobalTaxComplianceUrl()\"");
         workspaceSource.Should().Contain("@T.T(\"OpenTaxCompliance\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" })\"");
+        workspaceSource.Should().Contain("string TaxSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" }) ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@TaxSettingsUrl()\"");
         workspaceSource.Should().Contain("@T.T(\"OpenTaxSettings\")");
         workspaceSource.Should().Contain("@T.T(\"WebhookLifecycleVisibility\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"Webhooks\", \"Billing\")\"");
+        workspaceSource.Should().Contain("string GlobalBillingWebhooksUrl() => Url.Action(\"Webhooks\", \"Billing\") ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@GlobalBillingWebhooksUrl()\"");
         workspaceSource.Should().Contain("@T.T(\"OpenWebhookQueue\")");
         workspaceSource.Should().Contain("@T.T(\"ReviewPaymentExceptions\")");
         workspaceSource.Should().Contain("@T.T(\"ReviewDisputeSignals\")");
@@ -2893,7 +2997,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         workspaceSource.Should().Contain("@T.T(\"Queue\")");
         workspaceSource.Should().Contain("@T.T(\"Scope\")");
         workspaceSource.Should().Contain("@T.T(\"OperatorAction\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
+        workspaceSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
         workspaceSource.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         workspaceSource.Should().Contain("name=\"q\" value=\"@Model.Query\"");
         workspaceSource.Should().Contain("@T.T(\"SearchPaymentsPlaceholder\")");
@@ -2904,7 +3009,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         workspaceSource.Should().Contain("@T.T(\"NoPaymentsFound\")");
         workspaceSource.Should().Contain("@T.T(\"Provider\")");
         workspaceSource.Should().Contain("@T.T(\"Timeline\")");
-        workspaceSource.Should().Contain("hx-get=\"@Url.Action(\"EditPayment\", \"Billing\", new { id = item.Id })\"");
+        workspaceSource.Should().Contain("string EditPaymentUrl(Guid id) => Url.Action(\"EditPayment\", \"Billing\", new { id }) ?? string.Empty;");
+        workspaceSource.Should().Contain("hx-get=\"@EditPaymentUrl(item.Id)\"");
         workspaceSource.Should().Contain("@T.T(\"Edit\")");
 
         shellSource.Should().Contain("id=\"billing-payment-editor-shell\"");
@@ -2916,18 +3022,23 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shellSource.Should().Contain("input type=\"hidden\" asp-for=\"RowVersion\"");
         shellSource.Should().Contain("<partial name=\"_PaymentForm\" model=\"Model\" />");
         shellSource.Should().Contain("@T.T(\"Save\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.BusinessId })\"");
+        shellSource.Should().Contain("string PaymentsUrl(Guid? businessId) => Url.Action(\"Payments\", \"Billing\", new { businessId }) ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@PaymentsUrl(Model.BusinessId)\"");
         shellSource.Should().Contain("@T.T(\"BackToPayments\")");
 
         formSource.Should().Contain("@T.T(\"RelatedRecords\")");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = Model.OrderId.Value })\"");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = Model.CustomerId.Value })\"");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = Model.UserId.Value })\"");
+        formSource.Should().Contain("string OrderDetailsUrl(Guid id) => Url.Action(\"Details\", \"Orders\", new { id }) ?? string.Empty;");
+        formSource.Should().Contain("string CrmEditCustomerUrl(Guid id) => Url.Action(\"EditCustomer\", \"Crm\", new { id }) ?? string.Empty;");
+        formSource.Should().Contain("string UserEditUrl(Guid id) => Url.Action(\"Edit\", \"Users\", new { id }) ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@OrderDetailsUrl(Model.OrderId.Value)\"");
+        formSource.Should().Contain("hx-get=\"@CrmEditCustomerUrl(Model.CustomerId.Value)\"");
+        formSource.Should().Contain("hx-get=\"@UserEditUrl(Model.UserId.Value)\"");
         formSource.Should().Contain("@T.T(\"Lifecycle\")");
         formSource.Should().Contain("@T.T(\"RecordedAmount\")");
         formSource.Should().Contain("@T.T(\"NetCollected\")");
         formSource.Should().Contain("@T.T(\"ReconciliationAndDisputeSnapshot\")");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"PaymentSettings\", \"Settings\")\"");
+        formSource.Should().Contain("string PaymentSettingsUrl() => Url.Action(\"PaymentSettings\", \"Settings\") ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@PaymentSettingsUrl()\"");
         formSource.Should().Contain("@T.T(\"NeedsReconciliationQueue\")");
         formSource.Should().Contain("@T.T(\"DisputeFollowUpQueue\")");
         formSource.Should().Contain("@T.T(\"PaymentExceptions\")");
@@ -2963,7 +3074,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         refundsSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         refundsSource.Should().Contain("@T.T(\"RefundQueueTitle\")");
         refundsSource.Should().Contain("@T.T(\"RefundQueueIntro\")");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Pending })\"");
+        refundsSource.Should().Contain("string ScopedRefundsUrl(BillingRefundQueueFilter queue) => Url.Action(\"Refunds\", \"Billing\", new { businessId = Model.BusinessId, queue }) ?? string.Empty;");
+        refundsSource.Should().Contain("hx-get=\"@ScopedRefundsUrl(BillingRefundQueueFilter.Pending)\"");
         refundsSource.Should().Contain("@T.T(\"BackToPayments\")");
         refundsSource.Should().Contain("@T.T(\"WebhookAnomalyVisibility\")");
         refundsSource.Should().Contain("@T.T(\"OpenWebhookQueue\")");
@@ -2979,7 +3091,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         refundsSource.Should().Contain("@T.T(\"AllQueues\")");
         refundsSource.Should().Contain("@T.T(\"OpenPayments\")");
         refundsSource.Should().Contain("@T.T(\"NoRefundsFound\")");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.CustomerId.Value })\"");
+        refundsSource.Should().Contain("string CrmEditCustomerUrl(Guid id) => Url.Action(\"EditCustomer\", \"Crm\", new { id }) ?? string.Empty;");
+        refundsSource.Should().Contain("hx-get=\"@CrmEditCustomerUrl(item.CustomerId.Value)\"");
         refundsSource.Should().Contain("asp-controller=\"Billing\"");
         refundsSource.Should().Contain("asp-action=\"Refunds\"");
         refundsSource.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
@@ -2988,7 +3101,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         accountsSource.Should().Contain("id=\"billing-financial-accounts-workspace-shell\"");
         accountsSource.Should().Contain("@T.T(\"FinancialAccountsTitle\")");
-        accountsSource.Should().Contain("hx-get=\"@Url.Action(\"FinancialAccounts\", \"Billing\")\"");
+        accountsSource.Should().Contain("string GlobalFinancialAccountsUrl() => Url.Action(\"FinancialAccounts\", \"Billing\") ?? string.Empty;");
+        accountsSource.Should().Contain("hx-get=\"@GlobalFinancialAccountsUrl()\"");
         accountsSource.Should().Contain("@T.T(\"SearchFinancialAccountsPlaceholder\")");
         accountsSource.Should().Contain("@T.T(\"CreateFinancialAccount\")");
         accountsSource.Should().Contain("@Model.Summary.TotalCount");
@@ -2999,8 +3113,12 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         accountsSource.Should().Contain("@T.T(\"FinancialAccountsPlaybooksTitle\")");
         accountsSource.Should().Contain("@T.T(\"FinancialAccountsEmptyState\")");
         accountsSource.Should().Contain("@T.T(\"FinancialAccountsCodeMissing\")");
-        accountsSource.Should().Contain("hx-get=\"@Url.Action(\"EditFinancialAccount\", \"Billing\", new { id = item.Id })\"");
-        accountsSource.Should().Contain("hx-get=\"@Url.Action(\"JournalEntries\", \"Billing\", new { businessId = Model.BusinessId, q = string.IsNullOrWhiteSpace(item.Code) ? item.Name : item.Code })\"");
+        accountsSource.Should().Contain("string FinancialAccountsUrl(object? businessId = null, string? q = null, object? queue = null) => Url.Action(\"FinancialAccounts\", \"Billing\", new { businessId, q, queue }) ?? string.Empty;");
+        accountsSource.Should().Contain("string CreateFinancialAccountUrl(object? businessId = null) => Url.Action(\"CreateFinancialAccount\", \"Billing\", new { businessId }) ?? string.Empty;");
+        accountsSource.Should().Contain("string EditFinancialAccountUrl(Guid id) => Url.Action(\"EditFinancialAccount\", \"Billing\", new { id }) ?? string.Empty;");
+        accountsSource.Should().Contain("hx-get=\"@EditFinancialAccountUrl(item.Id)\"");
+        accountsSource.Should().Contain("string JournalEntriesUrl(object? businessId = null, string? q = null) => Url.Action(\"JournalEntries\", \"Billing\", new { businessId, q }) ?? string.Empty;");
+        accountsSource.Should().Contain("hx-get=\"@JournalEntriesUrl(Model.BusinessId, string.IsNullOrWhiteSpace(item.Code) ? item.Name : item.Code)\"");
         accountsSource.Should().Contain("asp-controller=\"Billing\"");
         accountsSource.Should().Contain("asp-action=\"FinancialAccounts\"");
         accountsSource.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
@@ -3009,7 +3127,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         expensesSource.Should().Contain("id=\"billing-expenses-workspace-shell\"");
         expensesSource.Should().Contain("@T.T(\"ExpensesTitle\")");
-        expensesSource.Should().Contain("hx-get=\"@Url.Action(\"Expenses\", \"Billing\")\"");
+        expensesSource.Should().Contain("string GlobalExpensesUrl() => Url.Action(\"Expenses\", \"Billing\") ?? string.Empty;");
+        expensesSource.Should().Contain("hx-get=\"@GlobalExpensesUrl()\"");
         expensesSource.Should().Contain("@T.T(\"SearchExpensesPlaceholder\")");
         expensesSource.Should().Contain("@T.T(\"CreateExpense\")");
         expensesSource.Should().Contain("@Model.Summary.TotalCount");
@@ -3018,8 +3137,12 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         expensesSource.Should().Contain("@Model.Summary.HighValueCount");
         expensesSource.Should().Contain("@T.T(\"ExpensesReviewPlaybooks\")");
         expensesSource.Should().Contain("@T.T(\"ExpensesEmptyState\")");
-        expensesSource.Should().Contain("hx-get=\"@Url.Action(\"EditExpense\", \"Billing\", new { id = item.Id })\"");
-        expensesSource.Should().Contain("hx-get=\"@Url.Action(\"EditSupplier\", \"Inventory\", new { id = item.SupplierId.Value })\"");
+        expensesSource.Should().Contain("string ExpensesUrl(object? businessId = null) => Url.Action(\"Expenses\", \"Billing\", new { businessId }) ?? string.Empty;");
+        expensesSource.Should().Contain("string CreateExpenseUrl(object? businessId = null) => Url.Action(\"CreateExpense\", \"Billing\", new { businessId }) ?? string.Empty;");
+        expensesSource.Should().Contain("string EditExpenseUrl(Guid id) => Url.Action(\"EditExpense\", \"Billing\", new { id }) ?? string.Empty;");
+        expensesSource.Should().Contain("hx-get=\"@EditExpenseUrl(item.Id)\"");
+        expensesSource.Should().Contain("string EditSupplierUrl(Guid id) => Url.Action(\"EditSupplier\", \"Inventory\", new { id }) ?? string.Empty;");
+        expensesSource.Should().Contain("hx-get=\"@EditSupplierUrl(item.SupplierId.Value)\"");
         expensesSource.Should().Contain("asp-controller=\"Billing\"");
         expensesSource.Should().Contain("asp-action=\"Expenses\"");
         expensesSource.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
@@ -3027,7 +3150,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         journalSource.Should().Contain("id=\"billing-journal-entries-workspace-shell\"");
         journalSource.Should().Contain("@T.T(\"JournalEntriesTitle\")");
-        journalSource.Should().Contain("hx-get=\"@Url.Action(\"JournalEntries\", \"Billing\")\"");
+        journalSource.Should().Contain("string GlobalJournalEntriesUrl() => Url.Action(\"JournalEntries\", \"Billing\") ?? string.Empty;");
+        journalSource.Should().Contain("hx-get=\"@GlobalJournalEntriesUrl()\"");
         journalSource.Should().Contain("@T.T(\"SearchJournalEntriesPlaceholder\")");
         journalSource.Should().Contain("@T.T(\"CreateJournalEntry\")");
         journalSource.Should().Contain("@Model.Summary.TotalCount");
@@ -3035,7 +3159,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         journalSource.Should().Contain("@Model.Summary.MultiLineCount");
         journalSource.Should().Contain("@T.T(\"JournalReviewPlaybooks\")");
         journalSource.Should().Contain("@T.T(\"JournalEntriesEmptyState\")");
-        journalSource.Should().Contain("hx-get=\"@Url.Action(\"EditJournalEntry\", \"Billing\", new { id = item.Id })\"");
+        journalSource.Should().Contain("string JournalEntriesUrl(object? businessId = null, object? queue = null) => Url.Action(\"JournalEntries\", \"Billing\", new { businessId, queue }) ?? string.Empty;");
+        journalSource.Should().Contain("string CreateJournalEntryUrl(object? businessId = null) => Url.Action(\"CreateJournalEntry\", \"Billing\", new { businessId }) ?? string.Empty;");
+        journalSource.Should().Contain("string EditJournalEntryUrl(Guid id) => Url.Action(\"EditJournalEntry\", \"Billing\", new { id }) ?? string.Empty;");
+        journalSource.Should().Contain("hx-get=\"@EditJournalEntryUrl(item.Id)\"");
         journalSource.Should().Contain("asp-controller=\"Billing\"");
         journalSource.Should().Contain("asp-action=\"JournalEntries\"");
         journalSource.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
@@ -3061,7 +3188,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         accountShellSource.Should().Contain("input type=\"hidden\" asp-for=\"Id\"");
         accountShellSource.Should().Contain("input type=\"hidden\" asp-for=\"RowVersion\"");
         accountShellSource.Should().Contain("<partial name=\"_FinancialAccountForm\" model=\"Model\" />");
-        accountShellSource.Should().Contain("hx-get=\"@Url.Action(\"FinancialAccounts\", \"Billing\", new { businessId = Model.BusinessId })\"");
+        accountShellSource.Should().Contain("string FinancialAccountsUrl(Guid? businessId) => Url.Action(\"FinancialAccounts\", \"Billing\", new { businessId }) ?? string.Empty;");
+        accountShellSource.Should().Contain("hx-get=\"@FinancialAccountsUrl(Model.BusinessId)\"");
         accountShellSource.Should().Contain("@T.T(\"Back\")");
 
         accountFormSource.Should().Contain("asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\"");
@@ -3079,7 +3207,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         expenseShellSource.Should().Contain("input type=\"hidden\" asp-for=\"Id\"");
         expenseShellSource.Should().Contain("input type=\"hidden\" asp-for=\"RowVersion\"");
         expenseShellSource.Should().Contain("<partial name=\"_ExpenseForm\" model=\"Model\" />");
-        expenseShellSource.Should().Contain("hx-get=\"@Url.Action(\"Expenses\", \"Billing\", new { businessId = Model.BusinessId })\"");
+        expenseShellSource.Should().Contain("string ExpensesUrl(Guid? businessId) => Url.Action(\"Expenses\", \"Billing\", new { businessId }) ?? string.Empty;");
+        expenseShellSource.Should().Contain("hx-get=\"@ExpensesUrl(Model.BusinessId)\"");
         expenseShellSource.Should().Contain("@T.T(\"Back\")");
 
         expenseFormSource.Should().Contain("asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\"");
@@ -3096,14 +3225,15 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         journalShellSource.Should().Contain("input type=\"hidden\" asp-for=\"Id\"");
         journalShellSource.Should().Contain("input type=\"hidden\" asp-for=\"RowVersion\"");
         journalShellSource.Should().Contain("<partial name=\"_JournalEntryForm\" model=\"Model\" />");
-        journalShellSource.Should().Contain("hx-get=\"@Url.Action(\"JournalEntries\", \"Billing\", new { businessId = Model.BusinessId })\"");
+        journalShellSource.Should().Contain("string JournalEntriesUrl(Guid? businessId) => Url.Action(\"JournalEntries\", \"Billing\", new { businessId }) ?? string.Empty;");
+        journalShellSource.Should().Contain("hx-get=\"@JournalEntriesUrl(Model.BusinessId)\"");
         journalShellSource.Should().Contain("@T.T(\"Back\")");
 
         journalFormSource.Should().Contain("asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\"");
         journalFormSource.Should().Contain("asp-for=\"EntryDateUtc\" type=\"date\" class=\"form-control\"");
         journalFormSource.Should().Contain("asp-for=\"Description\" class=\"form-control\"");
         journalFormSource.Should().Contain("@T.T(\"Lines\")");
-        journalFormSource.Should().Contain("id=\"addJournalLine\">@T.T(\"AddLine\")</button>");
+        journalFormSource.Should().Contain("id=\"addJournalLine\" data-dynamic-lines-add data-dynamic-lines-container=\"#journalLines\" data-dynamic-lines-template=\"#journalLineTemplate\"");
         journalFormSource.Should().Contain("id=\"journalLines\"");
         journalFormSource.Should().Contain("asp-for=\"Lines[i].AccountId\" asp-items=\"Model.AccountOptions\" class=\"form-select\"");
         journalFormSource.Should().Contain("asp-for=\"Lines[i].DebitMinor\" class=\"form-control\"");
@@ -3114,7 +3244,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         journalFormSource.Should().Contain("name=\"Lines[__index__].DebitMinor\" value=\"0\"");
         journalFormSource.Should().Contain("name=\"Lines[__index__].CreditMinor\" value=\"0\"");
         journalFormSource.Should().Contain("name=\"Lines[__index__].Memo\"");
-        journalFormSource.Should().Contain("class=\"btn btn-sm btn-outline-danger remove-line\">@T.T(\"Remove\")</button>");
+        journalFormSource.Should().Contain("class=\"btn btn-sm btn-outline-danger remove-line\" data-dynamic-lines-remove>@T.T(\"Remove\")</button>");
     }
 
 
@@ -3129,9 +3259,11 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         taxSource.Should().Contain("@T.T(\"TaxComplianceTitle\")");
         taxSource.Should().Contain("@T.T(\"TaxComplianceIntro\")");
         taxSource.Should().Contain("@T.T(\"TaxInvoicingReadiness\")");
-        taxSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
+        taxSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        taxSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
         taxSource.Should().Contain("@T.T(\"Payments\")");
-        taxSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" })\"");
+        taxSource.Should().Contain("string TaxSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" }) ?? string.Empty;");
+        taxSource.Should().Contain("hx-get=\"@TaxSettingsUrl()\"");
         taxSource.Should().Contain("@T.T(\"OpenTaxSettings\")");
         taxSource.Should().Contain("@T.T(\"ArchiveReadiness\")");
         taxSource.Should().Contain("@T.T(\"EInvoiceBaseline\")");
@@ -3150,9 +3282,11 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         taxSource.Should().Contain("@T.T(\"TaxComplianceOpenOrderAction\")");
         taxSource.Should().Contain("@T.T(\"TaxComplianceCustomerReviewTitle\")");
         taxSource.Should().Contain("@T.T(\"TaxComplianceNoCustomerFollowUp\")");
-        taxSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
+        taxSource.Should().Contain("string GlobalInvoicesUrl() => Url.Action(\"Invoices\", \"Crm\") ?? string.Empty;");
+        taxSource.Should().Contain("hx-get=\"@GlobalInvoicesUrl()\"");
         taxSource.Should().Contain("@T.T(\"ReviewInvoices\")");
-        taxSource.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\", new { filter = CustomerQueueFilter.MissingVatId })\"");
+        taxSource.Should().Contain("string CrmCustomersUrl(CustomerQueueFilter filter) => Url.Action(\"Customers\", \"Crm\", new { filter }) ?? string.Empty;");
+        taxSource.Should().Contain("hx-get=\"@CrmCustomersUrl(CustomerQueueFilter.MissingVatId)\"");
         taxSource.Should().Contain("@T.T(\"FixVatId\")");
 
         webhooksSource.Should().Contain("id=\"billing-webhooks-workspace-shell\"");
@@ -3167,12 +3301,16 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         webhooksSource.Should().Contain("@T.T(\"WebhookSupportPlaybooks\")");
         webhooksSource.Should().Contain("@T.T(\"ActiveWebhookSubscriptions\")");
         webhooksSource.Should().Contain("@T.T(\"NoWebhookSubscriptionsFound\")");
-        webhooksSource.Should().Contain("hx-get=\"@Url.Action(\"Webhooks\", \"Billing\")\"");
+        webhooksSource.Should().Contain("string GlobalBillingWebhooksUrl() => Url.Action(\"Webhooks\", \"Billing\") ?? string.Empty;");
+        webhooksSource.Should().Contain("hx-get=\"@GlobalBillingWebhooksUrl()\"");
+        webhooksSource.Should().Contain("string BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter queue) => Url.Action(\"Webhooks\", \"Billing\", new { queue }) ?? string.Empty;");
         webhooksSource.Should().Contain("@T.T(\"SearchWebhookDeliveriesPlaceholder\")");
         webhooksSource.Should().Contain("@T.T(\"AllDeliveries\")");
-        webhooksSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
+        webhooksSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        webhooksSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
         webhooksSource.Should().Contain("@T.T(\"PaymentsLabel\")");
-        webhooksSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-payments\" })\"");
+        webhooksSource.Should().Contain("string PaymentSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-payments\" }) ?? string.Empty;");
+        webhooksSource.Should().Contain("hx-get=\"@PaymentSettingsUrl()\"");
         webhooksSource.Should().Contain("@T.T(\"PaymentSettings\")");
         webhooksSource.Should().Contain("@T.T(\"NoWebhookDeliveriesFound\")");
         webhooksSource.Should().Contain("@T.T(\"InactiveSubscription\")");
@@ -3232,7 +3370,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         formSource.Should().Contain("asp-validation-for=\"Translations[i].DescriptionHtml\" class=\"text-danger\"");
         formSource.Should().Contain("type=\"submit\" class=\"btn btn-primary\"");
         formSource.Should().Contain("@T.T(\"Save\")");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Brands\")\"");
+        formSource.Should().Contain("string BrandsIndexUrl() => Url.Action(\"Index\", \"Brands\") ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@BrandsIndexUrl()\"");
         formSource.Should().Contain("@T.T(\"Back\")");
     }
 
@@ -3265,7 +3404,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         createSource.Should().Contain("CategorySlugHelp");
         createSource.Should().Contain("asp-for=\"Translations[@i].Description\"");
         createSource.Should().Contain("CategoryDescriptionHelp");
-        createSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Categories\")\"");
+        createSource.Should().Contain("string CategoriesIndexUrl() => Url.Action(\"Index\", \"Categories\") ?? string.Empty;");
+        createSource.Should().Contain("hx-get=\"@CategoriesIndexUrl()\"");
         createSource.Should().Contain("@T.T(\"Back\")");
         createSource.Should().Contain("@T.T(\"Create\")");
 
@@ -3294,7 +3434,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         editSource.Should().Contain("asp-for=\"Translations[@i].Slug\"");
         editSource.Should().Contain("asp-validation-for=\"Translations[@i].Slug\"");
         editSource.Should().Contain("textarea asp-for=\"Translations[@i].Description\"");
-        editSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Categories\")\"");
+        editSource.Should().Contain("string CategoriesIndexUrl() => Url.Action(\"Index\", \"Categories\") ?? string.Empty;");
+        editSource.Should().Contain("hx-get=\"@CategoriesIndexUrl()\"");
         editSource.Should().Contain("@T.T(\"Back\")");
         editSource.Should().Contain("@T.T(\"Save\")");
     }
@@ -3314,7 +3455,9 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         createSource.Should().Contain("hx-post=\"@Url.Action(\"Create\", \"Pages\")\"");
         createSource.Should().Contain("@Html.AntiForgeryToken()");
         createSource.Should().Contain("<partial name=\"_PageForm\" model=\"Model\" />");
-        createSource.Should().Contain("<partial name=\"_PageEditorScript\" />");
+        createSource.Should().Contain("data-page-editor-placeholder=\"@T.T(\"PageEditorPlaceholder\")\"");
+        createSource.Should().Contain("data-page-image-upload-url=\"@Url.Action(\"UploadQuill\", \"Media\")\"");
+        createSource.Should().NotContain("<partial name=\"_PageEditorScript\" />");
 
         editSource.Should().Contain("id=\"page-editor-shell\"");
         editSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
@@ -3326,7 +3469,9 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         editSource.Should().Contain("<partial name=\"_PageForm\" model=\"Model\" />");
-        editSource.Should().Contain("<partial name=\"_PageEditorScript\" />");
+        editSource.Should().Contain("data-page-editor-placeholder=\"@T.T(\"PageEditorPlaceholder\")\"");
+        editSource.Should().Contain("data-page-image-upload-url=\"@Url.Action(\"UploadQuill\", \"Media\")\"");
+        editSource.Should().NotContain("<partial name=\"_PageEditorScript\" />");
     }
 
 
@@ -3366,7 +3511,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("content=\"@T.T(\"PageContentHelpContent\")\"");
         source.Should().Contain("id=\"page-quill-editor-@i\" class=\"border rounded\" data-page-quill-editor=\"true\"");
         source.Should().Contain("<textarea asp-for=\"Translations[@i].ContentHtml\" class=\"d-none\"></textarea>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Pages\")\"");
+        source.Should().Contain("string PagesIndexUrl() => Url.Action(\"Index\", \"Pages\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@PagesIndexUrl()\"");
         source.Should().Contain("hx-target=\"#page-editor-shell\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"Back\")</a>");
         source.Should().Contain("<button type=\"submit\" class=\"btn btn-primary\">@T.T(\"Save\")</button>");
@@ -3376,44 +3522,42 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
     [Fact]
     public void PageEditorScript_Should_KeepQuillUploadAndSubmitSyncContractsWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Views", "Pages", "_PageEditorScript.cshtml"));
+        var source = ReadWebAdminFile(Path.Combine("wwwroot", "js", "content-editors.js"));
 
-        source.Should().Contain("window.darwinAdmin.initPageEditors = window.darwinAdmin.initPageEditors || function (root)");
+        source.Should().Contain("window.darwinAdmin.initPageEditors = function (root)");
         source.Should().Contain("if (!window.Quill)");
-        source.Should().Contain("const pageEditorQuillNotLoaded = '@T.T(\"PageEditorQuillNotLoaded\")';");
-        source.Should().Contain("console.error(pageEditorQuillNotLoaded);");
-        source.Should().Contain("scope.querySelectorAll('[data-page-quill-editor=\"true\"]').forEach(function (el)");
+        source.Should().Contain("console.error(options.notLoadedMessage);");
+        source.Should().Contain("scope.querySelectorAll(selector).forEach(function (el)");
+        source.Should().Contain("initEditors(scope, '[data-page-quill-editor=\"true\"]', {");
         source.Should().Contain("if (el.dataset.quillInitialized === 'true')");
-        source.Should().Contain("const quill = new Quill(el, {");
+        source.Should().Contain("const quillOptions = {");
+        source.Should().Contain("const quill = new Quill(el, quillOptions);");
         source.Should().Contain("theme: 'snow',");
-        source.Should().Contain("const pageEditorPlaceholder = '@T.T(\"PageEditorPlaceholder\")';");
-        source.Should().Contain("const pageImageUploadFailed = '@T.T(\"PageImageUploadFailed\")';");
-        source.Should().Contain("const pageEditorUploadFailedError = '@T.T(\"PageEditorUploadFailedError\")';");
-        source.Should().Contain("placeholder: pageEditorPlaceholder,");
+        source.Should().Contain("placeholder: options.placeholder,");
         source.Should().Contain("['link', 'image', 'video']");
         source.Should().Contain("image: function () {");
         source.Should().Contain("input.type = 'file';");
         source.Should().Contain("input.accept = 'image/*';");
         source.Should().Contain("const formData = new FormData();");
         source.Should().Contain("formData.append('file', file);");
-        source.Should().Contain("fetch('@Url.Action(\"UploadQuill\", \"Media\")', {");
+        source.Should().Contain("fetch(uploadUrl, {");
         source.Should().Contain("method: 'POST',");
-        source.Should().Contain("throw new Error(pageEditorUploadFailedError);");
+        source.Should().Contain("throw new Error(uploadFailedError);");
         source.Should().Contain("const json = await resp.json();");
         source.Should().Contain("quill.insertEmbed(range.index, 'image', json.url);");
-        source.Should().Contain("alert(pageImageUploadFailed);");
+        source.Should().Contain("alert(uploadFailedMessage);");
         source.Should().Contain("const hidden = el.parentElement.querySelector('textarea');");
         source.Should().Contain("quill.root.innerHTML = hidden.value;");
-        source.Should().Contain("const form = el.closest('form');");
-        source.Should().Contain("if (form && form.dataset.pageQuillSubmitBound !== 'true')");
+        source.Should().Contain("bindSubmit(el.closest('form'), selector, options.submitDataKey);");
         source.Should().Contain("form.addEventListener('submit', function () {");
-        source.Should().Contain("form.querySelectorAll('[data-page-quill-editor=\"true\"]').forEach(function (editorEl)");
+        source.Should().Contain("form.querySelectorAll(selector).forEach(function (editorEl)");
         source.Should().Contain("if (editorHidden && editorEl.__quill)");
         source.Should().Contain("editorHidden.value = editorEl.__quill.root.innerHTML;");
-        source.Should().Contain("form.dataset.pageQuillSubmitBound = 'true';");
+        source.Should().Contain("form.dataset[dataKey] = 'true';");
         source.Should().Contain("el.__quill = quill;");
         source.Should().Contain("el.dataset.quillInitialized = 'true';");
-        source.Should().Contain("window.darwinAdmin.initPageEditors(document.getElementById('page-editor-shell') || document);");
+        source.Should().Contain("document.addEventListener('DOMContentLoaded', function ()");
+        source.Should().Contain("document.body.addEventListener('htmx:afterSwap', function (event)");
     }
 
 
@@ -3436,7 +3580,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         createSource.Should().Contain("asp-for=\"DisplayName\" class=\"form-control\"");
         createSource.Should().Contain("@T.T(\"AdminDisplayNameHelp\")");
         createSource.Should().Contain("asp-for=\"Description\" class=\"form-control\"");
-        createSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\")\"");
+        createSource.Should().Contain("string PermissionsIndexUrl() => Url.Action(\"Index\", \"Permissions\") ?? string.Empty;");
+        createSource.Should().Contain("hx-get=\"@PermissionsIndexUrl()\"");
         createSource.Should().Contain("@T.T(\"Back\")");
         createSource.Should().Contain("@T.T(\"Create\")");
 
@@ -3457,7 +3602,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         editSource.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Permissions\")\"");
         editSource.Should().Contain("data-rowversion=\"@Convert.ToBase64String(Model.RowVersion)\"");
         editSource.Should().Contain("data-name=\"@Model.Key\"");
-        editSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\")\"");
+        editSource.Should().Contain("string PermissionsIndexUrl() => Url.Action(\"Index\", \"Permissions\") ?? string.Empty;");
+        editSource.Should().Contain("hx-get=\"@PermissionsIndexUrl()\"");
         editSource.Should().Contain("@T.T(\"Back\")");
         editSource.Should().Contain("@T.T(\"Save\")");
         editSource.Should().Contain("<partial name=\"~/Views/Shared/_ConfirmDeleteModal.cshtml\" />");
@@ -3481,10 +3627,9 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         createSource.Should().Contain("hx-post=\"@Url.Action(\"Create\", \"Products\")\"");
         createSource.Should().Contain("@Html.AntiForgeryToken()");
         createSource.Should().Contain("<partial name=\"_ProductForm\" model=\"Model\" />");
-        createSource.Should().Contain("window.darwinAdmin.initProductEditors = window.darwinAdmin.initProductEditors || function (root)");
-        createSource.Should().Contain("placeholder: '@T.T(\"ProductDescriptionPlaceholder\")'");
-        createSource.Should().Contain("form.dataset.quillSubmitBound = 'true';");
-        createSource.Should().Contain("window.darwinAdmin.initProductEditors(document.getElementById('product-editor-shell') || document);");
+        createSource.Should().Contain("data-product-description-placeholder=\"@T.T(\"ProductDescriptionPlaceholder\")\"");
+        createSource.Should().NotContain("window.darwinAdmin.initProductEditors");
+        createSource.Should().NotContain("placeholder: '@T.T(\"ProductDescriptionPlaceholder\")'");
 
         editSource.Should().Contain("id=\"product-editor-shell\"");
         editSource.Should().Contain("@T.T(\"EditProduct\")");
@@ -3501,6 +3646,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         editSource.Should().Contain("<partial name=\"_ProductForm\" model=\"Model\" />");
+        editSource.Should().Contain("data-product-description-placeholder=\"@T.T(\"ProductDescriptionPlaceholder\")\"");
 
         formSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         formSource.Should().Contain("<div asp-validation-summary=\"All\" class=\"text-danger mb-3\"></div>");
@@ -3533,7 +3679,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         formSource.Should().Contain("asp-for=\"Variants[@j].TaxCategoryId\" class=\"form-select\"");
         formSource.Should().Contain("ViewBag.TaxCategories");
         formSource.Should().Contain("@T.T(\"MinorUnitsHelp\")");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Products\")\"");
+        formSource.Should().Contain("string ProductsIndexUrl() => Url.Action(\"Index\", \"Products\") ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@ProductsIndexUrl()\"");
         formSource.Should().Contain("@T.T(\"Back\")");
         formSource.Should().Contain("@T.T(\"Save\")");
     }
@@ -3547,10 +3694,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("ViewData[\"Title\"] = T.T(\"BusinessStaffAccessBadgeTitle\")");
         source.Should().Contain("id=\"business-staff-access-badge-shell\"");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeTitle\")");
-        source.Should().Contain("@Url.Action(\"StaffAccessBadge\", \"Businesses\", new { id = Model.MembershipId })");
+        source.Should().Contain("@StaffAccessBadgeUrl(Model.MembershipId)");
         source.Should().Contain("@T.T(\"RefreshBadgeAction\")");
-        source.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\", new { q = Model.UserEmail })");
-        source.Should().Contain("@Url.Action(\"Accounts\", \"Loyalty\", new { q = Model.UserEmail })");
+        source.Should().Contain("@MobileOperationsUrl(Model.Business.Id, Model.UserEmail)");
+        source.Should().Contain("@LoyaltyAccountsUrl(Model.UserEmail)");
         source.Should().Contain("@T.T(\"Loyalty\")");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgePreviewTitle\")");
         source.Should().Contain("src=\"@Model.BadgeImageDataUrl\"");
@@ -3593,14 +3740,15 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
 
         setupShellSource.Should().Contain("@T.T(\"BusinessProfile\")");
-        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"TaxCompliance\", \"Billing\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@BusinessCommunicationsDetailsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@TaxComplianceUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"LocalizationOperationalDefaults\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSetupLocalizationOwnershipIntro\")");
-        setupShellSource.Should().Contain("fragment = \"site-settings-localization\"");
-        setupShellSource.Should().Contain("@Url.Action(\"Customers\", \"Crm\")");
-        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-localization\")");
+        setupShellSource.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
+        setupShellSource.Should().Contain("@GlobalCrmCustomersUrl()");
+        setupShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"CustomerLocaleReview\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
     }
@@ -3614,9 +3762,9 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         setupShellSource.Should().Contain("@T.T(\"Branding\")");
         setupShellSource.Should().Contain("@T.T(\"BrandDisplayName\")");
         setupShellSource.Should().Contain("@T.T(\"BrandLogoUrl\")");
-        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-business-app\" })");
-        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-business-app\")");
+        setupShellSource.Should().Contain("@BusinessCommunicationsDetailsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"BusinessApp\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationProfileTitle\")");
         setupShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
@@ -3629,20 +3777,20 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
 
         setupShellSource.Should().Contain("@T.T(\"OperationalSetupActions\")");
-        setupShellSource.Should().Contain("@Url.Action(\"CreateMember\", \"Businesses\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"CreateLocation\", \"Businesses\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"CreateInvitation\", \"Businesses\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"OwnerOverrideAudits\", \"Businesses\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })");
-        setupShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked })");
-        setupShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        setupShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired })");
-        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@BusinessCreateMemberUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessCreateLocationUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessCreateInvitationUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessOwnerOverrideAuditsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
+        setupShellSource.Should().Contain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
+        setupShellSource.Should().Contain("@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
+        setupShellSource.Should().Contain("@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)");
+        setupShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
         setupShellSource.Should().Contain("string MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch");
         setupShellSource.Should().Contain("@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         setupShellSource.Should().Contain("@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
-        setupShellSource.Should().NotContain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })\"\r\n                       hx-target=\"#business-setup-shell\"\r\n                       hx-swap=\"outerHTML\"\r\n                       hx-push-url=\"true\">@T.T(\"PendingActivation\")</a>");
-        setupShellSource.Should().NotContain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked })\"\r\n                       hx-target=\"#business-setup-shell\"\r\n                       hx-swap=\"outerHTML\"\r\n                       hx-push-url=\"true\">@T.T(\"UsersFilterLocked\")</a>");
+        setupShellSource.Should().NotContain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)\"\r\n                       hx-target=\"#business-setup-shell\"\r\n                       hx-swap=\"outerHTML\"\r\n                       hx-push-url=\"true\">@T.T(\"PendingActivation\")</a>");
+        setupShellSource.Should().NotContain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)\"\r\n                       hx-target=\"#business-setup-shell\"\r\n                       hx-swap=\"outerHTML\"\r\n                       hx-push-url=\"true\">@T.T(\"UsersFilterLocked\")</a>");
         setupShellSource.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
         setupShellSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         setupShellSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
@@ -3661,35 +3809,35 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         setupShellSource.Should().Contain("@T.T(\"BusinessSetupPlatformDependenciesIntro\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSetupPlatformDependenciesRule\")");
-        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
-        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        setupShellSource.Should().Contain("fragment = \"site-settings-communications-policy\"");
-        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"Businesses\", new { id = Model.Id })");
+        setupShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-communications-policy\")");
+        setupShellSource.Should().Contain("@BusinessEditUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"OpenGlobalSettings\")");
         setupShellSource.Should().Contain("@T.T(\"EditBusiness\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaults\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaultsHelp\")");
-        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@BusinessCommunicationsDetailsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@ChannelAuditsUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"BusinessSetupPaymentsShippingTitle\")");
-        setupShellSource.Should().Contain("fragment = \"site-settings-payments\"");
-        setupShellSource.Should().Contain("fragment = \"site-settings-shipping\"");
-        setupShellSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-payments\")");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-shipping\")");
+        setupShellSource.Should().Contain("@PaymentsUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"OpenPayments\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSetupSecurityMobileAccessTitle\")");
-        setupShellSource.Should().Contain("fragment = \"site-settings-security\"");
-        setupShellSource.Should().Contain("fragment = \"site-settings-mobile\"");
-        setupShellSource.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\")");
-        setupShellSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-security\")");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-mobile\")");
+        setupShellSource.Should().Contain("@MobileOperationsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         setupShellSource.Should().Contain("@T.T(\"MobileOperationsTitle\")");
         setupShellSource.Should().Contain("@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         setupShellSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"UsersFilterLocked\")</a>");
         setupShellSource.Should().Contain("@T.T(\"Communications\")");
-        setupShellSource.Should().Contain("fragment = \"site-settings-smtp\"");
-        setupShellSource.Should().Contain("fragment = \"site-settings-sms\"");
-        setupShellSource.Should().Contain("fragment = \"site-settings-whatsapp\"");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-smtp\")");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-sms\")");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-whatsapp\")");
         setupShellSource.Should().Contain("string CommunicationChannelLabel(string channel) => string.Equals(channel, \"WhatsApp\", StringComparison.OrdinalIgnoreCase)");
         setupShellSource.Should().Contain("? T.T(\"BusinessCommunicationWhatsAppShort\")");
         setupShellSource.Should().Contain(": T.T(\"SMS\");");
@@ -3697,9 +3845,9 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         setupShellSource.Should().Contain("@CommunicationChannelLabel(\"WhatsApp\")");
         setupShellSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"SMS\")</a>");
         setupShellSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"WhatsApp\")</a>");
-        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
+        setupShellSource.Should().Contain("@BusinessCommunicationsDetailsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@ChannelAuditsUrl(Model.Id)");
     }
 
 
@@ -3709,10 +3857,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
 
         setupShellSource.Should().Contain("@T.T(\"BusinessSetupSaveAction\")");
-        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"Businesses\", new { id = Model.Id })");
+        setupShellSource.Should().Contain("@BusinessEditUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"BusinessMembersBackToBusinessAction\")");
-        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
-        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        setupShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
     }
@@ -3724,17 +3872,17 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         var locationShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessLocationEditorShell.cshtml"));
         var invitationShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessInvitationEditorShell.cshtml"));
 
-        locationShellSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
-        locationShellSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.BusinessId })");
-        locationShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        locationShellSource.Should().Contain("@BusinessLocationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
+        locationShellSource.Should().Contain("@BusinessSetupUrl(Model.BusinessId)");
+        locationShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
         locationShellSource.Should().Contain("@T.T(\"BusinessLocationBackToLocations\")");
         locationShellSource.Should().Contain("@T.T(\"Setup\")");
         locationShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
         locationShellSource.Should().Contain("mt-4");
 
-        invitationShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
-        invitationShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        invitationShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        invitationShellSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
+        invitationShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
+        invitationShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
         invitationShellSource.Should().Contain("@T.T(\"BusinessInvitationBackToInvitations\")");
         invitationShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
         invitationShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
@@ -3928,31 +4076,49 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         attachCategoriesSource.Should().Contain("id=\"add-on-group-attach-categories-shell\"");
         attachCategoriesSource.Should().Contain("asp-action=\"AttachToCategories\"");
-        attachCategoriesSource.Should().Contain("hx-get=\"@Url.Action(\"AttachToCategories\", \"AddOnGroups\")\"");
+        attachCategoriesSource.Should().Contain("string AttachAddOnGroupToCategoriesSearchUrl() => Url.Action(\"AttachToCategories\", \"AddOnGroups\") ?? string.Empty;");
+        attachCategoriesSource.Should().Contain("string AttachAddOnGroupToCategoriesUrl(Guid id) => Url.Action(\"AttachToCategories\", \"AddOnGroups\", new { id }) ?? string.Empty;");
+        attachCategoriesSource.Should().Contain("hx-get=\"@AttachAddOnGroupToCategoriesSearchUrl()\"");
+        attachCategoriesSource.Should().Contain("hx-get=\"@AttachAddOnGroupToCategoriesUrl(Model.AddOnGroupId)\"");
         attachCategoriesSource.Should().Contain("name=\"SelectedCategoryIds\"");
         attachCategoriesSource.Should().Contain("@T.T(\"AddOnNoCategories\")");
         attachCategoriesSource.Should().Contain("@T.T(\"AddOnSaveAttachments\")");
+        attachCategoriesSource.Should().Contain("string AddOnGroupsIndexUrl() => Url.Action(\"Index\", \"AddOnGroups\") ?? string.Empty;");
+        attachCategoriesSource.Should().Contain("hx-get=\"@AddOnGroupsIndexUrl()\"");
         attachCategoriesSource.Should().Contain("asp-route-id=\"@Model.AddOnGroupId\"");
         attachCategoriesSource.Should().Contain("hx-target=\"#add-on-group-attach-categories-shell\"");
 
         attachBrandsSource.Should().Contain("id=\"add-on-group-attach-brands-shell\"");
         attachBrandsSource.Should().Contain("asp-action=\"AttachToBrands\"");
-        attachBrandsSource.Should().Contain("hx-get=\"@Url.Action(\"AttachToBrands\", \"AddOnGroups\")\"");
+        attachBrandsSource.Should().Contain("string AttachAddOnGroupToBrandsSearchUrl() => Url.Action(\"AttachToBrands\", \"AddOnGroups\") ?? string.Empty;");
+        attachBrandsSource.Should().Contain("string AttachAddOnGroupToBrandsUrl(Guid id) => Url.Action(\"AttachToBrands\", \"AddOnGroups\", new { id }) ?? string.Empty;");
+        attachBrandsSource.Should().Contain("hx-get=\"@AttachAddOnGroupToBrandsSearchUrl()\"");
+        attachBrandsSource.Should().Contain("hx-get=\"@AttachAddOnGroupToBrandsUrl(Model.AddOnGroupId)\"");
         attachBrandsSource.Should().Contain("name=\"SelectedBrandIds\"");
         attachBrandsSource.Should().Contain("@T.T(\"AddOnNoBrands\")");
         attachBrandsSource.Should().Contain("@T.T(\"AddOnSaveAttachments\")");
+        attachBrandsSource.Should().Contain("string AddOnGroupsIndexUrl() => Url.Action(\"Index\", \"AddOnGroups\") ?? string.Empty;");
+        attachBrandsSource.Should().Contain("hx-get=\"@AddOnGroupsIndexUrl()\"");
         attachBrandsSource.Should().Contain("asp-route-id=\"@Model.AddOnGroupId\"");
         attachBrandsSource.Should().Contain("hx-target=\"#add-on-group-attach-brands-shell\"");
 
         attachVariantsSource.Should().Contain("id=\"add-on-group-attach-variants-shell\"");
-        attachVariantsSource.Should().Contain("hx-get=\"@Url.Action(\"AttachToVariants\", \"AddOnGroups\")\"");
+        attachVariantsSource.Should().Contain("string AttachAddOnGroupToVariantsUrl() => Url.Action(\"AttachToVariants\", \"AddOnGroups\") ?? string.Empty;");
+        attachVariantsSource.Should().Contain("hx-get=\"@AttachAddOnGroupToVariantsUrl()\"");
+        attachVariantsSource.Should().Contain("string AddOnGroupsIndexUrl() => Url.Action(\"Index\", \"AddOnGroups\") ?? string.Empty;");
+        attachVariantsSource.Should().Contain("hx-get=\"@AddOnGroupsIndexUrl()\"");
         attachVariantsSource.Should().Contain("name=\"q\" value=\"@Model.Query\"");
         attachVariantsSource.Should().Contain("id=\"selected-container\"");
         attachVariantsSource.Should().Contain("name=\"SelectedVariantIds\"");
         attachVariantsSource.Should().Contain("asp-for=\"RowVersion\"");
         attachVariantsSource.Should().Contain("asp-route-q=\"@Model.Query\"");
-        attachVariantsSource.Should().Contain("document.querySelectorAll('input.sel').forEach(cb => {");
-        attachVariantsSource.Should().Contain("hid.dataset.bindId = id;");
+        attachCategoriesSource.Should().Contain("data-addon-selection-scope");
+        attachCategoriesSource.Should().Contain("data-addon-toggle-all");
+        attachCategoriesSource.Should().Contain("data-addon-row-check");
+        attachBrandsSource.Should().Contain("data-addon-selection-scope");
+        attachBrandsSource.Should().Contain("data-addon-toggle-all");
+        attachBrandsSource.Should().Contain("data-addon-row-check");
+        attachVariantsSource.Should().Contain("data-addon-variant-selection");
     }
 
 
@@ -3960,6 +4126,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
     public void AddOnGroupOptionsEditor_Should_KeepNestedOptionAndValueTemplateContractsWired()
     {
         var optionsEditorSource = ReadWebAdminFile(Path.Combine("Views", "AddOnGroups", "_OptionsEditor.cshtml"));
+        var addOnGroupsJsSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "add-on-groups.js"));
 
         optionsEditorSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupEditorVm");
         optionsEditorSource.Should().Contain("id=\"options-editor\" data-options-prefix=\"Options\"");
@@ -3972,12 +4139,16 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         optionsEditorSource.Should().Contain("data-remove-option");
         optionsEditorSource.Should().Contain("data-add-value");
         optionsEditorSource.Should().Contain("data-remove-value");
-        optionsEditorSource.Should().Contain("const prefix = root.getAttribute('data-options-prefix') || 'Options';");
-        optionsEditorSource.Should().Contain("const renderValue = (i, j) => `");
-        optionsEditorSource.Should().Contain("name=\"${prefix}[${i}].Values[${j}].PriceDeltaMinor\"");
-        optionsEditorSource.Should().Contain("const renderOption = (i) => `");
-        optionsEditorSource.Should().Contain("valuesContainer.insertAdjacentHTML('beforeend', renderValue(i, j));");
-        optionsEditorSource.Should().Contain("if (target.hasAttribute('data-remove-value'))");
+        optionsEditorSource.Should().Contain("id=\"addOnOptionTemplate\"");
+        optionsEditorSource.Should().Contain("id=\"addOnValueTemplate\"");
+        optionsEditorSource.Should().Contain("name=\"__prefix__[__i__].Values[__j__].PriceDeltaMinor\"");
+        optionsEditorSource.Should().Contain("<div class=\"values-container\">__value__</div>");
+        optionsEditorSource.Should().NotContain("<script>");
+        addOnGroupsJsSource.Should().Contain("function initOptionsEditor(root)");
+        addOnGroupsJsSource.Should().Contain("const prefix = editor.getAttribute('data-options-prefix') || 'Options';");
+        addOnGroupsJsSource.Should().Contain("return renderTemplate(optionTemplate, prefix, optionIndex, 0, renderValue(optionIndex, 0));");
+        addOnGroupsJsSource.Should().Contain("valuesContainer.insertAdjacentHTML('beforeend', renderValue(optionIndex, valueIndex));");
+        addOnGroupsJsSource.Should().Contain("target.closest('.value-item')?.remove();");
     }
 
 
@@ -3987,15 +4158,14 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         var createShellSource = ReadWebAdminFile(Path.Combine("Views", "AddOnGroups", "_AddOnGroupCreateEditorShell.cshtml"));
         var editShellSource = ReadWebAdminFile(Path.Combine("Views", "AddOnGroups", "_AddOnGroupEditEditorShell.cshtml"));
         var formSource = ReadWebAdminFile(Path.Combine("Views", "AddOnGroups", "_AddOnGroupForm.cshtml"));
+        var addOnGroupsJsSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "add-on-groups.js"));
 
         createShellSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupCreateVm");
         createShellSource.Should().Contain("id=\"add-on-group-editor-shell\"");
         createShellSource.Should().Contain("asp-action=\"Create\"");
         createShellSource.Should().Contain("hx-post=\"@Url.Action(\"Create\", \"AddOnGroups\")\"");
         createShellSource.Should().Contain("<partial name=\"_AddOnGroupForm\" model=\"Model\" />");
-        createShellSource.Should().Contain("const currency = shell.querySelector('#Currency');");
-        createShellSource.Should().Contain("currency.dataset.uppercaseBound = 'true';");
-        createShellSource.Should().Contain("this.value = this.value.toUpperCase();");
+        createShellSource.Should().NotContain("<script>");
 
         editShellSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupEditVm");
         editShellSource.Should().Contain("asp-action=\"Edit\"");
@@ -4003,14 +4173,14 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         editShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
         editShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         editShellSource.Should().Contain("<partial name=\"_AddOnGroupForm\" model=\"Model\" />");
-        editShellSource.Should().Contain("const currency = shell.querySelector('#Currency');");
-        editShellSource.Should().Contain("this.value = this.value.toUpperCase();");
+        editShellSource.Should().NotContain("<script>");
 
         formSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupEditorVm");
         formSource.Should().Contain("asp-validation-summary=\"All\"");
         formSource.Should().Contain("asp-for=\"Name\"");
         formSource.Should().Contain("asp-for=\"Currency\"");
         formSource.Should().Contain("maxlength=\"3\"");
+        formSource.Should().Contain("data-addon-currency-uppercase");
         formSource.Should().Contain("asp-for=\"SelectionMode\"");
         formSource.Should().Contain("var selectionModeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.AddOnSelectionMode>().Select");
         formSource.Should().Contain("Text = T.T(option.Text)");
@@ -4023,6 +4193,13 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         formSource.Should().Contain("hx-target=\"#add-on-groups-workspace-shell\"");
         formSource.Should().Contain("@T.T(\"Save\")");
         formSource.Should().Contain("@T.T(\"Back\")");
+
+        addOnGroupsJsSource.Should().Contain("event.target.closest('[data-addon-toggle-all]')");
+        addOnGroupsJsSource.Should().Contain("scope.querySelectorAll('[data-addon-row-check]')");
+        addOnGroupsJsSource.Should().Contain("event.target.closest('[data-addon-variant-selection]')");
+        addOnGroupsJsSource.Should().Contain("hidden.dataset.bindId = id;");
+        addOnGroupsJsSource.Should().Contain("event.target.closest('[data-addon-currency-uppercase]')");
+        addOnGroupsJsSource.Should().Contain("input.value = input.value.toUpperCase();");
     }
 
 
@@ -4428,16 +4605,14 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         createJournalEntryViewSource.Should().Contain("ViewData[\"IsCreate\"] = true;");
         createJournalEntryViewSource.Should().Contain("<partial name=\"~/Views/Billing/_JournalEntryEditorShell.cshtml\" model=\"Model\" />");
         createJournalEntryViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
-        createJournalEntryViewSource.Should().Contain("event.target.closest('#addJournalLine')");
-        createJournalEntryViewSource.Should().Contain("template.innerHTML.replaceAll('__index__'");
+        createJournalEntryViewSource.Should().NotContain("<script>");
 
         editJournalEntryViewSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.Billing.JournalEntryEditVm");
         editJournalEntryViewSource.Should().Contain("ViewData[\"Title\"] = T.T(\"EditJournalEntry\");");
         editJournalEntryViewSource.Should().Contain("ViewData[\"IsCreate\"] = false;");
         editJournalEntryViewSource.Should().Contain("<partial name=\"~/Views/Billing/_JournalEntryEditorShell.cshtml\" model=\"Model\" />");
         editJournalEntryViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
-        editJournalEntryViewSource.Should().Contain("event.target.closest('#addJournalLine')");
-        editJournalEntryViewSource.Should().Contain("button.closest('.line-row')?.remove();");
+        editJournalEntryViewSource.Should().NotContain("<script>");
     }
 
 

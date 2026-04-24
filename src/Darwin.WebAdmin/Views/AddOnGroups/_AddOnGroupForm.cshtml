@@ -1,7 +1,10 @@
 ﻿@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupEditorVm
 
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
-@{ var selectionModeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.AddOnSelectionMode>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) }); }
+@{
+    var selectionModeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.AddOnSelectionMode>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
+    string AddOnGroupsIndexUrl() => Url.Action("Index", "AddOnGroups") ?? string.Empty;
+}
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
 <div class="card mb-3">
@@ -14,7 +17,7 @@
 
         <div class="col-md-3">
             <label asp-for="Currency" class="form-label"></label>
-            <input asp-for="Currency" class="form-control" maxlength="3" />
+            <input asp-for="Currency" class="form-control" maxlength="3" data-addon-currency-uppercase />
             <span asp-validation-for="Currency" class="text-danger"></span>
         </div>
 
@@ -57,7 +60,7 @@
 <div class="mt-3">
     <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
     <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Index", "AddOnGroups")"
+       hx-get="@AddOnGroupsIndexUrl()"
        hx-target="#add-on-groups-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Back")</a>

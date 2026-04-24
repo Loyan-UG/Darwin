@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (ViewData["IsCreate"] as bool?) ?? false;
+    string GlobalBillingPlansUrl() => Url.Action("Plans", "Billing") ?? string.Empty;
 }
 
 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -10,7 +11,7 @@
         <p class="text-muted mb-0">@T.T("BillingPlansIntro")</p>
     </div>
     <a asp-action="Plans" class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Plans", "Billing")"
+       hx-get="@GlobalBillingPlansUrl()"
        hx-target="#billing-plan-editor-shell"
        hx-swap="outerHTML"
        hx-push-url="true">

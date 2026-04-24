@@ -6,3 +6,87 @@
     font-weight: 600;
     border-left: 3px solid currentColor;
 }
+
+.admin-w-40 {
+    width: 40px;
+}
+
+.admin-w-80 {
+    width: 80px;
+}
+
+.admin-w-120 {
+    width: 120px;
+}
+
+.admin-w-140 {
+    width: 140px;
+}
+
+.admin-w-160 {
+    width: 160px;
+}
+
+.admin-w-180 {
+    width: 180px;
+}
+
+.admin-w-220 {
+    width: 220px;
+}
+
+.admin-w-240 {
+    width: 240px;
+}
+
+.admin-w-290 {
+    width: 290px;
+}
+
+.admin-w-320 {
+    width: 320px;
+}
+
+.admin-w-360 {
+    width: 360px;
+}
+
+.admin-w-380 {
+    width: 380px;
+}
+
+.admin-w-410 {
+    width: 410px;
+}
+
+.admin-w-420 {
+    width: 420px;
+}
+
+.admin-w-440 {
+    width: 440px;
+}
+
+.admin-w-520 {
+    width: 520px;
+}
+
+.admin-min-w-220 {
+    min-width: 220px;
+}
+
+.admin-min-w-240 {
+    min-width: 240px;
+}
+
+.admin-logo {
+    max-height: 40px;
+}
+
+.admin-auth-logo {
+    max-height: 140px;
+}
+
+.admin-qr {
+    max-width: 320px;
+}

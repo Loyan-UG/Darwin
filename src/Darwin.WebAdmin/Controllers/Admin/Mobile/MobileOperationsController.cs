@@ -41,6 +41,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         [HttpGet]
         public async Task<IActionResult> Index(
             string? q = null,
+            Guid? businessId = null,
             MobilePlatform? platform = null,
             string? state = null,
             int page = 1,
@@ -57,7 +58,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             var support = await _getBusinessSupportSummary.HandleAsync(ct: ct).ConfigureAwait(false);
             var comms = await _getCommunicationSummary.HandleAsync(ct: ct).ConfigureAwait(false);
             var deviceSummary = await _getDeviceSummary.HandleAsync(ct).ConfigureAwait(false);
-            var devicesPage = await _getDevicesPage.HandleAsync(page, pageSize, q, platform, state, ct).ConfigureAwait(false);
+            var devicesPage = await _getDevicesPage.HandleAsync(page, pageSize, q, platform, state, businessId, ct).ConfigureAwait(false);
 
             var vm = new MobileOperationsVm
             {
@@ -102,11 +103,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                     LastSeenAtUtc = x.LastSeenAtUtc
                 }).ToList(),
                 Query = q ?? string.Empty,
+                BusinessId = businessId,
                 PlatformFilter = platform,
                 StateFilter = state ?? string.Empty,
                 PlatformItems = BuildPlatformItems(platform),
                 StateItems = BuildStateItems(state),
-                Playbooks = BuildPlaybooks(),
+                Playbooks = BuildPlaybooks(businessId),
                 Devices = devicesPage.Items.Select(x => new MobileDeviceOpsListItemVm
                 {
                     Id = x.Id,
@@ -134,7 +136,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
+        public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
             var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
             if (result.Succeeded)
@@ -146,12 +148,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                 SetErrorMessage("MobilePushTokenClearFailed");
             }
 
-            return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
+            return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
+        public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
             var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
             if (result.Succeeded)
@@ -163,7 +165,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                 SetErrorMessage("MobileDeviceDeactivateFailed");
             }
 
-            return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
+            return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
         }
 
         private IActionResult RenderIndex(MobileOperationsVm vm)
@@ -192,7 +194,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private List<MobileOpsPlaybookVm> BuildPlaybooks()
+        private List<MobileOpsPlaybookVm> BuildPlaybooks(Guid? businessId)
         {
             return new List<MobileOpsPlaybookVm>
             {
@@ -202,7 +204,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                     ScopeNote = T("MobilePlaybookPushDebtScope"),
                     OperatorAction = T("MobilePlaybookPushDebtAction"),
                     QueueActionLabel = T("MobileMissingPushToken"),
-                    QueueActionUrl = Url.Action(nameof(Index), "MobileOperations", new { state = "missing-push" }) ?? string.Empty,
+                    QueueActionUrl = Url.Action(nameof(Index), "MobileOperations", new { businessId, state = "missing-push" }) ?? string.Empty,
                     FollowUpLabel = T("ReviewProviderLane"),
                     FollowUpUrl = Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true }) ?? string.Empty
                 },
@@ -212,7 +214,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                     ScopeNote = T("MobilePlaybookLoyaltyScanScope"),
                     OperatorAction = T("MobilePlaybookLoyaltyScanAction"),
                     QueueActionLabel = T("BusinessMemberDevices"),
-                    QueueActionUrl = Url.Action(nameof(Index), "MobileOperations", new { state = "business-members" }) ?? string.Empty,
+                    QueueActionUrl = Url.Action(nameof(Index), "MobileOperations", new { businessId, state = "business-members" }) ?? string.Empty,
                     FollowUpLabel = T("LoyaltyScanSessionsTitle"),
                     FollowUpUrl = Url.Action("ScanSessions", "Loyalty") ?? string.Empty
                 },
@@ -242,7 +244,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                     ScopeNote = T("MobilePlaybookMemberLifecycleScope"),
                     OperatorAction = T("MobilePlaybookMemberLifecycleAction"),
                     QueueActionLabel = T("SupportQueue"),
-                    QueueActionUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty,
+                    QueueActionUrl = Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty,
                     FollowUpLabel = T("UsersFilterMobileLinked"),
                     FollowUpUrl = Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked }) ?? string.Empty
                 }

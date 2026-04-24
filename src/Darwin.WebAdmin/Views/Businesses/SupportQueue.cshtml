@@ -33,6 +33,31 @@
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
     string SupportQueueHealthBadgeText(bool healthy) => healthy ? T.T("Configured") : T.T("NeedsAttention");
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string GlobalTaxComplianceUrl() => Url.Action("TaxCompliance", "Billing") ?? string.Empty;
+    string GlobalBusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
+    string GlobalChannelAuditsUrl() => Url.Action("ChannelAudits", "BusinessCommunications") ?? string.Empty;
+    string GlobalFinancialAccountsUrl() => Url.Action("FinancialAccounts", "Billing") ?? string.Empty;
+    string GlobalExpensesUrl() => Url.Action("Expenses", "Billing") ?? string.Empty;
+    string GlobalJournalEntriesUrl() => Url.Action("JournalEntries", "Billing") ?? string.Empty;
+    string GlobalOwnerOverrideAuditsUrl() => Url.Action("OwnerOverrideAudits", "Businesses") ?? string.Empty;
+    string BusinessMerchantReadinessUrl(Guid? businessId) => Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessesAttentionUrl() => Url.Action("Index", "Businesses", new { attentionOnly = true }) ?? string.Empty;
+    string MobileOperationsUrl(Guid? businessId) => Url.Action("Index", "MobileOperations", new { businessId }) ?? string.Empty;
+    string EmailAuditsUrl(
+        Guid? businessId = null,
+        string? status = null,
+        string? flowKey = null,
+        bool? retryBlockedOnly = null) => Url.Action("EmailAudits", "BusinessCommunications", new { businessId, status, flowKey, retryBlockedOnly }) ?? string.Empty;
+    string BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter readinessFilter) =>
+        Url.Action("Index", "Businesses", new { readinessFilter }) ?? string.Empty;
+    string BusinessesByOperationalStatusUrl(Darwin.Domain.Enums.BusinessOperationalStatus operationalStatus) =>
+        Url.Action("Index", "Businesses", new { operationalStatus }) ?? string.Empty;
+    string UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action("Index", "Users", new { filter }) ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string ChannelAuditsUrl(bool? phoneVerificationOnly = null) => Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly }) ?? string.Empty;
+    string CrmInvoicesUrl(string filter) => Url.Action("Invoices", "Crm", new { filter }) ?? string.Empty;
     var goLiveBlockerCount = Model.Summary.PendingApprovalBusinessCount
         + Model.Summary.ApprovedInactiveBusinessCount
         + Model.Summary.MissingOwnerBusinessCount
@@ -73,77 +98,79 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="MerchantReadiness"
+           asp-route-businessId="@Model.BusinessId"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+           hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
         <a asp-action="Index"
            asp-route-attentionOnly="true"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+           hx-get="@BusinessesAttentionUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
         <a asp-controller="BusinessCommunications"
            asp-action="Index"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "BusinessCommunications")"
+           hx-get="@GlobalBusinessCommunicationsUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Communications")</a>
         <a asp-controller="Billing"
            asp-action="Payments"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Payments", "Billing")"
+           hx-get="@GlobalPaymentsUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Payments")</a>
         <a asp-controller="Billing"
            asp-action="TaxCompliance"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("TaxCompliance", "Billing")"
+               hx-get="@GlobalTaxComplianceUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("TaxComplianceTitle")</a>
         <a asp-controller="Billing"
            asp-action="Refunds"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Refunds", "Billing")"
+               hx-get="@GlobalRefundsUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Refunds")</a>
         <a asp-controller="Billing"
            asp-action="FinancialAccounts"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("FinancialAccounts", "Billing")"
+           hx-get="@GlobalFinancialAccountsUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
         <a asp-controller="Billing"
            asp-action="Expenses"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Expenses", "Billing")"
+           hx-get="@GlobalExpensesUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("ExpensesTitle")</a>
         <a asp-controller="Billing"
            asp-action="JournalEntries"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("JournalEntries", "Billing")"
+           hx-get="@GlobalJournalEntriesUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("JournalEntriesTitle")</a>
         <a asp-action="OwnerOverrideAudits"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("OwnerOverrideAudits", "Businesses")"
+           hx-get="@GlobalOwnerOverrideAuditsUrl()"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("OwnerOverrideAuditTitle")</a>
         <a asp-controller="MobileOperations"
            asp-action="Index"
+           asp-route-businessId="@Model.BusinessId"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "MobileOperations")"
+           hx-get="@MobileOperationsUrl(Model.BusinessId)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("MobileOperationsTitle")</a>
@@ -151,7 +178,7 @@
            asp-action="EmailAudits"
            asp-route-status="Failed"
            class="btn btn-outline-danger"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed" })"
+           hx-get="@EmailAuditsUrl(status: "Failed")"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("FailedEmails")</a>
@@ -160,7 +187,7 @@
            asp-route-status="Failed"
            asp-route-flowKey="BusinessInvitation"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation" })"
+           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "BusinessInvitation")"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("OpenFailedInvitationEmails")</a>
@@ -169,7 +196,7 @@
            asp-route-status="Failed"
            asp-route-flowKey="AccountActivation"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation" })"
+           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "AccountActivation")"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
@@ -178,7 +205,7 @@
            asp-route-status="Failed"
            asp-route-flowKey="AdminCommunicationTest"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AdminCommunicationTest" })"
+           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "AdminCommunicationTest")"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("FailedAdminTests")</a>
@@ -187,63 +214,63 @@
            asp-route-status="Failed"
            asp-route-flowKey="PasswordReset"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset" })"
+           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "PasswordReset")"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
         <a asp-action="Index"
            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
+           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)</a>
         <a asp-action="Index"
            asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval })"
+           hx-get="@BusinessesByOperationalStatusUrl(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</a>
         <a asp-action="Index"
            asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.Suspended"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.Suspended })"
+           hx-get="@BusinessesByOperationalStatusUrl(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)</a>
         <a asp-action="Index"
            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner })"
+           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>
         <a asp-action="Index"
            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites })"
+           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>
         <a asp-action="Index"
            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation })"
+           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)</a>
         <a asp-action="Index"
            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail })"
+           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)</a>
         <a asp-action="Index"
            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName })"
+           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)</a>
@@ -251,7 +278,7 @@
            asp-action="Index"
            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+           hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
@@ -259,7 +286,7 @@
            asp-action="Index"
            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+           hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)"
            hx-target="#business-support-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
@@ -276,15 +303,16 @@
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a asp-action="MerchantReadiness"
+                   asp-route-businessId="@Model.BusinessId"
                    class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                 <a asp-action="Index"
                    asp-route-attentionOnly="true"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+                   hx-get="@BusinessesAttentionUrl()"
                    hx-target="#business-support-queue-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("NeedsAttention")</a>
@@ -303,21 +331,21 @@
                         <a asp-action="Index"
                            asp-route-attentionOnly="true"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+                           hx-get="@BusinessesAttentionUrl()"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</a>
                         <a asp-action="Index"
                            asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval })"
+                           hx-get="@BusinessesByOperationalStatusUrl(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</a>
                         <a asp-action="Index"
                            asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.Suspended"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.Suspended })"
+                           hx-get="@BusinessesByOperationalStatusUrl(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)</a>
@@ -342,7 +370,7 @@
                         <a asp-action="Index"
                            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites })"
+                           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>
@@ -350,14 +378,14 @@
                            asp-action="EmailAudits"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed" })"
+                           hx-get="@EmailAuditsUrl(status: "Failed")"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("FailedEmails")</a>
                         <a asp-controller="BusinessCommunications"
                            asp-action="Index"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "BusinessCommunications")"
+                           hx-get="@GlobalBusinessCommunicationsUrl()"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Communications")</a>
@@ -365,14 +393,14 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-communications-policy"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                           hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CommunicationPolicy")</a>
                         <a asp-controller="BusinessCommunications"
                            asp-action="ChannelAudits"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications")"
+                           hx-get="@GlobalChannelAuditsUrl()"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
@@ -380,7 +408,7 @@
                            asp-action="EmailAudits"
                            asp-route-retryBlockedOnly="true"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryBlockedOnly = true })"
+                           hx-get="@EmailAuditsUrl(retryBlockedOnly: true)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("RetryBlocked")</a>
@@ -388,7 +416,7 @@
                            asp-action="Index"
                            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                           hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
@@ -396,7 +424,7 @@
                            asp-action="Index"
                            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                           hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
@@ -405,7 +433,7 @@
                            asp-route-status="Failed"
                            asp-route-flowKey="AccountActivation"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation" })"
+                           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "AccountActivation")"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
@@ -414,7 +442,7 @@
                            asp-route-status="Failed"
                            asp-route-flowKey="AdminCommunicationTest"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AdminCommunicationTest" })"
+                           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "AdminCommunicationTest")"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("FailedAdminTests")</a>
@@ -423,7 +451,7 @@
                            asp-route-status="Failed"
                            asp-route-flowKey="PasswordReset"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset" })"
+                           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "PasswordReset")"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
@@ -431,7 +459,7 @@
                            asp-action="ChannelAudits"
                            asp-route-phoneVerificationOnly="true"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true })"
+                           hx-get="@ChannelAuditsUrl(phoneVerificationOnly: true)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PhoneVerification")</a>
@@ -448,22 +476,23 @@
                     <div class="small text-muted">@string.Format(T.T("BusinessSetupChecklistCounts"), Model.Summary.MissingOwnerBusinessCount, Model.Summary.MissingPrimaryLocationBusinessCount)</div>
                     <div class="d-flex gap-2 flex-wrap mt-auto">
                         <a asp-action="MerchantReadiness"
+                           asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                           hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                         <a asp-controller="Billing"
                            asp-action="TaxCompliance"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("TaxCompliance", "Billing")"
+                           hx-get="@GlobalTaxComplianceUrl()"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("TaxComplianceTitle")</a>
                         <a asp-action="Index"
                            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation })"
+                           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Locations")</a>
@@ -483,14 +512,14 @@
                         <a asp-controller="Billing"
                            asp-action="Payments"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-get="@GlobalPaymentsUrl()"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Payments")</a>
                         <a asp-controller="Billing"
                            asp-action="Refunds"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Refunds", "Billing")"
+                           hx-get="@GlobalRefundsUrl()"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Refunds")</a>
@@ -498,7 +527,7 @@
                            asp-action="Invoices"
                            asp-route-filter="Overdue"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "Overdue" })"
+                           hx-get="@CrmInvoicesUrl("Overdue")"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Overdue")</a>
@@ -506,7 +535,7 @@
                            asp-action="Invoices"
                            asp-route-filter="DueSoon"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "DueSoon" })"
+                           hx-get="@CrmInvoicesUrl("DueSoon")"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("DueSoon")</a>
@@ -514,14 +543,14 @@
                            asp-action="Invoices"
                            asp-route-filter="Draft"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "Draft" })"
+                           hx-get="@CrmInvoicesUrl("Draft")"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Draft")</a>
                         <a asp-action="Index"
                            asp-route-readinessFilter="@Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Businesses", new { readinessFilter = Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive })"
+                           hx-get="@BusinessesByReadinessUrl(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)"
                            hx-target="#business-support-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.ApprovedInactive)</a>
@@ -532,7 +561,7 @@
     </div>
 </div>
 
-<partial name="~/Views/Businesses/_SupportQueueSummary.cshtml" model="Model.Summary" />
+<partial name="~/Views/Businesses/_SupportQueueSummary.cshtml" model="Model" />
 
 <div class="card mb-3">
     <div class="card-header">@T.T("BusinessesOperationsPlaybooksTitle")</div>

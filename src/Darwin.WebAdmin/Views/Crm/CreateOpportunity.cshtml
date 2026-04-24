@@ -10,17 +10,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            const container = document.getElementById('opportunityLines');
-            const template = document.getElementById('opportunityLineTemplate');
-            document.getElementById('addOpportunityLine')?.addEventListener('click', function () {
-                container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
-            });
-            container?.addEventListener('click', function (event) {
-                const button = event.target.closest('.remove-line');
-                if (button) button.closest('.line-row')?.remove();
-            });
-        })();
-    </script>
 }

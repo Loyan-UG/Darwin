@@ -511,8 +511,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         // ---------------- Attach: Variants (override level) ----------------
 
         /// <summary>
-        /// GET placeholder: UI can provide variants from the product/search page.
-        /// This action only gives the group information for the header + concurrency.
+        /// GET: show selectable variants with pre-checked rows that are already attached to the add-on group.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> AttachToVariants(
@@ -547,11 +546,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 PageSize = pageSize,
                 Total = total,
                 Items = items
-                    .Select(v => new SelectableItemVm
+                    .Select(v => new SelectableVariantItemVm
                     {
                         Id = v.Id,
-                        Display = $"{v.Sku} - {v.ProductName ?? "(no name)"}",
-                        Selected = attachedSet.Contains(v.Id) /* isSelected: handled client-side via hidden inputs to persist across pages */
+                        Sku = v.Sku,
+                        ProductName = string.IsNullOrWhiteSpace(v.ProductName) ? T("ProductUnnamed") : v.ProductName,
+                        Gtin = v.Gtin,
+                        Currency = v.Currency,
+                        BasePriceNetMinor = v.BasePriceNetMinor,
+                        StockOnHand = v.StockOnHand,
+                        IsDigital = v.IsDigital,
+                        Selected = attachedSet.Contains(v.Id)
                     }).ToList(),
                 SelectedVariantIds = attached.ToList()
             };

@@ -7,6 +7,7 @@
             Value = option.Value,
             Text = T.T(option.Text)
         });
+    string ProductsIndexUrl() => Url.Action("Index", "Products") ?? string.Empty;
 }
 
 <div class="card shadow-sm">
@@ -153,7 +154,7 @@
 
     <div class="card-footer text-end">
         <a asp-action="Index" class="btn btn-secondary"
-           hx-get="@Url.Action("Index", "Products")"
+           hx-get="@ProductsIndexUrl()"
            hx-target="#products-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Back")</a>

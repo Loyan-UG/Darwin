@@ -4,6 +4,20 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Invoices");
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string GlobalTaxComplianceUrl() => Url.Action("TaxCompliance", "Billing") ?? string.Empty;
+    string GlobalInvoicesUrl() => Url.Action("Invoices", "Crm") ?? string.Empty;
+    string GlobalCrmIndexUrl() => Url.Action("Index", "Crm") ?? string.Empty;
+    string GlobalCrmCustomersUrl() => Url.Action("Customers", "Crm") ?? string.Empty;
+    string CrmInvoicesUrl(object? q = null, string? filter = null) => Url.Action("Invoices", "Crm", new { q, filter }) ?? string.Empty;
+    string CrmOpportunitiesUrl() => Url.Action("Opportunities", "Crm") ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string EditCustomerUrl(Guid id) => Url.Action("EditCustomer", "Crm", new { id }) ?? string.Empty;
+    string OrderDetailsUrl(Guid id, string? fragment = null) => Url.Action("Details", "Orders", new { id, fragment }) ?? string.Empty;
+    string EditInvoiceUrl(Guid id) => Url.Action("EditInvoice", "Crm", new { id }) ?? string.Empty;
+    string EditPaymentUrl(Guid id) => Url.Action("EditPayment", "Billing", new { id }) ?? string.Empty;
+    string PaymentsUrl(PaymentQueueFilter? queue = null) => Url.Action("Payments", "Billing", new { queue }) ?? string.Empty;
     string LocalizeCrmInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
     string CrmInvoiceOpsHealthBadgeClass(bool healthy) => healthy
@@ -21,7 +35,7 @@
         <div class="text-muted small">@T.T("InvoicesQueueIntro")</div>
     </div>
     <a asp-action="Index"
-       hx-get="@Url.Action("Index", "Crm")"
+       hx-get="@GlobalCrmIndexUrl()"
        hx-target="#crm-invoices-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
@@ -55,13 +69,13 @@
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <a asp-action="Invoices"
-                           hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query })"
+                           hx-get="@CrmInvoicesUrl(Model.Query)"
                            hx-target="#crm-invoices-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true"
                            class="btn btn-sm btn-outline-primary">@T.T("Invoices")</a>
                         <a asp-action="Customers"
-                           hx-get="@Url.Action("Customers", "Crm")"
+       hx-get="@GlobalCrmCustomersUrl()"
                            hx-target="#crm-invoices-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true"
@@ -81,8 +95,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("CrmNextStep")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a asp-action="Invoices" asp-route-filter="Draft" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "Draft" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Draft ? "btn-secondary" : "btn-outline-secondary")">@T.T("Draft")</a>
-                                <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("OpenOpportunities")</a>
+                                <a asp-action="Invoices" asp-route-filter="Draft" hx-get="@CrmInvoicesUrl(Model.Query, "Draft")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Draft ? "btn-secondary" : "btn-outline-secondary")">@T.T("Draft")</a>
+                                <a asp-action="Opportunities" hx-get="@CrmOpportunitiesUrl()" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("OpenOpportunities")</a>
                             </div>
                         </div>
                     </div>
@@ -97,8 +111,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("Payment")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a asp-action="Invoices" asp-route-filter="DueSoon" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "DueSoon" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.DueSoon ? "btn-warning" : "btn-outline-warning")">@T.T("DueSoon")</a>
-                                <a asp-controller="Billing" asp-action="Payments" hx-get="@Url.Action("Payments", "Billing")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("Payments")</a>
+                                <a asp-action="Invoices" asp-route-filter="DueSoon" hx-get="@CrmInvoicesUrl(Model.Query, "DueSoon")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.DueSoon ? "btn-warning" : "btn-outline-warning")">@T.T("DueSoon")</a>
+                                <a asp-controller="Billing" asp-action="Payments" hx-get="@GlobalPaymentsUrl()" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("Payments")</a>
                             </div>
                         </div>
                     </div>
@@ -113,8 +127,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("Customer")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a asp-action="Invoices" asp-route-filter="Overdue" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "Overdue" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Overdue ? "btn-danger" : "btn-outline-danger")">@T.T("Overdue")</a>
-                                <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Customers")</a>
+                                <a asp-action="Invoices" asp-route-filter="Overdue" hx-get="@CrmInvoicesUrl(Model.Query, "Overdue")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Overdue ? "btn-danger" : "btn-outline-danger")">@T.T("Overdue")</a>
+<a asp-action="Customers" hx-get="@GlobalCrmCustomersUrl()" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Customers")</a>
                             </div>
                         </div>
                     </div>
@@ -129,9 +143,9 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("TaxSettings")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a asp-action="Invoices" asp-route-filter="MissingVatId" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "MissingVatId" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")">@T.T("FixVatId")</a>
-                                <a asp-action="Invoices" asp-route-filter="Refunded" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "Refunded" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Refunded ? "btn-warning" : "btn-outline-warning")">@T.T("Refunded")</a>
-                                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("TaxSettings")</a>
+                                <a asp-action="Invoices" asp-route-filter="MissingVatId" hx-get="@CrmInvoicesUrl(Model.Query, "MissingVatId")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")">@T.T("FixVatId")</a>
+                                <a asp-action="Invoices" asp-route-filter="Refunded" hx-get="@CrmInvoicesUrl(Model.Query, "Refunded")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Refunded ? "btn-warning" : "btn-outline-warning")">@T.T("Refunded")</a>
+                                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@SiteSettingsUrl("site-settings-tax")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("TaxSettings")</a>
                             </div>
                         </div>
                     </div>
@@ -178,7 +192,7 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@T.T("TaxInvoicingPolicy")</span>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("OpenTaxSettings")</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@SiteSettingsUrl("site-settings-tax")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("OpenTaxSettings")</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
@@ -197,21 +211,21 @@
             <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("StructuredExportReadiness")</div><div class="fw-semibold mt-1">@(Model.TaxPolicy.StructuredExportBaselineReady ? T.T("Ready") : T.T("NotReady"))</div><div class="small text-muted mt-2">@Model.TaxPolicy.StructuredExportBaselineLabel</div><div class="small text-muted mt-1">@Model.TaxPolicy.ComplianceScopeNote</div></div></div>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-3">
-            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("TaxSettings")</a>
+            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@SiteSettingsUrl("site-settings-tax")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("TaxSettings")</a>
             @if (!Model.TaxPolicy.ArchiveReadinessComplete)
             {
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("CompleteIssuerData")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@SiteSettingsUrl("site-settings-tax")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("CompleteIssuerData")</a>
             }
             @if (!Model.TaxPolicy.EInvoiceBaselineReady)
             {
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("ReviewEInvoiceBaseline")</a>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@SiteSettingsUrl("site-settings-tax")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("ReviewEInvoiceBaseline")</a>
             }
         </div>
     </div>
 </div>
 
 <div class="row g-3 mb-3"><div class="col-lg-8"><form asp-action="Invoices" method="get" class="row g-2"
-      hx-get="@Url.Action("Invoices", "Crm")"
+      hx-get="@GlobalInvoicesUrl()"
       hx-target="#crm-invoices-workspace-shell"
       hx-swap="outerHTML"
       hx-push-url="true">
@@ -225,12 +239,12 @@
 </form>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a asp-action="Invoices" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.All ? "btn-dark" : "btn-outline-dark")">@T.T("All")</a>
-    <a asp-action="Invoices" asp-route-filter="Draft" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "Draft" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Draft ? "btn-secondary" : "btn-outline-secondary")">@T.T("Draft")</a>
-    <a asp-action="Invoices" asp-route-filter="DueSoon" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "DueSoon" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.DueSoon ? "btn-warning" : "btn-outline-warning")">@T.T("DueSoon")</a>
-    <a asp-action="Invoices" asp-route-filter="Overdue" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "Overdue" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Overdue ? "btn-danger" : "btn-outline-danger")">@T.T("Overdue")</a>
-    <a asp-action="Invoices" asp-route-filter="MissingVatId" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "MissingVatId" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")">@T.T("VatIdMissing")</a>
-    <a asp-action="Invoices" asp-route-filter="Refunded" hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Query, filter = "Refunded" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Refunded ? "btn-warning" : "btn-outline-warning")">@T.T("Refunded")</a>
+    <a asp-action="Invoices" hx-get="@CrmInvoicesUrl(Model.Query)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.All ? "btn-dark" : "btn-outline-dark")">@T.T("All")</a>
+    <a asp-action="Invoices" asp-route-filter="Draft" hx-get="@CrmInvoicesUrl(Model.Query, "Draft")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Draft ? "btn-secondary" : "btn-outline-secondary")">@T.T("Draft")</a>
+    <a asp-action="Invoices" asp-route-filter="DueSoon" hx-get="@CrmInvoicesUrl(Model.Query, "DueSoon")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.DueSoon ? "btn-warning" : "btn-outline-warning")">@T.T("DueSoon")</a>
+    <a asp-action="Invoices" asp-route-filter="Overdue" hx-get="@CrmInvoicesUrl(Model.Query, "Overdue")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Overdue ? "btn-danger" : "btn-outline-danger")">@T.T("Overdue")</a>
+    <a asp-action="Invoices" asp-route-filter="MissingVatId" hx-get="@CrmInvoicesUrl(Model.Query, "MissingVatId")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")">@T.T("VatIdMissing")</a>
+    <a asp-action="Invoices" asp-route-filter="Refunded" hx-get="@CrmInvoicesUrl(Model.Query, "Refunded")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.InvoiceQueueFilter.Refunded ? "btn-warning" : "btn-outline-warning")">@T.T("Refunded")</a>
 </div>
 
 <div class="table-responsive">
@@ -279,7 +293,7 @@
                         <td>
                             @if (item.CustomerId.HasValue)
                             {
-                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="text-decoration-none">
+                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@EditCustomerUrl(item.CustomerId.Value)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="text-decoration-none">
                                     @(string.IsNullOrWhiteSpace(item.CustomerDisplayName) ? item.CustomerId.Value.ToString() : item.CustomerDisplayName)
                                 </a>
                             }
@@ -291,7 +305,7 @@
                         <td>
                             @if (item.OrderId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="text-decoration-none">
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" hx-get="@OrderDetailsUrl(item.OrderId.Value)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="text-decoration-none">
                                     @(string.IsNullOrWhiteSpace(item.OrderNumber) ? item.OrderId.Value.ToString() : item.OrderNumber)
                                 </a>
                             }
@@ -344,50 +358,50 @@
                         <td>@LocalizeCrmInvoiceStatus(item.Status)</td>
                                 <td>@item.DueDateUtc.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</td>
                         <td class="text-end">
-                            <a asp-action="EditInvoice" asp-route-id="@item.Id" hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.Id })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Open")</a>
+                            <a asp-action="EditInvoice" asp-route-id="@item.Id" hx-get="@EditInvoiceUrl(item.Id)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Open")</a>
                             @if (item.CustomerId.HasValue)
                             {
-                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Customer")</a>
+                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@EditCustomerUrl(item.CustomerId.Value)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Customer")</a>
                                 @if (item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(item.CustomerVatId))
                                 {
-                                    <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("FixVatId")</a>
+                                    <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@EditCustomerUrl(item.CustomerId.Value)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("FixVatId")</a>
                                 }
                             }
                             @if (item.OrderId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-info">@T.T("Order")</a>
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" hx-get="@OrderDetailsUrl(item.OrderId.Value)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-info">@T.T("Order")</a>
                             }
                             @if (item.PaymentId.HasValue && item.OrderId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value, fragment = "payments" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("Payment")</a>
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" hx-get="@OrderDetailsUrl(item.OrderId.Value, "payments")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("Payment")</a>
                             }
                             @if (item.PaymentId.HasValue)
                             {
-                                <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId.Value" hx-get="@Url.Action("EditPayment", "Billing", new { id = item.PaymentId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Payments")</a>
+                                <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId.Value" hx-get="@EditPaymentUrl(item.PaymentId.Value)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Payments")</a>
                             }
                             @if (crmInvoiceNeedsCollectionFollowUp)
                             {
-                                <a asp-controller="Billing" asp-action="Payments" hx-get="@Url.Action("Payments", "Billing")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Payments")</a>
+                                <a asp-controller="Billing" asp-action="Payments" hx-get="@GlobalPaymentsUrl()" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Payments")</a>
                             }
                             @if (crmInvoiceNeedsPendingPaymentFollowUp)
                             {
-                                <a asp-controller="Billing" asp-action="Payments" asp-route-queue="@PaymentQueueFilter.Pending" hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Pending })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Pending")</a>
+                                <a asp-controller="Billing" asp-action="Payments" asp-route-queue="@PaymentQueueFilter.Pending" hx-get="@PaymentsUrl(PaymentQueueFilter.Pending)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Pending")</a>
                             }
                             @if (crmInvoiceNeedsUnlinkedPaymentFollowUp)
                             {
-                                <a asp-controller="Billing" asp-action="Payments" asp-route-queue="@PaymentQueueFilter.Unlinked" hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Unlinked })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("Unlinked")</a>
+                                <a asp-controller="Billing" asp-action="Payments" asp-route-queue="@PaymentQueueFilter.Unlinked" hx-get="@PaymentsUrl(PaymentQueueFilter.Unlinked)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("Unlinked")</a>
                             }
                             @if (crmInvoiceHasRefundPressure)
                             {
-                                <a asp-controller="Billing" asp-action="Refunds" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("RefundQueueTitle")</a>
+                                <a asp-controller="Billing" asp-action="Refunds" hx-get="@GlobalRefundsUrl()" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("RefundQueueTitle")</a>
                             }
                             @if (crmInvoiceNeedsRefundedPaymentFollowUp)
                             {
-                                <a asp-controller="Billing" asp-action="Payments" asp-route-queue="@PaymentQueueFilter.Refunded" hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Refunded })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Refunded")</a>
+                                <a asp-controller="Billing" asp-action="Payments" asp-route-queue="@PaymentQueueFilter.Refunded" hx-get="@PaymentsUrl(PaymentQueueFilter.Refunded)" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Refunded")</a>
                             }
                             @if (crmInvoiceNeedsVatRemediation)
                             {
-                                <a asp-controller="Billing" asp-action="TaxCompliance" hx-get="@Url.Action("TaxCompliance", "Billing")" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("TaxComplianceTitle")</a>
+                                <a asp-controller="Billing" asp-action="TaxCompliance" hx-get="@GlobalTaxComplianceUrl()" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">@T.T("TaxComplianceTitle")</a>
                             }
                             @if (item.Status == Darwin.Domain.Enums.InvoiceStatus.Draft)
                             {

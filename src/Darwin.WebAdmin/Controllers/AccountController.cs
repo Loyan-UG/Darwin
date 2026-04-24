@@ -65,7 +65,7 @@ namespace Darwin.WebAdmin.Controllers
         [HttpGet("/account/login")]
         public IActionResult Login(string? returnUrl = null)
         {
-            ViewData["ReturnUrl"] = returnUrl;
+            ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
             return View();
         }
 
@@ -86,7 +86,7 @@ namespace Darwin.WebAdmin.Controllers
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
                 ModelState.AddModelError(string.Empty, _text.T("EmailPasswordRequiredMessage"));
-                ViewData["ReturnUrl"] = returnUrl;
+                ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
                 return View("Login");
             }
 
@@ -99,20 +99,20 @@ namespace Darwin.WebAdmin.Controllers
                 {
                     TempData["2fa_user"] = result.UserId.Value.ToString();
                     TempData["remember"] = rememberMe ? "1" : "0";
-                    TempData["return"] = returnUrl ?? string.Empty;
+                    TempData["return"] = SafeReturnUrlForForm(returnUrl);
                     return RedirectToAction(nameof(LoginTwoFactor));
                 }
 
                 AddLocalizedModelError("InvalidCredentialsMessage");
 
-                ViewData["ReturnUrl"] = returnUrl;
+                ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
                 return View("Login");
             }
 
             if (!result.UserId.HasValue || string.IsNullOrWhiteSpace(result.SecurityStamp))
             {
                 ModelState.AddModelError(string.Empty, _text.T("UnexpectedLoginResultMessage"));
-                ViewData["ReturnUrl"] = returnUrl;
+                ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
                 return View("Login");
             }
 
@@ -361,8 +361,7 @@ namespace Darwin.WebAdmin.Controllers
         /// </summary>
         private async Task<string> DeterminePostLoginRedirectAsync(Guid userId, string? returnUrl, CancellationToken ct)
         {
-            if (!string.IsNullOrWhiteSpace(returnUrl) &&
-                Uri.TryCreate(returnUrl, UriKind.Relative, out _))
+            if (IsSafeLocalReturnUrl(returnUrl))
             {
                 return returnUrl!;
             }
@@ -379,10 +378,20 @@ namespace Darwin.WebAdmin.Controllers
         /// <summary>
         /// Normalizes an arbitrary return URL to a safe relative path. Used only in legacy flows.
         /// </summary>
-        private static string SafeReturnUrl(string? returnUrl)
+        private string SafeReturnUrl(string? returnUrl)
         {
             if (string.IsNullOrWhiteSpace(returnUrl)) return "~/";
-            return Uri.TryCreate(returnUrl, UriKind.Relative, out _) ? returnUrl : "~/";
+            return IsSafeLocalReturnUrl(returnUrl) ? returnUrl : "~/";
+        }
+
+        private string SafeReturnUrlForForm(string? returnUrl)
+        {
+            return IsSafeLocalReturnUrl(returnUrl) ? returnUrl! : string.Empty;
+        }
+
+        private bool IsSafeLocalReturnUrl(string? returnUrl)
+        {
+            return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl);
         }
     }
 }

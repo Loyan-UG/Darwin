@@ -9,6 +9,16 @@
         !Model.EmailConfirmed ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation :
         !Model.IsActive ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention :
         null;
+    string EditMemberUrl(Guid? id) => Url.Action("EditMember", "Businesses", new { id }) ?? string.Empty;
+    string UserEditUrl(Guid? id) => Url.Action("Edit", "Users", new { id }) ?? string.Empty;
+    string MobileOperationsUrl(Guid? businessId, string? q = null) => Url.Action("Index", "MobileOperations", new { businessId, q }) ?? string.Empty;
+    string LoyaltyAccountsUrl(string? q) => Url.Action("Accounts", "Loyalty", new { q }) ?? string.Empty;
+    string BusinessMembersUrl(Guid? businessId, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter? filter = null) =>
+        Url.Action("Members", "Businesses", new { businessId, filter }) ?? string.Empty;
+    string StaffAccessBadgeUrl(Guid? id) => Url.Action("StaffAccessBadge", "Businesses", new { id }) ?? string.Empty;
+    string UsersUrl(string? q = null, Darwin.Application.Identity.DTOs.UserQueueFilter? filter = null) =>
+        Url.Action("Index", "Users", new { q, filter }) ?? string.Empty;
+    string BusinessMerchantReadinessUrl(Guid? businessId) => Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty;
     string LocalizeBusinessMemberRole(object? role) => role is null ? "-" : T.T(role.ToString() ?? string.Empty);
     string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
     {
@@ -29,7 +39,7 @@
         <a asp-action="EditMember"
            asp-route-id="@Model.MembershipId"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("EditMember", "Businesses", new { id = Model.MembershipId })"
+           hx-get="@EditMemberUrl(Model.MembershipId)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML">
             <i class="fa-solid fa-user-pen"></i> @T.T("EditMemberAction")
@@ -38,7 +48,7 @@
            asp-action="Edit"
            asp-route-id="@Model.UserId"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId })"
+           hx-get="@UserEditUrl(Model.UserId)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -46,9 +56,10 @@
         </a>
         <a asp-controller="MobileOperations"
            asp-action="Index"
+           asp-route-businessId="@Model.Business.Id"
            asp-route-q="@Model.UserEmail"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "MobileOperations", new { q = Model.UserEmail })"
+           hx-get="@MobileOperationsUrl(Model.Business.Id, Model.UserEmail)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -58,7 +69,7 @@
            asp-action="Accounts"
            asp-route-q="@Model.UserEmail"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Accounts", "Loyalty", new { q = Model.UserEmail })"
+           hx-get="@LoyaltyAccountsUrl(Model.UserEmail)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -68,9 +79,7 @@
            asp-route-businessId="@Model.Business.Id"
            asp-route-filter="@backToMembersFilter"
            class="btn btn-outline-secondary"
-           hx-get="@(backToMembersFilter.HasValue
-               ? Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = backToMembersFilter })
-               : Url.Action("Members", "Businesses", new { businessId = Model.Business.Id }))"
+           hx-get="@BusinessMembersUrl(Model.Business.Id, backToMembersFilter)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML">
             <i class="fa-solid fa-arrow-left"></i> @T.T("BackToMembersAction")
@@ -78,7 +87,7 @@
         <a asp-action="StaffAccessBadge"
            asp-route-id="@Model.MembershipId"
            class="btn btn-primary"
-           hx-get="@Url.Action("StaffAccessBadge", "Businesses", new { id = Model.MembershipId })"
+           hx-get="@StaffAccessBadgeUrl(Model.MembershipId)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML">
             <i class="fa-solid fa-rotate"></i> @T.T("RefreshBadgeAction")
@@ -92,7 +101,7 @@
         <a asp-action="EditMember"
            asp-route-id="@Model.MembershipId"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("EditMember", "Businesses", new { id = Model.MembershipId })"
+           hx-get="@EditMemberUrl(Model.MembershipId)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML">
             <i class="fa-solid fa-user-pen"></i> @T.T("EditMemberAction")
@@ -101,7 +110,7 @@
            asp-action="Edit"
            asp-route-id="@Model.UserId"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId })"
+           hx-get="@UserEditUrl(Model.UserId)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -111,17 +120,16 @@
            asp-route-businessId="@Model.Business.Id"
            asp-route-filter="@backToMembersFilter"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@(backToMembersFilter.HasValue
-               ? Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = backToMembersFilter })
-               : Url.Action("Members", "Businesses", new { businessId = Model.Business.Id }))"
+           hx-get="@BusinessMembersUrl(Model.Business.Id, backToMembersFilter)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
             <i class="fa-solid fa-users"></i> @T.T("CommonMembers")
         </a>
         <a asp-action="MerchantReadiness"
+           asp-route-businessId="@Model.Business.Id"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+           hx-get="@BusinessMerchantReadinessUrl(Model.Business.Id)"
            hx-target="#business-staff-access-badge-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -135,7 +143,7 @@
         <div class="card shadow-sm h-100">
             <div class="card-header">@T.T("BusinessStaffAccessBadgePreviewTitle")</div>
             <div class="card-body text-center">
-                <img src="@Model.BadgeImageDataUrl" alt="@T.T("BusinessStaffAccessBadgeQrAlt")" class="img-fluid border rounded p-3 bg-white" style="max-width:320px" />
+                    <img src="@Model.BadgeImageDataUrl" alt="@T.T("BusinessStaffAccessBadgeQrAlt")" class="img-fluid border rounded p-3 bg-white admin-qr" />
                 <div class="mt-3 fw-semibold">@Model.UserDisplayName</div>
                 <div class="text-muted small">@Model.UserEmail</div>
                 <div class="small text-muted mt-2">@T.T("BusinessStaffAccessBadgeMemberRoleLabel"): @LocalizeBusinessMemberRole(Model.Role)</div>
@@ -190,7 +198,7 @@
                                    asp-action="Edit"
                                    asp-route-id="@Model.UserId"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId })"
+                                   hx-get="@UserEditUrl(Model.UserId)"
                                    hx-target="#business-staff-access-badge-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
@@ -202,7 +210,7 @@
                                 <a asp-action="EditMember"
                                    asp-route-id="@Model.MembershipId"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("EditMember", "Businesses", new { id = Model.MembershipId })"
+                                   hx-get="@EditMemberUrl(Model.MembershipId)"
                                    hx-target="#business-staff-access-badge-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-user-pen"></i> @T.T("EditMemberAction")
@@ -215,7 +223,7 @@
                                    asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                                    asp-route-q="@Model.UserEmail"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = Model.UserEmail })"
+                                   hx-get="@UsersUrl(Model.UserEmail, Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)"
                                    hx-target="#business-staff-access-badge-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
@@ -226,9 +234,10 @@
                             {
                                 <a asp-controller="MobileOperations"
                                    asp-action="Index"
+                                   asp-route-businessId="@Model.Business.Id"
                                    asp-route-q="@Model.UserEmail"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = Model.UserEmail })"
+                                   hx-get="@MobileOperationsUrl(Model.Business.Id, Model.UserEmail)"
                                    hx-target="#business-staff-access-badge-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
@@ -253,7 +262,7 @@
             <a asp-action="EditMember"
                asp-route-id="@Model.MembershipId"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("EditMember", "Businesses", new { id = Model.MembershipId })"
+               hx-get="@EditMemberUrl(Model.MembershipId)"
                hx-target="#business-staff-access-badge-shell"
                hx-swap="outerHTML">
                 <i class="fa-solid fa-user-pen"></i> @T.T("EditMemberAction")
@@ -262,7 +271,7 @@
                asp-action="Edit"
                asp-route-id="@Model.UserId"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId })"
+               hx-get="@UserEditUrl(Model.UserId)"
                hx-target="#business-staff-access-badge-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -272,17 +281,16 @@
                asp-route-businessId="@Model.Business.Id"
                asp-route-filter="@backToMembersFilter"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@(backToMembersFilter.HasValue
-                   ? Url.Action("Members", "Businesses", new { businessId = Model.Business.Id, filter = backToMembersFilter })
-                   : Url.Action("Members", "Businesses", new { businessId = Model.Business.Id }))"
+                hx-get="@BusinessMembersUrl(Model.Business.Id, backToMembersFilter)"
                hx-target="#business-staff-access-badge-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
                 <i class="fa-solid fa-users"></i> @T.T("CommonMembers")
             </a>
             <a asp-action="MerchantReadiness"
+               asp-route-businessId="@Model.Business.Id"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+               hx-get="@BusinessMerchantReadinessUrl(Model.Business.Id)"
                hx-target="#business-staff-access-badge-shell"
                hx-swap="outerHTML"
                hx-push-url="true">

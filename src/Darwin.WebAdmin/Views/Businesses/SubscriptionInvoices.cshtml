@@ -180,8 +180,8 @@ string InvoiceTableActionsClass() => "text-end";
     string InvoiceRefundsActionHref() => Url.Action("Refunds", "Billing", new { businessId = InvoicePageBusinessIdValue() }) ?? string.Empty;
     string InvoicePaymentSettingsActionFragment() => "site-settings-payments";
     string InvoicePaymentSettingsActionHref() => Url.Action("Edit", "SiteSettings", new { fragment = InvoicePaymentSettingsActionFragment() }) ?? string.Empty;
-    string InvoiceSupportQueueActionHref() => Url.Action("SupportQueue", "Businesses") ?? string.Empty;
-    string InvoiceMerchantReadinessActionHref() => Url.Action("MerchantReadiness", "Businesses") ?? string.Empty;
+    string InvoiceSupportQueueActionHref() => Url.Action("SupportQueue", "Businesses", new { businessId = Model.Business.Id }) ?? string.Empty;
+    string InvoiceMerchantReadinessActionHref() => Url.Action("MerchantReadiness", "Businesses", new { businessId = Model.Business.Id }) ?? string.Empty;
 }
 
 <div id="@InvoiceRootId()">

@@ -6,6 +6,10 @@
     var total = Model.Total;
     var query = Model.Query;
     var filter = Model.Filter;
+    string CategoriesIndexUrl(string? query = null, string? filter = null) => Url.Action("Index", "Categories", new { query, filter }) ?? string.Empty;
+    string CategoriesCreateUrl() => Url.Action("Create", "Categories") ?? string.Empty;
+    string CategoriesEditUrl(Guid id) => Url.Action("Edit", "Categories", new { id }) ?? string.Empty;
+    string FormatTimestamp(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "-";
 }
 
 <div id="categories-workspace-shell">
@@ -18,7 +22,7 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
         <form asp-action="Index" method="get" class="d-flex gap-2"
-              hx-get="@Url.Action("Index", "Categories")"
+              hx-get="@CategoriesIndexUrl()"
               hx-target="#categories-workspace-shell"
               hx-swap="outerHTML"
               hx-push-url="true">
@@ -26,13 +30,13 @@
             <input type="hidden" name="filter" value="@filter" />
             <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> @T.T("Search")</button>
             <a asp-action="Index" class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Index", "Categories")"
+               hx-get="@CategoriesIndexUrl()"
                hx-target="#categories-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("Reset")</a>
         </form>
         <a asp-action="Create" class="btn btn-primary"
-           hx-get="@Url.Action("Create", "Categories")"
+           hx-get="@CategoriesCreateUrl()"
            hx-target="#categories-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("CreateCategory")</a>
@@ -49,11 +53,11 @@
 <div class="row g-3 mb-4">
     <div class="col-lg-8">
         <div class="d-flex flex-wrap gap-2">
-            <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("All")</a>
-            <a asp-action="Index" asp-route-query="@query" asp-route-filter="inactive" class="btn @(filter == "inactive" ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query, filter = "inactive" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Inactive")</a>
-            <a asp-action="Index" asp-route-query="@query" asp-route-filter="unpublished" class="btn @(filter == "unpublished" ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query, filter = "unpublished" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Unpublished")</a>
-            <a asp-action="Index" asp-route-query="@query" asp-route-filter="root" class="btn @(filter == "root" ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query, filter = "root" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("RootCategories")</a>
-            <a asp-action="Index" asp-route-query="@query" asp-route-filter="child" class="btn @(filter == "child" ? "btn-primary" : "btn-outline-primary")" hx-get="@Url.Action("Index", "Categories", new { query, filter = "child" })" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("ChildCategories")</a>
+            <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")" hx-get="@CategoriesIndexUrl(query)" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("All")</a>
+            <a asp-action="Index" asp-route-query="@query" asp-route-filter="inactive" class="btn @(filter == "inactive" ? "btn-primary" : "btn-outline-primary")" hx-get="@CategoriesIndexUrl(query, "inactive")" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Inactive")</a>
+            <a asp-action="Index" asp-route-query="@query" asp-route-filter="unpublished" class="btn @(filter == "unpublished" ? "btn-primary" : "btn-outline-primary")" hx-get="@CategoriesIndexUrl(query, "unpublished")" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Unpublished")</a>
+            <a asp-action="Index" asp-route-query="@query" asp-route-filter="root" class="btn @(filter == "root" ? "btn-primary" : "btn-outline-primary")" hx-get="@CategoriesIndexUrl(query, "root")" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("RootCategories")</a>
+            <a asp-action="Index" asp-route-query="@query" asp-route-filter="child" class="btn @(filter == "child" ? "btn-primary" : "btn-outline-primary")" hx-get="@CategoriesIndexUrl(query, "child")" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("ChildCategories")</a>
         </div>
     </div>
     <div class="col-lg-4">
@@ -106,10 +110,10 @@
                                 <td class="text-center">@if (c.IsActive) { <span class="badge bg-success">@T.T("Yes")</span> } else { <span class="badge bg-outline-secondary border">@T.T("No")</span> }</td>
                                 <td class="text-center">@if (c.IsPublished) { <span class="badge bg-success">@T.T("Yes")</span> } else { <span class="badge bg-outline-secondary border">@T.T("No")</span> }</td>
                                 <td class="text-center">@c.SortOrder</td>
-                                <td class="text-nowrap text-muted small">@c.ModifiedAtUtc.ToString("u")</td>
+                                <td class="text-nowrap text-muted small">@FormatTimestamp(c.ModifiedAtUtc)</td>
                                 <td class="text-end">
                                     <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("Edit", "Categories", new { id = c.Id })"
+                                       hx-get="@CategoriesEditUrl(c.Id)"
                                        hx-target="#categories-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true"><i class="fas fa-edit"></i> @T.T("Edit")</a>
@@ -119,7 +123,7 @@
                                             data-rowversion="@Convert.ToBase64String(c.RowVersion)"
                                             data-name="@(string.IsNullOrWhiteSpace(c.Name) ? c.Id.ToString() : c.Name)"
                                             data-hx-target="#categories-workspace-shell" data-hx-swap="outerHTML"
-                                            data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');"><i class="fas fa-trash-alt"></i> @T.T("Delete")</button>
+                            ><i class="fas fa-trash-alt"></i> @T.T("Delete")</button>
                                 </td>
                             </tr>
                         }

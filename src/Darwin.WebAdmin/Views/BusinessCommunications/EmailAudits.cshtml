@@ -3,6 +3,47 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("EmailDeliveryAudits");
+    string GlobalEmailAuditsUrl() => Url.Action("EmailAudits", "BusinessCommunications") ?? string.Empty;
+    string GlobalBusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
+    string BusinessSupportQueueUrl(Guid? businessId) => Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string CommunicationDetailsUrl(Guid? businessId) => Url.Action("Details", "BusinessCommunications", new { businessId }) ?? string.Empty;
+    string ChannelAuditsUrl(Guid? businessId, bool? phoneVerificationOnly = null) => Url.Action("ChannelAudits", "BusinessCommunications", new { businessId, phoneVerificationOnly }) ?? string.Empty;
+    string UsersUrl(string? q = null) => Url.Action("Index", "Users", new { q }) ?? string.Empty;
+    string MobileOperationsUrl(Guid? businessId, string? q = null) => Url.Action("Index", "MobileOperations", new { businessId, q }) ?? string.Empty;
+    string BusinessInvitationsUrl(Guid? businessId, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter? filter = null, string? query = null) => Url.Action("Invitations", "Businesses", new { businessId, query, filter }) ?? string.Empty;
+    string BusinessMembersUrl(Guid? businessId, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter? filter = null, string? query = null) => Url.Action("Members", "Businesses", new { businessId, query, filter }) ?? string.Empty;
+    string EmailAuditsUrl(
+        string? query = null,
+        string? status = null,
+        string? flowKey = null,
+        string? recipientEmail = null,
+        bool? stalePendingOnly = null,
+        bool? businessLinkedFailuresOnly = null,
+        bool? repeatedFailuresOnly = null,
+        bool? priorSuccessOnly = null,
+        bool? retryReadyOnly = null,
+        bool? retryBlockedOnly = null,
+        bool? highChainVolumeOnly = null,
+        bool? chainFollowUpOnly = null,
+        bool? chainResolvedOnly = null,
+        Guid? businessId = null) => Url.Action("EmailAudits", "BusinessCommunications", new
+        {
+            query,
+            status,
+            flowKey,
+            recipientEmail,
+            stalePendingOnly,
+            businessLinkedFailuresOnly,
+            repeatedFailuresOnly,
+            priorSuccessOnly,
+            retryReadyOnly,
+            retryBlockedOnly,
+            highChainVolumeOnly,
+            chainFollowUpOnly,
+            chainResolvedOnly,
+            businessId
+        }) ?? string.Empty;
 
     string FlowLabel(string? flowKey) => flowKey switch
     {
@@ -83,7 +124,7 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "BusinessCommunications")"
+                           hx-get="@GlobalBusinessCommunicationsUrl()"
            hx-target="#business-communication-audits-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BackToCommunications")</a>
@@ -101,8 +142,9 @@
             <div class="d-flex gap-2 flex-wrap">
                 <a asp-controller="Businesses"
                    asp-action="SupportQueue"
+                   asp-route-businessId="@Model.BusinessId"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-get="@BusinessSupportQueueUrl(Model.BusinessId)"
                    hx-target="#business-communication-audits-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -110,7 +152,7 @@
                    asp-action="Edit"
                    asp-fragment="site-settings-communications-policy"
                    class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                   hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                    hx-target="#business-communication-audits-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("OpenPolicyAction")</a>
@@ -130,7 +172,7 @@
                            asp-route-retryReadyOnly="true"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-success"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryReadyOnly = true, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(retryReadyOnly: true, businessId: Model.BusinessId)"
                            hx-target="#business-communication-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("RetryReady")</a>
@@ -138,7 +180,7 @@
                            asp-route-retryBlockedOnly="true"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryBlockedOnly = true, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(retryBlockedOnly: true, businessId: Model.BusinessId)"
                            hx-target="#business-communication-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("RetryBlocked")</a>
@@ -158,7 +200,7 @@
                            asp-route-repeatedFailuresOnly="true"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { repeatedFailuresOnly = true, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(repeatedFailuresOnly: true, businessId: Model.BusinessId)"
                            hx-target="#business-communication-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("RepeatedFailures")</a>
@@ -166,7 +208,7 @@
                            asp-route-priorSuccessOnly="true"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { priorSuccessOnly = true, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(priorSuccessOnly: true, businessId: Model.BusinessId)"
                            hx-target="#business-communication-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PriorSuccessContext")</a>
@@ -186,7 +228,7 @@
                            asp-route-highChainVolumeOnly="true"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { highChainVolumeOnly = true, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(highChainVolumeOnly: true, businessId: Model.BusinessId)"
                            hx-target="#business-communication-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("HeavyChains")</a>
@@ -194,7 +236,7 @@
                            asp-route-stalePendingOnly="true"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = true, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(stalePendingOnly: true, businessId: Model.BusinessId)"
                            hx-target="#business-communication-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("StalePending")</a>
@@ -216,7 +258,7 @@
                            asp-route-flowKey="@Model.FlowKey"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { chainFollowUpOnly = true, recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(chainFollowUpOnly: true, recipientEmail: Model.RecipientEmail, flowKey: Model.FlowKey, businessId: Model.BusinessId)"
                            hx-target="#business-communication-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("NeedsFollowUp")</a>
@@ -225,7 +267,7 @@
                            asp-route-flowKey="@Model.FlowKey"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(recipientEmail: Model.RecipientEmail, flowKey: Model.FlowKey, businessId: Model.BusinessId)"
                            hx-target="#business-communication-audits-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("WholeChain")</a>
@@ -254,7 +296,7 @@
                                asp-route-flowKey="@playbook.FlowKey"
                                asp-route-businessId="@Model.BusinessId"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = playbook.FlowKey, businessId = Model.BusinessId })"
+                               hx-get="@EmailAuditsUrl(status: "Failed", flowKey: playbook.FlowKey, businessId: Model.BusinessId)"
                                hx-target="#business-communication-audits-workspace-shell"
                                hx-swap="outerHTML">@T.T("OpenFailed")</a>
                         </div>
@@ -277,7 +319,7 @@
        asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-danger"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
+                       hx-get="@EmailAuditsUrl(status: "Failed", stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("FailedOnly")</a>
     <a asp-action="EmailAudits"
@@ -287,7 +329,7 @@
        asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-warning"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = true, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
+                       hx-get="@EmailAuditsUrl(stalePendingOnly: true, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("StalePending")</a>
     <a asp-action="EmailAudits"
@@ -298,7 +340,7 @@
        asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", businessLinkedFailuresOnly = true, stalePendingOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
+                       hx-get="@EmailAuditsUrl(status: "Failed", businessLinkedFailuresOnly: true, stalePendingOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("BusinessLinkedFailures")</a>
     <a asp-action="EmailAudits"
@@ -309,7 +351,7 @@
        asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = true, priorSuccessOnly = false, businessId = Model.BusinessId })"
+                       hx-get="@EmailAuditsUrl(status: "Failed", stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: true, priorSuccessOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("RepeatedFailures")</a>
     <a asp-action="EmailAudits"
@@ -321,7 +363,7 @@
        asp-route-retryBlockedOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = true, retryReadyOnly = false, retryBlockedOnly = false, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: true, retryReadyOnly: false, retryBlockedOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("PriorSuccessContext")</a>
     <a asp-action="EmailAudits"
@@ -333,7 +375,7 @@
        asp-route-retryBlockedOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-success"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = true, retryBlockedOnly = false, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, retryReadyOnly: true, retryBlockedOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("RetryReady")</a>
     <a asp-action="EmailAudits"
@@ -346,7 +388,7 @@
        asp-route-highChainVolumeOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-warning"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = true, highChainVolumeOnly = false, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, retryReadyOnly: false, retryBlockedOnly: true, highChainVolumeOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("RetryBlocked")</a>
     <a asp-action="EmailAudits"
@@ -359,7 +401,7 @@
        asp-route-highChainVolumeOnly="true"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-dark"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = true, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, retryReadyOnly: false, retryBlockedOnly: false, highChainVolumeOnly: true, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("HeavyChains")</a>
     <a asp-action="EmailAudits"
@@ -371,7 +413,7 @@
        asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "BusinessInvitation", stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("FailedInvitations")</a>
     <a asp-action="EmailAudits"
@@ -383,7 +425,7 @@
        asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "AccountActivation", stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("FailedActivations")</a>
     <a asp-action="EmailAudits"
@@ -395,7 +437,7 @@
        asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(status: "Failed", flowKey: "PasswordReset", stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("FailedPasswordResets")</a>
     <a asp-action="EmailAudits"
@@ -407,7 +449,7 @@
        asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AdminCommunicationTest", status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
+                           hx-get="@EmailAuditsUrl(flowKey: "AdminCommunicationTest", status: "Failed", stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, businessId: Model.BusinessId)"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">@T.T("FailedAdminTests")</a>
 </div>
@@ -437,7 +479,7 @@
            asp-route-chainResolvedOnly="false"
            asp-route-businessId="@Model.BusinessId"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { query = Model.Query, status = Model.Status, flowKey = Model.FlowKey, stalePendingOnly = Model.StalePendingOnly, businessLinkedFailuresOnly = Model.BusinessLinkedFailuresOnly, repeatedFailuresOnly = Model.RepeatedFailuresOnly, priorSuccessOnly = Model.PriorSuccessOnly, retryReadyOnly = Model.RetryReadyOnly, retryBlockedOnly = Model.RetryBlockedOnly, highChainVolumeOnly = Model.HighChainVolumeOnly, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = Model.BusinessId })"
+                                   hx-get="@EmailAuditsUrl(query: Model.Query, status: Model.Status, flowKey: Model.FlowKey, stalePendingOnly: Model.StalePendingOnly, businessLinkedFailuresOnly: Model.BusinessLinkedFailuresOnly, repeatedFailuresOnly: Model.RepeatedFailuresOnly, priorSuccessOnly: Model.PriorSuccessOnly, retryReadyOnly: Model.RetryReadyOnly, retryBlockedOnly: Model.RetryBlockedOnly, highChainVolumeOnly: Model.HighChainVolumeOnly, chainFollowUpOnly: false, chainResolvedOnly: false, businessId: Model.BusinessId)"
            hx-target="#business-communication-audits-workspace-shell"
            hx-swap="outerHTML">@T.T("LeaveExactChain")</a>
     </div>
@@ -452,7 +494,7 @@
                asp-route-chainResolvedOnly="false"
                asp-route-businessId="@Model.BusinessId"
                class="btn btn-sm @(Model.ChainFollowUpOnly || Model.ChainResolvedOnly ? "btn-outline-secondary" : "btn-dark")"
-               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = Model.BusinessId })"
+                                   hx-get="@EmailAuditsUrl(recipientEmail: Model.RecipientEmail, flowKey: Model.FlowKey, chainFollowUpOnly: false, chainResolvedOnly: false, businessId: Model.BusinessId)"
                hx-target="#business-communication-audits-workspace-shell"
                hx-swap="outerHTML">@T.T("WholeChain")</a>
             <a asp-action="EmailAudits"
@@ -462,7 +504,7 @@
                asp-route-chainResolvedOnly="false"
                asp-route-businessId="@Model.BusinessId"
                class="btn btn-sm @(Model.ChainFollowUpOnly ? "btn-warning" : "btn-outline-warning")"
-               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = true, chainResolvedOnly = false, businessId = Model.BusinessId })"
+                                   hx-get="@EmailAuditsUrl(recipientEmail: Model.RecipientEmail, flowKey: Model.FlowKey, chainFollowUpOnly: true, chainResolvedOnly: false, businessId: Model.BusinessId)"
                hx-target="#business-communication-audits-workspace-shell"
                hx-swap="outerHTML">@T.T("NeedsFollowUp")</a>
             <a asp-action="EmailAudits"
@@ -472,7 +514,7 @@
                asp-route-chainResolvedOnly="true"
                asp-route-businessId="@Model.BusinessId"
                class="btn btn-sm @(Model.ChainResolvedOnly ? "btn-success" : "btn-outline-success")"
-               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = false, chainResolvedOnly = true, businessId = Model.BusinessId })"
+                                   hx-get="@EmailAuditsUrl(recipientEmail: Model.RecipientEmail, flowKey: Model.FlowKey, chainFollowUpOnly: false, chainResolvedOnly: true, businessId: Model.BusinessId)"
                hx-target="#business-communication-audits-workspace-shell"
                hx-swap="outerHTML">@T.T("ResolvedHistory")</a>
         </div>
@@ -714,7 +756,7 @@
 </div>
 
 <form method="get" class="row g-2 mb-3"
-      hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+      hx-get="@GlobalEmailAuditsUrl()"
       hx-target="#business-communication-audits-workspace-shell"
       hx-swap="outerHTML">
     <div class="col-md-4">
@@ -795,7 +837,7 @@
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")</button>
         <a asp-action="EmailAudits" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+           hx-get="@GlobalEmailAuditsUrl()"
            hx-target="#business-communication-audits-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Reset")</a>
@@ -844,7 +886,7 @@
                         @if (item.BusinessId.HasValue)
                         {
                             <a asp-action="Details" asp-route-businessId="@item.BusinessId"
-                               hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
+                               hx-get="@CommunicationDetailsUrl(item.BusinessId)"
                                hx-target="#business-communication-audits-workspace-shell"
                                hx-swap="outerHTML">@BusinessDisplayName(item)</a>
                         }
@@ -1019,11 +1061,11 @@
                                    asp-route-retryBlockedOnly="true"
                                    asp-route-businessId="@item.BusinessId"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryBlockedOnly = true, businessId = item.BusinessId })"
+                                   hx-get="@EmailAuditsUrl(retryBlockedOnly: true, businessId: item.BusinessId)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("RetryBlocked")</a>
                                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
                                 @if (string.Equals(item.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
@@ -1032,7 +1074,7 @@
                                        asp-route-businessId="@item.BusinessId"
                                        asp-route-phoneVerificationOnly="true"
                                        class="btn btn-sm btn-outline-dark"
-                                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = item.BusinessId, phoneVerificationOnly = true })"
+                                       hx-get="@ChannelAuditsUrl(item.BusinessId, phoneVerificationOnly: true)"
                                        hx-target="#business-communication-audits-workspace-shell"
                                        hx-swap="outerHTML">@T.T("PhoneVerification")</a>
                                 }
@@ -1047,14 +1089,14 @@
                                    asp-route-flowKey="@item.FlowKey"
                                    asp-route-businessId="@item.BusinessId"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { chainFollowUpOnly = true, recipientEmail = LogicalRecipientEmail(item), flowKey = item.FlowKey, businessId = item.BusinessId })"
+                                   hx-get="@EmailAuditsUrl(chainFollowUpOnly: true, recipientEmail: LogicalRecipientEmail(item), flowKey: item.FlowKey, businessId: item.BusinessId)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("NeedsFollowUp")</a>
                                 <a asp-action="EmailAudits"
                                    asp-route-repeatedFailuresOnly="true"
                                    asp-route-businessId="@item.BusinessId"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { repeatedFailuresOnly = true, businessId = item.BusinessId })"
+                                   hx-get="@EmailAuditsUrl(repeatedFailuresOnly: true, businessId: item.BusinessId)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("RepeatedFailures")</a>
                             </div>
@@ -1077,7 +1119,7 @@
                                    asp-route-chainResolvedOnly="@Model.ChainResolvedOnly"
                                    asp-route-businessId="@item.BusinessId"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = LogicalRecipientEmail(item), flowKey = item.FlowKey, status = string.Empty, stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = false, chainFollowUpOnly = Model.ChainFollowUpOnly, chainResolvedOnly = Model.ChainResolvedOnly, businessId = item.BusinessId })"
+                                           hx-get="@EmailAuditsUrl(recipientEmail: LogicalRecipientEmail(item), flowKey: item.FlowKey, status: string.Empty, stalePendingOnly: false, businessLinkedFailuresOnly: false, repeatedFailuresOnly: false, priorSuccessOnly: false, retryReadyOnly: false, retryBlockedOnly: false, highChainVolumeOnly: false, chainFollowUpOnly: Model.ChainFollowUpOnly, chainResolvedOnly: Model.ChainResolvedOnly, businessId: item.BusinessId)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("OpenExactChain")</a>
                             </div>
@@ -1087,17 +1129,16 @@
                             var invitationWorkspaceFilter = InvitationWorkspaceFilter(item);
                             <div class="mt-2 d-flex flex-wrap gap-2">
                                 <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" asp-route-query="@LogicalRecipientEmail(item)" asp-route-filter="@invitationWorkspaceFilter" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@(invitationWorkspaceFilter.HasValue
-                                       ? Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = invitationWorkspaceFilter })
-                                       : Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item) }))"
+                                   hx-get="@BusinessInvitationsUrl(item.BusinessId, invitationWorkspaceFilter, LogicalRecipientEmail(item))"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("BusinessCommunicationSearchInvitationAction")</a>
                                 <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                   asp-route-businessId="@item.BusinessId"
+                                   hx-get="@BusinessSupportQueueUrl(item.BusinessId)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("SupportQueue")</a>
                                 <a asp-action="Details" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-dark"
-                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
+                                   hx-get="@CommunicationDetailsUrl(item.BusinessId)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("BusinessCommunicationInspectBusinessAction")</a>
                             </div>
@@ -1107,25 +1148,23 @@
                             var memberWorkspaceFilter = MemberWorkspaceFilter(item);
                             <div class="mt-2 d-flex flex-wrap gap-2">
                                 <a asp-controller="Users" asp-action="Index" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { q = LogicalRecipientEmail(item) })"
+                                   hx-get="@UsersUrl(LogicalRecipientEmail(item))"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("BusinessCommunicationOpenUsersAction")</a>
-                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = LogicalRecipientEmail(item) })"
+                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-businessId="@item.BusinessId" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@MobileOperationsUrl(item.BusinessId, LogicalRecipientEmail(item))"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                                 @if (item.BusinessId.HasValue)
                                 {
                                     <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-query="@LogicalRecipientEmail(item)" asp-route-filter="@memberWorkspaceFilter" class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@(memberWorkspaceFilter.HasValue
-                                           ? Url.Action("Members", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item), filter = memberWorkspaceFilter })
-                                           : Url.Action("Members", "Businesses", new { businessId = item.BusinessId, query = LogicalRecipientEmail(item) }))"
+                                       hx-get="@BusinessMembersUrl(item.BusinessId, memberWorkspaceFilter, LogicalRecipientEmail(item))"
                                        hx-target="#business-communication-audits-workspace-shell"
                                        hx-swap="outerHTML">@T.T("CommunicationOpenMemberSupportAction")</a>
                                 }
                                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
                             </div>
@@ -1137,16 +1176,16 @@
                                    asp-route-businessId="@item.BusinessId"
                                    asp-route-phoneVerificationOnly="true"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = item.BusinessId, phoneVerificationOnly = true })"
+                                   hx-get="@ChannelAuditsUrl(item.BusinessId, phoneVerificationOnly: true)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("PhoneVerification")</a>
-                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = LogicalRecipientEmail(item) })"
+                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-businessId="@item.BusinessId" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@MobileOperationsUrl(item.BusinessId, LogicalRecipientEmail(item))"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
                             </div>
@@ -1155,11 +1194,11 @@
                         {
                             <div class="mt-2 d-flex flex-wrap gap-2">
                                 <a asp-action="Index" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "BusinessCommunications")"
+       hx-get="@GlobalBusinessCommunicationsUrl()"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("OpenWorkspaceAction")</a>
                                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
                                 @if (Model.CanSendTestEmail)
@@ -1178,11 +1217,12 @@
                         {
                             <div class="mt-2 d-flex flex-wrap gap-2">
                                 <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                   asp-route-businessId="@item.BusinessId"
+                                   hx-get="@BusinessSupportQueueUrl(item.BusinessId)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("SupportQueue")</a>
                                 <a asp-action="Details" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-dark"
-                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
+                                   hx-get="@CommunicationDetailsUrl(item.BusinessId)"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">@T.T("BusinessCommunicationInspectBusinessAction")</a>
                             </div>

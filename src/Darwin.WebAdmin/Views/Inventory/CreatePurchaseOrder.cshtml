@@ -7,25 +7,4 @@
 <partial name="~/Views/Inventory/_PurchaseOrderEditorShell.cshtml" model="Model" />
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            document.addEventListener('click', function (event) {
-                if (event.target.closest('#addPurchaseOrderLine')) {
-                    const container = document.getElementById('purchaseOrderLines');
-                    const template = document.getElementById('purchaseOrderLineTemplate');
-                    if (!container || !template) {
-                        return;
-                    }
-
-                    container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
-                    return;
-                }
-
-                const button = event.target.closest('#purchaseOrderLines .remove-line');
-                if (button) {
-                    button.closest('.line-row')?.remove();
-                }
-            });
-        })();
-    </script>
 }

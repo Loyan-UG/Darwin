@@ -3,6 +3,14 @@
 @{
     // Server renders pager via TagHelper; actions stay on Details page and reload this partial via JS when needed.
     var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string GlobalInvoicesUrl() => Url.Action("Invoices", "Crm") ?? string.Empty;
+    string GlobalBillingWebhooksUrl() => Url.Action("Webhooks", "Billing") ?? string.Empty;
+    string AddPaymentUrl(Guid orderId) => Url.Action("AddPayment", "Orders", new { orderId }) ?? string.Empty;
+    string CreateInvoiceUrl(Guid orderId) => Url.Action("CreateInvoice", "Orders", new { orderId }) ?? string.Empty;
+    string EditPaymentUrl(Guid id) => Url.Action("EditPayment", "Billing", new { id }) ?? string.Empty;
+    string AddRefundUrl(Guid orderId, Guid paymentId) => Url.Action("AddRefund", "Orders", new { orderId, paymentId }) ?? string.Empty;
     string LocalizePaymentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
@@ -42,14 +50,14 @@
                        asp-action="AddPayment"
                        asp-route-orderId="@Model.OrderId"
                        class="btn btn-sm btn-outline-primary"
-                       hx-get="@Url.Action("AddPayment", "Orders", new { orderId = Model.OrderId })"
+                       hx-get="@AddPaymentUrl(Model.OrderId)"
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">@T.T("Payment")</a>
                     <a asp-controller="Billing"
                        asp-action="Payments"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Payments", "Billing")"
+                       hx-get="@GlobalPaymentsUrl()"
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">@T.T("Payments")</a>
@@ -69,7 +77,7 @@
                         <div class="small text-muted mt-3">@T.T("NeedsAttention")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" asp-route-filter="Failed" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.PaymentQueueFilter.Failed ? "btn-danger" : "btn-outline-danger")">@T.T("Failed")</a>
-                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Payments", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payments")</a>
+                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalPaymentsUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payments")</a>
                         </div>
                     </div>
                 </div>
@@ -85,7 +93,7 @@
                         <div class="small text-muted mt-3">@T.T("CrmNextStep")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" asp-route-filter="Refunded" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.PaymentQueueFilter.Refunded ? "btn-warning" : "btn-outline-warning")">@T.T("Refunded")</a>
-                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refund")</a>
+                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalRefundsUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refund")</a>
                         </div>
                     </div>
                 </div>
@@ -100,8 +108,8 @@
                         </div>
                         <div class="small text-muted mt-3">@T.T("ReviewInvoices")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
-                            <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-primary" hx-get="@Url.Action("CreateInvoice", "Orders", new { orderId = Model.OrderId })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("CreateInvoice")</a>
-                            <a asp-controller="Crm" asp-action="Invoices" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Invoices", "Crm")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ReviewInvoices")</a>
+                            <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-primary" hx-get="@CreateInvoiceUrl(Model.OrderId)" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("CreateInvoice")</a>
+                            <a asp-controller="Crm" asp-action="Invoices" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalInvoicesUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ReviewInvoices")</a>
                         </div>
                     </div>
                 </div>
@@ -116,8 +124,8 @@
                         </div>
                         <div class="small text-muted mt-3">@T.T("Open")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
-                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Payments", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payments")</a>
-                            <a asp-controller="Billing" asp-action="Webhooks" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Webhooks", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Open")</a>
+                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalPaymentsUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payments")</a>
+            <a asp-controller="Billing" asp-action="Webhooks" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalBillingWebhooksUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Open")</a>
                         </div>
                     </div>
                 </div>
@@ -189,7 +197,7 @@
                                    asp-action="EditPayment"
                                    asp-route-id="@p.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EditPayment", "Billing", new { id = p.Id })"
+                                   hx-get="@EditPaymentUrl(p.Id)"
                                    hx-target="#order-operation-shell"
                                    hx-swap="innerHTML"
                                    hx-push-url="false">
@@ -200,7 +208,7 @@
                                    asp-route-orderId="@Model.OrderId"
                                    asp-route-paymentId="@p.Id"
                                    class="btn btn-sm btn-outline-danger"
-                                   hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = p.Id })"
+                                   hx-get="@AddRefundUrl(Model.OrderId, p.Id)"
                                    hx-target="#order-operation-shell"
                                    hx-swap="innerHTML"
                                    hx-push-url="false">

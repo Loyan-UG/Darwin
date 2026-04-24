@@ -4,6 +4,19 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("TaxComplianceTitle");
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string GlobalInvoicesUrl() => Url.Action("Invoices", "Crm") ?? string.Empty;
+    string TaxSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" }) ?? string.Empty;
+    string CrmCustomersUrl(CustomerQueueFilter filter) => Url.Action("Customers", "Crm", new { filter }) ?? string.Empty;
+    string CrmInvoicesUrl(string filter) => Url.Action("Invoices", "Crm", new { filter }) ?? string.Empty;
+    string CrmInvoicesByQueryUrl(string q) => Url.Action("Invoices", "Crm", new { q }) ?? string.Empty;
+    string CrmEditInvoiceUrl(Guid? id) => Url.Action("EditInvoice", "Crm", new { id }) ?? string.Empty;
+    string CrmEditCustomerUrl(Guid? id) => Url.Action("EditCustomer", "Crm", new { id }) ?? string.Empty;
+    string CrmOpportunitiesUrl(string q) => Url.Action("Opportunities", "Crm", new { q }) ?? string.Empty;
+    string OrdersUrl(string filter) => Url.Action("Index", "Orders", new { filter }) ?? string.Empty;
+    string OrderDetailsUrl(Guid? id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
+    string EditPaymentUrl(Guid? id) => Url.Action("EditPayment", "Billing", new { id }) ?? string.Empty;
     string LocalizeTaxInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string TaxComplianceOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
     string TaxComplianceOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
@@ -53,7 +66,7 @@
                            asp-action="Customers"
                            asp-route-filter="@CustomerQueueFilter.MissingVatId"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Customers", "Crm", new { filter = CustomerQueueFilter.MissingVatId })"
+                           hx-get="@CrmCustomersUrl(CustomerQueueFilter.MissingVatId)"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -61,7 +74,7 @@
                            asp-action="Invoices"
                            asp-route-filter="MissingVatId"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "MissingVatId" })"
+                           hx-get="@CrmInvoicesUrl("MissingVatId")"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -80,7 +93,7 @@
                            asp-action="Invoices"
                            asp-route-filter="MissingVatId"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "MissingVatId" })"
+                           hx-get="@CrmInvoicesUrl("MissingVatId")"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -88,7 +101,7 @@
                            asp-action="Index"
                            asp-route-filter="PaymentIssues"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Orders", new { filter = "PaymentIssues" })"
+                           hx-get="@OrdersUrl("PaymentIssues")"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OrdersTitle")</a>
@@ -108,7 +121,7 @@
                            asp-action="Invoices"
                            asp-route-filter="Overdue"
                            class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "Overdue" })"
+                           hx-get="@CrmInvoicesUrl("Overdue")"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -116,13 +129,13 @@
                            asp-action="Invoices"
                            asp-route-filter="DueSoon"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "DueSoon" })"
+                           hx-get="@CrmInvoicesUrl("DueSoon")"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("DueSoon")</a>
                         <a asp-action="Payments"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-get="@GlobalPaymentsUrl()"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Payments")</a>
@@ -143,7 +156,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-tax"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                          hx-get="@TaxSettingsUrl()"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenTaxSettings")</a>
@@ -151,7 +164,7 @@
                            asp-action="Invoices"
                            asp-route-filter="Draft"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "Draft" })"
+                           hx-get="@CrmInvoicesUrl("Draft")"
                            hx-target="#billing-tax-compliance-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Draft")</a>
@@ -168,7 +181,7 @@
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="Payments"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("Payments", "Billing")"
+               hx-get="@GlobalPaymentsUrl()"
                hx-target="#billing-tax-compliance-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("Payments")</a>
@@ -176,7 +189,7 @@
                asp-action="Edit"
                asp-fragment="site-settings-tax"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+               hx-get="@TaxSettingsUrl()"
                hx-target="#billing-tax-compliance-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("OpenTaxSettings")</a>
@@ -202,7 +215,7 @@
                    asp-action="Edit"
                    asp-fragment="site-settings-tax"
                    class="btn btn-sm btn-outline-warning"
-                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                   hx-get="@TaxSettingsUrl()"
                    hx-target="#billing-tax-compliance-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("CompleteIssuerData")</a>
@@ -213,7 +226,7 @@
                    asp-action="Edit"
                    asp-fragment="site-settings-tax"
                    class="btn btn-sm btn-outline-danger"
-                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                   hx-get="@TaxSettingsUrl()"
                    hx-target="#billing-tax-compliance-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("ReviewEInvoiceBaseline")</a>
@@ -265,7 +278,7 @@
         <a asp-controller="CRM"
            asp-action="Invoices"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Invoices", "Crm")"
+           hx-get="@GlobalInvoicesUrl()"
            hx-target="#billing-tax-compliance-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -319,7 +332,7 @@
                                        asp-action="EditInvoice"
                                        asp-route-id="@item.Id"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.Id })"
+                                      hx-get="@CrmEditInvoiceUrl(item.Id)"
                                        hx-target="#billing-tax-compliance-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("TaxComplianceOpenInvoiceAction")</a>
@@ -329,7 +342,7 @@
                                            asp-action="EditCustomer"
                                            asp-route-id="@item.CustomerId"
                                            class="btn btn-sm btn-outline-secondary"
-                                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId })"
+                                          hx-get="@CrmEditCustomerUrl(item.CustomerId)"
                                            hx-target="#billing-tax-compliance-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("TaxComplianceOpenCustomerAction")</a>
@@ -340,7 +353,7 @@
                                            asp-action="Details"
                                            asp-route-id="@item.OrderId"
                                            class="btn btn-sm btn-outline-secondary"
-                                           hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })"
+                                          hx-get="@OrderDetailsUrl(item.OrderId)"
                                            hx-target="#billing-tax-compliance-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("TaxComplianceOpenOrderAction")</a>
@@ -350,7 +363,7 @@
                                         <a asp-action="EditPayment"
                                            asp-route-id="@item.PaymentId"
                                            class="btn btn-sm btn-outline-secondary"
-                                           hx-get="@Url.Action("EditPayment", "Billing", new { id = item.PaymentId })"
+                                          hx-get="@EditPaymentUrl(item.PaymentId)"
                                            hx-target="#billing-tax-compliance-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("Payments")</a>
@@ -359,13 +372,13 @@
                                     {
                                         <a asp-action="Payments"
                                            class="btn btn-sm btn-outline-warning"
-                                           hx-get="@Url.Action("Payments", "Billing")"
+                                           hx-get="@GlobalPaymentsUrl()"
                                            hx-target="#billing-tax-compliance-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("Payments")</a>
                                         <a asp-action="Refunds"
                                            class="btn btn-sm btn-outline-danger"
-                                           hx-get="@Url.Action("Refunds", "Billing")"
+                                           hx-get="@GlobalRefundsUrl()"
                                            hx-target="#billing-tax-compliance-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("RefundQueueTitle")</a>
@@ -376,7 +389,7 @@
                                            asp-action="Customers"
                                            asp-route-filter="@CustomerQueueFilter.MissingVatId"
                                            class="btn btn-sm btn-outline-warning"
-                                           hx-get="@Url.Action("Customers", "Crm", new { filter = CustomerQueueFilter.MissingVatId })"
+                                          hx-get="@CrmCustomersUrl(CustomerQueueFilter.MissingVatId)"
                                            hx-target="#billing-tax-compliance-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("FixVatId")</a>
@@ -399,7 +412,7 @@
            asp-action="Customers"
            asp-route-filter="@CustomerQueueFilter.MissingVatId"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Customers", "Crm", new { filter = CustomerQueueFilter.MissingVatId })"
+          hx-get="@CrmCustomersUrl(CustomerQueueFilter.MissingVatId)"
            hx-target="#billing-tax-compliance-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("FixVatId")</a>
@@ -444,7 +457,7 @@
                                        asp-action="EditCustomer"
                                        asp-route-id="@item.Id"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.Id })"
+                                      hx-get="@CrmEditCustomerUrl(item.Id)"
                                        hx-target="#billing-tax-compliance-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("TaxComplianceOpenCustomerAction")</a>
@@ -452,7 +465,7 @@
                                        asp-action="Invoices"
                                        asp-route-q="@item.Email"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Invoices", "Crm", new { q = item.Email })"
+                                      hx-get="@CrmInvoicesByQueryUrl(item.Email)"
                                        hx-target="#billing-tax-compliance-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -462,7 +475,7 @@
                                            asp-action="Opportunities"
                                            asp-route-q="@item.Email"
                                            class="btn btn-sm btn-outline-secondary"
-                                           hx-get="@Url.Action("Opportunities", "Crm", new { q = item.Email })"
+                                          hx-get="@CrmOpportunitiesUrl(item.Email)"
                                            hx-target="#billing-tax-compliance-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("Opportunities")</a>

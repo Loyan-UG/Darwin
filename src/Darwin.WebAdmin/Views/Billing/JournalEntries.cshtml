@@ -4,11 +4,17 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("JournalEntriesTitle");
+    string GlobalJournalEntriesUrl() => Url.Action("JournalEntries", "Billing") ?? string.Empty;
     string JournalEntryOpsHealthBadgeClass(bool healthy) => healthy
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
     string JournalEntryOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
     var journalEntryAttentionCount = Model.Summary.RecentCount + Model.Summary.MultiLineCount;
+    string JournalEntriesUrl(object? businessId = null, object? queue = null) => Url.Action("JournalEntries", "Billing", new { businessId, queue }) ?? string.Empty;
+    string CreateJournalEntryUrl(object? businessId = null) => Url.Action("CreateJournalEntry", "Billing", new { businessId }) ?? string.Empty;
+    string FinancialAccountsUrl(object? businessId = null) => Url.Action("FinancialAccounts", "Billing", new { businessId }) ?? string.Empty;
+    string ExpensesUrl(object? businessId = null) => Url.Action("Expenses", "Billing", new { businessId }) ?? string.Empty;
+    string EditJournalEntryUrl(Guid id) => Url.Action("EditJournalEntry", "Billing", new { id }) ?? string.Empty;
 }
 
 <div id="billing-journal-entries-workspace-shell">
@@ -16,7 +22,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="JournalEntries" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("JournalEntries", "Billing")"
+          hx-get="@GlobalJournalEntriesUrl()"
           hx-target="#billing-journal-entries-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -24,13 +30,13 @@
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchJournalEntriesPlaceholder")">
         <button class="btn btn-outline-secondary" type="submit">@T.T("CommonSearch")</button>
         <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+           hx-get="@JournalEntriesUrl(Model.BusinessId)"
            hx-target="#billing-journal-entries-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("CommonReset")</a>
     </form>
     <a asp-action="CreateJournalEntry" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
-       hx-get="@Url.Action("CreateJournalEntry", "Billing", new { businessId = Model.BusinessId })"
+       hx-get="@CreateJournalEntryUrl(Model.BusinessId)"
        hx-target="#billing-journal-entries-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("CreateJournalEntry")</a>
@@ -75,12 +81,12 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a asp-action="CreateJournalEntry" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("CreateJournalEntry", "Billing", new { businessId = Model.BusinessId })"
+                   hx-get="@CreateJournalEntryUrl(Model.BusinessId)"
                    hx-target="#billing-journal-entries-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("CreateJournalEntry")</a>
                 <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                   hx-get="@FinancialAccountsUrl(Model.BusinessId)"
                    hx-target="#billing-journal-entries-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
@@ -100,12 +106,12 @@
                     <div class="small text-muted mt-3">@T.T("JournalEntryPlaybookRecentAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-queue="@JournalEntryQueueFilter.Recent" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, queue = JournalEntryQueueFilter.Recent })"
+                           hx-get="@JournalEntriesUrl(Model.BusinessId, JournalEntryQueueFilter.Recent)"
                            hx-target="#billing-journal-entries-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Recent")</a>
                         <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@ExpensesUrl(Model.BusinessId)"
                            hx-target="#billing-journal-entries-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ExpensesTitle")</a>
@@ -124,12 +130,12 @@
                     <div class="small text-muted mt-3">@T.T("JournalEntryPlaybookMultilineAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-queue="@JournalEntryQueueFilter.MultiLine" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, queue = JournalEntryQueueFilter.MultiLine })"
+                           hx-get="@JournalEntriesUrl(Model.BusinessId, JournalEntryQueueFilter.MultiLine)"
                            hx-target="#billing-journal-entries-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("JournalEntriesMultiLine")</a>
                         <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@FinancialAccountsUrl(Model.BusinessId)"
                            hx-target="#billing-journal-entries-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
@@ -148,12 +154,12 @@
                     <div class="small text-muted mt-3">@T.T("JournalEntryPlaybookMultilineDependency")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="CreateJournalEntry" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("CreateJournalEntry", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@CreateJournalEntryUrl(Model.BusinessId)"
                            hx-target="#billing-journal-entries-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CreateJournalEntry")</a>
                         <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@ExpensesUrl(Model.BusinessId)"
                            hx-target="#billing-journal-entries-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ExpensesTitle")</a>
@@ -193,17 +199,17 @@
 
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-sm @(Model.QueueFilter is null ? "btn-dark" : "btn-outline-dark")"
-       hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+       hx-get="@JournalEntriesUrl(Model.BusinessId)"
        hx-target="#billing-journal-entries-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("All")</a>
     <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-queue="@JournalEntryQueueFilter.Recent" class="btn btn-sm @(Model.QueueFilter == JournalEntryQueueFilter.Recent ? "btn-primary" : "btn-outline-primary")"
-       hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, queue = JournalEntryQueueFilter.Recent })"
+       hx-get="@JournalEntriesUrl(Model.BusinessId, JournalEntryQueueFilter.Recent)"
        hx-target="#billing-journal-entries-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Recent")</a>
     <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-queue="@JournalEntryQueueFilter.MultiLine" class="btn btn-sm @(Model.QueueFilter == JournalEntryQueueFilter.MultiLine ? "btn-secondary" : "btn-outline-secondary")"
-       hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, queue = JournalEntryQueueFilter.MultiLine })"
+       hx-get="@JournalEntriesUrl(Model.BusinessId, JournalEntryQueueFilter.MultiLine)"
        hx-target="#billing-journal-entries-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("JournalEntriesMultiLine")</a>
@@ -228,7 +234,7 @@
                     <td>@item.Currency @((item.TotalDebitMinor / 100M).ToString("0.00"))</td>
                     <td>@item.Currency @((item.TotalCreditMinor / 100M).ToString("0.00"))</td>
                     <td class="text-end"><a asp-action="EditJournalEntry" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("EditJournalEntry", "Billing", new { id = item.Id })"
+                       hx-get="@EditJournalEntryUrl(item.Id)"
                        hx-target="#billing-journal-entries-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("CommonEdit")</a></td>

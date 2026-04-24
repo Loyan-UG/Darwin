@@ -11,6 +11,9 @@
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
     string InventoryLedgerOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    string VariantLedgerUrl(object? variantId = null, object? warehouseId = null, string? filter = null) => Url.Action("VariantLedger", "Inventory", new { variantId, warehouseId, filter }) ?? string.Empty;
+    string StockLevelsUrl(object? warehouseId = null) => Url.Action("StockLevels", "Inventory", new { warehouseId }) ?? string.Empty;
+    string StockTransfersUrl(object? warehouseId = null) => Url.Action("StockTransfers", "Inventory", new { warehouseId }) ?? string.Empty;
     var inventoryLedgerAttentionCount = Model.Summary.OutboundCount + Model.Summary.ReservationCount;
 }
 
@@ -42,12 +45,12 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId })"
+                   hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId)"
                    hx-target="#inventory-ledger-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("InventoryLedger")</a>
                 <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("StockLevels", "Inventory", new { warehouseId = Model.WarehouseId })"
+                   hx-get="@StockLevelsUrl(Model.WarehouseId)"
                    hx-target="#inventory-ledger-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("StockLevels")</a>
@@ -67,12 +70,12 @@
                     <div class="small text-muted mt-3">@T.T("InventoryLedgerPlaybookInboundAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Inbound" class="btn btn-sm btn-outline-success"
-                           hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Inbound" })"
+                           hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId, "Inbound")"
                            hx-target="#inventory-ledger-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Inbound")</a>
                         <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("StockLevels", "Inventory", new { warehouseId = Model.WarehouseId })"
+                           hx-get="@StockLevelsUrl(Model.WarehouseId)"
                            hx-target="#inventory-ledger-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("StockLevels")</a>
@@ -91,12 +94,12 @@
                     <div class="small text-muted mt-3">@T.T("InventoryLedgerPlaybookOutboundAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Outbound" class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Outbound" })"
+                           hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId, "Outbound")"
                            hx-target="#inventory-ledger-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Outbound")</a>
                         <a asp-action="StockTransfers" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("StockTransfers", "Inventory", new { warehouseId = Model.WarehouseId })"
+                           hx-get="@StockTransfersUrl(Model.WarehouseId)"
                            hx-target="#inventory-ledger-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("StockTransfersTitle")</a>
@@ -115,12 +118,12 @@
                     <div class="small text-muted mt-3">@T.T("InventoryLedgerPlaybookOutboundScope")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reservations" class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Reservations" })"
+                           hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId, "Reservations")"
                            hx-target="#inventory-ledger-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Reservations")</a>
                         <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("StockLevels", "Inventory", new { warehouseId = Model.WarehouseId })"
+                           hx-get="@StockLevelsUrl(Model.WarehouseId)"
                            hx-target="#inventory-ledger-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("StockLevels")</a>
@@ -159,7 +162,7 @@
 </div>
 
 <form asp-action="VariantLedger" method="get" class="d-flex gap-2 mb-3"
-      hx-get="@Url.Action("VariantLedger", "Inventory")"
+      hx-get="@VariantLedgerUrl()"
       hx-target="#inventory-ledger-workspace-shell"
       hx-swap="outerHTML"
       hx-push-url="true">
@@ -168,7 +171,7 @@
     <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
     <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
-       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId })"
+       hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId)"
        hx-target="#inventory-ledger-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Reset")</a>
@@ -176,22 +179,22 @@
 
 <div class="d-flex gap-2 flex-wrap mb-3">
     <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Inbound" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Inbound ? "btn-success" : "btn-outline-success")"
-       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Inbound" })"
+       hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId, "Inbound")"
        hx-target="#inventory-ledger-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Inbound")</a>
     <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Outbound" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Outbound ? "btn-danger" : "btn-outline-danger")"
-       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Outbound" })"
+       hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId, "Outbound")"
        hx-target="#inventory-ledger-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Outbound")</a>
     <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reservations" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Reservations ? "btn-warning" : "btn-outline-warning")"
-       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Reservations" })"
+       hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId, "Reservations")"
        hx-target="#inventory-ledger-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Reservations")</a>
     <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId })"
+       hx-get="@VariantLedgerUrl(Model.VariantId, Model.WarehouseId)"
        hx-target="#inventory-ledger-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("ClearQueueFilters")</a>
@@ -201,11 +204,11 @@
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th style="width:140px;">@T.T("WhenUtc")</th>
-                <th style="width:220px;">@T.T("Warehouse")</th>
-                <th style="width:120px;" class="text-end">@T.T("QtyDelta")</th>
+                        <th class="admin-w-140">@T.T("WhenUtc")</th>
+                        <th class="admin-w-220">@T.T("Warehouse")</th>
+                        <th class="text-end admin-w-120">@T.T("QtyDelta")</th>
                 <th>@T.T("Reason")</th>
-                <th style="width:320px;">@T.T("Reference")</th>
+                        <th class="admin-w-320">@T.T("Reference")</th>
             </tr>
         </thead>
         <tbody>

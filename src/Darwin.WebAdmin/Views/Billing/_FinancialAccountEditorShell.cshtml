@@ -3,6 +3,7 @@
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
     ViewData["Title"] = isCreate ? T.T("CreateFinancialAccount") : T.T("EditFinancialAccount");
+    string FinancialAccountsUrl(Guid? businessId) => Url.Action("FinancialAccounts", "Billing", new { businessId }) ?? string.Empty;
 }
 
 <div id="billing-financial-account-editor-shell">
@@ -25,7 +26,7 @@
             <a asp-action="FinancialAccounts"
                asp-route-businessId="@Model.BusinessId"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+               hx-get="@FinancialAccountsUrl(Model.BusinessId)"
                hx-target="#billing-financial-account-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("Back")</a>

@@ -139,6 +139,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
     public sealed class EmailDispatchAuditListItemVm
     {
         public Guid Id { get; set; }
+        public bool IsQueueOperation { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? FlowKey { get; set; }
         public string? TemplateKey { get; set; }
@@ -153,6 +154,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public DateTime AttemptedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
         public string? FailureMessage { get; set; }
+        public int QueueAttemptCount { get; set; }
         public int AttemptAgeMinutes { get; set; }
         public int? CompletionLatencySeconds { get; set; }
         public bool NeedsOperatorFollowUp { get; set; }
@@ -385,6 +387,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int RetryReadyCount { get; set; }
         public int RetryBlockedCount { get; set; }
         public int HighChainVolumeCount { get; set; }
+        public int QueuedPendingCount { get; set; }
+        public int QueuedFailedCount { get; set; }
     }
 
     public sealed class EmailDispatchAuditChainSummaryVm

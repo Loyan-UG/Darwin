@@ -115,6 +115,7 @@ namespace Darwin.Application.Businesses.Queries
                 .Select(x => new EmailDispatchAuditListItemDto
                 {
                     Id = x.Audit.Id,
+                    IsQueueOperation = false,
                     Provider = x.Audit.Provider,
                     FlowKey = x.Audit.FlowKey,
                     TemplateKey = x.Audit.TemplateKey,
@@ -128,7 +129,8 @@ namespace Darwin.Application.Businesses.Queries
                     Status = x.Audit.Status,
                     AttemptedAtUtc = x.Audit.AttemptedAtUtc,
                     CompletedAtUtc = x.Audit.CompletedAtUtc,
-                    FailureMessage = x.Audit.FailureMessage
+                    FailureMessage = x.Audit.FailureMessage,
+                    QueueAttemptCount = 0
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
@@ -242,6 +244,25 @@ namespace Darwin.Application.Businesses.Queries
                 filteredItems = filteredItems.Where(x => !x.NeedsOperatorFollowUp);
             }
 
+            var filteredList = filteredItems.ToList();
+            var queuedItems = await BuildQueuedOperationItemsAsync(
+                    query,
+                    recipientEmail,
+                    status,
+                    flowKey,
+                    stalePendingOnly,
+                    businessLinkedFailuresOnly,
+                    repeatedFailuresOnly,
+                    priorSuccessOnly,
+                    retryReadyOnly,
+                    retryBlockedOnly,
+                    highChainVolumeOnly,
+                    chainResolvedOnly,
+                    businessId,
+                    stalePendingThresholdUtc,
+                    ct)
+                .ConfigureAwait(false);
+
             EmailDispatchAuditChainSummaryDto? chainSummary = null;
             if (!string.IsNullOrWhiteSpace(recipientEmail))
             {
@@ -249,8 +270,10 @@ namespace Darwin.Application.Businesses.Queries
                     .ConfigureAwait(false);
             }
 
-            var total = filteredItems.Count();
-            var items = filteredItems
+            var total = filteredList.Count + queuedItems.Count;
+            var items = filteredList
+                .Concat(queuedItems)
+                .OrderByDescending(x => x.AttemptedAtUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
@@ -261,9 +284,11 @@ namespace Darwin.Application.Businesses.Queries
         public async Task<EmailDispatchAuditSummaryDto> GetSummaryAsync(Guid? businessId = null, CancellationToken ct = default)
         {
             var audits = _db.Set<EmailDispatchAudit>().AsNoTracking();
+            var queued = _db.Set<EmailDispatchOperation>().AsNoTracking().Where(x => !x.IsDeleted);
             if (businessId.HasValue)
             {
                 audits = audits.Where(x => x.BusinessId == businessId.Value);
+                queued = queued.Where(x => x.BusinessId == businessId.Value);
             }
 
             var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
@@ -280,6 +305,14 @@ namespace Darwin.Application.Businesses.Queries
                     x.IntendedRecipientEmail,
                     x.AttemptedAtUtc,
                     x.CompletedAtUtc
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+            var queuedRows = await queued
+                .Where(x => x.Status == "Pending" || x.Status == "Failed")
+                .Select(x => new
+                {
+                    x.Status
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
@@ -323,8 +356,145 @@ namespace Darwin.Application.Businesses.Queries
                 HighChainVolumeCount = summaryRows
                     .Where(x => !string.IsNullOrWhiteSpace(x.FlowKey) && x.AttemptedAtUtc >= recentThresholdUtc)
                     .GroupBy(x => new { x.FlowKey, x.BusinessId, RecipientEmail = x.IntendedRecipientEmail ?? x.RecipientEmail })
-                    .Count(g => g.Count() >= 3)
+                    .Count(g => g.Count() >= 3),
+                QueuedPendingCount = queuedRows.Count(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase)),
+                QueuedFailedCount = queuedRows.Count(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase))
             };
+        }
+
+        private async Task<List<EmailDispatchAuditListItemDto>> BuildQueuedOperationItemsAsync(
+            string? query,
+            string? recipientEmail,
+            string? status,
+            string? flowKey,
+            bool stalePendingOnly,
+            bool businessLinkedFailuresOnly,
+            bool repeatedFailuresOnly,
+            bool priorSuccessOnly,
+            bool retryReadyOnly,
+            bool retryBlockedOnly,
+            bool highChainVolumeOnly,
+            bool chainResolvedOnly,
+            Guid? businessId,
+            DateTime stalePendingThresholdUtc,
+            CancellationToken ct)
+        {
+            if (repeatedFailuresOnly ||
+                priorSuccessOnly ||
+                retryReadyOnly ||
+                retryBlockedOnly ||
+                highChainVolumeOnly ||
+                chainResolvedOnly)
+            {
+                return new List<EmailDispatchAuditListItemDto>();
+            }
+
+            var queuedQuery =
+                from operation in _db.Set<EmailDispatchOperation>().AsNoTracking()
+                join business in _db.Set<Business>().AsNoTracking() on operation.BusinessId equals business.Id into businessJoin
+                from business in businessJoin.DefaultIfEmpty()
+                where !operation.IsDeleted && (operation.Status == "Pending" || operation.Status == "Failed")
+                select new
+                {
+                    Operation = operation,
+                    BusinessName = business == null ? null : business.Name
+                };
+
+            if (businessId.HasValue)
+            {
+                queuedQuery = queuedQuery.Where(x => x.Operation.BusinessId == businessId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var q = query.Trim();
+                queuedQuery = queuedQuery.Where(x =>
+                    x.Operation.RecipientEmail.Contains(q) ||
+                    (x.Operation.IntendedRecipientEmail != null && x.Operation.IntendedRecipientEmail.Contains(q)) ||
+                    x.Operation.Subject.Contains(q) ||
+                    x.Operation.Provider.Contains(q) ||
+                    x.Operation.Status.Contains(q) ||
+                    (x.Operation.FlowKey != null && x.Operation.FlowKey.Contains(q)) ||
+                    (x.Operation.TemplateKey != null && x.Operation.TemplateKey.Contains(q)) ||
+                    (x.Operation.CorrelationKey != null && x.Operation.CorrelationKey.Contains(q)) ||
+                    (x.BusinessName != null && x.BusinessName.Contains(q)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                var normalizedRecipientEmail = recipientEmail.Trim();
+                queuedQuery = queuedQuery.Where(x => (x.Operation.IntendedRecipientEmail ?? x.Operation.RecipientEmail) == normalizedRecipientEmail);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                var normalizedStatus = status.Trim();
+                queuedQuery = queuedQuery.Where(x => x.Operation.Status == normalizedStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(flowKey))
+            {
+                var normalizedFlowKey = flowKey.Trim();
+                queuedQuery = queuedQuery.Where(x => x.Operation.FlowKey == normalizedFlowKey);
+            }
+
+            if (stalePendingOnly)
+            {
+                queuedQuery = queuedQuery.Where(x => x.Operation.Status == "Pending" && x.Operation.CreatedAtUtc <= stalePendingThresholdUtc);
+            }
+
+            if (businessLinkedFailuresOnly)
+            {
+                queuedQuery = queuedQuery.Where(x => x.Operation.Status == "Failed" && x.Operation.BusinessId != null);
+            }
+
+            var nowUtc = DateTime.UtcNow;
+            var rows = await queuedQuery
+                .OrderByDescending(x => x.Operation.LastAttemptAtUtc ?? x.Operation.CreatedAtUtc)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            return rows.Select(x => new EmailDispatchAuditListItemDto
+                {
+                    Id = x.Operation.Id,
+                    IsQueueOperation = true,
+                    Provider = x.Operation.Provider,
+                    FlowKey = x.Operation.FlowKey,
+                    TemplateKey = x.Operation.TemplateKey,
+                    CorrelationKey = x.Operation.CorrelationKey,
+                    BusinessId = x.Operation.BusinessId,
+                    BusinessName = x.BusinessName,
+                    RecipientEmail = x.Operation.RecipientEmail,
+                    IntendedRecipientEmail = x.Operation.IntendedRecipientEmail,
+                    Subject = x.Operation.Subject,
+                    ProviderMessageId = null,
+                    Status = x.Operation.Status,
+                    AttemptedAtUtc = x.Operation.LastAttemptAtUtc ?? x.Operation.CreatedAtUtc,
+                    CompletedAtUtc = x.Operation.ProcessedAtUtc,
+                    FailureMessage = x.Operation.FailureReason,
+                    QueueAttemptCount = x.Operation.AttemptCount,
+                    AttemptAgeMinutes = (int)Math.Max(0, (nowUtc - (x.Operation.LastAttemptAtUtc ?? x.Operation.CreatedAtUtc)).TotalMinutes),
+                    CompletionLatencySeconds = x.Operation.ProcessedAtUtc.HasValue
+                        ? (int)Math.Max(0, (x.Operation.ProcessedAtUtc.Value - x.Operation.CreatedAtUtc).TotalSeconds)
+                        : null,
+                    NeedsOperatorFollowUp = true,
+                    Severity = string.Equals(x.Operation.Status, "Failed", StringComparison.OrdinalIgnoreCase) ? "High" : "Watch",
+                    CanRetryNow = false,
+                    RetryPolicyState = "Queued",
+                    RetryBlockedReason = null,
+                    RetryAvailableAtUtc = null,
+                    RecentAttemptCount24h = 0,
+                    ChainStartedAtUtc = x.Operation.CreatedAtUtc,
+                    ChainLastAttemptAtUtc = x.Operation.LastAttemptAtUtc ?? x.Operation.CreatedAtUtc,
+                    ChainSpanHours = 0,
+                    ChainStatusMix = string.Equals(x.Operation.Status, "Failed", StringComparison.OrdinalIgnoreCase)
+                        ? "Failure-only chain"
+                        : "Pending-only chain",
+                    PriorAttemptCount = 0,
+                    PriorFailureCount = 0,
+                    LastSuccessfulAttemptAtUtc = null
+                })
+                .ToList();
         }
 
         private static void ApplyRetryPolicy(EmailDispatchAuditListItemDto item, DateTime nowUtc)

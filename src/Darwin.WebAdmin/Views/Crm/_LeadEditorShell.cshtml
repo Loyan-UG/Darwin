@@ -3,6 +3,11 @@
 @{
     var isCreate = Model.Id == Guid.Empty;
     var formAction = (string?)ViewData["FormAction"] ?? (isCreate ? "CreateLead" : "EditLead");
+    string GlobalCrmLeadsUrl() => Url.Action("Leads", "Crm") ?? string.Empty;
+    string EditCrmCustomerUrl(Guid id) => Url.Action("EditCustomer", "Crm", new { id }) ?? string.Empty;
+    string CreateCrmOpportunityForCustomerUrl(Guid customerId) => Url.Action("CreateOpportunity", "Crm", new { customerId }) ?? string.Empty;
+    string EditCrmLeadSectionUrl(Guid id) => Url.Action("EditLead", "Crm", new { id, fragment = "lead-interactions-section" }) ?? string.Empty;
+    string CrmLeadInteractionsUrl(Guid leadId) => Url.Action("LeadInteractions", "Crm", new { leadId }) ?? string.Empty;
     string LocalizeLeadStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
 }
 
@@ -53,7 +58,7 @@
                             <a asp-action="EditCustomer"
                                asp-route-id="@Model.CustomerId.Value"
                                class="btn btn-sm btn-outline-primary"
-                               hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                               hx-get="@EditCrmCustomerUrl(Model.CustomerId.Value)"
                                hx-target="#crm-lead-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -62,7 +67,7 @@
                             <a asp-action="CreateOpportunity"
                                asp-route-customerId="@Model.CustomerId.Value"
                                class="btn btn-sm btn-outline-success"
-                               hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = Model.CustomerId.Value })"
+                               hx-get="@CreateCrmOpportunityForCustomerUrl(Model.CustomerId.Value)"
                                hx-target="#crm-lead-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -95,7 +100,7 @@
         <partial name="_LeadForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
-            <a asp-action="Leads" hx-get="@Url.Action("Leads", "Crm")" hx-target="#crm-lead-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
+            <a asp-action="Leads" hx-get="@GlobalCrmLeadsUrl()" hx-target="#crm-lead-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 
@@ -108,13 +113,13 @@
                    asp-route-id="@Model.Id"
                    asp-fragment="lead-interactions-section"
                    class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("EditLead", "Crm", new { id = Model.Id, fragment = "lead-interactions-section" })"
+                   hx-get="@EditCrmLeadSectionUrl(Model.Id)"
                    hx-target="#crm-lead-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("Open")</a>
             </div>
             <div class="card-body" id="lead-interactions-section"
-                 hx-get="@Url.Action("LeadInteractions", "Crm", new { leadId = Model.Id })"
+                 hx-get="@CrmLeadInteractionsUrl(Model.Id)"
                  hx-trigger="load"
                  hx-target="this"
                  hx-swap="innerHTML">

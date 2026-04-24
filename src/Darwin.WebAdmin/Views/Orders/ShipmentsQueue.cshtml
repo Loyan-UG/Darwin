@@ -3,6 +3,15 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Shipments");
+    string GlobalShipmentsQueueUrl() => Url.Action("ShipmentsQueue", "Orders") ?? string.Empty;
+    string GlobalReturnsQueueUrl() => Url.Action("ReturnsQueue", "Orders") ?? string.Empty;
+    string ShipmentsQueueUrl(ShipmentQueueFilter filter) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
+    string OrdersIndexUrl(string filter) => Url.Action("Index", "Orders", new { filter }) ?? string.Empty;
+    string ShippingSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" }) ?? string.Empty;
+    string ShippingMethodsUrl(string filter) => Url.Action("Index", "ShippingMethods", new { filter }) ?? string.Empty;
+    string OrderDetailsUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
+    string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action("AddRefund", "Orders", new { orderId, paymentId }) ?? string.Empty;
+    string AddShipmentUrl(Guid orderId) => Url.Action("AddShipment", "Orders", new { orderId }) ?? string.Empty;
     var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeShipmentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
@@ -25,25 +34,25 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="ShipmentsQueue" asp-route-filter="Pending" class="btn btn-outline-warning btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.Pending })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("PendingPacked")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.Pending)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("PendingPacked")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="Shipped" class="btn btn-outline-secondary btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.Shipped })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("ShippedDelivered")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.Shipped)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("ShippedDelivered")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="MissingTracking" class="btn btn-outline-info btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.MissingTracking })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("MissingTracking")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.MissingTracking)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("MissingTracking")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="Returned" class="btn btn-outline-dark btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.Returned })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("Returned")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.Returned)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("Returned")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="Dhl" class="btn btn-outline-primary btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.Dhl })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("DhlMethods")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.Dhl)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("DhlMethods")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="MissingService" class="btn btn-outline-warning btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.MissingService })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("MissingService")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.MissingService)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("MissingService")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="AwaitingHandoff" class="btn btn-outline-danger btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.AwaitingHandoff })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("AwaitingHandoff")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.AwaitingHandoff)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("AwaitingHandoff")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="TrackingOverdue" class="btn btn-outline-danger btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.TrackingOverdue })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("TrackingOverdue")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.TrackingOverdue)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("TrackingOverdue")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="CarrierReview" class="btn btn-outline-danger btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("CarrierReview")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.CarrierReview)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("CarrierReview")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="ReturnFollowUp" class="btn btn-outline-dark btn-sm"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.ReturnFollowUp })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("ReturnFollowUp")</a>
+           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.ReturnFollowUp)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("ReturnFollowUp")</a>
     </div>
 </div>
 
@@ -75,14 +84,14 @@
                         <a asp-action="ShipmentsQueue"
                            asp-route-filter="@ShipmentQueueFilter.AwaitingHandoff"
                            class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.AwaitingHandoff })"
+                           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.AwaitingHandoff)"
                            hx-target="#shipments-queue-workspace-shell"
                            hx-swap="outerHTML">@T.T("Open")</a>
                         <a asp-controller="Orders"
                            asp-action="Index"
                            asp-route-filter="Fulfillment"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Orders", new { filter = "Fulfillment" })"
+                           hx-get="@OrdersIndexUrl("Fulfillment")"
                            hx-target="#shipments-queue-workspace-shell"
                            hx-swap="outerHTML">@T.T("OrdersTitle")</a>
                     </div>
@@ -99,14 +108,14 @@
                         <a asp-action="ShipmentsQueue"
                            asp-route-filter="@ShipmentQueueFilter.TrackingOverdue"
                            class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.TrackingOverdue })"
+                           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.TrackingOverdue)"
                            hx-target="#shipments-queue-workspace-shell"
                            hx-swap="outerHTML">@T.T("Open")</a>
                         <a asp-controller="SiteSettings"
                            asp-action="Edit"
                            asp-fragment="site-settings-shipping"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                           hx-get="@ShippingSettingsUrl()"
                            hx-target="#shipments-queue-workspace-shell"
                            hx-swap="outerHTML">@T.T("ShippingSettings")</a>
                     </div>
@@ -123,14 +132,14 @@
                         <a asp-action="ShipmentsQueue"
                            asp-route-filter="@ShipmentQueueFilter.CarrierReview"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })"
+                           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.CarrierReview)"
                            hx-target="#shipments-queue-workspace-shell"
                            hx-swap="outerHTML">@T.T("Open")</a>
                         <a asp-controller="ShippingMethods"
                            asp-action="Index"
                            asp-route-filter="Dhl"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                           hx-get="@ShippingMethodsUrl("Dhl")"
                            hx-target="#shipments-queue-workspace-shell"
                            hx-swap="outerHTML">@T.T("ShippingMethods")</a>
                     </div>
@@ -147,13 +156,13 @@
                         <a asp-action="ShipmentsQueue"
                            asp-route-filter="@ShipmentQueueFilter.ReturnFollowUp"
                            class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.ReturnFollowUp })"
+                           hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.ReturnFollowUp)"
                            hx-target="#shipments-queue-workspace-shell"
                            hx-swap="outerHTML">@T.T("Open")</a>
                         <a asp-controller="Orders"
                            asp-action="ReturnsQueue"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ReturnsQueue", "Orders")"
+                               hx-get="@GlobalReturnsQueueUrl()"
                            hx-target="#shipments-queue-workspace-shell"
                            hx-swap="outerHTML">@T.T("ReturnsQueueTitle")</a>
                     </div>
@@ -234,7 +243,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@T.T("DhlPhaseOneReadiness")</span>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-shipping" class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("OpenShippingSettings")</a>
+           hx-get="@ShippingSettingsUrl()" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("OpenShippingSettings")</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
@@ -320,7 +329,7 @@
 </div>
 
 <form method="get" class="row g-2 mb-3"
-      hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+          hx-get="@GlobalShipmentsQueueUrl()"
       hx-target="#shipments-queue-workspace-shell"
       hx-swap="outerHTML">
     <div class="col-md-4">
@@ -337,7 +346,7 @@
             <i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")
         </button>
         <a asp-action="ShipmentsQueue" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders")" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("Reset")</a>
+       hx-get="@GlobalShipmentsQueueUrl()" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("Reset")</a>
     </div>
 </form>
 
@@ -555,13 +564,13 @@
                                 </button>
                             }
                             <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="shipments" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
+                               hx-get="@OrderDetailsUrl(item.OrderId)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
                                 <i class="fa-solid fa-receipt"></i> @T.T("Order")
                             </a>
                             @if (item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned || item.NeedsCarrierReview)
                             {
                                 <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-danger"
-                                   hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
+                                   hx-get="@OrderDetailsUrl(item.OrderId)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
                                     <i class="fa-solid fa-rotate-left"></i> @T.T("ReviewRefunds")
                                 </a>
                             }
@@ -570,7 +579,7 @@
                                 <a asp-action="ShipmentsQueue"
                                    asp-route-filter="@ShipmentQueueFilter.CarrierReview"
                                    class="btn btn-sm btn-outline-dark"
-                                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })"
+                                   hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.CarrierReview)"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-triangle-exclamation"></i> @T.T("CarrierReviewQueue")
@@ -581,7 +590,7 @@
                                 <a asp-action="ShipmentsQueue"
                                    asp-route-filter="@ShipmentQueueFilter.CarrierReview"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })"
+                                   hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.CarrierReview)"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-triangle-exclamation"></i> @T.T("CarrierReview")
@@ -592,7 +601,7 @@
                                 <a asp-action="ShipmentsQueue"
                                    asp-route-filter="@ShipmentQueueFilter.AwaitingHandoff"
                                    class="btn btn-sm btn-outline-danger"
-                                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.AwaitingHandoff })"
+                                   hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.AwaitingHandoff)"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-hourglass-half"></i> @T.T("AwaitingHandoff")
@@ -603,7 +612,7 @@
                                 <a asp-action="ShipmentsQueue"
                                    asp-route-filter="@ShipmentQueueFilter.TrackingOverdue"
                                    class="btn btn-sm btn-outline-danger"
-                                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.TrackingOverdue })"
+                                   hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.TrackingOverdue)"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-location-crosshairs"></i> @T.T("TrackingOverdue")
@@ -615,7 +624,7 @@
                                    asp-action="Index"
                                    asp-route-filter="Dhl"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                                   hx-get="@ShippingMethodsUrl("Dhl")"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-box"></i> @T.T("ShippingMethods")
@@ -624,7 +633,7 @@
                                    asp-action="Index"
                                    asp-route-filter="MissingRates"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })"
+                                   hx-get="@ShippingMethodsUrl("MissingRates")"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-scale-balanced"></i> @T.T("MissingRates")
@@ -636,7 +645,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-shipping"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                                   hx-get="@ShippingSettingsUrl()"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-sliders"></i> @T.T("ShippingSettings")
@@ -647,7 +656,7 @@
                                 <a asp-controller="Orders"
                                    asp-action="ReturnsQueue"
                                    class="btn btn-sm btn-outline-dark"
-                                   hx-get="@Url.Action("ReturnsQueue", "Orders")"
+                           hx-get="@GlobalReturnsQueueUrl()"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-arrow-rotate-left"></i> @T.T("ReturnsQueueTitle")
@@ -660,7 +669,7 @@
                                    asp-route-orderId="@item.OrderId"
                                    asp-route-paymentId="@item.DefaultRefundPaymentId"
                                    class="btn btn-sm btn-danger"
-                                   hx-get="@Url.Action("AddRefund", "Orders", new { orderId = item.OrderId, paymentId = item.DefaultRefundPaymentId })"
+                                   hx-get="@AddRefundUrl(item.OrderId, item.DefaultRefundPaymentId)"
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-rotate-left"></i> @T.T("StartReturnRefund")
@@ -673,7 +682,7 @@
                             @if (item.Status == Darwin.Domain.Enums.ShipmentStatus.Pending || item.Status == Darwin.Domain.Enums.ShipmentStatus.Packed)
                             {
                                 <a asp-controller="Orders" asp-action="AddShipment" asp-route-orderId="@item.OrderId" class="btn btn-sm btn-outline-primary"
-                                   hx-get="@Url.Action("AddShipment", "Orders", new { orderId = item.OrderId })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
+                                   hx-get="@AddShipmentUrl(item.OrderId)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
                                     <i class="fa-solid fa-plus"></i> @T.T("AddShipment")
                                 </a>
                             }

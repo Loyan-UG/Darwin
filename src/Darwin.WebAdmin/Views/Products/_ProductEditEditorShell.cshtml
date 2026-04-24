@@ -3,7 +3,8 @@
     ViewData["Title"] = T.T("EditProduct");
 }
 
-<div id="product-editor-shell">
+<div id="product-editor-shell"
+     data-product-description-placeholder="@T.T("ProductDescriptionPlaceholder")">
     <partial name="~/Views/Shared/_Alerts.cshtml" />
 
     <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
@@ -53,61 +54,3 @@
         <partial name="_ProductForm" model="Model" />
     </form>
 </div>
-
-<script>
-    (function () {
-        window.darwinAdmin = window.darwinAdmin || {};
-
-        window.darwinAdmin.initProductEditors = window.darwinAdmin.initProductEditors || function (root) {
-            const scope = root || document;
-            if (!window.Quill) {
-                return;
-            }
-
-            scope.querySelectorAll('[data-quill-product-editor="true"]').forEach(function (el) {
-                if (el.dataset.quillInitialized === 'true') {
-                    return;
-                }
-
-                const hidden = el.parentElement.querySelector('textarea');
-                const quill = new Quill(el, {
-                    theme: 'snow',
-                    placeholder: '@T.T("ProductDescriptionPlaceholder")',
-                    modules: {
-                        toolbar: [
-                            [{ header: [1, 2, 3, false] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                            ['link', 'image', 'video'],
-                            ['blockquote', 'code-block'],
-                            [{ 'align': [] }],
-                            ['clean']
-                        ]
-                    }
-                });
-
-                if (hidden && hidden.value) {
-                    quill.root.innerHTML = hidden.value;
-                }
-
-                const form = el.closest('form');
-                if (form && form.dataset.quillSubmitBound !== 'true') {
-                    form.addEventListener('submit', function () {
-                        form.querySelectorAll('[data-quill-product-editor="true"]').forEach(function (editorEl) {
-                            const editorHidden = editorEl.parentElement.querySelector('textarea');
-                            if (editorHidden && editorEl.__quill) {
-                                editorHidden.value = editorEl.__quill.root.innerHTML;
-                            }
-                        });
-                    });
-                    form.dataset.quillSubmitBound = 'true';
-                }
-
-                el.__quill = quill;
-                el.dataset.quillInitialized = 'true';
-            });
-        };
-
-        window.darwinAdmin.initProductEditors(document.getElementById('product-editor-shell') || document);
-    })();
-</script>

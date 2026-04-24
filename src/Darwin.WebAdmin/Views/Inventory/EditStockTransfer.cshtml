@@ -7,25 +7,4 @@
 <partial name="~/Views/Inventory/_StockTransferEditorShell.cshtml" model="Model" />
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            document.addEventListener('click', function (event) {
-                if (event.target.closest('#addTransferLine')) {
-                    const container = document.getElementById('transferLines');
-                    const template = document.getElementById('transferLineTemplate');
-                    if (!container || !template) {
-                        return;
-                    }
-
-                    container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
-                    return;
-                }
-
-                const button = event.target.closest('#transferLines .remove-line');
-                if (button) {
-                    button.closest('.line-row')?.remove();
-                }
-            });
-        })();
-    </script>
 }

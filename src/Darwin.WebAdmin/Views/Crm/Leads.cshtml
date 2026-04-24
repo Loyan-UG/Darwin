@@ -2,6 +2,16 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CrmLeadsTitle");
+    string GlobalCrmIndexUrl() => Url.Action("Index", "Crm") ?? string.Empty;
+    string GlobalCrmCustomersUrl() => Url.Action("Customers", "Crm") ?? string.Empty;
+    string GlobalCrmLeadsUrl() => Url.Action("Leads", "Crm") ?? string.Empty;
+    string CrmLeadsUrl(string? filter = null) => Url.Action("Leads", "Crm", string.IsNullOrWhiteSpace(filter) ? new { q = Model.Query } : new { q = Model.Query, filter }) ?? string.Empty;
+    string GlobalCrmOpportunitiesUrl() => Url.Action("Opportunities", "Crm") ?? string.Empty;
+    string CreateCrmLeadUrl() => Url.Action("CreateLead", "Crm") ?? string.Empty;
+    string EditCrmLeadUrl(Guid id) => Url.Action("EditLead", "Crm", new { id }) ?? string.Empty;
+    string EditCrmLeadInteractionsUrl(Guid id) => Url.Action("EditLead", "Crm", new { id, fragment = "lead-interactions-grid" }) ?? string.Empty;
+    string EditCrmCustomerUrl(Guid id) => Url.Action("EditCustomer", "Crm", new { id }) ?? string.Empty;
+    string CreateCrmOpportunityForCustomerUrl(Guid customerId) => Url.Action("CreateOpportunity", "Crm", new { customerId }) ?? string.Empty;
     var crmCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeLeadStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string CrmDateTimeText(DateTime? utc) => utc?.ToString("g", crmCulture) ?? "-";
@@ -17,7 +27,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="mb-0">@T.T("Leads")</h1>
     <a asp-action="Index"
-       hx-get="@Url.Action("Index", "Crm")"
+       hx-get="@GlobalCrmIndexUrl()"
        hx-target="#crm-leads-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
@@ -59,13 +69,13 @@
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <a asp-action="CreateLead"
-                           hx-get="@Url.Action("CreateLead", "Crm")"
+                           hx-get="@CreateCrmLeadUrl()"
                            hx-target="#crm-leads-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true"
                            class="btn btn-sm btn-outline-primary">@T.T("NewLead")</a>
                         <a asp-action="Customers"
-                           hx-get="@Url.Action("Customers", "Crm")"
+       hx-get="@GlobalCrmCustomersUrl()"
                            hx-target="#crm-leads-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true"
@@ -85,8 +95,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("CrmLeadQualifiedPlaybookAction")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a asp-action="Leads" asp-route-filter="Qualified" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Qualified" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Qualified")</a>
-                                <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Opportunity")</a>
+                                <a asp-action="Leads" asp-route-filter="Qualified" hx-get="@CrmLeadsUrl("Qualified")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Qualified")</a>
+                                <a asp-action="Opportunities" hx-get="@GlobalCrmOpportunitiesUrl()" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Opportunity")</a>
                             </div>
                         </div>
                     </div>
@@ -101,8 +111,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("CrmLeadUnassignedPlaybookAction")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a asp-action="Leads" asp-route-filter="Unassigned" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unassigned" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-info">@T.T("Unassigned")</a>
-                                <a asp-action="CreateLead" hx-get="@Url.Action("CreateLead", "Crm")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("NewLead")</a>
+                                <a asp-action="Leads" asp-route-filter="Unassigned" hx-get="@CrmLeadsUrl("Unassigned")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-info">@T.T("Unassigned")</a>
+                                <a asp-action="CreateLead" hx-get="@CreateCrmLeadUrl()" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("NewLead")</a>
                             </div>
                         </div>
                     </div>
@@ -117,8 +127,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("CrmLeadUnconvertedPlaybookAction")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a asp-action="Leads" asp-route-filter="Unconverted" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unconverted" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Unconverted")</a>
-                                <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Customers")</a>
+                                <a asp-action="Leads" asp-route-filter="Unconverted" hx-get="@CrmLeadsUrl("Unconverted")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Unconverted")</a>
+<a asp-action="Customers" hx-get="@GlobalCrmCustomersUrl()" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Customers")</a>
                             </div>
                         </div>
                     </div>
@@ -133,8 +143,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("CrmNextStep")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a asp-action="Leads" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Interactions")</a>
-                                <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Opportunity")</a>
+                                <a asp-action="Leads" hx-get="@CrmLeadsUrl()" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Interactions")</a>
+                                <a asp-action="Opportunities" hx-get="@GlobalCrmOpportunitiesUrl()" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Opportunity")</a>
                             </div>
                         </div>
                     </div>
@@ -200,7 +210,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Leads" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("Leads", "Crm")"
+          hx-get="@GlobalCrmLeadsUrl()"
           hx-target="#crm-leads-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -210,7 +220,7 @@
     </form>
 
     <a asp-action="CreateLead"
-       hx-get="@Url.Action("CreateLead", "Crm")"
+       hx-get="@CreateCrmLeadUrl()"
        hx-target="#crm-leads-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
@@ -220,10 +230,10 @@
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="Leads" asp-route-filter="Qualified" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Qualified" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Qualified ? "btn-warning" : "btn-outline-warning")">@T.T("Qualified")</a>
-    <a asp-action="Leads" asp-route-filter="Unassigned" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unassigned" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Unassigned ? "btn-info" : "btn-outline-info")">@T.T("Unassigned")</a>
-    <a asp-action="Leads" asp-route-filter="Unconverted" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unconverted" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Unconverted ? "btn-primary" : "btn-outline-primary")">@T.T("Unconverted")</a>
-    <a asp-action="Leads" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
+    <a asp-action="Leads" asp-route-filter="Qualified" hx-get="@CrmLeadsUrl("Qualified")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Qualified ? "btn-warning" : "btn-outline-warning")">@T.T("Qualified")</a>
+    <a asp-action="Leads" asp-route-filter="Unassigned" hx-get="@CrmLeadsUrl("Unassigned")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Unassigned ? "btn-info" : "btn-outline-info")">@T.T("Unassigned")</a>
+    <a asp-action="Leads" asp-route-filter="Unconverted" hx-get="@CrmLeadsUrl("Unconverted")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.LeadQueueFilter.Unconverted ? "btn-primary" : "btn-outline-primary")">@T.T("Unconverted")</a>
+    <a asp-action="Leads" hx-get="@CrmLeadsUrl()" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="table-responsive">
@@ -262,10 +272,10 @@
                     <td class="text-end">
                         @if (item.CustomerId.HasValue)
                         {
-                            <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-success">
+                            <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@EditCrmCustomerUrl(item.CustomerId.Value)" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-success">
                                 <i class="fa fa-user"></i> @T.T("Customer")
                             </a>
-                            <a asp-action="CreateOpportunity" asp-route-customerId="@item.CustomerId.Value" hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = item.CustomerId.Value })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
+                            <a asp-action="CreateOpportunity" asp-route-customerId="@item.CustomerId.Value" hx-get="@CreateCrmOpportunityForCustomerUrl(item.CustomerId.Value)" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
                                 <i class="fa fa-briefcase"></i> @T.T("Opportunity")
                             </a>
                         }
@@ -281,10 +291,10 @@
                                 </button>
                             </form>
                         }
-                        <a asp-action="EditLead" asp-route-id="@item.Id" asp-fragment="lead-interactions-grid" hx-get="@Url.Action("EditLead", "Crm", new { id = item.Id, fragment = "lead-interactions-grid" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
+                        <a asp-action="EditLead" asp-route-id="@item.Id" asp-fragment="lead-interactions-grid" hx-get="@EditCrmLeadInteractionsUrl(item.Id)" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
                             <i class="fa fa-comments"></i> @T.T("Interactions")
                         </a>
-                        <a asp-action="EditLead" asp-route-id="@item.Id" hx-get="@Url.Action("EditLead", "Crm", new { id = item.Id })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
+                        <a asp-action="EditLead" asp-route-id="@item.Id" hx-get="@EditCrmLeadUrl(item.Id)" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-pen"></i> @T.T("Edit")
                         </a>
                     </td>

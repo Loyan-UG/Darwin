@@ -3,12 +3,19 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("ExpensesTitle");
+    string GlobalExpensesUrl() => Url.Action("Expenses", "Billing") ?? string.Empty;
     string ExpenseOpsHealthBadgeClass(bool healthy) => healthy
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
     string ExpenseOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
     var expenseAttentionCount = Model.Summary.HighValueCount
         + (Model.Summary.TotalCount - Model.Summary.SupplierLinkedCount);
+    string ExpensesUrl(object? businessId = null) => Url.Action("Expenses", "Billing", new { businessId }) ?? string.Empty;
+    string CreateExpenseUrl(object? businessId = null) => Url.Action("CreateExpense", "Billing", new { businessId }) ?? string.Empty;
+    string FinancialAccountsUrl(object? businessId = null) => Url.Action("FinancialAccounts", "Billing", new { businessId }) ?? string.Empty;
+    string JournalEntriesUrl(object? businessId = null) => Url.Action("JournalEntries", "Billing", new { businessId }) ?? string.Empty;
+    string EditExpenseUrl(Guid id) => Url.Action("EditExpense", "Billing", new { id }) ?? string.Empty;
+    string EditSupplierUrl(Guid id) => Url.Action("EditSupplier", "Inventory", new { id }) ?? string.Empty;
 }
 
 <div id="billing-expenses-workspace-shell">
@@ -16,7 +23,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Expenses" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("Expenses", "Billing")"
+          hx-get="@GlobalExpensesUrl()"
           hx-target="#billing-expenses-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -24,13 +31,13 @@
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchExpensesPlaceholder")">
         <button class="btn btn-outline-secondary" type="submit">@T.T("CommonSearch")</button>
         <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+           hx-get="@ExpensesUrl(Model.BusinessId)"
            hx-target="#billing-expenses-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("CommonReset")</a>
     </form>
     <a asp-action="CreateExpense" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
-       hx-get="@Url.Action("CreateExpense", "Billing", new { businessId = Model.BusinessId })"
+       hx-get="@CreateExpenseUrl(Model.BusinessId)"
        hx-target="#billing-expenses-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("CreateExpense")</a>
@@ -81,12 +88,12 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a asp-action="CreateExpense" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("CreateExpense", "Billing", new { businessId = Model.BusinessId })"
+                   hx-get="@CreateExpenseUrl(Model.BusinessId)"
                    hx-target="#billing-expenses-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("CreateExpense")</a>
                 <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                   hx-get="@FinancialAccountsUrl(Model.BusinessId)"
                    hx-target="#billing-expenses-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
@@ -106,12 +113,12 @@
                     <div class="small text-muted mt-3">@T.T("ExpensePlaybookRecentAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@ExpensesUrl(Model.BusinessId)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ExpensesTitle")</a>
                         <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@JournalEntriesUrl(Model.BusinessId)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("JournalEntriesTitle")</a>
@@ -130,12 +137,12 @@
                     <div class="small text-muted mt-3">@T.T("ExpensePlaybookHighValueAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@ExpensesUrl(Model.BusinessId)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("HighValue")</a>
                         <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@FinancialAccountsUrl(Model.BusinessId)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
@@ -154,12 +161,12 @@
                     <div class="small text-muted mt-3">@T.T("ExpensePlaybookRecentDependency")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@ExpensesUrl(Model.BusinessId)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Supplier")</a>
                         <a asp-action="CreateExpense" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("CreateExpense", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@CreateExpenseUrl(Model.BusinessId)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CreateExpense")</a>
@@ -178,12 +185,12 @@
                     <div class="small text-muted mt-3">@T.T("NeedsAttention")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@FinancialAccountsUrl(Model.BusinessId)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
                         <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+                           hx-get="@JournalEntriesUrl(Model.BusinessId)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("JournalEntriesTitle")</a>
@@ -240,14 +247,14 @@
                     <td>@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
                     <td class="text-end">
                         <a asp-action="EditExpense" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EditExpense", "Billing", new { id = item.Id })"
+                           hx-get="@EditExpenseUrl(item.Id)"
                            hx-target="#billing-expenses-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CommonEdit")</a>
                         @if (item.SupplierId.HasValue)
                         {
                             <a asp-controller="Inventory" asp-action="EditSupplier" asp-route-id="@item.SupplierId.Value" class="btn btn-sm btn-outline-info"
-                               hx-get="@Url.Action("EditSupplier", "Inventory", new { id = item.SupplierId.Value })"
+                               hx-get="@EditSupplierUrl(item.SupplierId.Value)"
                                hx-target="#billing-expenses-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Supplier")</a>

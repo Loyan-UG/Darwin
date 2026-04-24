@@ -3,6 +3,15 @@
 @{
     var formAction = ViewData["FormAction"]?.ToString() ?? "EditCustomer";
     var heading = formAction == "CreateCustomer" ? T.T("CreateCustomer") : T.T("EditCustomer");
+    string GlobalCrmCustomersUrl() => Url.Action("Customers", "Crm") ?? string.Empty;
+    string CrmInvoicesUrl(object? q = null, string? filter = null) => Url.Action("Invoices", "Crm", new { q, filter }) ?? string.Empty;
+    string CrmCustomersUrl(string? filter = null) => Url.Action("Customers", "Crm", new { filter }) ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string EditCustomerUrl(Guid id, string? fragment = null) => Url.Action("EditCustomer", "Crm", new { id, fragment }) ?? string.Empty;
+    string CreateOpportunityUrl(Guid customerId) => Url.Action("CreateOpportunity", "Crm", new { customerId }) ?? string.Empty;
+    string CustomerInteractionsUrl(Guid customerId) => Url.Action("CustomerInteractions", "Crm", new { customerId }) ?? string.Empty;
+    string CustomerConsentsUrl(Guid customerId) => Url.Action("CustomerConsents", "Crm", new { customerId }) ?? string.Empty;
+    string CustomerSegmentMembershipsUrl(Guid customerId) => Url.Action("CustomerSegmentMemberships", "Crm", new { customerId }) ?? string.Empty;
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
     string CrmCustomerEditorHealthBadgeClass(bool healthy) => healthy
         ? "badge bg-success-subtle text-success-emphasis"
@@ -33,14 +42,14 @@
                     <div class="d-flex gap-2 flex-wrap">
                         <a asp-action="Customers"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Customers", "Crm")"
+                           hx-get="@GlobalCrmCustomersUrl()"
                            hx-target="#crm-customer-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Customers")</a>
                         <a asp-action="Invoices"
                            asp-route-q="@Model.Id"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Id })"
+                           hx-get="@CrmInvoicesUrl(Model.Id)"
                            hx-target="#crm-customer-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -62,7 +71,7 @@
                                 <a asp-action="Customers"
                                    asp-route-filter="UsesPlatformLocaleFallback"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Customers", "Crm", new { filter = "UsesPlatformLocaleFallback" })"
+                                   hx-get="@CrmCustomersUrl(filter: "UsesPlatformLocaleFallback")"
                                    hx-target="#crm-customer-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("LocaleFallback")</a>
@@ -70,7 +79,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-localization"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-localization")"
                                    hx-target="#crm-customer-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Open")</a>
@@ -92,7 +101,7 @@
                                    asp-route-q="@Model.Id"
                                    asp-route-filter="MissingVatId"
                                    class="btn btn-sm btn-outline-danger"
-                                   hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Id, filter = "MissingVatId" })"
+                                   hx-get="@CrmInvoicesUrl(Model.Id, "MissingVatId")"
                                    hx-target="#crm-customer-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -100,7 +109,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-tax"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-tax")"
                                    hx-target="#crm-customer-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("TaxSettings")</a>
@@ -121,7 +130,7 @@
                                 <a asp-action="Customers"
                                    asp-route-filter="NeedsSegmentation"
                                    class="btn btn-sm btn-outline-warning"
-                                   hx-get="@Url.Action("Customers", "Crm", new { filter = "NeedsSegmentation" })"
+                                   hx-get="@CrmCustomersUrl(filter: "NeedsSegmentation")"
                                    hx-target="#crm-customer-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("ReviewSegmentation")</a>
@@ -129,7 +138,7 @@
                                    asp-route-id="@Model.Id"
                                    asp-fragment="customer-segments-section"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.Id, fragment = "customer-segments-section" })"
+                                   hx-get="@EditCustomerUrl(Model.Id, "customer-segments-section")"
                                    hx-target="#crm-customer-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Segments")</a>
@@ -150,14 +159,14 @@
                                 <a asp-action="CreateOpportunity"
                                    asp-route-customerId="@Model.Id"
                                    class="btn btn-sm btn-outline-success"
-                                   hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = Model.Id })"
+                                   hx-get="@CreateOpportunityUrl(Model.Id)"
                                    hx-target="#crm-customer-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("CreateOpportunity")</a>
                                 <a asp-action="Invoices"
                                    asp-route-q="@Model.Id"
                                    class="btn btn-sm btn-outline-primary"
-                                   hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Id })"
+                                   hx-get="@CrmInvoicesUrl(Model.Id)"
                                    hx-target="#crm-customer-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -220,7 +229,7 @@
                         <a asp-action="CreateOpportunity"
                            asp-route-customerId="@Model.Id"
                            class="btn btn-sm btn-outline-success"
-                           hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = Model.Id })"
+                           hx-get="@CreateOpportunityUrl(Model.Id)"
                            hx-target="#crm-customer-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -229,7 +238,7 @@
                         <a asp-action="Invoices"
                            asp-route-q="@Model.Id"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Id })"
+                           hx-get="@CrmInvoicesUrl(Model.Id)"
                            hx-target="#crm-customer-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -238,7 +247,7 @@
                         <a asp-action="Customers"
                            asp-route-filter="NeedsSegmentation"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Customers", "Crm", new { filter = "NeedsSegmentation" })"
+                           hx-get="@CrmCustomersUrl(filter: "NeedsSegmentation")"
                            hx-target="#crm-customer-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -264,7 +273,7 @@
         <partial name="_CustomerForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
-            <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-customer-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
+    <a asp-action="Customers" hx-get="@GlobalCrmCustomersUrl()" hx-target="#crm-customer-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 
@@ -279,13 +288,13 @@
                            asp-route-id="@Model.Id"
                            asp-fragment="customer-interactions-section"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.Id, fragment = "customer-interactions-section" })"
+                           hx-get="@EditCustomerUrl(Model.Id, "customer-interactions-section")"
                            hx-target="#crm-customer-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                     </div>
                     <div class="card-body" id="customer-interactions-section"
-                         hx-get="@Url.Action("CustomerInteractions", "Crm", new { customerId = Model.Id })"
+                         hx-get="@CustomerInteractionsUrl(Model.Id)"
                          hx-trigger="load"
                          hx-target="this"
                          hx-swap="innerHTML">
@@ -301,13 +310,13 @@
                            asp-route-id="@Model.Id"
                            asp-fragment="customer-consents-section"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.Id, fragment = "customer-consents-section" })"
+                           hx-get="@EditCustomerUrl(Model.Id, "customer-consents-section")"
                            hx-target="#crm-customer-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                     </div>
                     <div class="card-body" id="customer-consents-section"
-                         hx-get="@Url.Action("CustomerConsents", "Crm", new { customerId = Model.Id })"
+                         hx-get="@CustomerConsentsUrl(Model.Id)"
                          hx-trigger="load"
                          hx-target="this"
                          hx-swap="innerHTML">
@@ -323,13 +332,13 @@
                            asp-route-id="@Model.Id"
                            asp-fragment="customer-segments-section"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.Id, fragment = "customer-segments-section" })"
+                           hx-get="@EditCustomerUrl(Model.Id, "customer-segments-section")"
                            hx-target="#crm-customer-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                     </div>
                     <div class="card-body" id="customer-segments-section"
-                         hx-get="@Url.Action("CustomerSegmentMemberships", "Crm", new { customerId = Model.Id })"
+                         hx-get="@CustomerSegmentMembershipsUrl(Model.Id)"
                          hx-trigger="load"
                          hx-target="this"
                          hx-swap="innerHTML">
@@ -340,5 +349,3 @@
         </div>
     }
 </div>
-
-<partial name="~/Views/Crm/_CustomerFormScript.cshtml" />

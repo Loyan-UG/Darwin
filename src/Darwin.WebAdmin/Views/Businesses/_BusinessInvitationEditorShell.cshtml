@@ -1,5 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessInvitationCreateVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string BusinessInvitationsUrl(Guid? businessId, int page, int pageSize, string? query, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter? filter) =>
+        Url.Action("Invitations", "Businesses", new { businessId, page, pageSize, query, filter }) ?? string.Empty;
+    string BusinessSupportQueueUrl(Guid? businessId) => Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessMerchantReadinessUrl(Guid? businessId) => Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty;
+}
 
 <div id="business-invitation-editor-shell">
     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -15,19 +21,21 @@
                asp-route-query="@Model.Query"
                asp-route-filter="@Model.Filter"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
+               hx-get="@BusinessInvitationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)"
                hx-target="#business-invitation-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("BusinessInvitationBackToInvitations")</a>
             <a asp-action="SupportQueue"
+               asp-route-businessId="@Model.BusinessId"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("SupportQueue", "Businesses")"
+               hx-get="@BusinessSupportQueueUrl(Model.BusinessId)"
                hx-target="#business-invitation-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
             <a asp-action="MerchantReadiness"
+               asp-route-businessId="@Model.BusinessId"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+               hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
                hx-target="#business-invitation-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
@@ -57,19 +65,21 @@
            asp-route-query="@Model.Query"
            asp-route-filter="@Model.Filter"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
+           hx-get="@BusinessInvitationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)"
            hx-target="#business-invitation-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BusinessInvitationBackToInvitations")</a>
         <a asp-action="SupportQueue"
+           asp-route-businessId="@Model.BusinessId"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("SupportQueue", "Businesses")"
+           hx-get="@BusinessSupportQueueUrl(Model.BusinessId)"
            hx-target="#business-invitation-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
         <a asp-action="MerchantReadiness"
+           asp-route-businessId="@Model.BusinessId"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+           hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
            hx-target="#business-invitation-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("MerchantReadinessTitle")</a>

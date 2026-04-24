@@ -33,8 +33,7 @@ namespace Darwin.Application.Shipping.Commands
 
         public async Task HandleAsync(ShippingMethodEditDto dto, CancellationToken ct = default)
         {
-            var v = _validator.Validate(dto);
-            if (!v.IsValid) throw new ValidationException(v.Errors);
+            await _validator.ValidateAndThrowAsync(dto, ct);
 
             var method = await _db.Set<ShippingMethod>()
                 .Include(m => m.Rates)

@@ -8,11 +8,29 @@ using Darwin.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsEnvironment("Testing") &&
+    string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("DefaultConnection")))
+{
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+    {
+        ["ConnectionStrings:DefaultConnection"] = "Server=(localdb)\\MSSQLLocalDB;Database=Darwin_WebAdmin_SmokeTests;Trusted_Connection=True;TrustServerCertificate=True"
+    });
+}
+
 // Serilog bootstrap (read from appsettings)
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
+    .MinimumLevel.Warning()
+    .WriteTo.Console()
     .Enrich.FromLogContext()
     .CreateLogger();
+
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    Log.Logger = new LoggerConfiguration()
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.FromLogContext()
+        .CreateLogger();
+}
 
 builder.Host.UseSerilog(); // requires Serilog.AspNetCore
 
@@ -39,3 +57,8 @@ app.UseSerilogRequestLogging(); // middleware
 await app.UseWebStartupAsync();
 
 app.Run();
+
+/// <summary>
+/// Entry point marker used by WebAdmin integration tests with WebApplicationFactory.
+/// </summary>
+public partial class Program { }

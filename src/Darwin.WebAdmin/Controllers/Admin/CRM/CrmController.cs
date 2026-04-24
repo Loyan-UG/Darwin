@@ -775,9 +775,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> CreateOpportunity(Guid? customerId = null, CancellationToken ct = default)
         {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var vm = new OpportunityEditVm
             {
-                CustomerId = customerId ?? Guid.Empty
+                CustomerId = customerId ?? Guid.Empty,
+                Currency = settings.DefaultCurrency
             };
             EnsureOpportunityLineRows(vm);
             await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -788,6 +790,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateOpportunity(OpportunityEditVm vm, CancellationToken ct = default)
         {
+            await EnsureOpportunityCurrencyAsync(vm, ct).ConfigureAwait(false);
+
             if (!ModelState.IsValid)
             {
                 EnsureOpportunityLineRows(vm);
@@ -869,6 +873,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditOpportunity(OpportunityEditVm vm, CancellationToken ct = default)
         {
+            await EnsureOpportunityCurrencyAsync(vm, ct).ConfigureAwait(false);
+
             if (!ModelState.IsValid)
             {
                 EnsureOpportunityLineRows(vm);
@@ -1283,6 +1289,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.AssignedToUserId, includeEmpty: true, ct).ConfigureAwait(false);
             vm.VariantOptions = await _referenceData.GetVariantOptionsAsync(null, ct).ConfigureAwait(false);
             vm.NewInteraction.UserOptions = await _referenceData.GetUserOptionsAsync(vm.NewInteraction.UserId, includeEmpty: true, ct).ConfigureAwait(false);
+        }
+
+        private async Task EnsureOpportunityCurrencyAsync(OpportunityEditVm vm, CancellationToken ct)
+        {
+            if (!string.IsNullOrWhiteSpace(vm.Currency))
+            {
+                return;
+            }
+
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            vm.Currency = settings.DefaultCurrency;
+            ModelState.Remove(nameof(OpportunityEditVm.Currency));
         }
 
         private async Task PopulateInvoiceOptionsAsync(InvoiceEditVm vm, CancellationToken ct)

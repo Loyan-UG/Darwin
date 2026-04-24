@@ -39,6 +39,7 @@ namespace Darwin.WebAdmin.ViewModels.Mobile
         public int IosDevicesCount { get; set; }
         public List<MobileAppVersionSnapshotVm> RecentVersions { get; set; } = new();
         public string Query { get; set; } = string.Empty;
+        public Guid? BusinessId { get; set; }
         public MobilePlatform? PlatformFilter { get; set; }
         public string StateFilter { get; set; } = string.Empty;
         public List<SelectListItem> PlatformItems { get; set; } = new();

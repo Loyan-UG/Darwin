@@ -13,6 +13,31 @@
         ? setupOverrideCultures[0]
         : Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture;
     var setupSecondaryCulture = setupOverrideCultures.Length > 1 ? setupOverrideCultures[1] : setupPrimaryCulture;
+    string GlobalCrmCustomersUrl() => Url.Action("Customers", "Crm") ?? string.Empty;
+    string BusinessIndexUrl(Darwin.Domain.Enums.BusinessOperationalStatus? operationalStatus = null) => Url.Action("Index", "Businesses", new { operationalStatus }) ?? string.Empty;
+    string BusinessEditUrl(Guid id) => Url.Action("Edit", "Businesses", new { id }) ?? string.Empty;
+    string BusinessSetupUrl(Guid id) => Url.Action("Setup", "Businesses", new { id }) ?? string.Empty;
+    string BusinessLocationsUrl(Guid businessId) => Url.Action("Locations", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessInvitationsUrl(Guid businessId, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter? filter = null) => Url.Action("Invitations", "Businesses", new { businessId, filter }) ?? string.Empty;
+    string BusinessMembersUrl(Guid businessId, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter? filter = null) => Url.Action("Members", "Businesses", new { businessId, filter }) ?? string.Empty;
+    string BusinessSubscriptionUrl(Guid businessId) => Url.Action("Subscription", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessSubscriptionInvoicesUrl(Guid businessId) => Url.Action("SubscriptionInvoices", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessOwnerOverrideAuditsUrl(Guid businessId) => Url.Action("OwnerOverrideAudits", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessMerchantReadinessUrl(Guid businessId) => Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessSupportQueueUrl(Guid businessId) => Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessCreateMemberUrl(Guid businessId) => Url.Action("CreateMember", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessCreateLocationUrl(Guid businessId) => Url.Action("CreateLocation", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessCreateInvitationUrl(Guid businessId) => Url.Action("CreateInvitation", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessSetupMembersPreviewUrl(Guid businessId) => Url.Action("SetupMembersPreview", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessSetupInvitationsPreviewUrl(Guid businessId) => Url.Action("SetupInvitationsPreview", "Businesses", new { businessId }) ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string BusinessCommunicationsDetailsUrl(Guid businessId) => Url.Action("Details", "BusinessCommunications", new { businessId }) ?? string.Empty;
+    string EmailAuditsUrl(Guid businessId, string? status = null, string? flowKey = null, bool? retryBlockedOnly = null) => Url.Action("EmailAudits", "BusinessCommunications", new { businessId, status, flowKey, retryBlockedOnly }) ?? string.Empty;
+    string ChannelAuditsUrl(Guid businessId, bool? phoneVerificationOnly = null) => Url.Action("ChannelAudits", "BusinessCommunications", new { businessId, phoneVerificationOnly }) ?? string.Empty;
+    string TaxComplianceUrl(Guid businessId) => Url.Action("TaxCompliance", "Billing", new { businessId }) ?? string.Empty;
+    string PaymentsUrl(Guid businessId) => Url.Action("Payments", "Billing", new { businessId }) ?? string.Empty;
+    string CrmCustomerEditUrl(Guid id) => Url.Action("EditCustomer", "Crm", new { id }) ?? string.Empty;
+    string MobileOperationsUrl(Guid businessId) => Url.Action("Index", "MobileOperations", new { businessId }) ?? string.Empty;
     string MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
     {
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
@@ -113,7 +138,7 @@
             <a asp-action="Edit"
                asp-route-id="@Model.Id"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+               hx-get="@BusinessEditUrl(Model.Id)"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -124,8 +149,8 @@
                asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                class="btn btn-outline-secondary"
                hx-get="@(Model.ActiveOwnerCount > 0
-                   ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
-                   : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
+                   ? BusinessMembersUrl(Model.Id)
+                   : BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention))"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -134,7 +159,7 @@
             <a asp-action="Locations"
                asp-route-businessId="@Model.Id"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
+               hx-get="@BusinessLocationsUrl(Model.Id)"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -144,7 +169,7 @@
                asp-route-businessId="@Model.Id"
                asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
+               hx-get="@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -153,7 +178,7 @@
             <a asp-action="Subscription"
                asp-route-businessId="@Model.Id"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+               hx-get="@BusinessSubscriptionUrl(Model.Id)"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -162,7 +187,7 @@
             <a asp-action="OwnerOverrideAudits"
                asp-route-businessId="@Model.Id"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.Id })"
+               hx-get="@BusinessOwnerOverrideAuditsUrl(Model.Id)"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -193,14 +218,14 @@
                     <a asp-action="Index"
                        asp-route-operationalStatus="@Model.OperationalStatus"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Model.OperationalStatus })"
+                       hx-get="@BusinessIndexUrl(Model.OperationalStatus)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OperationalStatus")</a>
                     <a asp-action="Edit"
                        asp-route-id="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+                       hx-get="@BusinessEditUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("EditBusiness")</a>
@@ -235,8 +260,7 @@
                             <input type="hidden" name="returnToSetup" value="true" />
                             <input type="text"
                                    name="note"
-                                   class="form-control form-control-sm"
-                                   style="min-width: 220px;"
+                                   class="form-control form-control-sm admin-min-w-220"
                                    placeholder="@T.T("BusinessEditorOptionalSuspensionReason")" />
                             <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("BusinessEditorSuspend")</button>
                         </form>
@@ -255,15 +279,15 @@
                        asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                        class="btn btn-sm btn-outline-secondary"
                        hx-get="@(Model.ActiveOwnerCount > 0
-                           ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
-                           : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
+                           ? BusinessMembersUrl(Model.Id)
+                           : BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention))"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@MemberWorkspaceLabel()</a>
                     <a asp-action="Locations"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@BusinessLocationsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("Locations")</a>
@@ -280,14 +304,14 @@
                        asp-action="Edit"
                        asp-fragment="site-settings-localization"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
+                       hx-get="@SiteSettingsUrl("site-settings-localization")"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenGlobalLocalization")</a>
                     <a asp-action="Edit"
                        asp-route-id="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+                       hx-get="@BusinessEditUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("EditBusiness")</a>
@@ -301,14 +325,16 @@
                 <div class="small text-muted mt-2">@T.T("ApprovalChecklistRequirement")</div>
                 <div class="d-flex gap-2 flex-wrap mt-3">
                     <a asp-action="MerchantReadiness"
+                       asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                     <a asp-action="SupportQueue"
+                       asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-get="@BusinessSupportQueueUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -331,14 +357,16 @@
                         <div class="small text-muted mb-3">@string.Format(T.T("BusinessSetupChecklistCounts"), Model.ActiveOwnerCount, Model.PrimaryLocationCount)</div>
                         <div class="d-flex flex-wrap gap-2">
                             <a asp-action="MerchantReadiness"
+                               asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                               hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                             <a asp-action="SupportQueue"
+                               asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("SupportQueue", "Businesses")"
+                               hx-get="@BusinessSupportQueueUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -364,14 +392,14 @@
                                asp-action="TaxCompliance"
                                asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("TaxCompliance", "Billing", new { businessId = Model.Id })"
+                               hx-get="@TaxComplianceUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("TaxComplianceTitle")</a>
                             <a asp-action="Edit"
                                asp-route-id="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+                               hx-get="@BusinessEditUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("EditBusiness")</a>
@@ -419,7 +447,7 @@
                                asp-action="Details"
                                asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                               hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -427,15 +455,15 @@
                                asp-action="Edit"
                                asp-fragment="site-settings-communications-policy"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                               hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CommunicationPolicy")</a>
-                            <a asp-controller="Users"
-                               asp-action="Index"
-                               asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
+                            <a asp-action="Members"
+                               asp-route-businessId="@Model.Id"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                               hx-get="@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
@@ -444,7 +472,7 @@
                                asp-route-businessId="@Model.Id"
                                asp-route-retryBlockedOnly="true"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, retryBlockedOnly = true })"
+                               hx-get="@EmailAuditsUrl(Model.Id, retryBlockedOnly: true)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("RetryBlocked")</a>
@@ -469,7 +497,7 @@
                             <a asp-action="Subscription"
                                asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+                               hx-get="@BusinessSubscriptionUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Subscription")</a>
@@ -477,7 +505,7 @@
                                asp-action="Payments"
                                asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Id })"
+                               hx-get="@PaymentsUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("OpenPayments")</a>
@@ -499,7 +527,7 @@
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
+                       hx-get="@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingOwner)</a>
@@ -509,7 +537,7 @@
                     <a asp-action="Locations"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@BusinessLocationsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)</a>
@@ -519,7 +547,7 @@
                     <a asp-action="Edit"
                        asp-route-id="@Model.Id"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+                       hx-get="@BusinessEditUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)</a>
@@ -529,14 +557,15 @@
                     <a asp-action="Edit"
                        asp-route-id="@Model.Id"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+                       hx-get="@BusinessEditUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)</a>
                 }
                 <a asp-action="MerchantReadiness"
+                   asp-route-businessId="@Model.Id"
                    class="btn btn-sm btn-outline-warning"
-                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                    hx-target="#business-setup-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
@@ -551,7 +580,7 @@
                asp-action="Edit"
                asp-fragment="site-settings-communications-policy"
                class="btn btn-sm btn-outline-secondary"
-               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+               hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("OpenGlobalSettings")</a>
@@ -574,7 +603,7 @@
                             <a asp-action="Edit"
                                asp-route-id="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+                               hx-get="@BusinessEditUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("EditBusiness")</a>
@@ -582,14 +611,14 @@
                                asp-action="Details"
                                asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                               hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
                             <a asp-action="Setup"
                                asp-route-id="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
+                               hx-get="@BusinessSetupUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Localization")</a>
@@ -610,7 +639,7 @@
                                asp-action="Edit"
                                asp-fragment="site-settings-communications-policy"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                               hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CommunicationPolicy")</a>
@@ -618,7 +647,7 @@
                                asp-action="Edit"
                                asp-fragment="site-settings-payments"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+                               hx-get="@SiteSettingsUrl("site-settings-payments")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Payments")</a>
@@ -626,7 +655,7 @@
                                asp-action="Edit"
                                asp-fragment="site-settings-tax"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-get="@SiteSettingsUrl("site-settings-tax")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Tax")</a>
@@ -638,37 +667,37 @@
                         <div class="fw-semibold mb-2">@T.T("DirectHandoff")</div>
                         <div class="d-flex flex-wrap gap-2">
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
+                               hx-get="@SiteSettingsUrl("site-settings-business-app")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("BusinessApp")</a>
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-localization" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
+                               hx-get="@SiteSettingsUrl("site-settings-localization")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Localization")</a>
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                               hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CommunicationPolicy")</a>
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+                               hx-get="@SiteSettingsUrl("site-settings-payments")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Payments")</a>
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-get="@SiteSettingsUrl("site-settings-tax")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Tax")</a>
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-shipping" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                               hx-get="@SiteSettingsUrl("site-settings-shipping")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Shipping")</a>
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                               hx-get="@SiteSettingsUrl("site-settings-admin-routing")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("AdminAlerts")</a>
@@ -742,7 +771,7 @@
                        asp-action="Details"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -750,13 +779,14 @@
                        asp-action="TaxCompliance"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("TaxCompliance", "Billing", new { businessId = Model.Id })"
+                       hx-get="@TaxComplianceUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("TaxComplianceTitle")</a>
                     <a asp-action="MerchantReadiness"
+                       asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
@@ -774,26 +804,28 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-localization"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
+                           hx-get="@SiteSettingsUrl("site-settings-localization")"
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenGlobalLocalization")</a>
                         <a asp-controller="CRM"
                            asp-action="Customers"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Customers", "Crm")"
+                   hx-get="@GlobalCrmCustomersUrl()"
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CustomerLocaleReview")</a>
                         <a asp-action="MerchantReadiness"
+                           asp-route-businessId="@Model.Id"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                           hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                         <a asp-action="SupportQueue"
+                           asp-route-businessId="@Model.Id"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("SupportQueue", "Businesses")"
+                           hx-get="@BusinessSupportQueueUrl(Model.Id)"
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
                             hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -829,7 +861,7 @@
                                        asp-action="EditCustomer"
                                        asp-route-id="@Model.SupportCustomerId.Value"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.SupportCustomerId.Value })"
+                                       hx-get="@CrmCustomerEditUrl(Model.SupportCustomerId.Value)"
                                        hx-target="#business-setup-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("OpenSupportCustomer")</a>
@@ -919,7 +951,7 @@
                        asp-action="Edit"
                        asp-fragment="site-settings-business-app"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
+                       hx-get="@SiteSettingsUrl("site-settings-business-app")"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessApp")</a>
@@ -927,13 +959,14 @@
                        asp-action="Details"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
                     <a asp-action="MerchantReadiness"
+                       asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
@@ -977,7 +1010,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-communications-policy"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("CommunicationPolicy")</a>
@@ -985,7 +1018,7 @@
                                    asp-action="Details"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -1004,13 +1037,14 @@
                                    asp-action="EmailAudits"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@EmailAuditsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("EmailAudits")</a>
                                 <a asp-action="MerchantReadiness"
+                                   asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                   hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
@@ -1029,7 +1063,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-admin-routing"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-admin-routing")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("AdminAlerts")</a>
@@ -1037,7 +1071,7 @@
                                    asp-action="ChannelAudits"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@ChannelAuditsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
@@ -1067,7 +1101,7 @@
                                                asp-action="Edit"
                                                asp-fragment="site-settings-communications-policy"
                                                class="btn btn-sm btn-outline-secondary"
-                                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                               hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                                hx-target="#business-setup-shell"
                                                hx-swap="outerHTML"
                                                hx-push-url="true">@T.T("CommunicationPolicy")</a>
@@ -1082,7 +1116,7 @@
                                                asp-action="EmailAudits"
                                                asp-route-businessId="@Model.Id"
                                                class="btn btn-sm btn-outline-secondary"
-                                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                               hx-get="@EmailAuditsUrl(Model.Id)"
                                                hx-target="#business-setup-shell"
                                                hx-swap="outerHTML"
                                                hx-push-url="true">@T.T("EmailAudits")</a>
@@ -1097,7 +1131,7 @@
                                                asp-action="Edit"
                                                asp-fragment="site-settings-admin-routing"
                                                class="btn btn-sm btn-outline-secondary"
-                                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                               hx-get="@SiteSettingsUrl("site-settings-admin-routing")"
                                                hx-target="#business-setup-shell"
                                                hx-swap="outerHTML"
                                                hx-push-url="true">@T.T("AdminAlerts")</a>
@@ -1148,7 +1182,7 @@
                        asp-action="Details"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -1156,7 +1190,7 @@
                        asp-action="EmailAudits"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-get="@EmailAuditsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("EmailAudits")</a>
@@ -1164,7 +1198,7 @@
                        asp-action="ChannelAudits"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-get="@ChannelAuditsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
@@ -1190,7 +1224,7 @@
                                    asp-action="Details"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -1198,7 +1232,7 @@
                                    asp-action="EmailAudits"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@EmailAuditsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("EmailAudits")</a>
@@ -1219,7 +1253,7 @@
                                    asp-action="Details"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -1227,7 +1261,7 @@
                                    asp-action="ChannelAudits"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@ChannelAuditsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
@@ -1248,7 +1282,7 @@
                                    asp-action="Details"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -1256,7 +1290,7 @@
                                    asp-action="ChannelAudits"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@ChannelAuditsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
@@ -1277,7 +1311,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-admin-routing"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-admin-routing")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("AdminAlerts")</a>
@@ -1285,7 +1319,7 @@
                                    asp-action="Details"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -1311,7 +1345,7 @@
                                     <a asp-action="Subscription"
                                        asp-route-businessId="@Model.Id"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+                                       hx-get="@BusinessSubscriptionUrl(Model.Id)"
                                        hx-target="#business-setup-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("Subscription")</a>
@@ -1319,7 +1353,7 @@
                                        asp-action="Payments"
                                        asp-route-businessId="@Model.Id"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Id })"
+                                       hx-get="@PaymentsUrl(Model.Id)"
                                        hx-target="#business-setup-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("OpenPayments")</a>
@@ -1344,14 +1378,14 @@
                                     <a asp-action="Subscription"
                                        asp-route-businessId="@Model.Id"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+                                       hx-get="@BusinessSubscriptionUrl(Model.Id)"
                                        hx-target="#business-setup-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("Subscription")</a>
                                     <a asp-action="SubscriptionInvoices"
                                        asp-route-businessId="@Model.Id"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Id })"
+                                       hx-get="@BusinessSubscriptionInvoicesUrl(Model.Id)"
                                        hx-target="#business-setup-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("BusinessSubscriptionInvoicesTitle")</a>
@@ -1367,7 +1401,7 @@
                                     <a asp-action="SubscriptionInvoices"
                                        asp-route-businessId="@Model.Id"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Id })"
+                                       hx-get="@BusinessSubscriptionInvoicesUrl(Model.Id)"
                                        hx-target="#business-setup-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("BusinessSubscriptionInvoicesTitle")</a>
@@ -1375,7 +1409,7 @@
                                        asp-action="Payments"
                                        asp-route-businessId="@Model.Id"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Id })"
+                                       hx-get="@PaymentsUrl(Model.Id)"
                                        hx-target="#business-setup-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("OpenPayments")</a>
@@ -1399,14 +1433,14 @@
                             <a asp-action="Subscription"
                                asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+                               hx-get="@BusinessSubscriptionUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Subscription")</a>
                             <a asp-action="SubscriptionInvoices"
                                asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Id })"
+                               hx-get="@BusinessSubscriptionInvoicesUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("BusinessSubscriptionInvoicesTitle")</a>
@@ -1414,13 +1448,14 @@
                                asp-action="Payments"
                                asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Id })"
+                               hx-get="@PaymentsUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("OpenPayments")</a>
                             <a asp-action="SupportQueue"
+                               asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("SupportQueue", "Businesses")"
+                               hx-get="@BusinessSupportQueueUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -1432,21 +1467,21 @@
                        asp-action="Payments"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Id })"
+                       hx-get="@PaymentsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenPayments")</a>
                     <a asp-action="Subscription"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@BusinessSubscriptionUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("Subscription")</a>
                     <a asp-action="SubscriptionInvoices"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@BusinessSubscriptionInvoicesUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessSubscriptionInvoicesTitle")</a>
@@ -1454,7 +1489,7 @@
                        asp-action="Edit"
                        asp-fragment="site-settings-business-app"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
+                       hx-get="@SiteSettingsUrl("site-settings-business-app")"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessApp")</a>
@@ -1469,7 +1504,7 @@
                     <a asp-action="CreateMember"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-outline-primary"
-                       hx-get="@Url.Action("CreateMember", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@BusinessCreateMemberUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -1478,7 +1513,7 @@
                     <a asp-action="CreateLocation"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-outline-primary"
-                       hx-get="@Url.Action("CreateLocation", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@BusinessCreateLocationUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -1487,7 +1522,7 @@
                     <a asp-action="CreateInvitation"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@BusinessCreateInvitationUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -1498,8 +1533,8 @@
                        asp-route-filter="@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                        class="btn btn-outline-secondary"
                        hx-get="@(Model.ActiveOwnerCount > 0
-                           ? Url.Action("Members", "Businesses", new { businessId = Model.Id })
-                           : Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
+                           ? BusinessMembersUrl(Model.Id)
+                           : BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention))"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -1509,7 +1544,7 @@
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
+                       hx-get="@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -1518,7 +1553,7 @@
                     <a asp-action="OwnerOverrideAudits"
                        asp-route-businessId="@Model.Id"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.Id })"
+                       hx-get="@BusinessOwnerOverrideAuditsUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -1530,7 +1565,7 @@
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
+                       hx-get="@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
@@ -1538,7 +1573,7 @@
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked })"
+                       hx-get="@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
@@ -1546,7 +1581,7 @@
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
+                       hx-get="@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
@@ -1554,13 +1589,14 @@
                        asp-route-businessId="@Model.Id"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired })"
+                       hx-get="@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)</a>
                     <a asp-action="MerchantReadiness"
+                       asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
@@ -1578,20 +1614,21 @@
                                asp-route-businessId="@Model.Id"
                                asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })"
+                               hx-get="@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@MemberWorkspaceLabel()</a>
                             <a asp-action="MerchantReadiness"
+                               asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                               hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                         </div>
                     </div>
                     <div class="card-body"
-                         hx-get="@Url.Action("SetupMembersPreview", "Businesses", new { businessId = Model.Id })"
+                         hx-get="@BusinessSetupMembersPreviewUrl(Model.Id)"
                          hx-trigger="load"
                          hx-target="this"
                          hx-swap="innerHTML">
@@ -1608,20 +1645,21 @@
                                asp-route-businessId="@Model.Id"
                                asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
+                               hx-get="@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
                             <a asp-action="SupportQueue"
+                               asp-route-businessId="@Model.Id"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("SupportQueue", "Businesses")"
+                               hx-get="@BusinessSupportQueueUrl(Model.Id)"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
                         </div>
                     </div>
                     <div class="card-body"
-                         hx-get="@Url.Action("SetupInvitationsPreview", "Businesses", new { businessId = Model.Id })"
+                         hx-get="@BusinessSetupInvitationsPreviewUrl(Model.Id)"
                          hx-trigger="load"
                          hx-target="this"
                          hx-swap="innerHTML">
@@ -1639,14 +1677,16 @@
                 </p>
                 <div class="d-flex gap-2 flex-wrap mb-3">
                     <a asp-action="MerchantReadiness"
+                       asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                     <a asp-action="SupportQueue"
+                       asp-route-businessId="@Model.Id"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-get="@BusinessSupportQueueUrl(Model.Id)"
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -1658,14 +1698,14 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-communications-policy"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                           hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenGlobalSettings")</a>
                         <a asp-action="Edit"
                            asp-route-id="@Model.Id"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+                           hx-get="@BusinessEditUrl(Model.Id)"
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("EditBusiness")</a>
@@ -1673,7 +1713,7 @@
                            asp-action="Details"
                            asp-route-businessId="@Model.Id"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                           hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                            hx-target="#business-setup-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -1689,7 +1729,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-security"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-security" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-security")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Security")</a>
@@ -1697,22 +1737,23 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-mobile"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-mobile")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Mobile")</a>
                                 <a asp-controller="MobileOperations"
                                    asp-action="Index"
+                                   asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "MobileOperations")"
+                                   hx-get="@MobileOperationsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
-                                <a asp-controller="Users"
-                                   asp-action="Index"
-                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
+                                <a asp-action="Members"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                                   hx-get="@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
@@ -1768,7 +1809,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-smtp"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-smtp")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("SMTP")</a>
@@ -1776,7 +1817,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-sms"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-sms")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@CommunicationChannelLabel("SMS")</a>
@@ -1784,7 +1825,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-whatsapp"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-whatsapp")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@CommunicationChannelLabel("WhatsApp")</a>
@@ -1792,7 +1833,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-admin-routing"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-admin-routing")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("AdminAlerts")</a>
@@ -1800,7 +1841,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-communications-policy"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("CommunicationPolicy")</a>
@@ -1808,7 +1849,7 @@
                                    asp-action="Details"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@BusinessCommunicationsDetailsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
@@ -1816,7 +1857,7 @@
                                    asp-action="EmailAudits"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@EmailAuditsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("EmailAudits")</a>
@@ -1825,7 +1866,7 @@
                                    asp-route-businessId="@Model.Id"
                                    asp-route-retryBlockedOnly="true"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, retryBlockedOnly = true })"
+                                   hx-get="@EmailAuditsUrl(Model.Id, retryBlockedOnly: true)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("RetryBlocked")</a>
@@ -1835,7 +1876,7 @@
                                    asp-route-status="Failed"
                                    asp-route-flowKey="AdminCommunicationTest"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = "AdminCommunicationTest" })"
+                                   hx-get="@EmailAuditsUrl(Model.Id, status: "Failed", flowKey: "AdminCommunicationTest")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("FailedAdminTests")</a>
@@ -1845,7 +1886,7 @@
                                    asp-route-status="Failed"
                                    asp-route-flowKey="AccountActivation"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = "AccountActivation" })"
+                                   hx-get="@EmailAuditsUrl(Model.Id, status: "Failed", flowKey: "AccountActivation")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
@@ -1853,23 +1894,23 @@
                                    asp-route-businessId="@Model.Id"
                                    asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
+                                   hx-get="@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
-                                <a asp-controller="Users"
-                                   asp-action="Index"
-                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
+                                <a asp-action="Members"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                                   hx-get="@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
-                                <a asp-controller="Users"
-                                   asp-action="Index"
-                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
+                                <a asp-action="Members"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                                   hx-get="@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("PasswordReset")</a>
@@ -1879,7 +1920,7 @@
                                    asp-route-status="Failed"
                                    asp-route-flowKey="PasswordReset"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = "PasswordReset" })"
+                                   hx-get="@EmailAuditsUrl(Model.Id, status: "Failed", flowKey: "PasswordReset")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
@@ -1889,7 +1930,7 @@
                                asp-route-status="Failed"
                                asp-route-flowKey="PasswordReset"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = "PasswordReset" })"
+                               hx-get="@EmailAuditsUrl(Model.Id, status: "Failed", flowKey: "PasswordReset")"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
@@ -1897,7 +1938,7 @@
                                    asp-action="ChannelAudits"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-get="@ChannelAuditsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
@@ -1906,14 +1947,15 @@
                                    asp-route-businessId="@Model.Id"
                                    asp-route-phoneVerificationOnly="true"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id, phoneVerificationOnly = true })"
+                                   hx-get="@ChannelAuditsUrl(Model.Id, phoneVerificationOnly: true)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("PhoneVerification")</a>
                                 <a asp-controller="MobileOperations"
                                    asp-action="Index"
+                                   asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "MobileOperations")"
+                                   hx-get="@MobileOperationsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
@@ -1929,7 +1971,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-payments"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-payments")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Payments")</a>
@@ -1937,7 +1979,7 @@
                                    asp-action="Edit"
                                    asp-fragment="site-settings-shipping"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-shipping")"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Shipping")</a>
@@ -1945,7 +1987,7 @@
                                    asp-action="Payments"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Id })"
+                                   hx-get="@PaymentsUrl(Model.Id)"
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("OpenPayments")</a>
@@ -1963,19 +2005,21 @@
             <a asp-action="Edit"
                asp-route-id="@Model.Id"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+               hx-get="@BusinessEditUrl(Model.Id)"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("BusinessMembersBackToBusinessAction")</a>
             <a asp-action="MerchantReadiness"
+               asp-route-businessId="@Model.Id"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+               hx-get="@BusinessMerchantReadinessUrl(Model.Id)"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
             <a asp-action="SupportQueue"
+               asp-route-businessId="@Model.Id"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("SupportQueue", "Businesses")"
+               hx-get="@BusinessSupportQueueUrl(Model.Id)"
                hx-target="#business-setup-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>

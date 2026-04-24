@@ -55,6 +55,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
     /// </summary>
     public sealed class BusinessSupportQueueVm
     {
+        public Guid? BusinessId { get; set; }
         public BusinessSupportSummaryVm Summary { get; set; } = new();
         public List<BusinessListItemVm> AttentionBusinesses { get; set; } = new();
         public List<BusinessSupportFailedEmailVm> FailedEmails { get; set; } = new();
@@ -63,6 +64,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
 
     public sealed class MerchantReadinessWorkspaceVm
     {
+        public Guid? BusinessId { get; set; }
         public BusinessSupportSummaryVm Summary { get; set; } = new();
         public List<MerchantReadinessItemVm> Items { get; set; } = new();
         public List<MerchantReadinessPlaybookVm> Playbooks { get; set; } = new();

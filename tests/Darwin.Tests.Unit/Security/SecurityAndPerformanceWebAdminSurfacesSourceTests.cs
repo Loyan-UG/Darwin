@@ -1,9 +1,609 @@
 using FluentAssertions;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Darwin.Tests.Unit.Security;
 
 public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : SecurityAndPerformanceSourceTestBase
 {
+    [Fact]
+    public void WebAdminRazorViews_Should_KeepNavigationAndTimestampCleanupContractsClean()
+    {
+        var viewSources = ReadWebAdminViewSources();
+
+        viewSources.Should().NotBeEmpty();
+        var rawGetNavigationPatterns = new[]
+        {
+            "hx-get=\"@Url.Action",
+            "href=\"@Url.Action",
+            "src=\"@Url.Action"
+        };
+
+        viewSources
+            .Where(view => rawGetNavigationPatterns.Any(pattern => view.Source.Contains(pattern, StringComparison.Ordinal)))
+            .Select(view => view.Path)
+            .Should()
+            .BeEmpty("GET navigation and media references should route through explicit local URL helpers instead of inline Url.Action calls");
+        viewSources
+            .Where(view => view.Source.Contains("ToString(\"u\")", StringComparison.Ordinal))
+            .Select(view => view.Path)
+            .Should()
+            .BeEmpty("operator-facing WebAdmin timestamps should use CurrentCulture helpers instead of invariant sortable formatting");
+    }
+
+    [Fact]
+    public void WebAdminRazorViews_Should_KeepHtmxPostMutationsProtectedByAntiForgeryTokens()
+    {
+        var viewSources = ReadWebAdminViewSources();
+
+        viewSources
+            .Where(view => view.Source.Contains("hx-post=", StringComparison.Ordinal))
+            .Select(view => new
+            {
+                view.Path,
+                HasAntiForgeryToken = view.Source.Contains("@Html.AntiForgeryToken()", StringComparison.Ordinal)
+            })
+            .Where(view => !view.HasAntiForgeryToken)
+            .Select(view => view.Path)
+            .Should()
+            .BeEmpty("every HTMX POST mutation surface should include an anti-forgery token in the posting Razor view");
+    }
+
+    [Fact]
+    public void WebAdminRazorViews_Should_KeepPostFormsProtectedByAntiForgeryTokens()
+    {
+        var missingTokens = ReadWebAdminViewSources()
+            .SelectMany(view => PostForms()
+                .Matches(view.Source)
+                .Select(match => new
+                {
+                    view.Path,
+                    Form = match.Value,
+                    HasAntiForgeryToken =
+                        match.Value.Contains("@Html.AntiForgeryToken()", StringComparison.Ordinal) ||
+                        match.Value.Contains("name=\"__RequestVerificationToken\"", StringComparison.Ordinal)
+                }))
+            .Where(match => !match.HasAntiForgeryToken)
+            .Select(match => $"{match.Path}: {NormalizeTagForAssertion(match.Form)}")
+            .ToList();
+
+        missingTokens
+            .Should()
+            .BeEmpty("every WebAdmin POST form should include an anti-forgery token, including non-HTMX forms");
+    }
+
+    [Fact]
+    public void WebAdminControllers_Should_KeepHttpPostActionsProtectedByAntiForgeryValidation()
+    {
+        var unprotectedPostActions = ReadWebAdminControllerSources()
+            .SelectMany(controller => HttpPostActionAttributeBlocks()
+                .Matches(controller.Source)
+                .Select(match => new
+                {
+                    controller.Path,
+                    AttributeBlock = match.Groups["attributes"].Value,
+                    Signature = NormalizeTagForAssertion(match.Groups["signature"].Value)
+                }))
+            .Where(action =>
+                !action.AttributeBlock.Contains("ValidateAntiForgeryToken", StringComparison.Ordinal) &&
+                !action.AttributeBlock.Contains("IgnoreAntiforgeryToken", StringComparison.Ordinal))
+            .Select(action => $"{action.Path}: {action.Signature}")
+            .ToList();
+
+        unprotectedPostActions
+            .Should()
+            .BeEmpty("every WebAdmin POST action should either validate anti-forgery tokens or declare an explicit ignore exception");
+    }
+
+    [Fact]
+    public void WebAdminControllers_Should_KeepAntiForgeryIgnoreExceptionsExplicitlyAllowlisted()
+    {
+        var ignoreExceptions = ReadWebAdminControllerSources()
+            .SelectMany(controller => FindIgnoreAntiForgeryBlocks(controller.Path, controller.Source))
+            .ToList();
+
+        ignoreExceptions
+            .Select(action => $"{action.Path}: {action.Signature}")
+            .Should()
+            .BeEquivalentTo(
+                new[] { "Admin\\Media\\MediaController.cs: public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)" },
+                "UploadQuill is the only intentional WebAdmin anti-forgery exception");
+
+        ignoreExceptions.Single().Block.Should().Contain("Quill sends multipart uploads through fetch without the admin form token");
+        ignoreExceptions.Single().Block.Should().Contain("strict file validation");
+    }
+
+    [Fact]
+    public void WebAdminFileUploadAndFileIo_Should_RemainConfinedToHardenedMediaPipeline()
+    {
+        var webAdminSources = ReadWebAdminSources();
+        var fileIoPatterns = new[]
+        {
+            "IFormFile",
+            "System.IO.File.",
+            "Directory.CreateDirectory(",
+            "Path.GetExtension(",
+            "CopyToAsync(",
+            "WriteAllBytesAsync("
+        };
+
+        webAdminSources
+            .Where(source => fileIoPatterns.Any(pattern => source.Source.Contains(pattern, StringComparison.Ordinal)))
+            .Select(source => source.Path.Replace('/', '\\'))
+            .Distinct()
+            .Should()
+            .BeEquivalentTo(
+                new[]
+                {
+                    "Controllers\\Admin\\Media\\MediaController.cs",
+                    "ViewModels\\CMS\\MediaVms.cs"
+                },
+                "WebAdmin file upload and file IO should remain isolated to the hardened media pipeline");
+
+        var mediaSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
+        mediaSource.Should().Contain("private static readonly string[] AllowedExtensions = [\".png\", \".jpg\", \".jpeg\", \".webp\", \".gif\"];");
+        mediaSource.Should().Contain("private const long MaxUploadBytes = 5 * 1024 * 1024;");
+        mediaSource.Should().Contain("var ext = Path.GetExtension(file.FileName).ToLowerInvariant();");
+        mediaSource.Should().Contain("if (!AllowedExtensions.Contains(ext))");
+        mediaSource.Should().Contain("if (file.Length > MaxUploadBytes)");
+        mediaSource.Should().Contain("var uploadsRoot = Path.Combine(GetWebRootPath(), \"uploads\");");
+        mediaSource.Should().Contain("var fileName = $\"{Guid.NewGuid():N}{ext}\";");
+        mediaSource.Should().Contain("var fullPath = Path.Combine(uploadsRoot, fileName);");
+        mediaSource.Should().Contain("Convert.ToHexString(SHA256.HashData(bytes))");
+        mediaSource.Should().Contain("PublicUrl: $\"/uploads/{fileName}\"");
+        mediaSource.Should().NotContain("Path.Combine(uploadsRoot, file.FileName)");
+        mediaSource.Should().NotContain("PublicUrl: $\"/uploads/{file.FileName}\"");
+    }
+
+    [Fact]
+    public void WebAdminRazorViews_Should_KeepUnsafeRenderingAndBlankTargetsGuarded()
+    {
+        var viewSources = ReadWebAdminViewSources();
+        var unsafeRenderingPatterns = new[]
+        {
+            "Html.Raw",
+            "new HtmlString",
+            "javascript:"
+        };
+
+        viewSources
+            .Where(view => unsafeRenderingPatterns.Any(pattern => view.Source.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
+            .Select(view => view.Path)
+            .Should()
+            .BeEmpty("WebAdmin Razor views should keep default Razor encoding and avoid javascript: URLs");
+
+        viewSources
+            .SelectMany(view => InlineEventAttributeTags()
+                .Matches(view.Source)
+                .Select(match => $"{view.Path}: {NormalizeTagForAssertion(match.Value)}"))
+            .Should()
+            .BeEmpty("WebAdmin Razor views should use delegated JavaScript handlers instead of inline event attributes");
+        viewSources
+            .Where(view =>
+                view.Source.Contains("data-hx-success=", StringComparison.Ordinal) ||
+                view.Source.Contains("hx-on::after-request=", StringComparison.Ordinal))
+            .Select(view => view.Path)
+            .Should()
+            .BeEmpty("WebAdmin Razor views should use centralized HTMX afterRequest handlers instead of inline JavaScript snippets");
+        viewSources
+            .SelectMany(view => InlineStyleAttributeTags()
+                .Matches(view.Source)
+                .Select(match => $"{view.Path}: {NormalizeTagForAssertion(match.Value)}"))
+            .Should()
+            .BeEmpty("WebAdmin Razor views should keep CSP-friendly styling in local CSS classes instead of inline style attributes");
+
+        var unsafeBlankTargets = viewSources
+            .SelectMany(view => TargetBlankTags()
+                .Matches(view.Source)
+                .Select(match => new
+                {
+                    view.Path,
+                    Tag = NormalizeTagForAssertion(match.Value),
+                    HasNoOpener = match.Value.Contains("noopener", StringComparison.OrdinalIgnoreCase),
+                    HasNoReferrer = match.Value.Contains("noreferrer", StringComparison.OrdinalIgnoreCase)
+                }))
+            .Where(link => !link.HasNoOpener || !link.HasNoReferrer)
+            .Select(link => $"{link.Path}: {link.Tag}")
+            .ToList();
+
+        unsafeBlankTargets
+            .Should()
+            .BeEmpty("target=_blank links should prevent opener access and referrer leakage");
+    }
+
+    [Fact]
+    public void WebAdminVendorAssets_Should_BeSelfHostedAndVersioned()
+    {
+        var externalAssets = ReadWebAdminViewSources()
+            .SelectMany(view => ExternalAssetTags()
+                .Matches(view.Source)
+                .Select(match => new
+                {
+                    view.Path,
+                    Tag = NormalizeTagForAssertion(match.Value),
+                    Url = match.Groups["url"].Value
+                }))
+            .Where(asset => asset.Url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var layoutSource = ReadWebAdminFile(Path.Combine("Views", "Shared", "_Layout.cshtml"));
+        var authLayoutSource = ReadWebAdminFile(Path.Combine("Views", "Shared", "_AuthLayout.cshtml"));
+        var validationSource = ReadWebAdminFile(Path.Combine("Views", "Shared", "_ValidationScriptsPartial.cshtml"));
+        var vendorFiles = new[]
+        {
+            Path.Combine("wwwroot", "lib", "bootstrap", "css", "bootstrap.min.css"),
+            Path.Combine("wwwroot", "lib", "bootstrap", "js", "bootstrap.bundle.min.js"),
+            Path.Combine("wwwroot", "lib", "fontawesome", "css", "all.min.css"),
+            Path.Combine("wwwroot", "lib", "fontawesome", "webfonts", "fa-brands-400.woff2"),
+            Path.Combine("wwwroot", "lib", "fontawesome", "webfonts", "fa-regular-400.woff2"),
+            Path.Combine("wwwroot", "lib", "fontawesome", "webfonts", "fa-solid-900.woff2"),
+            Path.Combine("wwwroot", "lib", "fontawesome", "webfonts", "fa-v4compatibility.woff2"),
+            Path.Combine("wwwroot", "lib", "jquery", "jquery.min.js"),
+            Path.Combine("wwwroot", "lib", "jquery-validation", "jquery.validate.min.js"),
+            Path.Combine("wwwroot", "lib", "jquery-validation-unobtrusive", "jquery.validate.unobtrusive.min.js"),
+            Path.Combine("wwwroot", "lib", "quill", "quill.js"),
+            Path.Combine("wwwroot", "lib", "htmx", "htmx.min.js"),
+            Path.Combine("wwwroot", "lib", "vendor-manifest.json")
+        };
+        var vendorManifestSource = ReadWebAdminFile(Path.Combine("wwwroot", "lib", "vendor-manifest.json"));
+        using var vendorManifest = JsonDocument.Parse(vendorManifestSource);
+        var assets = vendorManifest.RootElement.GetProperty("assets");
+        var expectedVendorEntries = new Dictionary<string, (string Version, string License, string File)>
+        {
+            ["bootstrap"] = ("5.3.8", "MIT", "bootstrap/css/bootstrap.min.css"),
+            ["fontawesome-free"] = ("7.0.0", "MIT", "fontawesome/css/all.min.css"),
+            ["htmx"] = ("2.0.4", "BSD-2-Clause", "htmx/htmx.min.js"),
+            ["jquery"] = ("3.7.1", "MIT", "jquery/jquery.min.js"),
+            ["jquery-validation"] = ("1.19.5", "MIT", "jquery-validation/jquery.validate.min.js"),
+            ["jquery-validation-unobtrusive"] = ("4.x", "Apache-2.0", "jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"),
+            ["quill"] = ("2.x", "BSD-3-Clause", "quill/quill.js")
+        };
+
+        externalAssets
+            .Select(asset => $"{asset.Path}: {asset.Url}")
+            .Should()
+            .BeEmpty("WebAdmin vendor scripts and styles should be self-hosted from wwwroot/lib for stricter CSP and offline-safe admin rendering");
+        layoutSource.Should().Contain("<link href=\"~/lib/bootstrap/css/bootstrap.min.css\" rel=\"stylesheet\" asp-append-version=\"true\" />");
+        layoutSource.Should().Contain("<link href=\"~/lib/fontawesome/css/all.min.css\" rel=\"stylesheet\" asp-append-version=\"true\" />");
+        layoutSource.Should().Contain("<script src=\"~/lib/jquery/jquery.min.js\" asp-append-version=\"true\"></script>");
+        layoutSource.Should().Contain("<script src=\"~/lib/bootstrap/js/bootstrap.bundle.min.js\" asp-append-version=\"true\"></script>");
+        layoutSource.Should().Contain("<script src=\"~/lib/quill/quill.js\" asp-append-version=\"true\"></script>");
+        layoutSource.Should().Contain("<script src=\"~/lib/htmx/htmx.min.js\" asp-append-version=\"true\"></script>");
+        authLayoutSource.Should().Contain("<script src=\"~/lib/htmx/htmx.min.js\" asp-append-version=\"true\"></script>");
+        validationSource.Should().Contain("<script src=\"~/lib/jquery-validation/jquery.validate.min.js\" asp-append-version=\"true\"></script>");
+        validationSource.Should().Contain("<script src=\"~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js\" asp-append-version=\"true\"></script>");
+        vendorFiles
+            .Select(path => (Path: path, FullPath: Path.Combine(WebAdminRoot(), path)))
+            .Select(file => (file.Path, Exists: File.Exists(file.FullPath), Length: File.Exists(file.FullPath) ? new FileInfo(file.FullPath).Length : 0))
+            .Should()
+            .OnlyContain(file => file.Exists && file.Length > 0, "self-hosted vendor assets should be present under wwwroot/lib");
+        foreach (var entry in expectedVendorEntries)
+        {
+            assets.TryGetProperty(entry.Key, out var asset)
+                .Should()
+                .BeTrue($"{entry.Key} should be listed in the WebAdmin vendor manifest");
+            asset.GetProperty("version").GetString().Should().Be(entry.Value.Version);
+            asset.GetProperty("license").GetString().Should().Contain(entry.Value.License);
+            asset.GetProperty("source").GetString().Should().StartWith("https://");
+            asset.GetProperty("files").EnumerateArray()
+                .Select(file => file.GetString())
+                .Should()
+                .Contain(entry.Value.File);
+        }
+    }
+
+    [Fact]
+    public void WebAdminSecurityHeaders_Should_ApplyStrictSelfHostedCspBeforeStaticFiles()
+    {
+        var startupSource = ReadWebAdminFile(Path.Combine("Extensions", "Startup.cs"));
+        var dependencyInjectionSource = ReadWebAdminFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+
+        startupSource.Should().Contain("app.UseForwardedHeaders();");
+        startupSource.IndexOf("app.UseForwardedHeaders();", StringComparison.Ordinal)
+            .Should()
+            .BeLessThan(startupSource.IndexOf("app.UseHttpsRedirection();", StringComparison.Ordinal),
+                "WebAdmin should honor reverse-proxy scheme headers before HTTPS redirection and secure-cookie decisions");
+        startupSource.Should().Contain("app.UseHsts();");
+        startupSource.IndexOf("app.UseHsts();", StringComparison.Ordinal)
+            .Should()
+            .BeLessThan(startupSource.IndexOf("app.UseHttpsRedirection();", StringComparison.Ordinal),
+                "HSTS should run in the non-development branch before HTTPS redirection and endpoint/static responses");
+        startupSource.Should().Contain("app.UseWebAdminSecurityHeaders();");
+        startupSource.IndexOf("app.UseWebAdminSecurityHeaders();", StringComparison.Ordinal)
+            .Should()
+            .BeLessThan(startupSource.IndexOf("app.UseStaticFiles();", StringComparison.Ordinal),
+                "CSP and related security headers should also apply to locally served static vendor assets");
+        startupSource.Should().Contain("headers[\"Content-Security-Policy\"] = string.Join(\"; \",");
+        startupSource.Should().Contain("\"default-src 'self'\"");
+        startupSource.Should().Contain("\"script-src 'self'\"");
+        startupSource.Should().Contain("\"style-src 'self'\"");
+        startupSource.Should().Contain("\"img-src 'self' data: blob:\"");
+        startupSource.Should().Contain("\"font-src 'self'\"");
+        startupSource.Should().Contain("\"connect-src 'self'\"");
+        startupSource.Should().Contain("\"object-src 'none'\"");
+        startupSource.Should().Contain("\"base-uri 'self'\"");
+        startupSource.Should().Contain("\"form-action 'self'\"");
+        startupSource.Should().Contain("\"frame-ancestors 'none'\"");
+        startupSource.Should().Contain("headers[\"X-Content-Type-Options\"] = \"nosniff\";");
+        startupSource.Should().Contain("headers[\"Referrer-Policy\"] = \"strict-origin-when-cross-origin\";");
+        startupSource.Should().Contain("headers[\"Permissions-Policy\"] = \"camera=(), microphone=(), geolocation=(), payment=()\";");
+        startupSource.Should().NotContain("unsafe-inline");
+        startupSource.Should().NotContain("unsafe-eval");
+        startupSource.Should().NotContain("https://");
+        startupSource.Should().NotContain("http://");
+        dependencyInjectionSource.Should().Contain("services.Configure<ForwardedHeadersOptions>(options =>");
+        dependencyInjectionSource.Should().Contain("options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;");
+        dependencyInjectionSource.Should().Contain("options.ForwardLimit = 1;");
+        dependencyInjectionSource.Should().Contain("config.GetSection(\"ForwardedHeaders:KnownProxies\").Get<string[]>()");
+        dependencyInjectionSource.Should().Contain("config.GetSection(\"ForwardedHeaders:KnownNetworks\").Get<string[]>()");
+        dependencyInjectionSource.Should().Contain("System.Net.IPNetwork.TryParse(network, out var ipNetwork)");
+        dependencyInjectionSource.Should().Contain("options.KnownIPNetworks.Add(ipNetwork);");
+    }
+
+    [Fact]
+    public void WebAdminCookiesAndAntiForgery_Should_KeepSecureAdminDefaults()
+    {
+        var dependencyInjectionSource = ReadWebAdminFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+
+        dependencyInjectionSource.Should().Contain(".AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>");
+        dependencyInjectionSource.Should().Contain("options.Cookie.Name = \"Darwin.Auth\";");
+        dependencyInjectionSource.Should().Contain("options.Cookie.HttpOnly = true;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SameSite = SameSiteMode.Lax;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SecurePolicy = CookieSecurePolicy.Always;");
+        dependencyInjectionSource.Should().Contain("options.SlidingExpiration = true;");
+        dependencyInjectionSource.Should().Contain("services.AddAntiforgery(options =>");
+        dependencyInjectionSource.Should().Contain("options.HeaderName = \"RequestVerificationToken\";");
+        dependencyInjectionSource.Should().Contain("options.Cookie.Name = \"Darwin.AntiForgery\";");
+        dependencyInjectionSource.Should().Contain("options.Cookie.HttpOnly = true;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SameSite = SameSiteMode.Lax;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SecurePolicy = CookieSecurePolicy.Always;");
+    }
+
+    [Fact]
+    public void WebAdminSharedLayouts_Should_LoadCoreJavascriptFromLocalVersionedAsset()
+    {
+        var layoutSources = new[]
+        {
+            (Path: "Views\\Shared\\_Layout.cshtml", Source: ReadWebAdminFile(Path.Combine("Views", "Shared", "_Layout.cshtml"))),
+            (Path: "Views\\Shared\\_AuthLayout.cshtml", Source: ReadWebAdminFile(Path.Combine("Views", "Shared", "_AuthLayout.cshtml")))
+        };
+        var adminCoreSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "admin-core.js"));
+
+        layoutSources
+            .SelectMany(layout => InlineScriptBlocks()
+                .Matches(layout.Source)
+                .Select(match => $"{layout.Path}: {NormalizeTagForAssertion(match.Value)}"))
+            .Should()
+            .BeEmpty("shared layouts should load common JavaScript from local versioned assets instead of inline script blocks");
+        layoutSources
+            .Select(layout => layout.Source)
+            .Should()
+            .OnlyContain(source => source.Contains("<script src=\"~/js/admin-core.js\" asp-append-version=\"true\"></script>", StringComparison.Ordinal));
+        adminCoreSource.Should().NotContain("@Url.Action");
+        adminCoreSource.Should().Contain("document.body.dataset.alertsUrl");
+        adminCoreSource.Should().Contain("event.detail.headers.RequestVerificationToken = token;");
+    }
+
+    [Fact]
+    public void WebAdminAddOnGroups_Should_KeepReusableJavascriptInLocalAsset()
+    {
+        var addOnGroupViews = ReadWebAdminViewSources()
+            .Where(view => view.Path.StartsWith($"AddOnGroups{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .ToList();
+        var addOnGroupsJsSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "add-on-groups.js"));
+
+        addOnGroupViews
+            .SelectMany(view => InlineScriptBlocks()
+                .Matches(view.Source)
+                .Select(match => $"{view.Path}: {NormalizeTagForAssertion(match.Value)}"))
+            .Should()
+            .BeEmpty("AddOnGroups reusable behaviours should live in the local add-on-groups.js asset; localized dynamic option templates should be plain template markup, not inline scripts");
+        ReadWebAdminFile(Path.Combine("Views", "Shared", "_Layout.cshtml"))
+            .Should()
+            .Contain("<script src=\"~/js/add-on-groups.js\" asp-append-version=\"true\"></script>");
+        addOnGroupsJsSource.Should().Contain("data-addon-toggle-all");
+        addOnGroupsJsSource.Should().Contain("data-addon-variant-selection");
+        addOnGroupsJsSource.Should().Contain("data-addon-currency-uppercase");
+        addOnGroupsJsSource.Should().Contain("function initOptionsEditor(root)");
+        addOnGroupsJsSource.Should().Contain("addOnOptionTemplate");
+        addOnGroupsJsSource.Should().Contain("addOnValueTemplate");
+    }
+
+    [Fact]
+    public void WebAdminDynamicLineEditors_Should_KeepReusableJavascriptInLocalAsset()
+    {
+        var dynamicLineViews = new[]
+        {
+            Path.Combine("Billing", "CreateJournalEntry.cshtml"),
+            Path.Combine("Billing", "EditJournalEntry.cshtml"),
+            Path.Combine("Crm", "CreateOpportunity.cshtml"),
+            Path.Combine("Crm", "EditOpportunity.cshtml"),
+            Path.Combine("Crm", "_CustomerEditorShell.cshtml"),
+            Path.Combine("Inventory", "CreatePurchaseOrder.cshtml"),
+            Path.Combine("Inventory", "EditPurchaseOrder.cshtml"),
+            Path.Combine("Inventory", "CreateStockTransfer.cshtml"),
+            Path.Combine("Inventory", "EditStockTransfer.cshtml")
+        };
+        var crmOpportunityFormSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "_OpportunityForm.cshtml"));
+        var crmCustomerFormSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "_CustomerForm.cshtml"));
+        var dynamicLinesSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "dynamic-lines.js"));
+
+        dynamicLineViews
+            .Select(path => (Path: path, Source: ReadWebAdminFile(Path.Combine("Views", path))))
+            .SelectMany(view => InlineScriptBlocks()
+                .Matches(view.Source)
+                .Select(match => $"{view.Path}: {NormalizeTagForAssertion(match.Value)}"))
+            .Should()
+            .BeEmpty("dynamic line editor pages should use the shared local dynamic-lines.js asset instead of duplicating inline scripts");
+        ReadWebAdminFile(Path.Combine("Views", "Shared", "_Layout.cshtml"))
+            .Should()
+            .Contain("<script src=\"~/js/dynamic-lines.js\" asp-append-version=\"true\"></script>");
+        dynamicLinesSource.Should().Contain("data-dynamic-lines-add");
+        dynamicLinesSource.Should().Contain("data-dynamic-lines-remove");
+        dynamicLinesSource.Should().Contain("replaceAll('__index__', index.toString())");
+        crmOpportunityFormSource.Should().Contain("data-dynamic-lines-container=\"#opportunityLines\"");
+        crmCustomerFormSource.Should().Contain("data-dynamic-lines-container=\"#customerAddresses\"");
+        File.Exists(Path.Combine(WebAdminViewsRoot(), "Crm", "_CustomerFormScript.cshtml"))
+            .Should()
+            .BeFalse("CRM customer address editing should use the shared delegated dynamic-lines.js asset instead of an inline partial script");
+    }
+
+    [Fact]
+    public void WebAdminLoginPasskeyPlaceholder_Should_UseAdminCoreAsset()
+    {
+        var loginSource = ReadWebAdminFile(Path.Combine("Views", "Account", "Login.cshtml"));
+        var adminCoreSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "admin-core.js"));
+
+        InlineScriptBlocks()
+            .Matches(loginSource)
+            .Select(match => NormalizeTagForAssertion(match.Value))
+            .Should()
+            .BeEmpty("the login page should keep passkey placeholder behaviour in admin-core.js instead of an inline script block");
+        loginSource.Should().Contain(@"data-passkey-preparing-label=""@T.T(""PasskeyPreparing"")""");
+        adminCoreSource.Should().Contain("data-passkey-preparing-label");
+    }
+
+    [Fact]
+    public void WebAdminContentEditorsAndUserAddressModal_Should_KeepReusableJavascriptInLocalAssets()
+    {
+        var guardedViews = new[]
+        {
+            Path.Combine("Pages", "_PageCreateEditorShell.cshtml"),
+            Path.Combine("Pages", "_PageEditEditorShell.cshtml"),
+            Path.Combine("Products", "_ProductCreateEditorShell.cshtml"),
+            Path.Combine("Products", "_ProductEditEditorShell.cshtml"),
+            Path.Combine("Users", "_UserEditEditorShell.cshtml")
+        };
+        var layoutSource = ReadWebAdminFile(Path.Combine("Views", "Shared", "_Layout.cshtml"));
+        var contentEditorsSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "content-editors.js"));
+        var adminCoreSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "admin-core.js"));
+
+        guardedViews
+            .Select(path => (Path: path, Source: ReadWebAdminFile(Path.Combine("Views", path))))
+            .SelectMany(view => InlineScriptBlocks()
+                .Matches(view.Source)
+                .Select(match => $"{view.Path}: {NormalizeTagForAssertion(match.Value)}"))
+            .Should()
+            .BeEmpty("Page/Product Quill editors and the User address modal should use local versioned JavaScript assets instead of inline scripts");
+        layoutSource.Should().Contain("<script src=\"~/js/content-editors.js\" asp-append-version=\"true\"></script>");
+        contentEditorsSource.Should().Contain("window.darwinAdmin.initPageEditors = function (root)");
+        contentEditorsSource.Should().Contain("window.darwinAdmin.initProductEditors = function (root)");
+        contentEditorsSource.Should().Contain("data-page-quill-editor");
+        contentEditorsSource.Should().Contain("data-quill-product-editor");
+        adminCoreSource.Should().Contain("window.darwinAdmin.initUserEditScreen = function (root)");
+        adminCoreSource.Should().Contain("window.darwinAdmin.hideAddressModal = function ()");
+    }
+
+    [Fact]
+    public void WebAdminMediaAndShippingMethods_Should_KeepReusableJavascriptInLocalAssets()
+    {
+        var guardedViews = new[]
+        {
+            Path.Combine("Media", "Index.cshtml"),
+            Path.Combine("ShippingMethods", "_ShippingMethodForm.cshtml")
+        };
+        var layoutSource = ReadWebAdminFile(Path.Combine("Views", "Shared", "_Layout.cshtml"));
+        var mediaSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "media.js"));
+        var shippingMethodsSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "shipping-methods.js"));
+
+        guardedViews
+            .Select(path => (Path: path, Source: ReadWebAdminFile(Path.Combine("Views", path))))
+            .SelectMany(view => InlineScriptBlocks()
+                .Matches(view.Source)
+                .Select(match => $"{view.Path}: {NormalizeTagForAssertion(match.Value)}"))
+            .Should()
+            .BeEmpty("Media copy-url and ShippingMethods rate-tier behaviours should use local versioned JavaScript assets instead of inline scripts");
+        layoutSource.Should().Contain("<script src=\"~/js/media.js\" asp-append-version=\"true\"></script>");
+        layoutSource.Should().Contain("<script src=\"~/js/shipping-methods.js\" asp-append-version=\"true\"></script>");
+        mediaSource.Should().Contain("data-copy-media-url");
+        mediaSource.Should().Contain("navigator.clipboard.writeText(url);");
+        shippingMethodsSource.Should().Contain("data-shipping-rate-add");
+        shippingMethodsSource.Should().Contain("data-shipping-rate-remove");
+        shippingMethodsSource.Should().Contain("window.darwinAdmin.initShippingMethodForm = function ()");
+    }
+
+    [Fact]
+    public void WebAdminAdminControllers_Should_KeepPermissionProtectedBaseController()
+    {
+        var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
+        var adminControllers = ReadWebAdminControllerSources()
+            .Where(controller =>
+                controller.Path.StartsWith($"Admin{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
+                !string.Equals(controller.Path, Path.Combine("Admin", "AdminBaseController.cs"), StringComparison.Ordinal))
+            .ToList();
+
+        adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
+        adminBaseSource.Should().Contain("public abstract class AdminBaseController : Controller");
+        adminControllers.Should().NotBeEmpty();
+        adminControllers
+            .Where(controller => !controller.Source.Contains(": AdminBaseController", StringComparison.Ordinal))
+            .Select(controller => controller.Path)
+            .Should()
+            .BeEmpty("every Admin controller should inherit the permission-protected AdminBaseController");
+        adminControllers
+            .Where(controller => controller.Source.Contains("[AllowAnonymous]", StringComparison.Ordinal))
+            .Select(controller => controller.Path)
+            .Should()
+            .BeEmpty("Admin controllers should not bypass the AccessAdminPanel permission with AllowAnonymous");
+
+        ReadWebAdminControllerSources()
+            .Where(controller => !controller.Path.StartsWith($"Admin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .Select(controller => controller.Path)
+            .Should()
+            .BeEquivalentTo(
+                new[] { "AccountController.cs", "CultureController.cs" },
+                "non-admin WebAdmin controllers should remain a small explicit public-surface allowlist");
+    }
+
+    [Fact]
+    public void WebAdminRazorViews_Should_KeepHtmxRequestsTargetAndSwapExplicit()
+    {
+        var missingContracts = ReadWebAdminViewSources()
+            .SelectMany(view => HtmxRequestTags()
+                .Matches(view.Source)
+                .Select(match => new
+                {
+                    view.Path,
+                    Tag = match.Value,
+                    HasTarget = match.Value.Contains("hx-target=", StringComparison.Ordinal),
+                    HasSwap = match.Value.Contains("hx-swap=", StringComparison.Ordinal)
+                }))
+            .Where(match => !match.HasTarget || !match.HasSwap)
+            .Select(match => $"{match.Path}: {NormalizeTagForAssertion(match.Tag)}")
+            .ToList();
+
+        missingContracts
+            .Should()
+            .BeEmpty("every HTMX GET/POST tag should declare its target and swap behavior explicitly instead of relying on defaults");
+    }
+
+    [Fact]
+    public void WebAdminRazorViews_Should_KeepDeleteModalContractsComplete()
+    {
+        var viewSources = ReadWebAdminViewSources();
+
+        var deleteModalSources = viewSources
+            .Where(view => view.Source.Contains("data-action=\"@Url.Action(\"Delete", StringComparison.Ordinal))
+            .ToList();
+
+        deleteModalSources.Should().NotBeEmpty();
+        deleteModalSources
+            .Where(view =>
+                !view.Source.Contains("data-bs-target=\"#confirmDeleteModal\"", StringComparison.Ordinal) ||
+                !view.Source.Contains("data-id=", StringComparison.Ordinal) ||
+                !view.Source.Contains("data-rowversion=", StringComparison.Ordinal) ||
+                !view.Source.Contains("data-hx-target=", StringComparison.Ordinal) ||
+                !view.Source.Contains("data-hx-swap=", StringComparison.Ordinal))
+            .Select(view => view.Path)
+            .Should()
+            .BeEmpty("delete buttons should keep the shared confirm modal, optimistic-concurrency payload, and HTMX refresh target wired together");
+        var addressSectionSource = ReadWebAdminFile(Path.Combine("Views", "Users", "_AddressesSection.cshtml"));
+        var userEditShellSource = ReadWebAdminFile(Path.Combine("Views", "Users", "_UserEditEditorShell.cshtml"));
+
+        addressSectionSource.Should().Contain("data-action=\"@Url.Action(\"DeleteAddress\", \"Users\")\"");
+        userEditShellSource.Should().Contain("@await Html.PartialAsync(\"~/Views/Users/_AddressesSection.cshtml\", addressesSection)");
+        userEditShellSource.Should().Contain("<partial name=\"~/Views/Shared/_ConfirmDeleteModal.cshtml\" />");
+    }
+
 
     [Fact]
     public void WebAdminOperationalControlCenter_Should_KeepCoreAdminModulesReachable()
@@ -256,6 +856,37 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
             source.Should().NotContain("ModelState.AddModelError(string.Empty, ex.Message", $"admin controllers should not expose raw exception messages via ModelState: {controllerPath}");
             source.Should().NotContain("BadRequest(ex.Message", $"admin controllers should not return raw exception messages from admin actions: {controllerPath}");
         }
+    }
+
+    [Fact]
+    public void WebAdminControllers_Should_Not_ExposeRawExceptionOrApplicationErrors()
+    {
+        var forbiddenPatterns = new[]
+        {
+            "TempData[\"Error\"] = ex.Message",
+            "TempData[\"Warning\"] = ex.Message",
+            "ModelState.AddModelError(string.Empty, ex.Message",
+            "BadRequest(ex.Message",
+            "Problem(ex.Message",
+            "StatusCode(500, ex.Message",
+            "return Content(ex.Message",
+            "TempData[\"Error\"] = result.Error",
+            "TempData[\"Warning\"] = result.Error",
+            "ModelState.AddModelError(string.Empty, result.Error",
+            "BadRequest(result.Error",
+            "Problem(result.Error",
+            "result.Error ??"
+        };
+
+        var leaks = ReadWebAdminControllerSources()
+            .SelectMany(controller => forbiddenPatterns
+                .Where(pattern => controller.Source.Contains(pattern, StringComparison.Ordinal))
+                .Select(pattern => $"{controller.Path}: {pattern}"))
+            .ToList();
+
+        leaks
+            .Should()
+            .BeEmpty("WebAdmin controllers should use localized safe failure fallbacks instead of exposing raw exception or application error payloads");
     }
 
     [Fact]
@@ -585,6 +1216,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         paymentsSource.Should().Contain("@T.T(\"StripeReadiness\")");
         paymentsSource.Should().Contain("@T.T(\"WebhookLifecycleVisibility\")");
+        paymentsSource.Should().Contain("string PaymentSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-payments\" }) ?? string.Empty;");
+        paymentsSource.Should().Contain("string TaxSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" }) ?? string.Empty;");
+        paymentsSource.Should().Contain("string ScopedPaymentsUrl(PaymentQueueFilter queue) => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.BusinessId, queue }) ?? string.Empty;");
+        paymentsSource.Should().Contain("string ScopedRefundsUrl(BillingRefundQueueFilter queue) => Url.Action(\"Refunds\", \"Billing\", new { businessId = Model.BusinessId, queue }) ?? string.Empty;");
+        paymentsSource.Should().Contain("string BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter queue) => Url.Action(\"Webhooks\", \"Billing\", new { queue }) ?? string.Empty;");
+        paymentsSource.Should().Contain("string CrmInvoicesUrl(string filter) => Url.Action(\"Invoices\", \"Crm\", new { filter }) ?? string.Empty;");
         paymentsSource.Should().Contain("string PaymentOpsHealthBadgeClass(bool healthy) => healthy");
         paymentsSource.Should().Contain("string PaymentOpsHealthBadgeText(bool healthy) => healthy ? T.T(\"Ready\") : T.T(\"NeedsAttention\")");
         paymentsSource.Should().Contain("var paymentAttentionCount = Model.Summary.FailedCount");
@@ -622,9 +1259,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         paymentsSource.Should().Contain("var paymentNeedsOverdueInvoiceFollowUp = item.InvoiceId.HasValue && string.Equals(paymentInvoiceStatus, \"Overdue\", StringComparison.OrdinalIgnoreCase);");
         paymentsSource.Should().Contain("var paymentNeedsDueSoonInvoiceFollowUp = item.InvoiceId.HasValue && string.Equals(paymentInvoiceStatus, \"DueSoon\", StringComparison.OrdinalIgnoreCase);");
         paymentsSource.Should().Contain("var paymentNeedsDraftInvoiceFollowUp = item.InvoiceId.HasValue && string.Equals(paymentInvoiceStatus, \"Draft\", StringComparison.OrdinalIgnoreCase);");
-        paymentsSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Overdue\" })");
-        paymentsSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"DueSoon\" })");
-        paymentsSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Draft\" })");
+        paymentsSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"Overdue\")\"");
+        paymentsSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"DueSoon\")\"");
+        paymentsSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"Draft\")\"");
 
         webhooksSource.Should().Contain("string WebhookOpsHealthBadgeClass(bool healthy) => healthy");
         webhooksSource.Should().Contain("string WebhookOpsHealthBadgeText(bool healthy) => healthy ? T.T(\"Ready\") : T.T(\"NeedsAttention\")");
@@ -655,8 +1292,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         webhooksSource.Should().Contain("@T.T(\"MissingProviderRef\")");
         webhooksSource.Should().Contain("@T.T(\"NeedsReconciliation\")");
         webhooksSource.Should().Contain("@T.T(\"DisputeQueue\")");
-        webhooksSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"MissingVatId\" })\"");
-        webhooksSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Refunded\" })\"");
+        webhooksSource.Should().Contain("string CrmInvoicesUrl(string filter) => Url.Action(\"Invoices\", \"Crm\", new { filter }) ?? string.Empty;");
+        webhooksSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"MissingVatId\")\"");
+        webhooksSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"Refunded\")\"");
         webhooksSource.Should().Contain("@T.T(\"FixVatId\")");
         webhooksSource.Should().Contain("@T.T(\"Refunded\")");
         webhooksSource.Should().Contain("@T.T(\"PaymentSettings\")");
@@ -688,6 +1326,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
           paymentFormSource.Should().Contain("@T.T(\"IdempotencyKey\")");
         paymentFormSource.Should().Contain("@T.T(\"NeedsReconciliationQueue\")");
         paymentFormSource.Should().Contain("@T.T(\"DisputeFollowUpQueue\")");
+        paymentFormSource.Should().Contain("string ScopedPaymentsUrl(PaymentQueueFilter queue) => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.BusinessId, queue }) ?? string.Empty;");
+        paymentFormSource.Should().Contain("string ScopedRefundsUrl() => Url.Action(\"Refunds\", \"Billing\", new { businessId = Model.BusinessId }) ?? string.Empty;");
+        paymentFormSource.Should().Contain("string BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter queue) => Url.Action(\"Webhooks\", \"Billing\", new { queue }) ?? string.Empty;");
+        paymentFormSource.Should().Contain("string CrmEditInvoiceUrl(Guid id) => Url.Action(\"EditInvoice\", \"Crm\", new { id }) ?? string.Empty;");
+        paymentFormSource.Should().Contain("string CrmInvoicesUrl(string filter) => Url.Action(\"Invoices\", \"Crm\", new { filter }) ?? string.Empty;");
         paymentFormSource.Should().Contain("PaymentQueueFilter.MissingProviderRef");
         paymentFormSource.Should().Contain("@T.T(\"OpenTaxCompliance\")");
         paymentFormSource.Should().Contain("@T.T(\"RefundQueueTitle\")");
@@ -697,14 +1340,14 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         paymentFormSource.Should().Contain("@T.T(\"Overdue\")");
         paymentFormSource.Should().Contain("@T.T(\"DueSoon\")");
         paymentFormSource.Should().Contain("@T.T(\"Draft\")");
-        paymentFormSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Pending })\"");
-        paymentFormSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Unlinked })\"");
-        paymentFormSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Refunded })\"");
-        paymentFormSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\", new { businessId = Model.BusinessId })\"");
-        paymentFormSource.Should().Contain("hx-get=\"@Url.Action(\"EditInvoice\", \"Crm\", new { id = Model.InvoiceId.Value })\"");
-        paymentFormSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Overdue\" })\"");
-        paymentFormSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"DueSoon\" })\"");
-        paymentFormSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Draft\" })\"");
+        paymentFormSource.Should().Contain("hx-get=\"@ScopedPaymentsUrl(PaymentQueueFilter.Pending)\"");
+        paymentFormSource.Should().Contain("hx-get=\"@ScopedPaymentsUrl(PaymentQueueFilter.Unlinked)\"");
+        paymentFormSource.Should().Contain("hx-get=\"@ScopedPaymentsUrl(PaymentQueueFilter.Refunded)\"");
+        paymentFormSource.Should().Contain("hx-get=\"@ScopedRefundsUrl()\"");
+        paymentFormSource.Should().Contain("hx-get=\"@CrmEditInvoiceUrl(Model.InvoiceId.Value)\"");
+        paymentFormSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"Overdue\")\"");
+        paymentFormSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"DueSoon\")\"");
+        paymentFormSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"Draft\")\"");
         paymentFormSource.Should().Contain("@T.T(\"Invoices\")");
         paymentFormSource.Should().Contain("@T.T(\"WebhookExceptions\")");
         paymentFormSource.Should().Contain("BillingWebhookDeliveryQueueFilter.PaymentExceptions");
@@ -831,8 +1474,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         refundsSource.Should().Contain("@T.T(\"MissingProviderRef\")");
         refundsSource.Should().Contain("@T.T(\"ReconciliationQueue\")");
         refundsSource.Should().Contain("@T.T(\"OpenTaxCompliance\")");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { q = item.CustomerId, filter = \"MissingVatId\" })\"");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { q = item.CustomerId, filter = \"Refunded\" })\"");
+        refundsSource.Should().Contain("string CrmInvoicesUrl(Guid? q, string filter) => Url.Action(\"Invoices\", \"Crm\", new { q, filter }) ?? string.Empty;");
+        refundsSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(item.CustomerId, \"MissingVatId\")\"");
+        refundsSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(item.CustomerId, \"Refunded\")\"");
         refundsSource.Should().Contain("@T.T(\"FixVatId\")");
         refundsSource.Should().Contain("@T.T(\"Refunded\")");
         refundsSource.Should().Contain("string LocalizeProviderReferenceState(string? state) => state switch");
@@ -905,17 +1549,23 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         returnsSource.Should().Contain("@string.Format(T.T(\"LastCarrierEventAtUtc\"), OrderDateTimeText(item.LastCarrierEventAtUtc))");
         returnsSource.Should().Contain("T.T(\"NeedsAttention\")");
         returnsSource.Should().Contain("var returnQueueDefaultRefundItem = Model.Items.FirstOrDefault(item => item.DefaultRefundPaymentId.HasValue);");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\")\"");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
+        returnsSource.Should().Contain("string GlobalShipmentsQueueUrl() => Url.Action(\"ShipmentsQueue\", \"Orders\") ?? string.Empty;");
+        returnsSource.Should().Contain("string GlobalRefundsUrl() => Url.Action(\"Refunds\", \"Billing\") ?? string.Empty;");
+        returnsSource.Should().Contain("string ShipmentsQueueUrl(string filter) => Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter }) ?? string.Empty;");
+        returnsSource.Should().Contain("string ReturnsQueueUrl(string filter) => Url.Action(\"ReturnsQueue\", \"Orders\", new { query = Model.Query, filter }) ?? string.Empty;");
+        returnsSource.Should().Contain("string ShippingSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" }) ?? string.Empty;");
+        returnsSource.Should().Contain("string ShippingMethodsUrl(string filter) => Url.Action(\"Index\", \"ShippingMethods\", new { filter }) ?? string.Empty;");
+        returnsSource.Should().Contain("hx-get=\"@GlobalShipmentsQueueUrl()\"");
+        returnsSource.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
         returnsSource.Should().Contain("@T.T(\"ReviewRefunds\")");
         returnsSource.Should().Contain("@T.T(\"StartReturnRefund\")");
         returnsSource.Should().Contain("@T.T(\"CarrierReview\")");
         returnsSource.Should().Contain("@T.T(\"ReturnFollowUp\")");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"CarrierReview\" })\"");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"TrackingOverdue\" })\"");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" })\"");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Dhl\" })\"");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"ReturnsQueue\", \"Orders\", new { query = Model.Query, filter = \"FollowUp\" })\"");
+        returnsSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"CarrierReview\")\"");
+        returnsSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"TrackingOverdue\")\"");
+        returnsSource.Should().Contain("hx-get=\"@ShippingSettingsUrl()\"");
+        returnsSource.Should().Contain("hx-get=\"@ShippingMethodsUrl(\"Dhl\")\"");
+        returnsSource.Should().Contain("hx-get=\"@ReturnsQueueUrl(\"FollowUp\")\"");
 
         controllerSource.Should().Contain("private async Task<DhlOperationsVm> BuildDhlOperationsVmAsync(CancellationToken ct)");
         controllerSource.Should().Contain("return BuildDhlOperationsVm(settings);");
@@ -1009,9 +1659,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         var shipmentsSource = ReadWebAdminFile(Path.Combine("Views", "Orders", "ShipmentsQueue.cshtml"));
         var emailAuditsSource = ReadWebAdminFile(Path.Combine("Views", "BusinessCommunications", "EmailAudits.cshtml"));
 
-        businessesControllerSource.Should().Contain("public async Task<IActionResult> SupportQueue(CancellationToken ct = default)");
-        businessesControllerSource.Should().Contain("public async Task<IActionResult> MerchantReadiness(CancellationToken ct = default)");
-        businessesControllerSource.Should().Contain("BuildMerchantReadinessPlaybooks()");
+        businessesControllerSource.Should().Contain("public async Task<IActionResult> SupportQueue(Guid? businessId = null, CancellationToken ct = default)");
+        businessesControllerSource.Should().Contain("public async Task<IActionResult> MerchantReadiness(Guid? businessId = null, CancellationToken ct = default)");
+        businessesControllerSource.Should().Contain("BuildMerchantReadinessPlaybooks(businessId)");
         businessesControllerSource.Should().Contain("RenderSupportQueueWorkspace(vm)");
         businessesControllerSource.Should().Contain("RenderMerchantReadinessWorkspace(vm)");
 
@@ -1070,16 +1720,26 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         communicationsIndexSource.Should().Contain("@T.T(\"OpenFailedPasswordResets\"): @failedPasswordResetAttentionCount");
         communicationsIndexSource.Should().Contain("@T.T(\"PasswordReset\")");
         communicationsIndexSource.Should().Contain("@T.T(\"MobileOperationsTitle\")");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"AdminCommunicationTest\", status = \"Failed\" })");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"BusinessInvitation\", status = \"Failed\" })");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"PasswordReset\", status = \"Failed\" })");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"AccountActivation\", status = \"Failed\" })");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\")");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { actionBlockedOnly = true })");
-        communicationsIndexSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { phoneVerificationOnly = true })");
+        communicationsIndexSource.Should().Contain("string EmailAuditsFlowUrl(string flowKey, string status) => Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey, status }) ?? string.Empty;");
+        communicationsIndexSource.Should().Contain("@EmailAuditsFlowUrl(\"AdminCommunicationTest\", \"Failed\")");
+        communicationsIndexSource.Should().Contain("@EmailAuditsFlowUrl(\"BusinessInvitation\", \"Failed\")");
+        communicationsIndexSource.Should().Contain("@EmailAuditsFlowUrl(\"PasswordReset\", \"Failed\")");
+        communicationsIndexSource.Should().Contain("string PendingInvitationsUrl() => Url.Action(\"Invitations\", \"Businesses\", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending }) ?? string.Empty;");
+        communicationsIndexSource.Should().Contain("@PendingInvitationsUrl()");
+        communicationsIndexSource.Should().Contain("string UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action(\"Index\", \"Users\", new { filter }) ?? string.Empty;");
+        communicationsIndexSource.Should().Contain("@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)");
+        communicationsIndexSource.Should().Contain("@EmailAuditsFlowUrl(\"AccountActivation\", \"Failed\")");
+        communicationsIndexSource.Should().Contain("@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)");
+        communicationsIndexSource.Should().Contain("string GlobalMobileOperationsUrl() => Url.Action(\"Index\", \"MobileOperations\") ?? string.Empty;");
+        communicationsIndexSource.Should().Contain("@GlobalMobileOperationsUrl()");
+        communicationsIndexSource.Should().Contain("@ChannelAuditsActionBlockedUrl()");
+        communicationsIndexSource.Should().Contain("@ChannelAuditsPhoneVerificationUrl()");
+        communicationsIndexSource.Should().Contain("@BusinessEmailAuditsUrl(item.Id)");
+        communicationsIndexSource.Should().Contain("@BusinessFailedInvitationAuditsUrl(item.Id)");
+        communicationsIndexSource.Should().Contain("@BusinessChannelAuditsUrl(item.Id)");
+        communicationsIndexSource.Should().Contain("@BusinessPendingInvitationsUrl(item.Id)");
+        communicationsIndexSource.Should().Contain("@BusinessMembersUrl(item.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
+        communicationsIndexSource.Should().Contain("@BusinessMembersUrl(item.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         communicationsIndexSource.Should().Contain("|| string.Equals(x.FlowKey, \"PasswordReset\", StringComparison.OrdinalIgnoreCase)");
 
         communicationsDetailsSource.Should().Contain("string ProfileHealthBadgeClass(bool healthy) => healthy");
@@ -1118,22 +1778,23 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         communicationsDetailsSource.Should().Contain("@T.T(\"ActionBlocked\")");
         communicationsDetailsSource.Should().Contain("@T.T(\"HeavyChains\")");
         communicationsDetailsSource.Should().Contain("|| string.Equals(x.FlowKey, \"PasswordReset\", StringComparison.OrdinalIgnoreCase)");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, status = \"Failed\", flowKey = \"PasswordReset\" })");
+        communicationsDetailsSource.Should().Contain("@EmailAuditsUrl(Model.Id, status: \"Failed\", flowKey: \"PasswordReset\")");
         communicationsDetailsSource.Should().Contain("@T.T(\"ProviderReview\")");
         communicationsDetailsSource.Should().Contain("@T.T(\"ActionBlocked\")");
         communicationsDetailsSource.Should().Contain("@T.T(\"EscalationCandidates\")");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-communications-policy\" })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id, phoneVerificationOnly = true })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, retryBlockedOnly = true })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, status = \"Failed\", flowKey = \"AccountActivation\" })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\")");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, status = \"Failed\", flowKey = \"AdminCommunicationTest\" })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id, actionBlockedOnly = true })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, chainFollowUpOnly = true })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id, actionBlockedOnly = true })");
-        communicationsDetailsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id, escalationCandidatesOnly = true })");
+        communicationsDetailsSource.Should().Contain("@SiteSettingsUrl(\"site-settings-communications-policy\")");
+        communicationsDetailsSource.Should().Contain("@ChannelAuditsUrl(Model.Id, phoneVerificationOnly: true)");
+        communicationsDetailsSource.Should().Contain("@EmailAuditsUrl(Model.Id, retryBlockedOnly: true)");
+        communicationsDetailsSource.Should().Contain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
+        communicationsDetailsSource.Should().Contain("@EmailAuditsUrl(Model.Id, status: \"Failed\", flowKey: \"AccountActivation\")");
+        communicationsDetailsSource.Should().Contain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
+        communicationsDetailsSource.Should().NotContain("@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)");
+        communicationsDetailsSource.Should().NotContain("@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)");
+        communicationsDetailsSource.Should().Contain("@MobileOperationsUrl(Model.Id)");
+        communicationsDetailsSource.Should().Contain("@EmailAuditsUrl(Model.Id, status: \"Failed\", flowKey: \"AdminCommunicationTest\")");
+        communicationsDetailsSource.Should().Contain("@ChannelAuditsUrl(Model.Id, actionBlockedOnly: true)");
+        communicationsDetailsSource.Should().Contain("@EmailAuditsUrl(Model.Id, chainFollowUpOnly: true)");
+        communicationsDetailsSource.Should().Contain("@ChannelAuditsUrl(Model.Id, escalationCandidatesOnly: true)");
 
         paymentsSource.Should().Contain("@T.T(\"PaymentSupportPlaybooks\")");
         paymentsSource.Should().Contain("@T.T(\"OperatorAction\")");
@@ -1142,7 +1803,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         shipmentsSource.Should().Contain("@T.T(\"OperatorAction\")");
         shipmentsSource.Should().Contain("@T.T(\"CarrierReviewQueue\")");
 
-        emailAuditsSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        emailAuditsSource.Should().Contain("string BusinessSupportQueueUrl(Guid? businessId) => Url.Action(\"SupportQueue\", \"Businesses\", new { businessId }) ?? string.Empty;");
+        emailAuditsSource.Should().Contain("hx-get=\"@BusinessSupportQueueUrl(Model.BusinessId)\"");
+        emailAuditsSource.Should().Contain("hx-get=\"@BusinessSupportQueueUrl(item.BusinessId)\"");
+        emailAuditsSource.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
+        emailAuditsSource.Should().Contain("asp-route-businessId=\"@item.BusinessId\"");
         emailAuditsSource.Should().Contain("@T.T(\"SupportQueue\")");
         emailAuditsSource.Should().Contain("string EmailAuditHealthBadgeClass(bool healthy) => healthy");
         emailAuditsSource.Should().Contain("var retryEscalationCount = Model.Summary.RetryReadyCount + Model.Summary.RetryBlockedCount;");
@@ -1160,11 +1825,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         emailAuditsSource.Should().Contain("var needsRetryBlockedFollowUp = !item.CanRetryNow && !string.IsNullOrWhiteSpace(item.RetryPolicyState);");
         emailAuditsSource.Should().Contain("var needsChainFollowUp = item.NeedsOperatorFollowUp || item.PriorFailureCount > 0 || item.RecentAttemptCount24h > 1;");
         emailAuditsSource.Should().Contain("var needsBusinessSupportFollowUp = item.BusinessId.HasValue && (item.NeedsOperatorFollowUp || string.Equals(item.Status, \"Failed\", StringComparison.OrdinalIgnoreCase));");
-        emailAuditsSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { retryBlockedOnly = true, businessId = item.BusinessId })\"");
-        emailAuditsSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { chainFollowUpOnly = true, recipientEmail = LogicalRecipientEmail(item), flowKey = item.FlowKey, businessId = item.BusinessId })\"");
-        emailAuditsSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { repeatedFailuresOnly = true, businessId = item.BusinessId })\"");
-        emailAuditsSource.Should().Contain("hx-get=\"@Url.Action(\"SupportQueue\", \"Businesses\")\"");
-        emailAuditsSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = item.BusinessId })\"");
+        emailAuditsSource.Should().Contain("hx-get=\"@EmailAuditsUrl(retryBlockedOnly: true, businessId: item.BusinessId)\"");
+        emailAuditsSource.Should().Contain("hx-get=\"@EmailAuditsUrl(chainFollowUpOnly: true, recipientEmail: LogicalRecipientEmail(item), flowKey: item.FlowKey, businessId: item.BusinessId)\"");
+        emailAuditsSource.Should().Contain("hx-get=\"@EmailAuditsUrl(repeatedFailuresOnly: true, businessId: item.BusinessId)\"");
+        emailAuditsSource.Should().Contain("hx-get=\"@BusinessSupportQueueUrl(item.BusinessId)\"");
+        emailAuditsSource.Should().Contain("hx-get=\"@CommunicationDetailsUrl(item.BusinessId)\"");
     }
 
     [Fact]
@@ -1239,19 +1904,21 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         supportQueueSource.Should().Contain("@T.T(\"Overdue\")");
         supportQueueSource.Should().Contain("@T.T(\"DueSoon\")");
         supportQueueSource.Should().Contain("@T.T(\"Draft\")");
-        supportQueueSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\")");
-        supportQueueSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { phoneVerificationOnly = true })");
-        supportQueueSource.Should().Contain("@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-communications-policy\" })");
-        supportQueueSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { retryBlockedOnly = true })");
-        supportQueueSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })");
-        supportQueueSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AccountActivation\" })");
-        supportQueueSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AdminCommunicationTest\" })");
-        supportQueueSource.Should().Contain("@Url.Action(\"TaxCompliance\", \"Billing\")");
-        supportQueueSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Overdue\" })");
-        supportQueueSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"DueSoon\" })");
-        supportQueueSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Draft\" })");
+        supportQueueSource.Should().Contain("string GlobalChannelAuditsUrl() => Url.Action(\"ChannelAudits\", \"BusinessCommunications\") ?? string.Empty;");
+        supportQueueSource.Should().Contain("@GlobalChannelAuditsUrl()");
+        supportQueueSource.Should().Contain("@ChannelAuditsUrl(phoneVerificationOnly: true)");
+        supportQueueSource.Should().Contain("@SiteSettingsUrl(\"site-settings-communications-policy\")");
+        supportQueueSource.Should().Contain("@EmailAuditsUrl(retryBlockedOnly: true)");
+        supportQueueSource.Should().Contain("@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)");
+        supportQueueSource.Should().Contain("@EmailAuditsUrl(status: \"Failed\", flowKey: \"AccountActivation\")");
+        supportQueueSource.Should().Contain("@EmailAuditsUrl(status: \"Failed\", flowKey: \"AdminCommunicationTest\")");
+        supportQueueSource.Should().Contain("string GlobalTaxComplianceUrl() => Url.Action(\"TaxCompliance\", \"Billing\") ?? string.Empty;");
+        supportQueueSource.Should().Contain("@GlobalTaxComplianceUrl()");
+        supportQueueSource.Should().Contain("@CrmInvoicesUrl(\"Overdue\")");
+        supportQueueSource.Should().Contain("@CrmInvoicesUrl(\"DueSoon\")");
+        supportQueueSource.Should().Contain("@CrmInvoicesUrl(\"Draft\")");
         supportQueueSource.Should().Contain("@T.T(\"FailedEmails\")");
-        supportQueueSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        supportQueueSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
 
         readinessSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
         readinessSource.Should().Contain("string ReadinessBadgeClass(bool ready) => ready");
@@ -1283,6 +1950,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         readinessSource.Should().Contain("@T.T(\"OpenFailedPasswordResets\")");
         readinessSource.Should().Contain("@T.T(\"FailedAdminTests\")");
         readinessSource.Should().Contain("@T.T(\"MobileOperationsTitle\")");
+        readinessSource.Should().Contain("hx-get=\"@MobileOperationsUrl(Model.BusinessId)\"");
+        readinessSource.Should().Contain("asp-controller=\"MobileOperations\"");
+        readinessSource.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
         readinessSource.Should().Contain("@T.T(\"BusinessSetupPaymentsShippingNote\")");
         readinessSource.Should().Contain("@T.T(\"PendingApproval\")");
         readinessSource.Should().Contain("@T.T(\"ApprovedInactive\")");
@@ -1296,26 +1966,27 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         readinessSource.Should().Contain("BusinessOperationalStatus.PendingApproval");
         readinessSource.Should().Contain("BusinessReadinessQueueFilter.ApprovedInactive");
         readinessSource.Should().Contain("string SubscriptionStatusLabel(string? status)");
-        readinessSource.Should().Contain("@Url.Action(\"Subscription\", \"Businesses\", new { businessId = item.Id })");
-        readinessSource.Should().Contain("@Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = item.Id })");
-        readinessSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\")");
-        readinessSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        readinessSource.Should().Contain("@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-communications-policy\" })");
-        readinessSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { retryBlockedOnly = true })");
-        readinessSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = item.Id, retryBlockedOnly = true })");
-        readinessSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"BusinessInvitation\" })");
-        readinessSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = item.Id, status = \"Failed\", flowKey = \"BusinessInvitation\" })");
-        readinessSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AccountActivation\" })");
-        readinessSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"PasswordReset\" })");
-        readinessSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AdminCommunicationTest\" })");
-        readinessSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        readinessSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })");
-        readinessSource.Should().Contain("@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })");
+        readinessSource.Should().Contain("@BusinessSubscriptionUrl(item.Id)");
+        readinessSource.Should().Contain("@BusinessSubscriptionInvoicesUrl(item.Id)");
+        readinessSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        readinessSource.Should().Contain("@GlobalPaymentsUrl()");
+        readinessSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
+        readinessSource.Should().Contain("@SiteSettingsUrl(\"site-settings-communications-policy\")");
+        readinessSource.Should().Contain("@EmailAuditsUrl(retryBlockedOnly: true)");
+        readinessSource.Should().Contain("@EmailAuditsUrl(item.Id, retryBlockedOnly: true)");
+        readinessSource.Should().Contain("@EmailAuditsUrl(status: \"Failed\", flowKey: \"BusinessInvitation\")");
+        readinessSource.Should().Contain("@EmailAuditsUrl(item.Id, status: \"Failed\", flowKey: \"BusinessInvitation\")");
+        readinessSource.Should().Contain("@EmailAuditsUrl(status: \"Failed\", flowKey: \"AccountActivation\")");
+        readinessSource.Should().Contain("@EmailAuditsUrl(status: \"Failed\", flowKey: \"PasswordReset\")");
+        readinessSource.Should().Contain("@EmailAuditsUrl(status: \"Failed\", flowKey: \"AdminCommunicationTest\")");
+        readinessSource.Should().Contain("@BusinessInvitationsUrl(filter: Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
+        readinessSource.Should().Contain("@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)");
+        readinessSource.Should().Contain("@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)");
         readinessSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
-        readinessSource.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\")");
-        readinessSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Overdue\" })");
-        readinessSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"DueSoon\" })");
-        readinessSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Draft\" })");
+        readinessSource.Should().Contain("@MobileOperationsUrl(Model.BusinessId)");
+        readinessSource.Should().Contain("@CrmInvoicesUrl(\"Overdue\")");
+        readinessSource.Should().Contain("@CrmInvoicesUrl(\"DueSoon\")");
+        readinessSource.Should().Contain("@CrmInvoicesUrl(\"Draft\")");
 
         setupShellSource.Should().Contain("@T.T(\"BusinessSetupTitle\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSetupPlatformDependenciesTitle\")");
@@ -1325,9 +1996,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         setupShellSource.Should().NotContain("\"BusinessSetupTitle\":\"Betriebs-Setup\"");
         setupShellSource.Should().NotContain("\"BusinessSetupTitle\":\"Business setup\"");
         setupShellSource.Should().NotContain("@Model.ActiveOwnerCount owner(s), @Model.PrimaryLocationCount primary location(s)");
-        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
-        setupShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
+        setupShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         setupShellSource.Should().Contain("bool businessInvitationDefaultsReady = Model.CustomerEmailNotificationsEnabled");
         setupShellSource.Should().Contain("bool businessActivationDefaultsReady = businessTransactionalReady;");
         setupShellSource.Should().Contain("bool businessPasswordResetDefaultsReady = businessTransactionalReady;");
@@ -1349,10 +2020,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         setupShellSource.Should().Contain("@Model.CommunicationReadiness.FailedPasswordResetCount");
         setupShellSource.Should().Contain("@Model.CommunicationReadiness.FailedAdminTestCount");
         setupShellSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
-        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-communications-policy\" })");
-        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, retryBlockedOnly = true })");
-        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, status = \"Failed\", flowKey = \"AdminCommunicationTest\" })");
-        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, status = \"Failed\", flowKey = \"AccountActivation\" })");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-communications-policy\")");
+        setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id, retryBlockedOnly: true)");
+        setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id, status: \"Failed\", flowKey: \"AdminCommunicationTest\")");
+        setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id, status: \"Failed\", flowKey: \"AccountActivation\")");
 
         memberShellSource.Should().Contain("@T.T(\"BusinessMembersOwnerOverrideAuditAction\")");
         memberShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
@@ -1361,7 +2032,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         memberShellSource.Should().Contain("asp-for=\"PageSize\"");
         memberShellSource.Should().Contain("asp-for=\"Query\"");
         memberShellSource.Should().Contain("asp-for=\"Filter\"");
-        memberShellSource.Should().Contain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })\"");
+        memberShellSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)\"");
     }
 
 
@@ -1432,19 +2103,25 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         channelAuditsSource.Should().Contain("var needsBusinessSupportFollowUp = item.BusinessId.HasValue && (item.NeedsOperatorFollowUp || item.NeedsEscalationReview);");
         channelAuditsSource.Should().Contain("@T.T(\"GoLiveReadiness\")");
         channelAuditsSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
+        channelAuditsSource.Should().Contain("string BusinessSupportQueueUrl(Guid? businessId) => Url.Action(\"SupportQueue\", \"Businesses\", new { businessId }) ?? string.Empty;");
+        channelAuditsSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
+        channelAuditsSource.Should().Contain("@BusinessSupportQueueUrl(item.BusinessId)");
+        channelAuditsSource.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
+        channelAuditsSource.Should().Contain("asp-route-businessId=\"@item.BusinessId\"");
         channelAuditsSource.Should().Contain("@T.T(\"OpenPolicyAction\")");
         channelAuditsSource.Should().Contain("@T.T(\"ActionReady\")");
         channelAuditsSource.Should().Contain("@Model.ProviderSummary.RecommendedAction");
         channelAuditsSource.Should().Contain("@Model.ProviderSummary.EscalationHint");
         channelAuditsSource.Should().Contain("@T.T(\"OpenVerificationPolicy\")");
         channelAuditsSource.Should().Contain("@T.T(\"TestTargets\")");
-        channelAuditsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { actionBlockedOnly = true, businessId = item.BusinessId })");
-        channelAuditsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { chainFollowUpOnly = true, recipientAddress = LogicalRecipientAddress(item), flowKey = item.FlowKey, businessId = item.BusinessId })");
-        channelAuditsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { repeatedFailuresOnly = true, businessId = item.BusinessId })");
-        channelAuditsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true, provider = item.Provider, businessId = item.BusinessId })");
-        channelAuditsSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { escalationCandidatesOnly = true, businessId = item.BusinessId })");
-        channelAuditsSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        channelAuditsSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = item.BusinessId })");
+        channelAuditsSource.Should().Contain("@ChannelAuditsUrl(actionBlockedOnly: true, businessId: item.BusinessId)");
+        channelAuditsSource.Should().Contain("@ChannelAuditsUrl(chainFollowUpOnly: true, recipientAddress: LogicalRecipientAddress(item), flowKey: item.FlowKey, businessId: item.BusinessId)");
+        channelAuditsSource.Should().Contain("@ChannelAuditsUrl(repeatedFailuresOnly: true, businessId: item.BusinessId)");
+        channelAuditsSource.Should().Contain("@ChannelAuditsUrl(providerReviewOnly: true, provider: item.Provider, businessId: item.BusinessId)");
+        channelAuditsSource.Should().Contain("@ChannelAuditsUrl(escalationCandidatesOnly: true, businessId: item.BusinessId)");
+        channelAuditsSource.Should().Contain("@BusinessSupportQueueUrl(item.BusinessId)");
+        channelAuditsSource.Should().Contain("string CommunicationDetailsUrl(Guid? businessId) => Url.Action(\"Details\", \"BusinessCommunications\", new { businessId }) ?? string.Empty;");
+        channelAuditsSource.Should().Contain("@CommunicationDetailsUrl(item.BusinessId)");
 
         failedEmailsSource.Should().Contain("@item.FailureMessage");
         failedEmailsSource.Should().Contain("@item.RecommendedAction");
@@ -1457,12 +2134,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         failedEmailsSource.Should().Contain("@T.T(\"Overdue\")");
         failedEmailsSource.Should().Contain("@T.T(\"DueSoon\")");
         failedEmailsSource.Should().Contain("@T.T(\"Draft\")");
-        failedEmailsSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { retryBlockedOnly = true, businessId = item.BusinessId })");
-        failedEmailsSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { chainFollowUpOnly = true, recipientEmail = item.RecipientEmail, flowKey = item.FlowKey, businessId = item.BusinessId })");
-        failedEmailsSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { repeatedFailuresOnly = true, businessId = item.BusinessId })");
-        failedEmailsSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Overdue\" })");
-        failedEmailsSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"DueSoon\" })");
-        failedEmailsSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Draft\" })");
+        failedEmailsSource.Should().Contain("@EmailAuditsUrl(item.BusinessId, retryBlockedOnly: true)");
+        failedEmailsSource.Should().Contain("@EmailAuditsUrl(item.BusinessId, chainFollowUpOnly: true, recipientEmail: item.RecipientEmail, flowKey: item.FlowKey)");
+        failedEmailsSource.Should().Contain("@EmailAuditsUrl(item.BusinessId, repeatedFailuresOnly: true)");
+        failedEmailsSource.Should().Contain("@CrmInvoicesUrl(\"Overdue\")");
+        failedEmailsSource.Should().Contain("@CrmInvoicesUrl(\"DueSoon\")");
+        failedEmailsSource.Should().Contain("@CrmInvoicesUrl(\"Draft\")");
     }
 
 
@@ -1636,16 +2313,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         source.Should().Contain("id=\"users-workspace-shell\"");
         source.Should().Contain("@T.T(\"UsersPageTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })\"");
+        source.Should().Contain("string UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action(\"Index\", \"Users\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)\"");
         source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })\"");
+        source.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)\"");
         source.Should().Contain("@T.T(\"UsersFilterLocked\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive })\"");
+        source.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive)\"");
         source.Should().Contain("@T.T(\"UsersFilterInactive\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.All })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })\"");
+        source.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.All)\"");
+        source.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)\"");
         source.Should().Contain("@T.T(\"UsersFilterMobileLinked\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"Users\")\"");
+        source.Should().Contain("string CreateUserUrl() => Url.Action(\"Create\", \"Users\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateUserUrl()\"");
         source.Should().Contain("@T.T(\"UsersCreateAction\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@Model.Summary.UnconfirmedCount");
@@ -1656,18 +2335,26 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"UsersPlaybooksTitle\")");
         source.Should().Contain("@T.T(\"UsersPlaybooksQueueColumn\")");
         source.Should().Contain("@T.T(\"UsersPlaybooksFollowUpColumn\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = item.AuditFlowKey })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\")\"");
+        source.Should().Contain("string EmailAuditsUrl(string flowKey, string status = \"Failed\", string? recipientEmail = null) => Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status, flowKey, recipientEmail }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EmailAuditsUrl(item.AuditFlowKey)\"");
+        source.Should().Contain("string GlobalMobileOperationsUrl() => Url.Action(\"Index\", \"MobileOperations\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalMobileOperationsUrl()\"");
         source.Should().Contain("placeholder=\"@T.T(\"UsersSearchPlaceholder\")\"");
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("name=\"pageSize\" class=\"form-select\"");
         source.Should().Contain("@T.T(\"UsersEmailColumn\")");
         source.Should().Contain("@T.T(\"UsersLifecycleColumn\")");
         source.Should().Contain("@T.T(\"UsersActionsColumn\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = u.Id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ChangeEmail\", \"Users\", new { id = u.Id, currentEmail = u.Email, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ChangePassword\", \"Users\", new { id = u.Id, email = u.Email, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Roles\", \"Users\", new { id = u.Id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
+        source.Should().Contain("string UserEditUrl(object? id) => Url.Action(\"Edit\", \"Users\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@UserEditUrl(u.Id)\"");
+        source.Should().Contain("string UserEditReturnUrl(object? id) => Url.Action(\"Edit\", \"Users\", new { id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@UserEditReturnUrl(u.Id)\"");
+        source.Should().Contain("string ChangeEmailUrl(object? id, string? currentEmail) => Url.Action(\"ChangeEmail\", \"Users\", new { id, currentEmail, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ChangeEmailUrl(u.Id, u.Email)\"");
+        source.Should().Contain("string ChangePasswordUrl(object? id, string? email) => Url.Action(\"ChangePassword\", \"Users\", new { id, email, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ChangePasswordUrl(u.Id, u.Email)\"");
+        source.Should().Contain("string UserRolesUrl(object? id) => Url.Action(\"Roles\", \"Users\", new { id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@UserRolesUrl(u.Id)\"");
         source.Should().Contain("hx-post=\"@Url.Action(\"SendActivationEmail\", \"Users\")\"");
         source.Should().Contain("hx-post=\"@Url.Action(\"ConfirmEmail\", \"Users\")\"");
         source.Should().Contain("@T.T(\"UsersConfirmEmailAction\")");
@@ -1716,7 +2403,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         createShellSource.Should().Contain("asp-for=\"Email\"");
         createShellSource.Should().Contain("asp-for=\"Password\" type=\"password\"");
         createShellSource.Should().Contain("<partial name=\"_UserProfileFields\" model=\"Model\" />");
-        createShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\")\"");
+        createShellSource.Should().Contain("string GlobalUsersUrl() => Url.Action(\"Index\", \"Users\") ?? string.Empty;");
+        createShellSource.Should().Contain("hx-get=\"@GlobalUsersUrl()\"");
         createShellSource.Should().Contain("@T.T(\"CreateAction\")");
 
         editShellSource.Should().Contain("id=\"user-edit-editor-shell\"");
@@ -1725,22 +2413,30 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         editShellSource.Should().Contain("var needsPasswordResetFollowUp = Model.IsLockedOut;");
         editShellSource.Should().Contain("var needsInactiveFollowUp = !Model.IsActive;");
         editShellSource.Should().Contain("@T.T(\"UsersLifecycleColumn\")");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, q = Model.Email })\"");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AccountActivation\", recipientEmail = Model.Email })\"");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = Model.Email })\"");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"PasswordReset\", recipientEmail = Model.Email })\"");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive, q = Model.Email })\"");
+        editShellSource.Should().Contain("string UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter, string? q = null) => Url.Action(\"Index\", \"Users\", new { filter, q }) ?? string.Empty;");
+        editShellSource.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, Model.Email)\"");
+        editShellSource.Should().Contain("string EmailAuditsUrl(string flowKey) => Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey, recipientEmail = Model.Email }) ?? string.Empty;");
+        editShellSource.Should().Contain("string FormatTimestamp(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? \"-\";");
+        editShellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(\"AccountActivation\")\"");
+        editShellSource.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, Model.Email)\"");
+        editShellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(\"PasswordReset\")\"");
+        editShellSource.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive, Model.Email)\"");
         editShellSource.Should().Contain("@T.T(\"UserEmailConfirmedBadge\")");
         editShellSource.Should().Contain("@T.T(\"UserEmailUnconfirmedBadge\")");
         editShellSource.Should().Contain("@T.T(\"UserUnlockedBadge\")");
+        editShellSource.Should().Contain("@T.T(\"UserLockoutEndsLabel\"): @FormatTimestamp(Model.LockoutEndUtc)");
+        editShellSource.Should().NotContain("Model.LockoutEndUtc.Value.ToString(\"u\")");
         editShellSource.Should().Contain("asp-for=\"ReturnToIndex\"");
         editShellSource.Should().Contain("asp-for=\"Query\"");
         editShellSource.Should().Contain("asp-for=\"Filter\"");
         editShellSource.Should().Contain("asp-for=\"Page\"");
         editShellSource.Should().Contain("asp-for=\"PageSize\"");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"ChangeEmail\", \"Users\", new { id = Model.Id, currentEmail = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"ChangePassword\", \"Users\", new { id = Model.Id, email = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"Roles\", \"Users\", new { id = Model.Id })\"");
+        editShellSource.Should().Contain("string ChangeEmailUrl() => Url.Action(\"ChangeEmail\", \"Users\", new { id = Model.Id, currentEmail = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        editShellSource.Should().Contain("hx-get=\"@ChangeEmailUrl()\"");
+        editShellSource.Should().Contain("string ChangePasswordUrl() => Url.Action(\"ChangePassword\", \"Users\", new { id = Model.Id, email = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        editShellSource.Should().Contain("hx-get=\"@ChangePasswordUrl()\"");
+        editShellSource.Should().Contain("string UserRolesUrl() => Url.Action(\"Roles\", \"Users\", new { id = Model.Id }) ?? string.Empty;");
+        editShellSource.Should().Contain("hx-get=\"@UserRolesUrl()\"");
         editShellSource.Should().Contain("hx-post=\"@Url.Action(\"SendActivationEmail\", \"Users\")\"");
         editShellSource.Should().Contain("hx-post=\"@Url.Action(\"ConfirmEmail\", \"Users\")\"");
         editShellSource.Should().Contain("hx-post=\"@Url.Action(\"SendPasswordReset\", \"Users\")\"");
@@ -1754,19 +2450,24 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         editShellSource.Should().Contain("asp-for=\"Email\"");
         editShellSource.Should().Contain("asp-for=\"IsActive\"");
         editShellSource.Should().Contain("if (Model.ReturnToIndex)");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        editShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\")\"");
+        editShellSource.Should().Contain("string UsersReturnUrl() => Url.Action(\"Index\", \"Users\", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        editShellSource.Should().Contain("hx-get=\"@UsersReturnUrl()\"");
+        editShellSource.Should().Contain("string GlobalUsersUrl() => Url.Action(\"Index\", \"Users\") ?? string.Empty;");
+        editShellSource.Should().Contain("hx-get=\"@GlobalUsersUrl()\"");
         editShellSource.Should().Contain("@await Html.PartialAsync(\"~/Views/Users/_AddressesSection.cshtml\", addressesSection)");
         editShellSource.Should().Contain("@await Html.PartialAsync(\"~/Views/Users/_AddressEditModal.cshtml\", new Darwin.WebAdmin.ViewModels.Identity.UserAddressEditVm())");
         editShellSource.Should().Contain("<partial name=\"~/Views/Shared/_ConfirmDeleteModal.cshtml\" />");
-        editShellSource.Should().Contain("window.darwinAdmin.initUserEditScreen");
+        editShellSource.Should().NotContain("window.darwinAdmin.initUserEditScreen");
         editShellSource.Should().Contain("data-add-address-title=\"@T.T(\"AddAddress\")\"");
         editShellSource.Should().Contain("data-edit-address-title=\"@T.T(\"EditAddress\")\"");
-        editShellSource.Should().Contain("const addAddressTitle = root.dataset.addAddressTitle");
-        editShellSource.Should().Contain("const editAddressTitle = root.dataset.editAddressTitle");
-        editShellSource.Should().Contain("if (title) title.textContent = addAddressTitle;");
-        editShellSource.Should().Contain("if (title) title.textContent = editAddressTitle;");
-        editShellSource.Should().Contain("this.value = this.value.toUpperCase();");
+
+        var adminCoreSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "admin-core.js"));
+        adminCoreSource.Should().Contain("window.darwinAdmin.initUserEditScreen = function (root)");
+        adminCoreSource.Should().Contain("const addAddressTitle = root.dataset.addAddressTitle");
+        adminCoreSource.Should().Contain("const editAddressTitle = root.dataset.editAddressTitle");
+        adminCoreSource.Should().Contain("if (title) title.textContent = addAddressTitle;");
+        adminCoreSource.Should().Contain("if (title) title.textContent = editAddressTitle;");
+        adminCoreSource.Should().Contain("this.value = this.value.toUpperCase();");
 
         rolesShellSource.Should().Contain("id=\"user-roles-editor-shell\"");
         rolesShellSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
@@ -1779,12 +2480,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         rolesShellSource.Should().Contain("name=\"SelectedRoleIds\"");
         rolesShellSource.Should().Contain("@T.T(\"DelegatedSupportBadge\")");
         rolesShellSource.Should().Contain("@T.T(\"NoRolesFound\")");
-        rolesShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, q = Model.UserEmail })\"");
-        rolesShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = Model.UserEmail })\"");
-        rolesShellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AccountActivation\", recipientEmail = Model.UserEmail })\"");
-        rolesShellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"PasswordReset\", recipientEmail = Model.UserEmail })\"");
-        rolesShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        rolesShellSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = Model.UserId })\"");
+        rolesShellSource.Should().Contain("hx-get=\"@UsersUrl(Model.UserEmail, Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)\"");
+        rolesShellSource.Should().Contain("hx-get=\"@UsersUrl(Model.UserEmail, Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)\"");
+        rolesShellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(status: \"Failed\", flowKey: \"AccountActivation\", recipientEmail: Model.UserEmail)\"");
+        rolesShellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(status: \"Failed\", flowKey: \"PasswordReset\", recipientEmail: Model.UserEmail)\"");
+        rolesShellSource.Should().Contain("hx-get=\"@UsersUrl(Model.Query, Model.Filter, Model.Page, Model.PageSize)\"");
+        rolesShellSource.Should().Contain("hx-get=\"@UserEditUrl(Model.UserId)\"");
 
         changeEmailShellSource.Should().Contain("id=\"user-change-email-editor-shell\"");
         changeEmailShellSource.Should().Contain("@T.T(\"UserChangeEmailWarning\")");
@@ -1794,9 +2495,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         changeEmailShellSource.Should().Contain("asp-for=\"NewEmail\"");
         changeEmailShellSource.Should().Contain("CurrentEmailReadonlyHelp");
         changeEmailShellSource.Should().Contain("NewEmailHelp");
-        changeEmailShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, q = Model.CurrentEmail })\"");
-        changeEmailShellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"AccountActivation\", recipientEmail = Model.CurrentEmail })\"");
-        changeEmailShellSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = Model.Id })\"");
+        changeEmailShellSource.Should().Contain("string UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action(\"Index\", \"Users\", new { filter, q = Model.CurrentEmail }) ?? string.Empty;");
+        changeEmailShellSource.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)\"");
+        changeEmailShellSource.Should().Contain("string EmailAuditsUrl(string flowKey) => Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey, recipientEmail = Model.CurrentEmail }) ?? string.Empty;");
+        changeEmailShellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(\"AccountActivation\")\"");
+        changeEmailShellSource.Should().Contain("string UserEditUrl() => Url.Action(\"Edit\", \"Users\", new { id = Model.Id }) ?? string.Empty;");
+        changeEmailShellSource.Should().Contain("hx-get=\"@UserEditUrl()\"");
 
         changePasswordShellSource.Should().Contain("id=\"user-change-password-editor-shell\"");
         changePasswordShellSource.Should().Contain("hx-post=\"@Url.Action(\"ChangePassword\", \"Users\")\"");
@@ -1806,9 +2510,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         changePasswordShellSource.Should().Contain("asp-for=\"ConfirmNewPassword\" type=\"password\"");
         changePasswordShellSource.Should().Contain("@T.T(\"PasswordPolicyHelp\")");
         changePasswordShellSource.Should().Contain("@T.T(\"MustMatchNewPassword\")");
-        changePasswordShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = Model.Email })\"");
-        changePasswordShellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"PasswordReset\", recipientEmail = Model.Email })\"");
-        changePasswordShellSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = Model.Id })\"");
+        changePasswordShellSource.Should().Contain("string UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action(\"Index\", \"Users\", new { filter, q = Model.Email }) ?? string.Empty;");
+        changePasswordShellSource.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)\"");
+        changePasswordShellSource.Should().Contain("string EmailAuditsUrl(string flowKey) => Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey, recipientEmail = Model.Email }) ?? string.Empty;");
+        changePasswordShellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(\"PasswordReset\")\"");
+        changePasswordShellSource.Should().Contain("string UserEditUrl() => Url.Action(\"Edit\", \"Users\", new { id = Model.Id }) ?? string.Empty;");
+        changePasswordShellSource.Should().Contain("hx-get=\"@UserEditUrl()\"");
 
         changeEmailShellSource.Should().Contain("asp-for=\"ReturnToIndex\"");
         changeEmailShellSource.Should().Contain("asp-for=\"Query\"");
@@ -1816,8 +2523,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         changeEmailShellSource.Should().Contain("asp-for=\"Page\"");
         changeEmailShellSource.Should().Contain("asp-for=\"PageSize\"");
         changeEmailShellSource.Should().Contain("if (Model.ReturnToIndex)");
-        changeEmailShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        changeEmailShellSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = Model.Id })\"");
+        changeEmailShellSource.Should().Contain("string UsersReturnUrl() => Url.Action(\"Index\", \"Users\", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        changeEmailShellSource.Should().Contain("hx-get=\"@UsersReturnUrl()\"");
+        changeEmailShellSource.Should().Contain("hx-get=\"@UserEditUrl()\"");
 
         changePasswordShellSource.Should().Contain("asp-for=\"ReturnToIndex\"");
         changePasswordShellSource.Should().Contain("asp-for=\"Query\"");
@@ -1825,8 +2533,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         changePasswordShellSource.Should().Contain("asp-for=\"Page\"");
         changePasswordShellSource.Should().Contain("asp-for=\"PageSize\"");
         changePasswordShellSource.Should().Contain("if (Model.ReturnToIndex)");
-        changePasswordShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })\"");
-        changePasswordShellSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = Model.Id })\"");
+        changePasswordShellSource.Should().Contain("string UsersReturnUrl() => Url.Action(\"Index\", \"Users\", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;");
+        changePasswordShellSource.Should().Contain("hx-get=\"@UsersReturnUrl()\"");
+        changePasswordShellSource.Should().Contain("hx-get=\"@UserEditUrl()\"");
         changePasswordShellSource.Should().Contain("(@T.T(\"Id\"): @Model.Id)");
         changePasswordShellSource.Should().NotContain("(Id: @Model.Id)");
 
@@ -2383,13 +3092,16 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         shellSource.Should().Contain("@T.T(\"SiteSettingsSecurityJwtTitle\")");
         shellSource.Should().Contain("@T.T(\"SiteSettingsSigningKeyTitle\")");
         shellSource.Should().Contain("@T.T(\"SiteSettingsWebAuthnPasskeysTitle\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"BusinessCommunications\")\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"PasswordReset\", status = \"Failed\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\")\"");
+        shellSource.Should().Contain("string GlobalBusinessCommunicationsUrl() => Url.Action(\"Index\", \"BusinessCommunications\") ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@GlobalBusinessCommunicationsUrl()\"");
+        shellSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)\"");
+        shellSource.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)\"");
+        shellSource.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)\"");
+        shellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(flowKey: \"PasswordReset\", status: \"Failed\")\"");
+        shellSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        shellSource.Should().Contain("string GlobalUsersUrl() => Url.Action(\"Index\", \"Users\") ?? string.Empty;");
+        shellSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        shellSource.Should().Contain("hx-get=\"@GlobalUsersUrl()\"");
         shellSource.Should().Contain("@T.T(\"BusinessSetupQueue\")");
         shellSource.Should().Contain("@T.T(\"CommunicationOps\")");
         shellSource.Should().Contain("@T.T(\"PaymentOps\")");
@@ -2399,15 +3111,15 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         shellSource.Should().Contain("@T.T(\"RuntimeExecution\")");
         shellSource.Should().Contain("<li>@T.T(\"Communications\"): @ReadinessBadgeText(communicationDeliveryVisibilityReady)</li>");
         shellSource.Should().Contain("<li>@T.T(\"CommunicationTemplateInventoryTitle\"): @ReadinessBadgeText(communicationTemplateExecutionReadiness)</li>");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"CarrierReview\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"MissingService\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Dhl\" })\"");
+        shellSource.Should().Contain("hx-get=\"@ChannelAuditsUrl(providerReviewOnly: true)\"");
+        shellSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"CarrierReview\")\"");
+        shellSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"MissingService\")\"");
+        shellSource.Should().Contain("hx-get=\"@ShippingMethodsUrl(\"Dhl\")\"");
         shellSource.Should().Contain("@T.T(\"ShipmentSupportPlaybooks\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"TrackingOverdue\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"AwaitingHandoff\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"GlobalCoverage\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"MissingRates\" })\"");
+        shellSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"TrackingOverdue\")\"");
+        shellSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"AwaitingHandoff\")\"");
+        shellSource.Should().Contain("hx-get=\"@ShippingMethodsUrl(\"GlobalCoverage\")\"");
+        shellSource.Should().Contain("hx-get=\"@ShippingMethodsUrl(\"MissingRates\")\"");
         shellSource.Should().Contain("@CommunicationFlowLabel(\"AdminCommunicationTest\")");
         shellSource.Should().Contain("@CommunicationFlowLabel(\"BusinessInvitation\")");
         shellSource.Should().Contain("@CommunicationFlowLabel(\"PhoneVerification\")");
@@ -2433,31 +3145,31 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         shellSource.Should().Contain("@T.T(\"BusinessCommunicationPhaseOneImplicationDeliveryMonitoring\")");
         shellSource.Should().Contain("@T.T(\"OpenVerificationPolicy\")");
         shellSource.Should().Contain("@T.T(\"TestTargets\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"AdminCommunicationTest\", status = \"Failed\" })\"");
+        shellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(flowKey: \"AdminCommunicationTest\", status: \"Failed\")\"");
         shellSource.Should().Contain("asp-route-filter=\"@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"AccountActivation\", status = \"Failed\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"BusinessInvitation\", status = \"Failed\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { retryBlockedOnly = true })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { chainFollowUpOnly = true })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { repeatedFailuresOnly = true })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { flowKey = \"PasswordReset\", status = \"Failed\" })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { actionBlockedOnly = true })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { escalationCandidatesOnly = true })\"");
+        shellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(flowKey: \"AccountActivation\", status: \"Failed\")\"");
+        shellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(flowKey: \"BusinessInvitation\", status: \"Failed\")\"");
+        shellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(retryBlockedOnly: true)\"");
+        shellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(chainFollowUpOnly: true)\"");
+        shellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(repeatedFailuresOnly: true)\"");
+        shellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(flowKey: \"PasswordReset\", status: \"Failed\")\"");
+        shellSource.Should().Contain("hx-get=\"@ChannelAuditsUrl(actionBlockedOnly: true)\"");
+        shellSource.Should().Contain("hx-get=\"@ChannelAuditsUrl(escalationCandidatesOnly: true)\"");
         shellSource.Should().Contain("href=\"#PhoneVerificationPreferredChannel\">@T.T(\"OpenVerificationPolicy\")</a>");
         shellSource.Should().Contain("href=\"@CommunicationTemplateAnchorHref(\"PasswordReset\")\"");
         shellSource.Should().Contain("href=\"@CommunicationTemplateAnchorHref(\"BusinessInvitation\")\"");
         shellSource.Should().Contain("href=\"@CommunicationTemplateAnchorHref(\"PhoneVerification\")\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })\"");
+        shellSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)\"");
         shellSource.Should().Contain("@T.T(\"UsersFilterUnconfirmed\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })\"");
+        shellSource.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)\"");
         shellSource.Should().Contain("@T.T(\"UsersFilterLocked\")");
         shellSource.Should().Contain("@T.T(\"Pending\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { phoneVerificationOnly = true })\"");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\")\"");
+        shellSource.Should().Contain("hx-get=\"@ChannelAuditsUrl(phoneVerificationOnly: true)\"");
+        shellSource.Should().Contain("hx-get=\"@GlobalMobileOperationsUrl()\"");
         shellSource.Should().Contain("@T.T(\"OpenFailedInvitationEmails\")");
         shellSource.Should().Contain("@T.T(\"OpenFailedPasswordResets\")");
         shellSource.Should().Contain("@T.T(\"MobileOperationsTitle\")");
-        shellSource.Should().Contain("hx-get=\"@Url.Action(\"SupportQueue\", \"Businesses\")\"");
+        shellSource.Should().Contain("hx-get=\"@GlobalBusinessSupportQueueUrl()\"");
         shellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
         shellSource.Should().Contain("@T.T(\"Flow\")");
         shellSource.Should().Contain("@T.T(\"Channel\")");
@@ -2514,7 +3226,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         source.Should().Contain("var communicationDeliveryVisibilityAttentionCount = Model.CommunicationOps.MissingSupportEmailCount");
         source.Should().Contain("var communicationFamilyAttentionCount = Model.CommunicationOps.BusinessesRequiringEmailSetupCount;");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CommunicationOpsFragment\", \"Home\", new { businessId = Model.SelectedBusinessId })\"");
+        source.Should().Contain("string CommunicationOpsFragmentUrl(Guid? businessId) => Url.Action(\"CommunicationOpsFragment\", \"Home\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CommunicationOpsFragmentUrl(Model.SelectedBusinessId)\"");
         source.Should().Contain("hx-target=\"#communication-ops-card\"");
         source.Should().Contain("@T.T(\"OpenWorkspaceAction\")");
         source.Should().Contain("asp-fragment=\"site-settings-smtp\"");
@@ -2576,6 +3289,16 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention\"");
         source.Should().Contain("@T.T(\"CommunicationOpenMemberSupportAction\")");
         source.Should().Contain("@T.T(\"CommunicationInspectProfileAction\")");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-retryBlockedOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-chainFollowUpOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-repeatedFailuresOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-actionBlockedOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-escalationCandidatesOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-phoneVerificationOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
     }
 
 
@@ -2648,18 +3371,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Unlinked\"");
         source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Refunded\"");
         source.Should().Contain("asp-action=\"Edit\" asp-fragment=\"site-settings-communications-policy\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-retryBlockedOnly=\"true\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
+        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-retryBlockedOnly=\"true\"");
+        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
+        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
         source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
         source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
         source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
         source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
-        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-actionBlockedOnly=\"true\"");
-        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-escalationCandidatesOnly=\"true\"");
-        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-phoneVerificationOnly=\"true\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-chainFollowUpOnly=\"true\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-repeatedFailuresOnly=\"true\"");
+        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-actionBlockedOnly=\"true\"");
+        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-escalationCandidatesOnly=\"true\"");
+        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-phoneVerificationOnly=\"true\"");
+        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-chainFollowUpOnly=\"true\"");
+        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-repeatedFailuresOnly=\"true\"");
         source.Should().Contain("asp-route-filter=\"Overdue\"");
         source.Should().Contain("asp-route-filter=\"DueSoon\"");
         source.Should().Contain("asp-route-filter=\"Draft\"");
@@ -2713,12 +3436,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         source.Should().Contain("var businessOperationsAttentionCount = (Model.PaymentCount ?? 0) + (Model.PurchaseOrderCount ?? 0);");
         source.Should().Contain("var businessComplianceAttentionCount = (Model.PaymentCount ?? 0) + Model.OrderCount;");
-        source.Should().Contain("var businessCommunicationRuntimeExecutionAttentionCount = Model.BusinessSupport.PendingActivationMemberCount");
-        source.Should().Contain("Model.CommunicationOps.FailedInvitationCount");
-        source.Should().Contain("Model.CommunicationOps.FailedActivationCount");
-        source.Should().Contain("Model.CommunicationOps.FailedPasswordResetCount");
-        source.Should().Contain("Model.CommunicationOps.FailedAdminTestCount");
-        source.Should().Contain("@T.T(\"OpenFailedInvitationEmails\"): @Model.CommunicationOps.FailedInvitationCount");
+        source.Should().Contain("var businessCommunicationRuntimeExecutionAttentionCount = Model.BusinessSupport.SelectedBusinessPendingActivationCount");
+        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedInvitationCount");
+        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedActivationCount");
+        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount");
+        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedAdminTestCount");
+        source.Should().Contain("@T.T(\"OpenFailedInvitationEmails\"): @Model.BusinessSupport.SelectedBusinessFailedInvitationCount");
         source.Should().Contain("@T.T(\"DashboardCrmTitle\")");
         source.Should().Contain("@T.T(\"DashboardCrmIntro\")");
         source.Should().Contain("@T.T(\"DashboardOpenCrmAction\")");
@@ -2754,10 +3477,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"Communications\")");
         source.Should().Contain("@T.T(\"CommunicationPolicy\")");
         source.Should().Contain("@T.T(\"RuntimeExecution\")");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\"): @Model.BusinessSupport.PendingActivationMemberCount");
-        source.Should().Contain("@T.T(\"OpenFailedActivationEmails\"): @Model.CommunicationOps.FailedActivationCount");
-        source.Should().Contain("@T.T(\"FailedAdminTests\"): @Model.CommunicationOps.FailedAdminTestCount");
-        source.Should().Contain("@T.T(\"OpenFailedPasswordResets\"): @Model.CommunicationOps.FailedPasswordResetCount");
+        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\"): @Model.BusinessSupport.SelectedBusinessPendingActivationCount");
+        source.Should().Contain("@T.T(\"OpenFailedActivationEmails\"): @Model.BusinessSupport.SelectedBusinessFailedActivationCount");
+        source.Should().Contain("@T.T(\"FailedAdminTests\"): @Model.BusinessSupport.SelectedBusinessFailedAdminTestCount");
+        source.Should().Contain("@T.T(\"OpenFailedPasswordResets\"): @Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount");
         source.Should().Contain("@T.T(\"NeedsAttention\")");
         source.Should().Contain("@businessOperationsAttentionCount");
         source.Should().Contain("@businessComplianceAttentionCount");
@@ -2784,18 +3507,19 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"DashboardOpenPaymentsAction\")");
         source.Should().Contain("@T.T(\"DashboardOpenInventoryAction\")");
         source.Should().Contain("@T.T(\"DashboardOpenPurchaseOrdersAction\")");
-        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Invitations\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending\"");
-        source.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-filter=\"@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed\"");
-        source.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-filter=\"@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked\"");
+        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Invitations\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending\"");
+        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Members\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation\"");
+        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Members\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked\"");
         source.Should().Contain("asp-action=\"TaxCompliance\"");
         source.Should().Contain("asp-fragment=\"site-settings-communications-policy\"");
-        source.Should().Contain("asp-route-retryBlockedOnly=\"true\"");
-        source.Should().Contain("asp-route-actionBlockedOnly=\"true\"");
-        source.Should().Contain("asp-route-escalationCandidatesOnly=\"true\"");
-        source.Should().Contain("asp-route-phoneVerificationOnly=\"true\"");
-        source.Should().Contain("asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        source.Should().Contain("asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        source.Should().Contain("asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-retryBlockedOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-actionBlockedOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-escalationCandidatesOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-phoneVerificationOnly=\"true\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
+        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
         source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Pending\"");
         source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Unlinked\"");
         source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Refunded\"");
@@ -2864,8 +3588,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Home", "HomeController.cs"));
 
         source.Should().Contain("private async Task<AdminDashboardVm> BuildCommunicationOpsCardVmAsync(Guid? businessId, CancellationToken ct)");
+        source.Should().Contain("var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);");
         source.Should().Contain("SelectedBusinessId = selectedBusinessId,");
         source.Should().Contain("SelectedBusinessLabel = businessOptions.FirstOrDefault(x => x.Selected)?.Text ?? string.Empty,");
+        source.Should().Contain("BusinessSupport = MapBusinessSupportSummary(businessSupport),");
         source.Should().Contain("CommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings)");
         source.Should().Contain("private async Task<AdminDashboardVm> BuildBusinessSupportCardVmAsync(Guid? businessId, CancellationToken ct)");
         source.Should().Contain("BusinessSupport = MapBusinessSupportSummary(businessSupport)");
@@ -3015,19 +3741,24 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         source.Should().Contain("<h1 class=\"mb-1\">@T.T(\"MobileOperationsTitle\")</h1>");
         source.Should().Contain("@T.T(\"MobileOperationsIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-mobile\" })\"");
+        source.Should().Contain("string MobileSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-mobile\" }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@MobileSettingsUrl()\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"SiteSettings\")</a>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"SupportQueue\", \"Businesses\")\"");
+        source.Should().Contain("string ScopedSupportQueueUrl() => Url.Action(\"SupportQueue\", \"Businesses\", new { businessId = Model.BusinessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ScopedSupportQueueUrl()\"");
+        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"SupportQueue\" asp-route-businessId=\"@Model.BusinessId\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"SupportQueue\")</a>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ScanSessions\", \"Loyalty\")\"");
+        source.Should().Contain("string LoyaltyScanSessionsIndexUrl() => Url.Action(\"ScanSessions\", \"Loyalty\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@LoyaltyScanSessionsIndexUrl()\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"LoyaltyScanSessionsTitle\")</a>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })\"");
+        source.Should().Contain("string UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action(\"Index\", \"Users\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"UsersFilterMobileLinked\")</a>");
         source.Should().Contain("<div class=\"card-header\">@T.T(\"LoyaltyMobileFollowUp\")</div>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Redemptions\", \"Loyalty\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Campaigns\", \"Loyalty\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Programs\", \"Loyalty\")\"");
+        source.Should().Contain("hx-get=\"@LoyaltyAccountsIndexUrl()\"");
+        source.Should().Contain("hx-get=\"@LoyaltyRedemptionsUrl()\"");
+        source.Should().Contain("hx-get=\"@LoyaltyCampaignsUrl()\"");
+        source.Should().Contain("hx-get=\"@LoyaltyProgramsUrl()\"");
     }
 
 
@@ -3049,12 +3780,15 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("@T.T(\"OpenCommunicationsWorkspace\")");
         source.Should().Contain("@T.T(\"ReviewProviderLane\")");
         source.Should().Contain("@T.T(\"DeviceFleetSnapshotTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"BusinessCommunications\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true })\"");
+        source.Should().Contain("string GlobalBusinessCommunicationsUrl() => Url.Action(\"Index\", \"BusinessCommunications\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalBusinessCommunicationsUrl()\"");
+        source.Should().Contain("string ProviderReviewChannelAuditsUrl() => Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ProviderReviewChannelAuditsUrl()\"");
         source.Should().Contain("asp-route-state=\"stale\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { state = \"stale\" })\"");
+        source.Should().Contain("string MobileOperationsUrl(string state) => Url.Action(\"Index\", \"MobileOperations\", new { businessId = Model.BusinessId, state }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@MobileOperationsUrl(\"stale\")\"");
         source.Should().Contain("asp-route-state=\"missing-push\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { state = \"missing-push\" })\"");
+        source.Should().Contain("hx-get=\"@MobileOperationsUrl(\"missing-push\")\"");
     }
 
 
@@ -3070,18 +3804,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("T.T(\"BusinessSupportPendingInvitationsLabel\")");
         source.Should().Contain("InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)");
         source.Should().Contain("@InvitationDebtSummaryLabel(Model.PendingInvitationCount): <strong>@InvitationDebtCount(Model.PendingInvitationCount, Model.OpenInvitationCount)</strong>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"SupportQueue\", \"Businesses\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })\"");
-source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })\"");
+        source.Should().Contain("hx-get=\"@ScopedSupportQueueUrl()\"");
+        source.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)\"");
+        source.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)\"");
+source.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)\"");
         source.Should().Contain("hx-push-url=\"true\">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>");
         source.Should().Contain("hx-push-url=\"true\">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>");
         source.Should().Contain("<div class=\"card-header\">@T.T(\"TransportReadiness\")</div>");
         source.Should().Contain("@CommunicationChannelLabel(\"Sms\")");
         source.Should().Contain("@CommunicationChannelLabel(\"WhatsApp\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true })\"");
+        source.Should().Contain("hx-get=\"@ProviderReviewChannelAuditsUrl()\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"ReviewProviderLane\")</a>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"BusinessCommunications\")\"");
+        source.Should().Contain("hx-get=\"@GlobalBusinessCommunicationsUrl()\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"OpenCommunicationsWorkspace\")</a>");
     }
 
@@ -3107,9 +3841,10 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         source.Should().Contain("@T.T(\"Impressum\")");
         source.Should().Contain("@T.T(\"Privacy\")");
         source.Should().Contain("@T.T(\"BusinessTerms\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-business-app\" })\"");
+        source.Should().Contain("string BusinessAppSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-business-app\" }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@BusinessAppSettingsUrl()\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"OpenBusinessAppSettings\")</a>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-mobile\" })\"");
+        source.Should().Contain("hx-get=\"@MobileSettingsUrl()\"");
         source.Should().Contain("hx-push-url=\"true\">@T.T(\"OpenMobileBootstrap\")</a>");
     }
 
@@ -3135,9 +3870,10 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         source.Should().Contain("<div class=\"card-header\">@T.T(\"RecentAppVersions\")</div>");
         source.Should().Contain("@T.T(\"NoDeviceVersionData\")");
         source.Should().Contain("<div class=\"card-header\">@T.T(\"RecentMobileDevices\")</div>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { state = \"business-members\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { state = \"notifications-disabled\" })\"");
+        source.Should().Contain("string MobileOperationsIndexUrl() => Url.Action(\"Index\", \"MobileOperations\", new { businessId = Model.BusinessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@MobileOperationsIndexUrl()\"");
+        source.Should().Contain("hx-get=\"@MobileOperationsItemUrl(item)\"");
+        source.Should().Contain("hx-get=\"@MobileOperationsUrl(\"notifications-disabled\")\"");
         source.Should().Contain("placeholder=\"@T.T(\"MobileSearchUserDeviceVersion\")\"");
         source.Should().Contain("<select name=\"platform\" asp-items=\"Model.PlatformItems\" class=\"form-select\"></select>");
         source.Should().Contain("<select name=\"state\" asp-items=\"Model.StateItems\" class=\"form-select\"></select>");
@@ -3145,12 +3881,14 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         source.Should().Contain("@LocalizeMobilePlatform(item.Platform)");
         source.Should().Contain("@DeviceRemediationLabel(item)");
         source.Should().Contain("@DeviceRemediationBadgeClass(item)");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = item.UserId })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\", new { q = item.UserEmail })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ScanSessions\", \"Loyalty\", new { q = item.UserEmail })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"SupportQueue\", \"Businesses\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { state = DeviceRemediationState(item) })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true })\"");
+        source.Should().Contain("string UserEditUrl(Guid id) => Url.Action(\"Edit\", \"Users\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@UserEditUrl(item.UserId)\"");
+        source.Should().Contain("hx-get=\"@LoyaltyAccountsUrl(item.UserEmail)\"");
+        source.Should().Contain("hx-get=\"@LoyaltyScanSessionsUrl(item.UserEmail)\"");
+        source.Should().Contain("hx-get=\"@ScopedSupportQueueUrl()\"");
+        source.Should().Contain("string MobileOperationsItemUrl(Darwin.WebAdmin.ViewModels.Mobile.MobileDeviceOpsListItemVm item) => Url.Action(\"Index\", \"MobileOperations\", new { businessId = Model.BusinessId, state = DeviceRemediationState(item) }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@MobileOperationsItemUrl(item)\"");
+        source.Should().Contain("hx-get=\"@ProviderReviewChannelAuditsUrl()\"");
         source.Should().Contain("@T.T(\"ClearPush\")");
         source.Should().Contain("@T.T(\"Deactivate\")");
     }
@@ -3184,11 +3922,12 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         source.Should().Contain("var support = await _getBusinessSupportSummary.HandleAsync(ct: ct).ConfigureAwait(false);");
         source.Should().Contain("var comms = await _getCommunicationSummary.HandleAsync(ct: ct).ConfigureAwait(false);");
         source.Should().Contain("var deviceSummary = await _getDeviceSummary.HandleAsync(ct).ConfigureAwait(false);");
-        source.Should().Contain("var devicesPage = await _getDevicesPage.HandleAsync(page, pageSize, q, platform, state, ct).ConfigureAwait(false);");
+        source.Should().Contain("var devicesPage = await _getDevicesPage.HandleAsync(page, pageSize, q, platform, state, businessId, ct).ConfigureAwait(false);");
         source.Should().Contain("SetErrorMessage(\"MobileOperationsSiteSettingsMissing\")");
         source.Should().Contain("return RedirectOrHtmx(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-mobile\" });");
         source.Should().Contain("var vm = new MobileOperationsVm");
-        source.Should().Contain("Playbooks = BuildPlaybooks(),");
+        source.Should().Contain("BusinessId = businessId,");
+        source.Should().Contain("Playbooks = BuildPlaybooks(businessId),");
         source.Should().Contain("PlatformItems = BuildPlatformItems(platform),");
         source.Should().Contain("StateItems = BuildStateItems(state),");
         source.Should().Contain("return RenderIndex(vm);");
@@ -3202,15 +3941,15 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Mobile", "MobileOperationsController.cs"));
 
-        source.Should().Contain("public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
+        source.Should().Contain("public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
         source.Should().Contain("var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);");
         source.Should().Contain("SetSuccessMessage(\"MobilePushTokenCleared\")");
         source.Should().Contain("SetErrorMessage(\"MobilePushTokenClearFailed\")");
-        source.Should().Contain("public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
+        source.Should().Contain("public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
         source.Should().Contain("var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);");
         source.Should().Contain("SetSuccessMessage(\"MobileDeviceDeactivated\")");
         source.Should().Contain("SetErrorMessage(\"MobileDeviceDeactivateFailed\")");
-        source.Should().Contain("return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });");
+        source.Should().Contain("return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, controllerName, routeValues) ?? string.Empty;");
         source.Should().Contain("return new EmptyResult();");
         source.Should().Contain("return RedirectToAction(actionName, controllerName, routeValues);");
@@ -3222,21 +3961,23 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Mobile", "MobileOperationsController.cs"));
 
-        source.Should().Contain("private List<MobileOpsPlaybookVm> BuildPlaybooks()");
+        source.Should().Contain("private List<MobileOpsPlaybookVm> BuildPlaybooks(Guid? businessId)");
         source.Should().Contain("Title = T(\"MobilePlaybookPushDebtTitle\")");
         source.Should().Contain("Title = T(\"MobilePlaybookLoyaltyScanTitle\")");
         source.Should().Contain("Title = T(\"MobilePlaybookTransportTitle\")");
         source.Should().Contain("Title = T(\"MobilePlaybookProviderLaneTitle\")");
         source.Should().Contain("Title = T(\"MobilePlaybookMemberLifecycleTitle\")");
         source.Should().Contain("QueueActionLabel = T(\"MobileMissingPushToken\")");
-        source.Should().Contain("QueueActionUrl = Url.Action(nameof(Index), \"MobileOperations\", new { state = \"missing-push\" }) ?? string.Empty");
+        source.Should().Contain("QueueActionUrl = Url.Action(nameof(Index), \"MobileOperations\", new { businessId, state = \"missing-push\" }) ?? string.Empty");
         source.Should().Contain("FollowUpLabel = T(\"ReviewProviderLane\")");
         source.Should().Contain("FollowUpUrl = Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true }) ?? string.Empty");
         source.Should().Contain("QueueActionLabel = T(\"BusinessMemberDevices\")");
+        source.Should().Contain("QueueActionUrl = Url.Action(nameof(Index), \"MobileOperations\", new { businessId, state = \"business-members\" }) ?? string.Empty");
         source.Should().Contain("FollowUpLabel = T(\"LoyaltyScanSessionsTitle\")");
         source.Should().Contain("QueueActionLabel = T(\"OpenCommunicationsWorkspace\")");
         source.Should().Contain("FollowUpUrl = Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-mobile\" }) ?? string.Empty");
         source.Should().Contain("QueueActionLabel = T(\"SupportQueue\")");
+        source.Should().Contain("QueueActionUrl = Url.Action(\"SupportQueue\", \"Businesses\", new { businessId }) ?? string.Empty");
         source.Should().Contain("FollowUpLabel = T(\"UsersFilterMobileLinked\")");
         source.Should().Contain("private List<SelectListItem> BuildPlatformItems(MobilePlatform? selected)");
         source.Should().Contain("new(T(\"MobileAllPlatforms\"), string.Empty, !selected.HasValue)");
@@ -3299,15 +4040,22 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         indexSource.Should().Contain("id=\"orders-workspace-shell\"");
         indexSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         indexSource.Should().Contain("@T.T(\"OrdersTitle\")");
+        indexSource.Should().Contain("string OrdersIndexUrl(string? query = null, string? filter = null) => Url.Action(\"Index\", \"Orders\", new { query, filter }) ?? string.Empty;");
+        indexSource.Should().Contain("string AddPaymentUrl(Guid orderId) => Url.Action(\"AddPayment\", \"Orders\", new { orderId }) ?? string.Empty;");
+        indexSource.Should().Contain("string AddShipmentUrl(Guid orderId) => Url.Action(\"AddShipment\", \"Orders\", new { orderId }) ?? string.Empty;");
+        indexSource.Should().Contain("string CreateInvoiceUrl(Guid orderId) => Url.Action(\"CreateInvoice\", \"Orders\", new { orderId }) ?? string.Empty;");
+        indexSource.Should().Contain("string OrderDetailsUrl(Guid id) => Url.Action(\"Details\", \"Orders\", new { id }) ?? string.Empty;");
         indexSource.Should().Contain("string LocalizeOrderStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         indexSource.Should().Contain("string OrderQueueOpsHealthBadgeClass(bool healthy) => healthy ? \"text-bg-success\" : \"text-bg-warning\";");
         indexSource.Should().Contain("var paymentIssueCount = Model.Items.Count(o => o.FailedPaymentCount > 0);");
         indexSource.Should().Contain("var fulfillmentAttentionCount = Model.Items.Count(o => o.Status == Darwin.Domain.Enums.OrderStatus.Paid && o.ShipmentCount == 0);");
         indexSource.Should().Contain("var orderQueueAttentionCount = paymentIssueCount + fulfillmentAttentionCount;");
         indexSource.Should().Contain("@LocalizeOrderStatus(o.Status)");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\")\"");
+        indexSource.Should().Contain("string GlobalShipmentsQueueUrl() => Url.Action(\"ShipmentsQueue\", \"Orders\") ?? string.Empty;");
+        indexSource.Should().Contain("hx-get=\"@GlobalShipmentsQueueUrl()\"");
         indexSource.Should().Contain("@T.T(\"ShipmentsQueue\")");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"ReturnsQueue\", \"Orders\")\"");
+        indexSource.Should().Contain("string GlobalReturnsQueueUrl() => Url.Action(\"ReturnsQueue\", \"Orders\") ?? string.Empty;");
+        indexSource.Should().Contain("hx-get=\"@GlobalReturnsQueueUrl()\"");
         indexSource.Should().Contain("@T.T(\"ReturnsQueueTitle\")");
         indexSource.Should().Contain("@T.T(\"NeedsAttention\")");
         indexSource.Should().Contain("placeholder=\"@T.T(\"SearchOrdersPlaceholder\")\"");
@@ -3316,16 +4064,23 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         indexSource.Should().Contain("@T.T(\"PaymentIssues\")");
         indexSource.Should().Contain("@T.T(\"FulfillmentAttention\")");
         indexSource.Should().Contain("@T.T(\"ClearQueueFilters\")");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
+        indexSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        indexSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        indexSource.Should().Contain("string GlobalInvoicesUrl() => Url.Action(\"Invoices\", \"Crm\") ?? string.Empty;");
+        indexSource.Should().Contain("hx-get=\"@GlobalInvoicesUrl()\"");
+        indexSource.Should().Contain("string GlobalRefundsUrl() => Url.Action(\"Refunds\", \"Billing\") ?? string.Empty;");
+        indexSource.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
         indexSource.Should().Contain("@T.T(\"PaymentsCount\")");
         indexSource.Should().Contain("@T.T(\"FailedCount\")");
         indexSource.Should().Contain("@T.T(\"ShipmentsCount\")");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"AddPayment\", \"Orders\", new { orderId = o.Id })\"");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"AddShipment\", \"Orders\", new { orderId = o.Id })\"");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"CreateInvoice\", \"Orders\", new { orderId = o.Id })\"");
-        indexSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = o.Id })\"");
+        indexSource.Should().Contain("hx-get=\"@OrdersIndexUrl(Model.Query, \"Open\")\"");
+        indexSource.Should().Contain("hx-get=\"@OrdersIndexUrl(Model.Query, \"PaymentIssues\")\"");
+        indexSource.Should().Contain("hx-get=\"@OrdersIndexUrl(Model.Query, \"FulfillmentAttention\")\"");
+        indexSource.Should().Contain("hx-get=\"@OrdersIndexUrl(Model.Query)\"");
+        indexSource.Should().Contain("hx-get=\"@AddPaymentUrl(o.Id)\"");
+        indexSource.Should().Contain("hx-get=\"@AddShipmentUrl(o.Id)\"");
+        indexSource.Should().Contain("hx-get=\"@CreateInvoiceUrl(o.Id)\"");
+        indexSource.Should().Contain("hx-get=\"@OrderDetailsUrl(o.Id)\"");
         indexSource.Should().Contain("asp-route-filter=\"@Model.Filter\"");
         indexSource.Should().Contain("hx-target=\"#orders-workspace-shell\"");
 
@@ -3333,8 +4088,10 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         shipmentsSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         shipmentsSource.Should().Contain("@T.T(\"ShipmentQueueTitle\")");
         shipmentsSource.Should().Contain("@T.T(\"ShipmentQueueIntro\")");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Orders\", new { filter = \"Fulfillment\" })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"ReturnsQueue\", \"Orders\")\"");
+        shipmentsSource.Should().Contain("string OrdersIndexUrl(string filter) => Url.Action(\"Index\", \"Orders\", new { filter }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@OrdersIndexUrl(\"Fulfillment\")\"");
+        shipmentsSource.Should().Contain("string GlobalReturnsQueueUrl() => Url.Action(\"ReturnsQueue\", \"Orders\") ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@GlobalReturnsQueueUrl()\"");
         shipmentsSource.Should().Contain("@Model.Summary.PendingCount");
         shipmentsSource.Should().Contain("@Model.Summary.ShippedCount");
         shipmentsSource.Should().Contain("@Model.Summary.MissingTrackingCount");
@@ -3342,7 +4099,8 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         shipmentsSource.Should().Contain("@Model.Summary.CarrierReviewCount");
         shipmentsSource.Should().Contain("@Model.Summary.ReturnFollowUpCount");
         shipmentsSource.Should().Contain("@T.T(\"DhlPhaseOneReadiness\")");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" })\"");
+        shipmentsSource.Should().Contain("string ShippingSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@ShippingSettingsUrl()\"");
         shipmentsSource.Should().Contain("@T.T(\"ShipmentSupportPlaybooks\")");
         shipmentsSource.Should().Contain("@T.T(\"ShippingSettings\")");
         shipmentsSource.Should().Contain("placeholder=\"@T.T(\"SearchShipmentsPlaceholder\")\"");
@@ -3350,19 +4108,25 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         shipmentsSource.Should().Contain("@T.T(\"NoShipmentsFound\")");
         shipmentsSource.Should().Contain("string LocalizeShipmentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         shipmentsSource.Should().Contain("@LocalizeShipmentStatus(item.Status)");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = item.OrderId })\"");
+        shipmentsSource.Should().Contain("string OrderDetailsUrl(Guid id) => Url.Action(\"Details\", \"Orders\", new { id }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@OrderDetailsUrl(item.OrderId)\"");
         shipmentsSource.Should().Contain("asp-fragment=\"refunds\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Dhl\" })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = item.OrderId, paymentId = item.DefaultRefundPaymentId })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"AddShipment\", \"Orders\", new { orderId = item.OrderId })\"");
+        shipmentsSource.Should().Contain("string ShippingMethodsUrl(string filter) => Url.Action(\"Index\", \"ShippingMethods\", new { filter }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@ShippingMethodsUrl(\"Dhl\")\"");
+        shipmentsSource.Should().Contain("string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action(\"AddRefund\", \"Orders\", new { orderId, paymentId }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@AddRefundUrl(item.OrderId, item.DefaultRefundPaymentId)\"");
+        shipmentsSource.Should().Contain("string AddShipmentUrl(Guid orderId) => Url.Action(\"AddShipment\", \"Orders\", new { orderId }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@AddShipmentUrl(item.OrderId)\"");
         shipmentsSource.Should().Contain("asp-route-filter=\"@Model.Filter\"");
         shipmentsSource.Should().Contain("hx-target=\"#shipments-queue-workspace-shell\"");
 
         returnsSource.Should().Contain("id=\"returns-queue-workspace-shell\"");
         returnsSource.Should().Contain("@T.T(\"ReturnsQueueTitle\")");
         returnsSource.Should().Contain("@T.T(\"ReturnsQueueIntro\")");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\")\"");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
+        returnsSource.Should().Contain("string GlobalShipmentsQueueUrl() => Url.Action(\"ShipmentsQueue\", \"Orders\") ?? string.Empty;");
+        returnsSource.Should().Contain("string GlobalRefundsUrl() => Url.Action(\"Refunds\", \"Billing\") ?? string.Empty;");
+        returnsSource.Should().Contain("hx-get=\"@GlobalShipmentsQueueUrl()\"");
+        returnsSource.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
         returnsSource.Should().Contain("@Model.Summary.ReturnedCount");
         returnsSource.Should().Contain("@Model.Summary.ReturnFollowUpCount");
         returnsSource.Should().Contain("@Model.Summary.CarrierReviewCount");
@@ -3371,10 +4135,13 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         returnsSource.Should().Contain("@T.T(\"AllReturnCases\")");
         returnsSource.Should().Contain("@T.T(\"NoReturnCases\")");
         returnsSource.Should().Contain("string LocalizeReturnStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
+        returnsSource.Should().Contain("string OrderDetailsUrl(Guid id) => Url.Action(\"Details\", \"Orders\", new { id }) ?? string.Empty;");
+        returnsSource.Should().Contain("string RefundsUrl(string q) => Url.Action(\"Refunds\", \"Billing\", new { q }) ?? string.Empty;");
+        returnsSource.Should().Contain("string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action(\"AddRefund\", \"Orders\", new { orderId, paymentId }) ?? string.Empty;");
         returnsSource.Should().Contain("@LocalizeReturnStatus(item.Status)");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = item.OrderId })\"");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\", new { q = item.OrderNumber })\"");
-        returnsSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = item.OrderId, paymentId = item.DefaultRefundPaymentId })\"");
+        returnsSource.Should().Contain("hx-get=\"@OrderDetailsUrl(item.OrderId)\"");
+        returnsSource.Should().Contain("hx-get=\"@RefundsUrl(item.OrderNumber)\"");
+        returnsSource.Should().Contain("hx-get=\"@AddRefundUrl(item.OrderId, item.DefaultRefundPaymentId)\"");
         returnsSource.Should().Contain("asp-route-filter=\"@Model.Filter\"");
         returnsSource.Should().Contain("hx-target=\"#returns-queue-workspace-shell\"");
     }
@@ -3476,11 +4243,13 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         shipmentsSource.Should().Contain("@T.T(\"CarrierReviewQueue\")");
         shipmentsSource.Should().Contain("@T.T(\"ShippingMethods\")");
         shipmentsSource.Should().Contain("asp-route-filter=\"Dhl\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = ShipmentQueueFilter.CarrierReview })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = ShipmentQueueFilter.AwaitingHandoff })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = ShipmentQueueFilter.TrackingOverdue })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"MissingRates\" })\"");
-        shipmentsSource.Should().Contain("hx-get=\"@Url.Action(\"ReturnsQueue\", \"Orders\")\"");
+        shipmentsSource.Should().Contain("string ShipmentsQueueUrl(ShipmentQueueFilter filter) => Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("string ShippingMethodsUrl(string filter) => Url.Action(\"Index\", \"ShippingMethods\", new { filter }) ?? string.Empty;");
+        shipmentsSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(ShipmentQueueFilter.CarrierReview)\"");
+        shipmentsSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(ShipmentQueueFilter.AwaitingHandoff)\"");
+        shipmentsSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(ShipmentQueueFilter.TrackingOverdue)\"");
+        shipmentsSource.Should().Contain("hx-get=\"@ShippingMethodsUrl(\"MissingRates\")\"");
+        shipmentsSource.Should().Contain("hx-get=\"@GlobalReturnsQueueUrl()\"");
 
         returnsSource.Should().Contain("@T.T(\"ReturnsQueueTitle\")");
         returnsSource.Should().Contain("@Model.Summary.ReturnFollowUpCount");
@@ -3620,10 +4389,18 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         detailsSource.Should().Contain("var orderDetailRefundAttention = Model.ReturnSupport.ReturnedShipmentCount + (Model.ReturnSupport.HasRefundablePayment ? 0 : Model.ReturnSupport.CarrierReviewShipmentCount);");
         detailsSource.Should().Contain("var orderDetailInvoiceAttention = (!Model.TaxPolicy.ArchiveReadinessComplete ? 1 : 0) + (!Model.TaxPolicy.EInvoiceBaselineReady ? 1 : 0);");
         detailsSource.Should().Contain("@T.T(\"NeedsAttention\")");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\")\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"ReturnsQueue\", \"Orders\")\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
+        detailsSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        detailsSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        detailsSource.Should().Contain("string GlobalShipmentsQueueUrl() => Url.Action(\"ShipmentsQueue\", \"Orders\") ?? string.Empty;");
+        detailsSource.Should().Contain("string GlobalReturnsQueueUrl() => Url.Action(\"ReturnsQueue\", \"Orders\") ?? string.Empty;");
+        detailsSource.Should().Contain("hx-get=\"@GlobalShipmentsQueueUrl()\"");
+        detailsSource.Should().Contain("hx-get=\"@GlobalReturnsQueueUrl()\"");
+        detailsSource.Should().Contain("string GlobalInvoicesUrl() => Url.Action(\"Invoices\", \"Crm\") ?? string.Empty;");
+        detailsSource.Should().Contain("hx-get=\"@GlobalInvoicesUrl()\"");
+        detailsSource.Should().Contain("string TaxSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" }) ?? string.Empty;");
+        detailsSource.Should().Contain("string ShipmentsQueueUrl(string filter) => Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter }) ?? string.Empty;");
+        detailsSource.Should().Contain("hx-get=\"@TaxSettingsUrl()\"");
+        detailsSource.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"Returned\")\"");
         detailsSource.Should().Contain("@LocalizeOrderStatus(Model.Status)");
 
         paymentsSource.Should().Contain("string LocalizePaymentStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
@@ -3631,12 +4408,18 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         paymentsSource.Should().Contain("string OrderPaymentOpsHealthBadgeClass(bool healthy) => healthy");
         paymentsSource.Should().Contain("var orderPaymentAttentionCount = orderPaymentFailedCount + orderPaymentRefundedCount + orderPaymentUnlinkedInvoiceCount + orderPaymentProviderFollowUpCount;");
         paymentsSource.Should().Contain("T.T(\"NeedsAttention\")");
-        paymentsSource.Should().Contain("hx-get=\"@Url.Action(\"AddPayment\", \"Orders\", new { orderId = Model.OrderId })\"");
-        paymentsSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
-        paymentsSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
-        paymentsSource.Should().Contain("hx-get=\"@Url.Action(\"CreateInvoice\", \"Orders\", new { orderId = Model.OrderId })\"");
-        paymentsSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
-        paymentsSource.Should().Contain("hx-get=\"@Url.Action(\"Webhooks\", \"Billing\")\"");
+        paymentsSource.Should().Contain("string AddPaymentUrl(Guid orderId) => Url.Action(\"AddPayment\", \"Orders\", new { orderId }) ?? string.Empty;");
+        paymentsSource.Should().Contain("string CreateInvoiceUrl(Guid orderId) => Url.Action(\"CreateInvoice\", \"Orders\", new { orderId }) ?? string.Empty;");
+        paymentsSource.Should().Contain("hx-get=\"@AddPaymentUrl(Model.OrderId)\"");
+        paymentsSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        paymentsSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        paymentsSource.Should().Contain("string GlobalRefundsUrl() => Url.Action(\"Refunds\", \"Billing\") ?? string.Empty;");
+        paymentsSource.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
+        paymentsSource.Should().Contain("hx-get=\"@CreateInvoiceUrl(Model.OrderId)\"");
+        paymentsSource.Should().Contain("string GlobalInvoicesUrl() => Url.Action(\"Invoices\", \"Crm\") ?? string.Empty;");
+        paymentsSource.Should().Contain("hx-get=\"@GlobalInvoicesUrl()\"");
+        paymentsSource.Should().Contain("string GlobalBillingWebhooksUrl() => Url.Action(\"Webhooks\", \"Billing\") ?? string.Empty;");
+        paymentsSource.Should().Contain("hx-get=\"@GlobalBillingWebhooksUrl()\"");
         paymentsSource.Should().Contain("@LocalizePaymentStatus(p.Status)");
         paymentsSource.Should().Contain("@LocalizeInvoiceStatus(p.InvoiceStatus)");
 
@@ -3646,11 +4429,16 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         invoicesSource.Should().Contain("var orderInvoiceAttentionCount = orderInvoiceOutstandingCount + orderInvoiceVatGapCount + orderInvoiceRefundedCount;");
         invoicesSource.Should().Contain("@T.T(\"ReviewInvoices\")");
         invoicesSource.Should().Contain("T.T(\"NeedsAttention\")");
-        invoicesSource.Should().Contain("hx-get=\"@Url.Action(\"CreateInvoice\", \"Orders\", new { orderId = Model.OrderId })\"");
-        invoicesSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
-        invoicesSource.Should().Contain("hx-get=\"@Url.Action(\"TaxCompliance\", \"Billing\")\"");
-        invoicesSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
-        invoicesSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"MissingVatId\" })\"");
+        invoicesSource.Should().Contain("string CreateInvoiceUrl(Guid orderId) => Url.Action(\"CreateInvoice\", \"Orders\", new { orderId }) ?? string.Empty;");
+        invoicesSource.Should().Contain("string CrmInvoicesUrl(string? filter = null) => Url.Action(\"Invoices\", \"Crm\", string.IsNullOrWhiteSpace(filter) ? null : new { filter }) ?? string.Empty;");
+        invoicesSource.Should().Contain("hx-get=\"@CreateInvoiceUrl(Model.OrderId)\"");
+        invoicesSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        invoicesSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        invoicesSource.Should().Contain("string GlobalTaxComplianceUrl() => Url.Action(\"TaxCompliance\", \"Billing\") ?? string.Empty;");
+        invoicesSource.Should().Contain("string GlobalRefundsUrl() => Url.Action(\"Refunds\", \"Billing\") ?? string.Empty;");
+        invoicesSource.Should().Contain("hx-get=\"@GlobalTaxComplianceUrl()\"");
+        invoicesSource.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
+        invoicesSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"MissingVatId\")\"");
         invoicesSource.Should().Contain("@LocalizeInvoiceStatus(item.PaymentStatus)");
         invoicesSource.Should().Contain("@LocalizeInvoiceStatus(item.Status)");
         invoicesSource.Should().Contain("@LocalizeCustomerTaxProfileType(item.CustomerTaxProfileType)");
@@ -3659,9 +4447,12 @@ source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter
         refundsSource.Should().Contain("string OrderRefundOpsHealthBadgeClass(bool healthy) => healthy");
         refundsSource.Should().Contain("var orderRefundAttentionCount = orderRefundPendingCount + orderRefundReturnedShipmentCount + orderRefundProviderFollowUpCount;");
         refundsSource.Should().Contain("T.T(\"NeedsAttention\")");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
-        refundsSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })\"");
+        refundsSource.Should().Contain("string GlobalRefundsUrl() => Url.Action(\"Refunds\", \"Billing\") ?? string.Empty;");
+        refundsSource.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
+        refundsSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        refundsSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        refundsSource.Should().Contain("string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action(\"AddRefund\", \"Orders\", new { orderId, paymentId }) ?? string.Empty;");
+        refundsSource.Should().Contain("hx-get=\"@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)\"");
         refundsSource.Should().Contain("@LocalizeRefundStatus(item.PaymentStatus)");
         refundsSource.Should().Contain("@LocalizeRefundStatus(item.Status)");
 
@@ -3774,8 +4565,8 @@ subscriptionWorkspaceSource.Should().Contain("string SubscriptionInvoiceQueueAct
 subscriptionWorkspaceSource.Should().Contain("string SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Business.Id, filter }) ?? string.Empty;");
 subscriptionWorkspaceSource.Should().Contain("string SubscriptionPaymentsActionHref() => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id }) ?? string.Empty;");
 subscriptionWorkspaceSource.Should().Contain("string SubscriptionPaymentsSearchActionHref(string? providerInvoiceId) => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id, q = providerInvoiceId }) ?? string.Empty;");
-subscriptionWorkspaceSource.Should().Contain("string SubscriptionMerchantReadinessActionHref() => Url.Action(\"MerchantReadiness\", \"Businesses\") ?? string.Empty;");
-subscriptionWorkspaceSource.Should().Contain("string SubscriptionSupportQueueActionHref() => Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty;");
+        subscriptionWorkspaceSource.Should().Contain("string SubscriptionMerchantReadinessActionHref() => Url.Action(\"MerchantReadiness\", \"Businesses\", new { businessId = Model.Business.Id }) ?? string.Empty;");
+        subscriptionWorkspaceSource.Should().Contain("string SubscriptionSupportQueueActionHref() => Url.Action(\"SupportQueue\", \"Businesses\", new { businessId = Model.Business.Id }) ?? string.Empty;");
 subscriptionWorkspaceSource.Should().Contain("string SubscriptionActiveSubscriptionTimelineTextClass() => \"mt-3 small text-muted\";");
 subscriptionWorkspaceSource.Should().Contain("string SubscriptionInlineActionGroupClass() => \"d-flex gap-2 flex-wrap mt-3\";");
 subscriptionWorkspaceSource.Should().Contain("string SubscriptionMetricCardCaptionClass() => \"small text-muted text-uppercase\";");
@@ -4368,11 +5159,13 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         taxComplianceSource.Should().Contain("@T.T(\"ArchiveReadiness\")");
         taxComplianceSource.Should().Contain("@T.T(\"EInvoiceBaseline\")");
         taxComplianceSource.Should().Contain("@T.T(\"StructuredExportReadiness\")");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\", new { filter = CustomerQueueFilter.MissingVatId })\"");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"MissingVatId\" })\"");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Overdue\" })\"");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"DueSoon\" })\"");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Draft\" })\"");
+        taxComplianceSource.Should().Contain("string CrmCustomersUrl(CustomerQueueFilter filter) => Url.Action(\"Customers\", \"Crm\", new { filter }) ?? string.Empty;");
+        taxComplianceSource.Should().Contain("string CrmInvoicesUrl(string filter) => Url.Action(\"Invoices\", \"Crm\", new { filter }) ?? string.Empty;");
+        taxComplianceSource.Should().Contain("hx-get=\"@CrmCustomersUrl(CustomerQueueFilter.MissingVatId)\"");
+        taxComplianceSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"MissingVatId\")\"");
+        taxComplianceSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"Overdue\")\"");
+        taxComplianceSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"DueSoon\")\"");
+        taxComplianceSource.Should().Contain("hx-get=\"@CrmInvoicesUrl(\"Draft\")\"");
         taxComplianceSource.Should().Contain("Model.Tax.AllowReverseCharge");
         taxComplianceSource.Should().Contain("Model.Tax.InvoiceIssuerCountry");
         taxComplianceSource.Should().Contain("Model.Tax.ArchiveReadinessComplete");
@@ -4382,12 +5175,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         taxComplianceSource.Should().Contain("@LocalizeTaxInvoiceStatus(item.Status)");
         taxComplianceSource.Should().Contain("@T.T(\"VatIdMissing\")");
         taxComplianceSource.Should().Contain("var taxInvoiceNeedsCollectionFollowUp =");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"EditPayment\", \"Billing\", new { id = item.PaymentId })\"");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
+        taxComplianceSource.Should().Contain("string EditPaymentUrl(Guid? id) => Url.Action(\"EditPayment\", \"Billing\", new { id }) ?? string.Empty;");
+        taxComplianceSource.Should().Contain("hx-get=\"@EditPaymentUrl(item.PaymentId)\"");
+        taxComplianceSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        taxComplianceSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        taxComplianceSource.Should().Contain("string GlobalRefundsUrl() => Url.Action(\"Refunds\", \"Billing\") ?? string.Empty;");
+        taxComplianceSource.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
         taxComplianceSource.Should().Contain("@T.T(\"RefundQueueTitle\")");
         taxComplianceSource.Should().Contain("@T.T(\"FixVatId\")");
-        taxComplianceSource.Should().Contain("hx-get=\"@Url.Action(\"Opportunities\", \"Crm\", new { q = item.Email })\"");
+        taxComplianceSource.Should().Contain("string CrmOpportunitiesUrl(string q) => Url.Action(\"Opportunities\", \"Crm\", new { q }) ?? string.Empty;");
+        taxComplianceSource.Should().Contain("hx-get=\"@CrmOpportunitiesUrl(item.Email)\"");
 
         billingControllerSource.Should().Contain("public async Task<IActionResult> TaxCompliance(CancellationToken ct = default)");
         billingControllerSource.Should().Contain("AllowReverseCharge = settings.AllowReverseCharge,");
@@ -5238,12 +6035,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"GoLiveReadiness\")");
         source.Should().Contain("@T.T(\"NeedsAttention\")");
         source.Should().Contain("<form asp-action=\"Customers\" method=\"get\" class=\"d-flex gap-2\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmCustomersUrl()\"");
         source.Should().Contain("hx-target=\"#crm-customers-workspace-shell\"");
         source.Should().Contain("placeholder=\"@T.T(\"SearchCustomersPlaceholder\")\"");
         source.Should().Contain("<select name=\"filter\" asp-items=\"Model.FilterItems\" class=\"form-select\"></select>");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateCustomer\", \"Crm\")\"");
+        source.Should().Contain("string CreateCustomerUrl() => Url.Action(\"CreateCustomer\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateCustomerUrl()\"");
         source.Should().Contain("@T.T(\"NewCustomer\")");
         source.Should().Contain("@T.T(\"CrmCustomersFootprintNote\")");
         source.Should().Contain("@T.T(\"CrmCustomerSegmentsCoverageNote\")");
@@ -5260,9 +6059,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"B2BMissingVatId\")");
         source.Should().Contain("@T.T(\"LocaleFallback\")");
         source.Should().Contain("@T.T(\"ClearQueueFilters\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { filter = \"MissingVatId\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-localization\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Segments\", \"Crm\")\"");
+        source.Should().Contain("string CrmInvoicesUrl(object? q = null, string? filter = null) => Url.Action(\"Invoices\", \"Crm\", new { q, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CrmInvoicesUrl(filter: \"MissingVatId\")\"");
+        source.Should().Contain("string SiteSettingsUrl(string fragment) => Url.Action(\"Edit\", \"SiteSettings\", new { fragment }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@SiteSettingsUrl(\"site-settings-localization\")\"");
+        source.Should().Contain("string CrmSegmentsUrl() => Url.Action(\"Segments\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CrmSegmentsUrl()\"");
     }
 
 
@@ -5290,18 +6092,21 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"VatIdMissing\")");
         source.Should().Contain("@LocalizeCustomerTaxProfileType(item.TaxProfileType)");
         source.Should().Contain("@T.T(item.ModifiedAtUtc.HasValue ? \"Updated\" : \"Created\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.Id })\"");
+        source.Should().Contain("string EditCustomerUrl(Guid id, string? fragment = null) => Url.Action(\"EditCustomer\", \"Crm\", new { id, fragment }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCustomerUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Edit\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Users\", new { id = item.UserId.Value })\"");
+        source.Should().Contain("string UserEditUrl(object? id) => Url.Action(\"Edit\", \"Users\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@UserEditUrl(item.UserId.Value)\"");
         source.Should().Contain("@T.T(\"Users\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.Id, fragment = \"customer-interactions-section\" })\"");
+        source.Should().Contain("hx-get=\"@EditCustomerUrl(item.Id, \"customer-interactions-section\")\"");
         source.Should().Contain("@T.T(\"Interactions\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.Id, fragment = \"customer-segments-section\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateOpportunity\", \"Crm\", new { customerId = item.Id })\"");
+        source.Should().Contain("hx-get=\"@EditCustomerUrl(item.Id, \"customer-segments-section\")\"");
+        source.Should().Contain("string CreateOpportunityUrl(Guid customerId) => Url.Action(\"CreateOpportunity\", \"Crm\", new { customerId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateOpportunityUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Opportunity\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { q = item.Id })\"");
+        source.Should().Contain("hx-get=\"@CrmInvoicesUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"ReviewInvoices\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" })\"");
+        source.Should().Contain("hx-get=\"@SiteSettingsUrl(\"site-settings-tax\")\"");
         source.Should().Contain("@T.T(\"TaxSettings\")");
         source.Should().Contain("<pager page=\"Model.Page\"");
         source.Should().Contain("asp-controller=\"Crm\"");
@@ -5321,14 +6126,17 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<div id=\"crm-leads-workspace-shell\">");
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("<h1 class=\"mb-0\">@T.T(\"Leads\")</h1>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmIndexUrl() => Url.Action(\"Index\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmIndexUrl()\"");
         source.Should().Contain("hx-target=\"#crm-leads-workspace-shell\"");
         source.Should().Contain("<form asp-action=\"Leads\" method=\"get\" class=\"d-flex gap-2\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Leads\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmLeadsUrl() => Url.Action(\"Leads\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmLeadsUrl()\"");
         source.Should().Contain("placeholder=\"@T.T(\"SearchLeadsPlaceholder\")\"");
         source.Should().Contain("<select name=\"filter\" asp-items=\"Model.FilterItems\" class=\"form-select\"></select>");
         source.Should().Contain("@T.T(\"Search\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateLead\", \"Crm\")\"");
+        source.Should().Contain("string CreateCrmLeadUrl() => Url.Action(\"CreateLead\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateCrmLeadUrl()\"");
         source.Should().Contain("@T.T(\"NewLead\")");
         source.Should().Contain("@T.T(\"CrmOperatorPlaybooks\")");
         source.Should().Contain("@foreach (var playbook in Model.Playbooks)");
@@ -5355,9 +6163,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"GoLiveReadiness\")");
         source.Should().Contain("T.T(\"NeedsAttention\")");
         source.Should().Contain("@T.T(\"Customers\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Opportunities\", \"Crm\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateLead\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmCustomersUrl()\"");
+        source.Should().Contain("string GlobalCrmOpportunitiesUrl() => Url.Action(\"Opportunities\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmOpportunitiesUrl()\"");
+        source.Should().Contain("hx-get=\"@CreateCrmLeadUrl()\"");
+        source.Should().Contain("string CrmLeadsUrl(string? filter = null) => Url.Action(\"Leads\", \"Crm\", string.IsNullOrWhiteSpace(filter) ? new { q = Model.Query } : new { q = Model.Query, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CrmLeadsUrl(\"Qualified\")\"");
+        source.Should().Contain("hx-get=\"@CrmLeadsUrl(\"Unassigned\")\"");
+        source.Should().Contain("hx-get=\"@CrmLeadsUrl(\"Unconverted\")\"");
+        source.Should().Contain("hx-get=\"@CrmLeadsUrl()\"");
         source.Should().Contain("<th>@T.T(\"Name\")</th>");
         source.Should().Contain("<th>@T.T(\"Company\")</th>");
         source.Should().Contain("<th>@T.T(\"Email\")</th>");
@@ -5375,9 +6190,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? \"-\" : item.AssignedToUserDisplayName)");
         source.Should().Contain("@CrmDateTimeText(item.ModifiedAtUtc)");
         source.Should().Contain("@if (item.CustomerId.HasValue)");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.CustomerId.Value })\"");
+        source.Should().Contain("string EditCrmCustomerUrl(Guid id) => Url.Action(\"EditCustomer\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmCustomerUrl(item.CustomerId.Value)\"");
         source.Should().Contain("@T.T(\"Customer\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateOpportunity\", \"Crm\", new { customerId = item.CustomerId.Value })\"");
+        source.Should().Contain("string CreateCrmOpportunityForCustomerUrl(Guid customerId) => Url.Action(\"CreateOpportunity\", \"Crm\", new { customerId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateCrmOpportunityForCustomerUrl(item.CustomerId.Value)\"");
         source.Should().Contain("@T.T(\"Opportunity\")");
         source.Should().Contain("else if (item.Status == Darwin.Domain.Enums.LeadStatus.Qualified)");
         source.Should().Contain("<form asp-controller=\"Crm\" asp-action=\"ConvertLead\" method=\"post\" class=\"d-inline\">");
@@ -5386,9 +6203,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@Convert.ToBase64String(item.RowVersion)\" />");
         source.Should().Contain("<input type=\"hidden\" name=\"CopyNotesToCustomer\" value=\"true\" />");
         source.Should().Contain("@T.T(\"Convert\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditLead\", \"Crm\", new { id = item.Id, fragment = \"lead-interactions-grid\" })\"");
+        source.Should().Contain("string EditCrmLeadInteractionsUrl(Guid id) => Url.Action(\"EditLead\", \"Crm\", new { id, fragment = \"lead-interactions-grid\" }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmLeadInteractionsUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Interactions\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditLead\", \"Crm\", new { id = item.Id })\"");
+        source.Should().Contain("string EditCrmLeadUrl(Guid id) => Url.Action(\"EditLead\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmLeadUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Edit\")");
         source.Should().Contain("<pager page=\"Model.Page\"");
         source.Should().Contain("asp-controller=\"Crm\"");
@@ -5414,16 +6233,21 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"GoLiveReadiness\")");
         source.Should().Contain("@T.T(\"NeedsAttention\")");
         source.Should().Contain("@T.T(\"Customers\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmCustomersUrl()\"");
+        source.Should().Contain("string GlobalInvoicesUrl() => Url.Action(\"Invoices\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalInvoicesUrl()\"");
+        source.Should().Contain("string GlobalCrmIndexUrl() => Url.Action(\"Index\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmIndexUrl()\"");
         source.Should().Contain("hx-target=\"#crm-opportunities-workspace-shell\"");
         source.Should().Contain("<form asp-action=\"Opportunities\" method=\"get\" class=\"d-flex gap-2\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Opportunities\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmOpportunitiesUrl() => Url.Action(\"Opportunities\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmOpportunitiesUrl()\"");
         source.Should().Contain("placeholder=\"@T.T(\"SearchOpportunitiesPlaceholder\")\"");
         source.Should().Contain("<select name=\"filter\" asp-items=\"Model.FilterItems\" class=\"form-select\"></select>");
         source.Should().Contain("@T.T(\"Search\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateOpportunity\", \"Crm\")\"");
+        source.Should().Contain("string CreateCrmOpportunityUrl() => Url.Action(\"CreateOpportunity\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateCrmOpportunityUrl()\"");
         source.Should().Contain("@T.T(\"NewOpportunity\")");
         source.Should().Contain("@T.T(\"CrmOperatorPlaybooks\")");
         source.Should().Contain("@foreach (var playbook in Model.Playbooks)");
@@ -5463,11 +6287,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? \"-\" : item.AssignedToUserDisplayName)");
         source.Should().Contain("@item.ItemCount");
         source.Should().Contain("@CrmDateTimeText(item.ModifiedAtUtc)");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.CustomerId })\"");
+        source.Should().Contain("string EditCrmCustomerUrl(Guid id) => Url.Action(\"EditCustomer\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmCustomerUrl(item.CustomerId)\"");
         source.Should().Contain("@T.T(\"Customer\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditOpportunity\", \"Crm\", new { id = item.Id, fragment = \"opportunity-interactions-grid\" })\"");
+        source.Should().Contain("string EditCrmOpportunityInteractionsUrl(Guid id) => Url.Action(\"EditOpportunity\", \"Crm\", new { id, fragment = \"opportunity-interactions-grid\" }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmOpportunityInteractionsUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Interactions\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditOpportunity\", \"Crm\", new { id = item.Id })\"");
+        source.Should().Contain("string EditCrmOpportunityUrl(Guid id) => Url.Action(\"EditOpportunity\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmOpportunityUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Edit\")");
         source.Should().Contain("<pager page=\"Model.Page\"");
         source.Should().Contain("asp-controller=\"Crm\"");
@@ -5488,10 +6315,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("<h1 class=\"mb-0\">@T.T(\"CrmOverviewTitle\")</h1>");
         source.Should().Contain("@T.T(\"CrmOverviewIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmCustomersUrl()\"");
         source.Should().Contain("hx-target=\"#crm-overview-workspace-shell\"");
         source.Should().Contain("@T.T(\"Customers\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
+        source.Should().Contain("string GlobalInvoicesUrl() => Url.Action(\"Invoices\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalInvoicesUrl()\"");
         source.Should().Contain("@T.T(\"Invoices\")");
         source.Should().Contain("@T.T(\"Customers\")</div><div class=\"fs-3 fw-semibold\">@Model.CustomerCount</div>");
         source.Should().Contain("@T.T(\"Leads\")</div><div class=\"fs-3 fw-semibold\">@Model.LeadCount</div>");
@@ -5518,10 +6347,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"CrmOverviewPlaybookPipelineScope\")");
         source.Should().Contain("@T.T(\"CrmOverviewPlaybookPipelineAction\")");
         source.Should().Contain("@T.T(\"CrmNextStep\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Leads\", \"Crm\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Opportunities\", \"Crm\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Segments\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmCustomersUrl()\"");
+        source.Should().Contain("string GlobalCrmLeadsUrl() => Url.Action(\"Leads\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("string GlobalCrmOpportunitiesUrl() => Url.Action(\"Opportunities\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("string GlobalCrmSegmentsUrl() => Url.Action(\"Segments\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmLeadsUrl()\"");
+        source.Should().Contain("hx-get=\"@GlobalCrmOpportunitiesUrl()\"");
+        source.Should().Contain("hx-get=\"@GlobalCrmSegmentsUrl()\"");
         source.Should().Contain("class=\"btn btn-outline-primary\">@T.T(\"Customers\")</a>");
         source.Should().Contain("class=\"btn btn-outline-primary\">@T.T(\"Leads\")</a>");
         source.Should().Contain("class=\"btn btn-outline-primary\">@T.T(\"Opportunities\")</a>");
@@ -5538,7 +6371,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("<h1 class=\"mb-1\">@T.T(\"Invoices\")</h1>");
         source.Should().Contain("@T.T(\"InvoicesQueueIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmIndexUrl() => Url.Action(\"Index\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmIndexUrl()\"");
         source.Should().Contain("hx-target=\"#crm-invoices-workspace-shell\"");
         source.Should().Contain("@T.T(\"Overview\")");
         source.Should().Contain("@T.T(\"Draft\")");
@@ -5555,13 +6389,17 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("asp-route-filter=\"Overdue\"");
         source.Should().Contain("asp-route-filter=\"MissingVatId\"");
         source.Should().Contain("asp-route-filter=\"Refunded\"");
-        source.Should().Contain("@Url.Action(\"Payments\", \"Billing\")");
-        source.Should().Contain("@Url.Action(\"Customers\", \"Crm\")");
-        source.Should().Contain("@Url.Action(\"Opportunities\", \"Crm\")");
+        source.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        source.Should().Contain("@GlobalPaymentsUrl()");
+        source.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("@GlobalCrmCustomersUrl()");
+        source.Should().Contain("string CrmOpportunitiesUrl() => Url.Action(\"Opportunities\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("@CrmOpportunitiesUrl()");
         source.Should().Contain("@T.T(\"CrmOperatorPlaybooks\")");
         source.Should().Contain("@foreach (var item in Model.Playbooks)");
         source.Should().Contain("@T.T(\"TaxInvoicingPolicy\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" })\"");
+        source.Should().Contain("string SiteSettingsUrl(string fragment) => Url.Action(\"Edit\", \"SiteSettings\", new { fragment }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@SiteSettingsUrl(\"site-settings-tax\")\"");
         source.Should().Contain("@T.T(\"OpenTaxSettings\")");
         source.Should().Contain("@T.T(\"VatEnabled\")");
         source.Should().Contain("@T.T(\"DefaultVat\")");
@@ -5576,7 +6414,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"CompleteIssuerData\")");
         source.Should().Contain("@T.T(\"ReviewEInvoiceBaseline\")");
         source.Should().Contain("<form asp-action=\"Invoices\" method=\"get\" class=\"row g-2\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
+        source.Should().Contain("string GlobalInvoicesUrl() => Url.Action(\"Invoices\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalInvoicesUrl()\"");
         source.Should().Contain("<input type=\"hidden\" name=\"filter\" value=\"@Model.Filter\" />");
         source.Should().Contain("@T.T(\"All\")");
         source.Should().Contain("asp-route-filter=\"Refunded\"");
@@ -5615,33 +6454,41 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Settled\"):");
         source.Should().Contain("@T.T(\"Balance\"):");
         source.Should().Contain("@item.DueDateUtc.ToLocalTime().ToString(\"d\", CultureInfo.CurrentCulture)");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditInvoice\", \"Crm\", new { id = item.Id })\"");
+        source.Should().Contain("string EditInvoiceUrl(Guid id) => Url.Action(\"EditInvoice\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditInvoiceUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Open\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = item.CustomerId.Value })\"");
+        source.Should().Contain("string EditCustomerUrl(Guid id) => Url.Action(\"EditCustomer\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCustomerUrl(item.CustomerId.Value)\"");
         source.Should().Contain("@T.T(\"Customer\")");
         source.Should().Contain("@T.T(\"FixVatId\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Details\", \"Orders\", new { id = item.OrderId.Value })\"");
+        source.Should().Contain("string OrderDetailsUrl(Guid id, string? fragment = null) => Url.Action(\"Details\", \"Orders\", new { id, fragment }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@OrderDetailsUrl(item.OrderId.Value)\"");
         source.Should().Contain("@T.T(\"Order\")");
-        source.Should().Contain("fragment = \"payments\"");
+        source.Should().Contain("asp-fragment=\"payments\"");
+        source.Should().Contain("hx-get=\"@OrderDetailsUrl(item.OrderId.Value, \"payments\")\"");
         source.Should().Contain("@T.T(\"Payment\")");
         source.Should().Contain("var crmInvoiceNeedsCollectionFollowUp =");
         source.Should().Contain("var crmInvoiceNeedsPendingPaymentFollowUp =");
         source.Should().Contain("var crmInvoiceNeedsUnlinkedPaymentFollowUp =");
         source.Should().Contain("var crmInvoiceNeedsRefundedPaymentFollowUp =");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditPayment\", \"Billing\", new { id = item.PaymentId.Value })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
+        source.Should().Contain("string EditPaymentUrl(Guid id) => Url.Action(\"EditPayment\", \"Billing\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditPaymentUrl(item.PaymentId.Value)\"");
+        source.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
         source.Should().Contain("asp-route-queue=\"@PaymentQueueFilter.Pending\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { queue = PaymentQueueFilter.Pending })\"");
+        source.Should().Contain("string PaymentsUrl(PaymentQueueFilter? queue = null) => Url.Action(\"Payments\", \"Billing\", new { queue }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@PaymentsUrl(PaymentQueueFilter.Pending)\"");
         source.Should().Contain("@T.T(\"Pending\")");
         source.Should().Contain("asp-route-queue=\"@PaymentQueueFilter.Unlinked\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { queue = PaymentQueueFilter.Unlinked })\"");
+        source.Should().Contain("hx-get=\"@PaymentsUrl(PaymentQueueFilter.Unlinked)\"");
         source.Should().Contain("asp-route-queue=\"@PaymentQueueFilter.Refunded\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { queue = PaymentQueueFilter.Refunded })\"");
+        source.Should().Contain("hx-get=\"@PaymentsUrl(PaymentQueueFilter.Refunded)\"");
         source.Should().Contain("@T.T(\"Unlinked\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
+        source.Should().Contain("string GlobalRefundsUrl() => Url.Action(\"Refunds\", \"Billing\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
         source.Should().Contain("@T.T(\"RefundQueueTitle\")");
         source.Should().Contain("@T.T(\"Refunded\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"TaxCompliance\", \"Billing\")\"");
+        source.Should().Contain("string GlobalTaxComplianceUrl() => Url.Action(\"TaxCompliance\", \"Billing\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalTaxComplianceUrl()\"");
         source.Should().Contain("@T.T(\"TaxComplianceTitle\")");
         source.Should().Contain("@LocalizeCustomerTaxProfileType(item.CustomerTaxProfileType)");
         source.Should().Contain("<form asp-action=\"TransitionInvoiceStatus\" method=\"post\" class=\"d-inline\">");
@@ -5675,10 +6522,13 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"LocaleFallback\")");
         source.Should().Contain("@T.T(\"B2BMissingVatId\")");
         source.Should().Contain("@T.T(\"HasOpportunities\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\", new { filter = \"UsesPlatformLocaleFallback\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-localization\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { q = Model.Id, filter = \"MissingVatId\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-tax\" })\"");
+        source.Should().Contain("string CrmCustomersUrl(string? filter = null) => Url.Action(\"Customers\", \"Crm\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CrmCustomersUrl(filter: \"UsesPlatformLocaleFallback\")\"");
+        source.Should().Contain("string SiteSettingsUrl(string fragment) => Url.Action(\"Edit\", \"SiteSettings\", new { fragment }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@SiteSettingsUrl(\"site-settings-localization\")\"");
+        source.Should().Contain("string CrmInvoicesUrl(object? q = null, string? filter = null) => Url.Action(\"Invoices\", \"Crm\", new { q, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CrmInvoicesUrl(Model.Id, \"MissingVatId\")\"");
+        source.Should().Contain("hx-get=\"@SiteSettingsUrl(\"site-settings-tax\")\"");
         source.Should().Contain("@T.T(\"CustomerLinkedUser\")");
         source.Should().Contain("@T.T(\"Company\")");
         source.Should().Contain("@T.T(\"TaxProfile\")");
@@ -5688,13 +6538,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Segments\")");
         source.Should().Contain("@T.T(\"Opportunities\")");
         source.Should().Contain("@T.T(\"Interactions\") / @T.T(\"Consents\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateOpportunity\", \"Crm\", new { customerId = Model.Id })\"");
+        source.Should().Contain("string CreateOpportunityUrl(Guid customerId) => Url.Action(\"CreateOpportunity\", \"Crm\", new { customerId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateOpportunityUrl(Model.Id)\"");
         source.Should().Contain("@T.T(\"CreateOpportunity\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { q = Model.Id })\"");
+        source.Should().Contain("hx-get=\"@CrmInvoicesUrl(Model.Id)\"");
         source.Should().Contain("@T.T(\"ReviewInvoices\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\", new { filter = \"NeedsSegmentation\" })\"");
+        source.Should().Contain("hx-get=\"@CrmCustomersUrl(filter: \"NeedsSegmentation\")\"");
         source.Should().Contain("@T.T(\"ReviewSegmentation\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = Model.Id, fragment = \"customer-segments-section\" })\"");
+        source.Should().Contain("string EditCustomerUrl(Guid id, string? fragment = null) => Url.Action(\"EditCustomer\", \"Crm\", new { id, fragment }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCustomerUrl(Model.Id, \"customer-segments-section\")\"");
     }
 
 
@@ -5712,20 +6564,27 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         source.Should().Contain("<partial name=\"_CustomerForm\" model=\"Model\" />");
         source.Should().Contain("@T.T(\"Save\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Customers\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmCustomersUrl()\"");
         source.Should().Contain("@T.T(\"Back\")");
         source.Should().Contain("id=\"customer-interactions-section\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CustomerInteractions\", \"Crm\", new { customerId = Model.Id })\"");
+        source.Should().Contain("string CustomerInteractionsUrl(Guid customerId) => Url.Action(\"CustomerInteractions\", \"Crm\", new { customerId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CustomerInteractionsUrl(Model.Id)\"");
         source.Should().Contain("id=\"customer-consents-section\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CustomerConsents\", \"Crm\", new { customerId = Model.Id })\"");
+        source.Should().Contain("string CustomerConsentsUrl(Guid customerId) => Url.Action(\"CustomerConsents\", \"Crm\", new { customerId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CustomerConsentsUrl(Model.Id)\"");
         source.Should().Contain("id=\"customer-segments-section\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CustomerSegmentMemberships\", \"Crm\", new { customerId = Model.Id })\"");
-        source.Should().Contain("fragment = \"customer-interactions-section\"");
-        source.Should().Contain("fragment = \"customer-consents-section\"");
-        source.Should().Contain("fragment = \"customer-segments-section\"");
+        source.Should().Contain("string CustomerSegmentMembershipsUrl(Guid customerId) => Url.Action(\"CustomerSegmentMemberships\", \"Crm\", new { customerId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CustomerSegmentMembershipsUrl(Model.Id)\"");
+        source.Should().Contain("asp-fragment=\"customer-interactions-section\"");
+        source.Should().Contain("hx-get=\"@EditCustomerUrl(Model.Id, \"customer-interactions-section\")\"");
+        source.Should().Contain("asp-fragment=\"customer-consents-section\"");
+        source.Should().Contain("hx-get=\"@EditCustomerUrl(Model.Id, \"customer-consents-section\")\"");
+        source.Should().Contain("asp-fragment=\"customer-segments-section\"");
+        source.Should().Contain("hx-get=\"@EditCustomerUrl(Model.Id, \"customer-segments-section\")\"");
         source.Should().Contain("@T.T(\"Open\")");
         source.Should().Contain("@T.T(\"Loading\")...");
-        source.Should().Contain("<partial name=\"~/Views/Crm/_CustomerFormScript.cshtml\" />");
+        source.Should().NotContain("<partial name=\"~/Views/Crm/_CustomerFormScript.cshtml\" />");
     }
 
 
@@ -5747,9 +6606,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"LeadFollowUpWorkspace\")");
         source.Should().Contain("@T.T(\"LeadFollowUpWorkspaceNote\")");
         source.Should().Contain("@if (Model.CustomerId.HasValue)");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = Model.CustomerId.Value })\"");
+        source.Should().Contain("string EditCrmCustomerUrl(Guid id) => Url.Action(\"EditCustomer\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmCustomerUrl(Model.CustomerId.Value)\"");
         source.Should().Contain("@T.T(\"OpenCustomer\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateOpportunity\", \"Crm\", new { customerId = Model.CustomerId.Value })\"");
+        source.Should().Contain("string CreateCrmOpportunityForCustomerUrl(Guid customerId) => Url.Action(\"CreateOpportunity\", \"Crm\", new { customerId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateCrmOpportunityForCustomerUrl(Model.CustomerId.Value)\"");
         source.Should().Contain("@T.T(\"CreateOpportunity\")");
         source.Should().Contain("else");
         source.Should().Contain("<button type=\"button\" class=\"btn btn-sm btn-outline-success\" disabled>");
@@ -5770,12 +6631,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         source.Should().Contain("<partial name=\"_LeadForm\" model=\"Model\" />");
         source.Should().Contain("@T.T(\"Save\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Leads\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmLeadsUrl() => Url.Action(\"Leads\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmLeadsUrl()\"");
         source.Should().Contain("@T.T(\"Back\")");
         source.Should().Contain("asp-fragment=\"lead-interactions-section\"");
         source.Should().Contain("fragment = \"lead-interactions-section\"");
         source.Should().Contain("id=\"lead-interactions-section\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"LeadInteractions\", \"Crm\", new { leadId = Model.Id })\"");
+        source.Should().Contain("string EditCrmLeadSectionUrl(Guid id) => Url.Action(\"EditLead\", \"Crm\", new { id, fragment = \"lead-interactions-section\" }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmLeadSectionUrl(Model.Id)\"");
+        source.Should().Contain("string CrmLeadInteractionsUrl(Guid leadId) => Url.Action(\"LeadInteractions\", \"Crm\", new { leadId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CrmLeadInteractionsUrl(Model.Id)\"");
         source.Should().Contain("@T.T(\"Open\")");
         source.Should().Contain("@T.T(\"Loading\")...");
     }
@@ -5801,9 +6666,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"OpportunityFollowUpWorkspaceNote\")");
         source.Should().Contain("string LocalizeOpportunityStage(object? stage) => stage is null ? \"-\" : T.T(stage.ToString() ?? string.Empty);");
         source.Should().Contain("<div class=\"fw-semibold\">@LocalizeOpportunityStage(Model.Stage)</div>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCustomer\", \"Crm\", new { id = Model.CustomerId })\"");
+        source.Should().Contain("string EditCrmCustomerUrl(Guid id) => Url.Action(\"EditCustomer\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmCustomerUrl(Model.CustomerId)\"");
         source.Should().Contain("@T.T(\"OpenCustomer\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\", new { q = Model.CustomerId })\"");
+        source.Should().Contain("string CrmInvoicesForCustomerUrl(Guid customerId) => Url.Action(\"Invoices\", \"Crm\", new { q = customerId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CrmInvoicesForCustomerUrl(Model.CustomerId)\"");
         source.Should().Contain("@T.T(\"ReviewInvoices\")");
     }
 
@@ -5822,12 +6689,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         source.Should().Contain("<partial name=\"_OpportunityForm\" model=\"Model\" />");
         source.Should().Contain("@T.T(\"Save\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Opportunities\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmOpportunitiesUrl() => Url.Action(\"Opportunities\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmOpportunitiesUrl()\"");
         source.Should().Contain("@T.T(\"Back\")");
         source.Should().Contain("asp-fragment=\"opportunity-interactions-section\"");
         source.Should().Contain("fragment = \"opportunity-interactions-section\"");
         source.Should().Contain("id=\"opportunity-interactions-section\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"OpportunityInteractions\", \"Crm\", new { opportunityId = Model.Id })\"");
+        source.Should().Contain("string EditCrmOpportunitySectionUrl(Guid id) => Url.Action(\"EditOpportunity\", \"Crm\", new { id, fragment = \"opportunity-interactions-section\" }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCrmOpportunitySectionUrl(Model.Id)\"");
+        source.Should().Contain("string CrmOpportunityInteractionsUrl(Guid opportunityId) => Url.Action(\"OpportunityInteractions\", \"Crm\", new { opportunityId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CrmOpportunityInteractionsUrl(Model.Id)\"");
         source.Should().Contain("@T.T(\"Open\")");
         source.Should().Contain("@T.T(\"Loading\")...");
     }
@@ -5885,7 +6756,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Quantity\")");
         source.Should().Contain("name=\"Items[__index__].UnitPriceMinor\" value=\"0\"");
         source.Should().Contain("@T.T(\"UnitPriceMinor\")");
-        source.Should().Contain("class=\"btn btn-sm btn-outline-danger remove-line\">@T.T(\"Remove\")</button>");
+        source.Should().Contain("class=\"btn btn-sm btn-outline-danger remove-line\" data-dynamic-lines-remove data-dynamic-lines-row=\".line-row\">@T.T(\"Remove\")</button>");
     }
 
 
@@ -5962,7 +6833,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"DefaultBilling\")");
         source.Should().Contain("name=\"Addresses[__index__].IsDefaultShipping\" value=\"false\"");
         source.Should().Contain("@T.T(\"DefaultShipping\")");
-        source.Should().Contain("class=\"btn btn-sm btn-outline-danger remove-address\">@T.T(\"Remove\")</button>");
+        source.Should().Contain("class=\"btn btn-sm btn-outline-danger remove-address\" data-dynamic-lines-remove data-dynamic-lines-row=\".address-row\">@T.T(\"Remove\")</button>");
     }
 
 
@@ -6038,7 +6909,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<textarea asp-for=\"Description\" class=\"form-control\" rows=\"4\"></textarea>");
         source.Should().Contain("<span asp-validation-for=\"Description\" class=\"text-danger\"></span>");
         source.Should().Contain("<button type=\"submit\" class=\"btn btn-primary\">@(isCreate ? T.T(\"Create\") : T.T(\"Save\"))</button>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Segments\", \"Crm\")\"");
+        source.Should().Contain("string GlobalCrmSegmentsUrl() => Url.Action(\"Segments\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalCrmSegmentsUrl()\"");
         source.Should().Contain("hx-target=\"#crm-segment-editor-shell\"");
         source.Should().Contain("hx-swap=\"outerHTML\"");
         source.Should().Contain("hx-push-url=\"true\"");
@@ -6047,28 +6919,19 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
 
     [Fact]
-    public void CrmCustomerFormScript_Should_KeepAddressEditorContractsWired()
+    public void CrmCustomerFormScript_Should_StayReplacedBySharedDynamicLinesAsset()
     {
-        var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "_CustomerFormScript.cshtml"));
+        var customerFormSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "_CustomerForm.cshtml"));
+        var dynamicLinesSource = ReadWebAdminFile(Path.Combine("wwwroot", "js", "dynamic-lines.js"));
 
-        source.Should().Contain("window.darwinAdmin = window.darwinAdmin || {};");
-        source.Should().Contain("window.darwinAdmin.initCustomerAddressEditor = window.darwinAdmin.initCustomerAddressEditor || function (root) {");
-        source.Should().Contain("if (!root) return;");
-        source.Should().Contain("const container = root.querySelector('#customerAddresses');");
-        source.Should().Contain("const template = root.querySelector('#customerAddressTemplate');");
-        source.Should().Contain("const addButton = root.querySelector('#addCustomerAddress');");
-        source.Should().Contain("if (addButton && !addButton.dataset.customerAddressesBound)");
-        source.Should().Contain("addButton.dataset.customerAddressesBound = 'true';");
-        source.Should().Contain("addButton.addEventListener('click', function () {");
-        source.Should().Contain("if (!container || !template) return;");
-        source.Should().Contain("const index = container.querySelectorAll('.address-row').length;");
-        source.Should().Contain("container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', index));");
-        source.Should().Contain("if (container && !container.dataset.customerAddressesRemoveBound)");
-        source.Should().Contain("container.dataset.customerAddressesRemoveBound = 'true';");
-        source.Should().Contain("container.addEventListener('click', function (event) {");
-        source.Should().Contain("const button = event.target.closest('.remove-address');");
-        source.Should().Contain("button.closest('.address-row')?.remove();");
-        source.Should().Contain("window.darwinAdmin.initCustomerAddressEditor(document.getElementById('crm-customer-editor-shell'));");
+        File.Exists(Path.Combine(WebAdminViewsRoot(), "Crm", "_CustomerFormScript.cshtml"))
+            .Should()
+            .BeFalse("customer address editing should use the shared dynamic-lines.js asset instead of a page-local inline script partial");
+        customerFormSource.Should().Contain("data-dynamic-lines-container=\"#customerAddresses\"");
+        customerFormSource.Should().Contain("data-dynamic-lines-template=\"#customerAddressTemplate\"");
+        customerFormSource.Should().Contain("data-dynamic-lines-row=\".address-row\"");
+        dynamicLinesSource.Should().Contain("data-dynamic-lines-add");
+        dynamicLinesSource.Should().Contain("data-dynamic-lines-remove");
     }
 
 
@@ -6198,19 +7061,22 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"ReviewOrder\")");
         source.Should().Contain("@T.T(\"ReviewPaymentTrail\")");
         source.Should().Contain("@T.T(\"RelatedInvoices\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditPayment\", \"Billing\", new { id = Model.PaymentId.Value })\"");
+        source.Should().Contain("string EditPaymentUrl(Guid id) => Url.Action(\"EditPayment\", \"Billing\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditPaymentUrl(Model.PaymentId.Value)\"");
         source.Should().Contain("var crmInvoiceEditorNeedsPendingPaymentFollowUp =");
         source.Should().Contain("var crmInvoiceEditorNeedsUnlinkedPaymentFollowUp =");
         source.Should().Contain("var crmInvoiceEditorNeedsRefundedPaymentFollowUp =");
         source.Should().Contain("@T.T(\"RefundQueueTitle\")");
         source.Should().Contain("@T.T(\"TaxInvoicingPolicy\")");
         source.Should().Contain("@T.T(\"OpenTaxSettings\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"TaxCompliance\", \"Billing\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { queue = PaymentQueueFilter.Pending })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { queue = PaymentQueueFilter.Unlinked })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\", new { queue = PaymentQueueFilter.Refunded })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Billing\")\"");
+        source.Should().Contain("hx-get=\"@GlobalTaxComplianceUrl()\"");
+        source.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        source.Should().Contain("string PaymentsUrl(PaymentQueueFilter? queue = null) => Url.Action(\"Payments\", \"Billing\", new { queue }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@PaymentsUrl(PaymentQueueFilter.Pending)\"");
+        source.Should().Contain("hx-get=\"@PaymentsUrl(PaymentQueueFilter.Unlinked)\"");
+        source.Should().Contain("hx-get=\"@PaymentsUrl(PaymentQueueFilter.Refunded)\"");
+        source.Should().Contain("hx-get=\"@GlobalRefundsUrl()\"");
         source.Should().Contain("@T.T(\"TaxSettings\")");
         source.Should().Contain("@T.T(\"CustomerTaxProfile\")");
         source.Should().Contain("@T.T(\"FixVatId\")");
@@ -6265,7 +7131,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@if (Model.IsFinancialContentLocked)");
         source.Should().Contain("@Model.FinancialEditLockReason");
         source.Should().Contain("@T.T(\"Save\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Invoices\", \"Crm\")\"");
+        source.Should().Contain("string GlobalInvoicesUrl() => Url.Action(\"Invoices\", \"Crm\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@GlobalInvoicesUrl()\"");
         source.Should().Contain("@T.T(\"Back\")");
     }
 
@@ -6619,7 +7486,13 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"ShippingMethods\")");
         source.Should().Contain("@T.T(\"ShippingMethodsWorkspaceIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"ShippingMethods\")\"");
+        source.Should().Contain("string ShippingMethodsGlobalIndexUrl() => Url.Action(\"Index\", \"ShippingMethods\") ?? string.Empty;");
+        source.Should().Contain("string ShippingMethodsIndexUrl(string filter) => Url.Action(\"Index\", \"ShippingMethods\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("string CreateShippingMethodUrl() => Url.Action(\"Create\", \"ShippingMethods\") ?? string.Empty;");
+        source.Should().Contain("string EditShippingMethodUrl(Guid id) => Url.Action(\"Edit\", \"ShippingMethods\", new { id }) ?? string.Empty;");
+        source.Should().Contain("string ShipmentsQueueUrl(string filter) => Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("string ShippingSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateShippingMethodUrl()\"");
         source.Should().Contain("@T.T(\"CreateMethod\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@Model.Summary.ActiveCount");
@@ -6653,15 +7526,21 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Updated\")");
         source.Should().Contain("@T.T(\"Actions\")");
         source.Should().Contain("@T.T(\"NoShippingMethodsFound\")");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"MissingRates\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"Dhl\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"Inactive\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"GlobalCoverage\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"MultiRate\")\"");
         source.Should().Contain("T.T(\"All\") : item.CountriesCsv");
         source.Should().Contain("item.RatesCount > 0 ? \"text-bg-success\" : \"text-bg-warning\"");
         source.Should().Contain("item.IsActive ? \"text-bg-success\" : \"text-bg-secondary\"");
         source.Should().Contain("item.IsActive ? T.T(\"Active\") : T.T(\"Inactive\")");
         source.Should().Contain("@T.T(\"DhlMethods\")");
         source.Should().Contain("@T.T(\"GlobalCoverage\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"MissingService\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"ShippingMethods\", new { id = item.Id })\"");
+        source.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"MissingService\")\"");
+        source.Should().Contain("hx-get=\"@ShippingSettingsUrl()\"");
+        source.Should().Contain("hx-get=\"@EditShippingMethodUrl(item.Id)\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsGlobalIndexUrl()\"");
         source.Should().Contain("asp-controller=\"ShippingMethods\"");
         source.Should().Contain("asp-route-query=\"@Model.Query\"");
         source.Should().Contain("asp-route-filter=\"@Model.Filter\"");
@@ -6677,16 +7556,21 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("string ShippingMethodEditorOpsHealthBadgeClass(bool healthy) => healthy ? \"text-bg-success\" : \"text-bg-warning\";");
         source.Should().Contain("var shippingMethodEditorMissingRates = Model.Rates.Count == 0;");
         source.Should().Contain("var shippingMethodEditorDhl = string.Equals(Model.Carrier, \"DHL\", StringComparison.OrdinalIgnoreCase);");
+        source.Should().Contain("string ShippingMethodsGlobalIndexUrl() => Url.Action(\"Index\", \"ShippingMethods\") ?? string.Empty;");
+        source.Should().Contain("string ShippingMethodsIndexUrl(string filter) => Url.Action(\"Index\", \"ShippingMethods\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("string CreateShippingMethodUrl() => Url.Action(\"Create\", \"ShippingMethods\") ?? string.Empty;");
+        source.Should().Contain("string ShipmentsQueueUrl(string filter) => Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("string ShippingSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" }) ?? string.Empty;");
         source.Should().Contain("@T.T(\"NeedsAttention\")");
         source.Should().Contain("T.T(\"CreateShippingMethod\")");
         source.Should().Contain("T.T(\"EditShippingMethod\")");
         source.Should().Contain("@T.T(\"ShippingMethodEditorIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"MissingRates\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"MissingService\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Dhl\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"ShippingMethods\")\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"MissingRates\")\"");
+        source.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"MissingService\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"Dhl\")\"");
+        source.Should().Contain("hx-get=\"@ShippingSettingsUrl()\"");
+        source.Should().Contain("hx-get=\"@CreateShippingMethodUrl()\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsGlobalIndexUrl()\"");
         source.Should().Contain("<partial name=\"_ShippingMethodForm\" model=\"Model\" />");
     }
 
@@ -6702,18 +7586,24 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("var shippingMethodFormGlobalCoverage = string.IsNullOrWhiteSpace(Model.CountriesCsv);");
         source.Should().Contain("var shippingMethodFormMissingCurrency = string.IsNullOrWhiteSpace(Model.Currency);");
         source.Should().Contain("var shippingMethodFormInactive = !Model.IsActive;");
+        source.Should().Contain("string ShippingMethodsGlobalIndexUrl() => Url.Action(\"Index\", \"ShippingMethods\") ?? string.Empty;");
+        source.Should().Contain("string ShippingMethodsIndexUrl(string filter) => Url.Action(\"Index\", \"ShippingMethods\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("string CreateShippingMethodUrl() => Url.Action(\"Create\", \"ShippingMethods\") ?? string.Empty;");
+        source.Should().Contain("string ShipmentsQueueUrl(string filter) => Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("string ShippingSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" }) ?? string.Empty;");
         source.Should().Contain("var shippingMethodFormAttentionCount =");
         source.Should().Contain("@T.T(\"NeedsAttention\"): @shippingMethodFormAttentionCount");
         source.Should().Contain("@T.T(\"ShippingMethods\")");
         source.Should().Contain("@T.T(\"ShippingMethodEditorIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"MissingRates\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"MissingService\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Dhl\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"GlobalCoverage\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ShipmentsQueue\", \"Orders\", new { filter = \"CarrierReview\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Inactive\" })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"ShippingMethods\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"MissingRates\")\"");
+        source.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"MissingService\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"Dhl\")\"");
+        source.Should().Contain("hx-get=\"@ShippingSettingsUrl()\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"GlobalCoverage\")\"");
+        source.Should().Contain("hx-get=\"@ShipmentsQueueUrl(\"CarrierReview\")\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsIndexUrl(\"Inactive\")\"");
+        source.Should().Contain("hx-get=\"@CreateShippingMethodUrl()\"");
+        source.Should().Contain("hx-get=\"@ShippingMethodsGlobalIndexUrl()\"");
         source.Should().Contain("@T.T(\"MethodDetails\")");
         source.Should().Contain("@T.T(\"ShippingMethodCountriesPlaceholder\")");
         source.Should().Contain("@T.T(\"LeaveCountriesEmpty\")");
@@ -6721,9 +7611,9 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"AddRate\")");
         source.Should().Contain("@T.T(\"Currency\"): @(shippingMethodFormMissingCurrency ? 1 : 0)");
         source.Should().Contain("@T.T(\"ShippingRateTiersHelp\")");
-        source.Should().Contain("window.darwinAdmin.addShippingRateRow = function ()");
-        source.Should().Contain("window.darwinAdmin.removeShippingRateRow = function (button)");
-        source.Should().Contain("window.darwinAdmin.initShippingMethodForm = function ()");
+        source.Should().Contain("data-shipping-rate-add");
+        source.Should().Contain("data-shipping-rate-remove");
+        source.Should().NotContain("<script>");
     }
 
 
@@ -6737,14 +7627,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("string PurchaseOrderOpsHealthBadgeClass(bool healthy) => healthy");
         source.Should().Contain("string PurchaseOrderOpsHealthBadgeText(bool healthy) => healthy ? T.T(\"Ready\") : T.T(\"NeedsAttention\")");
         source.Should().Contain("var purchaseOrderAttentionCount = Model.Summary.DraftCount + Model.Summary.IssuedCount;");
-        source.Should().Contain("hx-get=\"@Url.Action(\"PurchaseOrders\", \"Inventory\")\"");
+        source.Should().Contain("string PurchaseOrdersUrl(object? businessId = null, string? q = null, string? filter = null) => Url.Action(\"PurchaseOrders\", \"Inventory\", new { businessId, q, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@PurchaseOrdersUrl()\"");
         source.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         source.Should().Contain("name=\"q\" value=\"@Model.Query\"");
         source.Should().Contain("@T.T(\"SearchPurchaseOrdersPlaceholder\")");
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"Filter\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreatePurchaseOrder\", \"Inventory\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string CreatePurchaseOrderUrl(object? businessId = null) => Url.Action(\"CreatePurchaseOrder\", \"Inventory\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreatePurchaseOrderUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"NewPurchaseOrder\")");
         source.Should().Contain("asp-route-filter=\"Draft\"");
         source.Should().Contain("asp-route-filter=\"Issued\"");
@@ -6757,7 +7649,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"GoLiveReadiness\")");
         source.Should().Contain("@T.T(\"NeedsAttention\")");
         source.Should().Contain("@T.T(\"Suppliers\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Suppliers\", \"Inventory\", new { businessId = Model.BusinessId, filter = \"HasPurchaseOrders\" })\"");
+        source.Should().Contain("string SuppliersUrl(object? businessId = null, string? filter = null) => Url.Action(\"Suppliers\", \"Inventory\", new { businessId, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@SuppliersUrl(Model.BusinessId, \"HasPurchaseOrders\")\"");
         source.Should().Contain("@T.T(\"PurchaseOrderOpsPlaybooks\")");
         source.Should().Contain("@T.T(\"Playbook\")");
         source.Should().Contain("@T.T(\"WhenItApplies\")");
@@ -6774,7 +7667,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"NoPurchaseOrdersFound\")");
         source.Should().Contain("T.T(\"Issued\")");
         source.Should().Contain("T.T(\"Received\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditPurchaseOrder\", \"Inventory\", new { id = item.Id })\"");
+        source.Should().Contain("string EditPurchaseOrderUrl(Guid id) => Url.Action(\"EditPurchaseOrder\", \"Inventory\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditPurchaseOrderUrl(item.Id)\"");
         source.Should().Contain("asp-controller=\"Inventory\"");
         source.Should().Contain("asp-action=\"PurchaseOrders\"");
         source.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
@@ -6884,7 +7778,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         adjustSource.Should().Contain("asp-for=\"ReferenceId\" class=\"form-control\"");
         adjustSource.Should().Contain("@T.T(\"InventoryReferenceIdAuditHelp\")");
         adjustSource.Should().Contain("@T.T(\"InventoryApplyAdjustment\")");
-        adjustSource.Should().Contain("hx-get=\"@Url.Action(\"StockLevels\", \"Inventory\", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })\"");
+        adjustSource.Should().Contain("string StockLevelsUrl(Guid? businessId, Guid? warehouseId) => Url.Action(\"StockLevels\", \"Inventory\", new { businessId, warehouseId }) ?? string.Empty;");
+        adjustSource.Should().Contain("hx-get=\"@StockLevelsUrl(Model.BusinessId, Model.WarehouseId)\"");
         adjustSource.Should().Contain("@T.T(\"InventoryBackToStockLevels\")");
 
         reserveSource.Should().Contain("id=\"inventory-reserve-stock-editor-shell\"");
@@ -6907,7 +7802,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         reserveSource.Should().Contain("asp-for=\"ReferenceId\" class=\"form-control\"");
         reserveSource.Should().Contain("@T.T(\"InventoryReferenceIdAuditHelp\")");
         reserveSource.Should().Contain("class=\"btn btn-warning\">@T.T(\"InventoryReserveStockTitle\")</button>");
-        reserveSource.Should().Contain("hx-get=\"@Url.Action(\"StockLevels\", \"Inventory\", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })\"");
+        reserveSource.Should().Contain("string StockLevelsUrl(Guid? businessId, Guid? warehouseId) => Url.Action(\"StockLevels\", \"Inventory\", new { businessId, warehouseId }) ?? string.Empty;");
+        reserveSource.Should().Contain("hx-get=\"@StockLevelsUrl(Model.BusinessId, Model.WarehouseId)\"");
         reserveSource.Should().Contain("@T.T(\"InventoryBackToStockLevels\")");
     }
 
@@ -6939,7 +7835,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         releaseSource.Should().Contain("asp-for=\"ReferenceId\" class=\"form-control\"");
         releaseSource.Should().Contain("@T.T(\"InventoryReferenceIdAuditHelp\")");
         releaseSource.Should().Contain("class=\"btn btn-info\">@T.T(\"InventoryReleaseReservationTitle\")</button>");
-        releaseSource.Should().Contain("hx-get=\"@Url.Action(\"StockLevels\", \"Inventory\", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })\"");
+        releaseSource.Should().Contain("string StockLevelsUrl(Guid? businessId, Guid? warehouseId) => Url.Action(\"StockLevels\", \"Inventory\", new { businessId, warehouseId }) ?? string.Empty;");
+        releaseSource.Should().Contain("hx-get=\"@StockLevelsUrl(Model.BusinessId, Model.WarehouseId)\"");
         releaseSource.Should().Contain("@T.T(\"InventoryBackToStockLevels\")");
 
         returnSource.Should().Contain("id=\"inventory-return-receipt-editor-shell\"");
@@ -6962,7 +7859,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         returnSource.Should().Contain("asp-for=\"ReferenceId\" class=\"form-control\"");
         returnSource.Should().Contain("@T.T(\"InventoryReturnReferenceHelp\")");
         returnSource.Should().Contain("class=\"btn btn-dark\">@T.T(\"InventoryProcessReturn\")</button>");
-        returnSource.Should().Contain("hx-get=\"@Url.Action(\"StockLevels\", \"Inventory\", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })\"");
+        returnSource.Should().Contain("string StockLevelsUrl(Guid? businessId, Guid? warehouseId) => Url.Action(\"StockLevels\", \"Inventory\", new { businessId, warehouseId }) ?? string.Empty;");
+        returnSource.Should().Contain("hx-get=\"@StockLevelsUrl(Model.BusinessId, Model.WarehouseId)\"");
         returnSource.Should().Contain("@T.T(\"InventoryBackToStockLevels\")");
     }
 
@@ -6975,15 +7873,19 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("id=\"loyalty-programs-workspace-shell\"");
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"LoyaltyProgramsTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Programs\", \"Loyalty\")\"");
+        source.Should().Contain("string ProgramsUrl(object? businessId = null, string? filter = null) => Url.Action(\"Programs\", \"Loyalty\", new { businessId, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ProgramsUrl()\"");
         source.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         source.Should().Contain("@T.T(\"Filter\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Campaigns\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string CampaignsUrl(object? businessId = null) => Url.Action(\"Campaigns\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CampaignsUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"Campaigns\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ScanSessions\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string ScanSessionsUrl(object? businessId = null) => Url.Action(\"ScanSessions\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ScanSessionsUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"LoyaltyScanSessionsTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateProgram\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string CreateProgramUrl(object? businessId = null) => Url.Action(\"CreateProgram\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateProgramUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"LoyaltyNewProgram\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@Model.Summary.ActiveCount");
@@ -7011,9 +7913,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"LoyaltyNoProgramsFound\")");
         source.Should().Contain("item.IsActive ? T.T(\"Active\") : T.T(\"Inactive\")");
         source.Should().Contain("@T.T(\"LoyaltySpendBased\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"RewardTiers\", \"Loyalty\", new { loyaltyProgramId = item.Id })\"");
+        source.Should().Contain("string RewardTiersUrl(Guid loyaltyProgramId) => Url.Action(\"RewardTiers\", \"Loyalty\", new { loyaltyProgramId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@RewardTiersUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"LoyaltyRewards\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditProgram\", \"Loyalty\", new { id = item.Id })\"");
+        source.Should().Contain("string EditProgramUrl(Guid id) => Url.Action(\"EditProgram\", \"Loyalty\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditProgramUrl(item.Id)\"");
         source.Should().Contain("hx-post=\"@Url.Action(\"DeleteProgram\", \"Loyalty\")\"");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("name=\"rowVersion\" value=\"@Convert.ToBase64String(item.RowVersion)\"");
@@ -7051,9 +7955,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         formSource.Should().Contain("@T.T(\"LoyaltyRulesJsonHelp\")");
         formSource.Should().Contain("asp-for=\"IsActive\" class=\"form-check-input\"");
         formSource.Should().Contain("class=\"btn btn-primary\">@(ViewData[\"IsCreate\"] as bool? == true ? T.T(\"Create\") : T.T(\"Save\"))</button>");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"Programs\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        formSource.Should().Contain("string ProgramsUrl(object? businessId = null) => Url.Action(\"Programs\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@ProgramsUrl(Model.BusinessId)\"");
         formSource.Should().Contain("@T.T(\"Back\")");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"RewardTiers\", \"Loyalty\", new { loyaltyProgramId = Model.Id })\"");
+        formSource.Should().Contain("string RewardTiersUrl(Guid loyaltyProgramId) => Url.Action(\"RewardTiers\", \"Loyalty\", new { loyaltyProgramId }) ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@RewardTiersUrl(Model.Id)\"");
         formSource.Should().Contain("@T.T(\"LoyaltyRewardTiersTitle\")");
     }
 
@@ -7080,9 +7986,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("string LocalizeRewardType(object? rewardType) => rewardType is null ? \"-\" : T.T(rewardType.ToString() ?? string.Empty);");
         source.Should().Contain("@T.T(\"LoyaltyRewardTiersTitle\")");
         source.Should().Contain("@Model.ProgramName");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditProgram\", \"Loyalty\", new { id = Model.LoyaltyProgramId })\"");
+        source.Should().Contain("string EditProgramUrl(Guid id) => Url.Action(\"EditProgram\", \"Loyalty\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditProgramUrl(Model.LoyaltyProgramId)\"");
         source.Should().Contain("@T.T(\"LoyaltyProgram\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateRewardTier\", \"Loyalty\", new { loyaltyProgramId = Model.LoyaltyProgramId })\"");
+        source.Should().Contain("string CreateRewardTierUrl(Guid loyaltyProgramId) => Url.Action(\"CreateRewardTier\", \"Loyalty\", new { loyaltyProgramId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateRewardTierUrl(Model.LoyaltyProgramId)\"");
         source.Should().Contain("@T.T(\"LoyaltyNewRewardTier\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@Model.Summary.SelfRedemptionCount");
@@ -7096,7 +8004,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@playbook.Title");
         source.Should().Contain("@playbook.ScopeNote");
         source.Should().Contain("@playbook.OperatorAction");
-        source.Should().Contain("hx-get=\"@Url.Action(\"RewardTiers\", \"Loyalty\")\"");
+        source.Should().Contain("string RewardTiersUrl(object? loyaltyProgramId = null, string? filter = null) => Url.Action(\"RewardTiers\", \"Loyalty\", new { loyaltyProgramId, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@RewardTiersUrl()\"");
         source.Should().Contain("name=\"loyaltyProgramId\" value=\"@Model.LoyaltyProgramId\"");
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"Filter\")");
@@ -7116,7 +8025,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@LocalizeRewardType(item.RewardType)");
         source.Should().Contain("item.AllowSelfRedemption ? T.T(\"Enabled\") : T.T(\"LoyaltyManual\")");
         source.Should().Contain("@T.T(\"LoyaltyMissingDescription\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditRewardTier\", \"Loyalty\", new { id = item.Id, loyaltyProgramId = item.LoyaltyProgramId })\"");
+        source.Should().Contain("string EditRewardTierUrl(Guid id, Guid loyaltyProgramId) => Url.Action(\"EditRewardTier\", \"Loyalty\", new { id, loyaltyProgramId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditRewardTierUrl(item.Id, item.LoyaltyProgramId)\"");
         source.Should().Contain("hx-post=\"@Url.Action(\"DeleteRewardTier\", \"Loyalty\")\"");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("name=\"rowVersion\" value=\"@Convert.ToBase64String(item.RowVersion)\"");
@@ -7184,7 +8094,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         formSource.Should().Contain("@T.T(\"LoyaltyRewardMetadataHelp\")");
         formSource.Should().Contain("asp-for=\"AllowSelfRedemption\" class=\"form-check-input\"");
         formSource.Should().Contain("class=\"btn btn-primary\">@(ViewData[\"IsCreate\"] as bool? == true ? T.T(\"Create\") : T.T(\"Save\"))</button>");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"RewardTiers\", \"Loyalty\", new { loyaltyProgramId = Model.LoyaltyProgramId })\"");
+        formSource.Should().Contain("string RewardTiersUrl(Guid loyaltyProgramId) => Url.Action(\"RewardTiers\", \"Loyalty\", new { loyaltyProgramId }) ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@RewardTiersUrl(Model.LoyaltyProgramId)\"");
         formSource.Should().Contain("@T.T(\"Back\")");
     }
 
@@ -7197,22 +8108,28 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("id=\"loyalty-accounts-workspace-shell\"");
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"LoyaltyAccountsTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\")\"");
+        source.Should().Contain("string AccountsUrl(object? businessId = null, string? q = null, Darwin.Domain.Enums.LoyaltyAccountStatus? status = null) => Url.Action(\"Accounts\", \"Loyalty\", new { businessId, q, status }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@AccountsUrl()\"");
         source.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         source.Should().Contain("name=\"q\" value=\"@Model.Query\"");
         source.Should().Contain("@T.T(\"LoyaltySearchByMember\")");
         source.Should().Contain("name=\"status\" asp-items=\"Model.StatusItems\"");
         source.Should().Contain("@T.T(\"Filter\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateAccount\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string CreateAccountUrl(object? businessId = null) => Url.Action(\"CreateAccount\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateAccountUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"LoyaltyCreateAccount\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Programs\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string ProgramsUrl(object? businessId = null) => Url.Action(\"Programs\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ProgramsUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"Programs\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Campaigns\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string CampaignsUrl(object? businessId = null) => Url.Action(\"Campaigns\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CampaignsUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"Campaigns\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Redemptions\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string RedemptionsUrl(object? businessId = null) => Url.Action(\"Redemptions\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@RedemptionsUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"Redemptions\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"ScanSessions\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string ScanSessionsUrl(object? businessId = null) => Url.Action(\"ScanSessions\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@ScanSessionsUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"LoyaltyScanSessionsTitle\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@Model.Summary.ActiveCount");
@@ -7237,9 +8154,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Actions\")");
         source.Should().Contain("@T.T(\"LoyaltyNoAccountsFound\")");
         source.Should().Contain("@LocalizeAccountStatus(item.Status)");
-        source.Should().Contain("hx-get=\"@Url.Action(\"AccountDetails\", \"Loyalty\", new { id = item.Id })\"");
+        source.Should().Contain("string AccountDetailsUrl(Guid id) => Url.Action(\"AccountDetails\", \"Loyalty\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@AccountDetailsUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Details\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"AdjustPoints\", \"Loyalty\", new { loyaltyAccountId = item.Id })\"");
+        source.Should().Contain("string AdjustPointsUrl(Guid loyaltyAccountId) => Url.Action(\"AdjustPoints\", \"Loyalty\", new { loyaltyAccountId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@AdjustPointsUrl(item.Id)\"");
         source.Should().Contain("@T.T(\"Adjust\")");
         source.Should().Contain("asp-controller=\"Loyalty\"");
         source.Should().Contain("asp-action=\"Accounts\"");
@@ -7270,27 +8189,28 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createFormSource.Should().Contain("@T.T(\"Member\")");
         createFormSource.Should().Contain("@T.T(\"LoyaltyCreateAccountHelp\")");
         createFormSource.Should().Contain("@T.T(\"LoyaltyCreateAccount\")");
-        createFormSource.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        createFormSource.Should().Contain("string AccountsUrl(object? businessId = null) => Url.Action(\"Accounts\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        createFormSource.Should().Contain("hx-get=\"@AccountsUrl(Model.BusinessId)\"");
         createFormSource.Should().Contain("@T.T(\"Cancel\")");
 
         detailsSource.Should().Contain("id=\"loyalty-account-workspace-shell\"");
         detailsSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         detailsSource.Should().Contain("@T.T(\"LoyaltyAccountTitle\")");
         detailsSource.Should().Contain("@Model.UserDisplayName (@Model.UserEmail)");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Redemptions\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        detailsSource.Should().Contain("hx-get=\"@RedemptionsUrl(Model.BusinessId)\"");
         detailsSource.Should().Contain("@T.T(\"Redemptions\")");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { q = Model.UserEmail })\"");
+        detailsSource.Should().Contain("hx-get=\"@MobileOperationsUrl(Model.BusinessId, Model.UserEmail)\"");
         detailsSource.Should().Contain("@T.T(\"LoyaltyMobileOps\")");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true })\"");
+        detailsSource.Should().Contain("hx-get=\"@ProviderReviewChannelAuditsUrl()\"");
         detailsSource.Should().Contain("@T.T(\"ProviderReview\")");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"AdjustPoints\", \"Loyalty\", new { loyaltyAccountId = Model.Id })\"");
+        detailsSource.Should().Contain("hx-get=\"@AdjustPointsUrl(Model.Id)\"");
         detailsSource.Should().Contain("@T.T(\"LoyaltyAdjustPoints\")");
         detailsSource.Should().Contain("hx-post=\"@Url.Action(\"SuspendAccount\", \"Loyalty\")\"");
         detailsSource.Should().Contain("@T.T(\"Suspend\")");
         detailsSource.Should().Contain("hx-post=\"@Url.Action(\"ActivateAccount\", \"Loyalty\")\"");
         detailsSource.Should().Contain("@T.T(\"Activate\")");
         detailsSource.Should().Contain("name=\"rowVersion\" value=\"@Convert.ToBase64String(Model.RowVersion)\"");
-        detailsSource.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        detailsSource.Should().Contain("hx-get=\"@LoyaltyAccountsUrl(Model.BusinessId)\"");
         detailsSource.Should().Contain("@T.T(\"Back\")");
         detailsSource.Should().Contain("string LocalizeAccountStatus(Darwin.Domain.Enums.LoyaltyAccountStatus status) => T.T(status.ToString());");
         detailsSource.Should().Contain("string LocalizeRedemptionStatus(Darwin.Domain.Enums.LoyaltyRedemptionStatus status) => T.T(status.ToString());");
@@ -7338,7 +8258,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"LoyaltyCampaignsTitle\")");
         source.Should().Contain("@T.T(\"LoyaltyCampaignsIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"CreateCampaign\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        source.Should().Contain("string CreateCampaignUrl(object? businessId = null) => Url.Action(\"CreateCampaign\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateCampaignUrl(Model.BusinessId)\"");
         source.Should().Contain("@T.T(\"LoyaltyNewCampaign\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@Model.Summary.ActiveCount");
@@ -7353,7 +8274,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@playbook.Title");
         source.Should().Contain("@playbook.ScopeNote");
         source.Should().Contain("@playbook.OperatorAction");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Campaigns\", \"Loyalty\")\"");
+        source.Should().Contain("string CampaignsUrl(object? businessId = null, string? filter = null) => Url.Action(\"Campaigns\", \"Loyalty\", new { businessId, filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CampaignsUrl()\"");
         source.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"Filter\")");
@@ -7377,7 +8299,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@LocalizeCampaignState(item.CampaignState)");
         source.Should().Contain("@T.T(\"LoyaltyPushEnabled\")");
         source.Should().Contain("@T.T(\"LoyaltyTo\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"EditCampaign\", \"Loyalty\", new { id = item.Id, businessId = item.BusinessId })\"");
+        source.Should().Contain("string EditCampaignUrl(Guid id, Guid businessId) => Url.Action(\"EditCampaign\", \"Loyalty\", new { id, businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditCampaignUrl(item.Id, item.BusinessId)\"");
         source.Should().Contain("hx-post=\"@Url.Action(\"SetCampaignActivation\", \"Loyalty\")\"");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("name=\"rowVersion\" value=\"@Convert.ToBase64String(item.RowVersion)\"");
@@ -7427,7 +8350,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         formSource.Should().Contain("textarea asp-for=\"PayloadJson\" class=\"form-control\" rows=\"4\"></textarea>");
         formSource.Should().Contain("@T.T(\"LoyaltyPayloadJsonHelp\")");
         formSource.Should().Contain("class=\"btn btn-primary\">@(ViewData[\"IsCreate\"] as bool? == true ? T.T(\"Create\") : T.T(\"Save\"))</button>");
-        formSource.Should().Contain("hx-get=\"@Url.Action(\"Campaigns\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        formSource.Should().Contain("string CampaignsUrl(object? businessId = null) => Url.Action(\"Campaigns\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        formSource.Should().Contain("hx-get=\"@CampaignsUrl(Model.BusinessId)\"");
         formSource.Should().Contain("@T.T(\"Back\")");
     }
 
@@ -7442,13 +8366,17 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         scanSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         scanSource.Should().Contain("@T.T(\"LoyaltyScanSessionsTitle\")");
         scanSource.Should().Contain("@T.T(\"LoyaltyScanSessionsIntro\")");
-        scanSource.Should().Contain("hx-get=\"@Url.Action(\"Redemptions\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        scanSource.Should().Contain("string RedemptionsUrl(object? businessId = null) => Url.Action(\"Redemptions\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        scanSource.Should().Contain("hx-get=\"@RedemptionsUrl(Model.BusinessId)\"");
         scanSource.Should().Contain("@T.T(\"Redemptions\")");
-        scanSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\")\"");
+        scanSource.Should().Contain("string MobileOperationsUrl(object? businessId = null, string? q = null) => Url.Action(\"Index\", \"MobileOperations\", new { businessId, q }) ?? string.Empty;");
+        scanSource.Should().Contain("hx-get=\"@MobileOperationsUrl(Model.BusinessId)\"");
         scanSource.Should().Contain("@T.T(\"LoyaltyMobileOps\")");
-        scanSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true })\"");
+        scanSource.Should().Contain("string ProviderReviewUrl() => Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true }) ?? string.Empty;");
+        scanSource.Should().Contain("hx-get=\"@ProviderReviewUrl()\"");
         scanSource.Should().Contain("@T.T(\"ProviderReview\")");
-        scanSource.Should().Contain("hx-get=\"@Url.Action(\"ScanSessions\", \"Loyalty\")\"");
+        scanSource.Should().Contain("string ScanSessionsUrl(object? businessId = null, string? q = null, Darwin.Domain.Enums.LoyaltyScanMode? mode = null, Darwin.Domain.Enums.LoyaltyScanStatus? status = null) => Url.Action(\"ScanSessions\", \"Loyalty\", new { businessId, q, mode, status }) ?? string.Empty;");
+        scanSource.Should().Contain("hx-get=\"@ScanSessionsUrl()\"");
         scanSource.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         scanSource.Should().Contain("name=\"q\" value=\"@Model.Query\"");
         scanSource.Should().Contain("@T.T(\"LoyaltySearchCustomerOrOutcome\")");
@@ -7491,7 +8419,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         scanSource.Should().Contain("@LocalizeScanOutcome(item.Outcome)");
         scanSource.Should().Contain("@LocalizeScanFailureReason(item.FailureReason)");
         scanSource.Should().Contain("@T.T(\"LoyaltyExp\")");
-        scanSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { q = item.CustomerEmail })\"");
+        scanSource.Should().Contain("hx-get=\"@MobileOperationsUrl(item.BusinessId, item.CustomerEmail)\"");
         scanSource.Should().Contain("asp-controller=\"Loyalty\"");
         scanSource.Should().Contain("asp-action=\"ScanSessions\"");
         scanSource.Should().Contain("asp-route-businessId=\"@Model.BusinessId\"");
@@ -7503,13 +8431,17 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         redemptionsSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyRedemptionsTitle\")");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyRedemptionsIntro\")");
-        redemptionsSource.Should().Contain("hx-get=\"@Url.Action(\"Accounts\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        redemptionsSource.Should().Contain("string AccountsUrl(object? businessId = null) => Url.Action(\"Accounts\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        redemptionsSource.Should().Contain("hx-get=\"@AccountsUrl(Model.BusinessId)\"");
         redemptionsSource.Should().Contain("@T.T(\"Accounts\")");
-        redemptionsSource.Should().Contain("hx-get=\"@Url.Action(\"ScanSessions\", \"Loyalty\", new { businessId = Model.BusinessId })\"");
+        redemptionsSource.Should().Contain("string ScanSessionsUrl(object? businessId = null) => Url.Action(\"ScanSessions\", \"Loyalty\", new { businessId }) ?? string.Empty;");
+        redemptionsSource.Should().Contain("hx-get=\"@ScanSessionsUrl(Model.BusinessId)\"");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyScanSessionsTitle\")");
-        redemptionsSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true })\"");
+        redemptionsSource.Should().Contain("string ProviderReviewUrl() => Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { providerReviewOnly = true }) ?? string.Empty;");
+        redemptionsSource.Should().Contain("hx-get=\"@ProviderReviewUrl()\"");
         redemptionsSource.Should().Contain("@T.T(\"ProviderReview\")");
-        redemptionsSource.Should().Contain("hx-get=\"@Url.Action(\"Redemptions\", \"Loyalty\")\"");
+        redemptionsSource.Should().Contain("string RedemptionsUrl(object? businessId = null, string? q = null, Darwin.Domain.Enums.LoyaltyRedemptionStatus? status = null) => Url.Action(\"Redemptions\", \"Loyalty\", new { businessId, q, status }) ?? string.Empty;");
+        redemptionsSource.Should().Contain("hx-get=\"@RedemptionsUrl()\"");
         redemptionsSource.Should().Contain("name=\"businessId\" asp-items=\"Model.BusinessOptions\"");
         redemptionsSource.Should().Contain("name=\"q\" value=\"@Model.Query\"");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltySearchMemberRewardOutcome\")");
@@ -7548,9 +8480,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         redemptionsSource.Should().Contain("@LocalizeScanOutcome(item.ScanOutcome)");
         redemptionsSource.Should().Contain("LocalizeScanFailureReason(item.ScanFailureReason)");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyPts\")");
-        redemptionsSource.Should().Contain("hx-get=\"@Url.Action(\"AccountDetails\", \"Loyalty\", new { id = item.LoyaltyAccountId })\"");
+        redemptionsSource.Should().Contain("string AccountDetailsUrl(Guid id) => Url.Action(\"AccountDetails\", \"Loyalty\", new { id }) ?? string.Empty;");
+        redemptionsSource.Should().Contain("hx-get=\"@AccountDetailsUrl(item.LoyaltyAccountId)\"");
         redemptionsSource.Should().Contain("@T.T(\"Account\")");
-        redemptionsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\", new { q = item.ConsumerEmail })\"");
+        redemptionsSource.Should().Contain("string MobileOperationsUrl(object? businessId = null, string? q = null) => Url.Action(\"Index\", \"MobileOperations\", new { businessId, q }) ?? string.Empty;");
+        redemptionsSource.Should().Contain("hx-get=\"@MobileOperationsUrl(item.BusinessId, item.ConsumerEmail)\"");
         redemptionsSource.Should().Contain("@T.T(\"LoyaltyMobileOps\")");
         redemptionsSource.Should().Contain("hx-post=\"@Url.Action(\"ConfirmRedemption\", \"Loyalty\")\"");
         redemptionsSource.Should().Contain("@T.T(\"Confirm\")");
@@ -7750,7 +8684,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         ownerOverrideSource.Should().Contain("@using System.Globalization");
         ownerOverrideSource.Should().Contain("@item.CreatedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)");
-        ownerOverrideSource.Should().Contain("hx-get=\"@Url.Action(\"EditMember\", \"Businesses\", new { id = item.BusinessMemberId })\"");
+        ownerOverrideSource.Should().Contain("hx-get=\"@EditMemberUrl(item.BusinessMemberId)\"");
 
         subscriptionInvoicesSource.Should().Contain("@using System.Globalization");
         subscriptionInvoicesSource.Should().Contain("timestampUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? \"-\"");
@@ -7830,7 +8764,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("asp-for=\"Reason\" class=\"form-control\"");
         source.Should().Contain("asp-for=\"Reference\" class=\"form-control\"");
         source.Should().Contain("@T.T(\"LoyaltyApply\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"AccountDetails\", \"Loyalty\", new { id = Model.LoyaltyAccountId })\"");
+        source.Should().Contain("string AccountDetailsUrl(Guid id) => Url.Action(\"AccountDetails\", \"Loyalty\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@AccountDetailsUrl(Model.LoyaltyAccountId)\"");
         source.Should().Contain("@T.T(\"Back\")");
     }
 
@@ -7914,13 +8849,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"Brands\")");
         source.Should().Contain("@T.T(\"BrandsWorkspaceIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Brands\")\"");
+        source.Should().Contain("string BrandsIndexUrl(string? query = null, string? filter = null) => Url.Action(\"Index\", \"Brands\", new { query, filter }) ?? string.Empty;");
+        source.Should().Contain("string BrandsCreateUrl() => Url.Action(\"Create\", \"Brands\") ?? string.Empty;");
+        source.Should().Contain("string BrandsEditUrl(Guid id) => Url.Action(\"Edit\", \"Brands\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@BrandsIndexUrl()\"");
         source.Should().Contain("name=\"query\" value=\"@Model.Query\"");
         source.Should().Contain("name=\"filter\" value=\"@Model.Filter\"");
         source.Should().Contain("@T.T(\"SearchBrandsPlaceholder\")");
         source.Should().Contain("@T.T(\"Search\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"Brands\")\"");
+        source.Should().Contain("hx-get=\"@BrandsCreateUrl()\"");
         source.Should().Contain("@T.T(\"CreateBrand\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@T.T(\"BrandsOpsTotalNote\")");
@@ -7933,6 +8871,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("asp-route-filter=\"unpublished\"");
         source.Should().Contain("asp-route-filter=\"missing-slug\"");
         source.Should().Contain("asp-route-filter=\"missing-logo\"");
+        source.Should().Contain("hx-get=\"@BrandsIndexUrl(Model.Query)\"");
+        source.Should().Contain("hx-get=\"@BrandsIndexUrl(Model.Query, \"unpublished\")\"");
+        source.Should().Contain("hx-get=\"@BrandsIndexUrl(Model.Query, \"missing-slug\")\"");
+        source.Should().Contain("hx-get=\"@BrandsIndexUrl(Model.Query, \"missing-logo\")\"");
         source.Should().Contain("@T.T(\"BrandOperationsPlaybooks\")");
         source.Should().Contain("@playbook.QueueLabel");
         source.Should().Contain("@playbook.WhyItMatters");
@@ -7948,7 +8890,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"NoBrandsFound\")");
         source.Should().Contain("span class=\"badge bg-success\">@T.T(\"Yes\")</span>");
         source.Should().Contain("span class=\"badge bg-outline-secondary border\">@T.T(\"No\")</span>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Brands\", new { id = b.Id })\"");
+        source.Should().Contain("hx-get=\"@BrandsEditUrl(b.Id)\"");
         source.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Brands\")\"");
         source.Should().Contain("data-rowversion=\"@Convert.ToBase64String(b.RowVersion)\"");
         source.Should().Contain("asp-controller=\"Brands\"");
@@ -8273,13 +9215,17 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"Categories\")");
         source.Should().Contain("@T.T(\"CategoriesWorkspaceIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Categories\")\"");
+        source.Should().Contain("string CategoriesIndexUrl(string? query = null, string? filter = null) => Url.Action(\"Index\", \"Categories\", new { query, filter }) ?? string.Empty;");
+        source.Should().Contain("string CategoriesCreateUrl() => Url.Action(\"Create\", \"Categories\") ?? string.Empty;");
+        source.Should().Contain("string CategoriesEditUrl(Guid id) => Url.Action(\"Edit\", \"Categories\", new { id }) ?? string.Empty;");
+        source.Should().Contain("string FormatTimestamp(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? \"-\";");
+        source.Should().Contain("hx-get=\"@CategoriesIndexUrl()\"");
         source.Should().Contain("name=\"query\" value=\"@query\"");
         source.Should().Contain("name=\"filter\" value=\"@filter\"");
         source.Should().Contain("@T.T(\"SearchCategoriesPlaceholder\")");
         source.Should().Contain("@T.T(\"Search\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"Categories\")\"");
+        source.Should().Contain("hx-get=\"@CategoriesCreateUrl()\"");
         source.Should().Contain("@T.T(\"CreateCategory\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@T.T(\"CategoriesOpsTotalNote\")");
@@ -8293,6 +9239,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("asp-route-filter=\"unpublished\"");
         source.Should().Contain("asp-route-filter=\"root\"");
         source.Should().Contain("asp-route-filter=\"child\"");
+        source.Should().Contain("hx-get=\"@CategoriesIndexUrl(query)\"");
+        source.Should().Contain("hx-get=\"@CategoriesIndexUrl(query, \"inactive\")\"");
+        source.Should().Contain("hx-get=\"@CategoriesIndexUrl(query, \"unpublished\")\"");
+        source.Should().Contain("hx-get=\"@CategoriesIndexUrl(query, \"root\")\"");
+        source.Should().Contain("hx-get=\"@CategoriesIndexUrl(query, \"child\")\"");
         source.Should().Contain("@T.T(\"CategoryOperationsPlaybooks\")");
         source.Should().Contain("@playbook.QueueLabel");
         source.Should().Contain("@playbook.WhyItMatters");
@@ -8308,7 +9259,9 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("T.T(\"ChildCategory\")");
         source.Should().Contain("span class=\"badge bg-success\">@T.T(\"Yes\")</span>");
         source.Should().Contain("span class=\"badge bg-outline-secondary border\">@T.T(\"No\")</span>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Categories\", new { id = c.Id })\"");
+        source.Should().Contain("@FormatTimestamp(c.ModifiedAtUtc)");
+        source.Should().NotContain("c.ModifiedAtUtc.ToString(\"u\")");
+        source.Should().Contain("hx-get=\"@CategoriesEditUrl(c.Id)\"");
         source.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Categories\")\"");
         source.Should().Contain("data-rowversion=\"@Convert.ToBase64String(c.RowVersion)\"");
         source.Should().Contain("<pager page=\"@currentPage\"");
@@ -8698,7 +9651,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         usersSource.Should().Contain("yield return new SelectListItem(T(\"UsersFilterMobileLinked\"), UserQueueFilter.MobileLinked.ToString(), selectedFilter == UserQueueFilter.MobileLinked);");
         usersSource.Should().Contain("OpensMobileOperations = true");
-        usersIndexSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })\"");
+        usersIndexSource.Should().Contain("hx-get=\"@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)\"");
         usersIndexSource.Should().Contain("@Model.Summary.MobileLinkedCount");
 
         rolesSource.Should().Contain("return string.Equals(item.Key, \"business-support-admins\", StringComparison.OrdinalIgnoreCase);");
@@ -8730,12 +9683,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("id=\"pages-workspace-shell\"");
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"PagesWorkspaceIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Pages\")\"");
+        source.Should().Contain("string PagesIndexUrl(string? query = null, string? filter = null) => Url.Action(\"Index\", \"Pages\", new { query, filter }) ?? string.Empty;");
+        source.Should().Contain("string PagesCreateUrl() => Url.Action(\"Create\", \"Pages\") ?? string.Empty;");
+        source.Should().Contain("string PagesEditUrl(Guid id) => Url.Action(\"Edit\", \"Pages\", new { id }) ?? string.Empty;");
+        source.Should().Contain("string FormatTimestamp(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? \"-\";");
+        source.Should().Contain("hx-get=\"@PagesIndexUrl()\"");
         source.Should().Contain("name=\"query\" value=\"@query\"");
         source.Should().Contain("name=\"filter\" value=\"@filter\"");
         source.Should().Contain("@T.T(\"Search\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"Pages\")\"");
+        source.Should().Contain("hx-get=\"@PagesCreateUrl()\"");
         source.Should().Contain("@T.T(\"CreatePage\")");
         source.Should().Contain("@T.T(\"Draft\")</div><div class=\"display-6 fw-semibold\">@Model.Summary.DraftCount");
         source.Should().Contain("@T.T(\"Published\")</div><div class=\"display-6 fw-semibold\">@Model.Summary.PublishedCount");
@@ -8745,6 +9702,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("asp-route-filter=\"published\"");
         source.Should().Contain("asp-route-filter=\"windowed\"");
         source.Should().Contain("asp-route-filter=\"live-window\"");
+        source.Should().Contain("hx-get=\"@PagesIndexUrl(query)\"");
+        source.Should().Contain("hx-get=\"@PagesIndexUrl(query, \"draft\")\"");
+        source.Should().Contain("hx-get=\"@PagesIndexUrl(query, \"published\")\"");
+        source.Should().Contain("hx-get=\"@PagesIndexUrl(query, \"windowed\")\"");
+        source.Should().Contain("hx-get=\"@PagesIndexUrl(query, \"live-window\")\"");
         source.Should().Contain("@T.T(\"TotalPages\"): @Model.Summary.TotalCount");
         source.Should().Contain("@T.T(\"ContentOperationsPlaybooks\")");
         source.Should().Contain("@playbook.QueueLabel");
@@ -8757,8 +9719,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Windowed\")");
         source.Should().Contain("string LocalizePageStatus(object? status) => status is null ? \"-\" : T.T(status.ToString() ?? string.Empty);");
         source.Should().Contain("@LocalizePageStatus(p.Status)");
-        source.Should().Contain("@(p.PublishStartUtc?.ToString(\"u\") ?? \"-\") @T.T(\"To\") @(p.PublishEndUtc?.ToString(\"u\") ?? \"-\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Pages\", new { id = p.Id })\"");
+        source.Should().Contain("@FormatTimestamp(p.PublishStartUtc) @T.T(\"To\") @FormatTimestamp(p.PublishEndUtc)");
+        source.Should().Contain("@FormatTimestamp(p.ModifiedAtUtc)");
+        source.Should().NotContain("p.PublishStartUtc?.ToString(\"u\")");
+        source.Should().NotContain("p.PublishEndUtc?.ToString(\"u\")");
+        source.Should().NotContain("p.ModifiedAtUtc.ToString(\"u\")");
+        source.Should().Contain("hx-get=\"@PagesEditUrl(p.Id)\"");
         source.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Pages\")\"");
         source.Should().Contain("data-rowversion=\"@Convert.ToBase64String(p.RowVersion)\"");
         source.Should().Contain("<pager page=\"@currentPage\"");
@@ -8777,12 +9743,20 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("id=\"media-workspace-shell\"");
         source.Should().Contain("@T.T(\"MediaLibraryTitle\")");
         source.Should().Contain("@T.T(\"MediaLibraryIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"Media\")\"");
+        source.Should().Contain("string MediaCreateUrl() => Url.Action(\"Create\", \"Media\") ?? string.Empty;");
+        source.Should().Contain("string MediaIndexUrl(string? filter = null) => Url.Action(\"Index\", \"Media\", string.IsNullOrWhiteSpace(filter) ? null : new { filter }) ?? string.Empty;");
+        source.Should().Contain("string MediaEditUrl(Guid id) => Url.Action(\"Edit\", \"Media\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@MediaCreateUrl()\"");
         source.Should().Contain("@T.T(\"UploadMedia\")");
         source.Should().Contain("asp-route-filter=\"MissingAlt\"");
         source.Should().Contain("asp-route-filter=\"MissingTitle\"");
         source.Should().Contain("asp-route-filter=\"EditorAssets\"");
         source.Should().Contain("asp-route-filter=\"LibraryAssets\"");
+        source.Should().Contain("hx-get=\"@MediaIndexUrl(\"MissingAlt\")\"");
+        source.Should().Contain("hx-get=\"@MediaIndexUrl(\"MissingTitle\")\"");
+        source.Should().Contain("hx-get=\"@MediaIndexUrl(\"EditorAssets\")\"");
+        source.Should().Contain("hx-get=\"@MediaIndexUrl(\"LibraryAssets\")\"");
+        source.Should().Contain("hx-get=\"@MediaIndexUrl()\"");
         source.Should().Contain("@T.T(\"ClearQueueFilters\")");
         source.Should().Contain("@T.T(\"MediaMissingAlt\")");
         source.Should().Contain("@Model.Summary.MissingAltCount");
@@ -8809,21 +9783,18 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Role\"):");
         source.Should().Contain("@T.T(\"Size\"):");
         source.Should().Contain("@T.T(\"Updated\"):");
-        source.Should().Contain("class=\"btn btn-outline-secondary js-copy-media-url\" data-url=\"@item.Url\">@T.T(\"Copy\")</button>");
+        source.Should().Contain("class=\"btn btn-outline-secondary js-copy-media-url\" data-copy-media-url data-url=\"@item.Url\" data-copy-label=\"@T.T(\"Copy\")\" data-copied-label=\"@T.T(\"Copied\")\">@T.T(\"Copy\")</button>");
         source.Should().Contain("@T.T(\"Open\")");
         source.Should().Contain("@T.T(\"MediaSetAlt\")");
         source.Should().Contain("@T.T(\"MediaSetTitle\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Media\", new { id = item.Id })\"");
+        source.Should().Contain("hx-get=\"@MediaEditUrl(item.Id)\"");
         source.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Media\")\"");
         source.Should().Contain("<pager page=\"Model.Page\"");
         source.Should().Contain("asp-controller=\"Media\"");
         source.Should().Contain("asp-route-query=\"@Model.Query\"");
         source.Should().Contain("asp-route-filter=\"@Model.Filter\"");
         source.Should().Contain("<partial name=\"~/Views/Shared/_ConfirmDeleteModal.cshtml\" />");
-        source.Should().Contain("document.querySelectorAll('.js-copy-media-url').forEach(function (button)");
-        source.Should().Contain("navigator.clipboard.writeText(url);");
-        source.Should().Contain("button.textContent = '@T.T(\"Copied\")';");
-        source.Should().Contain("button.textContent = '@T.T(\"Copy\")';");
+        source.Should().NotContain("<script>");
     }
 
 
@@ -8847,13 +9818,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createSource.Should().Contain("<partial name=\"_MediaAssetUploadForm\" model=\"Model\" />");
         createSource.Should().Contain("asp-validation-summary=\"ModelOnly\" class=\"text-danger mt-3\"");
         createSource.Should().Contain("@T.T(\"Upload\")");
-        createSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Media\")\"");
+        createSource.Should().Contain("string MediaIndexUrl() => Url.Action(\"Index\", \"Media\") ?? string.Empty;");
+        createSource.Should().Contain("hx-get=\"@MediaIndexUrl()\"");
         createSource.Should().Contain("@T.T(\"Cancel\")");
 
         editSource.Should().Contain("id=\"media-edit-editor-shell\"");
         editSource.Should().Contain("@T.T(\"MediaEditTitle\")");
         editSource.Should().Contain("@Model.OriginalFileName");
-        editSource.Should().Contain("href=\"@Model.Url\" target=\"_blank\" rel=\"noreferrer\"");
+        editSource.Should().Contain("href=\"@Model.Url\" target=\"_blank\" rel=\"noopener noreferrer\"");
         editSource.Should().Contain("@T.T(\"MediaOpenFile\")");
         editSource.Should().Contain("<img src=\"@Model.Url\" alt=\"@Model.Alt\" class=\"w-100 h-100 object-fit-cover\" />");
         editSource.Should().Contain("@T.T(\"Url\"):");
@@ -8869,7 +9841,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editSource.Should().Contain("<partial name=\"_MediaAssetUploadForm\" model=\"Model\" />");
         editSource.Should().Contain("asp-validation-summary=\"ModelOnly\" class=\"text-danger mt-3\"");
         editSource.Should().Contain("@T.T(\"Save\")");
-        editSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Media\")\"");
+        editSource.Should().Contain("string MediaIndexUrl() => Url.Action(\"Index\", \"Media\") ?? string.Empty;");
+        editSource.Should().Contain("hx-get=\"@MediaIndexUrl()\"");
         editSource.Should().Contain("@T.T(\"Back\")");
     }
 
@@ -8885,22 +9858,25 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@Model.Summary.SystemCount");
         source.Should().Contain("@Model.Summary.CustomCount");
         source.Should().Contain("@Model.Summary.DelegatedSupportCount");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Roles\", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.All })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Roles\", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.System })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Roles\", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.Custom })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Roles\", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.DelegatedSupport })\"");
+        source.Should().Contain("string RolesGlobalIndexUrl() => Url.Action(\"Index\", \"Roles\") ?? string.Empty;");
+        source.Should().Contain("string RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter filter) => Url.Action(\"Index\", \"Roles\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.All)\"");
+        source.Should().Contain("hx-get=\"@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.System)\"");
+        source.Should().Contain("hx-get=\"@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.Custom)\"");
+        source.Should().Contain("hx-get=\"@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.DelegatedSupport)\"");
         source.Should().Contain("@T.T(\"RoleOpsPlaybook\")");
         source.Should().Contain("@T.T(\"RoleOpsPlaybookSystem\")");
         source.Should().Contain("@T.T(\"RoleOpsPlaybookDelegatedSupport\")");
         source.Should().Contain("@T.T(\"RoleOpsPlaybookCustom\")");
         source.Should().Contain("@T.T(\"Open\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Roles\")\"");
+        source.Should().Contain("hx-get=\"@RolesGlobalIndexUrl()\"");
         source.Should().Contain("id=\"q\" name=\"q\" value=\"@Model.Query\"");
         source.Should().Contain("id=\"pageSize\" name=\"pageSize\" class=\"form-select\" asp-items=\"Model.PageSizeItems\"");
         source.Should().Contain("id=\"filter\" name=\"filter\" class=\"form-select\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"RoleSearchHelp\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"Roles\")\"");
+        source.Should().Contain("string CreateRoleUrl() => Url.Action(\"Create\", \"Roles\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateRoleUrl()\"");
         source.Should().Contain("@T.T(\"NewRole\")");
         source.Should().Contain("@T.T(\"DisplayName\")");
         source.Should().Contain("@T.T(\"Description\")");
@@ -8909,8 +9885,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"NoRolesFound\")");
         source.Should().Contain("string.Equals(r.Key, \"business-support-admins\", StringComparison.OrdinalIgnoreCase)");
         source.Should().Contain("@T.T(\"DelegatedSupport\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Roles\", new { id = r.Id })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Permissions\", \"Roles\", new { id = r.Id })\"");
+        source.Should().Contain("string EditRoleUrl(Guid id) => Url.Action(\"Edit\", \"Roles\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditRoleUrl(r.Id)\"");
+        source.Should().Contain("string RolePermissionsUrl(Guid id) => Url.Action(\"Permissions\", \"Roles\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@RolePermissionsUrl(r.Id)\"");
         source.Should().Contain("@T.T(\"Permissions\")");
         source.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Roles\")\"");
         source.Should().Contain("data-rowversion=\"@Convert.ToBase64String(r.RowVersion)\"");
@@ -8945,7 +9923,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createSource.Should().Contain("@T.T(\"AdminDisplayNameHelp\")");
         createSource.Should().Contain("asp-for=\"Description\" rows=\"3\" class=\"form-control\"");
         createSource.Should().Contain("@T.T(\"RoleDescriptionHelp\")");
-        createSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Roles\")\"");
+        createSource.Should().Contain("string RolesIndexUrl() => Url.Action(\"Index\", \"Roles\") ?? string.Empty;");
+        createSource.Should().Contain("hx-get=\"@RolesIndexUrl()\"");
         createSource.Should().Contain("@T.T(\"Back\")");
         createSource.Should().Contain("@T.T(\"Save\")");
 
@@ -8971,12 +9950,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         permissionsSource.Should().Contain("id=\"role-permissions-workspace-shell\"");
         permissionsSource.Should().Contain("@T.T(\"PermissionsForRole\") - @Model.RoleDisplayName");
         permissionsSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
-        permissionsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport })\"");
+        permissionsSource.Should().Contain("string DelegatedSupportPermissionsUrl() => Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport }) ?? string.Empty;");
+        permissionsSource.Should().Contain("hx-get=\"@DelegatedSupportPermissionsUrl()\"");
         permissionsSource.Should().Contain("@T.T(\"IdentityFilterDelegatedSupport\")");
-        permissionsSource.Should().Contain("hx-get=\"@Url.Action(\"SupportQueue\", \"Businesses\")\"");
+        permissionsSource.Should().Contain("string GlobalBusinessSupportQueueUrl() => Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty;");
+        permissionsSource.Should().Contain("hx-get=\"@GlobalBusinessSupportQueueUrl()\"");
         permissionsSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
-        permissionsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })\"");
-        permissionsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })\"");
+        permissionsSource.Should().Contain("string UnconfirmedUsersUrl() => Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed }) ?? string.Empty;");
+        permissionsSource.Should().Contain("hx-get=\"@UnconfirmedUsersUrl()\"");
+        permissionsSource.Should().Contain("string LockedUsersUrl() => Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked }) ?? string.Empty;");
+        permissionsSource.Should().Contain("hx-get=\"@LockedUsersUrl()\"");
         permissionsSource.Should().Contain("asp-action=\"Permissions\"");
         permissionsSource.Should().Contain("hx-post=\"@Url.Action(\"Permissions\", \"Roles\")\"");
         permissionsSource.Should().Contain("@Html.AntiForgeryToken()");
@@ -8988,7 +9971,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         permissionsSource.Should().Contain("@p.DisplayName");
         permissionsSource.Should().Contain("@p.Key - @p.Description");
         permissionsSource.Should().Contain("@T.T(\"NoPermissionsFound\")");
-        permissionsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Roles\")\"");
+        permissionsSource.Should().Contain("string RolesIndexUrl() => Url.Action(\"Index\", \"Roles\") ?? string.Empty;");
+        permissionsSource.Should().Contain("hx-get=\"@RolesIndexUrl()\"");
         permissionsSource.Should().Contain("@T.T(\"Back\")");
         permissionsSource.Should().Contain("@T.T(\"Save\")");
     }
@@ -9007,10 +9991,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@Model.Summary.SystemCount");
         source.Should().Contain("@Model.Summary.CustomCount");
         source.Should().Contain("@Model.Summary.DelegatedSupportCount");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.All })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.System })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.Custom })\"");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport })\"");
+        source.Should().Contain("string PermissionsGlobalIndexUrl() => Url.Action(\"Index\", \"Permissions\") ?? string.Empty;");
+        source.Should().Contain("string PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter filter) => Url.Action(\"Index\", \"Permissions\", new { filter }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.All)\"");
+        source.Should().Contain("hx-get=\"@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.System)\"");
+        source.Should().Contain("hx-get=\"@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.Custom)\"");
+        source.Should().Contain("hx-get=\"@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport)\"");
         source.Should().Contain("@T.T(\"PermissionOpsPlaybook\")");
         source.Should().Contain("@T.T(\"PermissionOpsPlaybookSystem\")");
         source.Should().Contain("@T.T(\"PermissionOpsPlaybookDelegatedSupport\")");
@@ -9018,13 +10004,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Open\")");
         source.Should().Contain("@T.T(\"DelegatedBusinessSupport\")");
         source.Should().Contain("@T.T(\"PermissionDelegatedSupportNote\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\")\"");
+        source.Should().Contain("hx-get=\"@PermissionsGlobalIndexUrl()\"");
         source.Should().Contain("id=\"q\" name=\"q\" value=\"@Model.Query\"");
         source.Should().Contain("id=\"pageSize\" name=\"pageSize\" class=\"form-select\" asp-items=\"Model.PageSizeItems\"");
         source.Should().Contain("id=\"filter\" name=\"filter\" class=\"form-select\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"PermissionSearchHelp\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"Permissions\")\"");
+        source.Should().Contain("string CreatePermissionUrl() => Url.Action(\"Create\", \"Permissions\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreatePermissionUrl()\"");
         source.Should().Contain("@T.T(\"NewPermission\")");
         source.Should().Contain("@T.T(\"Key\")");
         source.Should().Contain("@T.T(\"DisplayName\")");
@@ -9034,7 +10021,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"NoPermissionsFound\")");
         source.Should().Contain("string.Equals(p.Key, \"ManageBusinessSupport\", StringComparison.OrdinalIgnoreCase)");
         source.Should().Contain("@T.T(\"DelegatedSupport\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Permissions\", new { id = p.Id })\"");
+        source.Should().Contain("string EditPermissionUrl(Guid id) => Url.Action(\"Edit\", \"Permissions\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditPermissionUrl(p.Id)\"");
         source.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Permissions\")\"");
         source.Should().Contain("data-rowversion=\"@Convert.ToBase64String(p.RowVersion)\"");
         source.Should().Contain("<pager page=\"Model.Page\"");
@@ -9046,12 +10034,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         foreach (var editorSource in new[] { createSource, editSource })
         {
             editorSource.Should().Contain("id=\"permission-editor-shell\"");
-            editorSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport })\"");
+            editorSource.Should().Contain("string DelegatedSupportPermissionsUrl() => Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport }) ?? string.Empty;");
+            editorSource.Should().Contain("hx-get=\"@DelegatedSupportPermissionsUrl()\"");
             editorSource.Should().Contain("@T.T(\"IdentityFilterDelegatedSupport\")");
-            editorSource.Should().Contain("hx-get=\"@Url.Action(\"SupportQueue\", \"Businesses\")\"");
+            editorSource.Should().Contain("string GlobalBusinessSupportQueueUrl() => Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty;");
+            editorSource.Should().Contain("hx-get=\"@GlobalBusinessSupportQueueUrl()\"");
             editorSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
-            editorSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })\"");
-            editorSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })\"");
+            editorSource.Should().Contain("string UnconfirmedUsersUrl() => Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed }) ?? string.Empty;");
+            editorSource.Should().Contain("hx-get=\"@UnconfirmedUsersUrl()\"");
+            editorSource.Should().Contain("string LockedUsersUrl() => Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked }) ?? string.Empty;");
+            editorSource.Should().Contain("hx-get=\"@LockedUsersUrl()\"");
         }
     }
 
@@ -9069,13 +10061,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@Model.Summary.GlobalCount");
         source.Should().Contain("@Model.Summary.UnattachedCount");
         source.Should().Contain("@T.T(\"AddOnLinkedGroups\"): @Model.Summary.VariantLinkedCount");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"AddOnGroups\")\"");
+        source.Should().Contain("string AddOnGroupsIndexUrl() => Url.Action(\"Index\", \"AddOnGroups\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@AddOnGroupsIndexUrl()\"");
         source.Should().Contain("name=\"query\" value=\"@Model.Query\"");
         source.Should().Contain("name=\"filter\" asp-items=\"Model.FilterItems\"");
         source.Should().Contain("@T.T(\"AddOnSearchNameCurrency\")");
         source.Should().Contain("@T.T(\"Search\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"AddOnGroups\")\"");
+        source.Should().Contain("string CreateAddOnGroupUrl() => Url.Action(\"Create\", \"AddOnGroups\") ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CreateAddOnGroupUrl()\"");
         source.Should().Contain("@T.T(\"AddOnNewGroup\")");
         source.Should().Contain("@T.T(\"AddOnOperationsPlaybooks\")");
         source.Should().Contain("@playbook.QueueLabel");
@@ -9091,7 +10085,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@g.Name");
         source.Should().Contain("@g.Currency");
         source.Should().Contain("@(g.IsActive ? T.T(\"Yes\") : T.T(\"No\"))");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"AddOnGroups\", new { id = g.Id })\"");
+        source.Should().Contain("string EditAddOnGroupUrl(Guid id) => Url.Action(\"Edit\", \"AddOnGroups\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@EditAddOnGroupUrl(g.Id)\"");
+        source.Should().Contain("string AttachAddOnGroupToVariantsUrl(Guid id) => Url.Action(\"AttachToVariants\", \"AddOnGroups\", new { id }) ?? string.Empty;");
+        source.Should().Contain("string AttachAddOnGroupToProductsUrl(Guid id) => Url.Action(\"AttachToProducts\", \"AddOnGroups\", new { id }) ?? string.Empty;");
+        source.Should().Contain("string AttachAddOnGroupToCategoriesUrl(Guid id) => Url.Action(\"AttachToCategories\", \"AddOnGroups\", new { id }) ?? string.Empty;");
+        source.Should().Contain("string AttachAddOnGroupToBrandsUrl(Guid id) => Url.Action(\"AttachToBrands\", \"AddOnGroups\", new { id }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@AttachAddOnGroupToVariantsUrl(g.Id)\"");
+        source.Should().Contain("hx-get=\"@AttachAddOnGroupToProductsUrl(g.Id)\"");
+        source.Should().Contain("hx-get=\"@AttachAddOnGroupToCategoriesUrl(g.Id)\"");
+        source.Should().Contain("hx-get=\"@AttachAddOnGroupToBrandsUrl(g.Id)\"");
         source.Should().Contain("asp-action=\"AttachToVariants\"");
         source.Should().Contain("asp-action=\"AttachToProducts\"");
         source.Should().Contain("asp-action=\"AttachToCategories\"");
@@ -9119,9 +10122,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createSource.Should().Contain("hx-post=\"@Url.Action(\"Create\", \"AddOnGroups\")\"");
         createSource.Should().Contain("@Html.AntiForgeryToken()");
         createSource.Should().Contain("<partial name=\"_AddOnGroupForm\" model=\"Model\" />");
-        createSource.Should().Contain("const currency = shell.querySelector('#Currency');");
-        createSource.Should().Contain("currency.dataset.uppercaseBound = 'true';");
-        createSource.Should().Contain("this.value = this.value.toUpperCase();");
+        createSource.Should().NotContain("<script>");
 
         editSource.Should().Contain("id=\"add-on-group-editor-shell\"");
         editSource.Should().Contain("@T.T(\"AddOnEditHeading\") @Model.Name");
@@ -9132,13 +10133,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
         editSource.Should().Contain("<partial name=\"_AddOnGroupForm\" model=\"Model\" />");
-        editSource.Should().Contain("const currency = shell.querySelector('#Currency');");
+        editSource.Should().NotContain("<script>");
 
         attachProductsSource.Should().Contain("id=\"add-on-group-attach-products-shell\"");
         attachProductsSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         attachProductsSource.Should().Contain("@T.T(\"AddOnAttachProductsTitle\") <small class=\"text-muted\">(@Model.AddOnGroupName)</small>");
         attachProductsSource.Should().Contain("asp-action=\"AttachToProducts\"");
-        attachProductsSource.Should().Contain("hx-get=\"@Url.Action(\"AttachToProducts\", \"AddOnGroups\")\"");
+        attachProductsSource.Should().Contain("string AttachAddOnGroupToProductsSearchUrl() => Url.Action(\"AttachToProducts\", \"AddOnGroups\") ?? string.Empty;");
+        attachProductsSource.Should().Contain("string AttachAddOnGroupToProductsUrl(Guid id) => Url.Action(\"AttachToProducts\", \"AddOnGroups\", new { id }) ?? string.Empty;");
+        attachProductsSource.Should().Contain("hx-get=\"@AttachAddOnGroupToProductsSearchUrl()\"");
+        attachProductsSource.Should().Contain("hx-get=\"@AttachAddOnGroupToProductsUrl(Model.AddOnGroupId)\"");
         attachProductsSource.Should().Contain("name=\"id\" value=\"@Model.AddOnGroupId\"");
         attachProductsSource.Should().Contain("@T.T(\"AddOnSearchProducts\")");
         attachProductsSource.Should().Contain("@T.T(\"Reset\")");
@@ -9149,14 +10153,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         attachProductsSource.Should().Contain("name=\"PageSize\" value=\"@Model.PageSize\"");
         attachProductsSource.Should().Contain("name=\"Query\" value=\"@Model.Query\"");
         attachProductsSource.Should().Contain("id=\"toggleAll\"");
-        attachProductsSource.Should().Contain("class=\"row-check\" name=\"SelectedProductIds\" value=\"@p.Id\"");
+        attachProductsSource.Should().Contain("data-addon-toggle-all");
+        attachProductsSource.Should().Contain("class=\"row-check\" data-addon-row-check name=\"SelectedProductIds\" value=\"@p.Id\"");
         attachProductsSource.Should().Contain("@T.T(\"AddOnNoProducts\")");
         attachProductsSource.Should().Contain("@T.T(\"AddOnSaveAttachments\")");
-        attachProductsSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"AddOnGroups\")\"");
+        attachProductsSource.Should().Contain("string AddOnGroupsIndexUrl() => Url.Action(\"Index\", \"AddOnGroups\") ?? string.Empty;");
+        attachProductsSource.Should().Contain("hx-get=\"@AddOnGroupsIndexUrl()\"");
         attachProductsSource.Should().Contain("@T.T(\"Back\")");
         attachProductsSource.Should().Contain("<pager page=\"Model.Page\" page-size=\"Model.PageSize\" total=\"Model.Total\" asp-controller=\"AddOnGroups\" asp-action=\"AttachToProducts\" asp-route-id=\"@Model.AddOnGroupId\" asp-route-query=\"@Model.Query\"");
-        attachProductsSource.Should().Contain("document.getElementById('toggleAll');");
-        attachProductsSource.Should().Contain("document.querySelectorAll('.row-check').forEach(cb => cb.checked = toggle.checked);");
     }
 
 
@@ -9169,13 +10173,17 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"Products\")");
         source.Should().Contain("@T.T(\"ProductsWorkspaceIntro\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Products\")\"");
+        source.Should().Contain("string ProductsIndexUrl(string? query = null, string? filter = null) => Url.Action(\"Index\", \"Products\", new { query, filter }) ?? string.Empty;");
+        source.Should().Contain("string ProductsCreateUrl() => Url.Action(\"Create\", \"Products\") ?? string.Empty;");
+        source.Should().Contain("string ProductsEditUrl(Guid id) => Url.Action(\"Edit\", \"Products\", new { id }) ?? string.Empty;");
+        source.Should().Contain("string FormatTimestamp(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? \"-\";");
+        source.Should().Contain("hx-get=\"@ProductsIndexUrl()\"");
         source.Should().Contain("name=\"query\" value=\"@query\"");
         source.Should().Contain("name=\"filter\" value=\"@filter\"");
         source.Should().Contain("@T.T(\"SearchProductsPlaceholder\")");
         source.Should().Contain("@T.T(\"Search\")");
         source.Should().Contain("@T.T(\"Reset\")");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Create\", \"Products\")\"");
+        source.Should().Contain("hx-get=\"@ProductsCreateUrl()\"");
         source.Should().Contain("@T.T(\"CreateProduct\")");
         source.Should().Contain("@Model.Summary.TotalCount");
         source.Should().Contain("@T.T(\"ProductsOpsTotalNote\")");
@@ -9197,16 +10205,26 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("asp-route-filter=\"hidden\"");
         source.Should().Contain("asp-route-filter=\"single-variant\"");
         source.Should().Contain("asp-route-filter=\"scheduled\"");
+        source.Should().Contain("hx-get=\"@ProductsIndexUrl(query)\"");
+        source.Should().Contain("hx-get=\"@ProductsIndexUrl(query, \"inactive\")\"");
+        source.Should().Contain("hx-get=\"@ProductsIndexUrl(query, \"hidden\")\"");
+        source.Should().Contain("hx-get=\"@ProductsIndexUrl(query, \"single-variant\")\"");
+        source.Should().Contain("hx-get=\"@ProductsIndexUrl(query, \"scheduled\")\"");
         source.Should().Contain("@T.T(\"TotalProductsLabel\"): @Model.Summary.TotalCount");
         source.Should().Contain("@T.T(\"ProductNameDefaultCulture\")");
         source.Should().Contain("@T.T(\"Variants\")");
         source.Should().Contain("@T.T(\"Visible\")");
         source.Should().Contain("@T.T(\"NoProductsFound\")");
         source.Should().Contain("@T.T(\"CatalogWindowLabel\"):");
+        source.Should().Contain("@FormatTimestamp(p.PublishStartUtc) @T.T(\"To\") @FormatTimestamp(p.PublishEndUtc)");
+        source.Should().Contain("@FormatTimestamp(p.ModifiedAtUtc)");
+        source.Should().NotContain("p.PublishStartUtc?.ToString(\"u\")");
+        source.Should().NotContain("p.PublishEndUtc?.ToString(\"u\")");
+        source.Should().NotContain("p.ModifiedAtUtc.ToString(\"u\")");
         source.Should().Contain("@p.VariantCount");
         source.Should().Contain("span class=\"badge bg-success\">@T.T(\"Yes\")</span>");
         source.Should().Contain("span class=\"badge bg-outline-secondary border\">@T.T(\"No\")</span>");
-        source.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"Products\", new { id = p.Id })\"");
+        source.Should().Contain("hx-get=\"@ProductsEditUrl(p.Id)\"");
         source.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Products\")\"");
         source.Should().Contain("data-rowversion=\"@Convert.ToBase64String(p.RowVersion)\"");
         source.Should().Contain("<pager page=\"@currentPage\"");
@@ -9220,17 +10238,21 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void PageEditorScript_Should_KeepLocalizedQuillPlaceholderAndUploadFailureRails()
     {
-        var source = ReadWebAdminFile(Path.Combine("Views", "Pages", "_PageEditorScript.cshtml"));
+        var createShellSource = ReadWebAdminFile(Path.Combine("Views", "Pages", "_PageCreateEditorShell.cshtml"));
+        var editShellSource = ReadWebAdminFile(Path.Combine("Views", "Pages", "_PageEditEditorShell.cshtml"));
+        var source = ReadWebAdminFile(Path.Combine("wwwroot", "js", "content-editors.js"));
         var resourcesSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
 
-        source.Should().Contain("const pageEditorPlaceholder = '@T.T(\"PageEditorPlaceholder\")';");
-        source.Should().Contain("const pageImageUploadFailed = '@T.T(\"PageImageUploadFailed\")';");
-        source.Should().Contain("const pageEditorQuillNotLoaded = '@T.T(\"PageEditorQuillNotLoaded\")';");
-        source.Should().Contain("const pageEditorUploadFailedError = '@T.T(\"PageEditorUploadFailedError\")';");
-        source.Should().Contain("placeholder: pageEditorPlaceholder,");
-        source.Should().Contain("console.error(pageEditorQuillNotLoaded);");
-        source.Should().Contain("throw new Error(pageEditorUploadFailedError);");
-        source.Should().Contain("alert(pageImageUploadFailed);");
+        createShellSource.Should().Contain("data-page-editor-placeholder=\"@T.T(\"PageEditorPlaceholder\")\"");
+        createShellSource.Should().Contain("data-page-image-upload-failed=\"@T.T(\"PageImageUploadFailed\")\"");
+        createShellSource.Should().Contain("data-page-editor-quill-not-loaded=\"@T.T(\"PageEditorQuillNotLoaded\")\"");
+        createShellSource.Should().Contain("data-page-editor-upload-failed-error=\"@T.T(\"PageEditorUploadFailedError\")\"");
+        createShellSource.Should().Contain("data-page-image-upload-url=\"@Url.Action(\"UploadQuill\", \"Media\")\"");
+        editShellSource.Should().Contain("data-page-editor-placeholder=\"@T.T(\"PageEditorPlaceholder\")\"");
+        source.Should().Contain("placeholder: configRoot.dataset.pageEditorPlaceholder || ''");
+        source.Should().Contain("console.error(options.notLoadedMessage);");
+        source.Should().Contain("throw new Error(uploadFailedError);");
+        source.Should().Contain("alert(uploadFailedMessage);");
         source.Should().NotContain("placeholder: 'Write content here...'");
         source.Should().NotContain("alert('Image upload failed.')");
         source.Should().NotContain("console.error(\"Quill is not loaded. Ensure quill.js is included in _Layout BEFORE this section.\");");
@@ -9274,12 +10296,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         badgeViewSource.Should().Contain("string LocalizeBusinessMemberRole(object? role) => role is null ? \"-\" : T.T(role.ToString() ?? string.Empty);");
         badgeViewSource.Should().Contain("@Model.Business.Name | @Model.UserDisplayName");
         badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgeIntro\")");
-        badgeViewSource.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = Model.MembershipId })");
-        badgeViewSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = Model.UserId })");
+        badgeViewSource.Should().Contain("@EditMemberUrl(Model.MembershipId)");
+        badgeViewSource.Should().Contain("@UserEditUrl(Model.UserId)");
         badgeViewSource.Should().Contain("asp-route-filter=\"@backToMembersFilter\"");
-        badgeViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id, filter = backToMembersFilter })");
-        badgeViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id })");
-        badgeViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        badgeViewSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Business.Id, backToMembersFilter)\"");
+        badgeViewSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Business.Id)");
         badgeViewSource.Should().Contain("@if (!Model.EmailConfirmed || !Model.IsActive || isLocked)");
         badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgeConstraintWarning\")");
         badgeViewSource.Should().Contain("@T.T(\"OpenUserAction\")");
@@ -9294,12 +10315,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgePayloadNote\")");
         badgeViewSource.Should().Contain("@T.T(\"BusinessStaffAccessBadgeMemberRoleLabel\"): @LocalizeBusinessMemberRole(Model.Role)");
         badgeViewSource.Should().Contain("@LocalizeBusinessMemberRole(Model.Role)");
-        badgeViewSource.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = Model.MembershipId })");
-        badgeViewSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = Model.UserId })");
+        badgeViewSource.Should().Contain("@EditMemberUrl(Model.MembershipId)");
+        badgeViewSource.Should().Contain("@UserEditUrl(Model.UserId)");
         badgeViewSource.Should().Contain("asp-route-filter=\"@backToMembersFilter\"");
-        badgeViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id, filter = backToMembersFilter })");
-        badgeViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id })");
-        badgeViewSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        badgeViewSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Business.Id, backToMembersFilter)\"");
+        badgeViewSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Business.Id)");
     }
 
 
@@ -9311,15 +10331,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         var invitationsPreviewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupInvitationsPreview.cshtml"));
 
         businessesSource.Should().Contain("@T.T(\"BusinessSetupMembersRequiringAttentionTitle\")");
-        businessesSource.Should().Contain("@Url.Action(\"SetupMembersPreview\", \"Businesses\", new { businessId = Model.Id })");
+        businessesSource.Should().Contain("@BusinessSetupMembersPreviewUrl(Model.Id)");
         businessesSource.Should().Contain("asp-route-filter=\"@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
-        businessesSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })");
-        businessesSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
-        businessesSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        businessesSource.Should().Contain("? BusinessMembersUrl(Model.Id)");
+        businessesSource.Should().Contain(": BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
+        businessesSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
         businessesSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
-        businessesSource.Should().Contain("@Url.Action(\"SetupInvitationsPreview\", \"Businesses\", new { businessId = Model.Id })");
-        businessesSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        businessesSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        businessesSource.Should().Contain("@BusinessSetupInvitationsPreviewUrl(Model.Id)");
+        businessesSource.Should().Contain("@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
+        businessesSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
+        CountOccurrences(businessesSource, "asp-route-businessId=\"@Model.Id\"").Should().BeGreaterThanOrEqualTo(90);
         businessesSource.Should().Contain("string MemberWorkspaceLabel() => T.T(\"Members\")");
         businessesSource.Should().Contain("@MemberWorkspaceLabel()");
         businessesSource.Should().MatchRegex("asp-route-filter=\\\"@\\(Model\\.ActiveOwnerCount > 0 \\? null : Darwin\\.Application\\.Businesses\\.DTOs\\.BusinessMemberSupportFilter\\.Attention\\)\\\"", "setup shell should keep multiple owner-debt-aware members handoffs wired");
@@ -9327,8 +10348,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         businessesSource.Should().Contain("string MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch");
         businessesSource.Should().Contain("@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         businessesSource.Should().Contain("@MemberSupportFilterLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
-        businessesSource.Should().NotContain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })\"\r\n                       hx-target=\"#business-setup-shell\"\r\n                       hx-swap=\"outerHTML\"\r\n                       hx-push-url=\"true\">@T.T(\"PendingActivation\")</a>");
-        businessesSource.Should().NotContain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked })\"\r\n                       hx-target=\"#business-setup-shell\"\r\n                       hx-swap=\"outerHTML\"\r\n                       hx-push-url=\"true\">@T.T(\"UsersFilterLocked\")</a>");
+        businessesSource.Should().NotContain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)\"\r\n                       hx-target=\"#business-setup-shell\"\r\n                       hx-swap=\"outerHTML\"\r\n                       hx-push-url=\"true\">@T.T(\"PendingActivation\")</a>");
+        businessesSource.Should().NotContain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)\"\r\n                       hx-target=\"#business-setup-shell\"\r\n                       hx-swap=\"outerHTML\"\r\n                       hx-push-url=\"true\">@T.T(\"UsersFilterLocked\")</a>");
         businessesSource.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
         businessesSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         businessesSource.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)");
@@ -9341,27 +10362,27 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         businessesSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"Expired\")</a>");
         businessesSource.Should().NotContain("<i class=\"fa-solid fa-envelope\"></i> @T.T(\"Invitations\")");
 
-        membersPreviewSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
-        membersPreviewSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = item.UserId })");
-        membersPreviewSource.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = item.Id })");
-        membersPreviewSource.Should().Contain("flowKey = \"AccountActivation\"");
+        membersPreviewSource.Should().Contain("@BusinessMembersUrl(Model.BusinessId, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
+        membersPreviewSource.Should().Contain("@UserEditUrl(item.UserId)");
+        membersPreviewSource.Should().Contain("@EditMemberUrl(item.Id)");
+        membersPreviewSource.Should().Contain("flowKey: \"AccountActivation\"");
         membersPreviewSource.Should().Contain("string MemberAttentionStatusLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch");
         membersPreviewSource.Should().Contain("@MemberAttentionStatusLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         membersPreviewSource.Should().Contain("@MemberAttentionStatusLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         membersPreviewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"PendingActivation\")</a>");
         membersPreviewSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"Locked\")</a>");
 
-        invitationsPreviewSource.Should().Contain("flowKey = \"BusinessInvitation\"");
+        invitationsPreviewSource.Should().Contain("flowKey: \"BusinessInvitation\"");
         invitationsPreviewSource.Should().Contain("var invitationWorkspaceFilter = Model.PendingCount > 0");
         invitationsPreviewSource.Should().Contain("var invitationWorkspaceCountLabel = Model.PendingCount > 0");
-        invitationsPreviewSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, filter = invitationWorkspaceFilter })");
-        invitationsPreviewSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.BusinessId, status = \"Failed\", flowKey = \"BusinessInvitation\", recipientEmail = item.Email })");
+        invitationsPreviewSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, invitationWorkspaceFilter)");
+        invitationsPreviewSource.Should().Contain("@EmailAuditsUrl(Model.BusinessId, status: \"Failed\", flowKey: \"BusinessInvitation\", recipientEmail: item.Email)");
         invitationsPreviewSource.Should().Contain("@InvitationQueueLabel(invitationWorkspaceFilter)");
         invitationsPreviewSource.Should().Contain("BusinessSetupInvitationsPreviewPendingCount");
         invitationsPreviewSource.Should().Contain("@T.T(\"OpenFailedInvitationEmails\")");
-        invitationsPreviewSource.Should().Contain("filter = invitationWorkspaceFilter, query = item.Email");
-        invitationsPreviewSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending, query = item.Email })");
-        invitationsPreviewSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired, query = item.Email })");
+        invitationsPreviewSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, invitationWorkspaceFilter, item.Email)");
+        invitationsPreviewSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending, item.Email)");
+        invitationsPreviewSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired, item.Email)");
         invitationsPreviewSource.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending\"");
         invitationsPreviewSource.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired\"");
         invitationsPreviewSource.Should().Contain("asp-route-query=\"@item.Email\"");
@@ -9384,14 +10405,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         membersSource.Should().Contain("string LocalizeBusinessMemberRole(object? role) => role is null ? \"-\" : T.T(role.ToString() ?? string.Empty);");
         membersSource.Should().Contain("@LocalizeBusinessMemberRole(item.Role)");
         membersSource.Should().Contain("asp-route-filter=\"@(Model.Business.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
-        membersSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        membersSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Business.Id }))");
+        membersSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Model.Business.Id, Model.Business.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
+        membersSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Business.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)\"");
+        membersSource.Should().Contain("hx-get=\"@EmailAuditsUrl(Model.Business.Id, status: \"Failed\", flowKey: \"AccountActivation\")\"");
+        membersSource.Should().NotContain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)\"");
         invitationsSource.Should().Contain("string LocalizeBusinessInvitationRole(object? role) => role is null ? \"-\" : T.T(role.ToString() ?? string.Empty);");
         invitationsSource.Should().Contain("@LocalizeBusinessInvitationRole(item.Role)");
         invitationsSource.Should().Contain("asp-route-filter=\"@(Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
-        invitationsSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id })");
-        invitationsSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))");
-        invitationsSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = item.BusinessId, status = \"Failed\", flowKey = \"BusinessInvitation\", recipientEmail = item.Email })\"");
+        invitationsSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Business.Id, Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        invitationsSource.Should().Contain("hx-get=\"@InvitationEmailAuditsUrl(item.BusinessId, item.Email)\"");
         invitationsSource.Should().Contain("@T.T(\"OpenFailedInvitationEmails\")");
     }
 
@@ -9402,7 +10424,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
 
         setupShellSource.Should().Contain("@T.T(\"OperationalStatus\")");
-        setupShellSource.Should().Contain("operationalStatus = Model.OperationalStatus");
+        setupShellSource.Should().Contain("string BusinessIndexUrl(Darwin.Domain.Enums.BusinessOperationalStatus? operationalStatus = null)");
         setupShellSource.Should().Contain("string BusinessLifecycleStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
         setupShellSource.Should().Contain("_ => T.T(status.ToString())");
         setupShellSource.Should().Contain("@T.T(\"EditBusiness\")");
@@ -9423,8 +10445,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         setupShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
         setupShellSource.Should().Contain("asp-route-filter=\"@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
-        setupShellSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
-        setupShellSource.Should().NotContain("hx-get=\"@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })\"");
+        setupShellSource.Should().Contain(": BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
+        setupShellSource.Should().NotContain("hx-get=\"@BusinessMembersUrl(Model.Id)\"");
     }
 
 
@@ -9442,11 +10464,13 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         indexSource.Should().Contain("@T.T(\"Overdue\")");
         indexSource.Should().Contain("@T.T(\"DueSoon\")");
         indexSource.Should().Contain("@T.T(\"Draft\")");
-        indexSource.Should().Contain("@Url.Action(\"TaxCompliance\", \"Billing\")");
-        indexSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\")");
-        indexSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Overdue\" })");
-        indexSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"DueSoon\" })");
-        indexSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Draft\" })");
+        indexSource.Should().Contain("string GlobalTaxComplianceUrl() => Url.Action(\"TaxCompliance\", \"Billing\") ?? string.Empty;");
+        indexSource.Should().Contain("@GlobalTaxComplianceUrl()");
+        indexSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
+        indexSource.Should().Contain("@GlobalPaymentsUrl()");
+        indexSource.Should().Contain("@CrmInvoicesUrl(\"Overdue\")");
+        indexSource.Should().Contain("@CrmInvoicesUrl(\"DueSoon\")");
+        indexSource.Should().Contain("@CrmInvoicesUrl(\"Draft\")");
 
         readinessSource.Should().Contain("string BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
         readinessSource.Should().Contain("_ => T.T(status.ToString())");
@@ -9457,11 +10481,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         readinessSource.Should().Contain("@T.T(\"CommunicationPolicy\")");
         readinessSource.Should().Contain("@T.T(\"RetryBlocked\")");
         readinessSource.Should().Contain("@T.T(\"PhoneVerification\")");
-        readinessSource.Should().Contain("hx-get=\"@Url.Action(\"TaxCompliance\", \"Billing\")\"");
-        readinessSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"BusinessCommunications\")\"");
-        readinessSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\")\"");
-        readinessSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { phoneVerificationOnly = true })\"");
-        readinessSource.Should().Contain("hx-get=\"@Url.Action(\"Payments\", \"Billing\")\"");
+        readinessSource.Should().Contain("string GlobalTaxComplianceUrl() => Url.Action(\"TaxCompliance\", \"Billing\") ?? string.Empty;");
+        readinessSource.Should().Contain("hx-get=\"@GlobalTaxComplianceUrl()\"");
+        readinessSource.Should().Contain("string GlobalBusinessCommunicationsUrl() => Url.Action(\"Index\", \"BusinessCommunications\") ?? string.Empty;");
+        readinessSource.Should().Contain("hx-get=\"@GlobalBusinessCommunicationsUrl()\"");
+        readinessSource.Should().Contain("string GlobalEmailAuditsUrl() => Url.Action(\"EmailAudits\", \"BusinessCommunications\") ?? string.Empty;");
+        readinessSource.Should().Contain("hx-get=\"@GlobalEmailAuditsUrl()\"");
+        readinessSource.Should().Contain("hx-get=\"@ChannelAuditsUrl(phoneVerificationOnly: true)\"");
+        readinessSource.Should().Contain("hx-get=\"@GlobalPaymentsUrl()\"");
+        readinessSource.Should().Contain("hx-get=\"@BusinessMembersUrl(item.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)\"");
+        readinessSource.Should().Contain("hx-get=\"@BusinessMembersUrl(item.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)\"");
 
         attentionSource.Should().Contain("string BusinessOperationalStatusLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
         attentionSource.Should().Contain("_ => T.T(status.ToString())");
@@ -9476,16 +10505,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         attentionSource.Should().Contain("@T.T(\"Overdue\")");
         attentionSource.Should().Contain("@T.T(\"DueSoon\")");
         attentionSource.Should().Contain("@T.T(\"Draft\")");
-        attentionSource.Should().Contain("@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-communications-policy\" })");
-        attentionSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = item.Id, retryBlockedOnly = true })");
-        attentionSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = item.Id, status = \"Failed\", flowKey = \"AccountActivation\" })");
-        attentionSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = item.Id, status = \"Failed\", flowKey = \"AdminCommunicationTest\" })");
-        attentionSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = item.Id, phoneVerificationOnly = true })");
-        attentionSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = item.Id, actionBlockedOnly = true })");
-        attentionSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = item.Id, escalationCandidatesOnly = true })");
-        attentionSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Overdue\" })");
-        attentionSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"DueSoon\" })");
-        attentionSource.Should().Contain("@Url.Action(\"Invoices\", \"Crm\", new { filter = \"Draft\" })");
+        attentionSource.Should().Contain("@SiteSettingsUrl(\"site-settings-communications-policy\")");
+        attentionSource.Should().Contain("@EmailAuditsUrl(item.Id, retryBlockedOnly: true)");
+        attentionSource.Should().Contain("@EmailAuditsUrl(item.Id, status: \"Failed\", flowKey: \"AccountActivation\")");
+        attentionSource.Should().Contain("@EmailAuditsUrl(item.Id, status: \"Failed\", flowKey: \"AdminCommunicationTest\")");
+        attentionSource.Should().Contain("@ChannelAuditsUrl(item.Id, phoneVerificationOnly: true)");
+        attentionSource.Should().Contain("@ChannelAuditsUrl(item.Id, actionBlockedOnly: true)");
+        attentionSource.Should().Contain("@ChannelAuditsUrl(item.Id, escalationCandidatesOnly: true)");
+        attentionSource.Should().Contain("@CrmInvoicesUrl(\"Overdue\")");
+        attentionSource.Should().Contain("@CrmInvoicesUrl(\"DueSoon\")");
+        attentionSource.Should().Contain("@CrmInvoicesUrl(\"Draft\")");
     }
 
 
@@ -9509,10 +10538,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         setupShellSource.Should().Contain("@DependencyStatusLabel(Model.CommunicationReadiness.SmsTransportConfigured, \"Ready\", \"NotReady\")");
         setupShellSource.Should().Contain("@DependencyStatusLabel(Model.CommunicationReadiness.WhatsAppTransportConfigured, \"Ready\", \"NotReady\")");
         setupShellSource.Should().Contain("@DependencyStatusLabel(Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured, \"Configured\", \"Missing\")");
-        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("fragment = \"site-settings-admin-routing\"");
+        setupShellSource.Should().Contain("@BusinessCommunicationsDetailsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@ChannelAuditsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-admin-routing\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationProfileTitle\")");
         setupShellSource.Should().Contain("@T.T(\"EmailAudits\")");
         setupShellSource.Should().Contain("@T.T(\"SmsWhatsAppAuditsTitle\")");
@@ -9556,15 +10585,17 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         setupShellSource.Should().Contain("@Model.CommunicationReadiness.EmailTransportSummary");
         setupShellSource.Should().Contain("@Model.CommunicationReadiness.AdminRoutingSummary");
         setupShellSource.Should().Contain("bool businessCommunicationDeliveryVisibilityReady = Model.CommunicationReadiness.EmailTransportConfigured");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-communications-policy\" })\"");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id })\"");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id })\"");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })\"");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })\"");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"Users\", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })\"");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.Id, status = \"Failed\", flowKey = \"PasswordReset\" })\"");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"ChannelAudits\", \"BusinessCommunications\", new { businessId = Model.Id, phoneVerificationOnly = true })\"");
-        setupShellSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"MobileOperations\")\"");
+        setupShellSource.Should().Contain("hx-get=\"@SiteSettingsUrl(\"site-settings-communications-policy\")\"");
+        setupShellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(Model.Id)\"");
+        setupShellSource.Should().Contain("hx-get=\"@ChannelAuditsUrl(Model.Id)\"");
+        setupShellSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)\"");
+        setupShellSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)\"");
+        setupShellSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)\"");
+        setupShellSource.Should().NotContain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)\"");
+        setupShellSource.Should().NotContain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)\"");
+        setupShellSource.Should().Contain("hx-get=\"@EmailAuditsUrl(Model.Id, status: \"Failed\", flowKey: \"PasswordReset\")\"");
+        setupShellSource.Should().Contain("hx-get=\"@ChannelAuditsUrl(Model.Id, phoneVerificationOnly: true)\"");
+        setupShellSource.Should().Contain("hx-get=\"@MobileOperationsUrl(Model.Id)\"");
         setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationDefaultsHelp\")");
         setupShellSource.Should().Contain("@T.T(\"CommunicationPolicy\")");
         setupShellSource.Should().Contain("@T.T(\"RetryBlocked\")");
@@ -9682,10 +10713,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         setupShellSource.Should().Contain("@T.T(\"NoActiveSubscriptionSnapshot\")");
         setupShellSource.Should().Contain("string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? \"-\" : T.T(status);");
         setupShellSource.Should().Contain("@SubscriptionStatusLabel(Model.Subscription.Status)");
-        setupShellSource.Should().Contain("@Url.Action(\"Subscription\", \"Businesses\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        setupShellSource.Should().Contain("@BusinessSubscriptionUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessSubscriptionInvoicesUrl(Model.Id)");
+        setupShellSource.Should().Contain("@PaymentsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
         setupShellSource.Should().Contain("@T.T(\"BusinessSubscriptionInvoicesTitle\")");
         setupShellSource.Should().Contain("@T.T(\"OpenPayments\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
@@ -9702,10 +10733,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         setupShellSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingPrimaryLocation)");
         setupShellSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingContactEmail)");
         setupShellSource.Should().Contain("@BusinessReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.MissingLegalName)");
-        setupShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
-        setupShellSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"Edit\", \"Businesses\", new { id = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        setupShellSource.Should().Contain("@BusinessMembersUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
+        setupShellSource.Should().Contain("@BusinessLocationsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessEditUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
     }
 
 
@@ -9716,11 +10747,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         setupShellSource.Should().Contain("@T.T(\"BusinessOwnedHere\")");
         setupShellSource.Should().Contain("@T.T(\"GlobalDependencies\")");
-        setupShellSource.Should().Contain("@Url.Action(\"Details\", \"BusinessCommunications\", new { businessId = Model.Id })");
-        setupShellSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Id })");
-        setupShellSource.Should().Contain("fragment = \"site-settings-communications-policy\"");
-        setupShellSource.Should().Contain("fragment = \"site-settings-payments\"");
-        setupShellSource.Should().Contain("fragment = \"site-settings-tax\"");
+        setupShellSource.Should().Contain("@BusinessCommunicationsDetailsUrl(Model.Id)");
+        setupShellSource.Should().Contain("@BusinessSetupUrl(Model.Id)");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-communications-policy\")");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-payments\")");
+        setupShellSource.Should().Contain("@SiteSettingsUrl(\"site-settings-tax\")");
         setupShellSource.Should().Contain("@T.T(\"BusinessCommunicationProfileTitle\")");
         setupShellSource.Should().Contain("@T.T(\"CommunicationPolicy\")");
         setupShellSource.Should().Contain("@T.T(\"Payments\")");
@@ -9739,20 +10770,19 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editorShellSource.Should().Contain("@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)");
         editorShellSource.Should().NotContain("@T.T(\"BusinessEditorPendingInvites\")");
         editorShellSource.Should().Contain("asp-route-filter=\"@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
-        editorShellSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })");
-        editorShellSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
+        editorShellSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Id, Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
         editorShellSource.Should().Contain("hx-push-url=\"true\">@MemberWorkspaceLabel()</a>");
         editorShellSource.Should().Contain("hx-push-url=\"true\">@T.T(\"CommonMembers\")</a>");
         editorShellSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"Members\")</a>");
-        editorShellSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.Id })");
+        editorShellSource.Should().Contain("@BusinessLocationsUrl(Model.Id)");
         editorShellSource.Should().Contain("asp-route-filter=\"@(Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
-        editorShellSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        editorShellSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id }))");
+        editorShellSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Model.Id, Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorOperationalStatus\")");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorOnboardingChecklist\")");
-        editorShellSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Id })");
-        editorShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
-        editorShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        editorShellSource.Should().Contain("@BusinessSetupUrl(Model.Id)");
+        editorShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
+        editorShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
+        CountOccurrences(editorShellSource, "asp-route-businessId=\"@Model.Id\"").Should().BeGreaterThanOrEqualTo(19);
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorNextActions\")");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorNotOnboardingCompleteYet\")");
         editorShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
@@ -9786,11 +10816,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         var invitationFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessInvitationForm.cshtml"));
 
         invitationFormSource.Should().Contain("@T.T(\"BusinessInvitationCreateHelp\")");
-        invitationFormSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
-        invitationFormSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.BusinessId })");
-        invitationFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        invitationFormSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.BusinessId, status = \"Failed\", flowKey = \"BusinessInvitation\", recipientEmail = Model.Email })");
-        invitationFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        invitationFormSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
+        invitationFormSource.Should().Contain("@BusinessSetupUrl(Model.BusinessId)");
+        invitationFormSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
+        invitationFormSource.Should().Contain("@EmailAuditsUrl(Model.BusinessId, status: \"Failed\", flowKey: \"BusinessInvitation\", recipientEmail: Model.Email)");
+        invitationFormSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
+        CountOccurrences(invitationFormSource, "asp-route-businessId=\"@Model.BusinessId\"").Should().BeGreaterThanOrEqualTo(5);
         invitationFormSource.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
         invitationFormSource.Should().Contain("@InvitationQueueLabel(Model.Filter)");
         invitationFormSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"OpenInvitations\")</a>");
@@ -9808,12 +10839,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         memberFormSource.Should().Contain("@T.T(\"BusinessMemberAssignmentHelp\")");
         memberFormSource.Should().Contain("asp-route-filter=\"@(Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
-        memberFormSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId })");
-        memberFormSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))");
+        memberFormSource.Should().Contain("@BusinessMembersUrl(Model.BusinessId, filter: Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
         memberFormSource.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation\"");
-        memberFormSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })");
-        memberFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
-        memberFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        memberFormSource.Should().Contain("@BusinessMembersUrl(Model.BusinessId, filter: Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
+        memberFormSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
+        memberFormSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
+        CountOccurrences(memberFormSource, "asp-route-businessId=\"@Model.BusinessId\"").Should().BeGreaterThanOrEqualTo(5);
         memberFormSource.Should().Contain("string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch");
         memberFormSource.Should().Contain("@T.T(\"CommonMembers\")");
         memberFormSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
@@ -9833,8 +10864,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         badgeViewSource.Should().Contain("!Model.EmailConfirmed ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation :");
         badgeViewSource.Should().Contain("!Model.IsActive ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention :");
         badgeViewSource.Should().Contain("asp-route-filter=\"@backToMembersFilter\"");
-        badgeViewSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id, filter = backToMembersFilter })");
-        badgeViewSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Business.Id })");
+        badgeViewSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Business.Id, backToMembersFilter)\"");
         badgeViewSource.Should().Contain("<i class=\"fa-solid fa-user-lock\"></i> @MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         badgeViewSource.Should().NotContain("<i class=\"fa-solid fa-user-lock\"></i> @T.T(\"UsersFilterLocked\")");
     }
@@ -9845,9 +10875,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     {
         var locationFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessLocationForm.cshtml"));
 
-        locationFormSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
-        locationFormSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.BusinessId })");
-        locationFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        locationFormSource.Should().Contain("@BusinessLocationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
+        locationFormSource.Should().Contain("@BusinessSetupUrl(Model.BusinessId)");
+        locationFormSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
+        CountOccurrences(locationFormSource, "asp-route-businessId=\"@Model.BusinessId\"").Should().BeGreaterThanOrEqualTo(2);
         locationFormSource.Should().Contain("@T.T(\"Cancel\")");
         locationFormSource.Should().Contain("@T.T(\"Setup\")");
         locationFormSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
@@ -9861,16 +10892,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         businessFormSource.Should().Contain("@T.T(\"BusinessFormInitialOwnerHelp\")");
         businessFormSource.Should().Contain("@T.T(\"BusinessFormActiveHelp\")");
-        businessFormSource.Should().Contain("@Url.Action(\"Index\", \"Users\")");
+        businessFormSource.Should().Contain("string GlobalUsersUrl() => Url.Action(\"Index\", \"Users\") ?? string.Empty;");
+        businessFormSource.Should().Contain("hx-get=\"@GlobalUsersUrl()\"");
         businessFormSource.Should().Contain("asp-route-filter=\"@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
-        businessFormSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })");
-        businessFormSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))");
-        businessFormSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.Id })");
+        businessFormSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Id, Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        businessFormSource.Should().Contain("@BusinessLocationsUrl(Model.Id)");
         businessFormSource.Should().Contain("asp-route-filter=\"@(Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
-        businessFormSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        businessFormSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id }))");
-        businessFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        businessFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        businessFormSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Model.Id, Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
+        businessFormSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
+        businessFormSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
+        CountOccurrences(businessFormSource, "asp-route-businessId=\"@Model.Id\"").Should().BeGreaterThanOrEqualTo(11);
         businessFormSource.Should().Contain("@T.T(\"Users\")");
         businessFormSource.Should().Contain("@T.T(\"BusinessFormManageMembers\")");
         businessFormSource.Should().Contain("@T.T(\"BusinessFormManageLocations\")");
@@ -9887,12 +10918,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         memberShellSource.Should().Contain("@T.T(\"BusinessMemberLastActiveOwnerWarning\")");
         memberShellSource.Should().Contain("@T.T(\"BusinessMemberControlledOwnerOverrideTitle\")");
-        memberShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
-        memberShellSource.Should().Contain("@Url.Action(\"OwnerOverrideAudits\", \"Businesses\", new { businessId = Model.BusinessId })");
-        memberShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        memberShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
-        memberShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.BusinessId, status = \"Failed\", flowKey = \"AccountActivation\", recipientEmail = Model.UserEmail })");
-        memberShellSource.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.BusinessId, status = \"Failed\", flowKey = \"PasswordReset\", recipientEmail = Model.UserEmail })");
+        memberShellSource.Should().Contain("@BusinessMembersUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
+        memberShellSource.Should().Contain("@BusinessOwnerOverrideAuditsUrl(Model.BusinessId)");
+        memberShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
+        memberShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
+        memberShellSource.Should().Contain("@EmailAuditsUrl(Model.BusinessId, status: \"Failed\", flowKey: \"AccountActivation\", recipientEmail: Model.UserEmail)");
+        memberShellSource.Should().Contain("@EmailAuditsUrl(Model.BusinessId, status: \"Failed\", flowKey: \"PasswordReset\", recipientEmail: Model.UserEmail)");
         memberShellSource.Should().Contain("@T.T(\"CommonMembers\")");
         memberShellSource.Should().Contain("@T.T(\"BusinessMembersOwnerOverrideAuditAction\")");
         memberShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
@@ -9908,7 +10939,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         memberShellSource.Should().Contain("@T.T(\"BusinessMemberLastActiveOwnerWarning\")");
         memberShellSource.Should().Contain("@T.T(\"BusinessMemberControlledOwnerOverrideTitle\")");
         memberShellSource.Should().Contain("@T.T(\"BusinessMemberControlledOwnerOverrideNote\")");
-        memberShellSource.Should().Contain("@Url.Action(\"OwnerOverrideAudits\", \"Businesses\", new { businessId = Model.BusinessId })");
+        memberShellSource.Should().Contain("@BusinessOwnerOverrideAuditsUrl(Model.BusinessId)");
         memberShellSource.Should().Contain("@T.T(\"BusinessMembersOwnerOverrideAuditAction\")");
         memberShellSource.Should().Contain("hx-push-url=\"true\">@T.T(\"BusinessSupportQueueTitle\")</a>");
         memberShellSource.Should().Contain("hx-push-url=\"true\">@T.T(\"MerchantReadinessTitle\")</a>");
@@ -9927,19 +10958,19 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         var locationShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessLocationEditorShell.cshtml"));
         var locationFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessLocationForm.cshtml"));
 
-        invitationShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
+        invitationShellSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
         invitationShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"Page\" />");
         invitationShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"PageSize\" />");
         invitationShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"Query\" />");
         invitationShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"Filter\" />");
-        invitationFormSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
+        invitationFormSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
 
-        locationShellSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
+        locationShellSource.Should().Contain("@BusinessLocationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
         locationShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"Page\" />");
         locationShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"PageSize\" />");
         locationShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"Query\" />");
         locationShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"Filter\" />");
-        locationFormSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
+        locationFormSource.Should().Contain("@BusinessLocationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
     }
 
 
@@ -10163,16 +11194,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createPurchaseOrderViewSource.Should().Contain("ViewData[\"IsCreate\"] = true;");
         createPurchaseOrderViewSource.Should().Contain("<partial name=\"~/Views/Inventory/_PurchaseOrderEditorShell.cshtml\" model=\"Model\" />");
         createPurchaseOrderViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
-        createPurchaseOrderViewSource.Should().Contain("event.target.closest('#addPurchaseOrderLine')");
-        createPurchaseOrderViewSource.Should().Contain("template.innerHTML.replaceAll('__index__'");
+        createPurchaseOrderViewSource.Should().NotContain("<script>");
 
         editPurchaseOrderViewSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.Inventory.PurchaseOrderEditVm");
         editPurchaseOrderViewSource.Should().Contain("ViewData[\"Title\"] = T.T(\"EditPurchaseOrder\");");
         editPurchaseOrderViewSource.Should().Contain("ViewData[\"IsCreate\"] = false;");
         editPurchaseOrderViewSource.Should().Contain("<partial name=\"~/Views/Inventory/_PurchaseOrderEditorShell.cshtml\" model=\"Model\" />");
         editPurchaseOrderViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
-        editPurchaseOrderViewSource.Should().Contain("event.target.closest('#addPurchaseOrderLine')");
-        editPurchaseOrderViewSource.Should().Contain("button.closest('.line-row')?.remove();");
+        editPurchaseOrderViewSource.Should().NotContain("<script>");
 
         createStockLevelViewSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.Inventory.StockLevelEditVm");
         createStockLevelViewSource.Should().Contain("ViewData[\"IsCreate\"] = true;");
@@ -10191,16 +11220,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createStockTransferViewSource.Should().Contain("ViewData[\"IsCreate\"] = true;");
         createStockTransferViewSource.Should().Contain("<partial name=\"~/Views/Inventory/_StockTransferEditorShell.cshtml\" model=\"Model\" />");
         createStockTransferViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
-        createStockTransferViewSource.Should().Contain("event.target.closest('#addTransferLine')");
-        createStockTransferViewSource.Should().Contain("template.innerHTML.replaceAll('__index__'");
+        createStockTransferViewSource.Should().NotContain("<script>");
 
         editStockTransferViewSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.Inventory.StockTransferEditVm");
         editStockTransferViewSource.Should().Contain("ViewData[\"Title\"] = T.T(\"EditStockTransfer\");");
         editStockTransferViewSource.Should().Contain("ViewData[\"IsCreate\"] = false;");
         editStockTransferViewSource.Should().Contain("<partial name=\"~/Views/Inventory/_StockTransferEditorShell.cshtml\" model=\"Model\" />");
         editStockTransferViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
-        editStockTransferViewSource.Should().Contain("event.target.closest('#addTransferLine')");
-        editStockTransferViewSource.Should().Contain("button.closest('.line-row')?.remove();");
+        editStockTransferViewSource.Should().NotContain("<script>");
     }
 
 
@@ -10233,8 +11260,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createOpportunityViewSource.Should().Contain("<h1 class=\"mb-3\">@T.T(\"CreateOpportunity\")</h1>");
         createOpportunityViewSource.Should().Contain("<partial name=\"_OpportunityEditorShell\" model=\"Model\" />");
         createOpportunityViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
-        createOpportunityViewSource.Should().Contain("document.getElementById('addOpportunityLine')?.addEventListener('click'");
-        createOpportunityViewSource.Should().Contain("template.innerHTML.replaceAll('__index__'");
+        createOpportunityViewSource.Should().NotContain("document.getElementById('addOpportunityLine')?.addEventListener('click'");
+        createOpportunityViewSource.Should().NotContain("template.innerHTML.replaceAll('__index__'");
 
         createSegmentViewSource.Should().Contain("@model Darwin.WebAdmin.ViewModels.CRM.CustomerSegmentEditVm");
         createSegmentViewSource.Should().Contain("ViewData[\"FormAction\"] = \"CreateSegment\";");
@@ -10269,12 +11296,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editCustomerViewSource.Should().Contain("ViewData[\"Title\"] = T.T(\"EditCustomer\");");
         editCustomerViewSource.Should().Contain("ViewData[\"FormAction\"] = \"EditCustomer\";");
         editCustomerViewSource.Should().Contain("<partial name=\"~/Views/Crm/_CustomerEditorShell.cshtml\" model=\"Model\" />");
+        editCustomerViewSource.Should().Contain("string CustomerInteractionsUrl(Guid customerId) => Url.Action(\"CustomerInteractions\", \"Crm\", new { customerId }) ?? string.Empty;");
+        editCustomerViewSource.Should().Contain("string CustomerConsentsUrl(Guid customerId) => Url.Action(\"CustomerConsents\", \"Crm\", new { customerId }) ?? string.Empty;");
+        editCustomerViewSource.Should().Contain("string CustomerSegmentMembershipsUrl(Guid customerId) => Url.Action(\"CustomerSegmentMemberships\", \"Crm\", new { customerId }) ?? string.Empty;");
         editCustomerViewSource.Should().Contain("hx-post=\"@Url.Action(\"CustomerInteractions\", \"Crm\")\"");
-        editCustomerViewSource.Should().Contain("hx-get=\"@Url.Action(\"CustomerInteractions\", \"Crm\", new { customerId = Model.Id })\"");
+        editCustomerViewSource.Should().Contain("hx-get=\"@CustomerInteractionsUrl(Model.Id)\"");
         editCustomerViewSource.Should().Contain("hx-post=\"@Url.Action(\"CustomerConsents\", \"Crm\")\"");
-        editCustomerViewSource.Should().Contain("hx-get=\"@Url.Action(\"CustomerConsents\", \"Crm\", new { customerId = Model.Id })\"");
+        editCustomerViewSource.Should().Contain("hx-get=\"@CustomerConsentsUrl(Model.Id)\"");
         editCustomerViewSource.Should().Contain("hx-post=\"@Url.Action(\"CustomerSegmentMemberships\", \"Crm\")\"");
-        editCustomerViewSource.Should().Contain("hx-get=\"@Url.Action(\"CustomerSegmentMemberships\", \"Crm\", new { customerId = Model.Id })\"");
+        editCustomerViewSource.Should().Contain("hx-get=\"@CustomerSegmentMembershipsUrl(Model.Id)\"");
         editCustomerViewSource.Should().Contain("var interactionTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()");
         editCustomerViewSource.Should().Contain("var interactionChannelOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()");
         editCustomerViewSource.Should().Contain("var consentTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.ConsentType>()");
@@ -10300,7 +11330,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editLeadViewSource.Should().Contain("name=\"RowVersion\" value=\"@Convert.ToBase64String(Model.RowVersion)\"");
         editLeadViewSource.Should().Contain("name=\"CopyNotesToCustomer\" value=\"true\" checked=\"checked\"");
         editLeadViewSource.Should().Contain("hx-post=\"@Url.Action(\"LeadInteractions\", \"Crm\")\"");
-        editLeadViewSource.Should().Contain("hx-get=\"@Url.Action(\"LeadInteractions\", \"Crm\", new { leadId = Model.Id })\"");
+        editLeadViewSource.Should().Contain("string LeadInteractionsUrl(Guid leadId) => Url.Action(\"LeadInteractions\", \"Crm\", new { leadId }) ?? string.Empty;");
+        editLeadViewSource.Should().Contain("hx-get=\"@LeadInteractionsUrl(Model.Id)\"");
         editLeadViewSource.Should().Contain("var interactionTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()");
         editLeadViewSource.Should().Contain("var interactionChannelOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()");
         editLeadViewSource.Should().Contain("Text = T.T(option.Text)");
@@ -10314,15 +11345,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editOpportunityViewSource.Should().Contain("<h1 class=\"mb-3\">@T.T(\"EditOpportunity\")</h1>");
         editOpportunityViewSource.Should().Contain("<partial name=\"_OpportunityEditorShell\" model=\"Model\" />");
         editOpportunityViewSource.Should().Contain("hx-post=\"@Url.Action(\"OpportunityInteractions\", \"Crm\")\"");
-        editOpportunityViewSource.Should().Contain("hx-get=\"@Url.Action(\"OpportunityInteractions\", \"Crm\", new { opportunityId = Model.Id })\"");
+        editOpportunityViewSource.Should().Contain("string OpportunityInteractionsUrl(Guid opportunityId) => Url.Action(\"OpportunityInteractions\", \"Crm\", new { opportunityId }) ?? string.Empty;");
+        editOpportunityViewSource.Should().Contain("hx-get=\"@OpportunityInteractionsUrl(Model.Id)\"");
         editOpportunityViewSource.Should().Contain("var interactionTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()");
         editOpportunityViewSource.Should().Contain("var interactionChannelOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()");
         editOpportunityViewSource.Should().Contain("Text = T.T(option.Text)");
         editOpportunityViewSource.Should().Contain("asp-items=\"interactionTypeOptions\"");
         editOpportunityViewSource.Should().Contain("asp-items=\"interactionChannelOptions\"");
-        editOpportunityViewSource.Should().Contain("document.getElementById('addOpportunityLine')?.addEventListener('click'");
-        editOpportunityViewSource.Should().Contain("template.innerHTML.replaceAll('__index__'");
-        editOpportunityViewSource.Should().Contain("const button = event.target.closest('.remove-line');");
+        editOpportunityViewSource.Should().NotContain("document.getElementById('addOpportunityLine')?.addEventListener('click'");
+        editOpportunityViewSource.Should().NotContain("template.innerHTML.replaceAll('__index__'");
+        editOpportunityViewSource.Should().NotContain("const button = event.target.closest('.remove-line');");
         editOpportunityViewSource.Should().Contain("@section Scripts {");
         editOpportunityViewSource.Should().Contain("<partial name=\"_ValidationScriptsPartial\" />");
     }
@@ -11788,11 +12820,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         gridSource.Should().Contain("string OrderShipmentOpsHealthBadgeClass(bool healthy) => healthy");
         gridSource.Should().Contain("var orderShipmentAttentionCount = orderShipmentAwaitingHandoffCount + orderShipmentTrackingOverdueCount + orderShipmentCarrierReviewCount + orderShipmentReturnFollowUpCount;");
         gridSource.Should().Contain("T.T(\"NeedsAttention\")");
-        gridSource.Should().Contain("hx-get=\"@Url.Action(\"AddShipment\", \"Orders\", new { orderId = Model.OrderId })\"");
-        gridSource.Should().Contain("hx-get=\"@Url.Action(\"Refunds\", \"Orders\", new { orderId = Model.OrderId })\"");
-        gridSource.Should().Contain("hx-get=\"@Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" })\"");
-        gridSource.Should().Contain("hx-get=\"@Url.Action(\"Index\", \"ShippingMethods\", new { filter = \"Dhl\" })\"");
-        gridSource.Should().Contain("hx-get=\"@Url.Action(\"AddRefund\", \"Orders\", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })\"");
+        gridSource.Should().Contain("string AddShipmentUrl(Guid orderId) => Url.Action(\"AddShipment\", \"Orders\", new { orderId }) ?? string.Empty;");
+        gridSource.Should().Contain("string OrderRefundsUrl(Guid orderId) => Url.Action(\"Refunds\", \"Orders\", new { orderId }) ?? string.Empty;");
+        gridSource.Should().Contain("string ShippingSettingsUrl() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = \"site-settings-shipping\" }) ?? string.Empty;");
+        gridSource.Should().Contain("string ShippingMethodsUrl(string filter) => Url.Action(\"Index\", \"ShippingMethods\", new { filter }) ?? string.Empty;");
+        gridSource.Should().Contain("string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action(\"AddRefund\", \"Orders\", new { orderId, paymentId }) ?? string.Empty;");
+        gridSource.Should().Contain("hx-get=\"@AddShipmentUrl(Model.OrderId)\"");
+        gridSource.Should().Contain("hx-get=\"@OrderRefundsUrl(Model.OrderId)\"");
+        gridSource.Should().Contain("hx-get=\"@ShippingSettingsUrl()\"");
+        gridSource.Should().Contain("hx-get=\"@ShippingMethodsUrl(\"Dhl\")\"");
+        gridSource.Should().Contain("hx-get=\"@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)\"");
 
         handlerSource.Should().Contain("public sealed class GenerateDhlShipmentLabelHandler");
         handlerSource.Should().Contain("_db.Set<ShipmentProviderOperation>()");
@@ -11874,6 +12911,141 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         gridSource.Should().Contain("foreach (var carrierEvent in s.RecentCarrierEvents)");
         gridSource.Should().Contain("carrierEvent.ExceptionCode");
         gridSource.Should().Contain("carrierEvent.ExceptionMessage");
+    }
+
+    private static int CountOccurrences(string source, string value)
+    {
+        return source.Split(value, StringSplitOptions.None).Length - 1;
+    }
+
+    private static string WebAdminViewsRoot()
+    {
+        return Path.Combine(WebAdminRoot(), "Views");
+    }
+
+    private static string WebAdminRoot()
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..", "..",
+            "src", "Darwin.WebAdmin"));
+    }
+
+    private static List<(string Path, string Source)> ReadWebAdminViewSources()
+    {
+        var root = WebAdminViewsRoot();
+
+        return Directory
+            .GetFiles(root, "*.cshtml", SearchOption.AllDirectories)
+            .Select(path => (
+                Path: Path.GetRelativePath(root, path),
+                Source: File.ReadAllText(path)))
+            .ToList();
+    }
+
+    private static List<(string Path, string Source)> ReadWebAdminSources()
+    {
+        var root = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..", "..",
+            "src", "Darwin.WebAdmin"));
+
+        return Directory
+            .GetFiles(root, "*.cs", SearchOption.AllDirectories)
+            .Select(path => (
+                Path: Path.GetRelativePath(root, path),
+                Source: File.ReadAllText(path)))
+            .ToList();
+    }
+
+    private static List<(string Path, string Source)> ReadWebAdminControllerSources()
+    {
+        var root = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..", "..",
+            "src", "Darwin.WebAdmin", "Controllers"));
+
+        return Directory
+            .GetFiles(root, "*.cs", SearchOption.AllDirectories)
+            .Select(path => (
+                Path: Path.GetRelativePath(root, path),
+                Source: File.ReadAllText(path)))
+            .ToList();
+    }
+
+    private static Regex HtmxRequestTags()
+    {
+        return new Regex("<[^>]*hx-(?:get|post)=[^>]*>", RegexOptions.Singleline);
+    }
+
+    private static Regex PostForms()
+    {
+        return new Regex("<form\\b(?=[^>]*\\bmethod=\"post\")[^>]*>.*?</form>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    }
+
+    private static Regex TargetBlankTags()
+    {
+        return new Regex("<a\\b(?=[^>]*\\btarget=\"_blank\")[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    }
+
+    private static Regex InlineEventAttributeTags()
+    {
+        return new Regex("<[^>]+\\son[a-z]+\\s*=", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    }
+
+    private static Regex ExternalAssetTags()
+    {
+        return new Regex("<(?:script|link)\\b(?=[^>]*(?:src|href)=\"(?<url>https://[^\"]+)\")[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    }
+
+    private static Regex InlineScriptBlocks()
+    {
+        return new Regex("<script(?![^>]*\\bsrc=)[^>]*>.*?</script>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    }
+
+    private static Regex InlineStyleAttributeTags()
+    {
+        return new Regex("<[^>]+\\sstyle\\s*=\\s*['\"][^'\"]*['\"][^>]*>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    }
+
+    private static Regex HttpPostActionAttributeBlocks()
+    {
+        return new Regex(
+            "(?<attributes>(?:\\s*\\[[^\\]]*\\]\\s*)*\\s*\\[[^\\]]*HttpPost[^\\]]*\\]\\s*(?:\\s*\\[[^\\]]*\\]\\s*)*)\\s*(?<signature>public\\s+(?:async\\s+)?(?:Task<\\s*IActionResult\\s*>|IActionResult|ActionResult)[^{;]+)",
+            RegexOptions.Singleline);
+    }
+
+    private static string NormalizeTagForAssertion(string tag)
+    {
+        return Regex.Replace(tag, "\\s+", " ").Trim();
+    }
+
+    private static IEnumerable<(string Path, string Block, string Signature)> FindIgnoreAntiForgeryBlocks(string path, string source)
+    {
+        const string marker = "[IgnoreAntiforgeryToken]";
+        var searchIndex = 0;
+
+        while (true)
+        {
+            var markerIndex = source.IndexOf(marker, searchIndex, StringComparison.Ordinal);
+            if (markerIndex < 0)
+            {
+                yield break;
+            }
+
+            var signatureIndex = source.IndexOf("public ", markerIndex, StringComparison.Ordinal);
+            signatureIndex.Should().BeGreaterThan(markerIndex, $"IgnoreAntiforgeryToken in {path} should decorate a public action");
+            var signatureEnd = source.IndexOf('{', signatureIndex);
+            signatureEnd.Should().BeGreaterThan(signatureIndex, $"IgnoreAntiforgeryToken in {path} should be followed by an action body");
+
+            var blockStart = Math.Max(0, markerIndex - 800);
+            yield return (
+                path,
+                source.Substring(blockStart, signatureEnd - blockStart),
+                NormalizeTagForAssertion(source.Substring(signatureIndex, signatureEnd - signatureIndex)));
+
+            searchIndex = markerIndex + marker.Length;
+        }
     }
 }
 

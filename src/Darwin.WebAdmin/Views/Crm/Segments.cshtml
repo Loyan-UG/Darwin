@@ -4,6 +4,10 @@
     ViewData["Title"] = T.T("CustomerSegments");
 
     string SegmentMemberCountLabel() => T.T("Members");
+    string GlobalCrmSegmentsUrl() => Url.Action("Segments", "Crm") ?? string.Empty;
+    string CrmSegmentsUrl(string filter) => Url.Action("Segments", "Crm", new { q = Model.Query, filter }) ?? string.Empty;
+    string CreateCrmSegmentUrl() => Url.Action("CreateSegment", "Crm") ?? string.Empty;
+    string EditCrmSegmentUrl(Guid id) => Url.Action("EditSegment", "Crm", new { id }) ?? string.Empty;
 }
 
 <div id="crm-segments-workspace-shell">
@@ -13,7 +17,7 @@
         <p class="text-muted mb-0">@T.T("CustomerSegmentsIntro")</p>
     </div>
     <a asp-action="CreateSegment"
-       hx-get="@Url.Action("CreateSegment", "Crm")"
+       hx-get="@CreateCrmSegmentUrl()"
        hx-target="#crm-segments-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
@@ -57,7 +61,7 @@
 </div>
 
 <form method="get" class="row g-2 mb-3"
-      hx-get="@Url.Action("Segments", "Crm")"
+      hx-get="@GlobalCrmSegmentsUrl()"
       hx-target="#crm-segments-workspace-shell"
       hx-swap="outerHTML"
       hx-push-url="true">
@@ -73,9 +77,9 @@
 </form>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a asp-action="Segments" asp-route-filter="Empty" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "Empty" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Empty")</a>
-    <a asp-action="Segments" asp-route-filter="InUse" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "InUse" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("InUse")</a>
-    <a asp-action="Segments" asp-route-filter="MissingDescription" hx-get="@Url.Action("Segments", "Crm", new { q = Model.Query, filter = "MissingDescription" })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("MissingDescription")</a>
+    <a asp-action="Segments" asp-route-filter="Empty" hx-get="@CrmSegmentsUrl("Empty")" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Empty")</a>
+    <a asp-action="Segments" asp-route-filter="InUse" hx-get="@CrmSegmentsUrl("InUse")" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("InUse")</a>
+    <a asp-action="Segments" asp-route-filter="MissingDescription" hx-get="@CrmSegmentsUrl("MissingDescription")" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("MissingDescription")</a>
 </div>
 
 <div class="table-responsive">
@@ -117,7 +121,7 @@
                             }
                         </td>
                         <td class="text-end">
-                            <a asp-action="EditSegment" asp-route-id="@item.Id" hx-get="@Url.Action("EditSegment", "Crm", new { id = item.Id })" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Edit")</a>
+                            <a asp-action="EditSegment" asp-route-id="@item.Id" hx-get="@EditCrmSegmentUrl(item.Id)" hx-target="#crm-segments-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Edit")</a>
                         </td>
                     </tr>
                 }

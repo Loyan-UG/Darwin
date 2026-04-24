@@ -5,6 +5,11 @@
 
 @{
     ViewData["Title"] = T.T("Roles");
+    string RolesGlobalIndexUrl() => Url.Action("Index", "Roles") ?? string.Empty;
+    string RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter filter) => Url.Action("Index", "Roles", new { filter }) ?? string.Empty;
+    string CreateRoleUrl() => Url.Action("Create", "Roles") ?? string.Empty;
+    string EditRoleUrl(Guid id) => Url.Action("Edit", "Roles", new { id }) ?? string.Empty;
+    string RolePermissionsUrl(Guid id) => Url.Action("Permissions", "Roles", new { id }) ?? string.Empty;
 }
 
 <div id="roles-workspace-shell">
@@ -20,7 +25,7 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.All"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Roles", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.All })"
+                           hx-get="@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.All)"
                            hx-target="#roles-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -37,7 +42,7 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.System"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Roles", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.System })"
+                           hx-get="@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.System)"
                            hx-target="#roles-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("IdentityFilterSystem")</a>
@@ -54,13 +59,13 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.Custom"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Roles", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.Custom })"
+                           hx-get="@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.Custom)"
                            hx-target="#roles-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("IdentityFilterCustom")</a>
                         <a asp-action="Create"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Create", "Roles")"
+                           hx-get="@CreateRoleUrl()"
                            hx-target="#roles-workspace-shell"
                            hx-swap="outerHTML">@T.T("NewRole")</a>
                     </div>
@@ -76,7 +81,7 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.DelegatedSupport"
                            class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("Index", "Roles", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.DelegatedSupport })"
+                           hx-get="@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.DelegatedSupport)"
                            hx-target="#roles-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("IdentityFilterDelegatedSupport")</a>
@@ -95,7 +100,7 @@
                     <a asp-action="Index"
                        asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.System"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Roles", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.System })"
+                       hx-get="@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.System)"
                        hx-target="#roles-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("Open")</a>
@@ -105,7 +110,7 @@
                     <a asp-action="Index"
                        asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.DelegatedSupport"
                        class="btn btn-sm btn-outline-info"
-                       hx-get="@Url.Action("Index", "Roles", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.DelegatedSupport })"
+                       hx-get="@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.DelegatedSupport)"
                        hx-target="#roles-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("Open")</a>
@@ -116,13 +121,13 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.Custom"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Roles", new { filter = Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.Custom })"
+                           hx-get="@RolesIndexUrl(Darwin.WebAdmin.ViewModels.Identity.RoleQueueFilter.Custom)"
                            hx-target="#roles-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                         <a asp-action="Create"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Create", "Roles")"
+                           hx-get="@CreateRoleUrl()"
                            hx-target="#roles-workspace-shell"
                            hx-swap="outerHTML">@T.T("NewRole")</a>
                     </div>
@@ -135,7 +140,7 @@
         <div class="card-body">
             <form method="get"
                   class="row g-2 align-items-end"
-                  hx-get="@Url.Action("Index", "Roles")"
+               hx-get="@RolesGlobalIndexUrl()"
                   hx-target="#roles-workspace-shell"
                   hx-swap="outerHTML">
                 <div class="col-md-4">
@@ -157,12 +162,12 @@
                     </button>
                     <a asp-action="Index"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Roles")"
+       hx-get="@RolesGlobalIndexUrl()"
                        hx-target="#roles-workspace-shell"
                        hx-swap="outerHTML">@T.T("Reset")</a>
                     <a asp-action="Create"
                        class="btn btn-primary"
-                       hx-get="@Url.Action("Create", "Roles")"
+                       hx-get="@CreateRoleUrl()"
                        hx-target="#roles-workspace-shell"
                        hx-swap="outerHTML">
                         <i class="fa fa-plus"></i> @T.T("NewRole")
@@ -180,8 +185,8 @@
                         <tr>
                             <th>@T.T("DisplayName")</th>
                             <th>@T.T("Description")</th>
-                            <th style="width:120px;">@T.T("System")</th>
-                            <th class="text-end" style="width:290px;">@T.T("Actions")</th>
+                    <th class="admin-w-120">@T.T("System")</th>
+                    <th class="text-end admin-w-290">@T.T("Actions")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -216,7 +221,7 @@
                                         <a asp-action="Edit"
                                            asp-route-id="@r.Id"
                                            class="btn btn-sm btn-outline-primary me-1"
-                                           hx-get="@Url.Action("Edit", "Roles", new { id = r.Id })"
+                                           hx-get="@EditRoleUrl(r.Id)"
                                            hx-target="#roles-workspace-shell"
                                            hx-swap="outerHTML">
                                             <i class="fa fa-pen"></i> @T.T("Edit")
@@ -226,7 +231,7 @@
                                            asp-action="Permissions"
                                            asp-route-id="@r.Id"
                                            class="btn btn-sm btn-outline-primary"
-                                           hx-get="@Url.Action("Permissions", "Roles", new { id = r.Id })"
+                                           hx-get="@RolePermissionsUrl(r.Id)"
                                            hx-target="#roles-workspace-shell"
                                            hx-swap="outerHTML">
                                             <i class="fa fa-shield-alt"></i> @T.T("Permissions")
@@ -244,7 +249,7 @@
                                                     data-rowversion="@Convert.ToBase64String(r.RowVersion)"
                                                     data-hx-target="#roles-workspace-shell"
                                                     data-hx-swap="outerHTML"
-                                                    data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
+                                   >
                                                 <i class="fa fa-trash"></i> @T.T("Delete")
                                             </button>
                                         }

@@ -3,6 +3,16 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CrmCustomersTitle");
+    string GlobalCrmCustomersUrl() => Url.Action("Customers", "Crm") ?? string.Empty;
+    string GlobalInvoicesUrl() => Url.Action("Invoices", "Crm") ?? string.Empty;
+    string CreateCustomerUrl() => Url.Action("CreateCustomer", "Crm") ?? string.Empty;
+    string CrmCustomersUrl(object? q = null, string? filter = null) => Url.Action("Customers", "Crm", new { q, filter }) ?? string.Empty;
+    string CrmSegmentsUrl() => Url.Action("Segments", "Crm") ?? string.Empty;
+    string CrmInvoicesUrl(object? q = null, string? filter = null) => Url.Action("Invoices", "Crm", new { q, filter }) ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string EditCustomerUrl(Guid id, string? fragment = null) => Url.Action("EditCustomer", "Crm", new { id, fragment }) ?? string.Empty;
+    string UserEditUrl(object? id) => Url.Action("Edit", "Users", new { id }) ?? string.Empty;
+    string CreateOpportunityUrl(Guid customerId) => Url.Action("CreateOpportunity", "Crm", new { customerId }) ?? string.Empty;
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
     string CrmCustomerOpsHealthBadgeClass(bool healthy) => healthy
         ? "badge bg-success-subtle text-success-emphasis"
@@ -17,7 +27,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Customers" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("Customers", "Crm")"
+          hx-get="@GlobalCrmCustomersUrl()"
           hx-target="#crm-customers-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -25,14 +35,14 @@
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> @T.T("Search")</button>
         <a asp-action="Customers" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Customers", "Crm")"
+           hx-get="@GlobalCrmCustomersUrl()"
            hx-target="#crm-customers-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Reset")</a>
     </form>
 
     <a asp-action="CreateCustomer" class="btn btn-primary"
-       hx-get="@Url.Action("CreateCustomer", "Crm")"
+       hx-get="@CreateCustomerUrl()"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">
@@ -92,13 +102,13 @@
                     <div class="d-flex flex-wrap gap-2">
                         <a asp-action="CreateCustomer"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("CreateCustomer", "Crm")"
+                           hx-get="@CreateCustomerUrl()"
                            hx-target="#crm-customers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("NewCustomer")</a>
                         <a asp-action="Invoices"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invoices", "Crm")"
+                           hx-get="@GlobalInvoicesUrl()"
                            hx-target="#crm-customers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -118,13 +128,13 @@
                             <div class="small text-muted mt-3">@T.T("ReviewSegmentation")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
                                 <a asp-action="Customers" asp-route-filter="NeedsSegmentation" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.NeedsSegmentation ? "btn-warning" : "btn-outline-warning")"
-                                   hx-get="@Url.Action("Customers", "Crm", new { q = Model.Query, filter = "NeedsSegmentation" })"
+                                   hx-get="@CrmCustomersUrl(Model.Query, "NeedsSegmentation")"
                                    hx-target="#crm-customers-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("NeedsSegmentation")</a>
                                 <a asp-action="Segments"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Segments", "Crm")"
+                                   hx-get="@CrmSegmentsUrl()"
                                    hx-target="#crm-customers-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Segments")</a>
@@ -143,13 +153,13 @@
                             <div class="small text-muted mt-3">@T.T("ReviewInvoices")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
                                 <a asp-action="Customers" asp-route-filter="MissingVatId" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")"
-                                   hx-get="@Url.Action("Customers", "Crm", new { q = Model.Query, filter = "MissingVatId" })"
+                                   hx-get="@CrmCustomersUrl(Model.Query, "MissingVatId")"
                                    hx-target="#crm-customers-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("B2BMissingVatId")</a>
                                 <a asp-action="Invoices" asp-route-filter="MissingVatId"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Invoices", "Crm", new { filter = "MissingVatId" })"
+                                   hx-get="@CrmInvoicesUrl(filter: "MissingVatId")"
                                    hx-target="#crm-customers-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -168,13 +178,13 @@
                             <div class="small text-muted mt-3">@T.T("UsesPlatformLocaleFallback")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
                                 <a asp-action="Customers" asp-route-filter="UsesPlatformLocaleFallback" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.UsesPlatformLocaleFallback ? "btn-secondary" : "btn-outline-secondary")"
-                                   hx-get="@Url.Action("Customers", "Crm", new { q = Model.Query, filter = "UsesPlatformLocaleFallback" })"
+                                   hx-get="@CrmCustomersUrl(Model.Query, "UsesPlatformLocaleFallback")"
                                    hx-target="#crm-customers-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("LocaleFallback")</a>
                                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-localization"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
+                                   hx-get="@SiteSettingsUrl("site-settings-localization")"
                                    hx-target="#crm-customers-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Open")</a>
@@ -193,13 +203,13 @@
                             <div class="small text-muted mt-3">@T.T("CrmNextStep")</div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
                                 <a asp-action="Customers" asp-route-filter="HasOpportunities" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.HasOpportunities ? "btn-primary" : "btn-outline-primary")"
-                                   hx-get="@Url.Action("Customers", "Crm", new { q = Model.Query, filter = "HasOpportunities" })"
+                                   hx-get="@CrmCustomersUrl(Model.Query, "HasOpportunities")"
                                    hx-target="#crm-customers-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("HasOpportunities")</a>
                                 <a asp-action="Invoices"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Invoices", "Crm")"
+                                       hx-get="@GlobalInvoicesUrl()"
                                    hx-target="#crm-customers-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("ReviewInvoices")</a>
@@ -293,37 +303,37 @@
 
 <div class="d-flex gap-2 flex-wrap mb-3">
     <a asp-action="Customers" asp-route-filter="LinkedUser" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.LinkedUser ? "btn-info" : "btn-outline-info")"
-       hx-get="@Url.Action("Customers", "Crm", new { filter = "LinkedUser" })"
+       hx-get="@CrmCustomersUrl(filter: "LinkedUser")"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("LinkedUser")</a>
     <a asp-action="Customers" asp-route-filter="NeedsSegmentation" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.NeedsSegmentation ? "btn-warning" : "btn-outline-warning")"
-       hx-get="@Url.Action("Customers", "Crm", new { filter = "NeedsSegmentation" })"
+       hx-get="@CrmCustomersUrl(filter: "NeedsSegmentation")"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("NeedsSegmentation")</a>
     <a asp-action="Customers" asp-route-filter="HasOpportunities" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.HasOpportunities ? "btn-primary" : "btn-outline-primary")"
-       hx-get="@Url.Action("Customers", "Crm", new { filter = "HasOpportunities" })"
+       hx-get="@CrmCustomersUrl(filter: "HasOpportunities")"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("HasOpportunities")</a>
     <a asp-action="Customers" asp-route-filter="Business" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.Business ? "btn-dark" : "btn-outline-dark")"
-       hx-get="@Url.Action("Customers", "Crm", new { filter = "Business" })"
+       hx-get="@CrmCustomersUrl(filter: "Business")"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("B2B")</a>
     <a asp-action="Customers" asp-route-filter="MissingVatId" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")"
-       hx-get="@Url.Action("Customers", "Crm", new { filter = "MissingVatId" })"
+       hx-get="@CrmCustomersUrl(filter: "MissingVatId")"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("B2BMissingVatId")</a>
     <a asp-action="Customers" asp-route-filter="UsesPlatformLocaleFallback" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.UsesPlatformLocaleFallback ? "btn-secondary" : "btn-outline-secondary")"
-       hx-get="@Url.Action("Customers", "Crm", new { filter = "UsesPlatformLocaleFallback" })"
+       hx-get="@CrmCustomersUrl(filter: "UsesPlatformLocaleFallback")"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("LocaleFallback")</a>
     <a asp-action="Customers" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("Customers", "Crm")"
+           hx-get="@GlobalCrmCustomersUrl()"
        hx-target="#crm-customers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("ClearQueueFilters")</a>
@@ -396,7 +406,7 @@
                     </td>
                     <td class="text-end">
                         <a asp-action="EditCustomer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.Id })"
+                           hx-get="@EditCustomerUrl(item.Id)"
                            hx-target="#crm-customers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -405,7 +415,7 @@
                         @if (item.UserId.HasValue)
                         {
                             <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId.Value" class="btn btn-sm btn-outline-info"
-                               hx-get="@Url.Action("Edit", "Users", new { id = item.UserId.Value })"
+                               hx-get="@UserEditUrl(item.UserId.Value)"
                                hx-target="#crm-customers-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -413,28 +423,28 @@
                             </a>
                         }
                         <a asp-action="EditCustomer" asp-route-id="@item.Id" asp-fragment="customer-interactions-section" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.Id, fragment = "customer-interactions-section" })"
+                           hx-get="@EditCustomerUrl(item.Id, "customer-interactions-section")"
                            hx-target="#crm-customers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
                             <i class="fa fa-comments"></i> @T.T("Interactions")
                         </a>
                         <a asp-action="EditCustomer" asp-route-id="@item.Id" asp-fragment="customer-segments-section" class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.Id, fragment = "customer-segments-section" })"
+                           hx-get="@EditCustomerUrl(item.Id, "customer-segments-section")"
                            hx-target="#crm-customers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
                             <i class="fa fa-tags"></i> @T.T("Segments")
                         </a>
                         <a asp-action="CreateOpportunity" asp-route-customerId="@item.Id" class="btn btn-sm btn-outline-success"
-                           hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = item.Id })"
+                           hx-get="@CreateOpportunityUrl(item.Id)"
                            hx-target="#crm-customers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
                             <i class="fa fa-briefcase"></i> @T.T("Opportunity")
                         </a>
                         <a asp-action="Invoices" asp-route-q="@item.Id" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Invoices", "Crm", new { q = item.Id })"
+                           hx-get="@CrmInvoicesUrl(item.Id)"
                            hx-target="#crm-customers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -443,7 +453,7 @@
                         @if (item.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(item.VatId))
                         {
                             <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-danger"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-get="@SiteSettingsUrl("site-settings-tax")"
                                hx-target="#crm-customers-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">

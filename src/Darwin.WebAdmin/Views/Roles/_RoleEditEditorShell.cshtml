@@ -2,6 +2,9 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @addTagHelper *, Darwin.WebAdmin
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string RolesIndexUrl() => Url.Action("Index", "Roles") ?? string.Empty;
+}
 
 <div id="role-editor-shell">
     <h1 class="mb-3"><i class="fa fa-pen"></i> @T.T("EditRole")</h1>
@@ -71,7 +74,7 @@
                             data-name="@Model.DisplayName"
                             data-hx-target="#role-editor-shell"
                             data-hx-swap="outerHTML"
-                            data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
+                   >
                         <i class="fa fa-trash"></i> @T.T("Delete")
                     </button>
                 }
@@ -79,7 +82,7 @@
             <div class="text-end">
                 <a asp-action="Index"
                    class="btn btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "Roles")"
+                   hx-get="@RolesIndexUrl()"
                    hx-target="#role-editor-shell"
                    hx-swap="outerHTML"><i class="fa fa-arrow-left"></i> @T.T("Back")</a>
                 <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>

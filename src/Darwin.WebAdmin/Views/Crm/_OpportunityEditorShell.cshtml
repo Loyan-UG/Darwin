@@ -3,6 +3,11 @@
 @{
     var isCreate = Model.Id == Guid.Empty;
     var formAction = (string?)ViewData["FormAction"] ?? (isCreate ? "CreateOpportunity" : "EditOpportunity");
+    string GlobalCrmOpportunitiesUrl() => Url.Action("Opportunities", "Crm") ?? string.Empty;
+    string EditCrmCustomerUrl(Guid id) => Url.Action("EditCustomer", "Crm", new { id }) ?? string.Empty;
+    string CrmInvoicesForCustomerUrl(Guid customerId) => Url.Action("Invoices", "Crm", new { q = customerId }) ?? string.Empty;
+    string EditCrmOpportunitySectionUrl(Guid id) => Url.Action("EditOpportunity", "Crm", new { id, fragment = "opportunity-interactions-section" }) ?? string.Empty;
+    string CrmOpportunityInteractionsUrl(Guid opportunityId) => Url.Action("OpportunityInteractions", "Crm", new { opportunityId }) ?? string.Empty;
     string LocalizeOpportunityStage(object? stage) => stage is null ? "-" : T.T(stage.ToString() ?? string.Empty);
 }
 
@@ -55,7 +60,7 @@
                         <a asp-action="EditCustomer"
                            asp-route-id="@Model.CustomerId"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId })"
+                           hx-get="@EditCrmCustomerUrl(Model.CustomerId)"
                            hx-target="#crm-opportunity-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -64,7 +69,7 @@
                         <a asp-action="Invoices"
                            asp-route-q="@Model.CustomerId"
                            class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("Invoices", "Crm", new { q = Model.CustomerId })"
+                           hx-get="@CrmInvoicesForCustomerUrl(Model.CustomerId)"
                            hx-target="#crm-opportunity-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -82,6 +87,7 @@
           hx-target="#crm-opportunity-editor-shell"
           hx-swap="outerHTML">
         @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Currency" />
         @if (!isCreate)
         {
             <input type="hidden" asp-for="Id" />
@@ -90,7 +96,7 @@
         <partial name="_OpportunityForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> @T.T("Save")</button>
-            <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-opportunity-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
+            <a asp-action="Opportunities" hx-get="@GlobalCrmOpportunitiesUrl()" hx-target="#crm-opportunity-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 
@@ -103,13 +109,13 @@
                    asp-route-id="@Model.Id"
                    asp-fragment="opportunity-interactions-section"
                    class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("EditOpportunity", "Crm", new { id = Model.Id, fragment = "opportunity-interactions-section" })"
+                   hx-get="@EditCrmOpportunitySectionUrl(Model.Id)"
                    hx-target="#crm-opportunity-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("Open")</a>
             </div>
             <div class="card-body" id="opportunity-interactions-section"
-                 hx-get="@Url.Action("OpportunityInteractions", "Crm", new { opportunityId = Model.Id })"
+                 hx-get="@CrmOpportunityInteractionsUrl(Model.Id)"
                  hx-trigger="load"
                  hx-target="this"
                  hx-swap="innerHTML">

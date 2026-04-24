@@ -2,6 +2,16 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("ReturnsQueueTitle");
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string GlobalShipmentsQueueUrl() => Url.Action("ShipmentsQueue", "Orders") ?? string.Empty;
+    string GlobalReturnsQueueUrl() => Url.Action("ReturnsQueue", "Orders") ?? string.Empty;
+    string ReturnsQueueUrl(string filter) => Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter }) ?? string.Empty;
+    string ShipmentsQueueUrl(string filter) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
+    string OrderDetailsUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
+    string RefundsUrl(string q) => Url.Action("Refunds", "Billing", new { q }) ?? string.Empty;
+    string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action("AddRefund", "Orders", new { orderId, paymentId }) ?? string.Empty;
+    string ShippingSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" }) ?? string.Empty;
+    string ShippingMethodsUrl(string filter) => Url.Action("Index", "ShippingMethods", new { filter }) ?? string.Empty;
     var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeReturnStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
@@ -23,14 +33,14 @@
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="ShipmentsQueue"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+                   hx-get="@GlobalShipmentsQueueUrl()"
            hx-target="#returns-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("ShipmentsQueue")</a>
         <a asp-controller="Billing"
            asp-action="Refunds"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Refunds", "Billing")"
+                   hx-get="@GlobalRefundsUrl()"
            hx-target="#returns-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("RefundQueue")</a>
@@ -58,14 +68,14 @@
                     <div class="d-flex gap-2 flex-wrap">
                         <a asp-action="ShipmentsQueue"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+                           hx-get="@GlobalShipmentsQueueUrl()"
                            hx-target="#returns-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ShipmentsQueue")</a>
                         <a asp-controller="Billing"
                            asp-action="Refunds"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Refunds", "Billing")"
+                           hx-get="@GlobalRefundsUrl()"
                            hx-target="#returns-queue-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("RefundQueue")</a>
@@ -84,8 +94,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("ShipmentsQueue")</div>
                             <div class="d-flex gap-2 flex-wrap mt-3">
-                                <a asp-action="ReturnsQueue" asp-route-filter="All" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "All" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.All ? "btn-dark" : "btn-outline-dark")">@T.T("AllReturnCases")</a>
-                                <a asp-action="ShipmentsQueue" hx-get="@Url.Action("ShipmentsQueue", "Orders")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewShipments")</a>
+                                <a asp-action="ReturnsQueue" asp-route-filter="All" hx-get="@ReturnsQueueUrl("All")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.All ? "btn-dark" : "btn-outline-dark")">@T.T("AllReturnCases")</a>
+                            <a asp-action="ShipmentsQueue" hx-get="@GlobalShipmentsQueueUrl()" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewShipments")</a>
                             </div>
                         </div>
                     </div>
@@ -100,8 +110,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("ReviewRefunds")</div>
                             <div class="d-flex gap-2 flex-wrap mt-3">
-                                <a asp-action="ReturnsQueue" asp-route-filter="FollowUp" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "FollowUp" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.FollowUp ? "btn-warning" : "btn-outline-warning")">@T.T("ReturnFollowUp")</a>
-                                <a asp-controller="Billing" asp-action="Refunds" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewRefunds")</a>
+                                <a asp-action="ReturnsQueue" asp-route-filter="FollowUp" hx-get="@ReturnsQueueUrl("FollowUp")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.FollowUp ? "btn-warning" : "btn-outline-warning")">@T.T("ReturnFollowUp")</a>
+                            <a asp-controller="Billing" asp-action="Refunds" hx-get="@GlobalRefundsUrl()" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewRefunds")</a>
                             </div>
                         </div>
                     </div>
@@ -116,8 +126,8 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("ReviewShipments")</div>
                             <div class="d-flex gap-2 flex-wrap mt-3">
-                                <a asp-action="ReturnsQueue" asp-route-filter="CarrierReview" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "CarrierReview" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">@T.T("CarrierReview")</a>
-                                <a asp-action="ShipmentsQueue" hx-get="@Url.Action("ShipmentsQueue", "Orders")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewShipments")</a>
+                                <a asp-action="ReturnsQueue" asp-route-filter="CarrierReview" hx-get="@ReturnsQueueUrl("CarrierReview")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">@T.T("CarrierReview")</a>
+                            <a asp-action="ShipmentsQueue" hx-get="@GlobalShipmentsQueueUrl()" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewShipments")</a>
                             </div>
                         </div>
                     </div>
@@ -132,10 +142,10 @@
                             </div>
                             <div class="small text-muted mt-3">@T.T("RefundQueue")</div>
                             <div class="d-flex gap-2 flex-wrap mt-3">
-                                <a asp-controller="Billing" asp-action="Refunds" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("RefundQueue")</a>
+                            <a asp-controller="Billing" asp-action="Refunds" hx-get="@GlobalRefundsUrl()" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("RefundQueue")</a>
                                 @if (returnQueueDefaultRefundItem?.DefaultRefundPaymentId.HasValue == true)
                                 {
-                                    <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@returnQueueDefaultRefundItem.OrderId" asp-route-paymentId="@returnQueueDefaultRefundItem.DefaultRefundPaymentId" hx-get="@Url.Action("AddRefund", "Orders", new { orderId = returnQueueDefaultRefundItem.OrderId, paymentId = returnQueueDefaultRefundItem.DefaultRefundPaymentId })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("StartReturnRefund")</a>
+                                    <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@returnQueueDefaultRefundItem.OrderId" asp-route-paymentId="@returnQueueDefaultRefundItem.DefaultRefundPaymentId" hx-get="@AddRefundUrl(returnQueueDefaultRefundItem.OrderId, returnQueueDefaultRefundItem.DefaultRefundPaymentId)" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("StartReturnRefund")</a>
                                 }
                                 else
                                 {
@@ -199,7 +209,7 @@
 </div>
 
 <form asp-action="ReturnsQueue" method="get" class="d-flex gap-2 mb-3"
-      hx-get="@Url.Action("ReturnsQueue", "Orders")"
+          hx-get="@GlobalReturnsQueueUrl()"
       hx-target="#returns-queue-workspace-shell"
       hx-swap="outerHTML"
       hx-push-url="true">
@@ -208,13 +218,13 @@
     <button class="btn btn-outline-secondary" type="submit">
         <i class="fa fa-search"></i> @T.T("Search")
     </button>
-    <a asp-action="ReturnsQueue" hx-get="@Url.Action("ReturnsQueue", "Orders")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Reset")</a>
+        <a asp-action="ReturnsQueue" hx-get="@GlobalReturnsQueueUrl()" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Reset")</a>
 </form>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="ReturnsQueue" asp-route-filter="All" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "All" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.All ? "btn-dark" : "btn-outline-dark")">@T.T("AllReturnCases")</a>
-    <a asp-action="ReturnsQueue" asp-route-filter="FollowUp" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "FollowUp" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.FollowUp ? "btn-warning" : "btn-outline-warning")">@T.T("ReturnFollowUp")</a>
-    <a asp-action="ReturnsQueue" asp-route-filter="CarrierReview" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "CarrierReview" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">@T.T("CarrierReview")</a>
+    <a asp-action="ReturnsQueue" asp-route-filter="All" hx-get="@ReturnsQueueUrl("All")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.All ? "btn-dark" : "btn-outline-dark")">@T.T("AllReturnCases")</a>
+    <a asp-action="ReturnsQueue" asp-route-filter="FollowUp" hx-get="@ReturnsQueueUrl("FollowUp")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.FollowUp ? "btn-warning" : "btn-outline-warning")">@T.T("ReturnFollowUp")</a>
+    <a asp-action="ReturnsQueue" asp-route-filter="CarrierReview" hx-get="@ReturnsQueueUrl("CarrierReview")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">@T.T("CarrierReview")</a>
 </div>
 
 <div class="table-responsive">
@@ -282,7 +292,7 @@
                             <div class="d-flex justify-content-end gap-2 flex-wrap">
                                 <a asp-action="Details"
                                    asp-route-id="@item.OrderId"
-                                   hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })"
+                                   hx-get="@OrderDetailsUrl(item.OrderId)"
                                    hx-target="#returns-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true"
@@ -290,7 +300,7 @@
                                 <a asp-controller="Billing"
                                    asp-action="Refunds"
                                    asp-route-q="@item.OrderNumber"
-                                   hx-get="@Url.Action("Refunds", "Billing", new { q = item.OrderNumber })"
+                                   hx-get="@RefundsUrl(item.OrderNumber)"
                                    hx-target="#returns-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true"
@@ -299,7 +309,7 @@
                                 {
                                     <a asp-action="ShipmentsQueue"
                                        asp-route-filter="CarrierReview"
-                                       hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "CarrierReview" })"
+                                       hx-get="@ShipmentsQueueUrl("CarrierReview")"
                                        hx-target="#returns-queue-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true"
@@ -309,7 +319,7 @@
                                 {
                                     <a asp-action="ShipmentsQueue"
                                        asp-route-filter="TrackingOverdue"
-                                       hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "TrackingOverdue" })"
+                                       hx-get="@ShipmentsQueueUrl("TrackingOverdue")"
                                        hx-target="#returns-queue-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true"
@@ -320,7 +330,7 @@
                                     <a asp-controller="SiteSettings"
                                        asp-action="Edit"
                                        asp-fragment="site-settings-shipping"
-                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                                       hx-get="@ShippingSettingsUrl()"
                                        hx-target="#returns-queue-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true"
@@ -328,7 +338,7 @@
                                     <a asp-controller="ShippingMethods"
                                        asp-action="Index"
                                        asp-route-filter="Dhl"
-                                       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                                       hx-get="@ShippingMethodsUrl("Dhl")"
                                        hx-target="#returns-queue-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true"
@@ -338,7 +348,7 @@
                                 {
                                     <a asp-action="ReturnsQueue"
                                        asp-route-filter="FollowUp"
-                                       hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "FollowUp" })"
+                                       hx-get="@ReturnsQueueUrl("FollowUp")"
                                        hx-target="#returns-queue-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true"
@@ -349,7 +359,7 @@
                                     <a asp-action="AddRefund"
                                        asp-route-orderId="@item.OrderId"
                                        asp-route-paymentId="@item.DefaultRefundPaymentId"
-                                       hx-get="@Url.Action("AddRefund", "Orders", new { orderId = item.OrderId, paymentId = item.DefaultRefundPaymentId })"
+                                       hx-get="@AddRefundUrl(item.OrderId, item.DefaultRefundPaymentId)"
                                        hx-target="#returns-queue-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true"

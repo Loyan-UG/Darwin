@@ -3,6 +3,8 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BillingPlansTitle");
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalBillingPlansUrl() => Url.Action("Plans", "Billing") ?? string.Empty;
     string BillingPlanOpsHealthBadgeClass(bool healthy) => healthy
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
@@ -10,6 +12,9 @@
     var billingPlanAttentionCount = Model.Summary.InactiveCount
         + Model.Summary.TrialCount
         + Model.Summary.MissingFeaturesCount;
+    string CreatePlanUrl() => Url.Action("CreatePlan", "Billing") ?? string.Empty;
+    string BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter? queue = null) => Url.Action("Plans", "Billing", new { queue }) ?? string.Empty;
+    string EditPlanUrl(Guid id) => Url.Action("EditPlan", "Billing", new { id }) ?? string.Empty;
 }
 
 <div id="billing-plans-workspace-shell">
@@ -19,7 +24,7 @@
             <p class="text-muted mb-0">@T.T("BillingPlansIntro")</p>
         </div>
         <a asp-action="CreatePlan" class="btn btn-primary"
-           hx-get="@Url.Action("CreatePlan", "Billing")"
+           hx-get="@CreatePlanUrl()"
            hx-target="#billing-plans-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -55,7 +60,7 @@
             <div class="d-flex flex-wrap gap-2">
                 <a asp-action="CreatePlan"
                    class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("CreatePlan", "Billing")"
+                   hx-get="@CreatePlanUrl()"
                    hx-target="#billing-plans-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">
@@ -63,7 +68,7 @@
                 </a>
                 <a asp-action="Payments"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Payments", "Billing")"
+                   hx-get="@GlobalPaymentsUrl()"
                    hx-target="#billing-plans-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">
@@ -87,13 +92,13 @@
                         <a asp-action="Plans"
                            asp-route-queue="Inactive"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive })"
+                           hx-get="@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive)"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BillingPlansInactive")</a>
                         <a asp-action="CreatePlan"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("CreatePlan", "Billing")"
+                           hx-get="@CreatePlanUrl()"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BillingPlansCreatePlan")</a>
@@ -114,13 +119,13 @@
                         <a asp-action="Plans"
                            asp-route-queue="Trial"
                            class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial })"
+                           hx-get="@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial)"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BillingPlansTrial")</a>
                         <a asp-action="Payments"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-get="@GlobalPaymentsUrl()"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PaymentsLabel")</a>
@@ -141,13 +146,13 @@
                         <a asp-action="Plans"
                            asp-route-queue="MissingFeatures"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures })"
+                           hx-get="@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures)"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BillingPlansMissingFeatures")</a>
                         <a asp-action="CreatePlan"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("CreatePlan", "Billing")"
+                           hx-get="@CreatePlanUrl()"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BillingPlansCreatePlan")</a>
@@ -168,13 +173,13 @@
                         <a asp-action="Plans"
                            asp-route-queue="InUse"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse })"
+                           hx-get="@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse)"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BillingPlansInUse")</a>
                         <a asp-action="Payments"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-get="@GlobalPaymentsUrl()"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PaymentsLabel")</a>
@@ -214,7 +219,7 @@
 
     <form method="get"
           class="row g-2 mb-3"
-          hx-get="@Url.Action("Plans", "Billing")"
+      hx-get="@GlobalBillingPlansUrl()"
           hx-target="#billing-plans-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -238,7 +243,7 @@
             <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("CommonSearch")</button>
             <a asp-action="Plans"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Plans", "Billing")"
+       hx-get="@GlobalBillingPlansUrl()"
                hx-target="#billing-plans-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("CommonReset")</a>
@@ -249,34 +254,34 @@
         <a asp-action="Plans"
            asp-route-queue="Inactive"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive })"
+           hx-get="@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive)"
            hx-target="#billing-plans-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BillingPlansInactive")</a>
         <a asp-action="Plans"
            asp-route-queue="Trial"
            class="btn btn-sm btn-outline-info"
-           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial })"
+           hx-get="@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial)"
            hx-target="#billing-plans-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BillingPlansTrial")</a>
         <a asp-action="Plans"
            asp-route-queue="MissingFeatures"
            class="btn btn-sm btn-outline-warning"
-           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures })"
+           hx-get="@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures)"
            hx-target="#billing-plans-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BillingPlansMissingFeatures")</a>
         <a asp-action="Plans"
            asp-route-queue="InUse"
            class="btn btn-sm btn-outline-primary"
-           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse })"
+           hx-get="@BillingPlansUrl(Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse)"
            hx-target="#billing-plans-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BillingPlansInUse")</a>
         <a asp-action="Plans"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Plans", "Billing")"
+                    hx-get="@GlobalBillingPlansUrl()"
            hx-target="#billing-plans-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BillingPlansClearQueueFilters")</a>
@@ -330,7 +335,7 @@
                     <td>@(item.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")</td>
                     <td class="text-end">
                         <a asp-action="EditPlan" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("EditPlan", "Billing", new { id = item.Id })"
+                           hx-get="@EditPlanUrl(item.Id)"
                            hx-target="#billing-plans-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">

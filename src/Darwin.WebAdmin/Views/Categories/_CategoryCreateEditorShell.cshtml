@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.CategoryCreateVm
 @{
     ViewData["Title"] = T.T("CreateCategory");
+    string CategoriesIndexUrl() => Url.Action("Index", "Categories") ?? string.Empty;
 }
 
 <div id="category-editor-shell">
@@ -78,7 +79,7 @@
             </div>
 
             <div class="card-footer text-end">
-                <a asp-action="Index" class="btn btn-secondary" hx-get="@Url.Action("Index", "Categories")" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Back")</a>
+                <a asp-action="Index" class="btn btn-secondary" hx-get="@CategoriesIndexUrl()" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Back")</a>
                 <button type="submit" class="btn btn-primary">@T.T("Create")</button>
             </div>
         </div>

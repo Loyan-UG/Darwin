@@ -2,6 +2,17 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("OrdersTitle");
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string GlobalShipmentsQueueUrl() => Url.Action("ShipmentsQueue", "Orders") ?? string.Empty;
+    string GlobalReturnsQueueUrl() => Url.Action("ReturnsQueue", "Orders") ?? string.Empty;
+    string GlobalInvoicesUrl() => Url.Action("Invoices", "Crm") ?? string.Empty;
+    string GlobalOrdersIndexUrl() => Url.Action("Index", "Orders") ?? string.Empty;
+    string OrdersIndexUrl(string? query = null, string? filter = null) => Url.Action("Index", "Orders", new { query, filter }) ?? string.Empty;
+    string AddPaymentUrl(Guid orderId) => Url.Action("AddPayment", "Orders", new { orderId }) ?? string.Empty;
+    string AddShipmentUrl(Guid orderId) => Url.Action("AddShipment", "Orders", new { orderId }) ?? string.Empty;
+    string CreateInvoiceUrl(Guid orderId) => Url.Action("CreateInvoice", "Orders", new { orderId }) ?? string.Empty;
+    string OrderDetailsUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
     var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeOrderStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string OrderDateTimeText(DateTime utc) => utc.ToString("g", orderCulture);
@@ -19,14 +30,14 @@
     <h1 class="mb-0"><i class="fa fa-receipt"></i> @T.T("OrdersTitle")</h1>
     <a asp-controller="Orders"
        asp-action="ShipmentsQueue"
-       hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+       hx-get="@GlobalShipmentsQueueUrl()"
        hx-target="#orders-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
        class="btn btn-outline-secondary">@T.T("ShipmentsQueue")</a>
     <a asp-controller="Orders"
        asp-action="ReturnsQueue"
-       hx-get="@Url.Action("ReturnsQueue", "Orders")"
+       hx-get="@GlobalReturnsQueueUrl()"
        hx-target="#orders-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
@@ -63,13 +74,13 @@
                         <a asp-action="Index"
                            asp-route-filter="Open"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "Open" })"
+                           hx-get="@OrdersIndexUrl(Model.Query, "Open")"
                            hx-target="#orders-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                         <a asp-action="ShipmentsQueue"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+                           hx-get="@GlobalShipmentsQueueUrl()"
                            hx-target="#orders-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ShipmentsQueue")</a>
@@ -87,14 +98,14 @@
                         <a asp-action="Index"
                            asp-route-filter="PaymentIssues"
                            class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "PaymentIssues" })"
+                           hx-get="@OrdersIndexUrl(Model.Query, "PaymentIssues")"
                            hx-target="#orders-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                         <a asp-controller="Billing"
                            asp-action="Payments"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-get="@GlobalPaymentsUrl()"
                            hx-target="#orders-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Payments")</a>
@@ -112,13 +123,13 @@
                         <a asp-action="Index"
                            asp-route-filter="FulfillmentAttention"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "FulfillmentAttention" })"
+                           hx-get="@OrdersIndexUrl(Model.Query, "FulfillmentAttention")"
                            hx-target="#orders-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                         <a asp-action="ReturnsQueue"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ReturnsQueue", "Orders")"
+                           hx-get="@GlobalReturnsQueueUrl()"
                            hx-target="#orders-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ReturnsQueueTitle")</a>
@@ -136,14 +147,14 @@
                         <a asp-controller="Crm"
                            asp-action="Invoices"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invoices", "Crm")"
+                           hx-get="@GlobalInvoicesUrl()"
                            hx-target="#orders-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Invoice")</a>
                         <a asp-controller="Billing"
                            asp-action="Refunds"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Refunds", "Billing")"
+                           hx-get="@GlobalRefundsUrl()"
                            hx-target="#orders-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Refunds")</a>
@@ -155,7 +166,7 @@
 </div>
 
 <form asp-action="Index" method="get" class="d-flex gap-2 mb-3"
-      hx-get="@Url.Action("Index", "Orders")"
+          hx-get="@GlobalOrdersIndexUrl()"
       hx-target="#orders-workspace-shell"
       hx-swap="outerHTML"
       hx-push-url="true">
@@ -164,14 +175,14 @@
     <button class="btn btn-outline-secondary" type="submit">
         <i class="fa fa-search"></i> @T.T("Search")
     </button>
-    <a asp-action="Index" hx-get="@Url.Action("Index", "Orders")" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Reset")</a>
+    <a asp-action="Index" hx-get="@GlobalOrdersIndexUrl()" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Reset")</a>
 </form>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="Index" asp-route-filter="Open" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "Open" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.Open ? "btn-primary" : "btn-outline-primary")">@T.T("OpenQueue")</a>
-    <a asp-action="Index" asp-route-filter="PaymentIssues" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "PaymentIssues" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues ? "btn-danger" : "btn-outline-danger")">@T.T("PaymentIssues")</a>
-    <a asp-action="Index" asp-route-filter="FulfillmentAttention" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "FulfillmentAttention" })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention ? "btn-warning" : "btn-outline-warning")">@T.T("FulfillmentAttention")</a>
-    <a asp-action="Index" hx-get="@Url.Action("Index", "Orders", new { query = Model.Query })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
+    <a asp-action="Index" asp-route-filter="Open" hx-get="@OrdersIndexUrl(Model.Query, "Open")" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.Open ? "btn-primary" : "btn-outline-primary")">@T.T("OpenQueue")</a>
+    <a asp-action="Index" asp-route-filter="PaymentIssues" hx-get="@OrdersIndexUrl(Model.Query, "PaymentIssues")" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues ? "btn-danger" : "btn-outline-danger")">@T.T("PaymentIssues")</a>
+    <a asp-action="Index" asp-route-filter="FulfillmentAttention" hx-get="@OrdersIndexUrl(Model.Query, "FulfillmentAttention")" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention ? "btn-warning" : "btn-outline-warning")">@T.T("FulfillmentAttention")</a>
+    <a asp-action="Index" hx-get="@OrdersIndexUrl(Model.Query)" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
 </div>
 
 <div class="table-responsive">
@@ -183,7 +194,7 @@
                 <th>@T.T("Total")</th>
                 <th>@T.T("Ops")</th>
                 <th>@T.T("CreatedUtc")</th>
-                <th class="text-end" style="width:160px">@T.T("Actions")</th>
+                    <th class="text-end admin-w-160">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
@@ -210,23 +221,23 @@
                         <td class="text-end">
                             @if (o.FailedPaymentCount > 0 || Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues)
                             {
-                                <a asp-controller="Orders" asp-action="AddPayment" asp-route-orderId="@o.Id" hx-get="@Url.Action("AddPayment", "Orders", new { orderId = o.Id })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">
+                                <a asp-controller="Orders" asp-action="AddPayment" asp-route-orderId="@o.Id" hx-get="@AddPaymentUrl(o.Id)" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">
                                     <i class="fa fa-credit-card"></i> @T.T("Payments")
                                 </a>
                             }
                             @if (o.Status == Darwin.Domain.Enums.OrderStatus.Paid || Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention)
                             {
-                                <a asp-controller="Orders" asp-action="AddShipment" asp-route-orderId="@o.Id" hx-get="@Url.Action("AddShipment", "Orders", new { orderId = o.Id })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
+                                <a asp-controller="Orders" asp-action="AddShipment" asp-route-orderId="@o.Id" hx-get="@AddShipmentUrl(o.Id)" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
                                     <i class="fa fa-truck"></i> @T.T("Shipment")
                                 </a>
                             }
                             @if (o.PaymentCount > 0)
                             {
-                                <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@o.Id" hx-get="@Url.Action("CreateInvoice", "Orders", new { orderId = o.Id })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
+                                <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@o.Id" hx-get="@CreateInvoiceUrl(o.Id)" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
                                     <i class="fa fa-file-invoice"></i> @T.T("Invoice")
                                 </a>
                             }
-                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id" hx-get="@Url.Action("Details", "Orders", new { id = o.Id })" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
+                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id" hx-get="@OrderDetailsUrl(o.Id)" hx-target="#orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">
                                 <i class="fa fa-eye"></i> @T.T("View")
                             </a>
                         </td>

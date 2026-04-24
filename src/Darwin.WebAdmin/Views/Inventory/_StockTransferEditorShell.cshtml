@@ -3,6 +3,7 @@
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
     ViewData["Title"] = isCreate ? T.T("CreateStockTransfer") : T.T("EditStockTransfer");
+    string StockTransfersUrl(Guid? warehouseId) => Url.Action("StockTransfers", "Inventory", new { warehouseId }) ?? string.Empty;
 }
 
 <div id="inventory-stock-transfer-editor-shell">
@@ -23,7 +24,7 @@
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">@T.T("Save")</button>
             <a asp-action="StockTransfers" asp-route-warehouseId="@Model.FromWarehouseId" class="btn btn-outline-secondary"
-               hx-get="@Url.Action("StockTransfers", "Inventory", new { warehouseId = Model.FromWarehouseId })"
+               hx-get="@StockTransfersUrl(Model.FromWarehouseId)"
                hx-target="#inventory-stock-transfer-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("Back")</a>

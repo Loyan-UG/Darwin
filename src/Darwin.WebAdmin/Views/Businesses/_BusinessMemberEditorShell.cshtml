@@ -2,6 +2,17 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+    string BusinessMembersUrl(Guid? businessId, int page, int pageSize, string? query, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter? filter) =>
+        Url.Action("Members", "Businesses", new { businessId, page, pageSize, query, filter }) ?? string.Empty;
+    string BusinessOwnerOverrideAuditsUrl(Guid? businessId) => Url.Action("OwnerOverrideAudits", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessMerchantReadinessUrl(Guid? businessId) => Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessSupportQueueUrl(Guid? businessId) => Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty;
+    string UserEditUrl(Guid? id) => Url.Action("Edit", "Users", new { id }) ?? string.Empty;
+    string MobileOperationsUrl(Guid? businessId, string? q = null) => Url.Action("Index", "MobileOperations", new { businessId, q }) ?? string.Empty;
+    string LoyaltyAccountsUrl(string? q) => Url.Action("Accounts", "Loyalty", new { q }) ?? string.Empty;
+    string StaffAccessBadgeUrl(Guid? id) => Url.Action("StaffAccessBadge", "Businesses", new { id }) ?? string.Empty;
+    string EmailAuditsUrl(Guid? businessId, string? status = null, string? flowKey = null, string? recipientEmail = null) =>
+        Url.Action("EmailAudits", "BusinessCommunications", new { businessId, status, flowKey, recipientEmail }) ?? string.Empty;
     string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
     {
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
@@ -24,7 +35,7 @@
            asp-route-query="@Model.Query"
            asp-route-filter="@Model.Filter"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
+           hx-get="@BusinessMembersUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)"
            hx-target="#business-member-editor-shell"
            hx-swap="outerHTML">@T.T("BackToMembersAction")</a>
     </div>
@@ -37,19 +48,21 @@
                 <a asp-action="OwnerOverrideAudits"
                    asp-route-businessId="@Model.BusinessId"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.BusinessId })"
+                   hx-get="@BusinessOwnerOverrideAuditsUrl(Model.BusinessId)"
                    hx-target="#business-member-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("BusinessMembersOwnerOverrideAuditAction")</a>
                 <a asp-action="MerchantReadiness"
+                   asp-route-businessId="@Model.BusinessId"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                   hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
                    hx-target="#business-member-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                 <a asp-action="SupportQueue"
+                   asp-route-businessId="@Model.BusinessId"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-get="@BusinessSupportQueueUrl(Model.BusinessId)"
                    hx-target="#business-member-editor-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -88,7 +101,7 @@
                        asp-action="Edit"
                        asp-route-id="@Model.UserId"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId })"
+                       hx-get="@UserEditUrl(Model.UserId)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -96,9 +109,10 @@
                     </a>
                     <a asp-controller="MobileOperations"
                        asp-action="Index"
+                       asp-route-businessId="@Model.BusinessId"
                        asp-route-q="@Model.UserEmail"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "MobileOperations", new { q = Model.UserEmail })"
+                       hx-get="@MobileOperationsUrl(Model.BusinessId, Model.UserEmail)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -108,7 +122,7 @@
                        asp-action="Accounts"
                        asp-route-q="@Model.UserEmail"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Accounts", "Loyalty", new { q = Model.UserEmail })"
+                       hx-get="@LoyaltyAccountsUrl(Model.UserEmail)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -117,7 +131,7 @@
                     <a asp-action="StaffAccessBadge"
                        asp-route-id="@Model.Id"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("StaffAccessBadge", "Businesses", new { id = Model.Id })"
+                       hx-get="@StaffAccessBadgeUrl(Model.Id)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML">
                         <i class="fa-solid fa-qrcode"></i> @T.T("BusinessStaffAccessBadgeTitle")
@@ -131,7 +145,7 @@
                            asp-route-flowKey="AccountActivation"
                            asp-route-recipientEmail="@Model.UserEmail"
                            class="btn btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.BusinessId, status = "Failed", flowKey = "AccountActivation", recipientEmail = Model.UserEmail })"
+                           hx-get="@EmailAuditsUrl(Model.BusinessId, status: "Failed", flowKey: "AccountActivation", recipientEmail: Model.UserEmail)"
                            hx-target="#business-member-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -199,7 +213,7 @@
                        asp-route-flowKey="PasswordReset"
                        asp-route-recipientEmail="@Model.UserEmail"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.BusinessId, status = "Failed", flowKey = "PasswordReset", recipientEmail = Model.UserEmail })"
+                       hx-get="@EmailAuditsUrl(Model.BusinessId, status: "Failed", flowKey: "PasswordReset", recipientEmail: Model.UserEmail)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -281,19 +295,21 @@
            asp-route-query="@Model.Query"
            asp-route-filter="@Model.Filter"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
+           hx-get="@BusinessMembersUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)"
            hx-target="#business-member-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("CommonMembers")</a>
         <a asp-action="SupportQueue"
+           asp-route-businessId="@Model.BusinessId"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("SupportQueue", "Businesses")"
+           hx-get="@BusinessSupportQueueUrl(Model.BusinessId)"
            hx-target="#business-member-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
         <a asp-action="MerchantReadiness"
+           asp-route-businessId="@Model.BusinessId"
            class="btn btn-outline-secondary"
-           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+           hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
            hx-target="#business-member-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
@@ -311,19 +327,21 @@
                     <a asp-action="OwnerOverrideAudits"
                        asp-route-businessId="@Model.BusinessId"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.BusinessId })"
+                       hx-get="@BusinessOwnerOverrideAuditsUrl(Model.BusinessId)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessMembersOwnerOverrideAuditAction")</a>
                     <a asp-action="SupportQueue"
+                       asp-route-businessId="@Model.BusinessId"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-get="@BusinessSupportQueueUrl(Model.BusinessId)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
                     <a asp-action="MerchantReadiness"
+                       asp-route-businessId="@Model.BusinessId"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MerchantReadinessTitle")</a>

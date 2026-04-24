@@ -1,4 +1,4 @@
-﻿@model Darwin.WebAdmin.ViewModels.Mobile.MobileOperationsVm
+@model Darwin.WebAdmin.ViewModels.Mobile.MobileOperationsVm
 @using System.Globalization
 @{
     ViewData["Title"] = T.T("MobileOperationsTitle");
@@ -61,6 +61,23 @@
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
     string MobileOpsHealthBadgeText(bool healthy) => healthy ? T.T("Configured") : T.T("NeedsAttention");
+    string GlobalBusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
+    string MobileSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" }) ?? string.Empty;
+    string BusinessAppSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" }) ?? string.Empty;
+    string ScopedSupportQueueUrl() => Url.Action("SupportQueue", "Businesses", new { businessId = Model.BusinessId }) ?? string.Empty;
+    string LoyaltyAccountsIndexUrl() => Url.Action("Accounts", "Loyalty") ?? string.Empty;
+    string LoyaltyAccountsUrl(string q) => Url.Action("Accounts", "Loyalty", new { q }) ?? string.Empty;
+    string LoyaltyRedemptionsUrl() => Url.Action("Redemptions", "Loyalty") ?? string.Empty;
+    string LoyaltyCampaignsUrl() => Url.Action("Campaigns", "Loyalty") ?? string.Empty;
+    string LoyaltyProgramsUrl() => Url.Action("Programs", "Loyalty") ?? string.Empty;
+    string LoyaltyScanSessionsIndexUrl() => Url.Action("ScanSessions", "Loyalty") ?? string.Empty;
+    string LoyaltyScanSessionsUrl(string q) => Url.Action("ScanSessions", "Loyalty", new { q }) ?? string.Empty;
+    string UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action("Index", "Users", new { filter }) ?? string.Empty;
+    string UserEditUrl(Guid id) => Url.Action("Edit", "Users", new { id }) ?? string.Empty;
+    string ProviderReviewChannelAuditsUrl() => Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true }) ?? string.Empty;
+    string MobileOperationsIndexUrl() => Url.Action("Index", "MobileOperations", new { businessId = Model.BusinessId }) ?? string.Empty;
+    string MobileOperationsUrl(string state) => Url.Action("Index", "MobileOperations", new { businessId = Model.BusinessId, state }) ?? string.Empty;
+    string MobileOperationsItemUrl(Darwin.WebAdmin.ViewModels.Mobile.MobileDeviceOpsListItemVm item) => Url.Action("Index", "MobileOperations", new { businessId = Model.BusinessId, state = DeviceRemediationState(item) }) ?? string.Empty;
     var bootstrapAttentionCount =
         (Model.JwtEnabled ? 0 : 1)
         + (Model.JwtRequireDeviceBinding ? 0 : 1)
@@ -89,22 +106,22 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-mobile" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" })"
+           hx-get="@MobileSettingsUrl()"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("SiteSettings")</a>
-        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("SupportQueue", "Businesses")"
+        <a asp-controller="Businesses" asp-action="SupportQueue" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+           hx-get="@ScopedSupportQueueUrl()"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("SupportQueue")</a>
         <a asp-controller="Loyalty" asp-action="ScanSessions" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("ScanSessions", "Loyalty")"
+               hx-get="@LoyaltyScanSessionsIndexUrl()"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("LoyaltyScanSessionsTitle")</a>
         <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
+           hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -120,13 +137,13 @@
                 <p class="text-muted mb-0">@T.T("MobileOperationsIntro")</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                <a asp-controller="Businesses" asp-action="SupportQueue" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@ScopedSupportQueueUrl()"
                    hx-target="#mobile-operations-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-mobile" class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" })"
+                   hx-get="@MobileSettingsUrl()"
                    hx-target="#mobile-operations-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("OpenMobileBootstrap")</a>
@@ -143,12 +160,12 @@
                     <div class="small text-muted">@T.T("MobileBootstrapDeviceBindingRequired")</div>
                     <div class="d-flex gap-2 flex-wrap mt-auto">
                         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-mobile" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" })"
+                           hx-get="@MobileSettingsUrl()"
                            hx-target="#mobile-operations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenMobileBootstrap")</a>
                         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
+                           hx-get="@BusinessAppSettingsUrl()"
                            hx-target="#mobile-operations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenBusinessAppSettings")</a>
@@ -164,13 +181,13 @@
                     <div class="fs-4 fw-semibold">@onboardingAttentionCount</div>
                     <div class="small text-muted">@InvitationDebtSummaryLabel(Model.PendingInvitationCount)</div>
                     <div class="d-flex gap-2 flex-wrap mt-auto">
-                        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("SupportQueue", "Businesses")"
+                        <a asp-controller="Businesses" asp-action="SupportQueue" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@ScopedSupportQueueUrl()"
                            hx-target="#mobile-operations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("SupportQueue")</a>
                         <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
+                           hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)"
                            hx-target="#mobile-operations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -187,12 +204,12 @@
                     <div class="small text-muted">@T.T("MobileOperationsSnapshotNote")</div>
                     <div class="d-flex gap-2 flex-wrap mt-auto">
                         <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "BusinessCommunications")"
+                           hx-get="@GlobalBusinessCommunicationsUrl()"
                            hx-target="#mobile-operations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenCommunicationsWorkspace")</a>
                         <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true })"
+                           hx-get="@ProviderReviewChannelAuditsUrl()"
                            hx-target="#mobile-operations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ReviewProviderLane")</a>
@@ -208,13 +225,13 @@
                     <div class="fs-4 fw-semibold">@deviceAttentionCount</div>
                     <div class="small text-muted">@T.T("MobileMissingPushToken") / @T.T("MobileNotificationsDisabled")</div>
                     <div class="d-flex gap-2 flex-wrap mt-auto">
-                        <a asp-action="Index" asp-route-state="stale" class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Index", "MobileOperations", new { state = "stale" })"
+                        <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="stale" class="btn btn-sm btn-outline-warning"
+                           hx-get="@MobileOperationsUrl("stale")"
                            hx-target="#mobile-operations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("MobileStaleDevices")</a>
-                        <a asp-action="Index" asp-route-state="missing-push" class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Index", "MobileOperations", new { state = "missing-push" })"
+                        <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="missing-push" class="btn btn-sm btn-outline-warning"
+                           hx-get="@MobileOperationsUrl("missing-push")"
                            hx-target="#mobile-operations-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("MobileMissingPushToken")</a>
@@ -229,22 +246,22 @@
     <div class="card-header">@T.T("LoyaltyMobileFollowUp")</div>
     <div class="card-body d-flex gap-2 flex-wrap">
         <a asp-controller="Loyalty" asp-action="Accounts" class="btn btn-sm btn-outline-primary"
-           hx-get="@Url.Action("Accounts", "Loyalty")"
+                           hx-get="@LoyaltyAccountsIndexUrl()"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("LoyaltyAccountsTitle")</a>
         <a asp-controller="Loyalty" asp-action="Redemptions" class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Redemptions", "Loyalty")"
+           hx-get="@LoyaltyRedemptionsUrl()"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Redemptions")</a>
         <a asp-controller="Loyalty" asp-action="Campaigns" class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Campaigns", "Loyalty")"
+           hx-get="@LoyaltyCampaignsUrl()"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Campaigns")</a>
         <a asp-controller="Loyalty" asp-action="Programs" class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Programs", "Loyalty")"
+           hx-get="@LoyaltyProgramsUrl()"
            hx-target="#mobile-operations-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Programs")</a>
@@ -281,12 +298,12 @@
                 </div>
                 <div class="d-flex gap-2 mt-3 flex-wrap">
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
+                       hx-get="@BusinessAppSettingsUrl()"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenBusinessAppSettings")</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-mobile" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" })"
+                       hx-get="@MobileSettingsUrl()"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenMobileBootstrap")</a>
@@ -308,23 +325,23 @@
                 <div class="mb-2">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked): <strong>@Model.LockedMemberCount</strong></div>
                 <div>@T.T("BusinessesRequiringEmailSetup"): <strong>@Model.BusinessesRequiringEmailSetupCount</strong></div>
                 <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                    <a asp-controller="Businesses" asp-action="SupportQueue" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@ScopedSupportQueueUrl()"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("SupportQueue")</a>
                     <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                       hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
                     <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                       hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)</a>
                     <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
+                       hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -390,13 +407,13 @@
                 <div class="d-flex gap-2 mt-3 flex-wrap">
                     <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true })"
+                       hx-get="@ProviderReviewChannelAuditsUrl()"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("ReviewProviderLane")</a>
                     <a asp-controller="BusinessCommunications" asp-action="Index"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "BusinessCommunications")"
+                       hx-get="@GlobalBusinessCommunicationsUrl()"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenCommunicationsWorkspace")</a>
@@ -471,13 +488,13 @@
                 <div class="text-muted small">@T.T("RecentMobileDevices")</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a asp-action="Index" asp-route-state="business-members" class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "MobileOperations", new { state = "business-members" })"
+                <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="business-members" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@MobileOperationsUrl("business-members")"
                    hx-target="#mobile-operations-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("BusinessMemberDevices")</a>
                 <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
+                   hx-get="@UsersUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)"
                    hx-target="#mobile-operations-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -489,8 +506,8 @@
                     <div class="text-muted small">@T.T("MobileStaleDevices")</div>
                     <div class="fs-4 fw-semibold">@Model.StaleDevicesCount</div>
                     <div class="small text-muted">@T.T("LastSeen")</div>
-                    <a asp-action="Index" asp-route-state="stale" class="btn btn-sm btn-outline-warning mt-auto"
-                       hx-get="@Url.Action("Index", "MobileOperations", new { state = "stale" })"
+                    <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="stale" class="btn btn-sm btn-outline-warning mt-auto"
+                       hx-get="@MobileOperationsUrl("stale")"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MobileStaleDevices")</a>
@@ -501,8 +518,8 @@
                     <div class="text-muted small">@T.T("MobileMissingPushToken")</div>
                     <div class="fs-4 fw-semibold">@Model.DevicesMissingPushTokenCount</div>
                     <div class="small text-muted">@T.T("ClearPush")</div>
-                    <a asp-action="Index" asp-route-state="missing-push" class="btn btn-sm btn-outline-warning mt-auto"
-                       hx-get="@Url.Action("Index", "MobileOperations", new { state = "missing-push" })"
+                    <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="missing-push" class="btn btn-sm btn-outline-warning mt-auto"
+                       hx-get="@MobileOperationsUrl("missing-push")"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MobileMissingPushToken")</a>
@@ -513,8 +530,8 @@
                     <div class="text-muted small">@T.T("MobileNotificationsDisabled")</div>
                     <div class="fs-4 fw-semibold">@Model.NotificationsDisabledCount</div>
                     <div class="small text-muted">@T.T("ProviderReview")</div>
-                    <a asp-action="Index" asp-route-state="notifications-disabled" class="btn btn-sm btn-outline-warning mt-auto"
-                       hx-get="@Url.Action("Index", "MobileOperations", new { state = "notifications-disabled" })"
+                    <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="notifications-disabled" class="btn btn-sm btn-outline-warning mt-auto"
+                       hx-get="@MobileOperationsUrl("notifications-disabled")"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MobileNotificationsDisabled")</a>
@@ -525,8 +542,8 @@
                     <div class="text-muted small">@T.T("BusinessMemberDevices")</div>
                     <div class="fs-4 fw-semibold">@Model.BusinessMemberDevicesCount</div>
                     <div class="small text-muted">@T.T("SupportQueue")</div>
-                    <a asp-action="Index" asp-route-state="business-members" class="btn btn-sm btn-outline-secondary mt-auto"
-                       hx-get="@Url.Action("Index", "MobileOperations", new { state = "business-members" })"
+                    <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="business-members" class="btn btn-sm btn-outline-secondary mt-auto"
+                       hx-get="@MobileOperationsUrl("business-members")"
                        hx-target="#mobile-operations-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessMemberDevices")</a>
@@ -537,13 +554,14 @@
 </div>
 
 <div class="card mt-4">
-    <div class="card-header">@T.T("RecentMobileDevices")</div>
+        <div class="card-header">@T.T("RecentMobileDevices")</div>
     <div class="card-body border-bottom">
         <form asp-action="Index" method="get" class="row g-2"
-              hx-get="@Url.Action("Index", "MobileOperations")"
+                           hx-get="@MobileOperationsIndexUrl()"
               hx-target="#mobile-operations-workspace-shell"
               hx-swap="outerHTML"
               hx-push-url="true">
+            <input type="hidden" name="businessId" value="@Model.BusinessId" />
             <div class="col-md-4">
                 <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("MobileSearchUserDeviceVersion")" />
             </div>
@@ -555,8 +573,8 @@
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-outline-secondary">@T.T("Filter")</button>
-                <a asp-action="Index" class="btn btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "MobileOperations")"
+                <a asp-action="Index" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+                           hx-get="@MobileOperationsIndexUrl()"
                    hx-target="#mobile-operations-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("Reset")</a>
@@ -596,8 +614,8 @@
                             @if (item.BusinessMembershipCount > 0)
                             {
                                 <div class="small mt-1">
-                                    <a asp-controller="Businesses" asp-action="SupportQueue"
-                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                    <a asp-controller="Businesses" asp-action="SupportQueue" asp-route-businessId="@Model.BusinessId"
+                                       hx-get="@ScopedSupportQueueUrl()"
                                        hx-target="#mobile-operations-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("SupportQueue")</a>
@@ -607,33 +625,33 @@
                         <td>@(item.LastSeenAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? T.T("Never"))</td>
                         <td class="text-end">
                             <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-primary"
-                               hx-get="@Url.Action("Edit", "Users", new { id = item.UserId })"
+                               hx-get="@UserEditUrl(item.UserId)"
                                hx-target="#mobile-operations-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("User")</a>
                             <a asp-controller="Loyalty" asp-action="Accounts" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Accounts", "Loyalty", new { q = item.UserEmail })"
+                               hx-get="@LoyaltyAccountsUrl(item.UserEmail)"
                                hx-target="#mobile-operations-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Loyalty")</a>
                             @if (item.BusinessMembershipCount > 0)
                             {
                                 <a asp-controller="Loyalty" asp-action="ScanSessions" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("ScanSessions", "Loyalty", new { q = item.UserEmail })"
+                                   hx-get="@LoyaltyScanSessionsUrl(item.UserEmail)"
                                    hx-target="#mobile-operations-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("LoyaltyScanSessionsTitle")</a>
                             }
                             @if (!string.IsNullOrWhiteSpace(DeviceRemediationState(item)))
                             {
-                                <a asp-action="Index" asp-route-state="@DeviceRemediationState(item)" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "MobileOperations", new { state = DeviceRemediationState(item) })"
+                                <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="@DeviceRemediationState(item)" class="btn btn-sm btn-outline-secondary"
+                                           hx-get="@MobileOperationsItemUrl(item)"
                                    hx-target="#mobile-operations-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@DeviceRemediationLabel(item)</a>
                             }
                             <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true" class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true })"
+                               hx-get="@ProviderReviewChannelAuditsUrl()"
                                hx-target="#mobile-operations-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("ProviderReview")</a>
@@ -647,6 +665,7 @@
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
                                     <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="businessId" value="@Model.BusinessId" />
                                     <input type="hidden" name="platform" value="@Model.PlatformFilter" />
                                     <input type="hidden" name="state" value="@Model.StateFilter" />
                                     <input type="hidden" name="page" value="@Model.Page" />
@@ -663,6 +682,7 @@
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
                                     <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="businessId" value="@Model.BusinessId" />
                                     <input type="hidden" name="platform" value="@Model.PlatformFilter" />
                                     <input type="hidden" name="state" value="@Model.StateFilter" />
                                     <input type="hidden" name="page" value="@Model.Page" />
@@ -684,6 +704,7 @@
        asp-controller="MobileOperations"
        asp-action="Index"
        asp-route-q="@Model.Query"
+       asp-route-businessId="@Model.BusinessId"
        asp-route-platform="@Model.PlatformFilter"
        asp-route-state="@Model.StateFilter"
        hx-target="#mobile-operations-workspace-shell"

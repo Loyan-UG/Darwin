@@ -181,6 +181,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
 
+            var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
             var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);
             var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
 
@@ -188,6 +189,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             {
                 SelectedBusinessId = selectedBusinessId,
                 SelectedBusinessLabel = businessOptions.FirstOrDefault(x => x.Selected)?.Text ?? string.Empty,
+                BusinessSupport = MapBusinessSupportSummary(businessSupport),
                 CommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings)
             };
         }

@@ -2,6 +2,11 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     string ShippingMethodFormOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string ShippingMethodsGlobalIndexUrl() => Url.Action("Index", "ShippingMethods") ?? string.Empty;
+    string ShippingMethodsIndexUrl(string filter) => Url.Action("Index", "ShippingMethods", new { filter }) ?? string.Empty;
+    string CreateShippingMethodUrl() => Url.Action("Create", "ShippingMethods") ?? string.Empty;
+    string ShipmentsQueueUrl(string filter) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
+    string ShippingSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" }) ?? string.Empty;
     var shippingMethodFormMissingRates = Model.Rates.Count == 0;
     var shippingMethodFormDhl = string.Equals(Model.Carrier, "DHL", StringComparison.OrdinalIgnoreCase);
     var shippingMethodFormGlobalCoverage = string.IsNullOrWhiteSpace(Model.CountriesCsv);
@@ -54,7 +59,7 @@
                         <a asp-action="Index"
                            asp-route-filter="MissingRates"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })"
+                           hx-get="@ShippingMethodsIndexUrl("MissingRates")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -62,7 +67,7 @@
                            asp-action="ShipmentsQueue"
                            asp-route-filter="MissingService"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "MissingService" })"
+                           hx-get="@ShipmentsQueueUrl("MissingService")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ShipmentsQueue")</a>
@@ -79,7 +84,7 @@
                         <a asp-action="Index"
                            asp-route-filter="Dhl"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                           hx-get="@ShippingMethodsIndexUrl("Dhl")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -87,7 +92,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-shipping"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                           hx-get="@ShippingSettingsUrl()"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ShippingSettings")</a>
@@ -104,7 +109,7 @@
                         <a asp-action="Index"
                            asp-route-filter="GlobalCoverage"
                            class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "GlobalCoverage" })"
+                           hx-get="@ShippingMethodsIndexUrl("GlobalCoverage")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -112,7 +117,7 @@
                            asp-action="ShipmentsQueue"
                            asp-route-filter="CarrierReview"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "CarrierReview" })"
+                           hx-get="@ShipmentsQueueUrl("CarrierReview")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ShipmentsQueue")</a>
@@ -129,13 +134,13 @@
                         <a asp-action="Index"
                            asp-route-filter="Inactive"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Inactive" })"
+                           hx-get="@ShippingMethodsIndexUrl("Inactive")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                         <a asp-action="Create"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Create", "ShippingMethods")"
+                           hx-get="@CreateShippingMethodUrl()"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CreateMethod")</a>
@@ -187,7 +192,7 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@T.T("RateTiers")</span>
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.darwinAdmin.addShippingRateRow()">
+        <button type="button" class="btn btn-sm btn-outline-primary" data-shipping-rate-add>
             <i class="fa-solid fa-plus"></i> @T.T("AddRate")
         </button>
     </div>
@@ -211,8 +216,8 @@
                         <th>@T.T("MaxMass")</th>
                         <th>@T.T("MaxSubtotalNet")</th>
                         <th>@T.T("PriceMinor")</th>
-                        <th style="width:80px">@T.T("Sort")</th>
-                        <th style="width:80px"></th>
+                    <th class="admin-w-80">@T.T("Sort")</th>
+                    <th class="admin-w-80"></th>
                     </tr>
                 </thead>
                 <tbody id="shipping-rate-rows">
@@ -233,7 +238,7 @@
                             <input type="number" class="form-control form-control-sm" name="Rates[@i].SortOrder" value="@Model.Rates[i].SortOrder" min="0" />
                         </td>
                         <td class="text-end">
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.darwinAdmin.removeShippingRateRow(this)">
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-shipping-rate-remove>
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </td>
@@ -254,7 +259,7 @@
     </button>
     <a asp-action="Index"
        class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Index", "ShippingMethods")"
+           hx-get="@ShippingMethodsGlobalIndexUrl()"
        hx-target="#shipping-methods-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">
@@ -278,59 +283,9 @@
             <input type="number" class="form-control form-control-sm" name="Rates[__index__].SortOrder" min="0" value="0" />
         </td>
         <td class="text-end">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.darwinAdmin.removeShippingRateRow(this)">
+            <button type="button" class="btn btn-sm btn-outline-danger" data-shipping-rate-remove>
                 <i class="fa-solid fa-trash"></i>
             </button>
         </td>
     </tr>
 </template>
-
-<script>
-    (function () {
-        window.darwinAdmin = window.darwinAdmin || {};
-
-        function renumberShippingRateRows() {
-            const rows = document.querySelectorAll('#shipping-rate-rows [data-rate-row]');
-            rows.forEach(function (row, index) {
-                row.querySelectorAll('input').forEach(function (input) {
-                    const currentName = input.getAttribute('name');
-                    if (!currentName) return;
-                    input.setAttribute('name', currentName.replace(/Rates\[\d+\]/, 'Rates[' + index + ']'));
-                    if (currentName.endsWith('.SortOrder')) {
-                        input.value = index;
-                    }
-                });
-            });
-        }
-
-        window.darwinAdmin.addShippingRateRow = function () {
-            const template = document.getElementById('shipping-rate-row-template');
-            const tbody = document.getElementById('shipping-rate-rows');
-            if (!template || !tbody) return;
-
-            const index = tbody.querySelectorAll('[data-rate-row]').length;
-            const html = template.innerHTML.replaceAll('__index__', index.toString());
-            tbody.insertAdjacentHTML('beforeend', html);
-            renumberShippingRateRows();
-        };
-
-        window.darwinAdmin.removeShippingRateRow = function (button) {
-            const row = button.closest('[data-rate-row]');
-            const tbody = document.getElementById('shipping-rate-rows');
-            if (!row || !tbody) return;
-
-            row.remove();
-            if (!tbody.querySelector('[data-rate-row]')) {
-                window.darwinAdmin.addShippingRateRow();
-            } else {
-                renumberShippingRateRows();
-            }
-        };
-
-        window.darwinAdmin.initShippingMethodForm = function () {
-            renumberShippingRateRows();
-        };
-
-        window.darwinAdmin.initShippingMethodForm();
-    })();
-</script>

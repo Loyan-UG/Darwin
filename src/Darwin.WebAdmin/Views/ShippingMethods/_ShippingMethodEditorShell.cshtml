@@ -4,6 +4,11 @@
     var isCreate = (bool?)ViewData["IsCreate"] ?? false;
     string ShippingMethodEditorOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
     string ShippingMethodEditorOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    string ShippingMethodsGlobalIndexUrl() => Url.Action("Index", "ShippingMethods") ?? string.Empty;
+    string ShippingMethodsIndexUrl(string filter) => Url.Action("Index", "ShippingMethods", new { filter }) ?? string.Empty;
+    string CreateShippingMethodUrl() => Url.Action("Create", "ShippingMethods") ?? string.Empty;
+    string ShipmentsQueueUrl(string filter) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
+    string ShippingSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" }) ?? string.Empty;
     var shippingMethodEditorMissingRates = Model.Rates.Count == 0;
     var shippingMethodEditorDhl = string.Equals(Model.Carrier, "DHL", StringComparison.OrdinalIgnoreCase);
 }
@@ -15,7 +20,7 @@
             <p class="text-muted mb-0">@T.T("ShippingMethodEditorIntro")</p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "ShippingMethods")"
+           hx-get="@ShippingMethodsGlobalIndexUrl()"
            hx-target="#shipping-methods-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Back")</a>
@@ -49,7 +54,7 @@
                             <a asp-action="Index"
                                asp-route-filter="MissingRates"
                                class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })"
+                               hx-get="@ShippingMethodsIndexUrl("MissingRates")"
                                hx-target="#shipping-methods-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Open")</a>
@@ -57,7 +62,7 @@
                                asp-action="ShipmentsQueue"
                                asp-route-filter="MissingService"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "MissingService" })"
+                               hx-get="@ShipmentsQueueUrl("MissingService")"
                                hx-target="#shipping-methods-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("ShipmentsQueue")</a>
@@ -75,7 +80,7 @@
                             <a asp-action="Index"
                                asp-route-filter="Dhl"
                                class="btn btn-sm btn-outline-primary"
-                               hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                               hx-get="@ShippingMethodsIndexUrl("Dhl")"
                                hx-target="#shipping-methods-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Open")</a>
@@ -83,7 +88,7 @@
                                asp-action="Edit"
                                asp-fragment="site-settings-shipping"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                               hx-get="@ShippingSettingsUrl()"
                                hx-target="#shipping-methods-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("ShippingSettings")</a>
@@ -100,13 +105,13 @@
                         <div class="d-flex flex-wrap gap-2">
                             <a asp-action="Create"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Create", "ShippingMethods")"
+                               hx-get="@CreateShippingMethodUrl()"
                                hx-target="#shipping-methods-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CreateMethod")</a>
                             <a asp-action="Index"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Index", "ShippingMethods")"
+                               hx-get="@ShippingMethodsGlobalIndexUrl()"
                                hx-target="#shipping-methods-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Back")</a>

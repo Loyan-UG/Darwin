@@ -651,7 +651,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("ModelState.AddModelError(string.Empty, _text.T(\"EmailPasswordRequiredMessage\"));");
         source.Should().Contain("TempData[\"2fa_user\"] = result.UserId.Value.ToString();");
         source.Should().Contain("TempData[\"remember\"] = rememberMe ? \"1\" : \"0\";");
-        source.Should().Contain("TempData[\"return\"] = returnUrl ?? string.Empty;");
+        source.Should().Contain("ViewData[\"ReturnUrl\"] = SafeReturnUrlForForm(returnUrl);");
+        source.Should().Contain("TempData[\"return\"] = SafeReturnUrlForForm(returnUrl);");
         source.Should().Contain("return RedirectToAction(nameof(LoginTwoFactor));");
         source.Should().Contain("PrepareTwoFactorViewState(");
         source.Should().Contain("PrepareTwoFactorViewState(userId, rememberMe, returnUrl);");
@@ -697,12 +698,16 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("CookieAuthenticationDefaults.AuthenticationScheme");
         source.Should().Contain("ExpiresUtc = persistent ? DateTimeOffset.UtcNow.AddDays(30) : (DateTimeOffset?)null");
         source.Should().Contain("private async Task<string> DeterminePostLoginRedirectAsync(Guid userId, string? returnUrl, CancellationToken ct)");
-        source.Should().Contain("Uri.TryCreate(returnUrl, UriKind.Relative, out _)");
+        source.Should().Contain("if (IsSafeLocalReturnUrl(returnUrl))");
         source.Should().Contain("await _permissions.HasAsync(userId, \"AccessAdminPanel\", ct)");
         source.Should().Contain("var adminUrl = Url.Action(\"Index\", \"Home\")");
-        source.Should().Contain("private static string SafeReturnUrl(string? returnUrl)");
+        source.Should().Contain("private string SafeReturnUrl(string? returnUrl)");
         source.Should().Contain("if (string.IsNullOrWhiteSpace(returnUrl)) return \"~/\";");
-        source.Should().Contain("return Uri.TryCreate(returnUrl, UriKind.Relative, out _) ? returnUrl : \"~/\";");
+        source.Should().Contain("return IsSafeLocalReturnUrl(returnUrl) ? returnUrl : \"~/\";");
+        source.Should().Contain("private string SafeReturnUrlForForm(string? returnUrl)");
+        source.Should().Contain("return IsSafeLocalReturnUrl(returnUrl) ? returnUrl! : string.Empty;");
+        source.Should().Contain("private bool IsSafeLocalReturnUrl(string? returnUrl)");
+        source.Should().Contain("return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl);");
     }
 
 
@@ -732,6 +737,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         dependencyInjectionSource.Should().Contain("options.Cookie.Name = \"Darwin.Auth\";");
         dependencyInjectionSource.Should().Contain("options.Cookie.HttpOnly = true;");
         dependencyInjectionSource.Should().Contain("options.Cookie.SameSite = SameSiteMode.Lax;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SecurePolicy = CookieSecurePolicy.Always;");
         dependencyInjectionSource.Should().Contain("options.ExpireTimeSpan = TimeSpan.FromDays(30);");
         dependencyInjectionSource.Should().Contain(".AddControllersWithViews(options =>");
         dependencyInjectionSource.Should().Contain("options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;");
@@ -741,7 +747,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         dependencyInjectionSource.Should().Contain("services.AddApplication();");
         dependencyInjectionSource.Should().Contain("services.AddSharedHostingDataProtection(config);");
         dependencyInjectionSource.Should().Contain("services.AddPersistence(config);");
-        dependencyInjectionSource.Should().Contain("services.AddAntiforgery();");
+        dependencyInjectionSource.Should().Contain("services.AddAntiforgery(options =>");
+        dependencyInjectionSource.Should().Contain("options.HeaderName = \"RequestVerificationToken\";");
         dependencyInjectionSource.Should().Contain("services.AddMemoryCache();");
         dependencyInjectionSource.Should().Contain("services.AddScoped<ISiteSettingCache, SiteSettingCache>();");
     }
@@ -1084,7 +1091,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var source = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupInvitationsPreview.cshtml"));
 
         source.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending\"");
-        source.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending, query = item.Email })");
+        source.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending, item.Email)");
         source.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         source.Should().NotContain("hx-push-url=\"true\">@T.T(\"Pending\")</a>");
     }
@@ -1096,7 +1103,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var source = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupInvitationsPreview.cshtml"));
 
         source.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired\"");
-        source.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired, query = item.Email })");
+        source.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired, item.Email)");
         source.Should().Contain("@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Expired)");
         source.Should().NotContain("hx-push-url=\"true\">@T.T(\"Expired\")</a>");
     }
@@ -1107,7 +1114,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupMembersPreview.cshtml"));
 
-        source.Should().Contain("@Url.Action(\"EditMember\", \"Businesses\", new { id = item.Id })");
+        source.Should().Contain("@EditMemberUrl(item.Id)");
         source.Should().Contain("@T.T(\"EditMemberAction\")");
     }
 
@@ -1117,7 +1124,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupMembersPreview.cshtml"));
 
-        source.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention })");
+        source.Should().Contain("@BusinessMembersUrl(Model.BusinessId, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
         source.Should().Contain("@T.T(\"BusinessSetupOpenMembersAction\")");
     }
 
@@ -1132,7 +1139,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("BusinessSetupInvitationsPreviewPendingCount");
         source.Should().Contain("? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending");
         source.Should().Contain(": Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open;");
-        source.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, filter = invitationWorkspaceFilter })");
+        source.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, invitationWorkspaceFilter)");
         source.Should().Contain("@InvitationQueueLabel(invitationWorkspaceFilter)");
     }
 
@@ -1142,7 +1149,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupInvitationsPreview.cshtml"));
 
-        source.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.BusinessId, status = \"Failed\", flowKey = \"BusinessInvitation\", recipientEmail = item.Email })");
+        source.Should().Contain("@EmailAuditsUrl(Model.BusinessId, status: \"Failed\", flowKey: \"BusinessInvitation\", recipientEmail: item.Email)");
         source.Should().Contain("@T.T(\"OpenFailedInvitationEmails\")");
     }
 
@@ -1155,8 +1162,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         editorShellSource.Should().Contain("string InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter filter) => filter switch");
         editorShellSource.Should().Contain("@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)");
         editorShellSource.Should().Contain("asp-route-filter=\"@(Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
-        editorShellSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        editorShellSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id }))");
+        editorShellSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Model.Id, Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
         editorShellSource.Should().NotContain("@T.T(\"BusinessEditorPendingInvites\")");
         editorShellSource.Should().Contain("hx-push-url=\"true\">@InvitationReadinessLabel(Darwin.Application.Businesses.DTOs.BusinessReadinessQueueFilter.PendingInvites)</a>");
         editorShellSource.Should().NotContain("hx-push-url=\"true\">@T.T(\"Invitations\")</a>");
@@ -1168,12 +1174,11 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
     {
         var editorShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessEditorShell.cshtml"));
 
-        editorShellSource.Should().Contain("@Url.Action(\"CreateInvitation\", \"Businesses\", new { businessId = Model.Id })");
+        editorShellSource.Should().Contain("@CreateInvitationUrl(Model.Id)");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorInviteUser\")");
         editorShellSource.Should().Contain("@if (Model.InvitationCount > 0)");
         editorShellSource.Should().Contain("asp-route-filter=\"@(Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
-        editorShellSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        editorShellSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id }))");
+        editorShellSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Model.Id, Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorReviewInvitations\")");
     }
 
@@ -1183,13 +1188,13 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
     {
         var editorShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessEditorShell.cshtml"));
 
-        editorShellSource.Should().Contain("@Url.Action(\"CreateMember\", \"Businesses\", new { businessId = Model.Id })");
+        editorShellSource.Should().Contain("@CreateMemberUrl(Model.Id)");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorAssignOwner\")");
-        editorShellSource.Should().Contain("@Url.Action(\"CreateLocation\", \"Businesses\", new { businessId = Model.Id })");
+        editorShellSource.Should().Contain("@CreateLocationUrl(Model.Id)");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorAddPrimaryLocation\")");
-        editorShellSource.Should().Contain("@Url.Action(\"Subscription\", \"Businesses\", new { businessId = Model.Id })");
+        editorShellSource.Should().Contain("@BusinessSubscriptionUrl(Model.Id)");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorReviewSubscription\")");
-        editorShellSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.Id })");
+        editorShellSource.Should().Contain("@BusinessSetupUrl(Model.Id)");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorOpenSetupWorkspace\")");
     }
 
@@ -1243,11 +1248,11 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var locationShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessLocationEditorShell.cshtml"));
 
         locationShellSource.Should().Contain("hx-target=\"#business-location-editor-shell\"");
-        locationShellSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
+        locationShellSource.Should().Contain("@BusinessLocationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
         locationShellSource.Should().Contain("@T.T(\"BusinessLocationBackToLocations\")");
-        locationShellSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.BusinessId })");
+        locationShellSource.Should().Contain("@BusinessSetupUrl(Model.BusinessId)");
         locationShellSource.Should().Contain("@T.T(\"Setup\")");
-        locationShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        locationShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
         locationShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
     }
 
@@ -1258,11 +1263,11 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var invitationShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessInvitationEditorShell.cshtml"));
 
         invitationShellSource.Should().Contain("hx-target=\"#business-invitation-editor-shell\"");
-        invitationShellSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
+        invitationShellSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
         invitationShellSource.Should().Contain("@T.T(\"BusinessInvitationBackToInvitations\")");
-        invitationShellSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        invitationShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
         invitationShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
-        invitationShellSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        invitationShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
         invitationShellSource.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
     }
 
@@ -1356,10 +1361,10 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var invitationFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessInvitationForm.cshtml"));
 
         invitationFormSource.Should().Contain("@T.T(\"BusinessInvitationCreateHelp\")");
-        invitationFormSource.Should().Contain("@Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
-        invitationFormSource.Should().Contain("@Url.Action(\"Setup\", \"Businesses\", new { id = Model.BusinessId })");
-        invitationFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        invitationFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        invitationFormSource.Should().Contain("@BusinessInvitationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
+        invitationFormSource.Should().Contain("@BusinessSetupUrl(Model.BusinessId)");
+        invitationFormSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
+        invitationFormSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
         invitationFormSource.Should().Contain("hx-push-url=\"true\">@T.T(\"Cancel\")</a>");
     }
 
@@ -1371,10 +1376,9 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
 
         memberFormSource.Should().Contain("@T.T(\"BusinessMemberAssignmentHelp\")");
         memberFormSource.Should().Contain("asp-route-filter=\"@(Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
-        memberFormSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId })");
-        memberFormSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))");
-        memberFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
-        memberFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
+        memberFormSource.Should().Contain("@BusinessMembersUrl(Model.BusinessId, filter: Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
+        memberFormSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.BusinessId)");
+        memberFormSource.Should().Contain("@BusinessSupportQueueUrl(Model.BusinessId)");
         memberFormSource.Should().Contain("hx-swap=\"outerHTML\">@T.T(\"Cancel\")</a>");
     }
 
@@ -1441,7 +1445,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var businessFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessForm.cshtml"));
 
         businessFormSource.Should().Contain("@T.T(\"BusinessFormInitialOwnerHelp\")");
-        businessFormSource.Should().Contain("@Url.Action(\"Index\", \"Users\")");
+        businessFormSource.Should().Contain("string GlobalUsersUrl() => Url.Action(\"Index\", \"Users\") ?? string.Empty;");
+        businessFormSource.Should().Contain("hx-get=\"@GlobalUsersUrl()\"");
         businessFormSource.Should().Contain("hx-push-url=\"true\">@T.T(\"Users\")</a>");
         businessFormSource.Should().Contain("hx-push-url=\"true\">@T.T(\"BusinessSupportQueueTitle\")</a>");
         businessFormSource.Should().Contain("hx-push-url=\"true\">@T.T(\"MerchantReadinessTitle\")</a>");
@@ -1454,8 +1459,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var businessFormSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessForm.cshtml"));
 
         businessFormSource.Should().Contain("@T.T(\"BusinessFormActiveHelp\")");
-        businessFormSource.Should().Contain("@Url.Action(\"SupportQueue\", \"Businesses\")");
-        businessFormSource.Should().Contain("@Url.Action(\"MerchantReadiness\", \"Businesses\")");
+        businessFormSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
+        businessFormSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
         businessFormSource.Should().Contain("hx-push-url=\"true\">@T.T(\"BusinessSupportQueueTitle\")</a>");
         businessFormSource.Should().Contain("hx-push-url=\"true\">@T.T(\"MerchantReadinessTitle\")</a>");
     }
@@ -1471,12 +1476,10 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         businessFormSource.Should().Contain("@T.T(\"BusinessFormManageLocations\")");
         businessFormSource.Should().Contain("@T.T(\"BusinessFormManageInvitations\")");
         businessFormSource.Should().Contain("asp-route-filter=\"@(Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
-        businessFormSource.Should().Contain("? Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id })");
-        businessFormSource.Should().Contain(": Url.Action(\"Members\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))");
-        businessFormSource.Should().Contain("@Url.Action(\"Locations\", \"Businesses\", new { businessId = Model.Id })");
+        businessFormSource.Should().Contain("hx-get=\"@BusinessMembersUrl(Model.Id, Model.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)\"");
+        businessFormSource.Should().Contain("@BusinessLocationsUrl(Model.Id)");
         businessFormSource.Should().Contain("asp-route-filter=\"@(Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
-        businessFormSource.Should().Contain("? Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })");
-        businessFormSource.Should().Contain(": Url.Action(\"Invitations\", \"Businesses\", new { businessId = Model.Id }))");
+        businessFormSource.Should().Contain("hx-get=\"@BusinessInvitationsUrl(Model.Id, Model.InvitationCount > 0 ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending : null)\"");
         businessFormSource.Should().Contain("hx-push-url=\"true\">@T.T(\"BusinessSupportQueueTitle\")</a>");
         businessFormSource.Should().Contain("hx-push-url=\"true\">@T.T(\"MerchantReadinessTitle\")</a>");
     }
@@ -1492,10 +1495,10 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         memberShellSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
         memberShellSource.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)");
         memberShellSource.Should().Contain("@T.T(\"BusinessMemberUnlockedBadge\")");
-        memberShellSource.Should().Contain("@Url.Action(\"Edit\", \"Users\", new { id = Model.UserId })");
-        memberShellSource.Should().Contain("@Url.Action(\"Index\", \"MobileOperations\", new { q = Model.UserEmail })");
-        memberShellSource.Should().Contain("@Url.Action(\"Accounts\", \"Loyalty\", new { q = Model.UserEmail })");
-        memberShellSource.Should().Contain("@Url.Action(\"StaffAccessBadge\", \"Businesses\", new { id = Model.Id })");
+        memberShellSource.Should().Contain("@UserEditUrl(Model.UserId)");
+        memberShellSource.Should().Contain("@MobileOperationsUrl(Model.BusinessId, Model.UserEmail)");
+        memberShellSource.Should().Contain("@LoyaltyAccountsUrl(Model.UserEmail)");
+        memberShellSource.Should().Contain("@StaffAccessBadgeUrl(Model.Id)");
         memberShellSource.Should().Contain("@Url.Action(\"SendMemberActivationEmail\", \"Businesses\")");
         memberShellSource.Should().Contain("@Url.Action(\"ConfirmMemberEmail\", \"Businesses\")");
         memberShellSource.Should().Contain("@Url.Action(\"SendMemberPasswordReset\", \"Businesses\")");
@@ -1510,7 +1513,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var memberShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessMemberEditorShell.cshtml"));
 
         memberShellSource.Should().Contain("hx-target=\"#business-member-editor-shell\"");
-        memberShellSource.Should().Contain("@Url.Action(\"Members\", \"Businesses\", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })");
+        memberShellSource.Should().Contain("@BusinessMembersUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)");
         memberShellSource.Should().Contain("@T.T(\"BackToMembersAction\")");
     }
 

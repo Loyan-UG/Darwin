@@ -7,6 +7,10 @@
         : "badge bg-warning-subtle text-warning-emphasis";
     string SupplierOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
     var supplierAttentionCount = Model.Summary.MissingAddressCount + Model.Summary.HasPurchaseOrdersCount;
+    string SuppliersUrl(object? businessId = null, string? q = null, string? filter = null) => Url.Action("Suppliers", "Inventory", new { businessId, q, filter }) ?? string.Empty;
+    string CreateSupplierUrl(object? businessId = null) => Url.Action("CreateSupplier", "Inventory", new { businessId }) ?? string.Empty;
+    string PurchaseOrdersUrl(object? businessId = null, string? q = null) => Url.Action("PurchaseOrders", "Inventory", new { businessId, q }) ?? string.Empty;
+    string EditSupplierUrl(Guid id) => Url.Action("EditSupplier", "Inventory", new { id }) ?? string.Empty;
 }
 
 <div id="inventory-suppliers-workspace-shell">
@@ -14,7 +18,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Suppliers" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("Suppliers", "Inventory")"
+          hx-get="@SuppliersUrl()"
           hx-target="#inventory-suppliers-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -23,13 +27,13 @@
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId })"
+           hx-get="@SuppliersUrl(Model.BusinessId)"
            hx-target="#inventory-suppliers-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Reset")</a>
     </form>
     <a asp-action="CreateSupplier" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
-       hx-get="@Url.Action("CreateSupplier", "Inventory", new { businessId = Model.BusinessId })"
+       hx-get="@CreateSupplierUrl(Model.BusinessId)"
        hx-target="#inventory-suppliers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("NewSupplier")</a>
@@ -37,17 +41,17 @@
 
 <div class="d-flex gap-2 flex-wrap mb-3">
     <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="MissingAddress" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.SupplierQueueFilter.MissingAddress ? "btn-warning" : "btn-outline-warning")"
-       hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "MissingAddress" })"
+       hx-get="@SuppliersUrl(Model.BusinessId, Model.Query, "MissingAddress")"
        hx-target="#inventory-suppliers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("MissingAddress")</a>
     <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="HasPurchaseOrders" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.SupplierQueueFilter.HasPurchaseOrders ? "btn-primary" : "btn-outline-primary")"
-       hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "HasPurchaseOrders" })"
+       hx-get="@SuppliersUrl(Model.BusinessId, Model.Query, "HasPurchaseOrders")"
        hx-target="#inventory-suppliers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("HasPurchaseOrders")</a>
     <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, q = Model.Query })"
+       hx-get="@SuppliersUrl(Model.BusinessId, Model.Query)"
        hx-target="#inventory-suppliers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("ClearQueueFilters")</a>
@@ -98,12 +102,12 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a asp-action="CreateSupplier" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("CreateSupplier", "Inventory", new { businessId = Model.BusinessId })"
+                   hx-get="@CreateSupplierUrl(Model.BusinessId)"
                    hx-target="#inventory-suppliers-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("NewSupplier")</a>
                 <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId })"
+                   hx-get="@PurchaseOrdersUrl(Model.BusinessId)"
                    hx-target="#inventory-suppliers-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("PurchaseOrders")</a>
@@ -123,12 +127,12 @@
                     <div class="small text-muted mt-3">@T.T("SupplierPlaybookContactHygieneAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="MissingAddress" class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "MissingAddress" })"
+                           hx-get="@SuppliersUrl(Model.BusinessId, Model.Query, "MissingAddress")"
                            hx-target="#inventory-suppliers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("MissingAddress")</a>
                         <a asp-action="CreateSupplier" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("CreateSupplier", "Inventory", new { businessId = Model.BusinessId })"
+                           hx-get="@CreateSupplierUrl(Model.BusinessId)"
                            hx-target="#inventory-suppliers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("NewSupplier")</a>
@@ -147,12 +151,12 @@
                     <div class="small text-muted mt-3">@T.T("SupplierPlaybookActiveReviewAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="HasPurchaseOrders" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "HasPurchaseOrders" })"
+                           hx-get="@SuppliersUrl(Model.BusinessId, Model.Query, "HasPurchaseOrders")"
                            hx-target="#inventory-suppliers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("HasPurchaseOrders")</a>
                         <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId })"
+                           hx-get="@PurchaseOrdersUrl(Model.BusinessId)"
                            hx-target="#inventory-suppliers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PurchaseOrders")</a>
@@ -171,12 +175,12 @@
                     <div class="small text-muted mt-3">@T.T("SupplierPlaybookActiveReviewScope")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId })"
+                           hx-get="@PurchaseOrdersUrl(Model.BusinessId)"
                            hx-target="#inventory-suppliers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PurchaseOrders")</a>
                         <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, q = Model.Query })"
+                           hx-get="@SuppliersUrl(Model.BusinessId, Model.Query)"
                            hx-target="#inventory-suppliers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Suppliers")</a>
@@ -253,12 +257,12 @@
                            asp-route-businessId="@Model.BusinessId"
                            asp-route-q="@item.Name"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = item.Name })"
+                           hx-get="@PurchaseOrdersUrl(Model.BusinessId, item.Name)"
                            hx-target="#inventory-suppliers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PurchaseOrders")</a>
                         <a asp-action="EditSupplier" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EditSupplier", "Inventory", new { id = item.Id })"
+                           hx-get="@EditSupplierUrl(item.Id)"
                            hx-target="#inventory-suppliers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Edit")</a>

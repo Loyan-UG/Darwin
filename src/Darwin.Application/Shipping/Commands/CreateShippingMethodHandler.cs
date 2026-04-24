@@ -33,8 +33,7 @@ namespace Darwin.Application.Shipping.Commands
 
         public async Task HandleAsync(ShippingMethodCreateDto dto, CancellationToken ct = default)
         {
-            var v = _validator.Validate(dto);
-            if (!v.IsValid) throw new ValidationException(v.Errors);
+            await _validator.ValidateAndThrowAsync(dto, ct);
 
             var exists = await _db.Set<ShippingMethod>().AsNoTracking()
                 .AnyAsync(m => m.Carrier == dto.Carrier && m.Service == dto.Service, ct);

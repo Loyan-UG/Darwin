@@ -4,6 +4,38 @@
 @{
     ViewData["Title"] = T.T("CommunicationOpsTitle");
 
+    string GlobalBusinessSupportQueueUrl() => Url.Action("SupportQueue", "Businesses") ?? string.Empty;
+    string GlobalMerchantReadinessUrl() => Url.Action("MerchantReadiness", "Businesses") ?? string.Empty;
+    string GlobalMobileOperationsUrl() => Url.Action("Index", "MobileOperations") ?? string.Empty;
+    string GlobalUsersUrl() => Url.Action("Index", "Users") ?? string.Empty;
+    string GlobalEmailAuditsUrl() => Url.Action("EmailAudits", "BusinessCommunications") ?? string.Empty;
+    string GlobalBusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
+    string GlobalChannelAuditsUrl() => Url.Action("ChannelAudits", "BusinessCommunications") ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string BusinessCommunicationsSetupUrl() => Url.Action("Index", "BusinessCommunications", new { setupOnly = true }) ?? string.Empty;
+    string PendingInvitationsUrl() => Url.Action("Invitations", "Businesses", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending }) ?? string.Empty;
+    string UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action("Index", "Users", new { filter }) ?? string.Empty;
+    string EmailAuditsFlowUrl(string flowKey, string status) => Url.Action("EmailAudits", "BusinessCommunications", new { flowKey, status }) ?? string.Empty;
+    string FailedAuditFlowUrl(string flowKey) => Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey }) ?? string.Empty;
+    string EmailAuditsRetryReadyUrl() => Url.Action("EmailAudits", "BusinessCommunications", new { retryReadyOnly = true }) ?? string.Empty;
+    string EmailAuditsRetryBlockedUrl() => Url.Action("EmailAudits", "BusinessCommunications", new { retryBlockedOnly = true }) ?? string.Empty;
+    string EmailAuditsHighChainVolumeUrl() => Url.Action("EmailAudits", "BusinessCommunications", new { highChainVolumeOnly = true }) ?? string.Empty;
+    string ChannelAuditsProviderReviewUrl() => Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true }) ?? string.Empty;
+    string ChannelAuditsActionReadyUrl() => Url.Action("ChannelAudits", "BusinessCommunications", new { actionReadyOnly = true }) ?? string.Empty;
+    string ChannelAuditsActionBlockedUrl() => Url.Action("ChannelAudits", "BusinessCommunications", new { actionBlockedOnly = true }) ?? string.Empty;
+    string ChannelAuditsEscalationCandidatesUrl() => Url.Action("ChannelAudits", "BusinessCommunications", new { escalationCandidatesOnly = true }) ?? string.Empty;
+    string ChannelAuditsPhoneVerificationUrl() => Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true }) ?? string.Empty;
+    string ChannelAuditsPhoneVerificationByChannelUrl(string? channel) => Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, channel }) ?? string.Empty;
+    string ChannelAuditsAdminTestByChannelUrl(string? channel) => Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, channel }) ?? string.Empty;
+    string CommunicationDetailsUrl(Guid businessId) => Url.Action("Details", "BusinessCommunications", new { businessId }) ?? string.Empty;
+    string BusinessSetupUrl(Guid id) => Url.Action("Setup", "Businesses", new { id }) ?? string.Empty;
+    string BusinessEditUrl(Guid id) => Url.Action("Edit", "Businesses", new { id }) ?? string.Empty;
+    string BusinessEmailAuditsUrl(Guid businessId) => Url.Action("EmailAudits", "BusinessCommunications", new { businessId }) ?? string.Empty;
+    string BusinessFailedInvitationAuditsUrl(Guid businessId) => Url.Action("EmailAudits", "BusinessCommunications", new { businessId, status = "Failed", flowKey = "BusinessInvitation" }) ?? string.Empty;
+    string BusinessChannelAuditsUrl(Guid businessId) => Url.Action("ChannelAudits", "BusinessCommunications", new { businessId }) ?? string.Empty;
+    string BusinessPendingInvitationsUrl(Guid businessId) => Url.Action("Invitations", "Businesses", new { businessId, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending }) ?? string.Empty;
+    string BusinessMembersUrl(Guid businessId, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => Url.Action("Members", "Businesses", new { businessId, filter }) ?? string.Empty;
+
     string FlowLabel(string? flowKey) => flowKey switch
     {
         "BusinessInvitation" => T.T("CommunicationDetailsActiveFlowInvitation"),
@@ -100,32 +132,32 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="ChannelAudits" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications")"
+                           hx-get="@GlobalChannelAuditsUrl()"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("SmsWhatsAppAudits")</a>
         <a asp-action="EmailAudits" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+           hx-get="@GlobalEmailAuditsUrl()"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("EmailAudits")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
+           hx-get="@SiteSettingsUrl("site-settings-smtp")"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("SMTP")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
+           hx-get="@SiteSettingsUrl("site-settings-sms")"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@ChannelLabel("SMS")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
+           hx-get="@SiteSettingsUrl("site-settings-whatsapp")"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@ChannelLabel("WhatsApp")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+           hx-get="@SiteSettingsUrl("site-settings-admin-routing")"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("AdminAlerts")</a>
@@ -174,7 +206,7 @@
                 <a asp-controller="Businesses"
                    asp-action="SupportQueue"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-get="@GlobalBusinessSupportQueueUrl()"
                    hx-target="#business-communications-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -182,7 +214,7 @@
                    asp-action="Edit"
                    asp-fragment="site-settings-communications-policy"
                    class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                       hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                    hx-target="#business-communications-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("OpenPolicyAction")</a>
@@ -203,7 +235,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-smtp"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
+                       hx-get="@SiteSettingsUrl("site-settings-smtp")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("SMTP")</a>
@@ -211,7 +243,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-sms"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
+                       hx-get="@SiteSettingsUrl("site-settings-sms")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@ChannelLabel("SMS")</a>
@@ -219,7 +251,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-whatsapp"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
+                       hx-get="@SiteSettingsUrl("site-settings-whatsapp")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@ChannelLabel("WhatsApp")</a>
@@ -227,7 +259,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-communications-policy"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                       hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenPolicyAction")</a>
@@ -246,21 +278,21 @@
                         <a asp-action="Index"
                            asp-route-setupOnly="true"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "BusinessCommunications", new { setupOnly = true })"
+                       hx-get="@BusinessCommunicationsSetupUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("BusinessCommunicationNeedsSetupOnlyLabel")</a>
                         <a asp-controller="Businesses"
                            asp-action="SupportQueue"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("SupportQueue", "Businesses")"
+                           hx-get="@GlobalBusinessSupportQueueUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("SupportQueue")</a>
                         <a asp-controller="Businesses"
                            asp-action="MerchantReadiness"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                           hx-get="@GlobalMerchantReadinessUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
@@ -285,7 +317,7 @@
                            asp-action="Invitations"
                            asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invitations", "Businesses", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
+                       hx-get="@PendingInvitationsUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Pending")</a>
@@ -293,7 +325,7 @@
                            asp-route-flowKey="BusinessInvitation"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "BusinessInvitation", status = "Failed" })"
+                       hx-get="@EmailAuditsFlowUrl("BusinessInvitation", "Failed")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenFailedInvitationEmails")</a>
@@ -301,7 +333,7 @@
                            asp-action="Index"
                            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
@@ -309,7 +341,7 @@
                            asp-action="Index"
                            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("UsersFilterLocked")</a>
@@ -317,7 +349,7 @@
                            asp-route-flowKey="AccountActivation"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AccountActivation", status = "Failed" })"
+                       hx-get="@EmailAuditsFlowUrl("AccountActivation", "Failed")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
@@ -325,7 +357,7 @@
                            asp-route-flowKey="AdminCommunicationTest"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AdminCommunicationTest", status = "Failed" })"
+                       hx-get="@EmailAuditsFlowUrl("AdminCommunicationTest", "Failed")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("FailedAdminTests")</a>
@@ -333,28 +365,28 @@
                            asp-route-flowKey="PasswordReset"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "PasswordReset", status = "Failed" })"
+                       hx-get="@EmailAuditsFlowUrl("PasswordReset", "Failed")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
                         <a asp-action="EmailAudits"
                            asp-route-retryReadyOnly="true"
                            class="btn btn-sm btn-outline-success"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryReadyOnly = true })"
+                       hx-get="@EmailAuditsRetryReadyUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("RetryReady")</a>
                         <a asp-action="EmailAudits"
                            asp-route-retryBlockedOnly="true"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryBlockedOnly = true })"
+                       hx-get="@EmailAuditsRetryBlockedUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("RetryBlocked")</a>
                         <a asp-action="EmailAudits"
                            asp-route-highChainVolumeOnly="true"
                            class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { highChainVolumeOnly = true })"
+                       hx-get="@EmailAuditsHighChainVolumeUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("HeavyChains")</a>
@@ -377,7 +409,7 @@
                            asp-route-flowKey="AdminCommunicationTest"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AdminCommunicationTest", status = "Failed" })"
+                       hx-get="@EmailAuditsFlowUrl("AdminCommunicationTest", "Failed")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("FailedAdminTests")</a>
@@ -385,7 +417,7 @@
                            asp-action="Invitations"
                            asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invitations", "Businesses", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
+                       hx-get="@PendingInvitationsUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Pending")</a>
@@ -393,7 +425,7 @@
                            asp-route-flowKey="BusinessInvitation"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "BusinessInvitation", status = "Failed" })"
+                       hx-get="@EmailAuditsFlowUrl("BusinessInvitation", "Failed")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenFailedInvitationEmails")</a>
@@ -401,7 +433,7 @@
                            asp-action="Index"
                            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
@@ -409,7 +441,7 @@
                            asp-route-flowKey="AccountActivation"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AccountActivation", status = "Failed" })"
+                       hx-get="@EmailAuditsFlowUrl("AccountActivation", "Failed")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
@@ -417,7 +449,7 @@
                            asp-action="Index"
                            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PasswordReset")</a>
@@ -425,49 +457,49 @@
                            asp-route-flowKey="PasswordReset"
                            asp-route-status="Failed"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "PasswordReset", status = "Failed" })"
+                       hx-get="@EmailAuditsFlowUrl("PasswordReset", "Failed")"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
                         <a asp-action="ChannelAudits"
                            asp-route-providerReviewOnly="true"
                            class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true })"
+                       hx-get="@ChannelAuditsProviderReviewUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ProviderReview")</a>
                         <a asp-action="ChannelAudits"
                            asp-route-actionReadyOnly="true"
                            class="btn btn-sm btn-outline-success"
-                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { actionReadyOnly = true })"
+                       hx-get="@ChannelAuditsActionReadyUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ActionReady")</a>
                         <a asp-action="ChannelAudits"
                            asp-route-actionBlockedOnly="true"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { actionBlockedOnly = true })"
+                       hx-get="@ChannelAuditsActionBlockedUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ActionBlocked")</a>
                         <a asp-action="ChannelAudits"
                            asp-route-escalationCandidatesOnly="true"
                            class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { escalationCandidatesOnly = true })"
+                       hx-get="@ChannelAuditsEscalationCandidatesUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("EscalationCandidates")</a>
                         <a asp-action="ChannelAudits"
                            asp-route-phoneVerificationOnly="true"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true })"
+                       hx-get="@ChannelAuditsPhoneVerificationUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PhoneVerification")</a>
                         <a asp-controller="MobileOperations"
                            asp-action="Index"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "MobileOperations")"
+                           hx-get="@GlobalMobileOperationsUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("MobileOperationsTitle")</a>
@@ -600,14 +632,14 @@
                 <a asp-action="ChannelAudits"
                    asp-route-phoneVerificationOnly="true"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true })"
+                           hx-get="@ChannelAuditsPhoneVerificationUrl()"
                    hx-target="#business-communications-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("PhoneVerification")</a>
                 <a asp-controller="MobileOperations"
                    asp-action="Index"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "MobileOperations")"
+                   hx-get="@GlobalMobileOperationsUrl()"
                    hx-target="#business-communications-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("MobileOperationsTitle")</a>
@@ -615,7 +647,7 @@
                    asp-action="Index"
                    asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
+                           hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)"
                    hx-target="#business-communications-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -692,7 +724,7 @@
         </div>
         <div class="mt-3">
             <a asp-action="ChannelAudits" class="btn btn-sm btn-outline-primary"
-               hx-get="@Url.Action("ChannelAudits", "BusinessCommunications")"
+                           hx-get="@GlobalChannelAuditsUrl()"
                hx-target="#business-communications-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("BusinessCommunicationOpenFullChannelAuditLogAction")</a>
@@ -749,7 +781,7 @@
                                        asp-action="Edit"
                                        asp-fragment="@family.ActionFragment"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = family.ActionFragment })"
+                                           hx-get="@SiteSettingsUrl(family.ActionFragment)"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@family.ActionLabel</a>
@@ -759,14 +791,14 @@
                                            asp-route-phoneVerificationOnly="true"
                                            asp-route-channel="@family.ChannelValue"
                                            class="btn btn-sm btn-outline-dark"
-                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, channel = family.ChannelValue })"
+                                           hx-get="@ChannelAuditsPhoneVerificationByChannelUrl(family.ChannelValue)"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("BusinessCommunicationOpenVerificationAuditsAction")</a>
                                         <a asp-controller="MobileOperations"
                                            asp-action="Index"
                                            class="btn btn-sm btn-outline-dark"
-                                           hx-get="@Url.Action("Index", "MobileOperations")"
+                                           hx-get="@GlobalMobileOperationsUrl()"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("MobileOperationsTitle")</a>
@@ -774,7 +806,7 @@
                                            asp-action="Index"
                                            asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked"
                                            class="btn btn-sm btn-outline-dark"
-                                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })"
+                                           hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
@@ -785,7 +817,7 @@
                                            asp-route-adminTestOnly="true"
                                            asp-route-channel="@family.ChannelValue"
                                            class="btn btn-sm btn-outline-dark"
-                                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, channel = family.ChannelValue })"
+                                           hx-get="@ChannelAuditsAdminTestByChannelUrl(family.ChannelValue)"
                                            hx-target="#business-communications-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("BusinessCommunicationOpenTestAuditsAction")</a>
@@ -932,7 +964,7 @@
                                        asp-route-status="Failed"
                                        asp-route-flowKey="@item.AuditFlowKey"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
+                                       hx-get="@FailedAuditFlowUrl(item.AuditFlowKey)"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("FailedAuditsAction")</a>
@@ -940,21 +972,21 @@
                                 @if (item.OperatorActionTarget == "Invitations")
                                 {
                                     <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-get="@GlobalBusinessSupportQueueUrl()"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML">@item.OperatorActionLabel</a>
                                 }
                                 else if (item.OperatorActionTarget == "Users")
                                 {
                                     <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("Index", "Users")"
+                                       hx-get="@GlobalUsersUrl()"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML">@item.OperatorActionLabel</a>
                                 }
                                 else if (item.OperatorActionTarget == "EmailAudits")
                                 {
                                     <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+                                       hx-get="@GlobalEmailAuditsUrl()"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@item.OperatorActionLabel</a>
@@ -962,7 +994,7 @@
                                 else if (item.OperatorActionTarget == "AdminAlerts")
                                 {
                                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                       hx-get="@SiteSettingsUrl("site-settings-admin-routing")"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@item.OperatorActionLabel</a>
@@ -970,7 +1002,7 @@
                                 @if (item.OperatorActionTarget != "AdminAlerts")
                                 {
                                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                       hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("OpenPolicyAction")</a>
@@ -1088,7 +1120,7 @@
                                        asp-route-status="Failed"
                                        asp-route-flowKey="@item.AuditFlowKey"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
+                                       hx-get="@FailedAuditFlowUrl(item.AuditFlowKey)"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("FailedAuditsAction")</a>
@@ -1096,21 +1128,21 @@
                                 @if (item.OperatorActionTarget == "Invitations")
                                 {
                                     <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-get="@GlobalBusinessSupportQueueUrl()"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML">@item.OperatorActionLabel</a>
                                 }
                                 else if (item.OperatorActionTarget == "Users")
                                 {
                                     <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("Index", "Users")"
+                                       hx-get="@GlobalUsersUrl()"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML">@item.OperatorActionLabel</a>
                                 }
                                 else if (item.OperatorActionTarget == "EmailAudits")
                                 {
                                     <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+                                       hx-get="@GlobalEmailAuditsUrl()"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@item.OperatorActionLabel</a>
@@ -1118,7 +1150,7 @@
                                 else if (item.OperatorActionTarget == "AdminAlerts")
                                 {
                                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                       hx-get="@SiteSettingsUrl("site-settings-admin-routing")"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@item.OperatorActionLabel</a>
@@ -1238,7 +1270,7 @@
         </div>
         <div class="mt-3">
             <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
-               hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+               hx-get="@GlobalEmailAuditsUrl()"
                hx-target="#business-communications-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("BusinessCommunicationOpenFullEmailAuditLogAction")</a>
@@ -1271,7 +1303,7 @@
 </div>
 
 <form method="get" class="row g-2 mb-3"
-      hx-get="@Url.Action("Index", "BusinessCommunications")"
+          hx-get="@GlobalBusinessCommunicationsUrl()"
       hx-target="#business-communications-workspace-shell"
       hx-swap="outerHTML">
     <div class="col-md-4">
@@ -1297,7 +1329,7 @@
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")</button>
         <a asp-action="Index" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Index", "BusinessCommunications")"
+       hx-get="@GlobalBusinessCommunicationsUrl()"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Reset")</a>
@@ -1313,7 +1345,7 @@
                 <th>@T.T("BusinessCommunicationSenderIdentityColumn")</th>
                 <th>@T.T("BusinessCommunicationEnabledPoliciesColumn")</th>
                 <th>@T.T("BusinessCommunicationGapsColumn")</th>
-                <th class="text-end" style="width:220px">@T.T("Actions")</th>
+                        <th class="text-end admin-w-520">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
@@ -1365,24 +1397,79 @@
                         }
                     </td>
                     <td class="text-end">
-                        <a asp-action="Details" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.Id })"
-                           hx-target="#business-communications-workspace-shell"
-                           hx-swap="outerHTML">
-                            <i class="fa-solid fa-circle-info"></i> @T.T("CommunicationInspectProfileAction")
-                        </a>
-                        <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
-                           hx-target="#business-communications-workspace-shell"
-                           hx-swap="outerHTML">
-                            <i class="fa-solid fa-sliders"></i> @T.T("CommonOpenSetupAction")
-                        </a>
-                        <a asp-controller="Businesses" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
-                           hx-target="#business-communications-workspace-shell"
-                           hx-swap="outerHTML">
-                            <i class="fa-solid fa-pen"></i> @T.T("CommonEditBusiness")
-                        </a>
+                        <div class="d-flex justify-content-end flex-wrap gap-2">
+                            <a asp-action="Details" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-dark"
+                               hx-get="@CommunicationDetailsUrl(item.Id)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                <i class="fa-solid fa-circle-info"></i> @T.T("CommunicationInspectProfileAction")
+                            </a>
+                            <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
+                               hx-get="@BusinessSetupUrl(item.Id)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                <i class="fa-solid fa-sliders"></i> @T.T("CommonOpenSetupAction")
+                            </a>
+                            <a asp-controller="Businesses" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@BusinessEditUrl(item.Id)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                <i class="fa-solid fa-pen"></i> @T.T("CommonEditBusiness")
+                            </a>
+                            <a asp-action="EmailAudits"
+                               asp-route-businessId="@item.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@BusinessEmailAuditsUrl(item.Id)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("EmailAudits")</a>
+                            <a asp-action="EmailAudits"
+                               asp-route-businessId="@item.Id"
+                               asp-route-status="Failed"
+                               asp-route-flowKey="BusinessInvitation"
+                               class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@BusinessFailedInvitationAuditsUrl(item.Id)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("OpenFailedInvitationEmails")</a>
+                            <a asp-action="ChannelAudits"
+                               asp-route-businessId="@item.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@BusinessChannelAuditsUrl(item.Id)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("SmsWhatsAppAudits")</a>
+                            <a asp-controller="Businesses"
+                               asp-action="Invitations"
+                               asp-route-businessId="@item.Id"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
+                               class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@BusinessPendingInvitationsUrl(item.Id)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Pending")</a>
+                            <a asp-controller="Businesses"
+                               asp-action="Members"
+                               asp-route-businessId="@item.Id"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
+                               class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@BusinessMembersUrl(item.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                            <a asp-controller="Businesses"
+                               asp-action="Members"
+                               asp-route-businessId="@item.Id"
+                               asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked"
+                               class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@BusinessMembersUrl(item.Id, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("UsersFilterLocked")</a>
+                        </div>
                     </td>
                 </tr>
             }

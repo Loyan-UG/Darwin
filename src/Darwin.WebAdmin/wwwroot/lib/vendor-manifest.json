@@ -1,0 +1,67 @@
+{
+  "generatedUtc": "2026-04-24",
+  "purpose": "Tracks third-party frontend assets self-hosted by Darwin.WebAdmin for CSP, review, and upgrade audits.",
+  "assets": {
+    "bootstrap": {
+      "version": "5.3.8",
+      "license": "MIT",
+      "source": "https://getbootstrap.com/",
+      "files": [
+        "bootstrap/css/bootstrap.min.css",
+        "bootstrap/js/bootstrap.bundle.min.js"
+      ]
+    },
+    "fontawesome-free": {
+      "version": "7.0.0",
+      "license": "Icons: CC BY 4.0; Fonts: SIL OFL 1.1; Code: MIT",
+      "source": "https://fontawesome.com/",
+      "files": [
+        "fontawesome/css/all.min.css",
+        "fontawesome/webfonts/fa-brands-400.woff2",
+        "fontawesome/webfonts/fa-regular-400.woff2",
+        "fontawesome/webfonts/fa-solid-900.woff2",
+        "fontawesome/webfonts/fa-v4compatibility.woff2"
+      ]
+    },
+    "htmx": {
+      "version": "2.0.4",
+      "license": "BSD-2-Clause",
+      "source": "https://htmx.org/",
+      "files": [
+        "htmx/htmx.min.js"
+      ]
+    },
+    "jquery": {
+      "version": "3.7.1",
+      "license": "MIT",
+      "source": "https://jquery.org/",
+      "files": [
+        "jquery/jquery.min.js"
+      ]
+    },
+    "jquery-validation": {
+      "version": "1.19.5",
+      "license": "MIT",
+      "source": "https://jqueryvalidation.org/",
+      "files": [
+        "jquery-validation/jquery.validate.min.js"
+      ]
+    },
+    "jquery-validation-unobtrusive": {
+      "version": "4.x",
+      "license": "Apache-2.0",
+      "source": "https://github.com/aspnet/jquery-validation-unobtrusive",
+      "files": [
+        "jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"
+      ]
+    },
+    "quill": {
+      "version": "2.x",
+      "license": "BSD-3-Clause",
+      "source": "https://quilljs.com/",
+      "files": [
+        "quill/quill.js"
+      ]
+    }
+  }
+}

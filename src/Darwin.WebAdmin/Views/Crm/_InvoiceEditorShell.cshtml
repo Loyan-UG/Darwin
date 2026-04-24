@@ -2,6 +2,16 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InvoiceEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string GlobalTaxComplianceUrl() => Url.Action("TaxCompliance", "Billing") ?? string.Empty;
+    string GlobalInvoicesUrl() => Url.Action("Invoices", "Crm") ?? string.Empty;
+    string EditCustomerUrl(Guid id) => Url.Action("EditCustomer", "Crm", new { id }) ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string OrderDetailsUrl(Guid id, string? fragment = null) => Url.Action("Details", "Orders", new { id, fragment }) ?? string.Empty;
+    string EditPaymentUrl(Guid id) => Url.Action("EditPayment", "Billing", new { id }) ?? string.Empty;
+    string CrmInvoicesUrl(object? q = null) => Url.Action("Invoices", "Crm", new { q }) ?? string.Empty;
+    string PaymentsUrl(PaymentQueueFilter? queue = null) => Url.Action("Payments", "Billing", new { queue }) ?? string.Empty;
     string LocalizeCrmInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
     var invoiceStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
@@ -60,7 +70,7 @@
                                 <a asp-action="EditCustomer"
                                    asp-route-id="@Model.CustomerId.Value"
                                    class="btn btn-sm btn-outline-danger"
-                                   hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                                   hx-get="@EditCustomerUrl(Model.CustomerId.Value)"
                                    hx-target="#crm-invoice-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("FixVatId")</a>
@@ -68,7 +78,7 @@
                             <a asp-controller="Billing"
                                asp-action="TaxCompliance"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("TaxCompliance", "Billing")"
+                               hx-get="@GlobalTaxComplianceUrl()"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("TaxComplianceTitle")</a>
@@ -87,14 +97,14 @@
                                asp-action="Edit"
                                asp-fragment="site-settings-tax"
                                class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-get="@SiteSettingsUrl("site-settings-tax")"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CompleteIssuerData")</a>
                             <a asp-controller="Billing"
                                asp-action="TaxCompliance"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("TaxCompliance", "Billing")"
+                               hx-get="@GlobalTaxComplianceUrl()"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Open")</a>
@@ -113,14 +123,14 @@
                                asp-action="Edit"
                                asp-fragment="site-settings-tax"
                                class="btn btn-sm btn-outline-danger"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-get="@SiteSettingsUrl("site-settings-tax")"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("ReviewEInvoiceBaseline")</a>
                             <a asp-controller="Billing"
                                asp-action="TaxCompliance"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("TaxCompliance", "Billing")"
+                               hx-get="@GlobalTaxComplianceUrl()"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("TaxComplianceTitle")</a>
@@ -142,7 +152,7 @@
                                    asp-route-id="@Model.OrderId.Value"
                                    asp-fragment="payments"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value, fragment = "payments" })"
+                                   hx-get="@OrderDetailsUrl(Model.OrderId.Value, "payments")"
                                    hx-target="#crm-invoice-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("ReviewPaymentTrail")</a>
@@ -153,7 +163,7 @@
                                    asp-action="EditPayment"
                                    asp-route-id="@Model.PaymentId.Value"
                                    class="btn btn-sm btn-outline-dark"
-                                   hx-get="@Url.Action("EditPayment", "Billing", new { id = Model.PaymentId.Value })"
+                                   hx-get="@EditPaymentUrl(Model.PaymentId.Value)"
                                    hx-target="#crm-invoice-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("Payments")</a>
@@ -161,7 +171,7 @@
                             <a asp-controller="Billing"
                                asp-action="Payments"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Payments", "Billing")"
+                               hx-get="@GlobalPaymentsUrl()"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Payments")</a>
@@ -185,7 +195,7 @@
                        asp-action="Details"
                        asp-route-id="@Model.OrderId.Value"
                        class="text-decoration-none"
-                       hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value })"
+                       hx-get="@OrderDetailsUrl(Model.OrderId.Value)"
                        hx-target="#crm-invoice-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -204,7 +214,7 @@
                     <a asp-action="EditCustomer"
                        asp-route-id="@Model.CustomerId.Value"
                        class="text-decoration-none"
-                       hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                       hx-get="@EditCustomerUrl(Model.CustomerId.Value)"
                        hx-target="#crm-invoice-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -299,7 +309,7 @@
                         <a asp-action="EditCustomer"
                            asp-route-id="@Model.CustomerId.Value"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                           hx-get="@EditCustomerUrl(Model.CustomerId.Value)"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -312,7 +322,7 @@
                            asp-action="Details"
                            asp-route-id="@Model.OrderId.Value"
                            class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value })"
+                           hx-get="@OrderDetailsUrl(Model.OrderId.Value)"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -326,7 +336,7 @@
                            asp-route-id="@Model.OrderId.Value"
                            asp-fragment="payments"
                            class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value, fragment = "payments" })"
+                           hx-get="@OrderDetailsUrl(Model.OrderId.Value, "payments")"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -336,7 +346,7 @@
                     <a asp-action="Invoices"
                        asp-route-q="@Model.CustomerId"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Invoices", "Crm", new { q = Model.CustomerId })"
+                       hx-get="@CrmInvoicesUrl(Model.CustomerId)"
                        hx-target="#crm-invoice-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -347,7 +357,7 @@
                         <a asp-controller="Billing"
                            asp-action="Payments"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-get="@GlobalPaymentsUrl()"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -360,7 +370,7 @@
                            asp-action="Payments"
                            asp-route-queue="@PaymentQueueFilter.Pending"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Pending })"
+                           hx-get="@PaymentsUrl(PaymentQueueFilter.Pending)"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -373,7 +383,7 @@
                            asp-action="Payments"
                            asp-route-queue="@PaymentQueueFilter.Unlinked"
                            class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Unlinked })"
+                           hx-get="@PaymentsUrl(PaymentQueueFilter.Unlinked)"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -385,7 +395,7 @@
                         <a asp-controller="Billing"
                            asp-action="Refunds"
                            class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("Refunds", "Billing")"
+                           hx-get="@GlobalRefundsUrl()"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -398,7 +408,7 @@
                            asp-action="Payments"
                            asp-route-queue="@PaymentQueueFilter.Refunded"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Refunded })"
+                           hx-get="@PaymentsUrl(PaymentQueueFilter.Refunded)"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -408,7 +418,7 @@
                     <a asp-controller="Billing"
                        asp-action="TaxCompliance"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("TaxCompliance", "Billing")"
+                       hx-get="@GlobalTaxComplianceUrl()"
                        hx-target="#crm-invoice-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -433,7 +443,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-tax"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                           hx-get="@SiteSettingsUrl("site-settings-tax")"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -491,7 +501,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-tax"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                           hx-get="@SiteSettingsUrl("site-settings-tax")"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -502,7 +512,7 @@
                             <a asp-action="EditCustomer"
                                asp-route-id="@Model.CustomerId.Value"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                               hx-get="@EditCustomerUrl(Model.CustomerId.Value)"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -513,7 +523,7 @@
                                 <a asp-action="EditCustomer"
                                    asp-route-id="@Model.CustomerId.Value"
                                    class="btn btn-sm btn-outline-danger"
-                                   hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                                   hx-get="@EditCustomerUrl(Model.CustomerId.Value)"
                                    hx-target="#crm-invoice-editor-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
@@ -527,7 +537,7 @@
                                asp-action="Edit"
                                asp-fragment="site-settings-tax"
                                class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-get="@SiteSettingsUrl("site-settings-tax")"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -539,7 +549,7 @@
                             <a asp-controller="Billing"
                                asp-action="Payments"
                                class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("Payments", "Billing")"
+                               hx-get="@GlobalPaymentsUrl()"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -552,7 +562,7 @@
                                asp-action="Payments"
                                asp-route-queue="@PaymentQueueFilter.Pending"
                                class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Pending })"
+                               hx-get="@PaymentsUrl(PaymentQueueFilter.Pending)"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -565,7 +575,7 @@
                                asp-action="Payments"
                                asp-route-queue="@PaymentQueueFilter.Unlinked"
                                class="btn btn-sm btn-outline-dark"
-                               hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Unlinked })"
+                               hx-get="@PaymentsUrl(PaymentQueueFilter.Unlinked)"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -577,7 +587,7 @@
                             <a asp-controller="Billing"
                                asp-action="Refunds"
                                class="btn btn-sm btn-outline-danger"
-                               hx-get="@Url.Action("Refunds", "Billing")"
+                               hx-get="@GlobalRefundsUrl()"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -590,7 +600,7 @@
                                asp-action="Payments"
                                asp-route-queue="@PaymentQueueFilter.Refunded"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Refunded })"
+                               hx-get="@PaymentsUrl(PaymentQueueFilter.Refunded)"
                                hx-target="#crm-invoice-editor-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">
@@ -600,7 +610,7 @@
                         <a asp-controller="Billing"
                            asp-action="TaxCompliance"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("TaxCompliance", "Billing")"
+                       hx-get="@GlobalTaxComplianceUrl()"
                            hx-target="#crm-invoice-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -739,7 +749,7 @@
 
         <div class="mt-4">
             <button type="submit" class="btn btn-primary" @(Model.IsFinancialContentLocked ? "disabled" : null)>@T.T("Save")</button>
-            <a asp-action="Invoices" hx-get="@Url.Action("Invoices", "Crm")" hx-target="#crm-invoice-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
+    <a asp-action="Invoices" hx-get="@GlobalInvoicesUrl()" hx-target="#crm-invoice-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 </div>

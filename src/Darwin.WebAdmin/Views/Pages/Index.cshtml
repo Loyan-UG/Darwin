@@ -6,7 +6,11 @@
     var total = Model.Total;
     var query = Model.Query;
     var filter = Model.Filter;
+    string PagesIndexUrl(string? query = null, string? filter = null) => Url.Action("Index", "Pages", new { query, filter }) ?? string.Empty;
+    string PagesCreateUrl() => Url.Action("Create", "Pages") ?? string.Empty;
+    string PagesEditUrl(Guid id) => Url.Action("Edit", "Pages", new { id }) ?? string.Empty;
     string LocalizePageStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string FormatTimestamp(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "-";
 }
 <div id="pages-workspace-shell">
 <partial name="~/Views/Shared/_Alerts.cshtml" />
@@ -19,7 +23,7 @@
         <form asp-action="Index"
               method="get"
               class="d-flex gap-2"
-              hx-get="@Url.Action("Index", "Pages")"
+              hx-get="@PagesIndexUrl()"
               hx-target="#pages-workspace-shell"
               hx-swap="outerHTML"
               hx-push-url="true">
@@ -30,14 +34,14 @@
             </button>
             <a asp-action="Index"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Index", "Pages")"
+               hx-get="@PagesIndexUrl()"
                hx-target="#pages-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("Reset")</a>
         </form>
         <a asp-action="Create"
            class="btn btn-primary"
-           hx-get="@Url.Action("Create", "Pages")"
+           hx-get="@PagesCreateUrl()"
            hx-target="#pages-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true"><i class="fa fa-plus"></i> @T.T("CreatePage")</a>
@@ -64,15 +68,15 @@
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
             <div class="d-flex flex-wrap gap-2">
                 <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("All")</a>
+                   hx-get="@PagesIndexUrl(query)" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("All")</a>
                 <a asp-action="Index" asp-route-query="@query" asp-route-filter="draft" class="btn @(filter == "draft" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "draft" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Draft")</a>
+                   hx-get="@PagesIndexUrl(query, "draft")" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Draft")</a>
                 <a asp-action="Index" asp-route-query="@query" asp-route-filter="published" class="btn @(filter == "published" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "published" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Published")</a>
+                   hx-get="@PagesIndexUrl(query, "published")" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Published")</a>
                 <a asp-action="Index" asp-route-query="@query" asp-route-filter="windowed" class="btn @(filter == "windowed" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "windowed" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Windowed")</a>
+                   hx-get="@PagesIndexUrl(query, "windowed")" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Windowed")</a>
                 <a asp-action="Index" asp-route-query="@query" asp-route-filter="live-window" class="btn @(filter == "live-window" ? "btn-primary" : "btn-outline-primary")"
-                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "live-window" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("LiveWindow")</a>
+                   hx-get="@PagesIndexUrl(query, "live-window")" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("LiveWindow")</a>
             </div>
             <div class="text-muted small">@T.T("TotalPages"): @Model.Summary.TotalCount</div>
         </div>
@@ -142,11 +146,11 @@
                                     }
                                 </td>
                                 <td>@LocalizePageStatus(p.Status)</td>
-                                <td>@(p.PublishStartUtc?.ToString("u") ?? "-") @T.T("To") @(p.PublishEndUtc?.ToString("u") ?? "-")</td>
-                                <td>@p.ModifiedAtUtc.ToString("u")</td>
+                                <td>@FormatTimestamp(p.PublishStartUtc) @T.T("To") @FormatTimestamp(p.PublishEndUtc)</td>
+                                <td>@FormatTimestamp(p.ModifiedAtUtc)</td>
                                 <td class="text-end">
                                     <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary"
-                                       hx-get="@Url.Action("Edit", "Pages", new { id = p.Id })"
+                                       hx-get="@PagesEditUrl(p.Id)"
                                        hx-target="#pages-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">
@@ -162,7 +166,7 @@
                                             data-rowversion="@Convert.ToBase64String(p.RowVersion)"
                                             data-hx-target="#pages-workspace-shell"
                                             data-hx-swap="outerHTML"
-                                            data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
+                               >
                                         <i class="fa fa-trash"></i> @T.T("Delete")
                                     </button>
                                 </td>

@@ -2,6 +2,10 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action("AddRefund", "Orders", new { orderId, paymentId }) ?? string.Empty;
+    string EditPaymentUrl(Guid id) => Url.Action("EditPayment", "Billing", new { id }) ?? string.Empty;
     string LocalizeRefundStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
     string OrderRefundOpsHealthBadgeClass(bool healthy) => healthy
@@ -44,7 +48,7 @@
                            asp-route-orderId="@Model.OrderId"
                            asp-route-paymentId="@Model.DefaultRefundPaymentId"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })"
+                           hx-get="@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)"
                            hx-target="#order-operation-shell"
                            hx-swap="innerHTML"
                            hx-push-url="false">@T.T("Refund")</a>
@@ -52,7 +56,7 @@
                     <a asp-controller="Billing"
                        asp-action="Refunds"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Refunds", "Billing")"
+                       hx-get="@GlobalRefundsUrl()"
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">@T.T("Refunds")</a>
@@ -72,7 +76,7 @@
                         <div class="small text-muted mt-3">@T.T("NeedsAttention")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.RefundQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")">@T.T("Pending")</a>
-                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refunds")</a>
+                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalRefundsUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refunds")</a>
                         </div>
                     </div>
                 </div>
@@ -88,7 +92,7 @@
                         <div class="small text-muted mt-3">@T.T("Payment")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" asp-route-filter="Completed" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.RefundQueueFilter.Completed ? "btn-success" : "btn-outline-success")">@T.T("Completed")</a>
-                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Payments", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payment")</a>
+                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalPaymentsUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payment")</a>
                         </div>
                     </div>
                 </div>
@@ -106,7 +110,7 @@
                             <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="tab" data-bs-target="#shipments">@T.T("ReviewShipments")</button>
                             @if (Model.DefaultRefundPaymentId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId" asp-route-paymentId="@Model.DefaultRefundPaymentId" class="btn btn-sm btn-outline-danger" hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("StartReturnRefund")</a>
+                                <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId" asp-route-paymentId="@Model.DefaultRefundPaymentId" class="btn btn-sm btn-outline-danger" hx-get="@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("StartReturnRefund")</a>
                             }
                         </div>
                     </div>
@@ -122,8 +126,8 @@
                         </div>
                         <div class="small text-muted mt-3">@T.T("Open")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
-                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refunds")</a>
-                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Payments", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Open")</a>
+                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalRefundsUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refunds")</a>
+                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@GlobalPaymentsUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Open")</a>
                         </div>
                     </div>
                 </div>
@@ -157,7 +161,7 @@
                        asp-route-orderId="@Model.OrderId"
                        asp-route-paymentId="@Model.DefaultRefundPaymentId"
                        class="btn btn-sm btn-danger"
-                       hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })"
+                       hx-get="@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)"
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">
@@ -203,7 +207,7 @@
                                    asp-action="EditPayment"
                                    asp-route-id="@item.PaymentId"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EditPayment", "Billing", new { id = item.PaymentId })"
+                                   hx-get="@EditPaymentUrl(item.PaymentId)"
                                    hx-target="#order-operation-shell"
                                    hx-swap="innerHTML"
                                    hx-push-url="false">

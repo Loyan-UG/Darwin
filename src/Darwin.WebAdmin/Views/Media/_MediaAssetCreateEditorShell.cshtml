@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("UploadMedia");
+    string MediaIndexUrl() => Url.Action("Index", "Media") ?? string.Empty;
 }
 
 <div id="media-create-editor-shell">
@@ -33,7 +34,7 @@
             </button>
             <a asp-action="Index"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Index", "Media")"
+               hx-get="@MediaIndexUrl()"
                hx-target="#media-create-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("Cancel")</a>

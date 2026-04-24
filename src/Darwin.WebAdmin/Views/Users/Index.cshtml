@@ -2,6 +2,18 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("UsersPageTitle");
+    string GlobalMobileOperationsUrl() => Url.Action("Index", "MobileOperations") ?? string.Empty;
+    string GlobalUsersUrl() => Url.Action("Index", "Users") ?? string.Empty;
+    string UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter) => Url.Action("Index", "Users", new { filter }) ?? string.Empty;
+    string CreateUserUrl() => Url.Action("Create", "Users") ?? string.Empty;
+    string UserEditUrl(object? id) => Url.Action("Edit", "Users", new { id }) ?? string.Empty;
+    string UserEditReturnUrl(object? id) => Url.Action("Edit", "Users", new { id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;
+    string ChangeEmailUrl(object? id, string? currentEmail) => Url.Action("ChangeEmail", "Users", new { id, currentEmail, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;
+    string ChangePasswordUrl(object? id, string? email) => Url.Action("ChangePassword", "Users", new { id, email, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;
+    string UserRolesUrl(object? id) => Url.Action("Roles", "Users", new { id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;
+    string EmailAuditsUrl(string flowKey, string status = "Failed", string? recipientEmail = null) => Url.Action("EmailAudits", "BusinessCommunications", new { status, flowKey, recipientEmail }) ?? string.Empty;
+    string MobileOperationsUrl(string? q = null) => Url.Action("Index", "MobileOperations", new { q }) ?? string.Empty;
+    string LoyaltyAccountsUrl(string? q = null) => Url.Action("Accounts", "Loyalty", new { q }) ?? string.Empty;
 }
 
 <div id="users-workspace-shell">
@@ -9,17 +21,17 @@
         <h2 class="mb-0">@T.T("UsersPageTitle")</h2>
         <div class="d-flex gap-2 flex-wrap">
             <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed" class="btn btn-outline-warning btn-sm"
-               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterUnconfirmed")</a>
+               hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterUnconfirmed")</a>
             <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked" class="btn btn-outline-danger btn-sm"
-               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterLocked")</a>
+               hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterLocked")</a>
             <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive" class="btn btn-outline-secondary btn-sm"
-               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterInactive")</a>
+               hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive)" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterInactive")</a>
         <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked" class="btn btn-outline-info btn-sm"
-           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked })" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterMobileLinked")</a>
+           hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked)" hx-target="#users-workspace-shell" hx-swap="outerHTML">@T.T("UsersFilterMobileLinked")</a>
             <a asp-controller="Users"
                asp-action="Create"
                class="btn btn-primary"
-               hx-get="@Url.Action("Create", "Users")"
+               hx-get="@CreateUserUrl()"
                hx-target="#users-workspace-shell"
                hx-swap="outerHTML">
                 <i class="fa fa-plus"></i> @T.T("UsersCreateAction")
@@ -37,7 +49,7 @@
                        asp-action="Index"
                        asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.All"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.All })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.All)"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersPageTitle")</a>
@@ -53,7 +65,7 @@
                        asp-action="Index"
                        asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed)"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
@@ -62,7 +74,7 @@
                        asp-route-status="Failed"
                        asp-route-flowKey="AccountActivation"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation" })"
+                       hx-get="@EmailAuditsUrl("AccountActivation")"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
@@ -78,7 +90,7 @@
                        asp-action="Index"
                        asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                        class="btn btn-sm btn-outline-danger"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked)"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterLocked")</a>
@@ -87,7 +99,7 @@
                        asp-route-status="Failed"
                        asp-route-flowKey="PasswordReset"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset" })"
+                       hx-get="@EmailAuditsUrl("PasswordReset")"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
@@ -103,7 +115,7 @@
                        asp-action="Index"
                        asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive)"
                        hx-target="#users-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterInactive")</a>
@@ -143,7 +155,7 @@
                                    asp-action="Index"
                                    asp-route-filter="@item.QueueFilter"
                                    class="btn btn-sm btn-outline-primary"
-                                   hx-get="@Url.Action("Index", "Users", new { filter = item.QueueFilter })"
+                                   hx-get="@UsersQueueUrl(item.QueueFilter)"
                                    hx-target="#users-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@item.Title</a>
@@ -157,7 +169,7 @@
                                        asp-route-status="Failed"
                                        asp-route-flowKey="@item.AuditFlowKey"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
+                                       hx-get="@EmailAuditsUrl(item.AuditFlowKey)"
                                        hx-target="#users-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@(item.AuditFlowKey == "AccountActivation" ? T.T("OpenFailedActivationEmails") : T.T("OpenFailedPasswordResets"))</a>
@@ -167,7 +179,7 @@
                                     <a asp-controller="MobileOperations"
                                        asp-action="Index"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Index", "MobileOperations")"
+                                       hx-get="@GlobalMobileOperationsUrl()"
                                        hx-target="#users-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("MobileOperationsTitle")</a>
@@ -183,7 +195,7 @@
 
     <form method="get"
           class="row g-2 mb-3"
-          hx-get="@Url.Action("Index", "Users")"
+          hx-get="@GlobalUsersUrl()"
           hx-target="#users-workspace-shell"
           hx-swap="outerHTML">
         <div class="col-auto">
@@ -205,7 +217,7 @@
             <a asp-controller="Users"
                asp-action="Index"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Index", "Users")"
+               hx-get="@GlobalUsersUrl()"
                hx-target="#users-workspace-shell"
                hx-swap="outerHTML">@T.T("UsersResetAction")</a>
         </div>
@@ -219,7 +231,7 @@
                     <th>@T.T("UsersNameColumn")</th>
                     <th>@T.T("UsersLifecycleColumn")</th>
                     <th class="text-center">@T.T("UsersActiveColumn")</th>
-                    <th class="text-end" style="width:410px">@T.T("UsersActionsColumn")</th>
+                    <th class="text-end admin-w-410">@T.T("UsersActionsColumn")</th>
                 </tr>
             </thead>
             <tbody>
@@ -231,7 +243,7 @@
                                asp-action="Edit"
                                asp-route-id="@u.Id"
                                class="text-decoration-none"
-                               hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                               hx-get="@UserEditUrl(u.Id)"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@u.Email</a>
@@ -241,7 +253,7 @@
                                asp-action="Edit"
                                asp-route-id="@u.Id"
                                class="text-decoration-none"
-                               hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                               hx-get="@UserEditUrl(u.Id)"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@($"{u.FirstName} {u.LastName}".Trim())</a>
@@ -256,7 +268,7 @@
                                        asp-route-flowKey="AccountActivation"
                                        asp-route-recipientEmail="@u.Email"
                                        class="badge text-bg-warning text-decoration-none"
-                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", recipientEmail = u.Email })"
+                                       hx-get="@EmailAuditsUrl("AccountActivation", recipientEmail: u.Email)"
                                        hx-target="#users-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("UsersLifecycleUnconfirmedBadge")</a>
@@ -271,7 +283,7 @@
                                        asp-route-flowKey="PasswordReset"
                                        asp-route-recipientEmail="@u.Email"
                                        class="badge text-bg-danger text-decoration-none"
-                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", recipientEmail = u.Email })"
+                                       hx-get="@EmailAuditsUrl("PasswordReset", recipientEmail: u.Email)"
                                        hx-target="#users-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("UsersLifecycleLockedBadge")</a>
@@ -285,7 +297,7 @@
                                        asp-action="Index"
                                        asp-route-q="@u.Email"
                                        class="badge text-bg-info text-decoration-none"
-                                       hx-get="@Url.Action("Index", "MobileOperations", new { q = u.Email })"
+                                       hx-get="@MobileOperationsUrl(u.Email)"
                                        hx-target="#users-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@string.Format(T.T("UsersLifecycleMobileBadge"), u.MobileDeviceCount)</a>
@@ -303,7 +315,7 @@
                                        asp-route-page="@Model.Page"
                                        asp-route-pageSize="@Model.PageSize"
                                        class="badge text-bg-secondary text-decoration-none"
-                                       hx-get="@Url.Action("Edit", "Users", new { id = u.Id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                                       hx-get="@UserEditReturnUrl(u.Id)"
                                        hx-target="#users-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("UsersLifecycleInactiveBadge")</a>
@@ -317,7 +329,7 @@
                                    asp-action="Edit"
                                    asp-route-id="@u.Id"
                                    class="badge text-bg-success text-decoration-none"
-                                   hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                                   hx-get="@UserEditUrl(u.Id)"
                                    hx-target="#users-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("UsersYes")</a>
@@ -328,7 +340,7 @@
                                    asp-action="Edit"
                                    asp-route-id="@u.Id"
                                    class="badge text-bg-secondary text-decoration-none"
-                                   hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                                   hx-get="@UserEditUrl(u.Id)"
                                    hx-target="#users-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("UsersNo")</a>
@@ -344,7 +356,7 @@
                                asp-route-page="@Model.Page"
                                asp-route-pageSize="@Model.PageSize"
                                class="btn btn-sm btn-outline-primary"
-                               hx-get="@Url.Action("Edit", "Users", new { id = u.Id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                               hx-get="@UserEditReturnUrl(u.Id)"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML">
                                 <i class="fa fa-pen"></i> @T.T("UsersEditAction")
@@ -361,7 +373,7 @@
                                asp-route-page="@Model.Page"
                                asp-route-pageSize="@Model.PageSize"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("ChangeEmail", "Users", new { id = u.Id, currentEmail = u.Email, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                               hx-get="@ChangeEmailUrl(u.Id, u.Email)"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML">
                                 <i class="fa fa-envelope"></i> @T.T("UsersEmailAction")
@@ -378,7 +390,7 @@
                                asp-route-page="@Model.Page"
                                asp-route-pageSize="@Model.PageSize"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("ChangePassword", "Users", new { id = u.Id, email = u.Email, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                               hx-get="@ChangePasswordUrl(u.Id, u.Email)"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML">
                                 <i class="fa fa-key"></i> @T.T("UsersPasswordAction")
@@ -391,7 +403,7 @@
                                asp-route-page="@Model.Page"
                                asp-route-pageSize="@Model.PageSize"
                                class="btn btn-sm btn-outline-primary"
-                               hx-get="@Url.Action("Roles", "Users", new { id = u.Id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                               hx-get="@UserRolesUrl(u.Id)"
                                hx-target="#users-workspace-shell"
                                hx-swap="outerHTML">
                                 <i class="fa fa-users-cog"></i> @T.T("UsersRolesAction")
@@ -403,7 +415,7 @@
                                    asp-action="Index"
                                    asp-route-q="@u.Email"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = u.Email })"
+                                   hx-get="@MobileOperationsUrl(u.Email)"
                                    hx-target="#users-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
@@ -414,7 +426,7 @@
                                    asp-action="Accounts"
                                    asp-route-q="@u.Email"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Accounts", "Loyalty", new { q = u.Email })"
+                                   hx-get="@LoyaltyAccountsUrl(u.Email)"
                                    hx-target="#users-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
@@ -579,7 +591,7 @@
                                         data-rowversion="@Convert.ToBase64String(u.RowVersion)"
                                         data-hx-target="#users-workspace-shell"
                                         data-hx-swap="outerHTML"
-                                        data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
+                                   >
                                     <i class="fa fa-trash"></i> @T.T("UsersDeleteAction")
                                 </button>
                             }

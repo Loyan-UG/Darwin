@@ -4,6 +4,12 @@
     ViewData["Title"] = T.T("ShippingMethods");
     string ShippingMethodOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
     string ShippingMethodOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    string ShippingMethodsGlobalIndexUrl() => Url.Action("Index", "ShippingMethods") ?? string.Empty;
+    string ShippingMethodsIndexUrl(string filter) => Url.Action("Index", "ShippingMethods", new { filter }) ?? string.Empty;
+    string CreateShippingMethodUrl() => Url.Action("Create", "ShippingMethods") ?? string.Empty;
+    string EditShippingMethodUrl(Guid id) => Url.Action("Edit", "ShippingMethods", new { id }) ?? string.Empty;
+    string ShipmentsQueueUrl(string filter) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
+    string ShippingSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" }) ?? string.Empty;
     var shippingMethodAttentionCount = Model.Summary.MissingRatesCount + Model.Summary.InactiveCount;
 }
 
@@ -16,7 +22,7 @@
         <p class="text-muted mb-0">@T.T("ShippingMethodsWorkspaceIntro")</p>
     </div>
     <a asp-action="Create" class="btn btn-primary"
-       hx-get="@Url.Action("Create", "ShippingMethods")"
+       hx-get="@CreateShippingMethodUrl()"
        hx-target="#shipping-methods-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">
@@ -52,7 +58,7 @@
                         <a asp-action="Index"
                            asp-route-filter="MissingRates"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })"
+                           hx-get="@ShippingMethodsIndexUrl("MissingRates")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -60,7 +66,7 @@
                            asp-action="ShipmentsQueue"
                            asp-route-filter="MissingService"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "MissingService" })"
+                           hx-get="@ShipmentsQueueUrl("MissingService")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ShipmentsQueue")</a>
@@ -78,7 +84,7 @@
                         <a asp-action="Index"
                            asp-route-filter="Dhl"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                           hx-get="@ShippingMethodsIndexUrl("Dhl")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -86,7 +92,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-shipping"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                           hx-get="@ShippingSettingsUrl()"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ShippingSettings")</a>
@@ -104,13 +110,13 @@
                         <a asp-action="Index"
                            asp-route-filter="Inactive"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Inactive" })"
+                           hx-get="@ShippingMethodsIndexUrl("Inactive")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                         <a asp-action="Create"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Create", "ShippingMethods")"
+                           hx-get="@CreateShippingMethodUrl()"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("CreateMethod")</a>
@@ -128,14 +134,14 @@
                         <a asp-action="Index"
                            asp-route-filter="GlobalCoverage"
                            class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "GlobalCoverage" })"
+                           hx-get="@ShippingMethodsIndexUrl("GlobalCoverage")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                         <a asp-action="Index"
                            asp-route-filter="MultiRate"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MultiRate" })"
+                           hx-get="@ShippingMethodsIndexUrl("MultiRate")"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("MultiRate")</a>
@@ -158,14 +164,14 @@
 <div class="row g-3 mb-4">
     <div class="col-lg-8">
         <div class="d-flex flex-wrap gap-2 mb-3">
-            <a asp-action="Index" asp-route-filter="MissingRates" class="btn btn-sm btn-outline-warning" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MissingRates")</a>
-            <a asp-action="Index" asp-route-filter="Dhl" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("DhlMethods")</a>
-            <a asp-action="Index" asp-route-filter="Inactive" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Inactive" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Inactive")</a>
-            <a asp-action="Index" asp-route-filter="GlobalCoverage" class="btn btn-sm btn-outline-info" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "GlobalCoverage" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("GlobalCoverage")</a>
-            <a asp-action="Index" asp-route-filter="MultiRate" class="btn btn-sm btn-outline-primary" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MultiRate" })" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MultiRate")</a>
+            <a asp-action="Index" asp-route-filter="MissingRates" class="btn btn-sm btn-outline-warning" hx-get="@ShippingMethodsIndexUrl("MissingRates")" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MissingRates")</a>
+            <a asp-action="Index" asp-route-filter="Dhl" class="btn btn-sm btn-outline-secondary" hx-get="@ShippingMethodsIndexUrl("Dhl")" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("DhlMethods")</a>
+            <a asp-action="Index" asp-route-filter="Inactive" class="btn btn-sm btn-outline-secondary" hx-get="@ShippingMethodsIndexUrl("Inactive")" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Inactive")</a>
+            <a asp-action="Index" asp-route-filter="GlobalCoverage" class="btn btn-sm btn-outline-info" hx-get="@ShippingMethodsIndexUrl("GlobalCoverage")" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("GlobalCoverage")</a>
+            <a asp-action="Index" asp-route-filter="MultiRate" class="btn btn-sm btn-outline-primary" hx-get="@ShippingMethodsIndexUrl("MultiRate")" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MultiRate")</a>
         </div>
         <form method="get" class="row g-2"
-              hx-get="@Url.Action("Index", "ShippingMethods")"
+               hx-get="@ShippingMethodsGlobalIndexUrl()"
               hx-target="#shipping-methods-workspace-shell"
               hx-swap="outerHTML"
               hx-push-url="true">
@@ -176,7 +182,7 @@
             <div class="col-md-2"><select name="pageSize" asp-items="Model.PageSizeItems" class="form-select"></select></div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> @T.T("Search")</button>
-                <a asp-action="Index" class="btn btn-outline-secondary" hx-get="@Url.Action("Index", "ShippingMethods")" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Reset")</a>
+<a asp-action="Index" class="btn btn-outline-secondary" hx-get="@ShippingMethodsGlobalIndexUrl()" hx-target="#shipping-methods-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Reset")</a>
             </div>
         </form>
     </div>
@@ -246,7 +252,7 @@
                     <td>@(item.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")</td>
                     <td class="text-end">
                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Edit", "ShippingMethods", new { id = item.Id })"
+                           hx-get="@EditShippingMethodUrl(item.Id)"
                            hx-target="#shipping-methods-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true"><i class="fa-solid fa-pen"></i> @T.T("Edit")</a>

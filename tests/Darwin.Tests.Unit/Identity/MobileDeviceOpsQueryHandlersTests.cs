@@ -118,6 +118,60 @@ public sealed class MobileDeviceOpsQueryHandlersTests
         result.Items[0].BusinessMembershipCount.Should().Be(1);
     }
 
+    [Fact]
+    public async Task GetMobileDevicesPage_Should_FilterDevicesByBusinessId()
+    {
+        await using var db = MobileDeviceOpsTestDbContext.Create();
+        var firstBusinessUserId = Guid.NewGuid();
+        var secondBusinessUserId = Guid.NewGuid();
+        var firstBusinessId = Guid.NewGuid();
+        var secondBusinessId = Guid.NewGuid();
+
+        db.Set<User>().AddRange(
+            new User("first@example.com", "hash", "stamp") { Id = firstBusinessUserId, FirstName = "First", LastName = "Owner" },
+            new User("second@example.com", "hash", "stamp") { Id = secondBusinessUserId, FirstName = "Second", LastName = "Owner" });
+        db.Set<Business>().AddRange(
+            new Business { Id = firstBusinessId, Name = "First Shop" },
+            new Business { Id = secondBusinessId, Name = "Second Shop" });
+        db.Set<BusinessMember>().AddRange(
+            new BusinessMember { Id = Guid.NewGuid(), BusinessId = firstBusinessId, UserId = firstBusinessUserId, IsActive = true },
+            new BusinessMember { Id = Guid.NewGuid(), BusinessId = secondBusinessId, UserId = secondBusinessUserId, IsActive = true });
+        db.Set<UserDevice>().AddRange(
+            new UserDevice
+            {
+                Id = Guid.NewGuid(),
+                UserId = firstBusinessUserId,
+                DeviceId = "first-device",
+                Platform = MobilePlatform.Android,
+                PushToken = "push-1",
+                NotificationsEnabled = true,
+                LastSeenAtUtc = new DateTime(2030, 1, 29, 10, 0, 0, DateTimeKind.Utc),
+                AppVersion = "1.2.0",
+                IsActive = true
+            },
+            new UserDevice
+            {
+                Id = Guid.NewGuid(),
+                UserId = secondBusinessUserId,
+                DeviceId = "second-device",
+                Platform = MobilePlatform.iOS,
+                PushToken = "push-2",
+                NotificationsEnabled = true,
+                LastSeenAtUtc = new DateTime(2030, 1, 28, 8, 0, 0, DateTimeKind.Utc),
+                AppVersion = "1.1.0",
+                IsActive = true
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetMobileDevicesPageHandler(db, new StubClock());
+
+        var result = await handler.HandleAsync(businessId: firstBusinessId, ct: TestContext.Current.CancellationToken);
+
+        result.Total.Should().Be(1);
+        result.Items.Should().ContainSingle();
+        result.Items[0].UserEmail.Should().Be("first@example.com");
+    }
+
     private sealed class StubClock : IClock
     {
         public DateTime UtcNow => new(2030, 1, 30, 8, 0, 0, DateTimeKind.Utc);

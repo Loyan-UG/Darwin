@@ -3,6 +3,7 @@ using Darwin.Infrastructure.Extensions;
 using Darwin.WebAdmin.Localization;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,6 +52,7 @@ namespace Darwin.WebAdmin.Extensions
             };
             requestLocalizationOptions.RequestCultureProviders.Insert(0, new QueryStringRequestCultureProvider());
             requestLocalizationOptions.RequestCultureProviders.Insert(1, new CookieRequestCultureProvider());
+            app.UseForwardedHeaders();
             app.UseRequestLocalization(requestLocalizationOptions);
 
             if (app.Environment.IsDevelopment())
@@ -66,6 +68,7 @@ namespace Darwin.WebAdmin.Extensions
             }
 
             app.UseHttpsRedirection();
+            app.UseWebAdminSecurityHeaders();
             app.UseStaticFiles();
 
             app.UseRouting();
@@ -88,6 +91,31 @@ namespace Darwin.WebAdmin.Extensions
             var defaultCulture = supportedCultures.FirstOrDefault(static x => string.Equals(x.Name, AdminCultureCatalog.DefaultCulture, StringComparison.OrdinalIgnoreCase))?.Name
                                  ?? supportedCultures[0].Name;
             return (supportedCultures, defaultCulture);
+        }
+
+        private static void UseWebAdminSecurityHeaders(this WebApplication app)
+        {
+            app.Use(async (context, next) =>
+            {
+                var headers = context.Response.Headers;
+                headers["Content-Security-Policy"] = string.Join("; ",
+                    "default-src 'self'",
+                    "script-src 'self'",
+                    "style-src 'self'",
+                    "img-src 'self' data: blob:",
+                    "font-src 'self'",
+                    "connect-src 'self'",
+                    "media-src 'self' blob:",
+                    "object-src 'none'",
+                    "base-uri 'self'",
+                    "form-action 'self'",
+                    "frame-ancestors 'none'");
+                headers["X-Content-Type-Options"] = "nosniff";
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+                headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
+
+                await next().ConfigureAwait(false);
+            });
         }
     }
 }

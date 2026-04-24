@@ -1,13 +1,19 @@
-﻿@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupAttachToVariantsVm
+@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupAttachToVariantsVm
+@using System.Globalization
 @{
     ViewData["Title"] = T.T("AddOnAttachVariantsTitle");
+
+    string AttachAddOnGroupToVariantsUrl() => Url.Action("AttachToVariants", "AddOnGroups") ?? string.Empty;
+    string AddOnGroupsIndexUrl() => Url.Action("Index", "AddOnGroups") ?? string.Empty;
+    string FormatMinor(long minor, string currency) =>
+        string.Create(CultureInfo.CurrentCulture, $"{minor / 100m:N2} {currency}");
 }
 
 <div id="add-on-group-attach-variants-shell">
     <partial name="~/Views/Shared/_Alerts.cshtml" />
     <h1 class="mb-4">@T.T("AddOnAttachVariantsTitle") <small class="text-muted">(@Model.AddOnGroupName)</small></h1>
 
-    <form method="get" class="mb-3" hx-get="@Url.Action("AttachToVariants", "AddOnGroups")" hx-target="#add-on-group-attach-variants-shell" hx-swap="outerHTML" hx-push-url="true">
+    <form method="get" class="mb-3" hx-get="@AttachAddOnGroupToVariantsUrl()" hx-target="#add-on-group-attach-variants-shell" hx-swap="outerHTML" hx-push-url="true">
         <input type="hidden" name="id" value="@Model.AddOnGroupId" />
         <div class="input-group">
             <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("AddOnSearchVariants")" />
@@ -24,73 +30,77 @@
         <input type="hidden" asp-for="Query" />
 
         <div id="selected-container">
-            @if (Model.SelectedVariantIds != null)
+            @foreach (var id in Model.SelectedVariantIds)
             {
-                foreach (var id in Model.SelectedVariantIds)
-                {
-                    <input type="hidden" name="SelectedVariantIds" value="@id" />
-                }
+                <input type="hidden" name="SelectedVariantIds" value="@id" />
             }
         </div>
 
         <table class="table table-striped align-middle">
             <thead>
                 <tr>
-                    <th style="width:40px;"></th>
+                    <th class="admin-w-40"></th>
                     <th>@T.T("Sku")</th>
                     <th>@T.T("Product")</th>
                     <th>@T.T("PriceNet")</th>
                     <th>@T.T("Stock")</th>
+                    <th>@T.T("Kind")</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var it in Model.Items)
+                @if (Model.Items.Count == 0)
                 {
-                    var id = it.Id;
-                    var parts = (it.Display ?? string.Empty).Split(" — ");
-                    var sku = parts.Length > 0 ? parts[0] : string.Empty;
-                    var name = parts.Length > 1 ? parts[1] : string.Empty;
-
                     <tr>
-                        <td><input type="checkbox" class="sel" data-id="@id" name="SelectedVariantIds" @(Model.SelectedVariantIds?.Contains(id) == true ? "checked" : "") /></td>
-                        <td>@sku</td>
-                        <td>@name</td>
-                        <td></td>
-                        <td></td>
+                        <td colspan="6" class="text-center text-muted">@T.T("AddOnNoVariants")</td>
                     </tr>
+                }
+                else
+                {
+                    foreach (var it in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <input type="checkbox"
+                                       class="sel"
+                                       data-addon-variant-selection
+                                       data-id="@it.Id"
+                                       name="SelectedVariantIds"
+                                       value="@it.Id"
+                                       @(it.Selected ? "checked" : "") />
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@it.Sku</div>
+                                @if (!string.IsNullOrWhiteSpace(it.Gtin))
+                                {
+                                    <div class="small text-muted">@T.T("Gtin"): @it.Gtin</div>
+                                }
+                            </td>
+                            <td>@it.ProductName</td>
+                            <td>@FormatMinor(it.BasePriceNetMinor, it.Currency)</td>
+                            <td>@it.StockOnHand.ToString("N0", CultureInfo.CurrentCulture)</td>
+                            <td>
+                                @if (it.IsDigital)
+                                {
+                                    <span class="badge text-bg-info">@T.T("Digital")</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">@T.T("Physical")</span>
+                                }
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
 
         <div class="mt-3">
             <button type="submit" class="btn btn-success">@T.T("Save")</button>
-            <a asp-action="Index" class="btn btn-secondary" hx-get="@Url.Action("Index", "AddOnGroups")" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Cancel")</a>
+            <a asp-action="Index" class="btn btn-secondary" hx-get="@AddOnGroupsIndexUrl()" hx-target="#add-on-groups-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Cancel")</a>
         </div>
     </form>
 
     <div class="pt-3">
         <pager page="@Model.Page" page-size="@Model.PageSize" total="@Model.Total" asp-controller="AddOnGroups" asp-action="AttachToVariants" asp-route-id="@Model.AddOnGroupId" asp-route-q="@Model.Query" hx-target="#add-on-group-attach-variants-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
     </div>
-
-    @section Scripts {
-        <script>
-            document.querySelectorAll('input.sel').forEach(cb => {
-              cb.addEventListener('change', function() {
-                const container = document.getElementById('selected-container');
-                const id = this.getAttribute('data-id');
-                if (this.checked) {
-                  const hid = document.createElement('input');
-                  hid.type = 'hidden';
-                  hid.name = 'SelectedVariantIds';
-                  hid.value = id;
-                  hid.dataset.bindId = id;
-                  container.appendChild(hid);
-                } else {
-                  const existing = container.querySelector(`input[type="hidden"][name="SelectedVariantIds"][value="${id}"]`);
-                  if (existing) existing.remove();
-                }
-              });
-            });
-        </script>
-    }
 </div>

@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var header = ViewData["OrderHeader"] as Darwin.WebAdmin.ViewModels.Orders.OrderHeaderVm;
+    string OrderDetailsUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
 }
 
 <div id="order-shipment-shell" class="card mb-3">
@@ -77,7 +78,7 @@
                                         <input type="hidden" asp-for="Lines[i].OrderLineId" />
                                         <input type="hidden" asp-for="Lines[i].Label" />
                                     </td>
-                                    <td class="text-end" style="width:180px">
+                                    <td class="text-end admin-w-180">
                                         <input asp-for="Lines[i].Quantity" class="form-control text-end" />
                                         <span asp-validation-for="Lines[i].Quantity" class="text-danger"></span>
                                     </td>
@@ -88,7 +89,7 @@
                 </div>
             </div>
             <div class="col-12">
-                <a asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId })" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
+                <a asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@OrderDetailsUrl(Model.OrderId)" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
                 <button type="submit" class="btn btn-primary">@T.T("Save")</button>
             </div>
         </form>

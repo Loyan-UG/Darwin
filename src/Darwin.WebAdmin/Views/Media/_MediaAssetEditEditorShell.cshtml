@@ -3,6 +3,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("MediaEditTitle");
+    string MediaIndexUrl() => Url.Action("Index", "Media") ?? string.Empty;
 }
 
 <div id="media-edit-editor-shell">
@@ -11,7 +12,7 @@
             <h1 class="mb-1">@T.T("MediaEditTitle")</h1>
             <div class="text-muted small">@Model.OriginalFileName</div>
         </div>
-        <a href="@Model.Url" target="_blank" rel="noreferrer" class="btn btn-outline-secondary">
+        <a href="@Model.Url" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">
             <i class="fa fa-up-right-from-square"></i> @T.T("MediaOpenFile")
         </a>
     </div>
@@ -51,7 +52,7 @@
                     </button>
                     <a asp-action="Index"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Media")"
+                       hx-get="@MediaIndexUrl()"
                        hx-target="#media-edit-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("Back")</a>

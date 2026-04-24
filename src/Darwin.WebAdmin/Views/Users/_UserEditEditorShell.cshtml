@@ -6,6 +6,16 @@
     var needsActivationFollowUp = !Model.EmailConfirmed;
     var needsPasswordResetFollowUp = Model.IsLockedOut;
     var needsInactiveFollowUp = !Model.IsActive;
+    string GlobalUsersUrl() => Url.Action("Index", "Users") ?? string.Empty;
+    string UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter filter, string? q = null) => Url.Action("Index", "Users", new { filter, q }) ?? string.Empty;
+    string UsersReturnUrl() => Url.Action("Index", "Users", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;
+    string EmailAuditsUrl(string flowKey) => Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey, recipientEmail = Model.Email }) ?? string.Empty;
+    string ChangeEmailUrl() => Url.Action("ChangeEmail", "Users", new { id = Model.Id, currentEmail = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;
+    string ChangePasswordUrl() => Url.Action("ChangePassword", "Users", new { id = Model.Id, email = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize }) ?? string.Empty;
+    string UserRolesUrl() => Url.Action("Roles", "Users", new { id = Model.Id }) ?? string.Empty;
+    string MobileOperationsUrl() => Url.Action("Index", "MobileOperations", new { q = Model.Email }) ?? string.Empty;
+    string LoyaltyAccountsUrl() => Url.Action("Accounts", "Loyalty", new { q = Model.Email }) ?? string.Empty;
+    string FormatTimestamp(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "-";
 }
 
 <div id="user-edit-editor-shell"
@@ -24,7 +34,7 @@
                        asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
                        asp-route-q="@Model.Email"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, q = Model.Email })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, Model.Email)"
                        hx-target="#user-edit-editor-shell"
                        hx-swap="outerHTML">@T.T("UsersFilterUnconfirmed")</a>
                     <a asp-controller="BusinessCommunications"
@@ -33,7 +43,7 @@
                        asp-route-flowKey="AccountActivation"
                        asp-route-recipientEmail="@Model.Email"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", recipientEmail = Model.Email })"
+                       hx-get="@EmailAuditsUrl("AccountActivation")"
                        hx-target="#user-edit-editor-shell"
                        hx-swap="outerHTML">@T.T("OpenFailedActivationEmails")</a>
                 }
@@ -44,7 +54,7 @@
                        asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                        asp-route-q="@Model.Email"
                        class="btn btn-sm btn-outline-danger"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = Model.Email })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, Model.Email)"
                        hx-target="#user-edit-editor-shell"
                        hx-swap="outerHTML">@T.T("UsersFilterLocked")</a>
                     <a asp-controller="BusinessCommunications"
@@ -53,7 +63,7 @@
                        asp-route-flowKey="PasswordReset"
                        asp-route-recipientEmail="@Model.Email"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", recipientEmail = Model.Email })"
+                       hx-get="@EmailAuditsUrl("PasswordReset")"
                        hx-target="#user-edit-editor-shell"
                        hx-swap="outerHTML">@T.T("OpenFailedPasswordResets")</a>
                 }
@@ -64,7 +74,7 @@
                        asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive"
                        asp-route-q="@Model.Email"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive, q = Model.Email })"
+                       hx-get="@UsersQueueUrl(Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive, Model.Email)"
                        hx-target="#user-edit-editor-shell"
                        hx-swap="outerHTML">@T.T("UsersFilterInactive")</a>
                 }
@@ -99,7 +109,7 @@
             @if (Model.IsLockedOut && Model.LockoutEndUtc.HasValue)
             {
                 <p class="small text-muted mb-3">
-                    @T.T("UserLockoutEndsLabel"): @Model.LockoutEndUtc.Value.ToString("u")
+                    @T.T("UserLockoutEndsLabel"): @FormatTimestamp(Model.LockoutEndUtc)
                 </p>
             }
 
@@ -114,7 +124,7 @@
                asp-route-page="@Model.Page"
                asp-route-pageSize="@Model.PageSize"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("ChangeEmail", "Users", new { id = Model.Id, currentEmail = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+               hx-get="@ChangeEmailUrl()"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML">
                 <i class="fa fa-envelope"></i> @T.T("ChangeEmail")
@@ -129,7 +139,7 @@
                asp-route-page="@Model.Page"
                asp-route-pageSize="@Model.PageSize"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("ChangePassword", "Users", new { id = Model.Id, email = Model.Email, returnToIndex = Model.ReturnToIndex, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+               hx-get="@ChangePasswordUrl()"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML">
                 <i class="fa fa-key"></i> @T.T("ChangePassword")
@@ -138,7 +148,7 @@
                asp-action="Roles"
                asp-route-id="@Model.Id"
                class="btn btn-outline-primary"
-               hx-get="@Url.Action("Roles", "Users", new { id = Model.Id })"
+               hx-get="@UserRolesUrl()"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML">
                 <i class="fa fa-users-cog"></i> @T.T("ManageRolesAction")
@@ -147,7 +157,7 @@
                asp-action="Index"
                asp-route-q="@Model.Email"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Index", "MobileOperations", new { q = Model.Email })"
+               hx-get="@MobileOperationsUrl()"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -157,7 +167,7 @@
                asp-action="Accounts"
                asp-route-q="@Model.Email"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Accounts", "Loyalty", new { q = Model.Email })"
+               hx-get="@LoyaltyAccountsUrl()"
                hx-target="#user-edit-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">
@@ -346,7 +356,7 @@
                    asp-route-page="@Model.Page"
                    asp-route-pageSize="@Model.PageSize"
                    class="btn btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "Users", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                   hx-get="@UsersReturnUrl()"
                    hx-target="#user-edit-editor-shell"
                    hx-swap="outerHTML">@T.T("Back")</a>
             }
@@ -355,7 +365,7 @@
                 <a asp-controller="Users"
                    asp-action="Index"
                    class="btn btn-outline-secondary"
-                   hx-get="@Url.Action("Index", "Users")"
+                   hx-get="@GlobalUsersUrl()"
                    hx-target="#user-edit-editor-shell"
                    hx-swap="outerHTML">@T.T("Back")</a>
             }
@@ -372,96 +382,3 @@
     @await Html.PartialAsync("~/Views/Users/_AddressEditModal.cshtml", new Darwin.WebAdmin.ViewModels.Identity.UserAddressEditVm())
     <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 </div>
-
-<script>
-    (function () {
-      window.darwinAdmin = window.darwinAdmin || {};
-
-      window.darwinAdmin.hideAddressModal = function () {
-        window.darwinAdmin.hideModal('addressEditModal');
-      };
-
-      window.darwinAdmin.initUserEditScreen = window.darwinAdmin.initUserEditScreen || function (root) {
-        if (!root) return;
-
-        const addAddressTitle = root.dataset.addAddressTitle || 'Address';
-        const editAddressTitle = root.dataset.editAddressTitle || 'Address';
-
-        const modal = root.querySelector('#addressEditModal');
-        if (modal && !modal.dataset.addressModalBound) {
-          modal.dataset.addressModalBound = 'true';
-
-          modal.addEventListener('show.bs.modal', function (event) {
-            const btn = event.relatedTarget;
-            if (!btn) return;
-
-            const mode = btn.getAttribute('data-mode') || 'create';
-            const form = modal.querySelector('#addressEditForm');
-            if (!form) return;
-
-            const idInput = modal.querySelector('#addrId');
-            const rvInput = modal.querySelector('#addrRowVersion');
-            const userInput = modal.querySelector('#addrUserId');
-            const title = modal.querySelector('#addressEditModalLabel');
-            const action = btn.getAttribute('data-action') || '';
-
-            form.setAttribute('action', action);
-            form.setAttribute('hx-post', action);
-
-            if (userInput) {
-              userInput.value = btn.getAttribute('data-userid') || '';
-            }
-
-            const removeName = function (el) { if (el) el.removeAttribute('name'); };
-            const setName = function (el, name) { if (el) el.setAttribute('name', name); };
-
-            if (mode === 'create') {
-              if (idInput) { idInput.value = ''; removeName(idInput); }
-              if (rvInput) { rvInput.value = ''; removeName(rvInput); }
-
-              form.querySelector('input[name="FullName"]').value = '';
-              form.querySelector('input[name="Company"]').value = '';
-              form.querySelector('input[name="Street1"]').value = '';
-              form.querySelector('input[name="Street2"]').value = '';
-              form.querySelector('input[name="PostalCode"]').value = '';
-              form.querySelector('input[name="City"]').value = '';
-              form.querySelector('input[name="State"]').value = '';
-              form.querySelector('input[name="CountryCode"]').value = 'DE';
-              form.querySelector('input[name="PhoneE164"]').value = '';
-              form.querySelector('input[name="IsDefaultBilling"]').checked = false;
-              form.querySelector('input[name="IsDefaultShipping"]').checked = false;
-
-              if (title) title.textContent = addAddressTitle;
-            } else {
-              if (idInput) { idInput.value = btn.getAttribute('data-id') || ''; setName(idInput, 'Id'); }
-              if (rvInput) { rvInput.value = btn.getAttribute('data-rowversion') || ''; setName(rvInput, 'RowVersion'); }
-
-              form.querySelector('input[name="FullName"]').value = btn.getAttribute('data-fullname') || '';
-              form.querySelector('input[name="Company"]').value = btn.getAttribute('data-company') || '';
-              form.querySelector('input[name="Street1"]').value = btn.getAttribute('data-street1') || '';
-              form.querySelector('input[name="Street2"]').value = btn.getAttribute('data-street2') || '';
-              form.querySelector('input[name="PostalCode"]').value = btn.getAttribute('data-postalcode') || '';
-              form.querySelector('input[name="City"]').value = btn.getAttribute('data-city') || '';
-              form.querySelector('input[name="State"]').value = btn.getAttribute('data-state') || '';
-              form.querySelector('input[name="CountryCode"]').value = btn.getAttribute('data-countrycode') || 'DE';
-              form.querySelector('input[name="PhoneE164"]').value = btn.getAttribute('data-phonee164') || '';
-              form.querySelector('input[name="IsDefaultBilling"]').checked = btn.getAttribute('data-defaultbilling') === 'true';
-              form.querySelector('input[name="IsDefaultShipping"]').checked = btn.getAttribute('data-defaultshipping') === 'true';
-
-              if (title) title.textContent = editAddressTitle;
-            }
-          });
-        }
-
-        const countryCode = root.querySelector('#addrCountryCode');
-        if (countryCode && !countryCode.dataset.uppercaseBound) {
-          countryCode.dataset.uppercaseBound = 'true';
-          countryCode.addEventListener('input', function () {
-            this.value = this.value.toUpperCase();
-          });
-        }
-      };
-
-      window.darwinAdmin.initUserEditScreen(document.getElementById('user-edit-editor-shell'));
-    })();
-</script>

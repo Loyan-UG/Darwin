@@ -18,11 +18,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - @T.T("DarwinAdmin")</title>
 
-    <!-- Bootstrap 5.3.8 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-3I1H8n+..." crossorigin="anonymous" />
-    <!-- Font Awesome 7 -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" rel="stylesheet" />
-    <script src="https://kit.fontawesome.com/9da8b79f46.js" crossorigin="anonymous"></script>
+    <!-- Bootstrap 5.3.8 / Font Awesome 7 -->
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/lib/fontawesome/css/all.min.css" rel="stylesheet" asp-append-version="true" />
 
     <!-- Project Styles -->
     <link href="~/css/main.css" rel="stylesheet" />
@@ -35,7 +33,7 @@
     <meta name="apple-mobile-web-app-title" content="@T.T("DarwinAdmin")" />
     <link rel="manifest" href="/site.webmanifest" />
 </head>
-<body class="bg-light">
+<body class="bg-light" data-alerts-url="@Url.Action("AlertsFragment", "Home")">
     <header class="border-bottom bg-white">
         <div class="container-fluid">
             <div class="d-flex align-items-start justify-content-between py-2">
@@ -43,7 +41,7 @@
                 <div class="order-1">
                     <a asp-controller="Home" asp-action="Index"
                        class="d-inline-flex align-items-start">
-                        <img src="~/images/DarwinJustLogo.png" alt="Logo" class="img-fluid" style="max-height:40px;" />
+                    <img src="~/images/DarwinJustLogo.png" alt="Logo" class="img-fluid admin-logo" />
                     </a>
                 </div>
 
@@ -63,7 +61,7 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="returnUrl" value="@returnUrl" />
                         <label for="admin-culture-switcher" class="small text-muted mb-0">@T.T("Language")</label>
-                        <select id="admin-culture-switcher" name="culture" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <select id="admin-culture-switcher" name="culture" class="form-select form-select-sm" data-culture-switcher>
                             @foreach (var option in languageOptions)
                             {
                                 <option value="@option.Culture" selected="@(string.Equals(currentCulture, option.Culture, StringComparison.OrdinalIgnoreCase))">@option.Label</option>
@@ -264,57 +262,19 @@
 
 
     <!-- jQuery (optional), Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="~/lib/jquery/jquery.min.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
 
     <!-- Quill v2 FULL build (must be before per-view section Scripts) -->
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-    <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"></script>
+    <script src="~/lib/quill/quill.js" asp-append-version="true"></script>
+    <script src="~/lib/htmx/htmx.min.js" asp-append-version="true"></script>
 
-    <script>
-        window.darwinAdmin = window.darwinAdmin || {};
-
-        window.darwinAdmin.initBootstrapUi = function (root) {
-            const scope = root || document;
-            scope.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
-                bootstrap.Popover.getOrCreateInstance(el);
-            });
-            scope.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
-                bootstrap.Tooltip.getOrCreateInstance(el);
-            });
-        };
-
-        window.darwinAdmin.refreshAlerts = function (url) {
-            const targetUrl = url || '@Url.Action("AlertsFragment", "Home")';
-            htmx.ajax('GET', targetUrl, '#alerts-container');
-        };
-
-        window.darwinAdmin.hideModal = function (modalId) {
-            const modalEl = document.getElementById(modalId);
-            if (!modalEl) {
-                return;
-            }
-
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.hide();
-        };
-
-        document.addEventListener('DOMContentLoaded', function () {
-            window.darwinAdmin.initBootstrapUi(document);
-        });
-
-        document.body.addEventListener('htmx:configRequest', function (event) {
-            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-            const token = tokenInput ? tokenInput.value : '';
-            if (token) {
-                event.detail.headers['RequestVerificationToken'] = token;
-            }
-        });
-
-        document.body.addEventListener('htmx:afterSwap', function (event) {
-            window.darwinAdmin.initBootstrapUi(event.target);
-        });
-    </script>
+    <script src="~/js/admin-core.js" asp-append-version="true"></script>
+    <script src="~/js/add-on-groups.js" asp-append-version="true"></script>
+    <script src="~/js/dynamic-lines.js" asp-append-version="true"></script>
+    <script src="~/js/shipping-methods.js" asp-append-version="true"></script>
+    <script src="~/js/media.js" asp-append-version="true"></script>
+    <script src="~/js/content-editors.js" asp-append-version="true"></script>
 
 @RenderSection("Scripts", required: false)
 </body>

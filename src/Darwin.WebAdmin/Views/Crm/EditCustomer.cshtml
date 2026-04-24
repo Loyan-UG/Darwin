@@ -20,6 +20,9 @@
             Value = option.Value,
             Text = option.Text == nameof(Darwin.Domain.Enums.ConsentType.Sms) ? T.T("SMS") : T.T(option.Text)
         });
+    string CustomerInteractionsUrl(Guid customerId) => Url.Action("CustomerInteractions", "Crm", new { customerId }) ?? string.Empty;
+    string CustomerConsentsUrl(Guid customerId) => Url.Action("CustomerConsents", "Crm", new { customerId }) ?? string.Empty;
+    string CustomerSegmentMembershipsUrl(Guid customerId) => Url.Action("CustomerSegmentMemberships", "Crm", new { customerId }) ?? string.Empty;
 }
 
 @{
@@ -72,7 +75,8 @@
         <div class="card mt-3" id="customer-interactions-section">
             <div class="card-header"><strong>@T.T("Interactions")</strong></div>
             <div class="card-body" id="customer-interactions-grid"
-                 hx-get="@Url.Action("CustomerInteractions", "Crm", new { customerId = Model.Id })"
+                 hx-get="@CustomerInteractionsUrl(Model.Id)"
+                 hx-target="this"
                  hx-trigger="load"
                  hx-swap="innerHTML"></div>
         </div>
@@ -119,7 +123,8 @@
         <div class="card mt-3" id="customer-consents-section">
             <div class="card-header"><strong>@T.T("ConsentHistory")</strong></div>
             <div class="card-body" id="customer-consents-grid"
-                 hx-get="@Url.Action("CustomerConsents", "Crm", new { customerId = Model.Id })"
+                 hx-get="@CustomerConsentsUrl(Model.Id)"
+                 hx-target="this"
                  hx-trigger="load"
                  hx-swap="innerHTML"></div>
         </div>
@@ -147,7 +152,8 @@
                     </div>
                 </form>
                 <div id="customer-segments-grid"
-                     hx-get="@Url.Action("CustomerSegmentMemberships", "Crm", new { customerId = Model.Id })"
+                     hx-get="@CustomerSegmentMembershipsUrl(Model.Id)"
+                     hx-target="this"
                      hx-trigger="load"
                      hx-swap="innerHTML"></div>
             </div>

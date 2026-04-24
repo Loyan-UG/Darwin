@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (ViewData["IsCreate"] as bool?) ?? false;
+    string GlobalBillingPlansUrl() => Url.Action("Plans", "Billing") ?? string.Empty;
 }
 
 <form method="post" asp-action="@(isCreate ? "CreatePlan" : "EditPlan")" class="card shadow-sm"
@@ -82,7 +83,7 @@
             <i class="fa-solid fa-floppy-disk"></i> @(isCreate ? T.T("BillingPlansCreatePlan") : T.T("BillingPlanFormSaveChanges"))
         </button>
         <a asp-action="Plans" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Plans", "Billing")"
+           hx-get="@GlobalBillingPlansUrl()"
            hx-target="#billing-plan-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Cancel")</a>

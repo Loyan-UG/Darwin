@@ -273,6 +273,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         /// <summary>
         /// Image upload endpoint for Quill. Returns JSON <c>{ url: "/uploads/..." }</c>.
         /// </summary>
+        /// <remarks>
+        /// Quill sends multipart uploads through fetch without the admin form token, so this endpoint is the only
+        /// WebAdmin anti-forgery exception; it remains protected by admin authorization and strict file validation.
+        /// </remarks>
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)

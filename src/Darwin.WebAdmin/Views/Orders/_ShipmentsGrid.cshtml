@@ -8,6 +8,11 @@
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
     string OrderShipmentOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    string AddShipmentUrl(Guid orderId) => Url.Action("AddShipment", "Orders", new { orderId }) ?? string.Empty;
+    string OrderRefundsUrl(Guid orderId) => Url.Action("Refunds", "Orders", new { orderId }) ?? string.Empty;
+    string AddRefundUrl(Guid orderId, Guid? paymentId) => Url.Action("AddRefund", "Orders", new { orderId, paymentId }) ?? string.Empty;
+    string ShippingSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" }) ?? string.Empty;
+    string ShippingMethodsUrl(string filter) => Url.Action("Index", "ShippingMethods", new { filter }) ?? string.Empty;
     var orderShipmentAwaitingHandoffCount = Model.Items.Count(item => item.AwaitingHandoff);
     var orderShipmentTrackingOverdueCount = Model.Items.Count(item => item.TrackingOverdue);
     var orderShipmentCarrierReviewCount = Model.Items.Count(item => item.NeedsCarrierReview);
@@ -41,7 +46,7 @@
                        asp-action="AddShipment"
                        asp-route-orderId="@Model.OrderId"
                        class="btn btn-sm btn-outline-primary"
-                       hx-get="@Url.Action("AddShipment", "Orders", new { orderId = Model.OrderId })"
+                       hx-get="@AddShipmentUrl(Model.OrderId)"
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">@T.T("AddShipment")</a>
@@ -49,7 +54,7 @@
                        asp-action="Refunds"
                        asp-route-orderId="@Model.OrderId"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Refunds", "Orders", new { orderId = Model.OrderId })"
+                       hx-get="@OrderRefundsUrl(Model.OrderId)"
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">@T.T("ReviewRefunds")</a>
@@ -69,7 +74,7 @@
                         <div class="small text-muted mt-3">@T.T("ShippingSettings")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="AwaitingHandoff" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.AwaitingHandoff ? "btn-danger" : "btn-outline-danger")">@T.T("AwaitingHandoff")</a>
-                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-shipping" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ShippingSettings")</a>
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-shipping" class="btn btn-sm btn-outline-secondary" hx-get="@ShippingSettingsUrl()" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ShippingSettings")</a>
                         </div>
                     </div>
                 </div>
@@ -85,7 +90,7 @@
                         <div class="small text-muted mt-3">@T.T("Open")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="TrackingOverdue" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.TrackingOverdue ? "btn-danger" : "btn-outline-danger")">@T.T("TrackingOverdue")</a>
-                            <a asp-controller="ShippingMethods" asp-action="Index" asp-route-filter="Dhl" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ShippingMethods")</a>
+                            <a asp-controller="ShippingMethods" asp-action="Index" asp-route-filter="Dhl" class="btn btn-sm btn-outline-secondary" hx-get="@ShippingMethodsUrl("Dhl")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ShippingMethods")</a>
                         </div>
                     </div>
                 </div>
@@ -101,7 +106,7 @@
                         <div class="small text-muted mt-3">@T.T("ReviewRefunds")</div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="CarrierReview" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">@T.T("CarrierReview")</a>
-                            <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Refunds", "Orders", new { orderId = Model.OrderId })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ReviewRefunds")</a>
+                            <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary" hx-get="@OrderRefundsUrl(Model.OrderId)" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ReviewRefunds")</a>
                         </div>
                     </div>
                 </div>
@@ -119,7 +124,7 @@
                             <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="ReturnFollowUp" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.ReturnFollowUp ? "btn-dark" : "btn-outline-dark")">@T.T("ReturnFollowUp")</a>
                             @if (Model.DefaultRefundPaymentId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId" asp-route-paymentId="@Model.DefaultRefundPaymentId" class="btn btn-sm btn-outline-danger" hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("StartRefund")</a>
+                                <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId" asp-route-paymentId="@Model.DefaultRefundPaymentId" class="btn btn-sm btn-outline-danger" hx-get="@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("StartRefund")</a>
                             }
                         </div>
                     </div>
@@ -348,7 +353,7 @@
                                        asp-action="Index"
                                        asp-route-filter="Dhl"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                                       hx-get="@ShippingMethodsUrl("Dhl")"
                                        hx-target="#order-operation-shell"
                                        hx-swap="innerHTML"
                                        hx-push-url="false">
@@ -361,7 +366,7 @@
                                        asp-action="Edit"
                                        asp-fragment="site-settings-shipping"
                                        class="btn btn-sm btn-outline-secondary"
-                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                                       hx-get="@ShippingSettingsUrl()"
                                        hx-target="#order-operation-shell"
                                        hx-swap="innerHTML"
                                        hx-push-url="false">
@@ -375,7 +380,7 @@
                                        asp-route-orderId="@Model.OrderId"
                                        asp-route-paymentId="@Model.DefaultRefundPaymentId"
                                        class="btn btn-sm btn-outline-danger"
-                                       hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })"
+                                       hx-get="@AddRefundUrl(Model.OrderId, Model.DefaultRefundPaymentId)"
                                        hx-target="#order-operation-shell"
                                        hx-swap="innerHTML"
                                        hx-push-url="false">

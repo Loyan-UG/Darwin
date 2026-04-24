@@ -32,6 +32,7 @@ public sealed class GetMobileDevicesPageHandler
         string? query = null,
         MobilePlatform? platform = null,
         string? state = null,
+        Guid? businessId = null,
         CancellationToken ct = default)
     {
         page = Math.Max(1, page);
@@ -65,6 +66,16 @@ public sealed class GetMobileDevicesPageHandler
         if (platform.HasValue)
         {
             baseQuery = baseQuery.Where(x => x.device.Platform == platform.Value);
+        }
+
+        if (businessId.HasValue)
+        {
+            baseQuery = baseQuery.Where(x => _db.Set<BusinessMember>()
+                .AsNoTracking()
+                .Any(member => !member.IsDeleted &&
+                               member.IsActive &&
+                               member.BusinessId == businessId.Value &&
+                               member.UserId == x.device.UserId));
         }
 
         if (!string.IsNullOrWhiteSpace(state))

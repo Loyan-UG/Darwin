@@ -2,6 +2,10 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Permissions");
+    string PermissionsGlobalIndexUrl() => Url.Action("Index", "Permissions") ?? string.Empty;
+    string PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter filter) => Url.Action("Index", "Permissions", new { filter }) ?? string.Empty;
+    string CreatePermissionUrl() => Url.Action("Create", "Permissions") ?? string.Empty;
+    string EditPermissionUrl(Guid id) => Url.Action("Edit", "Permissions", new { id }) ?? string.Empty;
 }
 
 <div id="permissions-workspace-shell">
@@ -17,7 +21,7 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.All"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.All })"
+                           hx-get="@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.All)"
                            hx-target="#permissions-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
@@ -34,7 +38,7 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.System"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.System })"
+                           hx-get="@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.System)"
                            hx-target="#permissions-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("IdentityFilterSystem")</a>
@@ -51,13 +55,13 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.Custom"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.Custom })"
+                           hx-get="@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.Custom)"
                            hx-target="#permissions-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("IdentityFilterCustom")</a>
                         <a asp-action="Create"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Create", "Permissions")"
+                           hx-get="@CreatePermissionUrl()"
                            hx-target="#permissions-workspace-shell"
                            hx-swap="outerHTML">@T.T("NewPermission")</a>
                     </div>
@@ -73,7 +77,7 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport"
                            class="btn btn-sm btn-outline-info"
-                           hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport })"
+                           hx-get="@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport)"
                            hx-target="#permissions-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("IdentityFilterDelegatedSupport")</a>
@@ -92,7 +96,7 @@
                     <a asp-action="Index"
                        asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.System"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.System })"
+                       hx-get="@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.System)"
                        hx-target="#permissions-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("Open")</a>
@@ -102,7 +106,7 @@
                     <a asp-action="Index"
                        asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport"
                        class="btn btn-sm btn-outline-info"
-                       hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport })"
+                       hx-get="@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport)"
                        hx-target="#permissions-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("Open")</a>
@@ -113,13 +117,13 @@
                         <a asp-action="Index"
                            asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.Custom"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.Custom })"
+                           hx-get="@PermissionsIndexUrl(Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.Custom)"
                            hx-target="#permissions-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                         <a asp-action="Create"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Create", "Permissions")"
+                           hx-get="@CreatePermissionUrl()"
                            hx-target="#permissions-workspace-shell"
                            hx-swap="outerHTML"><i class="fa fa-plus"></i> @T.T("NewPermission")</a>
                     </div>
@@ -135,7 +139,7 @@
             </div>
             <form method="get"
                   class="row g-2 align-items-end"
-                  hx-get="@Url.Action("Index", "Permissions")"
+               hx-get="@PermissionsGlobalIndexUrl()"
                   hx-target="#permissions-workspace-shell"
                   hx-swap="outerHTML">
                 <div class="col-md-4">
@@ -157,12 +161,12 @@
                     </button>
                     <a asp-action="Index"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Permissions")"
+       hx-get="@PermissionsGlobalIndexUrl()"
                        hx-target="#permissions-workspace-shell"
                        hx-swap="outerHTML">@T.T("Reset")</a>
                     <a asp-action="Create"
                        class="btn btn-primary"
-                       hx-get="@Url.Action("Create", "Permissions")"
+                       hx-get="@CreatePermissionUrl()"
                        hx-target="#permissions-workspace-shell"
                        hx-swap="outerHTML"><i class="fa fa-plus"></i> @T.T("NewPermission")</a>
                 </div>
@@ -179,8 +183,8 @@
                             <th>@T.T("Key")</th>
                             <th>@T.T("DisplayName")</th>
                             <th>@T.T("Description")</th>
-                            <th style="width:120px;">@T.T("System")</th>
-                            <th class="text-end" style="width:180px;">@T.T("Actions")</th>
+                    <th class="admin-w-120">@T.T("System")</th>
+                    <th class="text-end admin-w-180">@T.T("Actions")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -208,7 +212,7 @@
                                     <a asp-action="Edit"
                                        asp-route-id="@p.Id"
                                        class="btn btn-sm btn-outline-primary me-1"
-                                       hx-get="@Url.Action("Edit", "Permissions", new { id = p.Id })"
+                                       hx-get="@EditPermissionUrl(p.Id)"
                                        hx-target="#permissions-workspace-shell"
                                        hx-swap="outerHTML">
                                         <i class="fa fa-pen"></i> @T.T("Edit")
@@ -225,7 +229,7 @@
                                                 data-rowversion="@Convert.ToBase64String(p.RowVersion)"
                                                 data-hx-target="#permissions-workspace-shell"
                                                 data-hx-swap="outerHTML"
-                                                data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
+                                   >
                                             <i class="fa fa-trash"></i> @T.T("Delete")
                                         </button>
                                     }

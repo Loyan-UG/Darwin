@@ -2,6 +2,11 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("EditRolePermissions");
+    string GlobalBusinessSupportQueueUrl() => Url.Action("SupportQueue", "Businesses") ?? string.Empty;
+    string RolesIndexUrl() => Url.Action("Index", "Roles") ?? string.Empty;
+    string DelegatedSupportPermissionsUrl() => Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport }) ?? string.Empty;
+    string UnconfirmedUsersUrl() => Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed }) ?? string.Empty;
+    string LockedUsersUrl() => Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked }) ?? string.Empty;
 }
 
 <div id="role-permissions-workspace-shell">
@@ -20,14 +25,14 @@
                    asp-action="Index"
                    asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport"
                    class="btn btn-sm btn-outline-info"
-                   hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport })"
+                   hx-get="@DelegatedSupportPermissionsUrl()"
                    hx-target="#role-permissions-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("IdentityFilterDelegatedSupport")</a>
                 <a asp-controller="Businesses"
                    asp-action="SupportQueue"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-get="@GlobalBusinessSupportQueueUrl()"
                    hx-target="#role-permissions-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -35,7 +40,7 @@
                    asp-action="Index"
                    asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
                    class="btn btn-sm btn-outline-warning"
-                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                   hx-get="@UnconfirmedUsersUrl()"
                    hx-target="#role-permissions-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
@@ -43,7 +48,7 @@
                    asp-action="Index"
                    asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
                    class="btn btn-sm btn-outline-danger"
-                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                   hx-get="@LockedUsersUrl()"
                    hx-target="#role-permissions-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("UsersFilterLocked")</a>
@@ -96,7 +101,7 @@
                     <a asp-controller="Roles"
                        asp-action="Index"
                        class="btn btn-outline-secondary"
-                       hx-get="@Url.Action("Index", "Roles")"
+                       hx-get="@RolesIndexUrl()"
                        hx-target="#role-permissions-workspace-shell"
                        hx-swap="outerHTML">
                         <i class="fa fa-arrow-left"></i> @T.T("Back")

@@ -20,7 +20,8 @@
                   method="post"
                   hx-target="#addresses-section"
                   hx-swap="innerHTML"
-                  hx-on::after-request="if(event.detail.successful){ window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideAddressModal(); }">
+                  data-refresh-alerts
+                  data-hide-address-modal>
                 @Html.AntiForgeryToken()
 
                 <!--

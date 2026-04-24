@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CreateUserTitle");
+    string GlobalUsersUrl() => Url.Action("Index", "Users") ?? string.Empty;
 }
 
 <div id="user-create-editor-shell">
@@ -37,7 +38,7 @@
             <a asp-controller="Users"
                asp-action="Index"
                class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Index", "Users")"
+               hx-get="@GlobalUsersUrl()"
                hx-target="#user-create-editor-shell"
                hx-swap="outerHTML">@T.T("Cancel")</a>
         </div>

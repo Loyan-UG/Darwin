@@ -2,6 +2,21 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Order") + " " + Model.OrderNumber;
+    string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
+    string GlobalShipmentsQueueUrl() => Url.Action("ShipmentsQueue", "Orders") ?? string.Empty;
+    string GlobalReturnsQueueUrl() => Url.Action("ReturnsQueue", "Orders") ?? string.Empty;
+    string GlobalInvoicesUrl() => Url.Action("Invoices", "Crm") ?? string.Empty;
+    string GlobalOrdersIndexUrl() => Url.Action("Index", "Orders") ?? string.Empty;
+    string AddPaymentUrl(Guid orderId) => Url.Action("AddPayment", "Orders", new { orderId }) ?? string.Empty;
+    string AddShipmentUrl(Guid orderId) => Url.Action("AddShipment", "Orders", new { orderId }) ?? string.Empty;
+    string AddRefundUrl(Guid orderId, Guid? paymentId = null) => Url.Action("AddRefund", "Orders", new { orderId, paymentId }) ?? string.Empty;
+    string CreateInvoiceUrl(Guid orderId) => Url.Action("CreateInvoice", "Orders", new { orderId }) ?? string.Empty;
+    string TaxSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" }) ?? string.Empty;
+    string ShipmentsQueueUrl(string filter) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
+    string OrderPaymentsUrl(Guid orderId) => Url.Action("Payments", "Orders", new { orderId }) ?? string.Empty;
+    string OrderShipmentsUrl(Guid orderId) => Url.Action("Shipments", "Orders", new { orderId }) ?? string.Empty;
+    string OrderRefundsUrl(Guid orderId) => Url.Action("Refunds", "Orders", new { orderId }) ?? string.Empty;
+    string OrderInvoicesUrl(Guid orderId) => Url.Action("Invoices", "Orders", new { orderId }) ?? string.Empty;
     string LocalizeOrderStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string OrderDetailOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
     string OrderDetailOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
@@ -16,7 +31,7 @@
 <div class="d-flex justify-content-between align-items-center mb-2">
     <h1 class="mb-0"><i class="fa fa-receipt"></i> @T.T("Order") @Model.OrderNumber</h1>
     <a asp-action="Index"
-       hx-get="@Url.Action("Index", "Orders")"
+       hx-get="@GlobalOrdersIndexUrl()"
        hx-target="#order-details-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true"
@@ -58,7 +73,7 @@
                         <a asp-controller="Billing"
                            asp-action="Payments"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-get="@GlobalPaymentsUrl()"
                            hx-target="#order-details-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Payments")</a>
@@ -82,7 +97,7 @@
                         <a asp-controller="Orders"
                            asp-action="ShipmentsQueue"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+                           hx-get="@GlobalShipmentsQueueUrl()"
                            hx-target="#order-details-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ShipmentsQueue")</a>
@@ -106,7 +121,7 @@
                         <a asp-controller="Orders"
                            asp-action="ReturnsQueue"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("ReturnsQueue", "Orders")"
+                           hx-get="@GlobalReturnsQueueUrl()"
                            hx-target="#order-details-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ReturnsQueueTitle")</a>
@@ -130,7 +145,7 @@
                         <a asp-controller="Crm"
                            asp-action="Invoices"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Invoices", "Crm")"
+                           hx-get="@GlobalInvoicesUrl()"
                            hx-target="#order-details-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Invoice")</a>
@@ -191,7 +206,7 @@
                    asp-action="AddPayment"
                    asp-route-orderId="@Model.Id"
                    class="btn btn-sm btn-success"
-                   hx-get="@Url.Action("AddPayment", "Orders", new { orderId = Model.Id })"
+                   hx-get="@AddPaymentUrl(Model.Id)"
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
@@ -201,7 +216,7 @@
                    asp-action="AddShipment"
                    asp-route-orderId="@Model.Id"
                    class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("AddShipment", "Orders", new { orderId = Model.Id })"
+                   hx-get="@AddShipmentUrl(Model.Id)"
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
@@ -211,7 +226,7 @@
                    asp-action="AddRefund"
                    asp-route-orderId="@Model.Id"
                    class="btn btn-sm btn-outline-danger"
-                   hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.Id })"
+                   hx-get="@AddRefundUrl(Model.Id)"
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
@@ -221,7 +236,7 @@
                    asp-action="CreateInvoice"
                    asp-route-orderId="@Model.Id"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("CreateInvoice", "Orders", new { orderId = Model.Id })"
+                   hx-get="@CreateInvoiceUrl(Model.Id)"
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
@@ -241,7 +256,7 @@
                    asp-action="Edit"
                    asp-fragment="site-settings-tax"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                   hx-get="@TaxSettingsUrl()"
                    hx-target="#order-operation-shell"
                    hx-swap="innerHTML"
                    hx-push-url="false">
@@ -302,7 +317,7 @@
                        asp-action="Edit"
                        asp-fragment="site-settings-tax"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                       hx-get="@TaxSettingsUrl()"
                        hx-target="#order-operation-shell"
                        hx-swap="innerHTML"
                        hx-push-url="false">
@@ -314,7 +329,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-tax"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                           hx-get="@TaxSettingsUrl()"
                            hx-target="#order-operation-shell"
                            hx-swap="innerHTML"
                            hx-push-url="false">
@@ -327,7 +342,7 @@
                            asp-action="Edit"
                            asp-fragment="site-settings-tax"
                            class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                           hx-get="@TaxSettingsUrl()"
                            hx-target="#order-operation-shell"
                            hx-swap="innerHTML"
                            hx-push-url="false">
@@ -351,7 +366,7 @@
                 <a asp-controller="Orders"
                    asp-action="ShipmentsQueue"
                    asp-route-filter="Returned"
-                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "Returned" })"
+                   hx-get="@ShipmentsQueueUrl("Returned")"
                    hx-target="#order-details-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true"
@@ -398,7 +413,7 @@
                            asp-route-orderId="@Model.Id"
                            asp-route-paymentId="@Model.ReturnSupport.DefaultRefundPaymentId"
                            class="btn btn-sm btn-danger"
-                           hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.Id, paymentId = Model.ReturnSupport.DefaultRefundPaymentId })"
+                           hx-get="@AddRefundUrl(Model.Id, Model.ReturnSupport.DefaultRefundPaymentId)"
                            hx-target="#order-operation-shell"
                            hx-swap="innerHTML"
                            hx-push-url="false">
@@ -409,7 +424,7 @@
                        asp-action="ShipmentsQueue"
                        asp-route-filter="CarrierReview"
                        class="btn btn-sm btn-outline-warning"
-                       hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "CarrierReview" })"
+                       hx-get="@ShipmentsQueueUrl("CarrierReview")"
                        hx-target="#order-details-workspace-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">
@@ -513,28 +528,32 @@
 <div class="tab-content border border-top-0 p-3">
     <div class="tab-pane fade show active" id="payments" role="tabpanel">
         <div id="payments-grid"
-             hx-get="@Url.Action("Payments", "Orders", new { orderId = Model.Id })"
+             hx-get="@OrderPaymentsUrl(Model.Id)"
+             hx-target="this"
              hx-trigger="load"
              hx-swap="innerHTML">
         </div>
     </div>
     <div class="tab-pane fade" id="shipments" role="tabpanel">
         <div id="shipments-grid"
-             hx-get="@Url.Action("Shipments", "Orders", new { orderId = Model.Id })"
+             hx-get="@OrderShipmentsUrl(Model.Id)"
+             hx-target="this"
              hx-trigger="revealed"
              hx-swap="innerHTML">
         </div>
     </div>
     <div class="tab-pane fade" id="refunds" role="tabpanel">
         <div id="refunds-grid"
-             hx-get="@Url.Action("Refunds", "Orders", new { orderId = Model.Id })"
+             hx-get="@OrderRefundsUrl(Model.Id)"
+             hx-target="this"
              hx-trigger="revealed"
              hx-swap="innerHTML">
         </div>
     </div>
     <div class="tab-pane fade" id="invoices" role="tabpanel">
         <div id="invoices-grid"
-             hx-get="@Url.Action("Invoices", "Orders", new { orderId = Model.Id })"
+             hx-get="@OrderInvoicesUrl(Model.Id)"
+             hx-target="this"
              hx-trigger="revealed"
              hx-swap="innerHTML">
         </div>

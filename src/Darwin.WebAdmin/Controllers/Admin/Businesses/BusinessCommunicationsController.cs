@@ -166,6 +166,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 RecentEmailAudits = emailAudits.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    IsQueueOperation = x.IsQueueOperation,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
                     TemplateKey = x.TemplateKey,
@@ -180,6 +181,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
                     FailureMessage = x.FailureMessage,
+                    QueueAttemptCount = x.QueueAttemptCount,
                     AttemptAgeMinutes = x.AttemptAgeMinutes,
                     CompletionLatencySeconds = x.CompletionLatencySeconds,
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
@@ -324,6 +326,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 RecentEmailAudits = recentAudits.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    IsQueueOperation = x.IsQueueOperation,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
                     TemplateKey = x.TemplateKey,
@@ -338,6 +341,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
                     FailureMessage = x.FailureMessage,
+                    QueueAttemptCount = x.QueueAttemptCount,
                     AttemptAgeMinutes = x.AttemptAgeMinutes,
                     CompletionLatencySeconds = x.CompletionLatencySeconds,
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
@@ -480,7 +484,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     RepeatedFailureCount = summary.RepeatedFailureCount,
                     RetryReadyCount = summary.RetryReadyCount,
                     RetryBlockedCount = summary.RetryBlockedCount,
-                    HighChainVolumeCount = summary.HighChainVolumeCount
+                    HighChainVolumeCount = summary.HighChainVolumeCount,
+                    QueuedPendingCount = summary.QueuedPendingCount,
+                    QueuedFailedCount = summary.QueuedFailedCount
                 },
                 ChainSummary = chainSummary == null ? null : new EmailDispatchAuditChainSummaryVm
                 {
@@ -514,6 +520,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Items = items.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    IsQueueOperation = x.IsQueueOperation,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
                     TemplateKey = x.TemplateKey,
@@ -528,6 +535,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
                     FailureMessage = x.FailureMessage,
+                    QueueAttemptCount = x.QueueAttemptCount,
                     AttemptAgeMinutes = x.AttemptAgeMinutes,
                     CompletionLatencySeconds = x.CompletionLatencySeconds,
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
@@ -2065,6 +2073,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private string BuildAuditRecommendedAction(EmailDispatchAuditListItemDto item)
         {
+            if (item.IsQueueOperation)
+            {
+                return T("CommunicationChannelAwaitingWorker");
+            }
+
             if (string.Equals(item.Status, "Sent", System.StringComparison.OrdinalIgnoreCase))
             {
                 return T("CommunicationAuditRecommendedActionNoImmediateAction");

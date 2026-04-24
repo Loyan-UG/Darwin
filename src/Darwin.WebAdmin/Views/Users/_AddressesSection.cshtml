@@ -37,7 +37,7 @@
                 <th>@T.T("City")</th>
                 <th>@T.T("Country")</th>
                 <th class="text-center">@T.T("Default")</th>
-                <th class="text-end" style="width:380px">@T.T("Actions")</th>
+            <th class="text-end admin-w-380">@T.T("Actions")</th>
             </tr>
         </thead>
         <tbody>
@@ -69,7 +69,7 @@
                                     hx-target="#addresses-section"
                                     hx-swap="innerHTML"
                                     hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Billing"}'
-                                    hx-on::after-request="if(event.detail.successful){ window.darwinAdmin.refreshAlerts(); }">
+                                    data-refresh-alerts>
                                 <i class="fa fa-credit-card"></i> @T.T("SetBilling")
                             </button>
 
@@ -84,7 +84,7 @@
                                     hx-target="#addresses-section"
                                     hx-swap="innerHTML"
                                     hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Shipping"}'
-                                    hx-on::after-request="if(event.detail.successful){ window.darwinAdmin.refreshAlerts(); }">
+                                    data-refresh-alerts>
                                 <i class="fa fa-truck"></i> @T.T("SetShipping")
                             </button>
 
@@ -123,7 +123,6 @@
                                     data-userid="@userId"
                                     data-hx-target="#addresses-section"
                                     data-hx-swap="innerHTML"
-                                    data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');"
                                     data-name="@($"{a.FullName} / {a.City} / {a.Street1}")">
                                 <i class="fa fa-trash"></i> @T.T("Delete")
                             </button>

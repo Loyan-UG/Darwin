@@ -163,6 +163,19 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public bool Selected { get; set; }
     }
 
+    public sealed class SelectableVariantItemVm
+    {
+        public Guid Id { get; set; }
+        public string Sku { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public string? Gtin { get; set; }
+        public string Currency { get; set; } = string.Empty;
+        public long BasePriceNetMinor { get; set; }
+        public int StockOnHand { get; set; }
+        public bool IsDigital { get; set; }
+        public bool Selected { get; set; }
+    }
+
     public sealed class AddOnGroupAttachToProductsVm : AddOnGroupAttachBaseVm
     {
         public List<SelectableItemVm> Items { get; set; } = new();
@@ -187,8 +200,6 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     public sealed class AddOnGroupAttachToVariantsVm : AddOnGroupAttachBaseVm
     {
         public List<Guid> SelectedVariantIds { get; set; } = new();
-        public List<SelectableItemVm> Items { get; set; } = new(); // Optional for the future
-
-
+        public List<SelectableVariantItemVm> Items { get; set; } = new();
     }
 }

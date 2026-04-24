@@ -10,6 +10,10 @@
         : "badge bg-warning-subtle text-warning-emphasis";
     string StockTransferOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
     var stockTransferAttentionCount = Model.Summary.DraftCount + Model.Summary.InTransitCount;
+    string StockTransfersUrl(object? businessId = null, object? warehouseId = null, string? q = null, string? filter = null) => Url.Action("StockTransfers", "Inventory", new { businessId, warehouseId, q, filter }) ?? string.Empty;
+    string CreateStockTransferUrl(object? businessId = null, object? warehouseId = null) => Url.Action("CreateStockTransfer", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
+    string StockLevelsUrl(object? businessId = null, object? warehouseId = null) => Url.Action("StockLevels", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
+    string EditStockTransferUrl(Guid id) => Url.Action("EditStockTransfer", "Inventory", new { id }) ?? string.Empty;
 }
 
 <div id="inventory-stock-transfers-workspace-shell">
@@ -17,7 +21,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="StockTransfers" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("StockTransfers", "Inventory")"
+          hx-get="@StockTransfersUrl()"
           hx-target="#inventory-stock-transfers-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -27,13 +31,13 @@
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+           hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId)"
            hx-target="#inventory-stock-transfers-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Reset")</a>
     </form>
     <a asp-action="CreateStockTransfer" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary"
-       hx-get="@Url.Action("CreateStockTransfer", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+       hx-get="@CreateStockTransferUrl(ViewBag.BusinessId, Model.WarehouseId)"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("NewTransfer")</a>
@@ -41,22 +45,22 @@
 
 <div class="d-flex gap-2 flex-wrap mb-3">
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Draft" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockTransferQueueFilter.Draft ? "btn-outline-secondary" : "btn-outline-dark")"
-       hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Draft" })"
+       hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "Draft")"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Draft")</a>
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="InTransit" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockTransferQueueFilter.InTransit ? "btn-warning" : "btn-outline-warning")"
-       hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "InTransit" })"
+       hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "InTransit")"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("InTransit")</a>
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Completed" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockTransferQueueFilter.Completed ? "btn-success" : "btn-outline-success")"
-       hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Completed" })"
+       hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "Completed")"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Completed")</a>
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query })"
+       hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query)"
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("ClearQueueFilters")</a>
@@ -115,12 +119,12 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a asp-action="CreateStockTransfer" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
-                   hx-get="@Url.Action("CreateStockTransfer", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                   hx-get="@CreateStockTransferUrl(ViewBag.BusinessId, Model.WarehouseId)"
                    hx-target="#inventory-stock-transfers-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("NewTransfer")</a>
                 <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                   hx-get="@StockLevelsUrl(ViewBag.BusinessId, Model.WarehouseId)"
                    hx-target="#inventory-stock-transfers-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("StockLevels")</a>
@@ -140,12 +144,12 @@
                     <div class="small text-muted mt-3">@T.T("InventoryTransfersPlaybookDraftAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Draft" class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Draft" })"
+                           hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "Draft")"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Draft")</a>
                         <a asp-action="CreateStockTransfer" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("CreateStockTransfer", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                           hx-get="@CreateStockTransferUrl(ViewBag.BusinessId, Model.WarehouseId)"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("NewTransfer")</a>
@@ -164,12 +168,12 @@
                     <div class="small text-muted mt-3">@T.T("InventoryTransfersPlaybookInTransitAction")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="InTransit" class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "InTransit" })"
+                           hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "InTransit")"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("InTransit")</a>
                         <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                           hx-get="@StockLevelsUrl(ViewBag.BusinessId, Model.WarehouseId)"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("StockLevels")</a>
@@ -188,12 +192,12 @@
                     <div class="small text-muted mt-3">@T.T("InventoryTransfersPlaybookInTransitScope")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Completed" class="btn btn-sm btn-outline-success"
-                           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Completed" })"
+                           hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "Completed")"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Completed")</a>
                         <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                           hx-get="@StockLevelsUrl(ViewBag.BusinessId, Model.WarehouseId)"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("StockLevels")</a>
@@ -212,12 +216,12 @@
                     <div class="small text-muted mt-3">@T.T("InventoryTransfersPlaybookDraftScope")</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                           hx-get="@StockLevelsUrl(ViewBag.BusinessId, Model.WarehouseId)"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("StockLevels")</a>
                         <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query })"
+                           hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query)"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("StockTransfersTitle")</a>
@@ -288,7 +292,7 @@
                     <td>@item.LineCount</td>
                     <td>@InventoryDateTimeText(item.CreatedAtUtc)</td>
                     <td class="text-end"><a asp-action="EditStockTransfer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EditStockTransfer", "Inventory", new { id = item.Id })"
+                           hx-get="@EditStockTransferUrl(item.Id)"
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Edit")</a></td>

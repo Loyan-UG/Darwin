@@ -14,6 +14,7 @@
             Value = option.Value,
             Text = T.T(option.Text)
         });
+    string LeadInteractionsUrl(Guid leadId) => Url.Action("LeadInteractions", "Crm", new { leadId }) ?? string.Empty;
 }
 
 <h1 class="mb-3">@T.T("EditLead")</h1>
@@ -105,7 +106,8 @@
         <div class="card">
             <div class="card-header"><strong>@T.T("Interactions")</strong></div>
             <div class="card-body" id="lead-interactions-grid"
-                 hx-get="@Url.Action("LeadInteractions", "Crm", new { leadId = Model.Id })"
+                 hx-get="@LeadInteractionsUrl(Model.Id)"
+                 hx-target="this"
                  hx-trigger="load"
                  hx-swap="innerHTML"></div>
         </div>

@@ -3,6 +3,7 @@
 @{
     var actionName = ViewData["FormAction"] as string ?? "EditSegment";
     var isCreate = string.Equals(actionName, "CreateSegment", StringComparison.Ordinal);
+    string GlobalCrmSegmentsUrl() => Url.Action("Segments", "Crm") ?? string.Empty;
 }
 
 <form asp-action="@actionName" method="post" class="row g-3">
@@ -25,6 +26,6 @@
     </div>
     <div class="col-12 d-flex gap-2">
         <button type="submit" class="btn btn-primary">@(isCreate ? T.T("Create") : T.T("Save"))</button>
-        <a asp-action="Segments" hx-get="@Url.Action("Segments", "Crm")" hx-target="#crm-segment-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
+        <a asp-action="Segments" hx-get="@GlobalCrmSegmentsUrl()" hx-target="#crm-segment-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
     </div>
 </form>

@@ -1,4 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.CMS.PageEditorVm
+@{
+    string PagesIndexUrl() => Url.Action("Index", "Pages") ?? string.Empty;
+}
 
 <div class="card shadow-sm">
     <div class="card-body">
@@ -100,7 +103,7 @@
     <div class="card-footer text-end">
         <a asp-action="Index"
            class="btn btn-secondary"
-           hx-get="@Url.Action("Index", "Pages")"
+           hx-get="@PagesIndexUrl()"
            hx-target="#page-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Back")</a>

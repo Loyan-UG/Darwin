@@ -4,6 +4,18 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("RefundQueueTitle");
+    string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
+    string GlobalTaxComplianceUrl() => Url.Action("TaxCompliance", "Billing") ?? string.Empty;
+    string GlobalBillingWebhooksUrl() => Url.Action("Webhooks", "Billing") ?? string.Empty;
+    string ScopedRefundsIndexUrl() => Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId }) ?? string.Empty;
+    string ScopedRefundsUrl(BillingRefundQueueFilter queue) => Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue }) ?? string.Empty;
+    string ScopedPaymentsIndexUrl() => Url.Action("Payments", "Billing", new { businessId = Model.BusinessId }) ?? string.Empty;
+    string ScopedPaymentsUrl(PaymentQueueFilter queue) => Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue }) ?? string.Empty;
+    string BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter queue) => Url.Action("Webhooks", "Billing", new { queue }) ?? string.Empty;
+    string OrderDetailsUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
+    string CrmEditCustomerUrl(Guid id) => Url.Action("EditCustomer", "Crm", new { id }) ?? string.Empty;
+    string EditPaymentUrl(Guid id) => Url.Action("EditPayment", "Billing", new { id }) ?? string.Empty;
+    string CrmInvoicesUrl(Guid? q, string filter) => Url.Action("Invoices", "Crm", new { q, filter }) ?? string.Empty;
     string LocalizeRefundStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizePaymentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeProviderReferenceState(string? state) => state switch
@@ -33,17 +45,17 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Pending" class="btn btn-outline-warning btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Pending })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Pending")</a>
+           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.Pending)" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Pending")</a>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Completed" class="btn btn-outline-success btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Completed })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Completed")</a>
+           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.Completed)" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Completed")</a>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Failed" class="btn btn-outline-danger btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Failed })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Failed")</a>
+           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.Failed)" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Failed")</a>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Stripe" class="btn btn-outline-primary btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Stripe })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Stripe")</a>
+           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.Stripe)" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Stripe")</a>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.NeedsSupport" class="btn btn-outline-danger btn-sm"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.NeedsSupport })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("NeedsSupport")</a>
+           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.NeedsSupport)" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("NeedsSupport")</a>
         <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary btn-sm"
-           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("BackToPayments")</a>
+           hx-get="@ScopedPaymentsIndexUrl()" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("BackToPayments")</a>
     </div>
 </div>
 
@@ -52,7 +64,7 @@
         <span>@T.T("WebhookAnomalyVisibility")</span>
         <a asp-action="Webhooks"
            class="btn btn-sm btn-outline-secondary"
-           hx-get="@Url.Action("Webhooks", "Billing")"
+       hx-get="@GlobalBillingWebhooksUrl()"
            hx-target="#billing-refunds-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("OpenWebhookQueue")</a>
@@ -88,14 +100,14 @@
             <a asp-action="Webhooks"
                asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
                class="btn btn-sm btn-outline-warning"
-               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+               hx-get="@BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter.PaymentExceptions)"
                hx-target="#billing-refunds-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("ReviewPaymentExceptions")</a>
             <a asp-action="Webhooks"
                asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
                class="btn btn-sm btn-outline-dark"
-               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+               hx-get="@BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter.DisputeSignals)"
                hx-target="#billing-refunds-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("ReviewDisputeSignals")</a>
@@ -180,13 +192,13 @@
                 <a asp-action="Payments"
                    asp-route-businessId="@Model.BusinessId"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })"
+                   hx-get="@ScopedPaymentsIndexUrl()"
                    hx-target="#billing-refunds-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("OpenPayments")</a>
                 <a asp-action="Webhooks"
                    class="btn btn-sm btn-outline-secondary"
-                   hx-get="@Url.Action("Webhooks", "Billing")"
+                                           hx-get="@GlobalBillingWebhooksUrl()"
                    hx-target="#billing-refunds-workspace-shell"
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("WebhookQueue")</a>
@@ -206,7 +218,7 @@
                            asp-route-businessId="@Model.BusinessId"
                            asp-route-queue="@BillingRefundQueueFilter.NeedsSupport"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.NeedsSupport })"
+                           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.NeedsSupport)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("NeedsSupport")</a>
@@ -214,7 +226,7 @@
                            asp-route-businessId="@Model.BusinessId"
                            asp-route-queue="@BillingRefundQueueFilter.Pending"
                            class="btn btn-sm btn-outline-warning"
-                           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Pending })"
+                           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.Pending)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Pending")</a>
@@ -234,14 +246,14 @@
                            asp-route-businessId="@Model.BusinessId"
                            asp-route-queue="@BillingRefundQueueFilter.Failed"
                            class="btn btn-sm btn-outline-danger"
-                           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Failed })"
+                           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.Failed)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Failed")</a>
                         <a asp-action="Webhooks"
                            asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+                           hx-get="@BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter.PaymentExceptions)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ReviewPaymentExceptions")</a>
@@ -260,7 +272,7 @@
                         <a asp-action="Webhooks"
                            asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
                            class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+                           hx-get="@BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter.DisputeSignals)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("ReviewDisputeSignals")</a>
@@ -268,7 +280,7 @@
                            asp-route-businessId="@Model.BusinessId"
                            asp-route-queue="@PaymentQueueFilter.DisputeFollowUp"
                            class="btn btn-sm btn-outline-dark"
-                           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })"
+                           hx-get="@ScopedPaymentsUrl(PaymentQueueFilter.DisputeFollowUp)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("DisputeQueue")</a>
@@ -288,14 +300,14 @@
                            asp-route-businessId="@Model.BusinessId"
                            asp-route-queue="@BillingRefundQueueFilter.Stripe"
                            class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Stripe })"
+                           hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.Stripe)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Stripe")</a>
                         <a asp-action="Payments"
                            asp-route-businessId="@Model.BusinessId"
                            class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })"
+                            hx-get="@ScopedPaymentsIndexUrl()"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("OpenPayments")</a>
@@ -308,7 +320,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Refunds" method="get" class="d-flex gap-2"
-          hx-get="@Url.Action("Refunds", "Billing")"
+          hx-get="@GlobalRefundsUrl()"
           hx-target="#billing-refunds-workspace-shell"
           hx-swap="outerHTML"
           hx-push-url="true">
@@ -324,10 +336,10 @@
         </select>
         <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
         <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
-           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Reset")</a>
+           hx-get="@ScopedRefundsIndexUrl()" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Reset")</a>
     </form>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("OpenPayments")</a>
+       hx-get="@ScopedPaymentsIndexUrl()" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("OpenPayments")</a>
 </div>
 
 <div class="table-responsive">
@@ -371,7 +383,7 @@
                 <tr>
                     <td>
                         <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="text-decoration-none fw-semibold"
-                           hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })"
+                           hx-get="@OrderDetailsUrl(item.OrderId)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">
@@ -408,7 +420,7 @@
                         {
                             <div>
                                 <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none"
-                                   hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })"
+                                   hx-get="@CrmEditCustomerUrl(item.CustomerId.Value)"
                                    hx-target="#billing-refunds-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
@@ -444,7 +456,7 @@
                     <td class="text-end">@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
                     <td class="text-end">
                         <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EditPayment", "Billing", new { id = item.PaymentId })"
+                           hx-get="@EditPaymentUrl(item.PaymentId)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("PaymentsLabel")</a>
@@ -454,7 +466,7 @@
                                asp-route-businessId="@Model.BusinessId"
                                asp-route-queue="@PaymentQueueFilter.MissingProviderRef"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.MissingProviderRef })"
+                               hx-get="@ScopedPaymentsUrl(PaymentQueueFilter.MissingProviderRef)"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("MissingProviderRef")</a>
@@ -465,7 +477,7 @@
                                asp-route-businessId="@Model.BusinessId"
                                asp-route-queue="@PaymentQueueFilter.NeedsReconciliation"
                                class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })"
+                               hx-get="@ScopedPaymentsUrl(PaymentQueueFilter.NeedsReconciliation)"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("ReconciliationQueue")</a>
@@ -476,7 +488,7 @@
                                asp-route-businessId="@Model.BusinessId"
                                asp-route-queue="@PaymentQueueFilter.Failed"
                                class="btn btn-sm btn-outline-danger"
-                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Failed })"
+                               hx-get="@ScopedPaymentsUrl(PaymentQueueFilter.Failed)"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Failed")</a>
@@ -487,7 +499,7 @@
                                asp-route-businessId="@Model.BusinessId"
                                asp-route-queue="@BillingRefundQueueFilter.NeedsSupport"
                                class="btn btn-sm btn-outline-danger"
-                               hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.NeedsSupport })"
+                               hx-get="@ScopedRefundsUrl(BillingRefundQueueFilter.NeedsSupport)"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("SupportQueue")</a>
@@ -497,7 +509,7 @@
                             <a asp-action="Webhooks"
                                asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
                                class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+                               hx-get="@BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter.PaymentExceptions)"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("WebhookExceptions")</a>
@@ -505,7 +517,7 @@
                                asp-route-businessId="@Model.BusinessId"
                                asp-route-queue="@PaymentQueueFilter.DisputeFollowUp"
                                class="btn btn-sm btn-outline-dark"
-                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })"
+                               hx-get="@ScopedPaymentsUrl(PaymentQueueFilter.DisputeFollowUp)"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("DisputeQueue")</a>
@@ -514,7 +526,7 @@
                         {
                             <a asp-action="TaxCompliance"
                                class="btn btn-sm btn-outline-warning"
-                               hx-get="@Url.Action("TaxCompliance", "Billing")"
+                               hx-get="@GlobalTaxComplianceUrl()"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("OpenTaxCompliance")</a>
@@ -523,7 +535,7 @@
                                asp-route-q="@item.CustomerId"
                                asp-route-filter="MissingVatId"
                                class="btn btn-sm btn-outline-danger"
-                               hx-get="@Url.Action("Invoices", "Crm", new { q = item.CustomerId, filter = "MissingVatId" })"
+                               hx-get="@CrmInvoicesUrl(item.CustomerId, "MissingVatId")"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("FixVatId")</a>
@@ -535,13 +547,13 @@
                                asp-route-q="@item.CustomerId"
                                asp-route-filter="Refunded"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("Invoices", "Crm", new { q = item.CustomerId, filter = "Refunded" })"
+                               hx-get="@CrmInvoicesUrl(item.CustomerId, "Refunded")"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("Refunded")</a>
                         }
                         <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-primary"
-                           hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })"
+                           hx-get="@OrderDetailsUrl(item.OrderId)"
                            hx-target="#billing-refunds-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Order")</a>

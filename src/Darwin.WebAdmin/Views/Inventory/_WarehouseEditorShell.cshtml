@@ -3,6 +3,7 @@
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
     ViewData["Title"] = isCreate ? T.T("CreateWarehouse") : T.T("EditWarehouse");
+    string WarehousesUrl(Guid? businessId) => Url.Action("Warehouses", "Inventory", new { businessId }) ?? string.Empty;
 }
 
 <div id="inventory-warehouse-editor-shell">
@@ -23,7 +24,7 @@
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">@T.T("Save")</button>
             <a asp-action="Warehouses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
-               hx-get="@Url.Action("Warehouses", "Inventory", new { businessId = Model.BusinessId })"
+               hx-get="@WarehousesUrl(Model.BusinessId)"
                hx-target="#inventory-warehouse-editor-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("Back")</a>

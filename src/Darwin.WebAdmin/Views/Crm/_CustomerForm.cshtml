@@ -79,7 +79,13 @@
 
 <div class="d-flex justify-content-between align-items-center mt-4">
     <h3 class="mb-0">@T.T("CrmAddresses")</h3>
-    <button type="button" class="btn btn-outline-secondary btn-sm" id="addCustomerAddress">
+    <button type="button"
+            class="btn btn-outline-secondary btn-sm"
+            id="addCustomerAddress"
+            data-dynamic-lines-add
+            data-dynamic-lines-container="#customerAddresses"
+            data-dynamic-lines-template="#customerAddressTemplate"
+            data-dynamic-lines-row=".address-row">
         <i class="fa fa-plus"></i> @T.T("AddAddress")
     </button>
 </div>
@@ -130,7 +136,7 @@
                 </div>
             </div>
             <div class="text-end mt-3">
-                <button type="button" class="btn btn-sm btn-outline-danger remove-address">@T.T("Remove")</button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-address" data-dynamic-lines-remove data-dynamic-lines-row=".address-row">@T.T("Remove")</button>
             </div>
         </div>
     </div>
@@ -151,6 +157,6 @@
             <div class="col-md-4"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" value="true" name="Addresses[__index__].IsDefaultBilling" /><input type="hidden" name="Addresses[__index__].IsDefaultBilling" value="false" /><label class="form-check-label">@T.T("DefaultBilling")</label></div></div>
             <div class="col-md-4"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" value="true" name="Addresses[__index__].IsDefaultShipping" /><input type="hidden" name="Addresses[__index__].IsDefaultShipping" value="false" /><label class="form-check-label">@T.T("DefaultShipping")</label></div></div>
         </div>
-        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-address">@T.T("Remove")</button></div>
+        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-address" data-dynamic-lines-remove data-dynamic-lines-row=".address-row">@T.T("Remove")</button></div>
     </div></div>
 </template>

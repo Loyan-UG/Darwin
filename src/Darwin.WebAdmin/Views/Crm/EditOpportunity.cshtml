@@ -14,6 +14,7 @@
             Value = option.Value,
             Text = T.T(option.Text)
         });
+    string OpportunityInteractionsUrl(Guid opportunityId) => Url.Action("OpportunityInteractions", "Crm", new { opportunityId }) ?? string.Empty;
 }
 
 <h1 class="mb-3">@T.T("EditOpportunity")</h1>
@@ -67,7 +68,8 @@
         <div class="card">
             <div class="card-header"><strong>@T.T("Interactions")</strong></div>
             <div class="card-body" id="opportunity-interactions-grid"
-                 hx-get="@Url.Action("OpportunityInteractions", "Crm", new { opportunityId = Model.Id })"
+                 hx-get="@OpportunityInteractionsUrl(Model.Id)"
+                 hx-target="this"
                  hx-trigger="load"
                  hx-swap="innerHTML"></div>
         </div>
@@ -76,17 +78,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            const container = document.getElementById('opportunityLines');
-            const template = document.getElementById('opportunityLineTemplate');
-            document.getElementById('addOpportunityLine')?.addEventListener('click', function () {
-                container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
-            });
-            container?.addEventListener('click', function (event) {
-                const button = event.target.closest('.remove-line');
-                if (button) button.closest('.line-row')?.remove();
-            });
-        })();
-    </script>
 }

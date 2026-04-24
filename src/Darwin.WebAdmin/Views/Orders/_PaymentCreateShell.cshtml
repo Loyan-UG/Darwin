@@ -2,6 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var header = ViewData["OrderHeader"] as Darwin.WebAdmin.ViewModels.Orders.OrderHeaderVm;
+    string OrderDetailsUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
 }
 
 <div id="order-payment-shell" class="card mb-3">
@@ -60,7 +61,7 @@
                 <span asp-validation-for="FailureReason" class="text-danger"></span>
             </div>
             <div class="col-12">
-                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId })" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@OrderDetailsUrl(Model.OrderId)" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">
                     <i class="fa fa-arrow-left"></i> @T.T("Back")
                 </a>
                 <button class="btn btn-primary" type="submit"><i class="fa fa-check"></i> @T.T("Save")</button>

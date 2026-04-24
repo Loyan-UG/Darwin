@@ -9,6 +9,10 @@
         Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
         _ => T.T("CommonMembers")
     };
+    string BusinessMembersUrl(Guid? businessId, int? page = null, int? pageSize = null, string? query = null, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter? filter = null) =>
+        Url.Action("Members", "Businesses", new { businessId, page, pageSize, query, filter }) ?? string.Empty;
+    string BusinessMerchantReadinessUrl(Guid? businessId) => Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty;
+    string BusinessSupportQueueUrl(Guid? businessId) => Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty;
 }
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -26,9 +30,7 @@
                        asp-route-businessId="@Model.BusinessId"
                        asp-route-filter="@(Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@(Model.Business.ActiveOwnerCount > 0
-                           ? Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })
-                           : Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention }))"
+                       hx-get="@BusinessMembersUrl(Model.BusinessId, filter: Model.Business.ActiveOwnerCount > 0 ? null : Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("CommonMembers")</a>
@@ -36,19 +38,21 @@
                        asp-route-businessId="@Model.BusinessId"
                        asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, filter = Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation })"
+                       hx-get="@BusinessMembersUrl(Model.BusinessId, filter: Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</a>
                     <a asp-action="MerchantReadiness"
+                       asp-route-businessId="@Model.BusinessId"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                       hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
                     <a asp-action="SupportQueue"
+                       asp-route-businessId="@Model.BusinessId"
                        class="btn btn-sm btn-outline-secondary"
-                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                       hx-get="@BusinessSupportQueueUrl(Model.BusinessId)"
                        hx-target="#business-member-editor-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
@@ -104,7 +108,7 @@
        asp-route-query="@Model.Query"
        asp-route-filter="@Model.Filter"
        class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
+       hx-get="@BusinessMembersUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)"
        hx-target="#business-member-editor-shell"
        hx-swap="outerHTML">@T.T("Cancel")</a>
 </div>

@@ -2,6 +2,10 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+    string BusinessLocationsUrl(Guid? businessId, int page, int pageSize, string? query, Darwin.Application.Businesses.DTOs.BusinessLocationQueueFilter? filter) =>
+        Url.Action("Locations", "Businesses", new { businessId, page, pageSize, query, filter }) ?? string.Empty;
+    string BusinessSetupUrl(Guid? id) => Url.Action("Setup", "Businesses", new { id }) ?? string.Empty;
+    string BusinessMerchantReadinessUrl(Guid? businessId) => Url.Action("MerchantReadiness", "Businesses", new { businessId }) ?? string.Empty;
 }
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -74,20 +78,21 @@
        asp-route-query="@Model.Query"
        asp-route-filter="@Model.Filter"
        class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.BusinessId, page = Model.Page, pageSize = Model.PageSize, query = Model.Query, filter = Model.Filter })"
+       hx-get="@BusinessLocationsUrl(Model.BusinessId, Model.Page, Model.PageSize, Model.Query, Model.Filter)"
        hx-target="#business-location-editor-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Cancel")</a>
     <a asp-action="Setup"
        asp-route-id="@Model.BusinessId"
        class="btn btn-outline-secondary"
-       hx-get="@Url.Action("Setup", "Businesses", new { id = Model.BusinessId })"
+       hx-get="@BusinessSetupUrl(Model.BusinessId)"
        hx-target="#business-location-editor-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Setup")</a>
     <a asp-action="MerchantReadiness"
+       asp-route-businessId="@Model.BusinessId"
        class="btn btn-outline-secondary"
-       hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+       hx-get="@BusinessMerchantReadinessUrl(Model.BusinessId)"
        hx-target="#business-location-editor-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("MerchantReadinessTitle")</a>

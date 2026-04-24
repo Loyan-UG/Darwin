@@ -8,11 +8,11 @@
     var mobileAttentionCount = Model.MobileStaleDeviceCount + Model.MobileMissingPushTokenCount;
     var businessOperationsAttentionCount = (Model.PaymentCount ?? 0) + (Model.PurchaseOrderCount ?? 0);
     var businessComplianceAttentionCount = (Model.PaymentCount ?? 0) + Model.OrderCount;
-    var businessCommunicationRuntimeExecutionAttentionCount = Model.BusinessSupport.PendingActivationMemberCount
-        + Model.CommunicationOps.FailedInvitationCount
-        + Model.CommunicationOps.FailedActivationCount
-        + Model.CommunicationOps.FailedPasswordResetCount
-        + Model.CommunicationOps.FailedAdminTestCount;
+    var businessCommunicationRuntimeExecutionAttentionCount = Model.BusinessSupport.SelectedBusinessPendingActivationCount
+        + Model.BusinessSupport.SelectedBusinessFailedInvitationCount
+        + Model.BusinessSupport.SelectedBusinessFailedActivationCount
+        + Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount
+        + Model.BusinessSupport.SelectedBusinessFailedAdminTestCount;
 }
 
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
@@ -243,7 +243,7 @@
                                 <div class="text-muted small">@T.T("NeedsAttention")</div>
                                 <div class="fs-4 fw-semibold">@businessOperationsAttentionCount</div>
                                 <div class="small text-muted mt-2">@T.T("TaxComplianceTitle"): <strong>@businessComplianceAttentionCount</strong></div>
-                                <div class="small text-muted">@T.T("RuntimeExecution"): <strong>@businessCommunicationRuntimeExecutionAttentionCount</strong> (@T.T("OpenFailedInvitationEmails"): @Model.CommunicationOps.FailedInvitationCount / @T.T("UsersFilterUnconfirmed"): @Model.BusinessSupport.PendingActivationMemberCount / @T.T("OpenFailedActivationEmails"): @Model.CommunicationOps.FailedActivationCount / @T.T("FailedAdminTests"): @Model.CommunicationOps.FailedAdminTestCount / @T.T("OpenFailedPasswordResets"): @Model.CommunicationOps.FailedPasswordResetCount)</div>
+                                <div class="small text-muted">@T.T("RuntimeExecution"): <strong>@businessCommunicationRuntimeExecutionAttentionCount</strong> (@T.T("OpenFailedInvitationEmails"): @Model.BusinessSupport.SelectedBusinessFailedInvitationCount / @T.T("UsersFilterUnconfirmed"): @Model.BusinessSupport.SelectedBusinessPendingActivationCount / @T.T("OpenFailedActivationEmails"): @Model.BusinessSupport.SelectedBusinessFailedActivationCount / @T.T("FailedAdminTests"): @Model.BusinessSupport.SelectedBusinessFailedAdminTestCount / @T.T("OpenFailedPasswordResets"): @Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount)</div>
                                 <div class="small text-muted">@T.T("Pending") / @T.T("UsersFilterUnconfirmed") / @T.T("UsersFilterLocked") / @T.T("OpenFailedPasswordResets")</div>
                                 <div class="small text-muted">@T.T("Pending") / @T.T("Unlinked") / @T.T("Refunded") / @T.T("FixVatId")</div>
                                 <div class="small text-muted">@T.T("CommunicationPolicy") / @T.T("RetryBlocked") / @T.T("ActionBlocked") / @T.T("EscalationCandidates") / @T.T("PhoneVerification")</div>
@@ -254,17 +254,17 @@
                                     <a asp-controller="Billing" asp-action="TaxCompliance" class="btn btn-sm btn-outline-secondary">@T.T("TaxComplianceTitle")</a>
                                     <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("Communications")</a>
                                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary">@T.T("CommunicationPolicy")</a>
-                                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending" class="btn btn-sm btn-outline-secondary">@T.T("Pending")</a>
-                                    <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterUnconfirmed")</a>
-                                    <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterLocked")</a>
-                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("RetryBlocked")</a>
-                                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("ActionBlocked")</a>
-                                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-dark">@T.T("EscalationCandidates")</a>
-                                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-phoneVerificationOnly="true" class="btn btn-sm btn-outline-dark">@T.T("PhoneVerification")</a>
-                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedInvitationEmails")</a>
-                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" asp-route-flowKey="AccountActivation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedActivationEmails")</a>
-                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" asp-route-flowKey="AdminCommunicationTest" class="btn btn-sm btn-outline-secondary">@T.T("FailedAdminTests")</a>
-                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" asp-route-flowKey="PasswordReset" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedPasswordResets")</a>
+                                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending" class="btn btn-sm btn-outline-secondary">@T.T("Pending")</a>
+                                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterUnconfirmed")</a>
+                                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterLocked")</a>
+                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("RetryBlocked")</a>
+                                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("ActionBlocked")</a>
+                                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-dark">@T.T("EscalationCandidates")</a>
+                                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-phoneVerificationOnly="true" class="btn btn-sm btn-outline-dark">@T.T("PhoneVerification")</a>
+                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedInvitationEmails")</a>
+                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AccountActivation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedActivationEmails")</a>
+                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AdminCommunicationTest" class="btn btn-sm btn-outline-secondary">@T.T("FailedAdminTests")</a>
+                                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="PasswordReset" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedPasswordResets")</a>
                                     <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Pending" class="btn btn-sm btn-outline-warning">@T.T("Pending")</a>
                                     <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Unlinked" class="btn btn-sm btn-outline-warning">@T.T("Unlinked")</a>
                                     <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Refunded" class="btn btn-sm btn-outline-warning">@T.T("Refunded")</a>
@@ -310,10 +310,10 @@
                         <a asp-controller="Billing" asp-action="TaxCompliance" class="btn btn-sm btn-outline-primary">@T.T("TaxComplianceTitle")</a>
                         <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("Communications")</a>
                         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-primary">@T.T("CommunicationPolicy")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("RetryBlocked")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("ActionBlocked")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("EscalationCandidates")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-phoneVerificationOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("PhoneVerification")</a>
+                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("RetryBlocked")</a>
+                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("ActionBlocked")</a>
+                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("EscalationCandidates")</a>
+                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-phoneVerificationOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("PhoneVerification")</a>
                         <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="Overdue" class="btn btn-sm btn-outline-secondary">@T.T("Overdue")</a>
                         <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="DueSoon" class="btn btn-sm btn-outline-secondary">@T.T("DueSoon")</a>
                         <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Pending" class="btn btn-sm btn-outline-secondary">@T.T("Pending")</a>
